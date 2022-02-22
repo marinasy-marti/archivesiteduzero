@@ -1,0 +1,603 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/introduction-aux-jointures-sql.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 03:04:39 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/introduction-aux-jointures-sql.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:40:57 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Introduction aux jointures SQL</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/introduction-aux-jointures-sql.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Introduction aux jointures SQL</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#IntroductionauxjointuresSQL">Introduction aux jointures SQL</a><br/><a href="#Pr-requislesbasesdedonnesrelationnelles">Pré-requis : les bases de données relationnelles</a><br/><a href="#Lesjointuresquelintrt">Les jointures, quel intérêt ?</a><br/><a href="#Lesjointuresinternes">Les jointures internes</a><br/><a href="#Lesjointuresexternes">Les jointures externes</a><br/><a href="#Restonslisibles">Restons lisibles !</a><br/><a href="#Pourallerplusloin">Pour aller plus loin</a><br/></div>
+<a name="IntroductionauxjointuresSQL"></a><h2>Introduction aux jointures SQL</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/pre-requis-les-bases-de-donnees-relationnelles">
+<span class="next">Pré-requis : les bases de données relationnelles</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-476169" data-claire-element-id="476169">Ce tutoriel a pour but de vous faire découvrir les jointures en SQL. Pour le comprendre, il est nécessaire d'avoir lu la partie <em>Les bases de données</em> du tutoriel officiel de PHP/MySQL.</p><aside id="r-476171" data-claire-element-id="476171" data-claire-semantic="warning"><p id="r-476170" data-claire-element-id="476170">Attention : pour faciliter votre compréhension des différents concepts, je vous conseille de lire ce tutoriel en entier et dans l'ordre proposé, vous risqueriez sinon de rater certains enchaînements logiques.</p></aside>
+</div><a name="Pr-requislesbasesdedonnesrelationnelles"></a><h2>Pré-requis : les bases de données relationnelles</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/les-jointures-quel-interet">
+<span class="next">Les jointures, quel intérêt ?</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-476172" data-claire-element-id="476172">Avant d'utiliser les jointures, il faut que votre base de données relationnelle soit correctement conçue. Vous apprendrez dans cette partie quelques règles de base (loin d'être exhaustives) dans la conception des bases de données.</p><p id="r-476173" data-claire-element-id="476173">Pour ce faire, utilisons un exemple.</p><p id="r-476174" data-claire-element-id="476174"><cite>Citation</cite></p><blockquote id="r-476176" data-claire-element-id="476176"><p id="r-476175" data-claire-element-id="476175">Vous êtes informaticien dans une <a href="http://fr.wikipedia.org/wiki/Agence_de_presse">agence de presse</a> et vous devez stocker les articles des journalistes de l'agence dans une base de données relationnelle. Vous devez stocker pour chaque article son titre, son contenu et sa date, ainsi que le nom, le prénom et l'adresse e-mail de l'auteur. Plusieurs journaux achètent des articles à l'agence de presse en question. Celle-ci voudrait savoir quels journaux ont acheté quels articles. L'agence désire par ailleurs connaître, en plus de leur nom, l'adresse des journaux.</p></blockquote><aside id="r-476178" data-claire-element-id="476178" data-claire-semantic="information"><p id="r-476177" data-claire-element-id="476177"><strong>Règle n°1</strong> : Regroupez dans une même table (= tableau de données) toutes les caractéristiques d'un élément.</p></aside><aside id="r-476180" data-claire-element-id="476180" data-claire-semantic="information"><p id="r-476179" data-claire-element-id="476179"><strong>Règle n°2</strong> : Si une information se répète plusieurs fois dans une même table, il est préférable de créer une table dédiée à ce type d'information avec une relation entre les deux tables.</p></aside><p id="r-476181" data-claire-element-id="476181">Ces règles n'étant pas faciles à comprendre de prime abord, appliquons-les à notre exemple.</p><p id="r-476182" data-claire-element-id="476182">On aurait a priori tendance à créer une table &quot;articles&quot; ayant la structure suivante (notez l'absence de caractères spéciaux, d'espaces et d'accents dans les noms des champs) :</p><table id="r-476209" data-claire-element-id="476209"><thead id="r-476186" data-claire-element-id="476186"><tr id="r-476185" data-claire-element-id="476185"><th id="r-476184" data-claire-element-id="476184"><p id="r-476183" data-claire-element-id="476183">articles</p></th></tr></thead><tbody id="r-476208" data-claire-element-id="476208"><tr id="r-476189" data-claire-element-id="476189"><td id="r-476188" data-claire-element-id="476188"><p id="r-476187" data-claire-element-id="476187">id_article</p></td></tr><tr id="r-476192" data-claire-element-id="476192"><td id="r-476191" data-claire-element-id="476191"><p id="r-476190" data-claire-element-id="476190">titre_article</p></td></tr><tr id="r-476195" data-claire-element-id="476195"><td id="r-476194" data-claire-element-id="476194"><p id="r-476193" data-claire-element-id="476193">nom_auteur</p></td></tr><tr id="r-476198" data-claire-element-id="476198"><td id="r-476197" data-claire-element-id="476197"><p id="r-476196" data-claire-element-id="476196">prenom_auteur</p></td></tr><tr id="r-476201" data-claire-element-id="476201"><td id="r-476200" data-claire-element-id="476200"><p id="r-476199" data-claire-element-id="476199">email_auteur</p></td></tr><tr id="r-476204" data-claire-element-id="476204"><td id="r-476203" data-claire-element-id="476203"><p id="r-476202" data-claire-element-id="476202">texte_article</p></td></tr><tr id="r-476207" data-claire-element-id="476207"><td id="r-476206" data-claire-element-id="476206"><p id="r-476205" data-claire-element-id="476205">date_article</p></td></tr></tbody></table><p id="r-476210" data-claire-element-id="476210">Ce qui donne, avec quelques données (exemple) :</p><table id="r-476288" data-claire-element-id="476288"><thead id="r-476226" data-claire-element-id="476226"><tr id="r-476225" data-claire-element-id="476225"><th id="r-476212" data-claire-element-id="476212"><p id="r-476211" data-claire-element-id="476211">id_article</p></th><th id="r-476214" data-claire-element-id="476214"><p id="r-476213" data-claire-element-id="476213">titre_article</p></th><th id="r-476216" data-claire-element-id="476216"><p id="r-476215" data-claire-element-id="476215">nom_auteur</p></th><th id="r-476218" data-claire-element-id="476218"><p id="r-476217" data-claire-element-id="476217">prenom_auteur</p></th><th id="r-476220" data-claire-element-id="476220"><p id="r-476219" data-claire-element-id="476219">email_auteur</p></th><th id="r-476222" data-claire-element-id="476222"><p id="r-476221" data-claire-element-id="476221">texte_article</p></th><th id="r-476224" data-claire-element-id="476224"><p id="r-476223" data-claire-element-id="476223">date_article</p></th></tr></thead><tbody id="r-476287" data-claire-element-id="476287"><tr id="r-476241" data-claire-element-id="476241"><td id="r-476228" data-claire-element-id="476228"><p id="r-476227" data-claire-element-id="476227">1</p></td><td id="r-476230" data-claire-element-id="476230"><p id="r-476229" data-claire-element-id="476229">Wall Street repasse dans le vert</p></td><td id="r-476232" data-claire-element-id="476232"><p id="r-476231" data-claire-element-id="476231">Dupont</p></td><td id="r-476234" data-claire-element-id="476234"><p id="r-476233" data-claire-element-id="476233">Jacques</p></td><td id="r-476236" data-claire-element-id="476236"><p id="r-476235" data-claire-element-id="476235"><a class="__cf_email__" href="http://www.cloudflare.com/email-protection" data-cfemail="711b1012000414022e1504011e1f0531141c10181d5f121e1c">[email&nbsp;protected]</a><script type="text/javascript">
+/* <![CDATA[ */
+(function(){try{var s,a,i,j,r,c,l,b=document.getElementsByTagName("script");l=b[b.length-1].previousSibling;a=l.getAttribute('data-cfemail');if(a){s='';r=parseInt(a.substr(0,2),16);for(j=2;a.length-j;j+=2){c=parseInt(a.substr(j,2),16)^r;s+=String.fromCharCode(c);}s=document.createTextNode(s);l.parentNode.replaceChild(s,l);}}catch(e){}})();
+/* ]]> */
+</script></p></td><td id="r-476238" data-claire-element-id="476238"><p id="r-476237" data-claire-element-id="476237">blabla</p></td><td id="r-476240" data-claire-element-id="476240"><p id="r-476239" data-claire-element-id="476239">26/01/2010</p></td></tr><tr id="r-476256" data-claire-element-id="476256"><td id="r-476243" data-claire-element-id="476243"><p id="r-476242" data-claire-element-id="476242">2</p></td><td id="r-476245" data-claire-element-id="476245"><p id="r-476244" data-claire-element-id="476244">La Fed garde son taux directeur inchangé</p></td><td id="r-476247" data-claire-element-id="476247"><p id="r-476246" data-claire-element-id="476246">Dubois</p></td><td id="r-476249" data-claire-element-id="476249"><p id="r-476248" data-claire-element-id="476248">Marcel</p></td><td id="r-476251" data-claire-element-id="476251"><p id="r-476250" data-claire-element-id="476250"><a class="__cf_email__" href="http://www.cloudflare.com/email-protection" data-cfemail="f09d9485929f9983b0959d91999cde939f9d">[email&nbsp;protected]</a><script type="text/javascript">
+/* <![CDATA[ */
+(function(){try{var s,a,i,j,r,c,l,b=document.getElementsByTagName("script");l=b[b.length-1].previousSibling;a=l.getAttribute('data-cfemail');if(a){s='';r=parseInt(a.substr(0,2),16);for(j=2;a.length-j;j+=2){c=parseInt(a.substr(j,2),16)^r;s+=String.fromCharCode(c);}s=document.createTextNode(s);l.parentNode.replaceChild(s,l);}}catch(e){}})();
+/* ]]> */
+</script></p></td><td id="r-476253" data-claire-element-id="476253"><p id="r-476252" data-claire-element-id="476252">blibli</p></td><td id="r-476255" data-claire-element-id="476255"><p id="r-476254" data-claire-element-id="476254">27/01/2010</p></td></tr><tr id="r-476271" data-claire-element-id="476271"><td id="r-476258" data-claire-element-id="476258"><p id="r-476257" data-claire-element-id="476257">3</p></td><td id="r-476260" data-claire-element-id="476260"><p id="r-476259" data-claire-element-id="476259">Des pensionnés très occupés !</p></td><td id="r-476262" data-claire-element-id="476262"><p id="r-476261" data-claire-element-id="476261">Dupont</p></td><td id="r-476264" data-claire-element-id="476264"><p id="r-476263" data-claire-element-id="476263">Jacques</p></td><td id="r-476266" data-claire-element-id="476266"><p id="r-476265" data-claire-element-id="476265"><a class="__cf_email__" href="http://www.cloudflare.com/email-protection" data-cfemail="1a707b796b6f7f69457e6f6a75746e5a7f777b737634797577">[email&nbsp;protected]</a><script type="text/javascript">
+/* <![CDATA[ */
+(function(){try{var s,a,i,j,r,c,l,b=document.getElementsByTagName("script");l=b[b.length-1].previousSibling;a=l.getAttribute('data-cfemail');if(a){s='';r=parseInt(a.substr(0,2),16);for(j=2;a.length-j;j+=2){c=parseInt(a.substr(j,2),16)^r;s+=String.fromCharCode(c);}s=document.createTextNode(s);l.parentNode.replaceChild(s,l);}}catch(e){}})();
+/* ]]> */
+</script></p></td><td id="r-476268" data-claire-element-id="476268"><p id="r-476267" data-claire-element-id="476267">bloblo</p></td><td id="r-476270" data-claire-element-id="476270"><p id="r-476269" data-claire-element-id="476269">28/01/2010</p></td></tr><tr id="r-476286" data-claire-element-id="476286"><td id="r-476273" data-claire-element-id="476273"><p id="r-476272" data-claire-element-id="476272">4</p></td><td id="r-476275" data-claire-element-id="476275"><p id="r-476274" data-claire-element-id="476274">L'entretien du réseau routier laisse à désirer</p></td><td id="r-476277" data-claire-element-id="476277"><p id="r-476276" data-claire-element-id="476276">Leroy</p></td><td id="r-476279" data-claire-element-id="476279"><p id="r-476278" data-claire-element-id="476278">Nicole</p></td><td id="r-476281" data-claire-element-id="476281"><p id="r-476280" data-claire-element-id="476280"><a class="__cf_email__" href="http://www.cloudflare.com/email-protection" data-cfemail="7b15121814171e55171e0914023b1e161a121755181416">[email&nbsp;protected]</a><script type="text/javascript">
+/* <![CDATA[ */
+(function(){try{var s,a,i,j,r,c,l,b=document.getElementsByTagName("script");l=b[b.length-1].previousSibling;a=l.getAttribute('data-cfemail');if(a){s='';r=parseInt(a.substr(0,2),16);for(j=2;a.length-j;j+=2){c=parseInt(a.substr(j,2),16)^r;s+=String.fromCharCode(c);}s=document.createTextNode(s);l.parentNode.replaceChild(s,l);}}catch(e){}})();
+/* ]]> */
+</script></p></td><td id="r-476283" data-claire-element-id="476283"><p id="r-476282" data-claire-element-id="476282">blublu</p></td><td id="r-476285" data-claire-element-id="476285"><p id="r-476284" data-claire-element-id="476284">28/01/2010</p></td></tr></tbody></table><p id="r-476289" data-claire-element-id="476289">On remarque cependant qu’il y a répétition des informations sur l'auteur. En effet, un auteur peut avoir écrit plusieurs articles !</p><p id="r-476290" data-claire-element-id="476290">On va donc créer une table &quot;auteurs&quot; en relation avec la table &quot;articles&quot; pour éviter d'avoir une répétition inutile de toutes les informations sur les auteurs. Cela permet en pratique, si vous voulez modifier un élément (par exemple l'adresse e-mail de l'auteur), de ne devoir le faire qu’une seule fois !</p><p id="r-476291" data-claire-element-id="476291">La structure de la table auteurs est la suivante :</p><table id="r-476309" data-claire-element-id="476309"><thead id="r-476295" data-claire-element-id="476295"><tr id="r-476294" data-claire-element-id="476294"><th id="r-476293" data-claire-element-id="476293"><p id="r-476292" data-claire-element-id="476292">auteurs</p></th></tr></thead><tbody id="r-476308" data-claire-element-id="476308"><tr id="r-476298" data-claire-element-id="476298"><td id="r-476297" data-claire-element-id="476297"><p id="r-476296" data-claire-element-id="476296">id_auteur</p></td></tr><tr id="r-476301" data-claire-element-id="476301"><td id="r-476300" data-claire-element-id="476300"><p id="r-476299" data-claire-element-id="476299">nom_auteur</p></td></tr><tr id="r-476304" data-claire-element-id="476304"><td id="r-476303" data-claire-element-id="476303"><p id="r-476302" data-claire-element-id="476302">prenom_auteur</p></td></tr><tr id="r-476307" data-claire-element-id="476307"><td id="r-476306" data-claire-element-id="476306"><p id="r-476305" data-claire-element-id="476305">email_auteur</p></td></tr></tbody></table><p id="r-476310" data-claire-element-id="476310">Ce qui donne en données :</p><table id="r-476349" data-claire-element-id="476349"><thead id="r-476320" data-claire-element-id="476320"><tr id="r-476319" data-claire-element-id="476319"><th id="r-476312" data-claire-element-id="476312"><p id="r-476311" data-claire-element-id="476311">id_auteur</p></th><th id="r-476314" data-claire-element-id="476314"><p id="r-476313" data-claire-element-id="476313">nom_auteur</p></th><th id="r-476316" data-claire-element-id="476316"><p id="r-476315" data-claire-element-id="476315">prenom_auteur</p></th><th id="r-476318" data-claire-element-id="476318"><p id="r-476317" data-claire-element-id="476317">email_auteur</p></th></tr></thead><tbody id="r-476348" data-claire-element-id="476348"><tr id="r-476329" data-claire-element-id="476329"><td id="r-476322" data-claire-element-id="476322"><p id="r-476321" data-claire-element-id="476321">1</p></td><td id="r-476324" data-claire-element-id="476324"><p id="r-476323" data-claire-element-id="476323">Dubois</p></td><td id="r-476326" data-claire-element-id="476326"><p id="r-476325" data-claire-element-id="476325">Marcel</p></td><td id="r-476328" data-claire-element-id="476328"><p id="r-476327" data-claire-element-id="476327"><a class="__cf_email__" href="http://www.cloudflare.com/email-protection" data-cfemail="64090011060b0d17240109050d084a070b09">[email&nbsp;protected]</a><script type="text/javascript">
+/* <![CDATA[ */
+(function(){try{var s,a,i,j,r,c,l,b=document.getElementsByTagName("script");l=b[b.length-1].previousSibling;a=l.getAttribute('data-cfemail');if(a){s='';r=parseInt(a.substr(0,2),16);for(j=2;a.length-j;j+=2){c=parseInt(a.substr(j,2),16)^r;s+=String.fromCharCode(c);}s=document.createTextNode(s);l.parentNode.replaceChild(s,l);}}catch(e){}})();
+/* ]]> */
+</script></p></td></tr><tr id="r-476338" data-claire-element-id="476338"><td id="r-476331" data-claire-element-id="476331"><p id="r-476330" data-claire-element-id="476330">2</p></td><td id="r-476333" data-claire-element-id="476333"><p id="r-476332" data-claire-element-id="476332">Dupont</p></td><td id="r-476335" data-claire-element-id="476335"><p id="r-476334" data-claire-element-id="476334">Jacques</p></td><td id="r-476337" data-claire-element-id="476337"><p id="r-476336" data-claire-element-id="476336"><a class="__cf_email__" href="http://www.cloudflare.com/email-protection" data-cfemail="ed878c8e9c98889eb289989d828399ad88808c8481c38e8280">[email&nbsp;protected]</a><script type="text/javascript">
+/* <![CDATA[ */
+(function(){try{var s,a,i,j,r,c,l,b=document.getElementsByTagName("script");l=b[b.length-1].previousSibling;a=l.getAttribute('data-cfemail');if(a){s='';r=parseInt(a.substr(0,2),16);for(j=2;a.length-j;j+=2){c=parseInt(a.substr(j,2),16)^r;s+=String.fromCharCode(c);}s=document.createTextNode(s);l.parentNode.replaceChild(s,l);}}catch(e){}})();
+/* ]]> */
+</script></p></td></tr><tr id="r-476347" data-claire-element-id="476347"><td id="r-476340" data-claire-element-id="476340"><p id="r-476339" data-claire-element-id="476339">3</p></td><td id="r-476342" data-claire-element-id="476342"><p id="r-476341" data-claire-element-id="476341">Leroy</p></td><td id="r-476344" data-claire-element-id="476344"><p id="r-476343" data-claire-element-id="476343">Nicole</p></td><td id="r-476346" data-claire-element-id="476346"><p id="r-476345" data-claire-element-id="476345"><a class="__cf_email__" href="http://www.cloudflare.com/email-protection" data-cfemail="4826212b27242d66242d3a2731082d25292124662b2725">[email&nbsp;protected]</a><script type="text/javascript">
+/* <![CDATA[ */
+(function(){try{var s,a,i,j,r,c,l,b=document.getElementsByTagName("script");l=b[b.length-1].previousSibling;a=l.getAttribute('data-cfemail');if(a){s='';r=parseInt(a.substr(0,2),16);for(j=2;a.length-j;j+=2){c=parseInt(a.substr(j,2),16)^r;s+=String.fromCharCode(c);}s=document.createTextNode(s);l.parentNode.replaceChild(s,l);}}catch(e){}})();
+/* ]]> */
+</script></p></td></tr></tbody></table><p id="r-476350" data-claire-element-id="476350">La nouvelle structure de la table &quot;articles&quot; est la suivante :</p><table id="r-476371" data-claire-element-id="476371"><thead id="r-476354" data-claire-element-id="476354"><tr id="r-476353" data-claire-element-id="476353"><th id="r-476352" data-claire-element-id="476352"><p id="r-476351" data-claire-element-id="476351">articles</p></th></tr></thead><tbody id="r-476370" data-claire-element-id="476370"><tr id="r-476357" data-claire-element-id="476357"><td id="r-476356" data-claire-element-id="476356"><p id="r-476355" data-claire-element-id="476355">id_article</p></td></tr><tr id="r-476360" data-claire-element-id="476360"><td id="r-476359" data-claire-element-id="476359"><p id="r-476358" data-claire-element-id="476358">titre_article</p></td></tr><tr id="r-476363" data-claire-element-id="476363"><td id="r-476362" data-claire-element-id="476362"><p id="r-476361" data-claire-element-id="476361">id_auteur</p></td></tr><tr id="r-476366" data-claire-element-id="476366"><td id="r-476365" data-claire-element-id="476365"><p id="r-476364" data-claire-element-id="476364">texte_article</p></td></tr><tr id="r-476369" data-claire-element-id="476369"><td id="r-476368" data-claire-element-id="476368"><p id="r-476367" data-claire-element-id="476367">date_article</p></td></tr></tbody></table><p id="r-476372" data-claire-element-id="476372">Ce qui donne en données :</p><table id="r-476430" data-claire-element-id="476430"><thead id="r-476384" data-claire-element-id="476384"><tr id="r-476383" data-claire-element-id="476383"><th id="r-476374" data-claire-element-id="476374"><p id="r-476373" data-claire-element-id="476373">id_article</p></th><th id="r-476376" data-claire-element-id="476376"><p id="r-476375" data-claire-element-id="476375">titre_article</p></th><th id="r-476378" data-claire-element-id="476378"><p id="r-476377" data-claire-element-id="476377">id_auteur</p></th><th id="r-476380" data-claire-element-id="476380"><p id="r-476379" data-claire-element-id="476379">texte_article</p></th><th id="r-476382" data-claire-element-id="476382"><p id="r-476381" data-claire-element-id="476381">date_article</p></th></tr></thead><tbody id="r-476429" data-claire-element-id="476429"><tr id="r-476395" data-claire-element-id="476395"><td id="r-476386" data-claire-element-id="476386"><p id="r-476385" data-claire-element-id="476385">1</p></td><td id="r-476388" data-claire-element-id="476388"><p id="r-476387" data-claire-element-id="476387">Wall Street repasse dans le vert</p></td><td id="r-476390" data-claire-element-id="476390"><p id="r-476389" data-claire-element-id="476389">2</p></td><td id="r-476392" data-claire-element-id="476392"><p id="r-476391" data-claire-element-id="476391">blabla</p></td><td id="r-476394" data-claire-element-id="476394"><p id="r-476393" data-claire-element-id="476393">26/01/2010</p></td></tr><tr id="r-476406" data-claire-element-id="476406"><td id="r-476397" data-claire-element-id="476397"><p id="r-476396" data-claire-element-id="476396">2</p></td><td id="r-476399" data-claire-element-id="476399"><p id="r-476398" data-claire-element-id="476398">La Fed garde son taux directeur inchangé</p></td><td id="r-476401" data-claire-element-id="476401"><p id="r-476400" data-claire-element-id="476400">1</p></td><td id="r-476403" data-claire-element-id="476403"><p id="r-476402" data-claire-element-id="476402">blibli</p></td><td id="r-476405" data-claire-element-id="476405"><p id="r-476404" data-claire-element-id="476404">27/01/2010</p></td></tr><tr id="r-476417" data-claire-element-id="476417"><td id="r-476408" data-claire-element-id="476408"><p id="r-476407" data-claire-element-id="476407">3</p></td><td id="r-476410" data-claire-element-id="476410"><p id="r-476409" data-claire-element-id="476409">Des pensionnés très occupés !</p></td><td id="r-476412" data-claire-element-id="476412"><p id="r-476411" data-claire-element-id="476411">2</p></td><td id="r-476414" data-claire-element-id="476414"><p id="r-476413" data-claire-element-id="476413">bloblo</p></td><td id="r-476416" data-claire-element-id="476416"><p id="r-476415" data-claire-element-id="476415">28/01/2010</p></td></tr><tr id="r-476428" data-claire-element-id="476428"><td id="r-476419" data-claire-element-id="476419"><p id="r-476418" data-claire-element-id="476418">4</p></td><td id="r-476421" data-claire-element-id="476421"><p id="r-476420" data-claire-element-id="476420">L'entretien du réseau routier laisse à désirer</p></td><td id="r-476423" data-claire-element-id="476423"><p id="r-476422" data-claire-element-id="476422">3</p></td><td id="r-476425" data-claire-element-id="476425"><p id="r-476424" data-claire-element-id="476424">blublu</p></td><td id="r-476427" data-claire-element-id="476427"><p id="r-476426" data-claire-element-id="476426">28/01/2010</p></td></tr></tbody></table><p id="r-476431" data-claire-element-id="476431">On a donc créé une relation numérique entre deux tables pour éviter la répétition d'informations. On comprend l'importance du champ &quot;id&quot; de chaque table qui doit absolument prendre une valeur différente/unique pour chaque ligne de la table.</p><p id="r-476432" data-claire-element-id="476432">Le champ de type &quot;id&quot; (première colonne), qui contient un identifiant unique pour chaque élément (ligne) de la table, est appelé clé primaire (Primary Key = PK).</p><p id="r-476433" data-claire-element-id="476433">Dans la table articles, on a un autre type de champ &quot;id&quot;, qui peut en effet prendre plusieurs fois la même valeur. C'est ce qu'on appelle une clé étrangère (Foreign Key = FK). Il correspond à la clé primaire d'une autre table et permet de créer une relation avec celle-ci.</p><p id="r-476434" data-claire-element-id="476434">Dans notre cas, le champ (clé étrangère) &quot;id_auteur&quot; de la table articles correspond au champ (clé primaire) &quot;id_auteur&quot; de la table auteurs. On nomme généralement de la même façon la clé primaire et la clé étrangère relative. La relation PK – FK est appelée relation 1 – N.</p><aside id="r-476436" data-claire-element-id="476436" data-claire-semantic="information"><p id="r-476435" data-claire-element-id="476435"><strong>Règle n°3</strong> : Il peut arriver que vous rencontriez une relation N – N, c'est-à-dire une relation où l'on a une répétition des éléments d'une table A dans une autre table B, et également une répétition de plusieurs éléments de la table B dans la table A. Pour optimiser les tables et éviter ces répétitions, il faut dans ce cas créer une table intermédiaire dans laquelle on stockera uniquement des &quot;id&quot;.</p></aside><p id="r-476437" data-claire-element-id="476437">Mise en pratique :</p><p id="r-476438" data-claire-element-id="476438">Reprenons notre exemple. En plus des tables articles et auteurs, créons la table &quot;journaux&quot;.</p><table id="r-476453" data-claire-element-id="476453"><thead id="r-476442" data-claire-element-id="476442"><tr id="r-476441" data-claire-element-id="476441"><th id="r-476440" data-claire-element-id="476440"><p id="r-476439" data-claire-element-id="476439">journaux</p></th></tr></thead><tbody id="r-476452" data-claire-element-id="476452"><tr id="r-476445" data-claire-element-id="476445"><td id="r-476444" data-claire-element-id="476444"><p id="r-476443" data-claire-element-id="476443">id_journal</p></td></tr><tr id="r-476448" data-claire-element-id="476448"><td id="r-476447" data-claire-element-id="476447"><p id="r-476446" data-claire-element-id="476446">nom_journal</p></td></tr><tr id="r-476451" data-claire-element-id="476451"><td id="r-476450" data-claire-element-id="476450"><p id="r-476449" data-claire-element-id="476449">adresse_journal</p></td></tr></tbody></table><table id="r-476491" data-claire-element-id="476491"><thead id="r-476461" data-claire-element-id="476461"><tr id="r-476460" data-claire-element-id="476460"><th id="r-476455" data-claire-element-id="476455"><p id="r-476454" data-claire-element-id="476454">id_journal</p></th><th id="r-476457" data-claire-element-id="476457"><p id="r-476456" data-claire-element-id="476456">nom_journal</p></th><th id="r-476459" data-claire-element-id="476459"><p id="r-476458" data-claire-element-id="476458">adresse_journal</p></th></tr></thead><tbody id="r-476490" data-claire-element-id="476490"><tr id="r-476468" data-claire-element-id="476468"><td id="r-476463" data-claire-element-id="476463"><p id="r-476462" data-claire-element-id="476462">1</p></td><td id="r-476465" data-claire-element-id="476465"><p id="r-476464" data-claire-element-id="476464">Le Monde</p></td><td id="r-476467" data-claire-element-id="476467"><p id="r-476466" data-claire-element-id="476466">Paris</p></td></tr><tr id="r-476475" data-claire-element-id="476475"><td id="r-476470" data-claire-element-id="476470"><p id="r-476469" data-claire-element-id="476469">2</p></td><td id="r-476472" data-claire-element-id="476472"><p id="r-476471" data-claire-element-id="476471">Le Figaro</p></td><td id="r-476474" data-claire-element-id="476474"><p id="r-476473" data-claire-element-id="476473">Paris</p></td></tr><tr id="r-476482" data-claire-element-id="476482"><td id="r-476477" data-claire-element-id="476477"><p id="r-476476" data-claire-element-id="476476">3</p></td><td id="r-476479" data-claire-element-id="476479"><p id="r-476478" data-claire-element-id="476478">Le Soir</p></td><td id="r-476481" data-claire-element-id="476481"><p id="r-476480" data-claire-element-id="476480">Bruxelles</p></td></tr><tr id="r-476489" data-claire-element-id="476489"><td id="r-476484" data-claire-element-id="476484"><p id="r-476483" data-claire-element-id="476483">4</p></td><td id="r-476486" data-claire-element-id="476486"><p id="r-476485" data-claire-element-id="476485">Libération</p></td><td id="r-476488" data-claire-element-id="476488"><p id="r-476487" data-claire-element-id="476487">Paris</p></td></tr></tbody></table><p id="r-476492" data-claire-element-id="476492">On veut stocker les articles achetés par ces journaux à l'agence de presse. Un journal peut avoir acheté plusieurs articles, et un article peut avoir été acheté par plusieurs journaux. On a donc une relation N – N.</p><p id="r-476493" data-claire-element-id="476493">Il ne nous est pas possible de stocker plusieurs articles pour un même journal (on a une seule ligne par journal dans la table journaux), il n'est pas non plus possible de faire l'inverse (on ne peut pas stocker plusieurs journaux pour un même article, on a également une seule ligne par article dans la table articles). On est donc obligés de créer une table intermédiaire pour stocker toutes nos relations (sous forme d'id). Grâce à ce subterfuge, on retrouve des relations 1 – N à la place de la relation N – N.</p><p id="r-476494" data-claire-element-id="476494">Notre table stockant les relations pourrait ressembler à ceci (données aléatoires) :</p><table id="r-476509" data-claire-element-id="476509"><thead id="r-476498" data-claire-element-id="476498"><tr id="r-476497" data-claire-element-id="476497"><th id="r-476496" data-claire-element-id="476496"><p id="r-476495" data-claire-element-id="476495">jonction_articles_journaux</p></th></tr></thead><tbody id="r-476508" data-claire-element-id="476508"><tr id="r-476501" data-claire-element-id="476501"><td id="r-476500" data-claire-element-id="476500"><p id="r-476499" data-claire-element-id="476499">id_jonction_art_journ</p></td></tr><tr id="r-476504" data-claire-element-id="476504"><td id="r-476503" data-claire-element-id="476503"><p id="r-476502" data-claire-element-id="476502">id_article</p></td></tr><tr id="r-476507" data-claire-element-id="476507"><td id="r-476506" data-claire-element-id="476506"><p id="r-476505" data-claire-element-id="476505">id_journal</p></td></tr></tbody></table><table id="r-476575" data-claire-element-id="476575"><thead id="r-476517" data-claire-element-id="476517"><tr id="r-476516" data-claire-element-id="476516"><th id="r-476511" data-claire-element-id="476511"><p id="r-476510" data-claire-element-id="476510">id_jonction_art_journ</p></th><th id="r-476513" data-claire-element-id="476513"><p id="r-476512" data-claire-element-id="476512">id_article</p></th><th id="r-476515" data-claire-element-id="476515"><p id="r-476514" data-claire-element-id="476514">id_journal</p></th></tr></thead><tbody id="r-476574" data-claire-element-id="476574"><tr id="r-476524" data-claire-element-id="476524"><td id="r-476519" data-claire-element-id="476519"><p id="r-476518" data-claire-element-id="476518">1</p></td><td id="r-476521" data-claire-element-id="476521"><p id="r-476520" data-claire-element-id="476520">1</p></td><td id="r-476523" data-claire-element-id="476523"><p id="r-476522" data-claire-element-id="476522">2</p></td></tr><tr id="r-476531" data-claire-element-id="476531"><td id="r-476526" data-claire-element-id="476526"><p id="r-476525" data-claire-element-id="476525">2</p></td><td id="r-476528" data-claire-element-id="476528"><p id="r-476527" data-claire-element-id="476527">1</p></td><td id="r-476530" data-claire-element-id="476530"><p id="r-476529" data-claire-element-id="476529">4</p></td></tr><tr id="r-476538" data-claire-element-id="476538"><td id="r-476533" data-claire-element-id="476533"><p id="r-476532" data-claire-element-id="476532">3</p></td><td id="r-476535" data-claire-element-id="476535"><p id="r-476534" data-claire-element-id="476534">2</p></td><td id="r-476537" data-claire-element-id="476537"><p id="r-476536" data-claire-element-id="476536">2</p></td></tr><tr id="r-476545" data-claire-element-id="476545"><td id="r-476540" data-claire-element-id="476540"><p id="r-476539" data-claire-element-id="476539">4</p></td><td id="r-476542" data-claire-element-id="476542"><p id="r-476541" data-claire-element-id="476541">3</p></td><td id="r-476544" data-claire-element-id="476544"><p id="r-476543" data-claire-element-id="476543">1</p></td></tr><tr id="r-476552" data-claire-element-id="476552"><td id="r-476547" data-claire-element-id="476547"><p id="r-476546" data-claire-element-id="476546">5</p></td><td id="r-476549" data-claire-element-id="476549"><p id="r-476548" data-claire-element-id="476548">3</p></td><td id="r-476551" data-claire-element-id="476551"><p id="r-476550" data-claire-element-id="476550">2</p></td></tr><tr id="r-476559" data-claire-element-id="476559"><td id="r-476554" data-claire-element-id="476554"><p id="r-476553" data-claire-element-id="476553">6</p></td><td id="r-476556" data-claire-element-id="476556"><p id="r-476555" data-claire-element-id="476555">3</p></td><td id="r-476558" data-claire-element-id="476558"><p id="r-476557" data-claire-element-id="476557">3</p></td></tr><tr id="r-476566" data-claire-element-id="476566"><td id="r-476561" data-claire-element-id="476561"><p id="r-476560" data-claire-element-id="476560">7</p></td><td id="r-476563" data-claire-element-id="476563"><p id="r-476562" data-claire-element-id="476562">4</p></td><td id="r-476565" data-claire-element-id="476565"><p id="r-476564" data-claire-element-id="476564">1</p></td></tr><tr id="r-476573" data-claire-element-id="476573"><td id="r-476568" data-claire-element-id="476568"><p id="r-476567" data-claire-element-id="476567">8</p></td><td id="r-476570" data-claire-element-id="476570"><p id="r-476569" data-claire-element-id="476569">4</p></td><td id="r-476572" data-claire-element-id="476572"><p id="r-476571" data-claire-element-id="476571">3</p></td></tr></tbody></table><aside id="r-476577" data-claire-element-id="476577" data-claire-semantic="information"><p id="r-476576" data-claire-element-id="476576"><strong>Règle n°4</strong> : Il existe également la relation 1 – 1, qui résulte d'une erreur dans la conception de la base de données. Elle signifie en effet que chaque élément d'une table A est en relation avec son équivalent dans la table B. Donc, l'élément d'id 1 de la table A est en relation directe avec l'élément d'id 1 de la table B.</p></aside><p id="r-476578" data-claire-element-id="476578">Dans notre exemple, ça aurait pu donner ceci :</p><table id="r-476616" data-claire-element-id="476616"><thead id="r-476586" data-claire-element-id="476586"><tr id="r-476585" data-claire-element-id="476585"><th id="r-476580" data-claire-element-id="476580"><p id="r-476579" data-claire-element-id="476579">id_article</p></th><th id="r-476582" data-claire-element-id="476582"><p id="r-476581" data-claire-element-id="476581">titre_article</p></th><th id="r-476584" data-claire-element-id="476584"><p id="r-476583" data-claire-element-id="476583">id_auteur</p></th></tr></thead><tbody id="r-476615" data-claire-element-id="476615"><tr id="r-476593" data-claire-element-id="476593"><td id="r-476588" data-claire-element-id="476588"><p id="r-476587" data-claire-element-id="476587">1</p></td><td id="r-476590" data-claire-element-id="476590"><p id="r-476589" data-claire-element-id="476589">Wall Street repasse dans le vert</p></td><td id="r-476592" data-claire-element-id="476592"><p id="r-476591" data-claire-element-id="476591">2</p></td></tr><tr id="r-476600" data-claire-element-id="476600"><td id="r-476595" data-claire-element-id="476595"><p id="r-476594" data-claire-element-id="476594">2</p></td><td id="r-476597" data-claire-element-id="476597"><p id="r-476596" data-claire-element-id="476596">La Fed garde son taux directeur inchangé</p></td><td id="r-476599" data-claire-element-id="476599"><p id="r-476598" data-claire-element-id="476598">1</p></td></tr><tr id="r-476607" data-claire-element-id="476607"><td id="r-476602" data-claire-element-id="476602"><p id="r-476601" data-claire-element-id="476601">3</p></td><td id="r-476604" data-claire-element-id="476604"><p id="r-476603" data-claire-element-id="476603">Des pensionnés très occupés !</p></td><td id="r-476606" data-claire-element-id="476606"><p id="r-476605" data-claire-element-id="476605">2</p></td></tr><tr id="r-476614" data-claire-element-id="476614"><td id="r-476609" data-claire-element-id="476609"><p id="r-476608" data-claire-element-id="476608">4</p></td><td id="r-476611" data-claire-element-id="476611"><p id="r-476610" data-claire-element-id="476610">L'entretien du réseau routier laisse à désirer</p></td><td id="r-476613" data-claire-element-id="476613"><p id="r-476612" data-claire-element-id="476612">3</p></td></tr></tbody></table><table id="r-476654" data-claire-element-id="476654"><thead id="r-476624" data-claire-element-id="476624"><tr id="r-476623" data-claire-element-id="476623"><th id="r-476618" data-claire-element-id="476618"><p id="r-476617" data-claire-element-id="476617">id_article</p></th><th id="r-476620" data-claire-element-id="476620"><p id="r-476619" data-claire-element-id="476619">texte_article</p></th><th id="r-476622" data-claire-element-id="476622"><p id="r-476621" data-claire-element-id="476621">date_article</p></th></tr></thead><tbody id="r-476653" data-claire-element-id="476653"><tr id="r-476631" data-claire-element-id="476631"><td id="r-476626" data-claire-element-id="476626"><p id="r-476625" data-claire-element-id="476625">1</p></td><td id="r-476628" data-claire-element-id="476628"><p id="r-476627" data-claire-element-id="476627">blabla</p></td><td id="r-476630" data-claire-element-id="476630"><p id="r-476629" data-claire-element-id="476629">26/01/2010</p></td></tr><tr id="r-476638" data-claire-element-id="476638"><td id="r-476633" data-claire-element-id="476633"><p id="r-476632" data-claire-element-id="476632">2</p></td><td id="r-476635" data-claire-element-id="476635"><p id="r-476634" data-claire-element-id="476634">blibli</p></td><td id="r-476637" data-claire-element-id="476637"><p id="r-476636" data-claire-element-id="476636">27/01/2010</p></td></tr><tr id="r-476645" data-claire-element-id="476645"><td id="r-476640" data-claire-element-id="476640"><p id="r-476639" data-claire-element-id="476639">3</p></td><td id="r-476642" data-claire-element-id="476642"><p id="r-476641" data-claire-element-id="476641">bloblo</p></td><td id="r-476644" data-claire-element-id="476644"><p id="r-476643" data-claire-element-id="476643">28/01/2010</p></td></tr><tr id="r-476652" data-claire-element-id="476652"><td id="r-476647" data-claire-element-id="476647"><p id="r-476646" data-claire-element-id="476646">4</p></td><td id="r-476649" data-claire-element-id="476649"><p id="r-476648" data-claire-element-id="476648">blublu</p></td><td id="r-476651" data-claire-element-id="476651"><p id="r-476650" data-claire-element-id="476650">28/01/2010</p></td></tr></tbody></table><p id="r-476655" data-claire-element-id="476655">Il s'agit en fait d'une relation entre clés primaires (PK – PK). Chaque élément ayant sa correspondance dans l'autre table, on peut les regrouper dans une seule table !</p><p id="r-476656" data-claire-element-id="476656">Pour terminer, voici la structure de la base de données, avec ses relations. Sous Microsoft Access, les relations 1 – N sont notées 1 –</p><figure id="r-476658" data-claire-element-id="476659"><img id="r-476657" data-claire-element-id="476657" src="medias/uploads.siteduzero.com_files_214001_215000_214416.png" alt="Image utilisateur"/></figure><p id="r-476660" data-claire-element-id="476660">.</p><figure id="r-476662" data-claire-element-id="476663"><img id="r-476661" data-claire-element-id="476661" src="medias/uploads.siteduzero.com_files_214001_215000_214417.png" alt="Image utilisateur"/></figure><p id="r-476664" data-claire-element-id="476664">Notez que chaque champ de table a diverses propriétés, notamment un type (textuel, numérique, date, booléen, ...) ou une taille (nombre de caractères). Nous n'aborderons pas ces détails ici.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql">Introduction aux jointures SQL</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/pre-requis-les-bases-de-donnees-relationnelles">
+Pré-requis : les bases de données relationnelles
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/les-jointures-quel-interet">
+Les jointures, quel intérêt ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/les-jointures-internes-1">
+Les jointures internes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/les-jointures-externes-1">
+Les jointures externes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/restons-lisibles">
+Restons lisibles !
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/pour-aller-plus-loin-37">
+Pour aller plus loin
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/les-jointures-quel-interet">
+<span class="next">Les jointures, quel intérêt ?</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lesjointuresquelintrt"></a><h2>Les jointures, quel intérêt ?</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/pre-requis-les-bases-de-donnees-relationnelles">
+<span class="arrow"></span>
+<span class="next">Pré-requis : les bases de données relationnelles</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/les-jointures-internes-1">
+<span class="next">Les jointures internes</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<div id="r-476667" data-claire-element-id="476667" data-claire-semantic="question"><p id="r-476666" data-claire-element-id="476666">Encore un truc inutile pour que mon code paraisse plus savant ?</p></div><p id="r-476668" data-claire-element-id="476668">Pas du tout !</p><aside id="r-476670" data-claire-element-id="476670" data-claire-semantic="information"><p id="r-476669" data-claire-element-id="476669">Les jointures sont tout d'abord un moyen d'optimiser vos scripts, en améliorant leur vitesse d'exécution.</p></aside><p id="r-476671" data-claire-element-id="476671">Pour le comprendre, reprenons l'exemple de l'agence de presse, et concentrons-nous sur la relation entre la table &quot;articles&quot; et la table &quot;auteurs&quot;. Nous avons donc une relation entre les deux tables via le champ &quot;id_auteur&quot;.</p><p id="r-476672" data-claire-element-id="476672">Dans notre script, nous désirons afficher une liste des articles avec, en plus du titre de l'article, le nom de l'auteur.</p><p id="r-476673" data-claire-element-id="476673">Un codeur ne connaissant pas les jointures va procéder comme suit :</p><pre id="r-476674" data-claire-element-id="476674"><code data-claire-semantic="html+php">&lt;?
+$req_articles = mysql_query('SELECT `titre_article`,`id_auteur` FROM `articles` ');
+while ($data_articles = mysql_fetch_array($req_articles))
+{
+    $req_auteurs = mysql_query('SELECT `nom_auteur` FROM `auteurs` WHERE `id_auteur` = &quot;'.$data_articles['id_auteur'].'&quot; ');
+    $data_auteurs = mysql_fetch_array($req_auteurs);
+
+    echo $data_articles['titre_article'].' rédigé par '.$data_auteurs['nom_auteur'].'&lt;br /&gt;';
+}
+?&gt;</code></pre><p id="r-476675" data-claire-element-id="476675">Bref, il sélectionne l'id de l'auteur dans la table &quot;articles&quot;, puis l'utilise dans une seconde requête sql qui cherche l'auteur correspondant dans la table &quot;auteurs&quot;.</p><aside id="r-476677" data-claire-element-id="476677" data-claire-semantic="warning"><p id="r-476676" data-claire-element-id="476676">Mettre une requête sql dans une boucle est une très mauvaise idée, cela réduit (de manière plus ou moins importante selon la requête) les performances de votre script !</p></aside><p id="r-476678" data-claire-element-id="476678"><strong>Grâce aux jointures, vous apprendrez à sélectionner toutes les informations dont vous avez besoin en une seule requête !</strong></p><aside id="r-476680" data-claire-element-id="476680" data-claire-semantic="information"><p id="r-476679" data-claire-element-id="476679">Par ailleurs, comme vous pourrez le découvrir à la lecture de ce tutoriel, les jointures offrent un confort et une puissance bien utiles lorsque vos scripts se complexifient.</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql">Introduction aux jointures SQL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/pre-requis-les-bases-de-donnees-relationnelles">
+Pré-requis : les bases de données relationnelles
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/les-jointures-quel-interet">
+Les jointures, quel intérêt ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/les-jointures-internes-1">
+Les jointures internes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/les-jointures-externes-1">
+Les jointures externes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/restons-lisibles">
+Restons lisibles !
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/pour-aller-plus-loin-37">
+Pour aller plus loin
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/pre-requis-les-bases-de-donnees-relationnelles">
+<span class="arrow"></span>
+<span class="next">Pré-requis : les bases de données relationnelles</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/les-jointures-internes-1">
+<span class="next">Les jointures internes</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lesjointuresinternes"></a><h2>Les jointures internes</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/les-jointures-quel-interet">
+<span class="arrow"></span>
+<span class="next">Les jointures, quel intérêt ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/les-jointures-externes-1">
+<span class="next">Les jointures externes</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-476682" data-claire-element-id="476682">Nous commencerons par l'étude de l'ancienne syntaxe des jointures internes, durant laquelle nous aborderons plusieurs notions utiles pour la suite du tutoriel. Nous passerons ensuite à l'étude de la nouvelle syntaxe, qu'il est désormais préférable d'utiliser.</p><aside id="r-476684" data-claire-element-id="476684" data-claire-semantic="warning"><p id="r-476683" data-claire-element-id="476683">Dans ce tutoriel, par soucis de simplification, nous sélectionnerons souvent tous les champs (en faisant un SELECT * ) dans les requêtes exemples. En pratique, il est conseillé de ne sélectionner que les champs dont vous avez besoin (afin de ne pas alourdir inutilement votre sélection).</p></aside><h2 id="r-ancienne-syntaxe" data-claire-element-id="476868">Ancienne syntaxe</h2><h3 id="r-requetes-multi-tables" data-claire-element-id="476851">Requêtes multi-tables</h3><p id="r-476685" data-claire-element-id="476685">Considérons un exemple simplifié : nous avons 2 tables &quot;clients&quot; et &quot;commandes&quot;.</p><p id="r-476686" data-claire-element-id="476686">Structure :</p><table id="r-476698" data-claire-element-id="476698"><thead id="r-476690" data-claire-element-id="476690"><tr id="r-476689" data-claire-element-id="476689"><th id="r-476688" data-claire-element-id="476688"><p id="r-476687" data-claire-element-id="476687">clients</p></th></tr></thead><tbody id="r-476697" data-claire-element-id="476697"><tr id="r-476693" data-claire-element-id="476693"><td id="r-476692" data-claire-element-id="476692"><p id="r-476691" data-claire-element-id="476691">id_client</p></td></tr><tr id="r-476696" data-claire-element-id="476696"><td id="r-476695" data-claire-element-id="476695"><p id="r-476694" data-claire-element-id="476694">nom_client</p></td></tr></tbody></table><table id="r-476713" data-claire-element-id="476713"><thead id="r-476702" data-claire-element-id="476702"><tr id="r-476701" data-claire-element-id="476701"><th id="r-476700" data-claire-element-id="476700"><p id="r-476699" data-claire-element-id="476699">commandes</p></th></tr></thead><tbody id="r-476712" data-claire-element-id="476712"><tr id="r-476705" data-claire-element-id="476705"><td id="r-476704" data-claire-element-id="476704"><p id="r-476703" data-claire-element-id="476703">id_commande</p></td></tr><tr id="r-476708" data-claire-element-id="476708"><td id="r-476707" data-claire-element-id="476707"><p id="r-476706" data-claire-element-id="476706">id_client</p></td></tr><tr id="r-476711" data-claire-element-id="476711"><td id="r-476710" data-claire-element-id="476710"><p id="r-476709" data-claire-element-id="476709">date_commande</p></td></tr></tbody></table><p id="r-476714" data-claire-element-id="476714">Nous avons conçu notre base de données avec une relation 1 - N entre les 2 tables (via le champ &quot;id_client&quot;). Les clients peuvent en effet avoir passé plusieurs commandes.</p><p id="r-476715" data-claire-element-id="476715">Données :</p><table id="r-476748" data-claire-element-id="476748"><thead id="r-476721" data-claire-element-id="476721"><tr id="r-476720" data-claire-element-id="476720"><th id="r-476717" data-claire-element-id="476717"><p id="r-476716" data-claire-element-id="476716">id_client</p></th><th id="r-476719" data-claire-element-id="476719"><p id="r-476718" data-claire-element-id="476718">nom_client</p></th></tr></thead><tbody id="r-476747" data-claire-element-id="476747"><tr id="r-476726" data-claire-element-id="476726"><td id="r-476723" data-claire-element-id="476723"><p id="r-476722" data-claire-element-id="476722">1</p></td><td id="r-476725" data-claire-element-id="476725"><p id="r-476724" data-claire-element-id="476724">Jacques Dupont</p></td></tr><tr id="r-476731" data-claire-element-id="476731"><td id="r-476728" data-claire-element-id="476728"><p id="r-476727" data-claire-element-id="476727">2</p></td><td id="r-476730" data-claire-element-id="476730"><p id="r-476729" data-claire-element-id="476729">Marcel Dubois</p></td></tr><tr id="r-476736" data-claire-element-id="476736"><td id="r-476733" data-claire-element-id="476733"><p id="r-476732" data-claire-element-id="476732">3</p></td><td id="r-476735" data-claire-element-id="476735"><p id="r-476734" data-claire-element-id="476734">Nathalie Leroy</p></td></tr><tr id="r-476741" data-claire-element-id="476741"><td id="r-476738" data-claire-element-id="476738"><p id="r-476737" data-claire-element-id="476737">4</p></td><td id="r-476740" data-claire-element-id="476740"><p id="r-476739" data-claire-element-id="476739">Marc Degraux</p></td></tr><tr id="r-476746" data-claire-element-id="476746"><td id="r-476743" data-claire-element-id="476743"><p id="r-476742" data-claire-element-id="476742">5</p></td><td id="r-476745" data-claire-element-id="476745"><p id="r-476744" data-claire-element-id="476744">Julie Duchemin</p></td></tr></tbody></table><table id="r-476842" data-claire-element-id="476842"><thead id="r-476756" data-claire-element-id="476756"><tr id="r-476755" data-claire-element-id="476755"><th id="r-476750" data-claire-element-id="476750"><p id="r-476749" data-claire-element-id="476749">id_commande</p></th><th id="r-476752" data-claire-element-id="476752"><p id="r-476751" data-claire-element-id="476751">id_client</p></th><th id="r-476754" data-claire-element-id="476754"><p id="r-476753" data-claire-element-id="476753">date_commande</p></th></tr></thead><tbody id="r-476841" data-claire-element-id="476841"><tr id="r-476763" data-claire-element-id="476763"><td id="r-476758" data-claire-element-id="476758"><p id="r-476757" data-claire-element-id="476757">1</p></td><td id="r-476760" data-claire-element-id="476760"><p id="r-476759" data-claire-element-id="476759">4</p></td><td id="r-476762" data-claire-element-id="476762"><p id="r-476761" data-claire-element-id="476761">26/01/2010</p></td></tr><tr id="r-476770" data-claire-element-id="476770"><td id="r-476765" data-claire-element-id="476765"><p id="r-476764" data-claire-element-id="476764">2</p></td><td id="r-476767" data-claire-element-id="476767"><p id="r-476766" data-claire-element-id="476766">1</p></td><td id="r-476769" data-claire-element-id="476769"><p id="r-476768" data-claire-element-id="476768">26/01/2010</p></td></tr><tr id="r-476777" data-claire-element-id="476777"><td id="r-476772" data-claire-element-id="476772"><p id="r-476771" data-claire-element-id="476771">3</p></td><td id="r-476774" data-claire-element-id="476774"><p id="r-476773" data-claire-element-id="476773">1</p></td><td id="r-476776" data-claire-element-id="476776"><p id="r-476775" data-claire-element-id="476775">28/01/2010</p></td></tr><tr id="r-476784" data-claire-element-id="476784"><td id="r-476779" data-claire-element-id="476779"><p id="r-476778" data-claire-element-id="476778">4</p></td><td id="r-476781" data-claire-element-id="476781"><p id="r-476780" data-claire-element-id="476780">3</p></td><td id="r-476783" data-claire-element-id="476783"><p id="r-476782" data-claire-element-id="476782">28/01/2010</p></td></tr><tr id="r-476791" data-claire-element-id="476791"><td id="r-476786" data-claire-element-id="476786"><p id="r-476785" data-claire-element-id="476785">5</p></td><td id="r-476788" data-claire-element-id="476788"><p id="r-476787" data-claire-element-id="476787">4</p></td><td id="r-476790" data-claire-element-id="476790"><p id="r-476789" data-claire-element-id="476789">28/01/2010</p></td></tr><tr id="r-476798" data-claire-element-id="476798"><td id="r-476793" data-claire-element-id="476793"><p id="r-476792" data-claire-element-id="476792">6</p></td><td id="r-476795" data-claire-element-id="476795"><p id="r-476794" data-claire-element-id="476794">3</p></td><td id="r-476797" data-claire-element-id="476797"><p id="r-476796" data-claire-element-id="476796">29/01/2010</p></td></tr><tr id="r-476805" data-claire-element-id="476805"><td id="r-476800" data-claire-element-id="476800"><p id="r-476799" data-claire-element-id="476799">7</p></td><td id="r-476802" data-claire-element-id="476802"><p id="r-476801" data-claire-element-id="476801">5</p></td><td id="r-476804" data-claire-element-id="476804"><p id="r-476803" data-claire-element-id="476803">29/01/2010</p></td></tr><tr id="r-476812" data-claire-element-id="476812"><td id="r-476807" data-claire-element-id="476807"><p id="r-476806" data-claire-element-id="476806">8</p></td><td id="r-476809" data-claire-element-id="476809"><p id="r-476808" data-claire-element-id="476808">4</p></td><td id="r-476811" data-claire-element-id="476811"><p id="r-476810" data-claire-element-id="476810">30/01/2010</p></td></tr><tr id="r-476819" data-claire-element-id="476819"><td id="r-476814" data-claire-element-id="476814"><p id="r-476813" data-claire-element-id="476813">9</p></td><td id="r-476816" data-claire-element-id="476816"><p id="r-476815" data-claire-element-id="476815">1</p></td><td id="r-476818" data-claire-element-id="476818"><p id="r-476817" data-claire-element-id="476817">01/02/2010</p></td></tr><tr id="r-476826" data-claire-element-id="476826"><td id="r-476821" data-claire-element-id="476821"><p id="r-476820" data-claire-element-id="476820">10</p></td><td id="r-476823" data-claire-element-id="476823"><p id="r-476822" data-claire-element-id="476822">4</p></td><td id="r-476825" data-claire-element-id="476825"><p id="r-476824" data-claire-element-id="476824">01/02/2010</p></td></tr><tr id="r-476833" data-claire-element-id="476833"><td id="r-476828" data-claire-element-id="476828"><p id="r-476827" data-claire-element-id="476827">11</p></td><td id="r-476830" data-claire-element-id="476830"><p id="r-476829" data-claire-element-id="476829">5</p></td><td id="r-476832" data-claire-element-id="476832"><p id="r-476831" data-claire-element-id="476831">01/02/2010</p></td></tr><tr id="r-476840" data-claire-element-id="476840"><td id="r-476835" data-claire-element-id="476835"><p id="r-476834" data-claire-element-id="476834">12</p></td><td id="r-476837" data-claire-element-id="476837"><p id="r-476836" data-claire-element-id="476836">3</p></td><td id="r-476839" data-claire-element-id="476839"><p id="r-476838" data-claire-element-id="476838">01/02/2010</p></td></tr></tbody></table><p id="r-476843" data-claire-element-id="476843">N'essayez pas de chercher une logique dans les id_client, ceci est un exemple aléatoire, chaque client peut commander à n'importe quel moment (et même plusieurs fois le même jour). On notera que jusqu'à présent Marcel Dubois (id_client = 2) n'a pas passé de commande.</p><p id="r-476844" data-claire-element-id="476844">Effectuons maintenant une requête multi-tables, en l'occurence la sélection des données de nos 2 tables en même temps (on va donc <strong>joindre</strong> nos 2 tables).</p><pre id="r-476845" data-claire-element-id="476845"><code data-claire-semantic="sql">SELECT * FROM `clients`,`commandes`</code></pre><p id="r-476846" data-claire-element-id="476846">Vu que nous n'avons pas spécifié de critère de jointure dans notre requête (c'est-à-dire la manière dont on doit joindre les 2 tables), nous obtenons comme résultat l'ensemble des relations/combinaisons possibles entre les deux tables.</p><p id="r-476847" data-claire-element-id="476847">Ainsi, chaque ligne de la table &quot;clients&quot; est associée à chaque ligne de la table &quot;commandes&quot;. En tout dans notre exemple on obtient donc comme résultat 60 lignes (5 lignes de la table clients multipliées par 12 lignes de la table commandes) qui sont les 60 relations/combinaisons possibles entre les lignes de nos 2 tables.</p><p id="r-476848" data-claire-element-id="476848">En données cela donne :</p><p id="r-476849" data-claire-element-id="476850"><a href="medias/uploads.siteduzero.com_files_214001_215000_214493.png"><img id="r-476850" data-claire-element-id="476849" src="medias/uploads.siteduzero.com_thb_214001_215000_214493.png" alt="Image utilisateur"/>(cliquez pour agrandir)</a></p><h3 id="r-utilisation-du-where" data-claire-element-id="476867">Utilisation du WHERE</h3><p id="r-476852" data-claire-element-id="476852">Heureusement notre exemple comporte peu de données. Mais si vous travaillez avec beaucoup de données, l'absence de critère de jointure peut faire souffrir votre serveur pour, au final, vous retrouver avec un résultat peu utile. Nous allons voir comment définir un critère de jointure.</p><p id="r-476853" data-claire-element-id="476853">Un des critères de jointure auquel on pense est évidemment la relation que nous avons définie entre nos deux tables lors de la conception de la base de données, à savoir la relation via le champ &quot;id_client&quot;.</p><p id="r-476854" data-claire-element-id="476854">Notre requête SQL avec critère de jointure se construit comme suit :</p><pre id="r-476855" data-claire-element-id="476855"><code data-claire-semantic="sql">SELECT * FROM `clients`,`commandes` WHERE `clients`.`id_client` = `commandes`.`id_client`</code></pre><aside id="r-476857" data-claire-element-id="476857" data-claire-semantic="warning"><p id="r-476856" data-claire-element-id="476856">Etant donné qu'il existe 2 champs portant un même nom (id_client) dans notre requête, il est obligatoire de spécifier leur table respective (en indiquant le nom de celle-ci suivi d'un point avant le nom du champ).</p></aside><p id="r-476858" data-claire-element-id="476858">On obtient comme résultat :</p><figure id="r-476860" data-claire-element-id="476861"><img id="r-476859" data-claire-element-id="476859" src="medias/uploads.siteduzero.com_files_214001_215000_214526.png" alt="Image utilisateur"/></figure><p id="r-476862" data-claire-element-id="476862">On a effectué ce qu'on appelle une <strong>jointure interne</strong> entre nos deux tables.</p><p id="r-476863" data-claire-element-id="476863">On constate qu'il ne reste que 12 lignes sur 60 une fois qu'on a introduit notre critère de jointure.</p><p id="r-476864" data-claire-element-id="476864">Notons notamment la disparition des lignes contenant &quot;Marcel Dubois&quot; (id_client = 2). Cela s'explique par le fait que Marcel Dubois n'a passé aucune commande, il n'est donc pas présent dans la table commandes.</p><aside id="r-476866" data-claire-element-id="476866" data-claire-semantic="information"><p id="r-476865" data-claire-element-id="476865">La jointure interne a pour particularité de n'afficher que les lignes qui respectent le critère de jointure ; il est donc possible qu'une ligne de la table &quot;clients&quot; qui n'a de relation avec aucune ligne de la table &quot;commandes&quot; ne soit pas du tout affichée dans le résultat de la requête (comme c'est le cas dans notre exemple avec l'id_client 2, Marcel Dubois) ! <br/> Nous verrons dans la section suivante (jointures externes) qu'il est néanmoins possible d'afficher malgré tout ces lignes sans relations.</p></aside><h2 id="r-nouvelle-syntaxe" data-claire-element-id="476881">Nouvelle syntaxe</h2><p id="r-476869" data-claire-element-id="476869">Afin d'améliorer la lisibilité des requêtes (notamment bien séparer ce qui relève du filtrage et ce qui relève de la jointure), et dans une certaine mesure de les optimiser, une nouvelle syntaxe a été introduite pour les jointures.</p><p id="r-476870" data-claire-element-id="476870">Notre requête :</p><pre id="r-476871" data-claire-element-id="476871"><code data-claire-semantic="sql">SELECT * 
+FROM `clients`,`commandes`
+WHERE `clients`.`id_client` = `commandes`.`id_client`</code></pre><p id="r-476872" data-claire-element-id="476872">Donne en nouvelle syntaxe :</p><pre id="r-476873" data-claire-element-id="476873"><code data-claire-semantic="sql">SELECT * 
+FROM `clients`
+INNER JOIN `commandes`
+ON `clients`.`id_client` = `commandes`.`id_client`</code></pre><p id="r-476874" data-claire-element-id="476874">Bref, il n'y a plus qu'une seule table dans le <strong>FROM</strong>, et pour chaque table que l'on désire joindre on doit utiliser <strong>INNER JOIN</strong> suivi du nom de la table, puis <strong>ON</strong> suivi du critère de jointure.</p><aside id="r-476876" data-claire-element-id="476876" data-claire-semantic="information"><p id="r-476875" data-claire-element-id="476875">A noter que le terme <strong>INNER</strong> est facultatif, on peut simplement écrire <strong>JOIN</strong>.</p></aside><aside id="r-476878" data-claire-element-id="476878" data-claire-semantic="warning"><p id="r-476877" data-claire-element-id="476877">Les critères de sélection <strong>WHERE</strong>, <strong>LIMIT</strong> et <strong>ORDER BY</strong> se placent après les jointures !</p></aside><p id="r-476879" data-claire-element-id="476879">Exemple de double jointure avec critères de sélection :</p><pre id="r-476880" data-claire-element-id="476880"><code data-claire-semantic="sql">SELECT * 
+FROM `clients`
+JOIN `commandes`
+ON `clients`.`id_client` = `commandes`.`id_client`
+JOIN `produits`
+ON `commandes`.`id_commande` = `produits`.`id_commande`
+WHERE `clients`.`code_postal` = &quot;75000&quot;
+ORDER BY `commandes`.`date_commande` ASC</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql">Introduction aux jointures SQL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/pre-requis-les-bases-de-donnees-relationnelles">
+Pré-requis : les bases de données relationnelles
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/les-jointures-quel-interet">
+Les jointures, quel intérêt ?
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/les-jointures-internes-1">
+Les jointures internes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/les-jointures-externes-1">
+Les jointures externes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/restons-lisibles">
+Restons lisibles !
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/pour-aller-plus-loin-37">
+Pour aller plus loin
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/les-jointures-quel-interet">
+<span class="arrow"></span>
+<span class="next">Les jointures, quel intérêt ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/les-jointures-externes-1">
+<span class="next">Les jointures externes</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lesjointuresexternes"></a><h2>Les jointures externes</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/les-jointures-internes-1">
+<span class="arrow"></span>
+<span class="next">Les jointures internes</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/restons-lisibles">
+<span class="next">Restons lisibles !</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<aside id="r-476884" data-claire-element-id="476884" data-claire-semantic="information"><p id="r-476883" data-claire-element-id="476883">Les jointures externes sont plus &quot;complètes&quot; que les jointures internes. En plus de sélectionner l'ensemble des lignes des 2 tables respectant le critère de jointure comme le font les jointures internes, elles sélectionnent les données d'une des tables qui ne respectent pas le critère de jointure.</p></aside><h2 id="r-left-join" data-claire-element-id="476901">LEFT JOIN</h2><p id="r-476885" data-claire-element-id="476885">Exemple :</p><pre id="r-476886" data-claire-element-id="476886"><code data-claire-semantic="sql">SELECT *
+FROM TableGauche
+LEFT JOIN TableDroite
+ON critère de jointure</code></pre><p id="r-476887" data-claire-element-id="476887">Le <strong>LEFT JOIN</strong> (ou LEFT OUTER JOIN) implique que l'on sélectionne toutes les lignes respectant le critère de jointure, puis on ajoute toutes les lignes de la table &quot;<strong>TableGauche</strong>&quot; qui ont été rejetées car elles ne respectaient pas le critère de jointure.</p><p id="r-476888" data-claire-element-id="476888">Appliquons le LEFT JOIN à l'exemple utilisé pour les jointures internes :</p><pre id="r-476889" data-claire-element-id="476889"><code data-claire-semantic="sql">SELECT * 
+FROM `clients`
+LEFT JOIN `commandes`
+ON `clients`.`id_client` = `commandes`.`id_client`</code></pre><p id="r-476890" data-claire-element-id="476890">En données, cela donne :</p><figure id="r-476892" data-claire-element-id="476893"><img id="r-476891" data-claire-element-id="476891" src="medias/uploads.siteduzero.com_files_214001_215000_214575.png" alt="Image utilisateur"/></figure><p id="r-476894" data-claire-element-id="476894">Bref, on a le même résultat qu'avec INNER JOIN, auquel on a juste ajouté les éléments de la table de gauche (en l'occurence &quot;clients&quot;) qui ne respectaient pas le critère de jointure.<br/> On voit donc réapparaître Marcel Dubois (id_client = 2) qui n'avait passé aucune commande, et n'était donc pas présent dans la table &quot;commandes&quot;, et ne respectait donc pas au moins une fois le critère de jointure (ce qui l'avait exclu des résultats de la jointure interne).</p><aside id="r-476896" data-claire-element-id="476896" data-claire-semantic="information"><p id="r-476895" data-claire-element-id="476895">La clause <strong>USING(liste_champs)</strong> permet de définir les champs communs à prendre en considération (critère de jointure).</p></aside><p id="r-476897" data-claire-element-id="476897">Exemple :</p><pre id="r-476898" data-claire-element-id="476898"><code data-claire-semantic="sql">SELECT * 
+FROM `tablea` 
+LEFT JOIN `tableb` 
+USING (`champ1`,`champ2`,`champ3`)</code></pre><p id="r-476899" data-claire-element-id="476899">est équivalent à :</p><pre id="r-476900" data-claire-element-id="476900"><code data-claire-semantic="sql">SELECT * 
+FROM `tablea`
+LEFT JOIN `tableb`
+ON `tablea`.`champ1` = `tableb`.`champ1` AND `tablea`.`champ2` = `tableb`.`champ2` AND `tablea`.`champ3`= `tableb`.`champ3`</code></pre><h2 id="r-right-join" data-claire-element-id="476903">RIGHT JOIN</h2><p id="r-476902" data-claire-element-id="476902">Le <strong>RIGHT JOIN</strong> (ou RIGHT OUTER JOIN) implique que l'on sélectionne toutes les lignes respectant le critère de jointure, puis on ajoute toutes les lignes de la table &quot;<strong>TableDroite</strong>&quot; qui ont été rejetées car elles ne respectaient pas le critère de jointure.</p><h2 id="r-full-join" data-claire-element-id="476906">FULL JOIN</h2><p id="r-476904" data-claire-element-id="476904">Le <strong>FULL JOIN</strong> (ou FULL OUTER JOIN) implique que l'on sélectionne toutes les lignes respectant le critère de jointure, puis on ajoute toutes les lignes de la table &quot;TableGauche&quot; et de la table &quot;TableDroite&quot; qui ont été rejetées car elles ne respectaient pas le critère de jointure.</p><p id="r-476905" data-claire-element-id="476905">A noter que le FULL JOIN n'existe pour le moment pas sous MySQL.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql">Introduction aux jointures SQL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/pre-requis-les-bases-de-donnees-relationnelles">
+Pré-requis : les bases de données relationnelles
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/les-jointures-quel-interet">
+Les jointures, quel intérêt ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/les-jointures-internes-1">
+Les jointures internes
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/les-jointures-externes-1">
+Les jointures externes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/restons-lisibles">
+Restons lisibles !
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/pour-aller-plus-loin-37">
+Pour aller plus loin
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/les-jointures-internes-1">
+<span class="arrow"></span>
+<span class="next">Les jointures internes</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/restons-lisibles">
+<span class="next">Restons lisibles !</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Restonslisibles"></a><h2>Restons lisibles !</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/les-jointures-externes-1">
+<span class="arrow"></span>
+<span class="next">Les jointures externes</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/pour-aller-plus-loin-37">
+<span class="next">Pour aller plus loin</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-les-alias-2" data-claire-element-id="476928">Les Alias</h2><p id="r-476908" data-claire-element-id="476908">Pour comprendre l'utilité des alias, prenons une requête multi-tables :</p><pre id="r-476909" data-claire-element-id="476909"><code data-claire-semantic="sql">SELECT * 
+FROM `clients`,`commandes` 
+WHERE `clients`.`id_client` = `commandes`.`id_client`</code></pre><p id="r-476910" data-claire-element-id="476910">Cette requête-ci est facile à lire. Cependant, certaines requêtes peuvent vite devenir assez longues lorsque l'on travaille avec plus de deux tables. Pour améliorer la lisibilité de la requête, il existe ce qu'on appelle les alias, qui sont des surnoms que l'on donne aux tables.</p><p id="r-476911" data-claire-element-id="476911">A noter qu'une fois un alias attribué à une table on peut toujours utiliser son nom complet, les deux fonctionnent.</p><p id="r-476912" data-claire-element-id="476912">Pour attribuer un alias à une table, il suffit simplement de l'ajouter dans le FROM juste après le nom de la table (avec un espace entre le nom complet de la table et son alias). Le but étant d'alléger le code, les alias comptent généralement peu de caractères.</p><p id="r-476913" data-claire-element-id="476913">Avec notre exemple, cela pourrait donner :</p><pre id="r-476914" data-claire-element-id="476914"><code data-claire-semantic="sql">SELECT * 
+FROM `clients` CL,`commandes` COM 
+WHERE CL.`id_client` = COM.`id_client`</code></pre><p id="r-476915" data-claire-element-id="476915">Même principe avec la nouvelle syntaxe :</p><pre id="r-476916" data-claire-element-id="476916"><code data-claire-semantic="sql">SELECT * 
+FROM `clients` CL
+JOIN `commandes` COM 
+ON CL.`id_client` = COM.`id_client`</code></pre><aside id="r-476918" data-claire-element-id="476918" data-claire-semantic="warning"><p id="r-476917" data-claire-element-id="476917">Si l'alias n'est qu'un outil pour améliorer la lisibilité de la requête dans le cas des tables, il est par contre essentiel dans le cas des champs.</p></aside><p id="r-476919" data-claire-element-id="476919">Dans les requêtes multi-tables, il peut arriver que deux champs de tables différentes portent le même nom. Cela ne pose pas de problème dans la requête elle-même étant donné que l'on précise à chaque fois la table à laquelle appartient le champ, mais cela peut par contre être problématique dans l'exploitation PHP du résultat de la requête.</p><p id="r-476920" data-claire-element-id="476920">Exemple :</p><pre id="r-476921" data-claire-element-id="476921"><code data-claire-semantic="sql">SELECT A.`quantite`,B.`quantite` 
+FROM `tablea` A, `tableb` B</code></pre><p id="r-476922" data-claire-element-id="476922">Dans cet exemple, nous avons 2 tables (&quot;tablea&quot; et &quot;tableb&quot;) qui contiennent deux champs portant le même nom (&quot;quantite&quot;).</p><p id="r-476923" data-claire-element-id="476923">Lorsque nous utilisons notre habituel mysql_fetch_array (ou mysql_fetch_object) pour récupérer les données issues de la requête, nous ne sommes pas en mesure (sans diminuer la lisibilité du code) de différentier les 2 champs.</p><p id="r-476924" data-claire-element-id="476924">Pour remédier à ce problème, il suffit d'attribuer un alias au champ dans la requête :</p><pre id="r-476925" data-claire-element-id="476925"><code data-claire-semantic="sql">SELECT A.`quantite`,B.`quantite` AS `quantite_bis`
+FROM `tablea` A, `tableb` B</code></pre><p id="r-476926" data-claire-element-id="476926">Ainsi, pour faire appel au champ &quot;quantite&quot; de la table &quot;tableb&quot;, on utilisera désormais son alias :</p><pre id="r-476927" data-claire-element-id="476927"><code data-claire-semantic="html+php">&lt;?
+$req = mysql_query('SELECT A.`quantite`,B.`quantite` AS `quantite_bis` FROM `tablea` A, `tableb` B');
+while ($data = mysql_fetch_array($req))
+{
+echo $data['quantite']; //affiche le contenu du champ &quot;quantite&quot; de la table &quot;tablea&quot;
+
+echo $data['quantite_bis']; //affiche le contenu du champ &quot;quantite&quot; de la table &quot;tableb&quot;
+}
+?&gt;</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql">Introduction aux jointures SQL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/pre-requis-les-bases-de-donnees-relationnelles">
+Pré-requis : les bases de données relationnelles
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/les-jointures-quel-interet">
+Les jointures, quel intérêt ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/les-jointures-internes-1">
+Les jointures internes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/les-jointures-externes-1">
+Les jointures externes
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/restons-lisibles">
+Restons lisibles !
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/pour-aller-plus-loin-37">
+Pour aller plus loin
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/les-jointures-externes-1">
+<span class="arrow"></span>
+<span class="next">Les jointures externes</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/pour-aller-plus-loin-37">
+<span class="next">Pour aller plus loin</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Pourallerplusloin"></a><h2>Pour aller plus loin</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/restons-lisibles">
+<span class="arrow"></span>
+<span class="next">Restons lisibles !</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-conditions-de-jointure" data-claire-element-id="476985">Conditions de jointure</h2><p id="r-476930" data-claire-element-id="476930">Dans les conditions de jointure on peut utiliser une égalité, mais également d'autres opérateurs de comparaison :</p><table id="r-476983" data-claire-element-id="476983"><thead id="r-476936" data-claire-element-id="476936"><tr id="r-476935" data-claire-element-id="476935"><th id="r-476932" data-claire-element-id="476932"><p id="r-476931" data-claire-element-id="476931">Opérateur</p></th><th id="r-476934" data-claire-element-id="476934"><p id="r-476933" data-claire-element-id="476933">Signification</p></th></tr></thead><tbody id="r-476982" data-claire-element-id="476982"><tr id="r-476941" data-claire-element-id="476941"><td id="r-476938" data-claire-element-id="476938"><p id="r-476937" data-claire-element-id="476937">&gt;</p></td><td id="r-476940" data-claire-element-id="476940"><p id="r-476939" data-claire-element-id="476939">supérieur</p></td></tr><tr id="r-476946" data-claire-element-id="476946"><td id="r-476943" data-claire-element-id="476943"><p id="r-476942" data-claire-element-id="476942">&gt;=</p></td><td id="r-476945" data-claire-element-id="476945"><p id="r-476944" data-claire-element-id="476944">supérieur ou égal</p></td></tr><tr id="r-476951" data-claire-element-id="476951"><td id="r-476948" data-claire-element-id="476948"><p id="r-476947" data-claire-element-id="476947">&lt;</p></td><td id="r-476950" data-claire-element-id="476950"><p id="r-476949" data-claire-element-id="476949">inférieur</p></td></tr><tr id="r-476956" data-claire-element-id="476956"><td id="r-476953" data-claire-element-id="476953"><p id="r-476952" data-claire-element-id="476952">&lt;=</p></td><td id="r-476955" data-claire-element-id="476955"><p id="r-476954" data-claire-element-id="476954">inférieur ou égal</p></td></tr><tr id="r-476961" data-claire-element-id="476961"><td id="r-476958" data-claire-element-id="476958"><p id="r-476957" data-claire-element-id="476957">&lt;&gt;</p></td><td id="r-476960" data-claire-element-id="476960"><p id="r-476959" data-claire-element-id="476959">différent de</p></td></tr><tr id="r-476966" data-claire-element-id="476966"><td id="r-476963" data-claire-element-id="476963"><p id="r-476962" data-claire-element-id="476962">IN</p></td><td id="r-476965" data-claire-element-id="476965"><p id="r-476964" data-claire-element-id="476964">dans un ensemble</p></td></tr><tr id="r-476971" data-claire-element-id="476971"><td id="r-476968" data-claire-element-id="476968"><p id="r-476967" data-claire-element-id="476967">LIKE</p></td><td id="r-476970" data-claire-element-id="476970"><p id="r-476969" data-claire-element-id="476969">correspondance partielle</p></td></tr><tr id="r-476976" data-claire-element-id="476976"><td id="r-476973" data-claire-element-id="476973"><p id="r-476972" data-claire-element-id="476972">BETWEEN .. AND ..</p></td><td id="r-476975" data-claire-element-id="476975"><p id="r-476974" data-claire-element-id="476974">entre deux valeurs</p></td></tr><tr id="r-476981" data-claire-element-id="476981"><td id="r-476978" data-claire-element-id="476978"><p id="r-476977" data-claire-element-id="476977">EXISTS</p></td><td id="r-476980" data-claire-element-id="476980"><p id="r-476979" data-claire-element-id="476979">dans une table</p></td></tr></tbody></table><p id="r-476984" data-claire-element-id="476984"><em><a href="http://sqlpro.developpez.com/cours/sqlaz/jointures/#LIV-B">Source</a></em></p><h2 id="r-la-jointure-croisee" data-claire-element-id="476990">La jointure croisée</h2><p id="r-476986" data-claire-element-id="476986">La jointure croisée est simplement la nouvelle syntaxe pour les requêtes multi-tables sans critère de sélection WHERE que nous avons abordées au tout début de la partie sur les jointures internes.</p><pre id="r-476987" data-claire-element-id="476987"><code data-claire-semantic="sql">SELECT * FROM `table1`,`table2`</code></pre><p id="r-476988" data-claire-element-id="476988">devient :</p><pre id="r-476989" data-claire-element-id="476989"><code data-claire-semantic="sql">SELECT * FROM `table1` CROSS JOIN `table2`</code></pre><h2 id="r-la-jointure-naturelle" data-claire-element-id="476997">La jointure naturelle</h2><p id="r-476991" data-claire-element-id="476991">Elle permet d'éviter de devoir spécifier le critère de jointure. Le compilateur SQL se charge de rechercher dans les 2 tables les champs qui ont un nom identique.</p><pre id="r-476992" data-claire-element-id="476992"><code data-claire-semantic="sql">SELECT * 
+FROM `clients` 
+NATURAL JOIN `commandes`</code></pre><p id="r-476993" data-claire-element-id="476993">équivaut donc à :</p><pre id="r-476994" data-claire-element-id="476994"><code data-claire-semantic="sql">SELECT * 
+FROM `clients` 
+JOIN `commandes`
+ON `clients`.`id_client` = `commandes`.`id_client`</code></pre><aside id="r-476996" data-claire-element-id="476996" data-claire-semantic="information"><p id="r-476995" data-claire-element-id="476995">A noter que NATURAL JOIN est une jointure naturelle interne. Vous pouvez également faire une jointure naturelle externe NATURAL LEFT JOIN ou NATURAL RIGHT JOIN !</p></aside><h2 id="r-auto-jointures" data-claire-element-id="477001">Auto-jointures</h2><p id="r-476998" data-claire-element-id="476998">Il est possible de joindre une table à elle-même. Pour ce faire, il conviendra d'utiliser les alias.</p><p id="r-476999" data-claire-element-id="476999">Exemple :</p><pre id="r-477000" data-claire-element-id="477000"><code data-claire-semantic="sql">SELECT *
+FROM `tablea` T1
+JOIN `tablea` T2
+ON T1.champ = T2.champ</code></pre><h2 id="r-quelques-references-1" data-claire-element-id="477010">Quelques références</h2><ul id="r-477008" data-claire-element-id="477008"><li id="r-477003" data-claire-element-id="477003"><p id="r-477002" data-claire-element-id="477002"><a href="http://dev.mysql.com/doc/refman/5.0/en/join.html">http://dev.mysql.com/doc/refman/5.0/en/join.html</a></p></li><li id="r-477005" data-claire-element-id="477005"><p id="r-477004" data-claire-element-id="477004"><a href="http://sqlpro.developpez.com/cours/sqlaz/jointures/">http://sqlpro.developpez.com/cours/sqlaz/jointures/</a></p></li><li id="r-477007" data-claire-element-id="477007"><p id="r-477006" data-claire-element-id="477006"><a href="http://mhubiche.developpez.com/Access/tutoJointures/">http://mhubiche.developpez.com/Access/tutoJointures/</a></p></li></ul><p id="r-477009" data-claire-element-id="477009">Voilà, j'espère que ce tutoriel vous sera utile et vous a donné envie d'en savoir plus sur les jointures. De tout ceci, retenez une chose : exploitez un maximum les possibilités offertes par SQL avant d'avoir recours à PHP, cela rendra vos scripts d'autant plus efficaces. Je vous invite d'ailleurs à lire les autres tutoriels SQL présents sur le Site du Zéro ! ;)</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql">Introduction aux jointures SQL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/pre-requis-les-bases-de-donnees-relationnelles">
+Pré-requis : les bases de données relationnelles
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/les-jointures-quel-interet">
+Les jointures, quel intérêt ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/les-jointures-internes-1">
+Les jointures internes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/les-jointures-externes-1">
+Les jointures externes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/restons-lisibles">
+Restons lisibles !
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/pour-aller-plus-loin-37">
+Pour aller plus loin
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/introduction-aux-jointures-sql/restons-lisibles">
+<span class="arrow"></span>
+<span class="next">Restons lisibles !</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/introduction-aux-jointures-sql.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 03:04:42 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/introduction-aux-jointures-sql.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:40:58 GMT -->
+</html>

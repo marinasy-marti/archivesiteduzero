@@ -1,0 +1,649 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/choisir-les-bons-types-de-colonne-sql.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 06:50:17 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/choisir-les-bons-types-de-colonne-sql.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:14:30 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Choisir les bons types de colonne SQL</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Choisir les bons types de colonne SQL</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#ChoisirlesbonstypesdecolonneSQL">Choisir les bons types de colonne SQL</a><br/><a href="#Commentchoisir">Comment choisir ?</a><br/><a href="#Lesformatsnumriques">Les formats numériques</a><br/><a href="#DateetHeure">Date et Heure</a><br/><a href="#Colonneschoixmultiples">Colonnes à choix multiples</a><br/><a href="#Colonnesdetexte">Colonnes de texte</a><br/><a href="#Lesrglesretenir">Les règles à retenir</a><br/><a href="#Rcapitulons">Récapitulons</a><br/></div>
+<a name="ChoisirlesbonstypesdecolonneSQL"></a><h2>Choisir les bons types de colonne SQL</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/comment-choisir-1">
+<span class="next">Comment choisir ?</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-437771" data-claire-element-id="437771">Ce tutoriel vise à alléger au maximum vos tables SQL en choisissant les bons types et en utilisant à bon escient les attributs et autres options.</p><div id="r-437773" data-claire-element-id="437773" data-claire-semantic="question"><p id="r-437772" data-claire-element-id="437772">Vous n'utilisez que les types INT et TEXT sans aucun attribut ?</p></div><p id="r-437774" data-claire-element-id="437774">Alors ce tuto est pour vous, vous êtes sur le point de diviser par 2 la taille des données stockées dans votre BDD.</p><aside id="r-437776" data-claire-element-id="437776" data-claire-semantic="warning"><p id="r-437775" data-claire-element-id="437775">Dans ce tutoriel, je parlerai des bases de données MySQL (je me base sur la version que je connais le mieux, la 5.0). Si vous ne connaissez pas votre configuration SQL, alors vous avez certainement celle-là, elle est très répandue. Et dans le cas où vous auriez une base différente, vous devriez trouver dans votre documentation des types équivalents pour les rares colonnes dont je pourrais parler et qui ne seraient pas dans votre liste.</p></aside><figure id="r-437778" data-claire-element-id="437779"><img id="r-437777" data-claire-element-id="437777" src="medias/uploads.siteduzero.com_files_360001_361000_360594.png" alt="Aller à l'essentiel"/></figure><p id="r-437780" data-claire-element-id="437780">Ce tutoriel sera composé de deux types de parties. Lorsque vous voyez à droite le logo vert ci-contre, vous êtes dans une partie principale, aucune connaissance outre les bases en SQL n'est nécessaire. En suivant toutes les parties vertes, vous pourrez déjà grandement optimiser vos tables.</p><figure id="r-437782" data-claire-element-id="437783"><img id="r-437781" data-claire-element-id="437781" src="medias/uploads.siteduzero.com_files_360001_361000_360595.png" alt="Aller plus loin"/></figure><p id="r-437784" data-claire-element-id="437784">Les parties arborant un logo orange permettent d'approfondir. Si vous êtes curieux, si vous voulez savoir le pourquoi du comment, lisez-les. Et n'oubliez pas qu'en comprenant MySQL en profondeur, vous serez d'autant plus efficace dans la pratique et pourrez vraiment choisir vos structures en connaissance de cause. Notez que ces parties vous demanderont quelques notions de mathématique, de binaire ou d'informatique. Si vous débutez ou que vous souhaitez aller à l'essentiel, vous pouvez sauter ces parties et descendre jusqu'au logo vert suivant.</p>
+</div><a name="Commentchoisir"></a><h2>Comment choisir ?</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/les-formats-numeriques">
+<span class="next">Les formats numériques</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<figure id="r-437786" data-claire-element-id="437787"><img id="r-437785" data-claire-element-id="437785" src="medias/uploads.siteduzero.com_files_360001_361000_360594.png" alt="Aller à l'essentiel"/></figure><p id="r-437788" data-claire-element-id="437788">Commençons par un exemple de table mal optimisée (créée avec phpMyAdmin) :</p><figure id="r-437790" data-claire-element-id="437791"><img id="r-437789" data-claire-element-id="437789" src="medias/uploads.siteduzero.com_files_360001_361000_360603.png" alt="Mauvaise table"/></figure><p id="r-437792" data-claire-element-id="437792">Je teste une requête sur cette table, voilà la requête :</p><pre id="r-437793" data-claire-element-id="437793"><code data-claire-semantic="sql">INSERT INTO `super_lourd` VALUES (1, 'Jean-Yves', '1990-02-16', 'rouge', '0125262728', 19);</code></pre><p id="r-437794" data-claire-element-id="437794">Et ensuite, je regarde le poids de cette ligne (&quot;Espace utilisé&quot; dans phpMyAdmin) : 52 octets.</p><p id="r-437795" data-claire-element-id="437795">Essayons maintenant avec cette configuration :</p><figure id="r-437797" data-claire-element-id="437798"><img id="r-437796" data-claire-element-id="437796" src="medias/uploads.siteduzero.com_files_360001_361000_360606.png" alt="Table optimisée"/></figure><p id="r-437799" data-claire-element-id="437799">Les données restent exactement les mêmes sauf que le poids, lui, passe à 28 octets.</p><p id="r-437800" data-claire-element-id="437800">Bref sur une table aussi simple que celle-là contenant 1000 lignes, on peut économiser 23 Ko !</p><p id="r-437801" data-claire-element-id="437801">Optimiser ses structures de table SQL consiste à choisir les formats les plus petits possibles pour stocker ses données.</p><p id="r-437802" data-claire-element-id="437802">En gros, c'est comme si vous deviez envoyer à 1000 personnes :</p><ul id="r-437809" data-claire-element-id="437809"><li id="r-437804" data-claire-element-id="437804"><p id="r-437803" data-claire-element-id="437803">un courrier</p></li><li id="r-437806" data-claire-element-id="437806"><p id="r-437805" data-claire-element-id="437805">un outil</p></li><li id="r-437808" data-claire-element-id="437808"><p id="r-437807" data-claire-element-id="437807">un mp3</p></li></ul><p id="r-437810" data-claire-element-id="437810">Et que vous deviez commander vos enveloppes et cartons en lots.<br/> Si vous n'envoyez que des petits courriers vous prenez un lot de 1000 petites enveloppes, pas des enveloppes A3, vous allez perdre des sous.<br/> L'outil peut être gros, il vous faut un carton extensible ^^ <br/> Et les mp3, c'est fragile, si vous ne mettez pas de papier-bulle, ils vont se casser.</p><p id="r-437811" data-claire-element-id="437811">En SQL, il faut aussi adapter le conteneur au contenu. Voyons maintenant les formats disponibles.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql">Choisir les bons types de colonne SQL</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/comment-choisir-1">
+Comment choisir ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/les-formats-numeriques">
+Les formats numériques
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/date-et-heure-4">
+Date et Heure
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/colonnes-a-choix-multiples">
+Colonnes à choix multiples
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/colonnes-de-texte">
+Colonnes de texte
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/les-regles-a-retenir">
+Les règles à retenir
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/recapitulons-3">
+Récapitulons
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/les-formats-numeriques">
+<span class="next">Les formats numériques</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lesformatsnumriques"></a><h2>Les formats numériques</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/comment-choisir-1">
+<span class="arrow"></span>
+<span class="next">Comment choisir ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/date-et-heure-4">
+<span class="next">Date et Heure</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-pourquoi-preferer-les-types-numeriques-aux-textuels" data-claire-element-id="437817">Pourquoi préférer les types numériques aux textuels ?</h2><p id="r-437813" data-claire-element-id="437813">Tout ce qui peut être rapporté à un nombre entier doit être enregistré dans un format <strong>INT </strong>(<strong>TINYINT</strong>, <strong>SMALLINT</strong>, <strong>INT</strong>...).</p><div id="r-437815" data-claire-element-id="437815" data-claire-semantic="question"><p id="r-437814" data-claire-element-id="437814">Et pourquoi d'abord ?</p></div><p id="r-437816" data-claire-element-id="437816">Parce qu'au final, tout sera enregistré en binaire dans des petits octets.<br/> Un octet peut prendre 256 formes. Pour une valeur numérique, ça revient à pouvoir stocker un nombre entre 0 et 255, et pour un texte, c'est une lettre ou un symbole ou un chiffre. Ce qui implique que si vous prenez un type texte limité à 1 octet pour stocker un nombre, vous irez de 0 à 9 et c'est tout ! On est loin des 255.</p><h2 id="r-comment-choisir-le-bon-int" data-claire-element-id="437877">Comment choisir le bon INT ?</h2><p id="r-437818" data-claire-element-id="437818">Et oui, des INT, il y en a pas mal. Ils ont chacun une taille définie et des limites que voici :</p><table id="r-437875" data-claire-element-id="437875"><thead id="r-437828" data-claire-element-id="437828"><tr id="r-437827" data-claire-element-id="437827"><th id="r-437820" data-claire-element-id="437820"><p id="r-437819" data-claire-element-id="437819">Type</p></th><th id="r-437822" data-claire-element-id="437822"><p id="r-437821" data-claire-element-id="437821">Poids en octets</p></th><th id="r-437824" data-claire-element-id="437824"><p id="r-437823" data-claire-element-id="437823">Minimum</p></th><th id="r-437826" data-claire-element-id="437826"><p id="r-437825" data-claire-element-id="437825">Maximum</p></th></tr></thead><tbody id="r-437874" data-claire-element-id="437874"><tr id="r-437837" data-claire-element-id="437837"><td id="r-437830" data-claire-element-id="437830"><p id="r-437829" data-claire-element-id="437829">TINYINT</p></td><td id="r-437832" data-claire-element-id="437832"><p id="r-437831" data-claire-element-id="437831">1</p></td><td id="r-437834" data-claire-element-id="437834"><p id="r-437833" data-claire-element-id="437833">-128</p></td><td id="r-437836" data-claire-element-id="437836"><p id="r-437835" data-claire-element-id="437835">127</p></td></tr><tr id="r-437846" data-claire-element-id="437846"><td id="r-437839" data-claire-element-id="437839"><p id="r-437838" data-claire-element-id="437838">SMALLINT</p></td><td id="r-437841" data-claire-element-id="437841"><p id="r-437840" data-claire-element-id="437840">2</p></td><td id="r-437843" data-claire-element-id="437843"><p id="r-437842" data-claire-element-id="437842">-32 768</p></td><td id="r-437845" data-claire-element-id="437845"><p id="r-437844" data-claire-element-id="437844">32 767</p></td></tr><tr id="r-437855" data-claire-element-id="437855"><td id="r-437848" data-claire-element-id="437848"><p id="r-437847" data-claire-element-id="437847">MEDIUMINT</p></td><td id="r-437850" data-claire-element-id="437850"><p id="r-437849" data-claire-element-id="437849">3</p></td><td id="r-437852" data-claire-element-id="437852"><p id="r-437851" data-claire-element-id="437851">-8 388 608</p></td><td id="r-437854" data-claire-element-id="437854"><p id="r-437853" data-claire-element-id="437853">8 388 607</p></td></tr><tr id="r-437864" data-claire-element-id="437864"><td id="r-437857" data-claire-element-id="437857"><p id="r-437856" data-claire-element-id="437856">INT</p></td><td id="r-437859" data-claire-element-id="437859"><p id="r-437858" data-claire-element-id="437858">4</p></td><td id="r-437861" data-claire-element-id="437861"><p id="r-437860" data-claire-element-id="437860">-2 147 483 648</p></td><td id="r-437863" data-claire-element-id="437863"><p id="r-437862" data-claire-element-id="437862">2 147 483 647</p></td></tr><tr id="r-437873" data-claire-element-id="437873"><td id="r-437866" data-claire-element-id="437866"><p id="r-437865" data-claire-element-id="437865">BIGINT</p></td><td id="r-437868" data-claire-element-id="437868"><p id="r-437867" data-claire-element-id="437867">8</p></td><td id="r-437870" data-claire-element-id="437870"><p id="r-437869" data-claire-element-id="437869">-9 223 372 036 854 775 808</p></td><td id="r-437872" data-claire-element-id="437872"><p id="r-437871" data-claire-element-id="437871">9 223 372 036 854 775 807</p></td></tr></tbody></table><p id="r-437876" data-claire-element-id="437876">Il faut donc choisir le type dont les bornes encadrent vos nombres au plus près.</p><h2 id="r-le-nombre-a-virgule" data-claire-element-id="437890">Le nombre à virgule</h2><p id="r-437878" data-claire-element-id="437878">Pour les nombres à virgule, c'est moins compliqué, vous avez <strong>FLOAT</strong> (occupe 4 octets) et <strong>DOUBLE</strong> (8 octets).<br/> La seule chose qui différencie les deux types, c'est la précision :<br/> Supposons qu'on veuille stocker : 3.1415926535897931159979634685441851615905761718753236...<br/> En DOUBLE, on a : 3.141592653589793115997963468544185161590576171875<br/> En FLOAT, on a : 3.1415926535897931159979634685442<br/> Vous pouvez voir que DOUBLE est plus précis que FLOAT mais qu'aucun des deux types ne permet de stocker une précision infinie. Le stockage binaire est dit discret. Ce qui signifie qu'au delà d'une précision donnée, les valeurs et calculs de nombres à virgule ne sont que des approximations.</p><figure id="r-437880" data-claire-element-id="437881"><img id="r-437879" data-claire-element-id="437879" src="medias/uploads.siteduzero.com_files_360001_361000_360595.png" alt="Aller plus loin"/></figure><aside id="r-437883" data-claire-element-id="437883" data-claire-semantic="information"><p id="r-437882" data-claire-element-id="437882">Le stockage des nombres flottants se fait en deux parties, l'une est appelée <em><strong>mantisse</strong></em> et l'autre <em><strong>exposant</strong></em>. Le nombre est le résultat de <strong><em>mantisse</em> x 2exposant</strong>. La mantisse et l'exposant sont des nombre entiers convertis en binaires. Par exemple, on peut stocker <strong>1,25</strong> de la façon suivante : <strong>5x2-2</strong>. Avec <strong>FLOAT</strong>, la mantisse est codée sur 24 bits et l'exposant sur 8, avec <strong>DOUBLE</strong>, ils sont codés respectivement sur 53 bits et 11 bits.</p></aside><figure id="r-437885" data-claire-element-id="437886"><img id="r-437884" data-claire-element-id="437884" src="medias/uploads.siteduzero.com_files_360001_361000_360594.png" alt="Aller à l'essentiel"/></figure><p id="r-437887" data-claire-element-id="437887">Enfin, il y a <strong>DECIMAL</strong>, c'est un type pour des nombres entiers ou à virgule de précision exacte dont on peut définir les limites. Par exemple DECIMAL(5,3) autorise au maximum 5 chiffres dont 3 sont situés après la virgule (exemple 12,345). Ce type est un peu moins optimisé que les précédents puisqu'il occupe M+2 octets si D&gt;0 et M+1 octets si D=0 avec M et D les paramètres de <strong>DECIMAL</strong> : DECIMAL(M,D). Donc avec notre exemple DECIMAL(5,3) D=3 et M=5 ; la colonne occupe alors 5+2=7 octets. Notez qu'un nombre entier ou à virgule prend autant de place dans un VARCHAR que dans un type DECIMAL. Il est plus que probable que DECIMAL convertisse les nombres en chaînes de caractères pour les stocker à la différence que l'utilisation de DECIMAL vous garantit qu'il n'y aura que des nombres dans la colonne.</p><aside id="r-437889" data-claire-element-id="437889" data-claire-semantic="information"><p id="r-437888" data-claire-element-id="437888">Rappel : MEDIUMINT occupe seulement 3 octets et peut y stocker 5 chiffres sans problème. Pour stocker un nombre décimal du type 12,345 vous pouvez le multiplier par 1000 et l'enregistrer dans un MEDIUMINT puis le diviser par 1000 lorsque vous le récupérer, vous économisez ainsi 4 octets.</p></aside><h2 id="r-les-attributs-des-types-numeriques" data-claire-element-id="437996">Les attributs des types numériques</h2><div id="r-437892" data-claire-element-id="437892" data-claire-semantic="question"><p id="r-437891" data-claire-element-id="437891">C'est bête, moi je veux enregistrer la taille en centimètre de mes visiteurs, les <strong>TINYINT</strong> ne sont pas suffisants et en même temps, je n'ai pas besoin des négatifs.</p></div><p id="r-437893" data-claire-element-id="437893">Et bien il y a mieux que de soustraire 127 à la taille pour l'enregistrer en <strong>TINYINT</strong>, vous pouvez choisir l'attribut <strong>UNSIGNED</strong> qui signifie <strong>non-algébrique</strong>, cela limite les colonnes aux nombres positifs. Le minimum des tous les types devient alors 0 et les maximums sont les suivants :</p><table id="r-437938" data-claire-element-id="437938"><thead id="r-437901" data-claire-element-id="437901"><tr id="r-437900" data-claire-element-id="437900"><th id="r-437895" data-claire-element-id="437895"><p id="r-437894" data-claire-element-id="437894">Type</p></th><th id="r-437897" data-claire-element-id="437897"><p id="r-437896" data-claire-element-id="437896">Poids en octets</p></th><th id="r-437899" data-claire-element-id="437899"><p id="r-437898" data-claire-element-id="437898">Maximum</p></th></tr></thead><tbody id="r-437937" data-claire-element-id="437937"><tr id="r-437908" data-claire-element-id="437908"><td id="r-437903" data-claire-element-id="437903"><p id="r-437902" data-claire-element-id="437902">TINYINT</p></td><td id="r-437905" data-claire-element-id="437905"><p id="r-437904" data-claire-element-id="437904">1</p></td><td id="r-437907" data-claire-element-id="437907"><p id="r-437906" data-claire-element-id="437906">255</p></td></tr><tr id="r-437915" data-claire-element-id="437915"><td id="r-437910" data-claire-element-id="437910"><p id="r-437909" data-claire-element-id="437909">SMALLINT</p></td><td id="r-437912" data-claire-element-id="437912"><p id="r-437911" data-claire-element-id="437911">2</p></td><td id="r-437914" data-claire-element-id="437914"><p id="r-437913" data-claire-element-id="437913">65 535</p></td></tr><tr id="r-437922" data-claire-element-id="437922"><td id="r-437917" data-claire-element-id="437917"><p id="r-437916" data-claire-element-id="437916">MEDIUMINT</p></td><td id="r-437919" data-claire-element-id="437919"><p id="r-437918" data-claire-element-id="437918">3</p></td><td id="r-437921" data-claire-element-id="437921"><p id="r-437920" data-claire-element-id="437920">16 777 215</p></td></tr><tr id="r-437929" data-claire-element-id="437929"><td id="r-437924" data-claire-element-id="437924"><p id="r-437923" data-claire-element-id="437923">INT</p></td><td id="r-437926" data-claire-element-id="437926"><p id="r-437925" data-claire-element-id="437925">4</p></td><td id="r-437928" data-claire-element-id="437928"><p id="r-437927" data-claire-element-id="437927">4 294 967 295</p></td></tr><tr id="r-437936" data-claire-element-id="437936"><td id="r-437931" data-claire-element-id="437931"><p id="r-437930" data-claire-element-id="437930">BIGINT</p></td><td id="r-437933" data-claire-element-id="437933"><p id="r-437932" data-claire-element-id="437932">8</p></td><td id="r-437935" data-claire-element-id="437935"><p id="r-437934" data-claire-element-id="437934">18 446 744 073 709 551 615</p></td></tr></tbody></table><figure id="r-437940" data-claire-element-id="437941"><img id="r-437939" data-claire-element-id="437939" src="medias/uploads.siteduzero.com_files_360001_361000_360595.png" alt="Aller plus loin"/></figure><p id="r-437942" data-claire-element-id="437942"><a href="http://www.siteduzero.com/membres-294-1256.html">Talus</a> me propose de vous expliquer pourquoi le maximum augmente en <strong>UNSIGNED</strong>.</p><p id="r-437943" data-claire-element-id="437943">Les nombres sont stockés sous leur forme binaire (ils sont convertis en une suite de 0 et de 1 appelés bits). Un octet donne 8 bits, d'où les 256 solutions (28), or si un nombre peut être négatif, il va falloir utiliser 1 bit pour stocker le signe (0, pour + et 1 pour -). Voyez par vous-même le résultat d'un petit script maison :</p><table id="r-437965" data-claire-element-id="437965"><tbody id="r-437964" data-claire-element-id="437964"><tr id="r-437948" data-claire-element-id="437948"><td id="r-437945" data-claire-element-id="437945"><p id="r-437944" data-claire-element-id="437944">46 en binaire</p></td><td id="r-437947" data-claire-element-id="437947"><p id="r-437946" data-claire-element-id="437946">00101110</p></td></tr><tr id="r-437953" data-claire-element-id="437953"><td id="r-437950" data-claire-element-id="437950"><p id="r-437949" data-claire-element-id="437949">128-46 en binaire</p></td><td id="r-437952" data-claire-element-id="437952"><p id="r-437951" data-claire-element-id="437951">01010010</p></td></tr><tr id="r-437958" data-claire-element-id="437958"><td id="r-437955" data-claire-element-id="437955"><p id="r-437954" data-claire-element-id="437954">256-46 en binaire</p></td><td id="r-437957" data-claire-element-id="437957"><p id="r-437956" data-claire-element-id="437956">11010010</p></td></tr><tr id="r-437963" data-claire-element-id="437963"><td id="r-437960" data-claire-element-id="437960"><p id="r-437959" data-claire-element-id="437959">-46 en binaire</p></td><td id="r-437962" data-claire-element-id="437962"><p id="r-437961" data-claire-element-id="437961">11010010</p></td></tr></tbody></table><p id="r-437966" data-claire-element-id="437966">Vous constatez que les 7 derniers bits sont les mêmes dans les trois dernières lignes et que -46 ainsi que 210 (256-46) s'écrivent de la même façon dans un octet. Et le premier octet suit cette règle :<br/> De -128 à -1 : 1<br/> De 0 à 127 : 0<br/> De 128 à 255 : 1<br/> Donc si le premier bit est égal à 0, SQL convertit simplement ce nombre en décimal.<br/> S'il est égal à 1 :</p><ul id="r-437971" data-claire-element-id="437971"><li id="r-437968" data-claire-element-id="437968"><p id="r-437967" data-claire-element-id="437967">il renvoie un nombre négatif de valeur égale à 128 moins les 7 autres bits convertis en décimal.</p></li><li id="r-437970" data-claire-element-id="437970"><p id="r-437969" data-claire-element-id="437969">Sauf si l'on active l'attribut <strong>UNSIGNED</strong>, là il convertit les 8 bits en décimal.</p></li></ul><p id="r-437972" data-claire-element-id="437972">Donc en libérant le bit qui s'occupe du signe, on multiplie par deux la capacité de stockage pour la valeur absolue du nombre.</p><p id="r-437973" data-claire-element-id="437973">Peut importe le nombre de bits total utilisé, il n'y a jamais besoin que d'un seul bit pour coder le signe. On peut donc obtenir le nombre maximal stockable dans un type de colonne en fonction de la taille de stockage en octets (notée n) comme ça :</p><ul id="r-437978" data-claire-element-id="437978"><li id="r-437975" data-claire-element-id="437975"><p id="r-437974" data-claire-element-id="437974">Sans attribut : 2(n*8)-1-1</p></li><li id="r-437977" data-claire-element-id="437977"><p id="r-437976" data-claire-element-id="437976">Avec <strong>UNSIGNED</strong> : 2(n*8)-1</p></li></ul><figure id="r-437980" data-claire-element-id="437981"><img id="r-437979" data-claire-element-id="437979" src="medias/uploads.siteduzero.com_files_360001_361000_360594.png" alt="Aller à l'essentiel"/></figure><p id="r-437982" data-claire-element-id="437982">Et le deuxième attribut qui s'avère utile moins souvent mais quelques fois tout de même : <strong>ZEROFILL</strong>. Comme son nom l'indique, il remplit les valeurs entrées avec des zéros.</p><p id="r-437983" data-claire-element-id="437983">N'ayez crainte, aucun mal ne sera fait à aucun d'entre nous, il s'agit du chiffre zéro et non des utilisateurs de ce site. (Comment ça, c'est pas drôle :euh: )</p><p id="r-437984" data-claire-element-id="437984">Donc si j'enregistre 23 dans un <strong>TINYINT </strong><strong>UNSIGNED ZEROFILL</strong> (<strong>ZEROFILL </strong>implique l'attribut <strong>UNSIGNED</strong>), SQL enregistrera 023. Ou encore dans un <strong>SMALLINT </strong><strong>UNSIGNED ZEROFILL</strong> : 00023.</p><div id="r-437986" data-claire-element-id="437986" data-claire-semantic="question"><p id="r-437985" data-claire-element-id="437985">Ha c'est bien mais si je veux stocker un nombre à 4 chiffres complété par des zéros (comme par exemple un CHMOD 0755, 0664...), hein ?</p></div><p id="r-437987" data-claire-element-id="437987">Et bien, c'est là, qu'intervient la taille des colonnes.</p><pre id="r-437988" data-claire-element-id="437988"><code data-claire-semantic="sql">SMALLINT(4) UNSIGNED ZEROFILL</code></pre><p id="r-437989" data-claire-element-id="437989">Ou sur phpMyAdmin :</p><figure id="r-437991" data-claire-element-id="437992"><img id="r-437990" data-claire-element-id="437990" src="medias/uploads.siteduzero.com_files_170001_171000_170638.png" alt="Colonne chmod avec ZEROFILL"/></figure><figure id="r-437994" data-claire-element-id="437995"><img id="r-437993" data-claire-element-id="437993" src="medias/uploads.siteduzero.com_files_360001_361000_360595.png" alt="Aller plus loin"/></figure><h2 id="r-precision-de-calcul" data-claire-element-id="438004">Précision de calcul</h2><p id="r-437997" data-claire-element-id="437997">On a vu plus haut que les nombres à virgules étaient stockés sous la forme de deux nombres entiers. En comprenant que seul des nombres entiers sont enregistrés et qu'ils sont codés sur un nombre fini de bits, certains nombres ou résultats seront obligatoirement approximés.</p><p id="r-437998" data-claire-element-id="437998">Tout d'abord, sachez que si vous faites la somme de plusieurs nombres entiers, il n'y a pas de perte de précision. Ce n'est pas parce que votre colonne est un <strong>TINYINT</strong> que SQL ne peut pas calculer au-delà de 256, en additionnant deux <strong>TINYINT</strong> de 250, on obtient bien 500. Les résultats sont fiables tant qu'on ne dépasse pas 64 bits de précision. En <strong>BIGINT</strong>, certaines fonctions telles que SMU() permettent d'obtenir des valeurs exactes même avec de grands nombre. Par exemple la somme de deux entées : 18446744073709551615 et 18446744073709551614, le résultat retourné est 36893488147419103229. La valeur est exacte malgré le dépassement des 64 bits. Attention cependant au logiciel qui récupèrera ce résultat. Par exemple PHP a une précision de 14 bits par défaut, ce qui est bien en deçà, on perd donc dans le cas présent 8 décimales. En faisant <code data-claire-semantic="html+php">ini_set('precision',32);</code>), on réduit la perte à une seule décimale. Et la précision du logiciel ne peut excéder celle du système (généralement 32 ou 64 bits). Il y a donc toujours une limite. Notez tout de même que vous pouvez restituer le nombre sous forme de texte sans perte et utiliser la bibliothèque GMP pour faire des calculs sur de grands nombres. Cette bibliothèque est disponible dans de nombreux langages (y compris PHP : <a href="http://fr.php.net/manual/fr/book.gmp.php">fonctions GMP</a>).<br/> En revanche, certains calculs vont donner des résultats très inattendus si la précision est dépassée : 18446744073709551615 + 18446744073709551614 = 18446744073709551613 (Ici, 18446744073709551615 a été compris comme -1)<br/> Autre calcul : 18446744073709551615 * 2 = 18446744073709551614 (MySQL est incapable de dépasser 18446744073709551614 en calculant directement avec des nombres entiers)</p><p id="r-437999" data-claire-element-id="437999">Le raisonnement est identique avec les nombres à virgule. Dès lors que vous faites une division ou un calcul incluant un nombre à virgule (moyenne, racine...), vos nombres entiers sont convertis en nombres à virgule. Par exemple, si on reprend le précédent calcul en rajoutant une décimale à 2 pour en faire un nombre à virgule, on obtient alors le bon résultat :<br/> 18446744073709551615 * 2.0 = 36893488147419103230.0 (Ici, MySQL convertit l'entier en nombre à virgule et renvoie un résultat de même précision)</p><p id="r-438000" data-claire-element-id="438000">D'autres exemples de calcul en SQL :<br/> 18446744073709551615 / 0.5 = 36893488147419103230.0000<br/> 5 / 3 = 1.6667<br/> 5.00 / 3 = 1.666667<br/> 5.00000 / 3 = 1.666666667<br/> 5.00000 / 3.00000 = 1.666666667<br/> 5.00[...]00 / 3 = 1.666666666666666666666666666667<br/> (5 / 3) * 1.00000000 = 1.666666666000</p><p id="r-438001" data-claire-element-id="438001">On constate que l'on peut forcer la précision de MySQL en rajoutant des 0 après la virgule. Toute fois la précision ne pourra jamais excéder 64 bits et le résultat du division portera au moins 4 chiffres après la virgule.<br/> Grâce au dernier exemple, on voit que MySQL ne conserve pas la précision de calcul d'une opération à la suivante.</p><p id="r-438002" data-claire-element-id="438002">Enfin, <strong>DECIMAL</strong> possède deux paramètres, la précision totale M et la précision après la virgule D exprimées en nombres de chiffres décimaux (et non en bits comme c'est le cas si on définit une précision à un type <strong>FLOAT</strong> par exemple). La valeur maximale de M est 65 et D ne peut excéder ni M ni 30. <strong>DECIMAL</strong> vous permet donc de stocker soit très grand (plus que BIGINT) soit très précis et la précision est restituée avec exactitude. Ainsi MySQL conseille d'utiliser DECIMAL plutôt que DOUBLE pour des valeurs monétaires afin d'éviter les erreurs d'approximation. Considérez tout de même la consommation gourmande de capacités du type <strong>DECIMAL</strong>. Si vote système vous permet de traiter les données à l'insertion et la récupération, il es possible de convertir vos nombres à virgules en nombre entier, par exemple en convertissant vos valeurs monétaires en centimes. Dans beaucoup de cas, la capacité de <strong>BIGINT</strong> (voire de types plus petits) est largement suffisante et donc ne pose pas de problème de précision et sont plus optimisés.</p><p id="r-438003" data-claire-element-id="438003">Dernière subtilité à aborder pour en finir avec les types numériques : les paramètres optionnels de <strong>FLOAT</strong>. FLOAT(P) permet de définir une autre précision que celle par défaut (24), elle correspond au nombre de bits sur lesquels sont codés la mantisse. Si P &lt;= 24, FLOAT occupe 4 octets, si P &gt; 24, il occupe 8 octets. La valeur maximal de P est 53.<br/> FLOAT peut également prendre 2 paramètres. Dans ce cas, le premier paramètre reste la précision exprimée en bits et le second paramètre permet de définir le nombres de chiffres après la virgule à stocker et à afficher. Les valeurs maximum sont alors 255 pour le premier paramètre et 30 pour le second.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql">Choisir les bons types de colonne SQL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/comment-choisir-1">
+Comment choisir ?
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/les-formats-numeriques">
+Les formats numériques
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/date-et-heure-4">
+Date et Heure
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/colonnes-a-choix-multiples">
+Colonnes à choix multiples
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/colonnes-de-texte">
+Colonnes de texte
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/les-regles-a-retenir">
+Les règles à retenir
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/recapitulons-3">
+Récapitulons
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/comment-choisir-1">
+<span class="arrow"></span>
+<span class="next">Comment choisir ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/date-et-heure-4">
+<span class="next">Date et Heure</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="DateetHeure"></a><h2>Date et Heure</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/les-formats-numeriques">
+<span class="arrow"></span>
+<span class="next">Les formats numériques</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/colonnes-a-choix-multiples">
+<span class="next">Colonnes à choix multiples</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<figure id="r-aller-a-l-essentiel" data-claire-element-id="438008"><img id="r-438006" data-claire-element-id="438006" src="medias/uploads.siteduzero.com_files_360001_361000_360594.png" alt="Aller à l'essentiel"/><figcaption>Aller à l'essentiel</figcaption></figure><p id="r-438009" data-claire-element-id="438009">Il existe 5 types temporels.</p><aside id="r-438013" data-claire-element-id="438013" data-claire-semantic="warning"><p id="r-438010" data-claire-element-id="438010">Attention, utilisateurs de PHP,</p><figure id="r-diable" data-claire-element-id="438011"><figcaption>:diable:</figcaption></figure><p id="r-438012" data-claire-element-id="438012">il y a deux faux-amis dans ce groupe-là.</p></aside><p id="r-438014" data-claire-element-id="438014"><strong>TIME</strong> n'a rien en commun avec le fonction <strong>time()</strong> de php<br/> Et <strong>TIMESTAMP</strong> n'est pas non plus le timestamp Unix.</p><p id="r-438015" data-claire-element-id="438015">En SQL, on stocke la date et l'heure comme ça :</p><table id="r-438072" data-claire-element-id="438072"><thead id="r-438025" data-claire-element-id="438025"><tr id="r-438024" data-claire-element-id="438024"><th id="r-438017" data-claire-element-id="438017"><p id="r-438016" data-claire-element-id="438016">Type de colonne</p></th><th id="r-438019" data-claire-element-id="438019"><p id="r-438018" data-claire-element-id="438018">Taille<br/> (en octets)</p></th><th id="r-438021" data-claire-element-id="438021"><p id="r-438020" data-claire-element-id="438020">Numérique<br/> ou chaîne</p></th><th id="r-438023" data-claire-element-id="438023"><p id="r-438022" data-claire-element-id="438022">Format</p></th></tr></thead><tbody id="r-438071" data-claire-element-id="438071"><tr id="r-438034" data-claire-element-id="438034"><td id="r-438027" data-claire-element-id="438027"><p id="r-438026" data-claire-element-id="438026">TIME</p></td><td id="r-438029" data-claire-element-id="438029"><p id="r-438028" data-claire-element-id="438028">3</p></td><td id="r-438031" data-claire-element-id="438031"><p id="r-438030" data-claire-element-id="438030">Chaîne</p></td><td id="r-438033" data-claire-element-id="438033"><p id="r-438032" data-claire-element-id="438032">HH:MM:SS</p></td></tr><tr id="r-438043" data-claire-element-id="438043"><td id="r-438036" data-claire-element-id="438036"><p id="r-438035" data-claire-element-id="438035">TIMESTAMP</p></td><td id="r-438038" data-claire-element-id="438038"><p id="r-438037" data-claire-element-id="438037">4</p></td><td id="r-438040" data-claire-element-id="438040"><p id="r-438039" data-claire-element-id="438039">Numérique</p></td><td id="r-438042" data-claire-element-id="438042"><p id="r-438041" data-claire-element-id="438041">AAAAMMJJHHMMSS</p></td></tr><tr id="r-438052" data-claire-element-id="438052"><td id="r-438045" data-claire-element-id="438045"><p id="r-438044" data-claire-element-id="438044">DATETIME</p></td><td id="r-438047" data-claire-element-id="438047"><p id="r-438046" data-claire-element-id="438046">8 (dont 3 non utilisés)</p></td><td id="r-438049" data-claire-element-id="438049"><p id="r-438048" data-claire-element-id="438048">Chaîne</p></td><td id="r-438051" data-claire-element-id="438051"><p id="r-438050" data-claire-element-id="438050">AAAA-MM-JJ HH:MM:SS</p></td></tr><tr id="r-438061" data-claire-element-id="438061"><td id="r-438054" data-claire-element-id="438054"><p id="r-438053" data-claire-element-id="438053">DATE</p></td><td id="r-438056" data-claire-element-id="438056"><p id="r-438055" data-claire-element-id="438055">3</p></td><td id="r-438058" data-claire-element-id="438058"><p id="r-438057" data-claire-element-id="438057">Chaîne</p></td><td id="r-438060" data-claire-element-id="438060"><p id="r-438059" data-claire-element-id="438059">AAAA-MM-JJ</p></td></tr><tr id="r-438070" data-claire-element-id="438070"><td id="r-438063" data-claire-element-id="438063"><p id="r-438062" data-claire-element-id="438062">YEAR</p></td><td id="r-438065" data-claire-element-id="438065"><p id="r-438064" data-claire-element-id="438064">1</p></td><td id="r-438067" data-claire-element-id="438067"><p id="r-438066" data-claire-element-id="438066">Numérique</p></td><td id="r-438069" data-claire-element-id="438069"><p id="r-438068" data-claire-element-id="438068">AAAA</p></td></tr></tbody></table><p id="r-438073" data-claire-element-id="438073">Les données ont des limites logiques, les minutes et secondes sont comprises entre 0 et 59, les heures entre 0 et 23, les jours entre 1 et 28 à 31 selon le mois, les mois entre 1 et 12.</p><p id="r-438074" data-claire-element-id="438074">Seules les années sont un peu spéciales. En gros, elles prennent la place qu'il reste donc ça varie selon le type de colonne.</p><ul id="r-438081" data-claire-element-id="438081"><li id="r-438076" data-claire-element-id="438076"><p id="r-438075" data-claire-element-id="438075"><strong>DATE</strong> et <strong>DATETIME</strong> : La documentation MySQL donne pour intervalle de validité : 1000 à 9999. En pratique, on peut même aller de 0 à 9999 tout comme on peut insérer 0 pour le jour ou le mois. Mais cela est vivement déconseillé car les fonctions de date pourraient avoir des comportement imprévus.</p></li><li id="r-438078" data-claire-element-id="438078"><p id="r-438077" data-claire-element-id="438077"><strong>TIMESTAMP</strong> va de 19700101000000 à 20380119041407 (du 1er janvier 1970 au 19 janvier 2038 à 4h14 07). Il est donc conseillé de vérifier que l'année soit comprise entre 1970 et 2038 avant d'insérer une valeur dans ce type de colonne.</p></li><li id="r-438080" data-claire-element-id="438080"><p id="r-438079" data-claire-element-id="438079"><strong>YEAR</strong> est limité à 1 octet et donc ses bornes sont 1901 et 2155. Si vous insérez un nombre compris entre 0 et 69, il lui sera automatiquement ajouté 2000, si vous insérez un nombre compris entre 70 et 99, il lui sera ajouté 1900.</p></li></ul><aside id="r-438083" data-claire-element-id="438083" data-claire-semantic="warning"><p id="r-438082" data-claire-element-id="438082">Attention, toute valeur non inclue dans les intervales cités ci-avant sera remplacé par un &quot;zéro&quot; dont le format et le type (numérique ou texte) suit le format de la colonne (voire tableau ci-dessus).</p></aside><aside id="r-438085" data-claire-element-id="438085" data-claire-semantic="information"><p id="r-438084" data-claire-element-id="438084">Ne négligez pas ces types, de nombreuses fonctions leurs sont associées.</p></aside><p id="r-438086" data-claire-element-id="438086">Voilà un peu tout ce que vous pouvez faire avec des colonnes de type temporel.</p><ul id="r-438115" data-claire-element-id="438115"><li id="r-438088" data-claire-element-id="438088"><p id="r-438087" data-claire-element-id="438087">CURRENT_DATE() ou CURDATE() pour obtenir la date courante (exemple : 2009-05-21)</p></li><li id="r-438090" data-claire-element-id="438090"><p id="r-438089" data-claire-element-id="438089">CURRENT_TIME() ou CURTIME() pour obtenir l'heure (exemple : 19:02:43)</p></li><li id="r-438092" data-claire-element-id="438092"><p id="r-438091" data-claire-element-id="438091">CURRENT_TIMESTAMP() ou NOW() pour obtenir la date et l'heure (exemple : 2009-05-21 19:02:43)</p></li><li id="r-438094" data-claire-element-id="438094"><p id="r-438093" data-claire-element-id="438093">Les types ci-dessus peuvent être convertis en entier en faisant CURTIME()+0 qui donne 190243</p></li><li id="r-438096" data-claire-element-id="438096"><p id="r-438095" data-claire-element-id="438095">YEAR() récupère l'année dans une date (exemple : YEAR(`date`) donne 2007)</p></li><li id="r-438098" data-claire-element-id="438098"><p id="r-438097" data-claire-element-id="438097">MONTH() récupère le mois</p></li><li id="r-438100" data-claire-element-id="438100"><p id="r-438099" data-claire-element-id="438099">DAYOFMONTH() récupère le jour du mois</p></li><li id="r-438102" data-claire-element-id="438102"><p id="r-438101" data-claire-element-id="438101">HOUR() récupère l'heure</p></li><li id="r-438104" data-claire-element-id="438104"><p id="r-438103" data-claire-element-id="438103">MINUTE() récupère la minute</p></li><li id="r-438106" data-claire-element-id="438106"><p id="r-438105" data-claire-element-id="438105">SECOND() récupère la seconde</p></li><li id="r-438108" data-claire-element-id="438108"><p id="r-438107" data-claire-element-id="438107">MONTHNAME() récupère le nom anglais du mois</p></li><li id="r-438110" data-claire-element-id="438110"><p id="r-438109" data-claire-element-id="438109">DAYNAME() récupère le nom anglais du jour de la semaine</p></li><li id="r-438112" data-claire-element-id="438112"><p id="r-438111" data-claire-element-id="438111">DATE_FORMAT() permet de formater une date</p></li><li id="r-438114" data-claire-element-id="438114"><p id="r-438113" data-claire-element-id="438113"><a href="http://dev.mysql.com/doc/refman/5.0/fr/date-and-time-functions.html">Et bien d'autres...</a></p></li></ul><pre id="r-438116" data-claire-element-id="438116"><code data-claire-semantic="sql">SELECT
+    CONCAT(
+        DAYNAME(`date`),' ',
+        DAYOFMONTH(`date`),' ',
+        MONTHNAME(`date`),' ',
+        YEAR(`date`)
+    )
+    AS `dateformatee`
+FROM `table`</code></pre><p id="r-438117" data-claire-element-id="438117">Ce code renverra par exemple :</p><pre id="r-438118" data-claire-element-id="438118"><code>+--------------------------+
+|      dateformatee        |
++--------------------------+
+| Tuesday 8 September 2009 |
+| Saturday 12 January 2008 |
++--------------------------+</code></pre><p id="r-438119" data-claire-element-id="438119">On peut obtenir le même résultat avec DATE_FORMAT() :</p><pre id="r-438120" data-claire-element-id="438120"><code data-claire-semantic="sql">SELECT DATE_FORMAT(`date`, '%W %e %M %Y') AS `dateformatee` FROM `table`</code></pre><p id="r-438121" data-claire-element-id="438121">DATE_FORMAT est adaptée à la mise en forme d'une date que l'on souhaite ensuite afficher. Les autres fonctions quand à elle sont intéressante lorsque l'on veut faire des traitements numériques ou de recherche avec l'une ou l'autre donnée de date.</p><p id="r-438122" data-claire-element-id="438122">Vous pouvez enfin comparer tous les types de colonne temporels avec &gt;, &lt;, =...</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql">Choisir les bons types de colonne SQL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/comment-choisir-1">
+Comment choisir ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/les-formats-numeriques">
+Les formats numériques
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/date-et-heure-4">
+Date et Heure
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/colonnes-a-choix-multiples">
+Colonnes à choix multiples
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/colonnes-de-texte">
+Colonnes de texte
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/les-regles-a-retenir">
+Les règles à retenir
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/recapitulons-3">
+Récapitulons
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/les-formats-numeriques">
+<span class="arrow"></span>
+<span class="next">Les formats numériques</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/colonnes-a-choix-multiples">
+<span class="next">Colonnes à choix multiples</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Colonneschoixmultiples"></a><h2>Colonnes à choix multiples</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/date-et-heure-4">
+<span class="arrow"></span>
+<span class="next">Date et Heure</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/colonnes-de-texte">
+<span class="next">Colonnes de texte</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-438124" data-claire-element-id="438124">Il existe deux types quasi-identiques pour sélectionner des valeurs prédéfinies : <strong>SET</strong> et <strong>ENUM</strong>.</p><h2 id="r-le-type-set" data-claire-element-id="438191">Le type SET</h2><figure id="r-438126" data-claire-element-id="438127"><img id="r-438125" data-claire-element-id="438125" src="medias/uploads.siteduzero.com_files_170001_171000_170663.png" alt="Colonne SET"/></figure><p id="r-438128" data-claire-element-id="438128">Les valeurs possibles de `piece` sont donc 'pile', 'face' mais aussi 'pile' et 'face' (noté <strong>'pile,face</strong>' dans une requête SQL) et aucune valeur (noté <strong>''</strong>). Et tout ceci ne prend qu'un quart d'octet alors qu'il faudrait 4 octets pour stocker le texte dans un <strong>VARCHAR</strong>. Bien sûr on ne peut pas couper un octet en 4, mais je signifiais par là qu'il y a encore de la place pour 6 autres valeurs au choix dans ce type de colonne <strong>SET</strong>.<br/> Voilà comment est stocké en binaire les 4 valeurs possibles pour un type <strong>SET</strong> qui contient 2 valeurs prédéfinies :</p><table id="r-438156" data-claire-element-id="438156"><thead id="r-438134" data-claire-element-id="438134"><tr id="r-438133" data-claire-element-id="438133"><th id="r-438130" data-claire-element-id="438130"><p id="r-438129" data-claire-element-id="438129">Valeur SQL</p></th><th id="r-438132" data-claire-element-id="438132"><p id="r-438131" data-claire-element-id="438131">Valeur binaire</p></th></tr></thead><tbody id="r-438155" data-claire-element-id="438155"><tr id="r-438139" data-claire-element-id="438139"><td id="r-438136" data-claire-element-id="438136"><p id="r-438135" data-claire-element-id="438135">''</p></td><td id="r-438138" data-claire-element-id="438138"><p id="r-438137" data-claire-element-id="438137">00000000</p></td></tr><tr id="r-438144" data-claire-element-id="438144"><td id="r-438141" data-claire-element-id="438141"><p id="r-438140" data-claire-element-id="438140">'pile'</p></td><td id="r-438143" data-claire-element-id="438143"><p id="r-438142" data-claire-element-id="438142">00000001</p></td></tr><tr id="r-438149" data-claire-element-id="438149"><td id="r-438146" data-claire-element-id="438146"><p id="r-438145" data-claire-element-id="438145">'face'</p></td><td id="r-438148" data-claire-element-id="438148"><p id="r-438147" data-claire-element-id="438147">00000010</p></td></tr><tr id="r-438154" data-claire-element-id="438154"><td id="r-438151" data-claire-element-id="438151"><p id="r-438150" data-claire-element-id="438150">'pile,face'</p></td><td id="r-438153" data-claire-element-id="438153"><p id="r-438152" data-claire-element-id="438152">00000011</p></td></tr></tbody></table><p id="r-438157" data-claire-element-id="438157">Donc pour chaque bit de l'octet, une valeur peut être sélectionnée ou non (1 ou 0). Les <strong>SET</strong> stockent ensuite ce nombre binaire comme les types numériques. Il peut donc peser 1, 2, 3, 4 ou 8 octets selon le nombre de valeurs prédéfinies :</p><table id="r-438190" data-claire-element-id="438190"><thead id="r-438163" data-claire-element-id="438163"><tr id="r-438162" data-claire-element-id="438162"><th id="r-438159" data-claire-element-id="438159"><p id="r-438158" data-claire-element-id="438158">Nombre de valeurs</p></th><th id="r-438161" data-claire-element-id="438161"><p id="r-438160" data-claire-element-id="438160">Taille en octets</p></th></tr></thead><tbody id="r-438189" data-claire-element-id="438189"><tr id="r-438168" data-claire-element-id="438168"><td id="r-438165" data-claire-element-id="438165"><p id="r-438164" data-claire-element-id="438164">1 à 8</p></td><td id="r-438167" data-claire-element-id="438167"><p id="r-438166" data-claire-element-id="438166">1</p></td></tr><tr id="r-438173" data-claire-element-id="438173"><td id="r-438170" data-claire-element-id="438170"><p id="r-438169" data-claire-element-id="438169">9 à 16</p></td><td id="r-438172" data-claire-element-id="438172"><p id="r-438171" data-claire-element-id="438171">2</p></td></tr><tr id="r-438178" data-claire-element-id="438178"><td id="r-438175" data-claire-element-id="438175"><p id="r-438174" data-claire-element-id="438174">17 à 24</p></td><td id="r-438177" data-claire-element-id="438177"><p id="r-438176" data-claire-element-id="438176">3</p></td></tr><tr id="r-438183" data-claire-element-id="438183"><td id="r-438180" data-claire-element-id="438180"><p id="r-438179" data-claire-element-id="438179">25 à 32</p></td><td id="r-438182" data-claire-element-id="438182"><p id="r-438181" data-claire-element-id="438181">4</p></td></tr><tr id="r-438188" data-claire-element-id="438188"><td id="r-438185" data-claire-element-id="438185"><p id="r-438184" data-claire-element-id="438184">33 à 64</p></td><td id="r-438187" data-claire-element-id="438187"><p id="r-438186" data-claire-element-id="438186">8</p></td></tr></tbody></table><h2 id="r-le-type-enum" data-claire-element-id="438193">Le type ENUM</h2><p id="r-438192" data-claire-element-id="438192">Le type <strong>ENUM</strong> lui ne peut pas prendre plusieurs valeurs. C'est pile ou face... Ou tranche à la limite mais pas de mélange. Cela permet en revanche de prendre beaucoup moins de place. À chaque valeur est associée un nombre converti en binaire et stocké dans un octet. Donc de 2 à 255 valeurs prédéfinies, le <strong>ENUM</strong> ne prend qu'un seul octet. Et bien que sa taille maximale soit de 2 octets, cela permet tout de même d'aller jusqu'à 65 535 valeurs. :-°</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql">Choisir les bons types de colonne SQL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/comment-choisir-1">
+Comment choisir ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/les-formats-numeriques">
+Les formats numériques
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/date-et-heure-4">
+Date et Heure
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/colonnes-a-choix-multiples">
+Colonnes à choix multiples
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/colonnes-de-texte">
+Colonnes de texte
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/les-regles-a-retenir">
+Les règles à retenir
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/recapitulons-3">
+Récapitulons
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/date-et-heure-4">
+<span class="arrow"></span>
+<span class="next">Date et Heure</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/colonnes-de-texte">
+<span class="next">Colonnes de texte</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Colonnesdetexte"></a><h2>Colonnes de texte</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/colonnes-a-choix-multiples">
+<span class="arrow"></span>
+<span class="next">Colonnes à choix multiples</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/les-regles-a-retenir">
+<span class="next">Les règles à retenir</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-438195" data-claire-element-id="438195">Bon, un tableau de plus ou de moins ne pourra faire de différence, je vais donc simplement résumer les possibilités directement tirées de la <a href="http://dev.mysql.com/doc/refman/5.0/fr/storage-requirements.html">doc</a> en essayant de trier un peu les informations et de les vulgariser.</p><aside id="r-438197" data-claire-element-id="438197" data-claire-semantic="information"><p id="r-438196" data-claire-element-id="438196">Vulgariser, c'est expliquer avec des phrases simples quelque chose de tordu de façon à ce que ce soit compréhensible pour la plupart des humains. Et paradoxalement, il faut souvent commencer par vulgariser le mot &quot;vulgariser&quot; pour que ce soit clair. :D Voilà c'était juste pour éviter de faire fuir ceux qui croyaient que j'allais parler de façon grossière.</p></aside><p id="r-438198" data-claire-element-id="438198">La taille minimale de tous les types textuels est de 1 caractère. Dans le tableau suivant, je considérerai que <strong>M</strong> est la taille maximale (choisie dans la colonne Taille/Valeurs de phpMyAdmin ou entre parenthèses dans une requête SQL). Et <strong>L</strong> sera la longueur du texte enregistré à l'insertion (elle est donc variable dans une même table)</p><table id="r-438250" data-claire-element-id="438250"><thead id="r-438206" data-claire-element-id="438206"><tr id="r-438205" data-claire-element-id="438205"><th id="r-438200" data-claire-element-id="438200"><p id="r-438199" data-claire-element-id="438199">Type</p></th><th id="r-438202" data-claire-element-id="438202"><p id="r-438201" data-claire-element-id="438201">Taille maximale</p></th><th id="r-438204" data-claire-element-id="438204"><p id="r-438203" data-claire-element-id="438203">Espace requis</p></th></tr></thead><tbody id="r-438249" data-claire-element-id="438249"><tr id="r-438213" data-claire-element-id="438213"><td id="r-438208" data-claire-element-id="438208"><p id="r-438207" data-claire-element-id="438207">CHAR</p></td><td id="r-438210" data-claire-element-id="438210"><p id="r-438209" data-claire-element-id="438209">255</p></td><td id="r-438212" data-claire-element-id="438212"><p id="r-438211" data-claire-element-id="438211"><strong>M</strong></p></td></tr><tr id="r-438220" data-claire-element-id="438220"><td id="r-438215" data-claire-element-id="438215"><p id="r-438214" data-claire-element-id="438214">VARCHAR</p></td><td id="r-438217" data-claire-element-id="438217"><p id="r-438216" data-claire-element-id="438216">255 (65 535 à partir de MySQL 5.5)</p></td><td id="r-438219" data-claire-element-id="438219"><p id="r-438218" data-claire-element-id="438218"><strong>L</strong>+1</p></td></tr><tr id="r-438227" data-claire-element-id="438227"><td id="r-438222" data-claire-element-id="438222"><p id="r-438221" data-claire-element-id="438221">TINYBLOB, TINYTEXT</p></td><td id="r-438224" data-claire-element-id="438224"><p id="r-438223" data-claire-element-id="438223">255</p></td><td id="r-438226" data-claire-element-id="438226"><p id="r-438225" data-claire-element-id="438225"><strong>L</strong>+1</p></td></tr><tr id="r-438234" data-claire-element-id="438234"><td id="r-438229" data-claire-element-id="438229"><p id="r-438228" data-claire-element-id="438228">BLOB, TEXT</p></td><td id="r-438231" data-claire-element-id="438231"><p id="r-438230" data-claire-element-id="438230">65 535</p></td><td id="r-438233" data-claire-element-id="438233"><p id="r-438232" data-claire-element-id="438232"><strong>L</strong>+2</p></td></tr><tr id="r-438241" data-claire-element-id="438241"><td id="r-438236" data-claire-element-id="438236"><p id="r-438235" data-claire-element-id="438235">MEDIUMBLOB, MEDIUMTEXT</p></td><td id="r-438238" data-claire-element-id="438238"><p id="r-438237" data-claire-element-id="438237">16 777 215</p></td><td id="r-438240" data-claire-element-id="438240"><p id="r-438239" data-claire-element-id="438239"><strong>L</strong>+3</p></td></tr><tr id="r-438248" data-claire-element-id="438248"><td id="r-438243" data-claire-element-id="438243"><p id="r-438242" data-claire-element-id="438242">LONGBLOB, LONGTEXT</p></td><td id="r-438245" data-claire-element-id="438245"><p id="r-438244" data-claire-element-id="438244">4 294 967 296</p></td><td id="r-438247" data-claire-element-id="438247"><p id="r-438246" data-claire-element-id="438246"><strong>L</strong>+4</p></td></tr></tbody></table><aside id="r-438252" data-claire-element-id="438252" data-claire-semantic="information"><p id="r-438251" data-claire-element-id="438251">Les +1, +2, +3 et +4 servent tout simplement à stocker la longueur du texte enregistré. La taille de <strong>CHAR </strong>n'est pas variable contrairement aux autres.</p></aside><aside id="r-438254" data-claire-element-id="438254" data-claire-semantic="information"><p id="r-438253" data-claire-element-id="438253"><a href="http://www.siteduzero.com/membres-294-227551.html">R0ro3lectr0</a> m'a fait remarquer qu'à partir de MySQL 5.5, le type VARCHAR autorise une longueur de texte maximale de 65 535 caractères. Si vous ne connaissez pas votre version ou que vous voulez développer un système compatible avec MySQL 5.0, considérez simplement que la limite est 255 et &quot;qui peut le plus peut le moins&quot;, votre système fonctionnera aussi avec MySQL 5.5. Notez bien que si vous utilisez cette version ou une supérieure, les textes de plus de 255 caractères occuperont alors Longueur+2 octets. Enfin remarquez que les propriétés de TINYTEXT restent les mêmes dans les nouvelles versions.</p></aside><h2 id="r-differences-entre-blob-et-text" data-claire-element-id="438296">Différences entre BLOB et TEXT</h2><p id="r-438255" data-claire-element-id="438255"><strong>BLOB</strong> stocke les informations en binaire directement, ce qui permet par exemple d'y insérer le contenu d'une image ou d'un exécutable mais on peut aussi y mettre du texte comme dans <strong>TEXT</strong> (il n'y a alors pas besoin de définir un <strong>interclassement</strong>) et la seule différence restante est la suivante :</p><p id="r-438256" data-claire-element-id="438256"><cite>Citation : doc MySQL</cite></p><blockquote id="r-438258" data-claire-element-id="438258"><p id="r-438257" data-claire-element-id="438257">Les seules différences entre les colonnes de type <strong>BLOB</strong> et celles de type <strong>TEXT</strong> se situent aux niveau des tris et comparaisons : Les tris, faits sur les <strong>BLOB</strong>, contrairement à ceux faits sur les <strong>TEXT</strong>, tiennent compte de la casse. En d'autres termes, une valeur <strong>TEXT</strong> est une valeur <strong>BLOB</strong> insensible à la casse.</p></blockquote><p id="r-438259" data-claire-element-id="438259">Donc si on prend une table qui ressemble à ça :</p><table id="r-438287" data-claire-element-id="438287"><thead id="r-438265" data-claire-element-id="438265"><tr id="r-438264" data-claire-element-id="438264"><th id="r-438261" data-claire-element-id="438261"><p id="r-438260" data-claire-element-id="438260">text</p></th><th id="r-438263" data-claire-element-id="438263"><p id="r-438262" data-claire-element-id="438262">blob</p></th></tr></thead><tbody id="r-438286" data-claire-element-id="438286"><tr id="r-438270" data-claire-element-id="438270"><td id="r-438267" data-claire-element-id="438267"><p id="r-438266" data-claire-element-id="438266">Camion</p></td><td id="r-438269" data-claire-element-id="438269"><p id="r-438268" data-claire-element-id="438268">Camion (en binaire)</p></td></tr><tr id="r-438275" data-claire-element-id="438275"><td id="r-438272" data-claire-element-id="438272"><p id="r-438271" data-claire-element-id="438271">camion</p></td><td id="r-438274" data-claire-element-id="438274"><p id="r-438273" data-claire-element-id="438273">camion (en binaire)</p></td></tr><tr id="r-438280" data-claire-element-id="438280"><td id="r-438277" data-claire-element-id="438277"><p id="r-438276" data-claire-element-id="438276">Voiture</p></td><td id="r-438279" data-claire-element-id="438279"><p id="r-438278" data-claire-element-id="438278">Voiture (en binaire)</p></td></tr><tr id="r-438285" data-claire-element-id="438285"><td id="r-438282" data-claire-element-id="438282"><p id="r-438281" data-claire-element-id="438281">voiture</p></td><td id="r-438284" data-claire-element-id="438284"><p id="r-438283" data-claire-element-id="438283">voiture (en binaire)</p></td></tr></tbody></table><p id="r-438288" data-claire-element-id="438288">Et que vous lancez la requête suivante :</p><pre id="r-438289" data-claire-element-id="438289"><code data-claire-semantic="sql">SELECT `text` FROM `testblob` WHERE `text`='camion'</code></pre><p id="r-438290" data-claire-element-id="438290">Vous obtenez deux résutats : 'Camion' et 'camion'.</p><p id="r-438291" data-claire-element-id="438291">Alors que :</p><pre id="r-438292" data-claire-element-id="438292"><code data-claire-semantic="sql">SELECT `blob` FROM `testblob` WHERE `blob`='camion'</code></pre><p id="r-438293" data-claire-element-id="438293">ne donne qu'un seul résultat : 'camion'.</p><aside id="r-438295" data-claire-element-id="438295" data-claire-semantic="error"><p id="r-438294" data-claire-element-id="438294">Il semble après quelques tests que j'ai réalisés avec phpMyAdmin sur ma version 5.1 de MySQL que <strong>CHAR</strong> ne soit pas aussi léger que la doc veut bien le dire. Je ne me permets donc pas de vous conseiller <strong>CHAR</strong> ou <strong>VARCHAR</strong> sur le point de l'optimisation.</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql">Choisir les bons types de colonne SQL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/comment-choisir-1">
+Comment choisir ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/les-formats-numeriques">
+Les formats numériques
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/date-et-heure-4">
+Date et Heure
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/colonnes-a-choix-multiples">
+Colonnes à choix multiples
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/colonnes-de-texte">
+Colonnes de texte
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/les-regles-a-retenir">
+Les règles à retenir
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/recapitulons-3">
+Récapitulons
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/colonnes-a-choix-multiples">
+<span class="arrow"></span>
+<span class="next">Colonnes à choix multiples</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/les-regles-a-retenir">
+<span class="next">Les règles à retenir</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lesrglesretenir"></a><h2>Les règles à retenir</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/colonnes-de-texte">
+<span class="arrow"></span>
+<span class="next">Colonnes de texte</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/recapitulons-3">
+<span class="next">Récapitulons</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-438298" data-claire-element-id="438298">Il y a 3 règles importantes à suivre pour bien choisir le type de colonne :</p><ul id="r-438305" data-claire-element-id="438305"><li id="r-438300" data-claire-element-id="438300"><p id="r-438299" data-claire-element-id="438299">La colonne doit pouvoir contenir toutes les valeurs qu'on va avoir besoin d'y stocker sans les tronquer ni perdre de précision utile.</p></li><li id="r-438302" data-claire-element-id="438302"><p id="r-438301" data-claire-element-id="438301">Il faut tenir compte des possibilités de traitement de chaque type et ne sélectionner que ceux qui permettront d'effectuer tous les traitements nécessaires de façon optimale (fonction de date et heure, recherche de texte, sensibilité à la casse, calculs numériques...)</p></li><li id="r-438304" data-claire-element-id="438304"><p id="r-438303" data-claire-element-id="438303">Si plusieurs types conviennent, on choisit le type le plus léger.</p></li></ul><figure id="r-438307" data-claire-element-id="438308"><img id="r-438306" data-claire-element-id="438306" src="medias/uploads.siteduzero.com_files_360001_361000_360595.png" alt="Aller plus loin"/></figure><p id="r-438309" data-claire-element-id="438309">Quelques autres règles pour obtenir une structure globale de base de données fonctionnelle et optimisée :</p><h3 id="r-limiter-au-maximum-les-doublons" data-claire-element-id="438311">Limiter au maximum les doublons</h3><p id="r-438310" data-claire-element-id="438310">Par exemple si vous avez une table avec une colonne &quot;ville&quot; de type VARCHAR et que vous constatez que sur 1000 lignes, il n'y a que 50 villes différentes, cela signifie que les mêmes villes apparaissent de nombreuses fois, il est alors plus adapté de créer une seconde table ne contenant que les villes et de ne stocker qu'un index numérique (plus léger) qui fera le lien entre les deux tables. Vous n'aurez ensuite plus qu'à recourir aux <a href="http://www.siteduzero.com/tutoriel-3-214617-introduction-aux-jointures-sql.html">jointures</a> pour relier vos tables.</p><h3 id="r-eliminer-les-cases-vides" data-claire-element-id="438315">Éliminer les cases vides</h3><p id="r-438312" data-claire-element-id="438312">À l'inverse, il faut éviter au maximum les cases vides, un millier de lignes contenant une moyenne de 5 colonnes VARCHAR vides représente une perte de 5 Ko.</p><p id="r-438313" data-claire-element-id="438313">Supposons qu'une table contienne la liste des tutoriels présents sur un site web et que chaque tutoriel puisse être rédigé par 1 à 10 auteurs. Il est alors possible de créer 10 colonnes dans votre table (auteur1, auteur2, ... auteur10) contenant chacune l'id de l'auteur (donc un INT ou MEDIUMINT).<br/> Dans le cas présent, il est probable que la plupart des tutoriels soit écrite par un seul auteur et que peu de tutoriels aillent jusqu'au maximum de 10. On aura alors probablement une moyenne de 1,2 auteur/tutoriel. Le type INT prend 4 octets, la perte sur 1000 lignes est donc considérable (4 x 1000 x (10 - 1,2) = 34,4 Ko).<br/> Ici, il serait plus adapté de créer une table dédiée aux auteurs de tutoriels. Cette table est dite &quot;de liaison&quot; car elle relie des éléments de la tables membres (ou auteurs) à des éléments de la table tutoriels. Elle contiendra alors 2 colonnes : id_membre (ou id_auteur) et id_tutoriel. Là encore, on peut relier toutes les données avec des <a href="http://www.siteduzero.com/tutoriel-3-214617-introduction-aux-jointures-sql.html">jointures</a>. Notez qu'en plus, avec ce système, vous pouvez faire varier facilement le nombre d'auteurs maximum et même le rendre illimité.</p><p id="r-438314" data-claire-element-id="438314">Ces deux règles ne concernent pas directement notre sujet et sont, je vous le concède, un peu plus pointues. Mais vous parler des choix de colonne sans évoquer ces notions n'aurait pas de sens, ce serait comme fermer votre porte à double-tour en laissant la fenêtre grande ouverte.</p><h3 id="r-l-index-de-table" data-claire-element-id="438324">L'index de table</h3><p id="r-438316" data-claire-element-id="438316">Pour terminer, je vais vous parler de l'index de table. Rappelez-vous nous avions pris cette table mal optimisée en exemple au début :</p><figure id="r-438318" data-claire-element-id="438319"><img id="r-438317" data-claire-element-id="438317" src="medias/uploads.siteduzero.com_files_170001_171000_170622.png" alt="Image utilisateur"/></figure><p id="r-438320" data-claire-element-id="438320">Il y a dans cette table un index : `id`<br/> Après tout ce que je vous ai dit, vous seriez en droit de vous demander si cette colonne est vraiment utile. En effet, on pourrait décréter qu'un membre n'a pas le droit de choisir un pseudo déjà pris et qu'il n'a pas le droit de changer de pseudo après inscription. Ainsi, on pourrait se servir de la colonne `pseudo` comme index de table car chaque pseudo serait unique et constant. On économiserait ainsi les 4 octets/ligne occupés par le type INT.</p><p id="r-438321" data-claire-element-id="438321">Cependant, je vous le déconseille. L'index est la colonne avec laquelle il ne faut pas radiner car on va s'en servir souvent, pour trier, récupérer une ligne, les lister, etc. Et le traitement sur un index numérique est bien plus rapide que sur une chaîne.</p><p id="r-438322" data-claire-element-id="438322">Vous devez vous dire qu'index est un job à temps plein. Sans index numérique dans la présente table, toute manipulation des pseudos pourraient compromettre votre système. Avec un index numérique qui s'incrémente tout seul, vous disposez d'un système automatique et vous restez libre de manipuler comme vous l'entendez toutes les autres données de la table.</p><p id="r-438323" data-claire-element-id="438323">En revanche, le type INT n'est pas forcément le plus pertinent. En effet, sans vouloir paraître pessimiste, il est peu probable d'avoir 2 147 483 647 membres enregistrés et même si cela arrivait un jour, vous pourriez alors modifier le type de colonne à ce moment-là. En attendant, vous pouvez très bien vous contenter d'un SMALLINT. Vu que vous n'avez pas besoin des nombres négatifs, utiliser UNSIGNED vous permettrait de doubler la capacité de la colonne. Vous auriez alors tout le temps d'attendre la 65 535ème avant de passer votre colonne en MEDIUMINT.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql">Choisir les bons types de colonne SQL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/comment-choisir-1">
+Comment choisir ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/les-formats-numeriques">
+Les formats numériques
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/date-et-heure-4">
+Date et Heure
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/colonnes-a-choix-multiples">
+Colonnes à choix multiples
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/colonnes-de-texte">
+Colonnes de texte
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/les-regles-a-retenir">
+Les règles à retenir
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/recapitulons-3">
+Récapitulons
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/colonnes-de-texte">
+<span class="arrow"></span>
+<span class="next">Colonnes de texte</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/recapitulons-3">
+<span class="next">Récapitulons</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Rcapitulons"></a><h2>Récapitulons</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/les-regles-a-retenir">
+<span class="arrow"></span>
+<span class="next">Les règles à retenir</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<figure id="r-438327" data-claire-element-id="438328"><img id="r-438326" data-claire-element-id="438326" src="medias/uploads.siteduzero.com_files_360001_361000_360594.png" alt="Aller à l'essentiel"/></figure><p id="r-438329" data-claire-element-id="438329">Reprenons donc maintenant la table que je vous avais présentée au départ comme plus optimisée :</p><figure id="r-438331" data-claire-element-id="438332"><img id="r-438330" data-claire-element-id="438330" src="medias/uploads.siteduzero.com_files_360001_361000_360606.png" alt="Table optimisée"/></figure><h3 id="r-id-smallint-4-au-lieu-de-int-4" data-claire-element-id="438334">id SMALLINT(4) au lieu de INT(4)</h3><p id="r-438333" data-claire-element-id="438333">Si je sais que id sera un nombre à 4 chiffres (ici, ce serait par exemple si je ne comptais pas inscrire plus de 9999 lignes dans cette table) alors le SMALLINT suffit puisqu'il va jusqu'à 65 535.</p><h3 id="r-pseudo-varchar-40-au-lieu-de-text" data-claire-element-id="438336">pseudo VARCHAR(40) au lieu de TEXT</h3><p id="r-438335" data-claire-element-id="438335">On aurait aussi pu choisir TINYTEXT ou TINYBLOB. Tous prendrons comme espace la longueur du pseudo + 1 et le pseudo sera limité à 40 caractères sans avoir besoin d'aucun traitement. (Pour un pseudo, c'est plutôt bien de ne pas pouvoir dépasser une certaine longueur, sinon gare à l'affichage, les pseudo qui dépassent l'écran...). Niveau optimisation, on ne gagne qu'un seul octet mais c'est déjà ça.</p><h3 id="r-date-date-au-lieu-de-varchar-10" data-claire-element-id="438338">date DATE au lieu de VARCHAR(10)</h3><p id="r-438337" data-claire-element-id="438337">Ici on gagne 7 octets (soit 70% de la place initialement occupée) et les dates sont forcément valides. Pas besoin de vérifier que la date insérée est au bon format. Vous pouvez insérer mysql_real_escape_string($_POST['date']) directement dans la table sans risquer d'avoir des blagues du genre &quot;aujourdhui&quot; qui aurait pu être écrit dans un VARCHAR.</p><h3 id="r-design-choisi-set-au-lieu-de-varchar-16" data-claire-element-id="438340">design_choisi SET au lieu de VARCHAR(16)</h3><p id="r-438339" data-claire-element-id="438339">Toujours plus fort, là on gagne 15 octets (soit 94%). Avec 3 choix, <strong>SET</strong> ne prend que 1 octet. On aurait aussi pu choisir <strong>ENUM</strong> mais pour le même prix, on peut avoir la possibilité de n'avoir aucun design, ou plusieurs (après, c'est à vous de voir...)</p><h3 id="r-telephone-int-10-au-lieu-de-varchar-10" data-claire-element-id="438655">telephone INT(10) au lieu de VARCHAR(10)</h3><p id="r-438341" data-claire-element-id="438341">Gain de 6 octets (60%) et l'attribut <strong>ZEROFILL</strong> se charge de rajouter les zéros qui manquent pour faire 10 chiffres.</p><p id="r-438342" data-claire-element-id="438342">Rappel des 3 règles à retenir :</p><ul id="r-438349" data-claire-element-id="438349"><li id="r-438344" data-claire-element-id="438344"><p id="r-438343" data-claire-element-id="438343">Le type de valeur retournée doit correspondre aux valeurs que vous enregistrez afin que leur traitement en sortie soit optimal.</p></li><li id="r-438346" data-claire-element-id="438346"><p id="r-438345" data-claire-element-id="438345">Les limites doivent être les plus restrictives possibles tout en laissant suffisamment de possibilité pour que la colonne réponde à tous vos besoins.</p></li><li id="r-438348" data-claire-element-id="438348"><p id="r-438347" data-claire-element-id="438347">Le poids doit être le plus petit possible.</p></li></ul><p id="r-438350" data-claire-element-id="438350">Et voici sous forme de tableau la liste des types de colonne que nous avons étudiés dans ce tutoriel et leurs propriétés les plus importantes. Je vous invite à vous y référer aussi souvent que nécessaire :</p><table id="r-438647" data-claire-element-id="438647"><thead id="r-438360" data-claire-element-id="438360"><tr id="r-438359" data-claire-element-id="438359"><th id="r-438352" data-claire-element-id="438352"><p id="r-438351" data-claire-element-id="438351">Type<br/> de colonne</p></th><th id="r-438354" data-claire-element-id="438354"><p id="r-438353" data-claire-element-id="438353">Poids<br/> (en octets)</p></th><th id="r-438356" data-claire-element-id="438356"><p id="r-438355" data-claire-element-id="438355">Type de valeur<br/> retournée</p></th><th id="r-438358" data-claire-element-id="438358"><p id="r-438357" data-claire-element-id="438357">Limite</p></th></tr></thead><tbody id="r-438646" data-claire-element-id="438646"><tr id="r-438363" data-claire-element-id="438363"><td id="r-438362" data-claire-element-id="438362"><p id="r-438361" data-claire-element-id="438361"><strong>Types numériques</strong></p></td></tr><tr id="r-438372" data-claire-element-id="438372"><td id="r-438365" data-claire-element-id="438365"><p id="r-438364" data-claire-element-id="438364">TINYINT</p></td><td id="r-438367" data-claire-element-id="438367"><p id="r-438366" data-claire-element-id="438366">1</p></td><td id="r-438369" data-claire-element-id="438369"><p id="r-438368" data-claire-element-id="438368">Nombre entier</p></td><td id="r-438371" data-claire-element-id="438371"><p id="r-438370" data-claire-element-id="438370">[-127 ; 127] ou [0 ; 255] en UNSIGNED</p></td></tr><tr id="r-438381" data-claire-element-id="438381"><td id="r-438374" data-claire-element-id="438374"><p id="r-438373" data-claire-element-id="438373">SMALLINT</p></td><td id="r-438376" data-claire-element-id="438376"><p id="r-438375" data-claire-element-id="438375">2</p></td><td id="r-438378" data-claire-element-id="438378"><p id="r-438377" data-claire-element-id="438377">Nombre entier</p></td><td id="r-438380" data-claire-element-id="438380"><p id="r-438379" data-claire-element-id="438379">[-32 768 ; 32 767] ou [0 ; 65 535]</p></td></tr><tr id="r-438390" data-claire-element-id="438390"><td id="r-438383" data-claire-element-id="438383"><p id="r-438382" data-claire-element-id="438382">MEDIUMINT</p></td><td id="r-438385" data-claire-element-id="438385"><p id="r-438384" data-claire-element-id="438384">3</p></td><td id="r-438387" data-claire-element-id="438387"><p id="r-438386" data-claire-element-id="438386">Nombre entier</p></td><td id="r-438389" data-claire-element-id="438389"><p id="r-438388" data-claire-element-id="438388">[-8 388 608 ; 8 388 607] ou [0 ; 16 777 215]</p></td></tr><tr id="r-438399" data-claire-element-id="438399"><td id="r-438392" data-claire-element-id="438392"><p id="r-438391" data-claire-element-id="438391">INT</p></td><td id="r-438394" data-claire-element-id="438394"><p id="r-438393" data-claire-element-id="438393">4</p></td><td id="r-438396" data-claire-element-id="438396"><p id="r-438395" data-claire-element-id="438395">Nombre entier</p></td><td id="r-438398" data-claire-element-id="438398"><p id="r-438397" data-claire-element-id="438397">[-2 147 483 648 ; 2 147 483 647] ou [0 ; 4 294 967 295]</p></td></tr><tr id="r-438408" data-claire-element-id="438408"><td id="r-438401" data-claire-element-id="438401"><p id="r-438400" data-claire-element-id="438400">BIGINT</p></td><td id="r-438403" data-claire-element-id="438403"><p id="r-438402" data-claire-element-id="438402">8</p></td><td id="r-438405" data-claire-element-id="438405"><p id="r-438404" data-claire-element-id="438404">Nombre entier</p></td><td id="r-438407" data-claire-element-id="438407"><p id="r-438406" data-claire-element-id="438406">[-9,22 x1018 ; 9,22 x1018] ou [0 ; 1,84 x1019]</p></td></tr><tr id="r-438417" data-claire-element-id="438417"><td id="r-438410" data-claire-element-id="438410"><p id="r-438409" data-claire-element-id="438409">FLOAT</p></td><td id="r-438412" data-claire-element-id="438412"><p id="r-438411" data-claire-element-id="438411">4</p></td><td id="r-438414" data-claire-element-id="438414"><p id="r-438413" data-claire-element-id="438413">Nombre à virgule</p></td><td id="r-438416" data-claire-element-id="438416"><p id="r-438415" data-claire-element-id="438415">24 bits (~32 chiffres significatifs)</p></td></tr><tr id="r-438426" data-claire-element-id="438426"><td id="r-438419" data-claire-element-id="438419"><p id="r-438418" data-claire-element-id="438418">DOUBLE</p></td><td id="r-438421" data-claire-element-id="438421"><p id="r-438420" data-claire-element-id="438420">8</p></td><td id="r-438423" data-claire-element-id="438423"><p id="r-438422" data-claire-element-id="438422">Nombre à virgule</p></td><td id="r-438425" data-claire-element-id="438425"><p id="r-438424" data-claire-element-id="438424">53 bits (~50 chiffres significatifs)</p></td></tr><tr id="r-438435" data-claire-element-id="438435"><td id="r-438428" data-claire-element-id="438428"><p id="r-438427" data-claire-element-id="438427">DECIMAL</p></td><td id="r-438430" data-claire-element-id="438430"><p id="r-438429" data-claire-element-id="438429">8</p></td><td id="r-438432" data-claire-element-id="438432"><p id="r-438431" data-claire-element-id="438431">Nombre à virgule</p></td><td id="r-438434" data-claire-element-id="438434"><p id="r-438433" data-claire-element-id="438433">65 chiffres significatifs</p></td></tr><tr id="r-438438" data-claire-element-id="438438"><td id="r-438437" data-claire-element-id="438437"><p id="r-438436" data-claire-element-id="438436"><strong>Types date et heure</strong></p></td></tr><tr id="r-438447" data-claire-element-id="438447"><td id="r-438440" data-claire-element-id="438440"><p id="r-438439" data-claire-element-id="438439">TIMESTAMP</p></td><td id="r-438442" data-claire-element-id="438442"><p id="r-438441" data-claire-element-id="438441">4</p></td><td id="r-438444" data-claire-element-id="438444"><p id="r-438443" data-claire-element-id="438443">Nombre entier</p></td><td id="r-438446" data-claire-element-id="438446"><p id="r-438445" data-claire-element-id="438445">[19700101000000 ; 20380119041407]</p></td></tr><tr id="r-438456" data-claire-element-id="438456"><td id="r-438449" data-claire-element-id="438449"><p id="r-438448" data-claire-element-id="438448">YEAR</p></td><td id="r-438451" data-claire-element-id="438451"><p id="r-438450" data-claire-element-id="438450">1</p></td><td id="r-438453" data-claire-element-id="438453"><p id="r-438452" data-claire-element-id="438452">Nombre entier</p></td><td id="r-438455" data-claire-element-id="438455"><p id="r-438454" data-claire-element-id="438454">[1901 ; 2155]</p></td></tr><tr id="r-438465" data-claire-element-id="438465"><td id="r-438458" data-claire-element-id="438458"><p id="r-438457" data-claire-element-id="438457">DATE</p></td><td id="r-438460" data-claire-element-id="438460"><p id="r-438459" data-claire-element-id="438459">3</p></td><td id="r-438462" data-claire-element-id="438462"><p id="r-438461" data-claire-element-id="438461">Chaîne</p></td><td id="r-438464" data-claire-element-id="438464"><p id="r-438463" data-claire-element-id="438463">[1000-01-01 ; 9999-12-31]</p></td></tr><tr id="r-438474" data-claire-element-id="438474"><td id="r-438467" data-claire-element-id="438467"><p id="r-438466" data-claire-element-id="438466">DATETIME</p></td><td id="r-438469" data-claire-element-id="438469"><p id="r-438468" data-claire-element-id="438468">8</p></td><td id="r-438471" data-claire-element-id="438471"><p id="r-438470" data-claire-element-id="438470">Chaîne</p></td><td id="r-438473" data-claire-element-id="438473"><p id="r-438472" data-claire-element-id="438472">[1000-01-01 00:00:00 ; 9999-12-31 23:59:59]</p></td></tr><tr id="r-438483" data-claire-element-id="438483"><td id="r-438476" data-claire-element-id="438476"><p id="r-438475" data-claire-element-id="438475">TIME</p></td><td id="r-438478" data-claire-element-id="438478"><p id="r-438477" data-claire-element-id="438477">3</p></td><td id="r-438480" data-claire-element-id="438480"><p id="r-438479" data-claire-element-id="438479">Chaîne</p></td><td id="r-438482" data-claire-element-id="438482"><p id="r-438481" data-claire-element-id="438481">[00:00:00 ; 23:59:59]</p></td></tr><tr id="r-438486" data-claire-element-id="438486"><td id="r-438485" data-claire-element-id="438485"><p id="r-438484" data-claire-element-id="438484"><strong>Types chaînes</strong></p></td></tr><tr id="r-438495" data-claire-element-id="438495"><td id="r-438488" data-claire-element-id="438488"><p id="r-438487" data-claire-element-id="438487">CHAR</p></td><td id="r-438490" data-claire-element-id="438490"><p id="r-438489" data-claire-element-id="438489"><strong>M</strong></p></td><td id="r-438492" data-claire-element-id="438492"><p id="r-438491" data-claire-element-id="438491">Chaîne</p></td><td id="r-438494" data-claire-element-id="438494"><p id="r-438493" data-claire-element-id="438493">255 caractères (pour <strong>M</strong>, <a href="#ss_part_5">voir Colonnes de texte</a>)</p></td></tr><tr id="r-438504" data-claire-element-id="438504"><td id="r-438497" data-claire-element-id="438497"><p id="r-438496" data-claire-element-id="438496">VARCHAR</p></td><td id="r-438499" data-claire-element-id="438499"><p id="r-438498" data-claire-element-id="438498"><strong>L</strong>+1</p></td><td id="r-438501" data-claire-element-id="438501"><p id="r-438500" data-claire-element-id="438500">Chaîne</p></td><td id="r-438503" data-claire-element-id="438503"><p id="r-438502" data-claire-element-id="438502">255 caractères (<strong>L</strong> est la longueur du texte)</p></td></tr><tr id="r-438513" data-claire-element-id="438513"><td id="r-438506" data-claire-element-id="438506"><p id="r-438505" data-claire-element-id="438505">TINYTEXT</p></td><td id="r-438508" data-claire-element-id="438508"><p id="r-438507" data-claire-element-id="438507"><strong>L</strong>+1</p></td><td id="r-438510" data-claire-element-id="438510"><p id="r-438509" data-claire-element-id="438509">Chaîne</p></td><td id="r-438512" data-claire-element-id="438512"><p id="r-438511" data-claire-element-id="438511">255 caractères</p></td></tr><tr id="r-438522" data-claire-element-id="438522"><td id="r-438515" data-claire-element-id="438515"><p id="r-438514" data-claire-element-id="438514">TEXT</p></td><td id="r-438517" data-claire-element-id="438517"><p id="r-438516" data-claire-element-id="438516"><strong>L</strong>+2</p></td><td id="r-438519" data-claire-element-id="438519"><p id="r-438518" data-claire-element-id="438518">Chaîne</p></td><td id="r-438521" data-claire-element-id="438521"><p id="r-438520" data-claire-element-id="438520">65 535 caractères</p></td></tr><tr id="r-438531" data-claire-element-id="438531"><td id="r-438524" data-claire-element-id="438524"><p id="r-438523" data-claire-element-id="438523">MEDIUMTEXT</p></td><td id="r-438526" data-claire-element-id="438526"><p id="r-438525" data-claire-element-id="438525"><strong>L</strong>+3</p></td><td id="r-438528" data-claire-element-id="438528"><p id="r-438527" data-claire-element-id="438527">Chaîne</p></td><td id="r-438530" data-claire-element-id="438530"><p id="r-438529" data-claire-element-id="438529">16 777 215 caractères</p></td></tr><tr id="r-438540" data-claire-element-id="438540"><td id="r-438533" data-claire-element-id="438533"><p id="r-438532" data-claire-element-id="438532">LONGTEXT</p></td><td id="r-438535" data-claire-element-id="438535"><p id="r-438534" data-claire-element-id="438534"><strong>L</strong>+4</p></td><td id="r-438537" data-claire-element-id="438537"><p id="r-438536" data-claire-element-id="438536">Chaîne</p></td><td id="r-438539" data-claire-element-id="438539"><p id="r-438538" data-claire-element-id="438538">4 294 967 296 caractères</p></td></tr><tr id="r-438543" data-claire-element-id="438543"><td id="r-438542" data-claire-element-id="438542"><p id="r-438541" data-claire-element-id="438541"><strong>Types binaires</strong></p></td></tr><tr id="r-438552" data-claire-element-id="438552"><td id="r-438545" data-claire-element-id="438545"><p id="r-438544" data-claire-element-id="438544">TINYBLOB</p></td><td id="r-438547" data-claire-element-id="438547"><p id="r-438546" data-claire-element-id="438546"><strong>L</strong>+1</p></td><td id="r-438549" data-claire-element-id="438549"><p id="r-438548" data-claire-element-id="438548">Chaîne binaire</p></td><td id="r-438551" data-claire-element-id="438551"><p id="r-438550" data-claire-element-id="438550">255 octets</p></td></tr><tr id="r-438561" data-claire-element-id="438561"><td id="r-438554" data-claire-element-id="438554"><p id="r-438553" data-claire-element-id="438553">BLOB</p></td><td id="r-438556" data-claire-element-id="438556"><p id="r-438555" data-claire-element-id="438555"><strong>L</strong>+2</p></td><td id="r-438558" data-claire-element-id="438558"><p id="r-438557" data-claire-element-id="438557">Chaîne binaire</p></td><td id="r-438560" data-claire-element-id="438560"><p id="r-438559" data-claire-element-id="438559">65 535 octets</p></td></tr><tr id="r-438570" data-claire-element-id="438570"><td id="r-438563" data-claire-element-id="438563"><p id="r-438562" data-claire-element-id="438562">MEDIUMBLOB</p></td><td id="r-438565" data-claire-element-id="438565"><p id="r-438564" data-claire-element-id="438564"><strong>L</strong>+3</p></td><td id="r-438567" data-claire-element-id="438567"><p id="r-438566" data-claire-element-id="438566">Chaîne binaire</p></td><td id="r-438569" data-claire-element-id="438569"><p id="r-438568" data-claire-element-id="438568">16 777 215 octets</p></td></tr><tr id="r-438579" data-claire-element-id="438579"><td id="r-438572" data-claire-element-id="438572"><p id="r-438571" data-claire-element-id="438571">LONGBLOB</p></td><td id="r-438574" data-claire-element-id="438574"><p id="r-438573" data-claire-element-id="438573"><strong>L</strong>+4</p></td><td id="r-438576" data-claire-element-id="438576"><p id="r-438575" data-claire-element-id="438575">Chaîne binaire</p></td><td id="r-438578" data-claire-element-id="438578"><p id="r-438577" data-claire-element-id="438577">4 294 967 296 octets</p></td></tr><tr id="r-438582" data-claire-element-id="438582"><td id="r-438581" data-claire-element-id="438581"><p id="r-438580" data-claire-element-id="438580"><strong>Types à choix multiples</strong></p></td></tr><tr id="r-438591" data-claire-element-id="438591"><td id="r-438584" data-claire-element-id="438584"><p id="r-438583" data-claire-element-id="438583">SET</p></td><td id="r-438586" data-claire-element-id="438586"><p id="r-438585" data-claire-element-id="438585">1</p></td><td id="r-438588" data-claire-element-id="438588"><p id="r-438587" data-claire-element-id="438587">Chaîne</p></td><td id="r-438590" data-claire-element-id="438590"><p id="r-438589" data-claire-element-id="438589">8 choix</p></td></tr><tr id="r-438600" data-claire-element-id="438600"><td id="r-438593" data-claire-element-id="438593"><p id="r-438592" data-claire-element-id="438592">SET</p></td><td id="r-438595" data-claire-element-id="438595"><p id="r-438594" data-claire-element-id="438594">2</p></td><td id="r-438597" data-claire-element-id="438597"><p id="r-438596" data-claire-element-id="438596">Chaîne</p></td><td id="r-438599" data-claire-element-id="438599"><p id="r-438598" data-claire-element-id="438598">16 choix</p></td></tr><tr id="r-438609" data-claire-element-id="438609"><td id="r-438602" data-claire-element-id="438602"><p id="r-438601" data-claire-element-id="438601">SET</p></td><td id="r-438604" data-claire-element-id="438604"><p id="r-438603" data-claire-element-id="438603">3</p></td><td id="r-438606" data-claire-element-id="438606"><p id="r-438605" data-claire-element-id="438605">Chaîne</p></td><td id="r-438608" data-claire-element-id="438608"><p id="r-438607" data-claire-element-id="438607">24 choix</p></td></tr><tr id="r-438618" data-claire-element-id="438618"><td id="r-438611" data-claire-element-id="438611"><p id="r-438610" data-claire-element-id="438610">SET</p></td><td id="r-438613" data-claire-element-id="438613"><p id="r-438612" data-claire-element-id="438612">4</p></td><td id="r-438615" data-claire-element-id="438615"><p id="r-438614" data-claire-element-id="438614">Chaîne</p></td><td id="r-438617" data-claire-element-id="438617"><p id="r-438616" data-claire-element-id="438616">32 choix</p></td></tr><tr id="r-438627" data-claire-element-id="438627"><td id="r-438620" data-claire-element-id="438620"><p id="r-438619" data-claire-element-id="438619">SET</p></td><td id="r-438622" data-claire-element-id="438622"><p id="r-438621" data-claire-element-id="438621">8</p></td><td id="r-438624" data-claire-element-id="438624"><p id="r-438623" data-claire-element-id="438623">Chaîne</p></td><td id="r-438626" data-claire-element-id="438626"><p id="r-438625" data-claire-element-id="438625">64 choix</p></td></tr><tr id="r-438636" data-claire-element-id="438636"><td id="r-438629" data-claire-element-id="438629"><p id="r-438628" data-claire-element-id="438628">ENUM</p></td><td id="r-438631" data-claire-element-id="438631"><p id="r-438630" data-claire-element-id="438630">1</p></td><td id="r-438633" data-claire-element-id="438633"><p id="r-438632" data-claire-element-id="438632">Chaîne</p></td><td id="r-438635" data-claire-element-id="438635"><p id="r-438634" data-claire-element-id="438634">255 choix</p></td></tr><tr id="r-438645" data-claire-element-id="438645"><td id="r-438638" data-claire-element-id="438638"><p id="r-438637" data-claire-element-id="438637">ENUM</p></td><td id="r-438640" data-claire-element-id="438640"><p id="r-438639" data-claire-element-id="438639">2</p></td><td id="r-438642" data-claire-element-id="438642"><p id="r-438641" data-claire-element-id="438641">Chaîne</p></td><td id="r-438644" data-claire-element-id="438644"><p id="r-438643" data-claire-element-id="438643">65 535 choix</p></td></tr></tbody></table><p id="r-438648" data-claire-element-id="438648">J'espère que ce tuto vous a été utile. Mon niveau de SQL reste toutefois lacunaire, n'hésitez donc pas à apporter des précisions à ce tuto en m'<a href="http://www.siteduzero.com/mp-273-4732.html">envoyant des MP</a>, je compléterai ce tuto si nécessaire.</p><p id="r-438649" data-claire-element-id="438649">Je n'ai pas fait le tour de tous les types SQL, chaque version et type de base de données a ses types et ses alias de types, pour un listing complet des types de MySQL, je vous conseille :</p><ul id="r-438654" data-claire-element-id="438654"><li id="r-438651" data-claire-element-id="438651"><p id="r-438650" data-claire-element-id="438650"><a href="http://www.siteduzero.com/tutoriel-3-70811-la-colonne-type.html">le tuto de Bouv</a></p></li><li id="r-438653" data-claire-element-id="438653"><p id="r-438652" data-claire-element-id="438652"><a href="http://dev.mysql.com/doc/">La doc MySQL</a> (voyez notamment <a href="http://dev.mysql.com/doc/refman/5.0/fr/storage-requirements.html">cette page</a>)</p></li></ul>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql">Choisir les bons types de colonne SQL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/comment-choisir-1">
+Comment choisir ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/les-formats-numeriques">
+Les formats numériques
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/date-et-heure-4">
+Date et Heure
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/colonnes-a-choix-multiples">
+Colonnes à choix multiples
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/colonnes-de-texte">
+Colonnes de texte
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/les-regles-a-retenir">
+Les règles à retenir
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/recapitulons-3">
+Récapitulons
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/choisir-les-bons-types-de-colonne-sql/les-regles-a-retenir">
+<span class="arrow"></span>
+<span class="next">Les règles à retenir</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/choisir-les-bons-types-de-colonne-sql.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 06:50:24 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/choisir-les-bons-types-de-colonne-sql.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:14:31 GMT -->
+</html>

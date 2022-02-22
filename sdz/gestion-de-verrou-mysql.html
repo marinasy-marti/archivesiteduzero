@@ -1,0 +1,875 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/gestion-de-verrou-mysql.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 03:38:04 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/gestion-de-verrou-mysql.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:43:59 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Gestion de verrou MySQL</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/gestion-de-verrou-mysql.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Gestion de verrou MySQL</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#GestiondeverrouMySQL">Gestion de verrou MySQL</a><br/><a href="#Leprincipeduverrou">Le principe du verrou</a><br/><a href="#LeverrouquotcourtedurequotverrounatifMySQL">Le verrou &quot;courte durée&quot;, verrou natif MySQL</a><br/><a href="#Leverrouquotlonguedurequotverrouprogramm">Le verrou &quot;longue durée&quot;, verrou programmé</a><br/><a href="#L039articulationdesverrousNatifsetprogramms">L&#039;articulation des verrous Natifs et programmés</a><br/><a href="#Lefichierd039exemple">Le fichier d&#039;exemple</a><br/></div>
+<a name="GestiondeverrouMySQL"></a><h2>Gestion de verrou MySQL</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/le-principe-du-verrou">
+<span class="next">Le principe du verrou</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-530691" data-claire-element-id="530691">Les bases de données permettent de stocker des informations dans des tables. Dans un système où tous les utilisateurs se connectent en lecture simple des informations et où au maximum une seule personne modifie les données à la fois, il n'y a aucun problème. Mais dans un système où plusieurs utilisateurs peuvent modifier des données sur la même ligne de la base de données en même temps, il va y avoir une collision et une incohérence des données mémorisées.</p><figure id="r-530693" data-claire-element-id="530694"><img id="r-530692" data-claire-element-id="530692" src="medias/uploads.siteduzero.com_files_204001_205000_204881.gif" alt="Image utilisateur"/></figure><p id="r-530695" data-claire-element-id="530695">Cette image présente le cas où deux utilisateurs souhaitent modifier 2 informations différentes sur une même ligne de la base de données, celle qui contient les coordonnées de M. Dupond.<br/> Pour résoudre ce conflit d'accès nous allons utiliser une technique de verrou.</p>
+</div><a name="Leprincipeduverrou"></a><h2>Le principe du verrou</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/le-verrou-courte-duree-verrou-natif-mysql">
+<span class="next">Le verrou &quot;courte durée&quot;, verrou natif MySQL</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-530696" data-claire-element-id="530696">Le verrou est une information associée à une donnée ou un groupe de donnée qui bloque l'accès aux données verrouillées aux autres utilisateurs. Lorsqu'un utilisateur souhaite accéder à une donnée verrouillée :</p><ul id="r-530701" data-claire-element-id="530701"><li id="r-530698" data-claire-element-id="530698"><p id="r-530697" data-claire-element-id="530697">Soit il reçoit un message d'erreur lui indiquant que la donnée est verrouillée et qu'il faut donc repasser plus tard.</p></li><li id="r-530700" data-claire-element-id="530700"><p id="r-530699" data-claire-element-id="530699">Soit il est mis dans une file d'attente, et aura accès aux données une fois que l'utilisateur qui a posé le verrou, l'aura levé.</p></li></ul><p id="r-530702" data-claire-element-id="530702">Ces verrous sont principalement de trois types :</p><ul id="r-530709" data-claire-element-id="530709"><li id="r-530704" data-claire-element-id="530704"><p id="r-530703" data-claire-element-id="530703">Ils peuvent empêcher tout accès aux données aux autres utilisateurs.</p></li><li id="r-530706" data-claire-element-id="530706"><p id="r-530705" data-claire-element-id="530705">Ils peuvent laisser uniquement un accès en lecture seule aux autres utilisateurs.</p></li><li id="r-530708" data-claire-element-id="530708"><p id="r-530707" data-claire-element-id="530707">Le dernier utilisateur qui accède aux données en lecture pour modification prend le verrou. Quand il enregistre, il vérifie qu'il a encore le verrou. Ce type de verrouillage ne me semble pas très ergonomique pour l'utilisateur, donc nous n'allons pas l'utiliser dans ce tuto.</p></li></ul>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql">Gestion de verrou MySQL</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/le-principe-du-verrou">
+Le principe du verrou
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/le-verrou-courte-duree-verrou-natif-mysql">
+Le verrou &quot;courte durée&quot;, verrou natif MySQL
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/le-verrou-longue-duree-verrou-programme">
+Le verrou &quot;longue durée&quot;, verrou programmé
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/l-articulation-des-verrous-natifs-et-programmes">
+L&#039;articulation des verrous Natifs et programmés
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/le-fichier-d-exemple">
+Le fichier d&#039;exemple
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/le-verrou-courte-duree-verrou-natif-mysql">
+<span class="next">Le verrou &quot;courte durée&quot;, verrou natif MySQL</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="LeverrouquotcourtedurequotverrounatifMySQL"></a><h2>Le verrou &quot;courte durée&quot;, verrou natif MySQL</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/le-principe-du-verrou">
+<span class="arrow"></span>
+<span class="next">Le principe du verrou</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/le-verrou-longue-duree-verrou-programme">
+<span class="next">Le verrou &quot;longue durée&quot;, verrou programmé</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-530711" data-claire-element-id="530711">MySQL possède de manière native des verrous. Ces verrous sont associés à des connexions à la base de données. Ainsi deux scripts PHP utilisant les mêmes identifiants de connexion, sont des connexions différentes. (Chaque script à sa connexion à la base de données). Ces verrous sont de deux types :</p><ul id="r-530716" data-claire-element-id="530716"><li id="r-530713" data-claire-element-id="530713"><p id="r-530712" data-claire-element-id="530712">Les verrous <strong>READ</strong> permettent aux autres connexions d'accéder aux données verrouillées <strong>en lecture seule</strong>.</p></li><li id="r-530715" data-claire-element-id="530715"><p id="r-530714" data-claire-element-id="530714">Les verrous <strong>WRITE empêchent tout accès </strong>aux autres connexions</p></li></ul><p id="r-530717" data-claire-element-id="530717">Pour la suite du tuto nous allons utiliser uniquement des verrous WRITE, afin de s'assurer qu'un autre script ne vienne pas prendre des informations susceptibles d'êtres en cours de modification.</p><p id="r-530718" data-claire-element-id="530718">Les verrous sont automatiquement levés dès que la connexion à la base MySQL est fermée, ou dès que des verrous sont posés sur une autre table de la base par la même connexion.</p><p id="r-530719" data-claire-element-id="530719">Lorsqu'une connexion veut accéder à une donnée verrouillée par une autre connexion, MySQL met la requête en attente. Elle sera exécutée dès que le verrou sera levé.</p><p id="r-530720" data-claire-element-id="530720">Exemple pour poser un verrou <strong>WRITE</strong> sur une table <strong>MaTable</strong></p><pre id="r-530721" data-claire-element-id="530721"><code data-claire-semantic="sql">LOCK TABLE MaTable WRITE;</code></pre><p id="r-530722" data-claire-element-id="530722">Quand une connexion pose un verrou sur une ou plusieurs tables, elle ne peut accéder qu'aux tables verrouillées avec les noms déclarés lors du verrou. Si cette contrainte n'est pas respectée, MySQL génère une erreur.</p><p id="r-530723" data-claire-element-id="530723">Exemple pour poser un verrou <strong>WRITE</strong> sur une table <strong>MaTable</strong> qui sera accédée dans les requêtes avec l'<strong>alias mt</strong></p><pre id="r-530724" data-claire-element-id="530724"><code data-claire-semantic="sql">LOCK TABLE MaTable AS mt WRITE;</code></pre><p id="r-530725" data-claire-element-id="530725">Si dans les requêtes SQL, on accède à plusieurs tables ou à une même table avec plusieurs alias, il faut les verrouiller toutes en même temps.<br/> Exemple pour poser un verrou <strong>WRITE </strong>sur une table <strong>MaTable</strong> qui sera accédés dans les requêtes avec <strong>son nom d'origine </strong>et l'<strong>alias mt</strong>, ainsi que la table <strong>AutreTable</strong></p><pre id="r-530726" data-claire-element-id="530726"><code data-claire-semantic="sql">LOCK TABLE MaTable WRITE, MaTable AS MT WRITE, AutreTable WRITE;</code></pre><p id="r-530727" data-claire-element-id="530727">Pour aller plus loin sur la syntaxe de ses verrous, je vous invite à lire la documentation officielle de MySQL.</p><div id="r-530729" data-claire-element-id="530729" data-claire-semantic="question"><p id="r-530728" data-claire-element-id="530728">Je commence à comprendre comment on met des verrous. Mais pour les supprimer, sans fermer la connexion SQL ni poser un autre verrou, je fais comment ?</p></div><p id="r-530730" data-claire-element-id="530730">C'est simple il suffit d'utiliser la bonne requête :-° .<br/> Elle supprime tous les verrous éventuels de la connexion courante. Il est possible de l'exécuter qu'il y ait 1, 10, ou 0 verrous...</p><pre id="r-530731" data-claire-element-id="530731"><code data-claire-semantic="sql">UNLOCK TABLES;</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql">Gestion de verrou MySQL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/le-principe-du-verrou">
+Le principe du verrou
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/le-verrou-courte-duree-verrou-natif-mysql">
+Le verrou &quot;courte durée&quot;, verrou natif MySQL
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/le-verrou-longue-duree-verrou-programme">
+Le verrou &quot;longue durée&quot;, verrou programmé
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/l-articulation-des-verrous-natifs-et-programmes">
+L&#039;articulation des verrous Natifs et programmés
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/le-fichier-d-exemple">
+Le fichier d&#039;exemple
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/le-principe-du-verrou">
+<span class="arrow"></span>
+<span class="next">Le principe du verrou</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/le-verrou-longue-duree-verrou-programme">
+<span class="next">Le verrou &quot;longue durée&quot;, verrou programmé</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Leverrouquotlonguedurequotverrouprogramm"></a><h2>Le verrou &quot;longue durée&quot;, verrou programmé</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/le-verrou-courte-duree-verrou-natif-mysql">
+<span class="arrow"></span>
+<span class="next">Le verrou &quot;courte durée&quot;, verrou natif MySQL</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/l-articulation-des-verrous-natifs-et-programmes">
+<span class="next">L&#039;articulation des verrous Natifs et programmés</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-530733" data-claire-element-id="530733">Nous avons vu les possibilités natives de MySQL. Cependant un verrou natif ne permet pas de verrouiller l'accès aux données plus longtemps que le temps de génération d'une page. Nous devons créer un verrou programmé qui permet de verrouiller un enregistrement pour une durée suffisante pour qu'un utilisateur puisse effectuer une saisie de formulaire.</p><p id="r-530734" data-claire-element-id="530734">Le temps de génération d'une page est de quelques millisecondes généralement, alors que le temps d'édition du formulaire est de quelques dizaines de secondes à quelques minutes. Nous n'allons pas bloquer l'accès complet à la table pendant tout ce temps, mais uniquement à la ligne concernées.</p><div id="r-530736" data-claire-element-id="530736" data-claire-semantic="question"><p id="r-530735" data-claire-element-id="530735">Comment créer ce verrou ?</p></div><p id="r-530737" data-claire-element-id="530737">Pour créer ce verrou nous ajoutons d'une part deux colonnes à chaque table de la base de données pouvant comporter des verrous et d'autre part une constante en PHP.<br/> Voici la description de ces ajouts :</p><ul id="r-530744" data-claire-element-id="530744"><li id="r-530739" data-claire-element-id="530739"><p id="r-530738" data-claire-element-id="530738"><strong>verrou_id</strong> : Champ en base de données qui contient l'identifiant de celui qui pose le verrou</p></li><li id="r-530741" data-claire-element-id="530741"><p id="r-530740" data-claire-element-id="530740"><strong>verrou_heure</strong> : Champ en base de données qui contient l'heure du dépôt du verrou</p></li><li id="r-530743" data-claire-element-id="530743"><p id="r-530742" data-claire-element-id="530742"><strong>verrou_duree</strong> : Constante PHP qui contient la durée de vie du verrou</p></li></ul><p id="r-530745" data-claire-element-id="530745">Quelques explications supplémentaires sur les choix techniques :</p><ul id="r-530752" data-claire-element-id="530752"><li id="r-530747" data-claire-element-id="530747"><p id="r-530746" data-claire-element-id="530746">Le champ <strong>verrou_id</strong> contient l'identifiant de la session PHP utilisée par le script posant le verrou. Ceci a l'avantage de permettre d'utiliser les verrous sur un site où aucune authentification n'est demandée, ou sur un site ou plusieurs utilisateurs possèdent les mêmes identifiants. De même nous évitons les problèmes posés par un utilisateur qui ouvre plusieurs connexions depuis différents poste avec le même login. Par contre l'utilisation de l'identifiant de session demande d'avoir une durée de vie du verrou plus courte que la durée de la session, et d'avoir un hébergeur supportant cette fonctionnalité. Quand aucun verrou n'est posé sur l'enregistrement, ce champ est à la valeur système NULL. Ce sera un CHAR32 car un identifiant de session est composé de 32 caractères alphanumériques.</p></li><li id="r-530749" data-claire-element-id="530749"><p id="r-530748" data-claire-element-id="530748">Le champ <strong>verrou_heure</strong> contient l'instant où le verrou est posé. Ceci implique que tous les verrous accédant à la table aient la même durée de vie, puisque pour savoir si un verrou est encore valide, il va être comparé l'heure actuelle avec l'heure de création du verrou à laquelle on ajoute la durée de vie du verrou. Ce champ sera un TIMESTAMP.</p></li><li id="r-530751" data-claire-element-id="530751"><p id="r-530750" data-claire-element-id="530750">La constante <strong>verrou_duree</strong> contient la durée de vie du verrou. Ceci assure que tout les verrous accédant à la table ait la même durée de vie, mais contraint en plus que tous les verrous de l'application aient la même durée de vie. Elle sera de type entier, et contiendra le nombre de minute de cette durée de vie.</p></li></ul><div id="r-530754" data-claire-element-id="530754" data-claire-semantic="question"><p id="r-530753" data-claire-element-id="530753">OK, je commence à voir le concept. Mais pourquoi tu mets une durée de vie alors que le verrou MySQL n'en a pas ?</p></div><p id="r-530755" data-claire-element-id="530755">Imagine qu'il y ait un &quot;plantage&quot; :</p><ul id="r-530762" data-claire-element-id="530762"><li id="r-530757" data-claire-element-id="530757"><p id="r-530756" data-claire-element-id="530756">Si c'est <strong>le script PHP </strong>qui plante, la connexion sera automatiquement fermée et le verrou MySQL sera levé.</p></li><li id="r-530759" data-claire-element-id="530759"><p id="r-530758" data-claire-element-id="530758">Si c'est <strong>le moteur PHP, Apache, ou MySQL </strong>qui plante, les connexions seront automatiquement fermés lors du redémarrage du (des) module(s) adapté(s) et le verrou MySQL sera levé.</p></li><li id="r-530761" data-claire-element-id="530761"><p id="r-530760" data-claire-element-id="530760">Si c'est <strong>l'utilisateur</strong> qui défaille (ou son ordinateur), Partis boire un café, happé par un collègue, ... Il faut aussi un mécanisme qui permette de faire sauter le verrou programmé, sans appeler un administrateur système. Il faut bien être conscient qu'en informatique la grande majorité des problèmes se situent &quot;entre la chaise et le clavier&quot;. Un verrou &quot;obsolète&quot; ou &quot;périmé&quot; pourra donc être supprimé par n'importe quel utilisateur qui accède à la table.</p></li></ul>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql">Gestion de verrou MySQL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/le-principe-du-verrou">
+Le principe du verrou
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/le-verrou-courte-duree-verrou-natif-mysql">
+Le verrou &quot;courte durée&quot;, verrou natif MySQL
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/le-verrou-longue-duree-verrou-programme">
+Le verrou &quot;longue durée&quot;, verrou programmé
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/l-articulation-des-verrous-natifs-et-programmes">
+L&#039;articulation des verrous Natifs et programmés
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/le-fichier-d-exemple">
+Le fichier d&#039;exemple
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/le-verrou-courte-duree-verrou-natif-mysql">
+<span class="arrow"></span>
+<span class="next">Le verrou &quot;courte durée&quot;, verrou natif MySQL</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/l-articulation-des-verrous-natifs-et-programmes">
+<span class="next">L&#039;articulation des verrous Natifs et programmés</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="L039articulationdesverrousNatifsetprogramms"></a><h2>L&#039;articulation des verrous Natifs et programmés</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/le-verrou-longue-duree-verrou-programme">
+<span class="arrow"></span>
+<span class="next">Le verrou &quot;longue durée&quot;, verrou programmé</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/le-fichier-d-exemple">
+<span class="next">Le fichier d&#039;exemple</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-le-principe-26" data-claire-element-id="530788">Le principe</h2><p id="r-530764" data-claire-element-id="530764">Nous allons utiliser les verrous natifs de type <strong>WRITE</strong>, pour bloquer l'accès aux données à tous les autres utilisateurs pendant la durée de manipulation des verrous programmés.</p><p id="r-530765" data-claire-element-id="530765">Afin de faciliter les exemples et d'avoir un code compatible avec un maximum de moteurs MySQL nous allons utiliser des verrous sur les tables complètes pour les verrous natifs. Nous partons du principe qu'en fonction de l'utilisation de notre site internet bloquer une table complète pendant la durée d'exécution d'un script PHP (quelques millisecondes à quelques secondes) n'est pas critique.</p><p id="r-530766" data-claire-element-id="530766">Voici le scénario de l'exemple que nous allons utiliser pour la suite : Une table &quot;test&quot; comporte des enregistrements accessibles en écriture aux utilisateurs avec un formulaire d'édition. Voici le schéma du script d'ouverture du formulaire :</p><figure id="r-530768" data-claire-element-id="530769"><img id="r-530767" data-claire-element-id="530767" src="medias/uploads.siteduzero.com_files_204001_205000_204878.gif" alt="Image utilisateur"/></figure><p id="r-530770" data-claire-element-id="530770">Et celui de traitement du formulaire saisi :</p><figure id="r-530772" data-claire-element-id="530773"><img id="r-530771" data-claire-element-id="530771" src="medias/uploads.siteduzero.com_files_204001_205000_204879.gif" alt="Image utilisateur"/></figure><p id="r-530774" data-claire-element-id="530774">Nous repérons un certains nombre de fonctions (les rectangles blancs) et des groupements de fonctions communs (les rectangles gris). Nous allons programmer des fonctions qui correspondent aux rectangles blancs et dans la mesure du possible faire des fonctions plus complètes qui correspondent aux rectangles gris.<br/> Liste des fonctions :</p><ul id="r-530787" data-claire-element-id="530787"><li id="r-530776" data-claire-element-id="530776"><p id="r-530775" data-claire-element-id="530775"><strong>poser_verrou_MySQL</strong> : Pose dès que possible un verrou MySQL sur une table spécifié.</p></li><li id="r-530778" data-claire-element-id="530778"><p id="r-530777" data-claire-element-id="530777"><strong>supprimer_verrou_MySQL</strong> : Supprime tous les verrous MySQL appartenant à la connexion courante.</p></li><li id="r-530780" data-claire-element-id="530780"><p id="r-530779" data-claire-element-id="530779"><strong>poser_verrou_ligne</strong> : Pose un verrou programmé sur la ligne spécifié. Elle peut écraser un autre verrou, il faut l'utiliser après avoir vérifier qu'il n'y ait pas un autre verrou sur la ligne.</p></li><li id="r-530782" data-claire-element-id="530782"><p id="r-530781" data-claire-element-id="530781"><strong>tester_verrou_ligne</strong> : Teste s'il y a un verrou programmé sur la ligne spécifié, et indique si la connexion courante en est propriétaire.</p></li><li id="r-530784" data-claire-element-id="530784"><p id="r-530783" data-claire-element-id="530783"><strong>supprimer_verrou_ligne</strong> : Supprime le verrou de la ligne spécifié.</p></li><li id="r-530786" data-claire-element-id="530786"><p id="r-530785" data-claire-element-id="530785"><strong>supprimer_verrou_obsoletes</strong> : Supprime tous les verrous obsolètes de la table spécifiée</p></li></ul><h2 id="r-une-bibliotheque-de-fonctions" data-claire-element-id="530791">Une bibliothèque de fonctions</h2><p id="r-530789" data-claire-element-id="530789">Nous allons voir ici les fonctions annoncée ci dessus et nous faire un &quot;boite à outils&quot;</p><pre id="r-530790" data-claire-element-id="530790"><code data-claire-semantic="html+php">&lt;?php
+/******************************************************************************/
+/* Boite à outils verrous MySQL                                               */
+/* Auteur : <a class="__cf_email__" href="http://www.cloudflare.com/email-protection" data-cfemail="98f5f9ececf0f1fdedd8fcf7f6fbf7fdedeab6fbf7f5">[email&nbsp;protected]</a><script type="text/javascript">
+/* <![CDATA[ */
+(function(){try{var s,a,i,j,r,c,l,b=document.getElementsByTagName("script");l=b[b.length-1].previousSibling;a=l.getAttribute('data-cfemail');if(a){s='';r=parseInt(a.substr(0,2),16);for(j=2;a.length-j;j+=2){c=parseInt(a.substr(j,2),16)^r;s+=String.fromCharCode(c);}s=document.createTextNode(s);l.parentNode.replaceChild(s,l);}}catch(e){}})();
+/* ]]> */
+</script>                                             */
+/* Mise à jour : 01/12/2009                                                   */
+/*                                                                            */
+/* Liste des constantes                                                       */
+/* - VALIDITE_VERROU Durée de validité d'un verrou en minutes                 */
+/*                                                                            */
+/* Liste des méthodes                                                         */
+/* - requete ($requete, $connexion = NULL)                                    */
+/* - poser_verrou_mysql ($table, $type=&quot;WRITE&quot;, $connexion = NULL)            */
+/* - supprimer_verrou_mysql ($connexion = NULL)                               */
+/* - poser_verrou_ligne ($table, $id, $cle = 'id', $connexion = NULL)         */
+/* - tester_verrou_ligne ($table, $id, $cle = 'id', $connexion = NULL)        */
+/* - supprimer_verrou_ligne ($table, $id, $cle = 'id', $connexion = NULL)     */
+/* - supprimer_verrou_obsoletes ($table, $connexion = NULL)                   */
+/******************************************************************************/
+
+define('VALIDITE_VERROU', 5); // durée de validité d'un verrou en minutes
+
+/******************************************************************************/
+/* requete ($requete, $connexion = NULL)                                      */
+/* Cette fonction exécute la requête sur la base                              */
+/* $requete : requête SQL à exécuter sur la base MySQL                        */
+/* $connexion : Peut contenir un lien vers une connexion MySQL. Si omis, la   */
+/* dernière connexion du script sera utilisée                                 */
+/******************************************************************************/
+function requete ($requete, $connexion = NULL) {
+	if ( empty ( $connexion) ) {
+		$resultat = mysql_query ( $requete );
+	} elseif (is_ressource ($connexion) ) {
+		$resultat = mysql_query ( $requete, $connexion );
+	} else {
+		return ('erreur sur le paramètre $connexion.');
+	}
+	if ( !$resultat) {
+		die('Requête invalide : &lt;br&gt;'.$requete. '&lt;br&gt;' . mysql_error());
+	} else {
+		return $resultat;
+	}
+}
+
+/******************************************************************************/
+/* poser_verrou_mysql ($table, $type=&quot;WRITE&quot; $connexion = NULL)               */
+/* Cette fonction pose un verrou MySQL sur la ou les tables passées en        */
+/* paramètres                                                                 */
+/* $table : - si est de type STRING pose un verrou sur la table spécifiée     */
+/*          - si est de type ARRAY pose un verrou sur les tables spécifiées.  */
+/*             - Si le tableau est associatif, les index servent d'alias.     */
+/* $type : Indique le type READ ou WRITE du verrou                            */
+/* $connexion : Peut contenir un lien vers une connexion MySQL. Si omis, la   */
+/* dernière connexion du script sera utilisée                                 */
+/* Retourne TRUE en cas de succès ou une chaine avec un message d'erreur      */
+/******************************************************************************/
+function poser_verrou_mysql ($table, $type=&quot;WRITE&quot;, $connexion = NULL) {
+	$liste_table = ''; // Liste des tables à verrouiller.
+	$requete = ''; // Requête MySQL pour verrouiller.
+
+	// verification du paramètre $type;
+		$type = mb_strtoupper($type);
+	if (!in_array($type, array('WRITE', 'READ'))) {
+		return ('erreur sur le paramètre $type. &quot;READ&quot; et &quot;WRITE&quot; sont les
+      seules valeurs admises');
+	}
+	if (is_string ($table) ) {
+		$liste_table = $table . ' ' . $type;
+	} elseif (is_array ($table) ) {
+		foreach ($table as $key =&gt; $value) {
+			if ( !is_string ($value) ) {
+				return ('erreur sur le paramètre $table.');
+			}
+			if ( !empty ($liste_table) ) {
+				$liste_table .= ', ';
+			}
+			$liste_table .= $value .' ';
+			if (is_string ($key) ) {
+				$liste_table .= 'AS ' . $key . ' ';
+			}
+			$liste_table .= $type;
+		}
+	} else {
+		return ('erreur sur le paramètre $table.');
+	}
+	$requete = 'LOCK TABLE ' . $liste_table . ';';
+	$resultat = requete ($requete, $connexion);
+	if ( !$resultat) {
+		die('Requête invalide : &lt;br&gt;'.$requete. '&lt;br&gt;' . mysql_error());
+	} else {
+		return TRUE;
+	}
+}
+
+/******************************************************************************/
+/* supprimer_verrou_mysql ($connexion = NULL)                                 */
+/* Cette fonction supprime tous les verrous MySQL sur la ou les tables        */
+/* $connexion : Peut contenir un lien vers une connexion MySQL. Si omis, la   */
+/* dernière connexion du script sera utilisée                                 */
+/******************************************************************************/
+function supprimer_verrou_mysql ($connexion = NULL) {
+	$requete = 'UNLOCK TABLES;'; // Requête MySQL pour verrouiller.
+	$resultat = requete ( $requete, $connexion );
+	if ( !$resultat) {
+		die('Requête invalide : &lt;br&gt;'.$requete. '&lt;br&gt;' . mysql_error());
+	} else {
+		return TRUE;
+	}
+}
+
+/******************************************************************************/
+/* poser_verrou_ligne ($table, $id, $cle = 'id', $connexion = NULL)           */
+/* Cette fonction pose un verrou programmé sur une ligne                      */
+/* $table : Nom de la table contenant la ligne à verrouiller                  */
+/* $id : Valeur de l'identifiant (clé primaire) de la ligne a verrouiller     */
+/* $cle : Nom du champ identifiant en base de donnée (clé primaire)           */
+/* $connexion : Peut contenir un lien vers une connexion MySQL. Si omis, la   */
+/* dernière connexion du script sera utilisée                                 */
+/******************************************************************************/
+function poser_verrou_ligne ($table, $id, $cle = 'id', $connexion = NULL) {
+	if ( (empty ($table) ) || (empty ($id) ) || (empty ($cle) ) ) {
+		return 'Un paramètre d\'appel de la fonction est vide';
+	}
+	if ( ( !empty ($connexion)) &amp;&amp; ( !is_ressource($connexion) ) ) {
+		return 'Le paramètre $connexion est invalide';
+	}
+
+	// Vérification qu'il n'y ait qu'une seule ligne qui correspond aux critères
+	$requete = 'SELECT verrou_id
+              FROM ' . $table . '
+              WHERE `' . $cle . '` = &quot;' . $id . '&quot;';
+
+	$resultat = requete ($requete, $connexion);
+	$verrou = mysql_num_rows ($resultat);
+	if ( $verrou !== 1) {
+		return ('Vous n\'avez pas utilisé un identifiant de ligne unique qui
+      retourne une seule ligne');
+	}
+
+	// si telle est le cas, je pose mon verrou
+	$requete = 'UPDATE ' . $table . '
+              SET verrou_id = &quot;' . session_id () . '&quot;,
+              verrou_heure = NOW()
+              WHERE `' . $cle . '` = &quot;' . $id . '&quot;;';
+	$resultat = requete ($requete, $connexion);
+	if ( !$resultat) {
+		die('Requête invalide : &lt;br&gt;'.$requete. '&lt;br&gt;' . mysql_error());
+	} else {
+		return TRUE;
+	}
+}
+
+/******************************************************************************/
+/* tester_verrou_ligne ($table, $id, $cle = 'id', $connexion = NULL)          */
+/* Cette fonction teste un verrou programmé sur une ligne                     */
+/* $table : Nom de la table contenant la ligne à verrouiller                  */
+/* $id : Valeur de l'identifiant (clé primaire) de la ligne a verrouiller     */
+/* $cle : Nom du champ identifiant en base de donnée (clé primaire)           */
+/* $connexion : Peut contenir un lien vers une connexion MySQL. Si omis, la   */
+/* dernière connexion du script sera utilisée                                 */
+/******************************************************************************/
+function tester_verrou_ligne ($table, $id, $cle = 'id', $connexion = NULL) {
+	if ( (empty ($table) ) || (empty ($id) ) || (empty ($cle) ) ) {
+		return 'Un paramètre d\'appel de la fonction est vide';
+	}
+	if ( ( !empty ($connexion)) &amp;&amp; ( !is_ressource($connexion) ) ) {
+		return 'Le paramètre $connexion est invalide';
+	}
+
+	// Vérification qu'il n'y ait qu'une seule ligne qui correspond aux critères
+	$requete = 'SELECT verrou_id
+              FROM ' . $table . '
+              WHERE `' . $cle . '` = &quot;' . $id . '&quot;; ';
+
+	$resultat = requete ($requete, $connexion);
+	$verrou = mysql_num_rows ($resultat);
+	if ( $verrou !== 1) {
+		return ('Vous n\'avez pas utilisé un identifiant de ligne unique qui
+      retourne une seule ligne');
+	}
+
+	// si telle est le cas, je verifie l'état du verrou
+	$requete = 'SELECT verrou_id
+              FROM ' . $table . '
+              WHERE `' . $cle . '` = &quot;' . $id . '&quot;
+              AND NOW() &lt;= ( DATE_ADD(verrou_heure, INTERVAL ' .
+	VALIDITE_VERROU . ' MINUTE) )';
+	$resultat = requete ($requete, $connexion);
+	if ( !$resultat) {
+		die('Requête invalide : &lt;br&gt;'.$requete. '&lt;br&gt;' . mysql_error());
+	}
+	if ((mysql_num_rows ($resultat))===0) {
+		return NULL;
+	} else {
+		$ligne = mysql_fetch_assoc($resultat);
+		if ($ligne['verrou_id'] === session_id() ) {
+			return TRUE;
+		} elseif ( empty($ligne['verrou_id'])){
+			return NULL;
+		} else {
+			return  FALSE;
+		}
+	}
+}
+
+/******************************************************************************/
+/* supprimer_verrou_ligne ($table, $id, $cle = 'id', $connexion = NULL)       */
+/* Cette fonction lève un verrou programmé sur une ligne                      */
+/* $table : Nom de la table contenant la ligne à déverrouiller                */
+/* $id : Valeur de l'identifiant (clé primaire) de la ligne a verrouiller     */
+/* $cle : Nom du champ identifiant en base de donnée (clé primaire)           */
+/* $connexion : Peut contenir un lien vers une connexion MySQL. Si omis, la   */
+/* dernière connexion du script sera utilisée                                 */
+/******************************************************************************/
+function supprimer_verrou_ligne ($table, $id, $cle = 'id', $connexion = NULL) {
+	if ( (empty ($table) ) || (empty ($id) ) || (empty ($cle) ) ) {
+		return 'Un paramètre d\'appel de la fonction est vide';
+	}
+	if ( ( !empty ($connexion)) &amp;&amp; ( !is_ressource($connexion) ) ) {
+		return 'Le paramètre $connexion est invalide';
+	}
+
+	// Vérification qu'il n'y ait qu'une seule ligne qui correspond aux critères
+	$requete = 'SELECT verrou_id
+              FROM ' . $table . '
+              WHERE `' . $cle . '` = &quot;' . $id . '&quot;';
+
+	$resultat = requete ($requete, $connexion);
+	$verrou = mysql_num_rows ($resultat);
+	if ( $verrou !== 1) {
+		return ('Vous n\'avez pas utilisé un identifiant de ligne unique qui
+      retourne une seule ligne');
+	}
+
+	// si telle est le cas, je lève mon verrou
+	$requete = 'UPDATE ' . $table . '
+              SET verrou_id = NULL,
+              verrou_heure = NULL
+              WHERE `' . $cle . '` = &quot;' . $id . '&quot;;';
+	$resultat = requete ($requete, $connexion);
+	if ( !$resultat) {
+		die('Requête invalide : &lt;br&gt;'.$requete. '&lt;br&gt;' . mysql_error());
+	} else {
+		return TRUE;
+	}
+}
+
+/******************************************************************************/
+/* supprimer_verrou_obsoletes ($table, $connexion = NULL                      */
+/* Cette fonction lève les verrous perimés de la table spécifiée              */
+/* $table : Nom de la table contenant les lignes à déverrouiller              */
+/* $connexion : Peut contenir un lien vers une connexion MySQL. Si omis, la   */
+/* dernière connexion du script sera utilisée                                 */
+/******************************************************************************/
+function supprimer_verrou_obsoletes ($table, $connexion = NULL) {
+	if (empty ($table) ) {
+		return 'Un paramètre $table est vide';
+	}
+	if ( ( !empty ($connexion)) &amp;&amp; ( !is_ressource($connexion) ) ) {
+		return 'Le paramètre $connexion est invalide';
+	}
+
+	// suppression des verrous obsoletes
+	$requete = 'UPDATE ' . $table . '
+              SET verrou_id = NULL,
+              verrou_heure = NULL
+              WHERE NOW() &gt;= ( DATE_ADD(verrou_heure, INTERVAL ' . 
+	VALIDITE_VERROU . ' MINUTE) )';
+	$resultat = requete ($requete, $connexion);
+	if ( !$resultat) {
+		die('Requête invalide : &lt;br&gt;'.$requete. '&lt;br&gt;' . mysql_error());
+	} else {
+		return TRUE;
+	}
+}
+?&gt;</code></pre><h2 id="r-les-meta-fonctions" data-claire-element-id="530808">Les meta-fonctions</h2><p id="r-530792" data-claire-element-id="530792">Nous avons vu sur le schéma général des blocs qui semblaient similaires. Nous allons voir si nous pouvons pas créer des méta fonctions qui regroupent une succession de fonctions élémentaires.<br/> Ceci présenterait les avantages suivants :</p><ul id="r-530797" data-claire-element-id="530797"><li id="r-530794" data-claire-element-id="530794"><p id="r-530793" data-claire-element-id="530793">Ne pas oublier d'enchainer les fonctions dans le bon sens</p></li><li id="r-530796" data-claire-element-id="530796"><p id="r-530795" data-claire-element-id="530795">Faciliter l'utilisation car moins d'appel aux fonctions.</p></li></ul><p id="r-530798" data-claire-element-id="530798">Ces fonctions seraient première vue :</p><ul id="r-530805" data-claire-element-id="530805"><li id="r-530800" data-claire-element-id="530800"><p id="r-530799" data-claire-element-id="530799"><strong>etat_verrou</strong> : pose un verrou &quot;Natif&quot; et se renseigne sur l'état du verrou programmé</p></li><li id="r-530802" data-claire-element-id="530802"><p id="r-530801" data-claire-element-id="530801"><strong>verrou_autre</strong> : Gère le cas ou le verrou ne nous appartient plus (appartient à un autre, ou est périmé)</p></li><li id="r-530804" data-claire-element-id="530804"><p id="r-530803" data-claire-element-id="530803"><strong>formulaire</strong> : Le point principal de ce bloc est la génération du formulaire qui est vraiment spécifique à la page, il est difficile de créer cette méta fonction de manière générique pour la réemployer.</p></li></ul><p id="r-530806" data-claire-element-id="530806"><strong>Ces méta fonctions sont intégrés dans la même &quot;boite à outils&quot; que les fonction ci dessus.</strong></p><pre id="r-530807" data-claire-element-id="530807"><code data-claire-semantic="html+php">&lt;?php
+/******************************************************************************/
+/* etat_verrou ($table, $id, $cle = 'id', $connexion = NULL)                  */
+/* Cette fonction vérifie l'état spécifé en paramètre après avoir supprimé    */
+/* les verrous périmés                                                        */
+/* $table : Nom de la table contenant la ligne à déverrouiller                */
+/* $id : Valeur de l'identifiant (clé primaire) de la ligne a verrouiller     */
+/* $cle : Nom du champ identifiant en base de donnée (clé primaire)           */
+/* $connexion : Peut contenir un lien vers une connexion MySQL. Si omis, la   */
+/* dernière connexion du script sera utilisée                                 */
+/******************************************************************************/
+function etat_verrou ($table, $id, $cle = 'id', $connexion = NULL) {
+	if ( (empty ($table) ) || (empty ($id) ) || (empty ($cle) ) ) {
+		return 'Un paramètre d\'appel de la fonction est vide';
+	}
+	if ( ( !empty ($connexion)) &amp;&amp; ( !is_ressource($connexion) ) ) {
+		return 'Le paramètre $connexion est invalide';
+	}
+	// Verrouiller la table
+	$ok = poser_verrou_mysql($table, 'WRITE', $connexion);
+	if ($ok !== TRUE){
+		return $ok;
+	}
+
+	// suppression des verrous obsoletes
+	$ok = supprimer_verrou_obsoletes($table, $connexion);
+	if ($ok !== TRUE){
+		return $ok;
+	}
+
+	// tester la ligne
+	$ok = tester_verrou_ligne($table, $id, $cle, $connexion);
+	return $ok;
+}
+/******************************************************************************/
+/* verrou_autre ($message, $bouton, $action = 'history.go(-1)',               */
+/*  $connexion = NULL)                                                        */
+/* Le message est affiché dans un paragraphe de classe CSS erreur             */
+/* $message : message donné à l'utilisateur lors de l'appel de cette fonction */
+/* $bouton : texte affiché sur le bouton de fin de page                       */
+/* $action  : effectuée lors d'un clic sur le bouton de fin de page           */
+/* $connexion : Peut contenir un lien vers une connexion MySQL. Si omis, la   */
+/* dernière connexion du script sera utilisée                                 */
+/******************************************************************************/
+function verrou_autre ($message, $bouton, $action = 'history.go(-1)',
+$connexion = NULL) {
+	if ( (empty ($message) ) || (empty ($bouton) ) || (empty ($action) ) ) {
+		return 'Un paramètre d\'appel de la fonction est vide';
+	}
+	if ( ( !empty ($connexion)) &amp;&amp; ( !is_ressource($connexion) ) ) {
+		return 'Le paramètre $connexion est invalide';
+	}
+	// Déverrouiller la table
+	$ok = supprimer_verrou_mysql($connexion);
+	if ($ok !== TRUE){
+		echo $ok;
+	}
+	echo '&lt;p class=&quot;erreur&quot;&gt;'.$message.'&lt;/p&gt;';
+	echo '&lt;input type=&quot;button&quot; value=&quot;'.$bouton.'&quot; onClick=&quot;'.$action.'&quot;&gt;';
+}
+?&gt;</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql">Gestion de verrou MySQL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/le-principe-du-verrou">
+Le principe du verrou
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/le-verrou-courte-duree-verrou-natif-mysql">
+Le verrou &quot;courte durée&quot;, verrou natif MySQL
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/le-verrou-longue-duree-verrou-programme">
+Le verrou &quot;longue durée&quot;, verrou programmé
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/l-articulation-des-verrous-natifs-et-programmes">
+L&#039;articulation des verrous Natifs et programmés
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/le-fichier-d-exemple">
+Le fichier d&#039;exemple
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/le-verrou-longue-duree-verrou-programme">
+<span class="arrow"></span>
+<span class="next">Le verrou &quot;longue durée&quot;, verrou programmé</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/le-fichier-d-exemple">
+<span class="next">Le fichier d&#039;exemple</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lefichierd039exemple"></a><h2>Le fichier d&#039;exemple</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/l-articulation-des-verrous-natifs-et-programmes">
+<span class="arrow"></span>
+<span class="next">L&#039;articulation des verrous Natifs et programmés</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-530810" data-claire-element-id="530810">Pour la suite nous avons supposé que la boite à outils est constituée d'un fichier appelé <strong>verrou.php</strong><br/> Ce fichier sera inclus dans chaque script utilisant les fonctions de verrous.<br/> Regardons maintenant un fichier d'exemple pour comprendre.<br/> Commençons par faire une table dans la base de données :</p><pre id="r-530811" data-claire-element-id="530811"><code data-claire-semantic="sql">CREATE TABLE IF NOT EXISTS `test` (
+  `id` tinyint(4) NOT NULL auto_increment COMMENT 'Clé primaire de la table',
+  `valeur` varchar(255) NOT NULL COMMENT 'Information(s) à mémoriser.',
+  `verrou_id` char(32) default NULL COMMENT 'Identifiant de la session de la personne posant le verrou',
+  `verrou_heure` timestamp NULL default NULL COMMENT 'Heure du dépot du verrou',
+  PRIMARY KEY  (`id`)
+)  DEFAULT CHARSET=latin1 AUTO_INCREMENT=3 ;
+
+
+INSERT INTO `test` (`id`, `valeur`, `verrou_id`, `verrou_heure`) VALUES
+(1, 'valeur 1', NULL, NULL),
+(2, 'valeur 2', NULL, NULL);</code></pre><p id="r-530812" data-claire-element-id="530812">Et voici maintenant le code de la page PHP d'exemple d'utilisation de notre bibliothèque :</p><pre id="r-530813" data-claire-element-id="530813"><code data-claire-semantic="html+php">&lt;?php
+/******************************************************************************/
+/* Fichier test verrous MySQL                                                 */
+/* Auteur : <a class="__cf_email__" href="http://www.cloudflare.com/email-protection" data-cfemail="620f0316160a0b071722060d0c010d0717104c010d0f">[email&nbsp;protected]</a><script type="text/javascript">
+/* <![CDATA[ */
+(function(){try{var s,a,i,j,r,c,l,b=document.getElementsByTagName("script");l=b[b.length-1].previousSibling;a=l.getAttribute('data-cfemail');if(a){s='';r=parseInt(a.substr(0,2),16);for(j=2;a.length-j;j+=2){c=parseInt(a.substr(j,2),16)^r;s+=String.fromCharCode(c);}s=document.createTextNode(s);l.parentNode.replaceChild(s,l);}}catch(e){}})();
+/* ]]> */
+</script>                                             */
+/* Mise à jour : 01/12/2009                                                   */
+/******************************************************************************/
+
+/******************************************************************************/
+/* Fonction de génération des formulaires                                     */
+/******************************************************************************/
+function formulaire ($valeur, $erreur = ''){
+	?&gt;
+&lt;form method=&quot;post&quot; action=&quot;&lt;?php $_SERVER['SCRIPT_NAME'];?&gt;&quot;&gt;
+&lt;p class=&quot;erreur&quot;&gt;&lt;?php echo $erreur;?&gt;&lt;/p&gt;
+&lt;p&gt;Valeur : &lt;input type=&quot;text&quot; value=&quot;&lt;?php echo $valeur;?&gt;&quot;
+	name=&quot;valeur&quot; id=&quot;valeur&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;input type=&quot;submit&quot; value=&quot;Enregistrer&quot; name=&quot;submit&quot; id=&quot;submit&quot; /&gt;&lt;/p&gt;
+&lt;/form&gt;
+	&lt;?php
+}
+
+session_start();
+include_once 'verrou.php';
+
+/******************************************************************************/
+/* Paramètres de configuration et de connexion à la base de données           */
+/* A personnaliser                                                            */
+/******************************************************************************/
+$host='localhost';
+$user='root';
+$pass='';
+$db='test';
+
+/******************************************************************************/
+/* Connexion à la base de données                                             */
+/******************************************************************************/
+$connexion = mysql_connect($host, $user, $pass);
+if ( ! is_resource($connexion) ) {
+	die ('Impossible de se connecter : ' . mysql_error() );
+} else {
+	$retour = TRUE;
+}
+$ok = mysql_select_db ($db, $connexion);
+if ($ok === FALSE) {
+	die ( 'Impossible de sélectionner la base' . $db);
+}
+
+/******************************************************************************/
+/* Récupération de l'identifiant de la ligne à éditer avec verrou, si         */
+/* possible à partir d'un paramètre POST sinon à partir d'un GET              */
+/******************************************************************************/
+$id = NULL;
+if ( isset ($_POST['id']) ) {
+	$id = $_POST['id'];
+} elseif ( isset  ( $_GET['id']) ) {
+	$id = $_GET['id'];
+}
+$id = intval ($id);
+if ( $id === 0 ) {
+	die ('Le paramètre id est manquant ou invalide');
+}
+$etat_verrou = etat_verrou('test', $id);
+?&gt;
+&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD XHTML 1.0 Transitional//EN&quot;
+           &quot;http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd&quot;&gt;
+&lt;html&gt;
+&lt;head&gt;
+&lt;title&gt;Page de test des verrous MySQL&lt;/title&gt;
+&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=iso-8859-1&quot; /&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;?php
+if (isset ($_POST['submit'])){
+	if (($etat_verrou === FALSE) || ($etat_verrou === NULL)){
+		$message = 'Le verrou Ne vous appartient plus. Veuillez recommencer
+		            votre saisie';
+		verrou_autre($message, 'Retour');
+	} else {
+		poser_verrou_ligne('test', $id);
+		/**********************************************************************/
+		/* Sécutisation et verification des valeurs saisies                   */
+		/**********************************************************************/
+		if (empty ($_POST['valeur'])){
+			supprimer_verrou_mysql();
+			$erreur = 'Valeur vide interdite';
+			$valeur = $_POST['valeur'];
+			formulaire($valeur, $erreur);
+		} else {
+			$_POST['valeur'] = mysql_real_escape_string($_POST['valeur']);
+			$requete = 'UPDATE test SET valeur = &quot;'.$_POST[&quot;valeur&quot;].'&quot;
+			            WHERE id = '.$id.';';
+			$resultat = mysql_query($requete);
+			if ($resultat === TRUE){
+				supprimer_verrou_ligne('test', $id);
+				echo '&lt;p&gt;Mise à jours ave succès&lt;/p&gt;';
+			}
+		}
+	}
+} else {
+	if ($etat_verrou === FALSE){
+		$message = 'Le verrou appartient à un autre utilisateur Veuillez
+		            ré-essayer ultèrieurement';
+		verrou_autre($message, 'Retour');
+	} else {
+		poser_verrou_ligne('test', $id);
+		$requete = 'SELECT valeur FROM test WHERE id = '.$id.';';
+		$resultat = mysql_query($requete);
+		$ligne = mysql_fetch_assoc($resultat);
+		$valeur = $ligne['valeur'];
+		formulaire($valeur);
+	}
+}
+?&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre><p id="r-530814" data-claire-element-id="530814">Pour aller plus loin, je vous propose de vous renseigner sur les éléments suivants :</p><ul id="r-530823" data-claire-element-id="530823"><li id="r-530816" data-claire-element-id="530816"><p id="r-530815" data-claire-element-id="530815">La documentation MySQL donne des précisions sur les différentes syntaxes et les utilisations de ces verrous. <a href="http://dev.mysql.com/doc/refman/5.0/fr/internal-locking.html">http://dev.mysql.com/doc/refman/5.0/fr [...] -locking.html</a> Il est notamment indiqué que pour les tables de type InnoDB, il est possible de verrouiller que des lignes et non toute la table. Ceci peut être intéressant si beaucoup d'utilisateurs demandent accès à des informations sur les mêmes tables. En effet cela permet de ne pas avoir une file d'attente trop importante.</p></li><li id="r-530818" data-claire-element-id="530818"><p id="r-530817" data-claire-element-id="530817">Pour plus d'informations sur les transactions vous pouvez lire la documentation officielle de MySQL sur la page <a href="http://dev.mysql.com/doc/refman/5.0/fr/commit.html">http://dev.mysql.com/doc/refman/5.0/fr/commit.html</a></p></li><li id="r-530820" data-claire-element-id="530820"><p id="r-530819" data-claire-element-id="530819">Pour d'autres langages web des Framework incluent en natifs des systèmes de verrouillage qui peuvent être différents. Par exemple Hiberbnate propose une autre gestion des accès concurrents pour des applications basés sur Java J2EE</p></li><li id="r-530822" data-claire-element-id="530822"><p id="r-530821" data-claire-element-id="530821">D'autres système de bases de données plus puissantes que les bases relationnelles commencent à voir le jour</p></li></ul><p id="r-530824" data-claire-element-id="530824">Pour plus d'informations sur tous ses points une petite recherche avec votre moteur préféré vous donnera des informations complémentaires.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql">Gestion de verrou MySQL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/le-principe-du-verrou">
+Le principe du verrou
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/le-verrou-courte-duree-verrou-natif-mysql">
+Le verrou &quot;courte durée&quot;, verrou natif MySQL
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/le-verrou-longue-duree-verrou-programme">
+Le verrou &quot;longue durée&quot;, verrou programmé
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/l-articulation-des-verrous-natifs-et-programmes">
+L&#039;articulation des verrous Natifs et programmés
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/le-fichier-d-exemple">
+Le fichier d&#039;exemple
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/gestion-de-verrou-mysql/l-articulation-des-verrous-natifs-et-programmes">
+<span class="arrow"></span>
+<span class="next">L&#039;articulation des verrous Natifs et programmés</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/gestion-de-verrou-mysql.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 03:38:08 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/gestion-de-verrou-mysql.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:44:00 GMT -->
+</html>

@@ -1,0 +1,396 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/les-transactions-avec-mysql-et-pdo.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 19:49:52 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/les-transactions-avec-mysql-et-pdo.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 03:34:14 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Les transactions avec MySQL et PDO</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/les-transactions-avec-mysql-et-pdo.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Les transactions avec MySQL et PDO</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#LestransactionsavecMySQLetPDO">Les transactions avec MySQL et PDO</a><br/><a href="#Explications">Explications</a><br/><a href="#LesmoteursdestockagedeMySQL">Les moteurs de stockage de MySQL</a><br/><a href="#LathorieMySQL">La théorie : MySQL</a><br/><a href="#LapratiqueutilisationdePDO">La pratique : utilisation de PDO</a><br/></div>
+<a name="LestransactionsavecMySQLetPDO"></a><h2>Les transactions avec MySQL et PDO</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-transactions-avec-mysql-et-pdo/explications-32">
+<span class="next">Explications</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-445052" data-claire-element-id="445052">Lorsqu'on débute avec MySQL, on ne se soucie pas trop de savoir si toutes les requêtes que l'on va faire vont parfaitement s'exécuter. On peut bien sûr mettre un <code data-claire-semantic="html+php">&lt;?php or exit(mysql_error()); ?&gt; </code> à la fin de chaque requête (ou un système plus élaboré) mais cela ne suffit pas toujours.</p><p id="r-445053" data-claire-element-id="445053">En effet il faut que le serveur MySQL renvoie une erreur (donc s'il tombe en panne à ce moment là c'est marron) ou que le serveur PHP puisse aussi traiter cette erreur (et comme son collègue il peut aussi avoir des soucis). Il faut donc s'assurer que pour certaines requêtes (INSERT et UPDATE entre autres) tout s'est déroulé comme on le voulait avant d'appliquer les changements dans la base de données.</p><aside id="r-445055" data-claire-element-id="445055" data-claire-semantic="information"><p id="r-445054" data-claire-element-id="445054">Le but des transaction est justement de s'assurer que tous ces changements ont été correctement effectués avant de les appliquer définitivement. Et en cas de problèmes les transactions permettent de revenir en arrière.</p></aside><p id="r-445056" data-claire-element-id="445056">Vous ne voyez toujours pas l'intérêt des transactions ? Au contraire ça vous intéresse et vous voulez en savoir plus ? Ça tombe bien c'est le but de ce tutoriel.</p>
+</div><a name="Explications"></a><h2>Explications</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-transactions-avec-mysql-et-pdo/les-moteurs-de-stockage-de-mysql-1">
+<span class="next">Les moteurs de stockage de MySQL</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-des-exemples-pour-mieux-comprendre" data-claire-element-id="445071">Des exemples pour mieux comprendre</h2><aside id="r-445058" data-claire-element-id="445058" data-claire-semantic="warning"><p id="r-445057" data-claire-element-id="445057">Ce premier exemple est là pour vous montrer que dans certains cas il est indispensable que toutes les requêtes soient effectuées.</p></aside><h3 id="r-les-transactions-bancaires" data-claire-element-id="445070">Les transactions bancaires</h3><p id="r-445059" data-claire-element-id="445059">On va prendre un honnête citoyen (Monsieur Michou) qui veut acheter un serveur qui vaut 2000€ qu'il décide de payer par CB. il donne alors son numéro et toutes les informations qui vont avec afin que la banque puisse effectuer le transfert d'argent entre le compte de monsieur Michou et le compte du vendeur de serveur. Cette banque qui après s'être assurée que tout était en règle va alors virer l'argent depuis le compte de l'acheteur vers celui du vendeur.</p><p id="r-445060" data-claire-element-id="445060">Tout d'abord la banque prélève 2000€ sur le compte de M. Michou.</p><pre id="r-445061" data-claire-element-id="445061"><code data-claire-semantic="sql">UPDATE compte SET argent = argent - 2000 WHERE compte_proprio = michou</code></pre><p id="r-445062" data-claire-element-id="445062">Ensuite elle envoie cet argent sur le compte du vendeur de serveurs.</p><pre id="r-445063" data-claire-element-id="445063"><code data-claire-semantic="sql">UPDATE compte SET argent = argent + 2000 WHERE compte_proprio = vendeur</code></pre><p id="r-445064" data-claire-element-id="445064">Le transfert s'étant bien effectué, monsieur Michou reçoit alors son serveur. Là tout s'est bien passé car les deux requêtes se sont convenablement déroulées, mais il peut aussi y avoir une erreur lors du transfert. reprenons l'exemple précédent :</p><p id="r-445065" data-claire-element-id="445065">Tout d'abord la banque prélève 2000€ sur le compte de M. Michou.</p><pre id="r-445066" data-claire-element-id="445066"><code data-claire-semantic="sql">UPDATE compte SET argent = argent - 2000 WHERE compte_proprio = michou</code></pre><p id="r-445067" data-claire-element-id="445067">Ensuite elle envoit cet argent sur le compte du vendeur de serveurs.</p><pre id="r-445068" data-claire-element-id="445068"><code data-claire-semantic="sql">//plantage du serveur MySQL</code></pre><p id="r-445069" data-claire-element-id="445069">Et là c'est le drame (pour monsieur Michou), la banque lui a retirée 2000€ sur son compte, mais cet argent n'est jamais arrivé sur le compte du vendeur qui donc n'enverra jamais le serveur vu qu'il n'a pas reçu d'argent. Il faudrait donc pouvoir s'assurer que ces deux requêtes se soient correctement effectuées avant de les appliquer. C'est l'objet de ce tutoriel.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-transactions-avec-mysql-et-pdo">Les transactions avec MySQL et PDO</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-transactions-avec-mysql-et-pdo/explications-32">
+Explications
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-transactions-avec-mysql-et-pdo/les-moteurs-de-stockage-de-mysql-1">
+Les moteurs de stockage de MySQL
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-transactions-avec-mysql-et-pdo/la-theorie-mysql">
+La théorie : MySQL
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-transactions-avec-mysql-et-pdo/la-pratique-utilisation-de-pdo">
+La pratique : utilisation de PDO
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-transactions-avec-mysql-et-pdo/les-moteurs-de-stockage-de-mysql-1">
+<span class="next">Les moteurs de stockage de MySQL</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="LesmoteursdestockagedeMySQL"></a><h2>Les moteurs de stockage de MySQL</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-transactions-avec-mysql-et-pdo/explications-32">
+<span class="arrow"></span>
+<span class="next">Explications</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-transactions-avec-mysql-et-pdo/la-theorie-mysql">
+<span class="next">La théorie : MySQL</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-445073" data-claire-element-id="445073">La particularité de MySQL est de proposer plusieurs moteurs de stockage dans une même base de données. Sans entrer dans les détails je vais vous faire une brève présentation de quelques uns de ces moteurs actuels en détaillant un peu leurs particularités, tout cela afin de comprendre quand et pourquoi utiliser tel ou tel moteur de stockage. Car ces moteurs ont des spécificités bien particulières qui ont même entrainées des idées reçues pendant un temps.</p><h2 id="r-myisam-le-plus-repandu" data-claire-element-id="445080">MyIsam : le plus répandu</h2><h3 id="r-des-avantages" data-claire-element-id="445076">Des avantages ...</h3><p id="r-445074" data-claire-element-id="445074">MyIsam est le moteur par défaut de MySQL, si jusqu'à présent la notion de moteur de stockage vous était inconnue, c'est surement ce moteur là que vous utilisez depuis vos début avec MySQL. Ce moteur est très populaire car il est très simple d'utilisation (pour un débutant) et offre de très bonnes performances sur des tables très fréquemment ouvertes en lecture-écriture.</p><p id="r-445075" data-claire-element-id="445075">Son autre point fort est de proposer un index FULL-TEXT, qui permet de faire des recherche assez précises (en comparaison avec LIKE) sur des colonnes de texte et qui permet donc à chacun d'avoir un petit moteur de recherche, notamment grâce à un tri par pertinence.</p><h3 id="r-et-des-inconvenients" data-claire-element-id="445079">...et des inconvénients</h3><p id="r-445077" data-claire-element-id="445077">Pour rester sur l'index FULL-TEXT, celui souffre néanmoins sur les grosses tables, de plus sa configuration (taille des mots notamment) n'est accessible que sur un serveur dédié.</p><p id="r-445078" data-claire-element-id="445078">Mais les 2 plus gros défauts du moteur MyIsam est qu'il ne supporte ni les clefs étrangères, ni les transactions (qui font l'objet de ce tutoriel). C'est d'ailleurs la forte présence de ce moteur (de plus proposé par défaut) qui fait croire à certains que MySQL ne gère pas les transactions. C'est faux, mais il faut pour cela utiliser un moteur de stockage qui les supporte : InnoDB.</p><h2 id="r-innodb-un-moteur-pour-des-bases-robustes" data-claire-element-id="445086">InnoDB : un moteur pour des bases robustes</h2><p id="r-445081" data-claire-element-id="445081">Contrairement à MyIsam, InnoDB est un moteur qu'on utilise pour ses fonctionnalités qui en font le moteur le plus utilisé dans les secteurs sensibles, c'est-à-dire nécessitant une cohérence et une grande intégrité des données (finances, jeux en ligne, architecture complexe très sollicitée, etc ...).</p><p id="r-445082" data-claire-element-id="445082">Ses deux grands points forts sont sa gestion des <a href="http://www.siteduzero.com/tutoriel-3-32310-creer-des-relations-dans-votre-base-de-donnees.html">clefs étrangères</a> et son support des transactions (ah je sens un regain d'intérêt petit lecteur ^^ ). Ces mécanismes transactionnels présentent une grande compatibilité aux critères <a href="http://fr.wikipedia.org/wiki/Propriétés_ACID">ACID</a>.</p><p id="r-445083" data-claire-element-id="445083">Concernant ses défauts : outre le fait d'avoir des tables plus volumineuses (en moyenne 25% plus grosses) et de ne pas proposer d'index FULL-TEXT, InnoDB est légèrement plus lent dans les opérations, mais cela est dû aux tests d'intégrité (les clef étrangères et les transactions) qui permettent de garder une base cohérente.</p><aside id="r-445085" data-claire-element-id="445085" data-claire-semantic="information"><p id="r-445084" data-claire-element-id="445084">C'est donc ce moteur de stockage que nous allons utiliser pour la suite de ce tutoriel.</p></aside><h2 id="r-memory-heap-tout-dans-la-ram" data-claire-element-id="445090">Memory (Heap) : tout dans la Ram</h2><p id="r-445087" data-claire-element-id="445087">Comme son nom l'indique, ce moteur de stockage stocke les données de la table en mémoire, la structure quand à elle est stockée dans un fichier. Son principal intérêt est sa rapidité d'accès, très utile pour une table très fortement sollicitée. Le problème c'est qu'en cas d'arrêt du serveur, toutes les données stockées sont supprimées (puisque stockée dans la Ram qui se vide lors de l'arrêt du courant).</p><p id="r-445088" data-claire-element-id="445088">Il faut donc utiliser ce moteur de stockage pour des données qui ne sont pas indispensables au fonctionnement d'un site tel qu'un compteur de visiteur ou un système de chat (sauf si vous voulez garder une trace des discussions).</p><p id="r-445089" data-claire-element-id="445089">Des moteurs de stockage pour MySQL, il y en a pleins d'autres mais les principaux sont là, passons sans plus attendre à la pratique.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-transactions-avec-mysql-et-pdo">Les transactions avec MySQL et PDO</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-transactions-avec-mysql-et-pdo/explications-32">
+Explications
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-transactions-avec-mysql-et-pdo/les-moteurs-de-stockage-de-mysql-1">
+Les moteurs de stockage de MySQL
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-transactions-avec-mysql-et-pdo/la-theorie-mysql">
+La théorie : MySQL
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-transactions-avec-mysql-et-pdo/la-pratique-utilisation-de-pdo">
+La pratique : utilisation de PDO
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-transactions-avec-mysql-et-pdo/explications-32">
+<span class="arrow"></span>
+<span class="next">Explications</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-transactions-avec-mysql-et-pdo/la-theorie-mysql">
+<span class="next">La théorie : MySQL</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="LathorieMySQL"></a><h2>La théorie : MySQL</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-transactions-avec-mysql-et-pdo/les-moteurs-de-stockage-de-mysql-1">
+<span class="arrow"></span>
+<span class="next">Les moteurs de stockage de MySQL</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-transactions-avec-mysql-et-pdo/la-pratique-utilisation-de-pdo">
+<span class="next">La pratique : utilisation de PDO</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-445092" data-claire-element-id="445092">Comme cela a été dit précédemment, il faut utiliser le moteur de stockage InnoDB, pour cela il faut le spécifier lors de la création de la table sur laquelle on va travailler :</p><pre id="r-445093" data-claire-element-id="445093"><code data-claire-semantic="sql">CREATE TABLE compte
+(
+    -- liste des champs
+)
+ENGINE = InnoDB;</code></pre><p id="r-445094" data-claire-element-id="445094">Cette table toute simple que l'on va utiliser, en reprenant le premier exemple, comporte 2 champs :</p><ul id="r-445099" data-claire-element-id="445099"><li id="r-445096" data-claire-element-id="445096"><p id="r-445095" data-claire-element-id="445095">le nom du propriétaire du compte</p></li><li id="r-445098" data-claire-element-id="445098"><p id="r-445097" data-claire-element-id="445097">le montant sur le compte</p></li></ul><pre id="r-445100" data-claire-element-id="445100"><code data-claire-semantic="sql">CREATE TABLE compte
+(
+    nom VARCHAR (30) NOT NULL,
+    montant MEDIUMINT UNSIGNED NOT NULL
+)
+ENGINE = InnoDB;</code></pre><p id="r-445101" data-claire-element-id="445101">On va bien sûr y insérer nos 2 utilisateurs, le vendeur et M. Michou (ici appelé acheteur) en leur donnant à chacun un compte bien remplis.</p><pre id="r-445102" data-claire-element-id="445102"><code data-claire-semantic="sql">INSERT INTO compte
+(nom,montant)
+VALUES
+('vendeur', '10000'),
+('acheteur', '25000');</code></pre><h2 id="r-les-transactions-commit-et-rollback" data-claire-element-id="445118">Les transactions : COMMIT et ROLLBACK</h2><p id="r-445103" data-claire-element-id="445103">Le principe des transactions est très simple à mettre en oeuvre : on lance la transaction avec <code data-claire-semantic="sql">START TRANSACTION; </code>puis on effectue les opérations sur les tables, et ensuite on a 2 choix :</p><ul id="r-445108" data-claire-element-id="445108"><li id="r-445105" data-claire-element-id="445105"><p id="r-445104" data-claire-element-id="445104">On valide les opérations précédentes avec COMMIT.</p></li><li id="r-445107" data-claire-element-id="445107"><p id="r-445106" data-claire-element-id="445106">On annule tous les changements avec ROLLBACK.</p></li></ul><p id="r-445109" data-claire-element-id="445109">Or par défaut, le moteur InnoDB est réglé pour valider automatiquement toutes les transactions car il considère chaque requête individuelle comme une transaction : on annule ce comportement grâce à la commande <code data-claire-semantic="sql">SET autocommit = 0; </code>, on va voir tout de suite ce que ça donne en pratique :</p><pre id="r-445110" data-claire-element-id="445110"><code data-claire-semantic="sql">-- on désactive l'autocommit
+SET autocommit = 0;
+-- on lance la transaction
+START TRANSACTION;
+-- on effectue cette simple requête sur notre table compte
+UPDATE compte SET montant = montant + 20000 WHERE nom = 'vendeur';</code></pre><p id="r-445111" data-claire-element-id="445111">Vous pouvez effectuer cette suite de requêtes autant de fois que vous voulez, le montant du vendeur ne changera pas d'un pouce, la transaction n'ayant pas été validée. Pour cela il faut faire appel à la commande COMMIT qui va valider les requêtes effectuées lors de la transaction :</p><pre id="r-445112" data-claire-element-id="445112"><code data-claire-semantic="sql">-- on désactive l'autocommit
+SET autocommit = 0;
+-- on lance la transaction
+START TRANSACTION;
+-- on effectue cette simple requête sur notre table compte
+UPDATE compte SET montant = montant + 20000 WHERE nom = 'vendeur';
+-- on valide la transaction
+COMMIT;</code></pre><p id="r-445113" data-claire-element-id="445113">Et là comme par magie la requête est prise en compte.</p><p id="r-445114" data-claire-element-id="445114">Il y a la commande COMMIT pour valider, mais il y a aussi la commande ROLLBACK pour annuler, cela permet de revenir à la structure avant le début de la transaction, en clair on fait un Ctrl + Z sur notre base de données. Très utile si il y a un problème comme celui ci par exemple :</p><pre id="r-445115" data-claire-element-id="445115"><code data-claire-semantic="sql">-- on désactive l'autocommit
+SET AUTOCOMMIT =0;
+-- on lance la transaction
+START TRANSACTION;
+-- on effectue cette simple requête sur notre table compte
+UPDATE compte SET montant = montant + 20000 WHERE nom = 'vendeur';
+-- cette requête retourne une erreur
+UPDATE compte SET montant = montant - 20000 WHERE nom = 'machin';
+-- on annule donc la transaction
+ROLLBACK ;</code></pre><p id="r-445116" data-claire-element-id="445116">Si ces deux opérations avaient été effectuées hors d'une transaction, le vendeur aurait bien reçu son argent mais il y aurait eut un problème puisque le membre machin n'existe pas, donc au final la somme totale dans ma table n'est plus la même, on a plus alors une base cohérente d'où l'importance des transactions.</p><p id="r-445117" data-claire-element-id="445117">Afin d'utiliser au mieux les transactions, on va maintenant passer à des exemples en utilisant PHP.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-transactions-avec-mysql-et-pdo">Les transactions avec MySQL et PDO</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-transactions-avec-mysql-et-pdo/explications-32">
+Explications
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-transactions-avec-mysql-et-pdo/les-moteurs-de-stockage-de-mysql-1">
+Les moteurs de stockage de MySQL
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-transactions-avec-mysql-et-pdo/la-theorie-mysql">
+La théorie : MySQL
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-transactions-avec-mysql-et-pdo/la-pratique-utilisation-de-pdo">
+La pratique : utilisation de PDO
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-transactions-avec-mysql-et-pdo/les-moteurs-de-stockage-de-mysql-1">
+<span class="arrow"></span>
+<span class="next">Les moteurs de stockage de MySQL</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-transactions-avec-mysql-et-pdo/la-pratique-utilisation-de-pdo">
+<span class="next">La pratique : utilisation de PDO</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="LapratiqueutilisationdePDO"></a><h2>La pratique : utilisation de PDO</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-transactions-avec-mysql-et-pdo/la-theorie-mysql">
+<span class="arrow"></span>
+<span class="next">La théorie : MySQL</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-pdo-comme-interface-avec-mysql" data-claire-element-id="445147">PDO comme interface avec MySQL</h2><h3 id="r-presentation-de-pdo" data-claire-element-id="445134">Présentation de PDO</h3><p id="r-445120" data-claire-element-id="445120">Il existe de nombreux moyens pour se connecter à une base de données avec PHP, l'un d'eux est d'utiliser <a href="http://fr2.php.net/manual/fr/class.pdo.php">PDO</a> qui permet notamment d'utiliser les transactions nativement. Pour ceux qui ne connaissent pas je vous conseille de lire <a href="http://www.siteduzero.com/tutoriel-3-34790-pdo-interface-d-acces-aux-bdd.html">ce tutoriel</a> afin d'avoir cette interface en main.</p><p id="r-445121" data-claire-element-id="445121">PDO fait notamment intervenir le concept de programmation orientée objet, cela reste néanmoins très simple et accessible à celui qui n'aurait jamais programmé en objet. La première chose à faire est de se connecter à la base de données : il faut comme avec le pilote MySQl habituel fournir les informations suivantes :</p><ul id="r-445130" data-claire-element-id="445130"><li id="r-445123" data-claire-element-id="445123"><p id="r-445122" data-claire-element-id="445122">L'adresse de la base de données (localhost si vous travaillez en local)</p></li><li id="r-445125" data-claire-element-id="445125"><p id="r-445124" data-claire-element-id="445124">Le nom de la base de données (ici transactions)</p></li><li id="r-445127" data-claire-element-id="445127"><p id="r-445126" data-claire-element-id="445126">Le nom d'utilisateur (ici root)</p></li><li id="r-445129" data-claire-element-id="445129"><p id="r-445128" data-claire-element-id="445128">Et bien sûr le mot de passe pour accéder à la base de données (ici test)</p></li></ul><p id="r-445131" data-claire-element-id="445131">Il ne reste plus qu'à créer un objet PDO pour interagir avec MySQL.</p><pre id="r-445132" data-claire-element-id="445132"><code data-claire-semantic="html+php">&lt;?php $pdo = new PDO('mysql:host=localhost;dbname=transactions', 'root', 'test'); ?&gt;</code></pre><p id="r-445133" data-claire-element-id="445133">Pour plus de détails je vous conseille de lire le tutoriel que je vous ai suggéré précédemment.</p><h3 id="r-les-exceptions-6" data-claire-element-id="445146">Les exceptions</h3><p id="r-445135" data-claire-element-id="445135">Un des avantages de PDO est de pouvoir utiliser les exceptions. Cela va nous permettre de lancer une transaction et selon le résultat (échec ou réussite de la transaction) agir en conséquence :</p><ul id="r-445140" data-claire-element-id="445140"><li id="r-445137" data-claire-element-id="445137"><p id="r-445136" data-claire-element-id="445136">En cas de réussite : continuer la suite du script (confirmation, validation, etc).</p></li><li id="r-445139" data-claire-element-id="445139"><p id="r-445138" data-claire-element-id="445138">En cas d'échec : une erreur ayant été détectée, il est alors possible de la récupérer (dans un log par exemple) pour ensuite la traiter. Le plus souvent les erreurs détectées sont des problèmes de clefs étrangères ou tout simplement des erreurs de codage. En ce sens les exceptions sont aussi très utiles pour débugger un système sans tout bousiller lors des tests.</p></li></ul><p id="r-445141" data-claire-element-id="445141">Le plus simple pour moi étant de vous monter un exemple, vous comprendrez tout de suite mieux. Une va utiliser un exception pour se connecter à la base de données précédente.</p><pre id="r-445142" data-claire-element-id="445142"><code data-claire-semantic="html+php">&lt;?php
+try
+{
+    $pdo = new PDO('mysql:host=localhost;dbname=transactions', 'root', 'test');
+}
+catch(Exception $e)
+{
+    echo 'Echec de la connexion à la base de données';
+    exit();
+}
+?&gt;</code></pre><p id="r-445143" data-claire-element-id="445143">La première partie peut être vue comme une tentative de la part du système (try veut dire essai en anglais) d'exécuter le code placé dans la première accolade. Si tout se passe bien alors tout va bien mais si la portion de script renvoie une erreur, elle va alors pouvoir être utilisée par l'instruction catch (attraper en anglais). Ensuite le code placé dans les accolades sera exécuté. Dans notre exemple on va alors afficher l'erreur afin de savoir pourquoi la connexion à la base de données a échouée.</p><pre id="r-445144" data-claire-element-id="445144"><code data-claire-semantic="html+php">&lt;?php
+catch(Exception $e)
+{
+    echo 'Erreur : '.$e-&gt;getMessage().'&lt;br /&gt;';
+    echo 'N° : '.$e-&gt;getCode();
+}</code></pre><p id="r-445145" data-claire-element-id="445145">La plupart du temps l'erreur est explicite (mauvais mot de passe, la bdd n'existe pas, le serveur SQl ne répond pas), sinon avec le numéro d'erreur donné et une recherche sur Google on trouve très vite la solution. Ce système est utilisé sur le SdZ pour afficher une page d'erreur lorsque le serveur PostgreSQL a un problème (souvent une surcharge).</p><h2 id="r-une-transaction-complete" data-claire-element-id="445161">Une transaction complète</h2><p id="r-445148" data-claire-element-id="445148">La première étape consiste à initialiser la transaction avec la méthode PDO <em>beginTransaction</em> (on a rarement fait plus simple). Je ne reprends pas le code précédent vous êtes grand.</p><pre id="r-445149" data-claire-element-id="445149"><code data-claire-semantic="html+php">&lt;?php $pdo-&gt;beginTransaction(); ?&gt;</code></pre><p id="r-445150" data-claire-element-id="445150">La suite est très simple, il suffit d'exécuter simplement les requêtes SQL que l'on désire (ces requêtes sont fantaisistes) :</p><pre id="r-445151" data-claire-element-id="445151"><code data-claire-semantic="html+php">&lt;?php
+$pdo-&gt;query('SELECT * FROM machin WHERE bidule = \'truc\'');
+
+$pdo-&gt;query('INSERT INTO machin SET bidule = \'truc\', chose = \'moi\'');
+
+$pdo-&gt;query('UPDATE machin SET nombre = nombre + 1');</code></pre><p id="r-445152" data-claire-element-id="445152">Enfin on applique toutes ces requêtes avec la méthode commit :</p><pre id="r-445153" data-claire-element-id="445153"><code data-claire-semantic="html+php">&lt;?php $pdo-&gt;commit(); ?&gt;</code></pre><p id="r-445154" data-claire-element-id="445154">Si tout se passe bien alors ces 3 requêtes seront appliquées à la base de données, mais en cas d'erreur on va la traiter et annuler les requêtes précédentes avec la méthode rollback.</p><pre id="r-445155" data-claire-element-id="445155"><code data-claire-semantic="html+php">&lt;?php $pdo-&gt;rollback(); ?&gt;</code></pre><p id="r-445156" data-claire-element-id="445156">Ce qui avec le système des exceptions donne cela au final :</p><pre id="r-445157" data-claire-element-id="445157"><code data-claire-semantic="html+php">&lt;?php
+try
+{
+    //on tente d'exécuter les requêtes suivantes dans une transactions
+
+    //on lance la transaction
+    $pdo-&gt;beginTransaction();
+
+    //nos 3 requêtes
+    $pdo-&gt;query('SELECT * FROM machin WHERE bidule = \'truc\'');
+
+    $pdo-&gt;query('INSERT INTO machin SET bidule = \'truc\', chose = \'moi\'');
+
+    $pdo-&gt;query('UPDATE machin SET nombre = nombre + 1');
+
+    //si jusque là tout se passe bien on valide la transaction
+    $pdo-&gt;commit();
+   
+    //on affiche un petit message de confirmation
+    echo 'Tout s\'est bien passé.';
+}
+catch(Exception $e) //en cas d'erreur
+{
+    //on annule la transation
+    $pdo-&gt;rollback();
+
+    //on affiche un message d'erreur ainsi que les erreurs
+    echo 'Tout ne s\'est pas bien passé, voir les erreurs ci-dessous&lt;br /&gt;';
+    echo 'Erreur : '.$e-&gt;getMessage().'&lt;br /&gt;';
+    echo 'N° : '.$e-&gt;getCode();
+
+    //on arrête l'exécution s'il y a du code après
+    exit();
+}</code></pre><p id="r-445158" data-claire-element-id="445158">Voilà donc à quoi ressemble une transaction complète, cela permet d'être sûr que tout s'est bien passé et qu'on va pas se retrouver avec une base de données erronées comme par exemple un message d'un forum qui n'est rattaché à aucun sujet car la création du sujet a échoué.</p><p id="r-445159" data-claire-element-id="445159">Les transactions sont surtout utilisées sur des bases de données nécessitant une fiabilité à toute épreuve (finance, santé, défense). Tous les grands SGBDR (Oracle, PostgreSQl, Firebird, DB2, SQl-SERVEr, etc) fournissent cette fonctionnalité qui est indispensable pour certains.</p><p id="r-445160" data-claire-element-id="445160">Je suis conscient que pour des petits sites web les transactions ne sont pas une nécessité, néanmoins j'espère que ce tutoriel vous a plu.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-transactions-avec-mysql-et-pdo">Les transactions avec MySQL et PDO</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-transactions-avec-mysql-et-pdo/explications-32">
+Explications
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-transactions-avec-mysql-et-pdo/les-moteurs-de-stockage-de-mysql-1">
+Les moteurs de stockage de MySQL
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-transactions-avec-mysql-et-pdo/la-theorie-mysql">
+La théorie : MySQL
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-transactions-avec-mysql-et-pdo/la-pratique-utilisation-de-pdo">
+La pratique : utilisation de PDO
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-transactions-avec-mysql-et-pdo/la-theorie-mysql">
+<span class="arrow"></span>
+<span class="next">La théorie : MySQL</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/les-transactions-avec-mysql-et-pdo.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 19:49:52 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/les-transactions-avec-mysql-et-pdo.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 03:34:14 GMT -->
+</html>

@@ -1,0 +1,1042 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/les-moteurs-de-stockage-de-mysql.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 01:21:19 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/les-moteurs-de-stockage-de-mysql.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:21:40 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Les moteurs de stockage de MySQL</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/les-moteurs-de-stockage-de-mysql.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Les moteurs de stockage de MySQL</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#LesmoteursdestockagedeMySQL">Les moteurs de stockage de MySQL</a><br/><a href="#MySQLetsesdrlesdemoteurs">MySQL et ses drôles de moteurs</a><br/><a href="#LemotclENGINE">Le mot clé ENGINE</a><br/><a href="#Deuxgrandesfamillesdemoteurs">Deux grandes familles de moteurs</a><br/><a href="#MyISAM">MyISAM</a><br/><a href="#InnoDB">InnoDB</a><br/><a href="#MEMORYanciennementHEAP">MEMORY (anciennement HEAP)</a><br/><a href="#MERGEanciemmentMRG_MyISAM">MERGE (anciemment MRG_MyISAM)</a><br/><a href="#Autresmoteurs">Autres moteurs</a><br/><a href="#EssenceouDieselQuelmoteurchoisir">Essence ou Diesel ? Quel moteur choisir ?</a><br/></div>
+<a name="LesmoteursdestockagedeMySQL"></a><h2>Les moteurs de stockage de MySQL</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/mysql-et-ses-droles-de-moteurs">
+<span class="next">MySQL et ses drôles de moteurs</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-352149" data-claire-element-id="352149">MySQL est souvent décrié par de nombreux développeurs comme étant lent, ne gérant pas les relations ou les transactions, et est souvent considéré à tort comme un mauvais outil.<br/> Mais comme tout outil, il faut savoir le manipuler pour en tirer réellement profit.</p><p id="r-352150" data-claire-element-id="352150">Nous allons découvrir ici quelques facettes de MySQL assez peu connues des débutants et qui peuvent dans certains cas nous changer la vie.</p><aside id="r-352152" data-claire-element-id="352152" data-claire-semantic="information"><p id="r-352151" data-claire-element-id="352151">Ce tutoriel ne parle pas de la version Cluster de MySQL en raison de sa complexité et n'abordera donc pas le moteur de stockage NDBCluster qui lui est associé.<br/> La <a href="http://dev.mysql.com/doc/refman/5.0/fr/ndbcluster.html">documentation MySQL</a> pourra vous renseigner largement sur ce moteur</p></aside>
+</div><a name="MySQLetsesdrlesdemoteurs"></a><h2>MySQL et ses drôles de moteurs</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/le-mot-cle-engine">
+<span class="next">Le mot clé ENGINE</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-352153" data-claire-element-id="352153">On appelle moteur de stockage l'ensemble des algorithmes utilisés par un SGBDR pour stocker les informations et y accéder au moyen d'une requête SQL.</p><p id="r-352154" data-claire-element-id="352154">La plupart des SGBDR proposent un moteur unique, créé pour être le plus efficace possible dans tous les cas. MySQL et ses forks (dont les plus connus sont MariaDB et Drizzle) se démarquent de leurs homologues en proposant à l'administrateur de la base de choisir pour chaque table de sa base quel moteur il désire utiliser.<br/> On se retrouve ainsi avec des bases où plusieurs moteurs peuvent coexister. C'est un choix de conception qui a ses avantages et inconvénients.<br/> Le développeur est libre de choisir la manière dont ses données sont stockées, mais en revanche, s'il ne fait pas attention à ce qu'il fait, on peut très vite perdre pied sur de grosses bases de données et ne plus savoir au final quelle table utilise quel moteur.</p><p id="r-352155" data-claire-element-id="352155">Actuellement, MySQL dispose de nombreux moteurs, avec chacun une utilité particulière et des cas spécifiques d'utilisation.<br/> Voici les principaux :</p><ul id="r-352174" data-claire-element-id="352174"><li id="r-352157" data-claire-element-id="352157"><p id="r-352156" data-claire-element-id="352156">MyISAM</p></li><li id="r-352159" data-claire-element-id="352159"><p id="r-352158" data-claire-element-id="352158">InnoDB</p></li><li id="r-352161" data-claire-element-id="352161"><p id="r-352160" data-claire-element-id="352160">MEMORY (anciennement HEAP)</p></li><li id="r-352163" data-claire-element-id="352163"><p id="r-352162" data-claire-element-id="352162">MERGE</p></li><li id="r-352165" data-claire-element-id="352165"><p id="r-352164" data-claire-element-id="352164">BLACKHOLE</p></li><li id="r-352167" data-claire-element-id="352167"><p id="r-352166" data-claire-element-id="352166">BerkeleyDB ou BDB</p></li><li id="r-352169" data-claire-element-id="352169"><p id="r-352168" data-claire-element-id="352168">ARCHIVE</p></li><li id="r-352171" data-claire-element-id="352171"><p id="r-352170" data-claire-element-id="352170">CSV</p></li><li id="r-352173" data-claire-element-id="352173"><p id="r-352172" data-claire-element-id="352172">FEDERATED</p></li></ul><p id="r-352175" data-claire-element-id="352175">Trois autres moteurs existent mais sont soit inutilisables, soit très complexes à appréhender et sortent du cadre de ce tutoriel.</p><ul id="r-352182" data-claire-element-id="352182"><li id="r-352177" data-claire-element-id="352177"><p id="r-352176" data-claire-element-id="352176">Il s'agit pour le premier de <strong>Isam</strong>, moteur historique de MySQL 1.0 , et qui a été remplacé par MyISAM à partir de la version 3.23.0.<br/> Depuis MySQL 5.0, Isam n'est même plus inclus dans le code source de MySQL.</p></li><li id="r-352179" data-claire-element-id="352179"><p id="r-352178" data-claire-element-id="352178">Le second moteur est <strong>NDBCluster</strong>, qui est le type spécifique de la version clusterisée de MySQL. Comme précisé dans l'introduction, pour ne pas trop compliquer ce tutoriel je n'aborderai pas la MySQL Cluster et je vous renvois donc à la <a href="http://dev.mysql.com/doc/refman/5.0/fr/ndbcluster.html">documentation de la version Cluster de MySQL</a> pour de plus amples informations à ce sujet.</p></li><li id="r-352181" data-claire-element-id="352181"><p id="r-352180" data-claire-element-id="352180">Enfin, le moteur inutilisable est <strong>EXAMPLE</strong>, dont l'unique but est de permettre aux développeurs d'avoir un exemple de structure de code pour créer leur propre moteur de stockage.</p></li></ul><p id="r-352183" data-claire-element-id="352183">De plus, par la nature modulaire des moteurs de stockages dans MySQL, des moteurs non officiels existent et peuvent être ajoutés à ceux présents de base comme s'il s'agissait de plug-ins.<br/> C'est le cas par exemple de <a href="https://launchpad.net/percona-xtradb">Percona-XtraDB</a>. Ce moteur est l'évolution non officielle d'InnoDB et est utilisé comme son remplaçant dans MariaDB.<br/> On citera aussi <a href="http://www.primebase.org/documentation/#what">PBXT</a>, <a href="https://launchpad.net/oqgraph">OQGRAPH</a> ou <a href="http://kb.askmonty.org/v/aria-storage-engine">Aria</a> (moteur par défaut de MariaDB).</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql">Les moteurs de stockage de MySQL</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/mysql-et-ses-droles-de-moteurs">
+MySQL et ses drôles de moteurs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/le-mot-cle-engine">
+Le mot clé ENGINE
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/deux-grandes-familles-de-moteurs">
+Deux grandes familles de moteurs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/myisam-1">
+MyISAM
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/innodb-1">
+InnoDB
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/memory-anciennement-heap">
+MEMORY (anciennement HEAP)
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/merge-anciemment-mrg-myisam">
+MERGE (anciemment MRG_MyISAM)
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/autres-moteurs">
+Autres moteurs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/essence-ou-diesel-quel-moteur-choisir">
+Essence ou Diesel ? Quel moteur choisir ?
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/le-mot-cle-engine">
+<span class="next">Le mot clé ENGINE</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="LemotclENGINE"></a><h2>Le mot clé ENGINE</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/mysql-et-ses-droles-de-moteurs">
+<span class="arrow"></span>
+<span class="next">MySQL et ses drôles de moteurs</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/deux-grandes-familles-de-moteurs">
+<span class="next">Deux grandes familles de moteurs</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-352185" data-claire-element-id="352185">Non, je ne parle pas ici d'un gros mal de gorge mais du mot anglais signifiant &quot;moteur&quot;. :p</p><p id="r-352186" data-claire-element-id="352186">Voyons déjà quels sont les moteurs que MySQL met à notre disposition, ceci au moyen de la commande <code data-claire-semantic="sql">SHOW ENGINES;</code>.<br/> Cette commande nous affiche la liste complète des moteurs disponibles, une colonne Support nous signale si le moteur est activé dans MySQL (YES/NO), une colonne Comment nous renseigne sur les spécificités du moteur. Les versions les plus récentes de MySQL précisent aussi une colonne Transactions (YES/NO) si le moteur permet de gérer les transactions.</p><pre id="r-352187" data-claire-element-id="352187"><code data-claire-semantic="console">mysql&gt; SHOW ENGINES;
++------------+---------+----------------------------------------------------------------+--------------+------+------------+
+| Engine     | Support | Comment                                                        | Transactions | XA   | Savepoints |
++------------+---------+----------------------------------------------------------------+--------------+------+------------+
+| InnoDB     | YES     | Supports transactions, row-level locking, and foreign keys     | YES          | YES  | YES        |
+| MRG_MYISAM | YES     | Collection of identical MyISAM tables                          | NO           | NO   | NO         |
+| BLACKHOLE  | YES     | /dev/null storage engine (anything you write to it disappears) | NO           | NO   | NO         |
+| CSV        | YES     | CSV storage engine                                             | NO           | NO   | NO         |
+| MEMORY     | YES     | Hash based, stored in memory, useful for temporary tables      | NO           | NO   | NO         |
+| FEDERATED  | NO      | Federated MySQL storage engine                                 | NULL         | NULL | NULL       |
+| ARCHIVE    | YES     | Archive storage engine                                         | NO           | NO   | NO         |
+| MyISAM     | DEFAULT | Default engine as of MySQL 3.23 with great performance         | NO           | NO   | NO         |
++------------+---------+----------------------------------------------------------------+--------------+------+------------+
+8 rows in set (0.00 sec)</code></pre><p id="r-352188" data-claire-element-id="352188">On voir dans l'exemple ci-dessus que FEDERATED est présent mais pas actif, qu'InnoDB est le seul moteur présent à gérer les transactions et que MyISAM est le moteur défini par défaut.<br/> Maintenant que nous connaissons les moteurs disponibles sur notre système, nous allons pouvoir utiliser ceux qui nous interessent.</p><p id="r-352189" data-claire-element-id="352189">Les moteurs de stockage se spécifient à l'aide du mot clé <code data-claire-semantic="sql">ENGINE=xxxxx</code> soit au moment de créer la table, soit à l'aide d'un <code data-claire-semantic="sql">ALTER TABLE</code> :</p><pre id="r-352190" data-claire-element-id="352190"><code data-claire-semantic="sql">/* A la création de la table */
+CREATE TABLE maTable(
+...
+)ENGINE=MonMoteurDeStockage;
+
+/* En modifiant une table déjà créée */
+ALTER TABLE maTable ENGINE=UnAutreMoteur;</code></pre><p id="r-352191" data-claire-element-id="352191">Pour des raisons de compatibilité avec les anciennes versions de MySQL, on rencontre parfois le mot clé <code data-claire-semantic="sql">TYPE</code> à la place de <code data-claire-semantic="sql">ENGINE</code>.</p><p id="r-352192" data-claire-element-id="352192">Parfois, certaines moteurs utilisent d'autres mots clés pour spécifier des paramètres supplémentaires, comme <code data-claire-semantic="sql">COMMENT</code>. Ces cas seront signalés plus tard dans le descriptif de chaque moteur.</p><div id="r-352194" data-claire-element-id="352194" data-claire-semantic="question"><p id="r-352193" data-claire-element-id="352193">Et faut le faire pour chaque table ou on peut dire à MySQL qu'on veut toujours utiliser un moteur en particulier par défaut ?</p></div><p id="r-352195" data-claire-element-id="352195">Il est possible de définir un moteur par défaut pour les nouvelles tables en le spécifiant dans le fichier de configuration de MySQL. Soit définitivement, soit pour la session active seulement.<br/> Pour la session active seulement, il faudra utiliser</p><pre id="r-352196" data-claire-element-id="352196"><code data-claire-semantic="sql">SET storage_engine=NomDuMoteur;</code></pre><p id="r-352197" data-claire-element-id="352197">Pour le faire définitivement, cela se fait au moyen de la directive suivante du fichier de configuration :</p><pre id="r-352198" data-claire-element-id="352198"><code data-claire-semantic="my.conf">[mysqld]
+default-storage-engine = NomDuMoteur</code></pre><ul id="r-352203" data-claire-element-id="352203"><li id="r-352200" data-claire-element-id="352200"><p id="r-352199" data-claire-element-id="352199">Pour les versions inférieures à MySQL 5.5 le moteur par défaut est MyISAM.</p></li><li id="r-352202" data-claire-element-id="352202"><p id="r-352201" data-claire-element-id="352201">Pour les versions supérieures ou égales à 5.5, le moteur par défaut est InnoDB.</p></li></ul>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql">Les moteurs de stockage de MySQL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/mysql-et-ses-droles-de-moteurs">
+MySQL et ses drôles de moteurs
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/le-mot-cle-engine">
+Le mot clé ENGINE
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/deux-grandes-familles-de-moteurs">
+Deux grandes familles de moteurs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/myisam-1">
+MyISAM
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/innodb-1">
+InnoDB
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/memory-anciennement-heap">
+MEMORY (anciennement HEAP)
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/merge-anciemment-mrg-myisam">
+MERGE (anciemment MRG_MyISAM)
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/autres-moteurs">
+Autres moteurs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/essence-ou-diesel-quel-moteur-choisir">
+Essence ou Diesel ? Quel moteur choisir ?
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/mysql-et-ses-droles-de-moteurs">
+<span class="arrow"></span>
+<span class="next">MySQL et ses drôles de moteurs</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/deux-grandes-familles-de-moteurs">
+<span class="next">Deux grandes familles de moteurs</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Deuxgrandesfamillesdemoteurs"></a><h2>Deux grandes familles de moteurs</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/le-mot-cle-engine">
+<span class="arrow"></span>
+<span class="next">Le mot clé ENGINE</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/myisam-1">
+<span class="next">MyISAM</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-352205" data-claire-element-id="352205">Comme nous l'a montré la commande <code data-claire-semantic="sql">SHOW ENGINES</code>, certains moteurs gèrent les transactions là où d'autres ne le font pas.</p><p id="r-352206" data-claire-element-id="352206">Les moteurs transactionnels sont plus surs que les moteurs non transactionnels, car ils assurent qu'une opération s'est exécutée du début à la fin sans être interrompue, et permettent d'annuler l'opération entière au cas où un incident serait survenu.</p><p id="r-352207" data-claire-element-id="352207">Les moteurs transactionnels offrent les sécurités suivantes :</p><ul id="r-352216" data-claire-element-id="352216"><li id="r-352209" data-claire-element-id="352209"><p id="r-352208" data-claire-element-id="352208">Si un problème matériel ou électrique survient pendant une opération et que celle-ci ne peut se terminer, les anciennes données sont récupérables et ne sont pas corrompues avec des fragments de nouvelles données.</p></li><li id="r-352211" data-claire-element-id="352211"><p id="r-352210" data-claire-element-id="352210">Vous pouvez grouper les instructions exécutées par MySQL. Il est plus simple pour lui d'effectuer plusieurs opérations identiques à la suite que d'effectuer de nombreuses opérations différentes.</p></li><li id="r-352213" data-claire-element-id="352213"><p id="r-352212" data-claire-element-id="352212">Si une mise à jour échoue, les changements sont annulés</p></li><li id="r-352215" data-claire-element-id="352215"><p id="r-352214" data-claire-element-id="352214">Les moteurs transactionnels obtiennent de meilleures performances pour les accès concurrents en lecture</p></li></ul><p id="r-352217" data-claire-element-id="352217">Les moteurs non transactionnels offrent en contrepartie de meilleures performances, car ils ne sont pas soumis à des vérifications nombreuses</p><ul id="r-352224" data-claire-element-id="352224"><li id="r-352219" data-claire-element-id="352219"><p id="r-352218" data-claire-element-id="352218">Plus rapides</p></li><li id="r-352221" data-claire-element-id="352221"><p id="r-352220" data-claire-element-id="352220">Moins de place utilisée sur le disque</p></li><li id="r-352223" data-claire-element-id="352223"><p id="r-352222" data-claire-element-id="352222">Moins de mémoire consommée</p></li></ul><p id="r-352225" data-claire-element-id="352225">Je vous renvois au <a href="http://www.siteduzero.com/tutoriel-3-166641-les-transactions-avec-mysql-et-pdo.html">tutoriel de Tortue Facile sur les transactions</a> si vous voulez plus d'informations.</p><aside id="r-352227" data-claire-element-id="352227" data-claire-semantic="error"><p id="r-352226" data-claire-element-id="352226">Même s'il est possible de le faire, il est <strong>très fortement déconseillé</strong> de mélanger des tables à moteurs transactionnels et des tables à moteurs non transactionnels au sein d'une même transaction.<br/> Les tables non transactionnelles ne vont pas le devenir par magie. Si l'opération échoue, seules les tables transactionnelles pourront revenir à un état précédent, les tables non transactionnelles seront corrompues avec des données incohérentes sans possibilité de retour en arrière.</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql">Les moteurs de stockage de MySQL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/mysql-et-ses-droles-de-moteurs">
+MySQL et ses drôles de moteurs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/le-mot-cle-engine">
+Le mot clé ENGINE
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/deux-grandes-familles-de-moteurs">
+Deux grandes familles de moteurs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/myisam-1">
+MyISAM
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/innodb-1">
+InnoDB
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/memory-anciennement-heap">
+MEMORY (anciennement HEAP)
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/merge-anciemment-mrg-myisam">
+MERGE (anciemment MRG_MyISAM)
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/autres-moteurs">
+Autres moteurs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/essence-ou-diesel-quel-moteur-choisir">
+Essence ou Diesel ? Quel moteur choisir ?
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/le-mot-cle-engine">
+<span class="arrow"></span>
+<span class="next">Le mot clé ENGINE</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/myisam-1">
+<span class="next">MyISAM</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="MyISAM"></a><h2>MyISAM</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/deux-grandes-familles-de-moteurs">
+<span class="arrow"></span>
+<span class="next">Deux grandes familles de moteurs</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/innodb-1">
+<span class="next">InnoDB</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h3 id="r-presentation-de-myisam" data-claire-element-id="352238">Présentation de MyISAM</h3><p id="r-352229" data-claire-element-id="352229">MyISAM est disponible dans toutes les versions de MySQL à partir de la 3.23.0.<br/> Pour les versions antérieures à la 5.5, c'est le moteur par défaut de MySQL.</p><p id="r-352230" data-claire-element-id="352230">Il s'agit d'un moteur <strong>non transactionnel</strong> assez rapide en écriture et très rapide en lecture. Ceci vient en grande partie du fait qu'<strong>il ne gère pas les relations ni les transactions</strong> et évite donc des contrôles gourmands en ressources mais perd en sûreté ce qu'il gagne en vitesse.<br/><strong>Il gère l'indexation des contenus</strong>, accélérant les recherches, et il est le seul moteur de MySQL permettant de créer des index <code data-claire-semantic="sql">FULLTEXT</code> sur les champs de type <code data-claire-semantic="sql">TEXT</code>, rendant les recherches beaucoup plus efficaces qu'avec <code data-claire-semantic="sql">LIKE %</code>.<br/> Ceci en fait le moteur de prédilection pour les fonctions de recherche avancées.</p><p id="r-352231" data-claire-element-id="352231">De plus, MyISAM garde en cache des métadonnées sur la table et ses index, comme le nombre de lignes, la taille perdue à cause de la fragmentation, etc.<br/> Ainsi, une requete <code data-claire-semantic="sql">SELECT COUNT(*) FROM maTable;</code> sera extrêmement rapide avec MyISAM car le résultat est déjà obtenu à l'avance.</p><aside id="r-352233" data-claire-element-id="352233" data-claire-semantic="warning"><p id="r-352232" data-claire-element-id="352232">Ceci ne fonctionne que sur les <code data-claire-semantic="sql">COUNT()</code> opérant sur la table entière (pas de WHERE, LIMIT ou autres restrictions)</p></aside><p id="r-352234" data-claire-element-id="352234">Il est conseillé pour les tables MyISAM n'ayant pas besoin de recherches FULLTEXT d'utiliser des champs de taille fixe (utilisation de <code data-claire-semantic="sql">CHAR</code> au lieu de <code data-claire-semantic="sql">VARCHAR</code>, pas de <code data-claire-semantic="sql">BLOB</code> ou de <code data-claire-semantic="sql">TEXT</code>) afin d'améliorer la vitesse de lecture.<br/> Ce gain, pouvant aller jusqu'à 30% de gain de performances dans des cas particuliers (attendez vous plutôt à un gain de 15% en moyenne), est contrebalancé par une taille plus importante occupée sur le disque dur.<br/> De plus, il n'est sensible que sur des tables contenant de TRES NOMBREUX enregistrements (plusieurs millions) ou comportant de nombreuses colonnes.</p><aside id="r-352236" data-claire-element-id="352236" data-claire-semantic="information"><p id="r-352235" data-claire-element-id="352235">Si une table comporte des champs CHAR et des champs <code data-claire-semantic="sql">VARCHAR</code>, les champs <code data-claire-semantic="sql">CHAR</code> seront automatiquement convertis en <code data-claire-semantic="sql">VARCHAR</code> si leur taille est supérieure à <code data-claire-semantic="sql">CHAR(3)</code>.<br/> Si une table contient des <code data-claire-semantic="sql">VARCHAR</code> d'une taille inférieure à <code data-claire-semantic="sql">VARCHAR(3)</code>, ils seront automatiquement convertis en <code data-claire-semantic="sql">CHAR</code>. La première règle de conversion surpasse celle-ci, si au moins un des champs <code data-claire-semantic="sql">VARCHAR</code> de la table est supérieur à <code data-claire-semantic="sql">VARCHAR(3)</code> les autres champs <code data-claire-semantic="sql">VARCHAR</code> ne sont pas convertis.<br/> Ceci vient du fait que les champs <code data-claire-semantic="sql">VARCHAR</code> comportent des informations supplémentaires pour déterminer la taille du champ, qui sont stockées sur 2 octets. Dans le cas où un <code data-claire-semantic="sql">VARCHAR</code> est inférieur à 3 octets, le <code data-claire-semantic="sql">CHAR</code> est plus économique car il ne comporte pas ces informations.</p></aside><p id="r-352237" data-claire-element-id="352237">La table possède un <strong>verrouillage en lecture/écriture au niveau de la table entière</strong>, ce qui fait que lorsqu'un utilisateur est en train d'écrire dans la table, les personnes essayant d'y accéder en lecture doivent attendre que l'écriture soit finie, et ce même si elles veulent lire une ligne autre que celle qui est en train d'être écrite.</p><h3 id="r-exemple-d-utilisation-11" data-claire-element-id="352244">Exemple d'utilisation</h3><p id="r-352239" data-claire-element-id="352239">Voici l'exemple d'une base de données où nous désirons enregistrer des informations sur des personne qui pourront se connecter à notre application.<br/> Nous créons donc une table personne qui contiendra les informations sur cette personne.</p><pre id="r-352240" data-claire-element-id="352240"><code data-claire-semantic="sql">CREATE TABLE Personne(
+Personne_id BIGINT NOT NULL PRIMARY KEY auto_increment,
+Personne_username CHAR(100) UNIQUE NOT NULL,
+Personne_password CHAR(40) NOT NULL,
+Personne_nom CHAR(100) NOT NULL,
+Personne_prenom CHAR(100) NOT NULL,
+Personne_adresse CHAR(200) NOT NULL,
+Personne_codepostal CHAR(5) NOT NULL,
+Personne_email CHAR(200) NOT NULL,
+Personne_ville CHAR(100) NOT NULL,
+INDEX('Personne_nom', 'Personne_prenom')
+)ENGINE=MyISAM;</code></pre><p id="r-352241" data-claire-element-id="352241">Ici, un exemple sur les index FULLTEXT</p><pre id="r-352242" data-claire-element-id="352242"><code data-claire-semantic="sql">/* on crée une table contenant des news */
+CREATE TABLE news(
+news_id bigint not null primary key auto_increment,
+news_titre varchar(200),
+news_texte TEXT,
+FULLTEXT(news_titre, news_text)
+)ENGINE=MyISAM;
+
+/* pour effectuer une recherche sur un mot on utilse la commande suivante */
+SELECT * FROM news WHERE MATCH (news_titre, news_texte) AGAINST ('database');
+/* ceci nous renverra tous les résultats où le mot 'database' apparait au moins une
+fois soit dans le titre, soit dans le corps du texte. */</code></pre><p id="r-352243" data-claire-element-id="352243">Des modificateurs permettent d'effectuer des recherches plus complexes par associations de termes. Voir <a href="http://dev.mysql.com/doc/refman/5.0/fr/fulltext-search.html">documentation MySQL sur la recherche Fulltext</a> pour plus d'informations</p><h3 id="r-avantages-et-inconvenients-4" data-claire-element-id="352261">Avantages et inconvénients</h3><p id="r-352245" data-claire-element-id="352245">Avantages :</p><ul id="r-352252" data-claire-element-id="352252"><li id="r-352247" data-claire-element-id="352247"><p id="r-352246" data-claire-element-id="352246">Très rapide en lecture</p></li><li id="r-352249" data-claire-element-id="352249"><p id="r-352248" data-claire-element-id="352248">Extrêmement rapide pour les opérations COUNT() sur une table entière</p></li><li id="r-352251" data-claire-element-id="352251"><p id="r-352250" data-claire-element-id="352250">Les index <code data-claire-semantic="sql">FULLTEXT</code> pour la recherche sur des textes</p></li></ul><p id="r-352253" data-claire-element-id="352253">Inconvénients :</p><ul id="r-352260" data-claire-element-id="352260"><li id="r-352255" data-claire-element-id="352255"><p id="r-352254" data-claire-element-id="352254">Pas de gestion des relations</p></li><li id="r-352257" data-claire-element-id="352257"><p id="r-352256" data-claire-element-id="352256">Pas de gestion des transactions</p></li><li id="r-352259" data-claire-element-id="352259"><p id="r-352258" data-claire-element-id="352258">Bloque une table entière lors d'opérations d'insertions, suppressions ou mise à jour des données</p></li></ul>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql">Les moteurs de stockage de MySQL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/mysql-et-ses-droles-de-moteurs">
+MySQL et ses drôles de moteurs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/le-mot-cle-engine">
+Le mot clé ENGINE
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/deux-grandes-familles-de-moteurs">
+Deux grandes familles de moteurs
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/myisam-1">
+MyISAM
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/innodb-1">
+InnoDB
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/memory-anciennement-heap">
+MEMORY (anciennement HEAP)
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/merge-anciemment-mrg-myisam">
+MERGE (anciemment MRG_MyISAM)
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/autres-moteurs">
+Autres moteurs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/essence-ou-diesel-quel-moteur-choisir">
+Essence ou Diesel ? Quel moteur choisir ?
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/deux-grandes-familles-de-moteurs">
+<span class="arrow"></span>
+<span class="next">Deux grandes familles de moteurs</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/innodb-1">
+<span class="next">InnoDB</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="InnoDB"></a><h2>InnoDB</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/myisam-1">
+<span class="arrow"></span>
+<span class="next">MyISAM</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/memory-anciennement-heap">
+<span class="next">MEMORY (anciennement HEAP)</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h3 id="r-presentation-d-innodb" data-claire-element-id="352267">Présentation d'InnoDB</h3><p id="r-352263" data-claire-element-id="352263">InnoDB est un moteur assez performant <strong>faisant partie de la famille des moteurs transactionnels</strong>.<br/><strong>Il ne gère pas les index en FULLTEXT</strong> contrairement à MyISAM.</p><p id="r-352264" data-claire-element-id="352264"><strong>InnoDB est un moteur relationnel.</strong> Il s'assure que les relations entre les données de plusieurs tables sont cohérentes et que si l'on modifie certaines données, que ces changements soient répercutés aux tables liées.</p><p id="r-352265" data-claire-element-id="352265"><strong>InnoDB gère le verrouillage des données au niveau de la ligne</strong>, contrairement à MyISAM qui les gère au niveau de la table. Ainsi, si vous écrivez des données sur la première ligne de la table, seule celle-ci sera bloquée et toutes les autres seront disponibles en écriture et lecture.</p><p id="r-352266" data-claire-element-id="352266">InnoDB est plus lent que MyISAM, de par sa nature transactionnelle et relationnelle, même si les récentes modifications qu'il a subi pour le passage à la version 5.5 l'ont rendu beaucoup plus performant qu'avant, et ses performances sont désormais très proches de celles de MyISAM. Cependant, la sécurité qu'il apporte quant à la validité des données dans la base en fait un moteur de choix lorsqu'il s'agit de stocker des données relationnelles ou nécessitant des transactions.</p><h3 id="r-exemple-d-utilisation-12" data-claire-element-id="352270">Exemple d'utilisation</h3><p id="r-352268" data-claire-element-id="352268">Reprenons l'exemple que nous avions précédemment : nous désirons conserver des informations sur des personnes.<br/> Les données contenues dans le champ Personne_ville et Personne_codepostal sont longues (105 caractères à chaque fois), et la même information peut revenir plusieurs fois (plusieurs personnes peuvent habiter à Dunkerque, par exemple).<br/> Nous allons extraire ces données dans une table Ville qui va contenir la ville et le code postal associé, et nous laisserons une référence vers cette table dans notre table personne.<br/> Nous allons donc utiliser le moteur InnoDB ici.</p><pre id="r-352269" data-claire-element-id="352269"><code data-claire-semantic="sql">CREATE TABLE Personne(
+Personne_id BIGINT NOT NULL PRIMARY KEY auto_increment,
+Personne_username CHAR(100) UNIQUE NOT NULL,
+Personne_password CHAR(40) NOT NULL,
+Personne_nom CHAR(100) NOT NULL,
+Personne_prenom CHAR(100) NOT NULL,
+Personne_adresse CHAR(200) NOT NULL,
+Personne_email CHAR(200) NOT NULL,
+Personne_Ville_id BIGINT NOT NULL REFERENCES Ville (Ville_id) ON UPDATE CASCADE ON DELETE CASCADE,
+INDEX('Personne_nom', 'Personne_prenom')
+)ENGINE=InnoDB;
+
+CREATE TABLE Ville(
+Ville_id BIGINT NOT NULL PRIMARY KEY auto_increment,
+Ville_codepostal CHAR(5) NOT NULL,
+Ville_ville CHAR(100) NOT NULL,
+INDEX('Ville_codepostal', 'Ville_ville')
+)ENGINE=InnoDB;</code></pre><h3 id="r-avantages-et-inconvenients-5" data-claire-element-id="352290">Avantages et inconvénients</h3><p id="r-352271" data-claire-element-id="352271">Avantages :</p><ul id="r-352278" data-claire-element-id="352278"><li id="r-352273" data-claire-element-id="352273"><p id="r-352272" data-claire-element-id="352272">Gestion des relations</p></li><li id="r-352275" data-claire-element-id="352275"><p id="r-352274" data-claire-element-id="352274">Gestion des transactions</p></li><li id="r-352277" data-claire-element-id="352277"><p id="r-352276" data-claire-element-id="352276">Verrouillage à la ligne et non à la table</p></li></ul><p id="r-352279" data-claire-element-id="352279">Inconvénients :</p><ul id="r-352286" data-claire-element-id="352286"><li id="r-352281" data-claire-element-id="352281"><p id="r-352280" data-claire-element-id="352280">Plus lent que MyISAM</p></li><li id="r-352283" data-claire-element-id="352283"><p id="r-352282" data-claire-element-id="352282">Occupe plus de place sur le disque dur</p></li><li id="r-352285" data-claire-element-id="352285"><p id="r-352284" data-claire-element-id="352284">Occupe plus de place en mémoire vive</p></li></ul><div id="r-352289" data-claire-element-id="352289"><p id="r-352287" data-claire-element-id="352287">Pour la petite histoire, Oracle Corporation voyait d'un mauvais oeil l'avancée de MySQL sur ses parts de marché et avait racheté l'entreprise qui développait InnoDB pour MySQL. Oracle a continué à fournir le moteur de stockage afin de paraitre gentil et d'aider la communauté de MySQL, mais faisait tout pour ralentir son évolution, et donc limitait la concurrence envers son propre SGBD, Oracle Database.</p><p id="r-352288" data-claire-element-id="352288">Depuis maintenant plus d'un an, Oracle a racheté Sun, qui détenait MySQL et par là même éliminé un sérieux concurrent. Oracle donc repris le développement d'InnoDB, car il destine les deux SGBD à des secteurs différents : MySQL pour le web et Oracle Database pour les applications lourdes en entreprise.<br/> Pratiquement du jour au lendemain, la vitesse d'exécution des requêtes a été augmentée sur de 350% sur Linux et de 1500% sur Windows. Comme quoi, quand on veut, on peut :D</p></div>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql">Les moteurs de stockage de MySQL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/mysql-et-ses-droles-de-moteurs">
+MySQL et ses drôles de moteurs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/le-mot-cle-engine">
+Le mot clé ENGINE
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/deux-grandes-familles-de-moteurs">
+Deux grandes familles de moteurs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/myisam-1">
+MyISAM
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/innodb-1">
+InnoDB
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/memory-anciennement-heap">
+MEMORY (anciennement HEAP)
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/merge-anciemment-mrg-myisam">
+MERGE (anciemment MRG_MyISAM)
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/autres-moteurs">
+Autres moteurs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/essence-ou-diesel-quel-moteur-choisir">
+Essence ou Diesel ? Quel moteur choisir ?
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/myisam-1">
+<span class="arrow"></span>
+<span class="next">MyISAM</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/memory-anciennement-heap">
+<span class="next">MEMORY (anciennement HEAP)</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="MEMORYanciennementHEAP"></a><h2>MEMORY (anciennement HEAP)</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/innodb-1">
+<span class="arrow"></span>
+<span class="next">InnoDB</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/merge-anciemment-mrg-myisam">
+<span class="next">MERGE (anciemment MRG_MyISAM)</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h3 id="r-presentation-de-memory" data-claire-element-id="352298">Présentation de MEMORY</h3><p id="r-352292" data-claire-element-id="352292">MEMORY (HEAP est synonyme mais est déprécié, il est conseillé d'utiliser seulement MEMORY) est un moteur de stockage permettant de créer des tables directement dans la mémoire vive, sans passer par le disque dur pour stocker les données. Ceci en fait le moteur de stockage le plus rapide que propose MySQL, mais aussi le plus dangereux.</p><aside id="r-352294" data-claire-element-id="352294" data-claire-semantic="warning"><p id="r-352293" data-claire-element-id="352293">Il est à réserver seulement au stockage de données temporaires car le moindre plantage, la moindre panne ou coupure de courant fera disparaitre définitivement les données stockées avec ce moteur. Il ne restera que la table vide à la remise en marche de MySQL.</p></aside><p id="r-352295" data-claire-element-id="352295"><strong>Il ne gère pas les champs TEXT ni BLOB</strong>. Ceux-ci prennent trop de place et donc vont contre la philosophie de ce moteur : la rapidité de traitement sur des données légères et temporaires.</p><p id="r-352296" data-claire-element-id="352296"><strong>Ni les transactions, ni les relations ne sont gérées par ce moteur. Comme il ne gère pas les champs TEXT, il ne gère pas non plus les index FULLTEXT</strong></p><p id="r-352297" data-claire-element-id="352297">MEMORY est parfait pour stocker des données purement temporaires qui ont besoin d'être traitées rapidement et surtout dont la perte n'est pas significative.<br/> L'absence de gestion de relations et de transactions n'est donc pas vraiment un problème dans ce cas. La probabilité qu'une relation entre deux enregistrements change entre le moment où la donnée temporaire est créée et le moment où elle a fini d'être traitée est très faible.<br/> De même, aucun intérêt à gérer des transactions censées garantir que les données sont fiables dans le temps si ces mêmes données ne sont ni vitales ni censées durer dans le temps.</p><h3 id="r-exemple-d-utilisation-13" data-claire-element-id="352302">Exemple d'utilisation</h3><p id="r-352299" data-claire-element-id="352299">Nous voulons ajouter dans notre application une validation par email des personnes qui s'inscrivent. Nous générerons un token de validation unique et nous stockerons la personne dans une table MEMORY.<br/> Quand la personne recevra son mail et cliquera sur le lien proposé, nous vérifierons que le token correspond bien à celui stocké dans cette base temporaire et nous déplacerons la personne vers la table réelle puis nous le supprimerons de la table temporaire.</p><p id="r-352300" data-claire-element-id="352300">Aucune donnée vitale à notre application n'est mise en danger, une personne non inscrite peut toujours répéter son inscription en cas de soucis, et la donnée est rapidement supprimée de la base et ne pollue donc pas la mémoire vive trop longtemps.</p><pre id="r-352301" data-claire-element-id="352301"><code data-claire-semantic="sql">CREATE TABLE Personne(
+Personne_id BIGINT NOT NULL PRIMARY KEY auto_increment,
+Personne_username CHAR(100) UNIQUE NOT NULL,
+Personne_password CHAR(40) NOT NULL,
+Personne_nom CHAR(100) NOT NULL,
+Personne_prenom CHAR(100) NOT NULL,
+Personne_adresse CHAR(200) NOT NULL,
+Personne_Ville_id BIGINT NOT NULL,
+Personne_Email CHAR(200) NOT NULL,
+Personne_tokenvalidation CHAR(40) NOT NULL,
+)ENGINE=MEMORY;</code></pre><h3 id="r-avantages-et-inconvenients-6" data-claire-element-id="352315">Avantages et inconvénients</h3><p id="r-352303" data-claire-element-id="352303">Avantages :</p><ul id="r-352308" data-claire-element-id="352308"><li id="r-352305" data-claire-element-id="352305"><p id="r-352304" data-claire-element-id="352304">Le moteur le plus rapide</p></li><li id="r-352307" data-claire-element-id="352307"><p id="r-352306" data-claire-element-id="352306">Ne consomme pas de place sur le disque dur</p></li></ul><p id="r-352309" data-claire-element-id="352309">Inconvénients :</p><ul id="r-352314" data-claire-element-id="352314"><li id="r-352311" data-claire-element-id="352311"><p id="r-352310" data-claire-element-id="352310">Les données sont volatiles : un arret du serveur et elles disparaissent</p></li><li id="r-352313" data-claire-element-id="352313"><p id="r-352312" data-claire-element-id="352312">Pas de champs BLOB ou TEXT</p></li></ul>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql">Les moteurs de stockage de MySQL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/mysql-et-ses-droles-de-moteurs">
+MySQL et ses drôles de moteurs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/le-mot-cle-engine">
+Le mot clé ENGINE
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/deux-grandes-familles-de-moteurs">
+Deux grandes familles de moteurs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/myisam-1">
+MyISAM
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/innodb-1">
+InnoDB
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/memory-anciennement-heap">
+MEMORY (anciennement HEAP)
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/merge-anciemment-mrg-myisam">
+MERGE (anciemment MRG_MyISAM)
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/autres-moteurs">
+Autres moteurs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/essence-ou-diesel-quel-moteur-choisir">
+Essence ou Diesel ? Quel moteur choisir ?
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/innodb-1">
+<span class="arrow"></span>
+<span class="next">InnoDB</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/merge-anciemment-mrg-myisam">
+<span class="next">MERGE (anciemment MRG_MyISAM)</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="MERGEanciemmentMRG_MyISAM"></a><h2>MERGE (anciemment MRG_MyISAM)</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/memory-anciennement-heap">
+<span class="arrow"></span>
+<span class="next">MEMORY (anciennement HEAP)</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/autres-moteurs">
+<span class="next">Autres moteurs</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h3 id="r-presentation-de-merge" data-claire-element-id="352347">Présentation de MERGE</h3><p id="r-352317" data-claire-element-id="352317">MRG_MyISAM est un alias déprécié. Il est conseillé désormais d'utiliser seulement MERGE.<br/> Il s'agit d'un moteur regroupant plusieurs tables MyISAM de manière transparente. Les tables fusionnées existent encore indépendamment, MERGE se contente de fournir une interface unique pour accéder en lecture à toutes les tables simultanément, et en écriture selon des règles que l'on aura fixé.</p><p id="r-352318" data-claire-element-id="352318">Les tables MyISAM fusionnées avec MERGE peuvent provenir de plusieurs bases de données, tant qu'elles sont sur le même serveur physique.<br/> MERGE gère les index de la même manière que MyISAM, sauf pour les index FULLTEXT qu'il ne prend pas en compte.</p><p id="r-352319" data-claire-element-id="352319">Les tables fusionnées doivent respecter plusieurs critères pour pouvoir être fusionnées avec MERGE :</p><ul id="r-352330" data-claire-element-id="352330"><li id="r-352321" data-claire-element-id="352321"><p id="r-352320" data-claire-element-id="352320">Être sur le même serveur</p></li><li id="r-352323" data-claire-element-id="352323"><p id="r-352322" data-claire-element-id="352322">Mêmes noms de champs</p></li><li id="r-352325" data-claire-element-id="352325"><p id="r-352324" data-claire-element-id="352324">Mêmes types pour ces champs</p></li><li id="r-352327" data-claire-element-id="352327"><p id="r-352326" data-claire-element-id="352326">Mêmes index (sauf FULLTEXT qui sera ignoré)</p></li><li id="r-352329" data-claire-element-id="352329"><p id="r-352328" data-claire-element-id="352328">Même ordre de déclaration des index</p></li></ul><p id="r-352331" data-claire-element-id="352331">Chaque table individuelle reste disponible, ce qui permet d'effectuer des opérations dessus, qui se répercuteront sur la table fusionnée.<br/> On peut alors facilement faire des recherches sur une base spécifique.</p><aside id="r-352338" data-claire-element-id="352338" data-claire-semantic="information"><p id="r-352332" data-claire-element-id="352332">MERGE fait partie des moteurs utilisant 2 paramètres supplémentaires dans sa déclaration en plus de <code data-claire-semantic="sql">ENGINE=MERGE</code> :</p><ul id="r-352337" data-claire-element-id="352337"><li id="r-352334" data-claire-element-id="352334"><p id="r-352333" data-claire-element-id="352333"><code data-claire-semantic="sql">UNION(t1, t2, t3, ...)</code> : on donnera la liste des tables à fusionnner.</p></li><li id="r-352336" data-claire-element-id="352336"><p id="r-352335" data-claire-element-id="352335"><code data-claire-semantic="sql">INSERT_METHOD=VALEUR</code> : Définit où seront insérées les nouvelles valeurs. Les valeurs possibles sont <code data-claire-semantic="sql">FIRST</code> et <code data-claire-semantic="sql">LAST</code>. <code data-claire-semantic="sql">FIRST</code> insérera les données dans la première table de la liste alors que <code data-claire-semantic="sql">LAST</code> les insérera dans la dernière table de la liste</p></li></ul></aside><p id="r-352339" data-claire-element-id="352339">Pour rajouter une nouvelle table à la fusion, il existe trois solutions :</p><ul id="r-352346" data-claire-element-id="352346"><li id="r-352341" data-claire-element-id="352341"><p id="r-352340" data-claire-element-id="352340">Supprimer la table à l'aide d'un <code data-claire-semantic="sql">DROP</code> puis la recréer avec la nouvelle table en plus</p></li><li id="r-352343" data-claire-element-id="352343"><p id="r-352342" data-claire-element-id="352342">utiliser la syntaxe <code data-claire-semantic="sql">ALTER TABLE nom_de_la_table UNION=(table1 , table2 , ... , nouvelle_table)</code></p></li><li id="r-352345" data-claire-element-id="352345"><p id="r-352344" data-claire-element-id="352344">Modifier à la main le fichier .MRG créé dans le dossier de données de MySQL puis faire un <code data-claire-semantic="sql">FLUSH TABLES</code> dans le SGBD pour le forcer à relire les définitions (méthode à réserver aux experts)</p></li></ul><h3 id="r-exemple-d-utilisation-14" data-claire-element-id="352350">Exemple d'utilisation</h3><p id="r-352348" data-claire-element-id="352348">Nous avons créé un 2eme site en plus du premier où nous utilisions notre table Personne.<br/> Cependant, nous nous rendons compte que nos utilisateurs du 1er site sont potentiellement intéressés par le second que nous venons d'ouvrir, aussi nous décidons de rendre leur donner accès au nouveau site sans avoir besoin de s'inscrire.<br/> Les personnes s'inscrivant sur le 2eme site ne sont par contre pas spécialement intéressées par le 1er, nous voulons donc qu'elles se créent elles-mêmes un compte sur le 1er site.<br/> Notre système doit donc gérer les lectures sur les 2 tables, et les écritures seulement sur la 2eme table.<br/> Nous pouvons faire ceci très facilement avec une table MERGE avec <code data-claire-semantic="sql">INSERT_METHOD=LAS</code>T.</p><pre id="r-352349" data-claire-element-id="352349"><code data-claire-semantic="sql">USE baseSite1;
+
+/* Nous créons la table du site 1 */
+CREATE TABLE PersonneSite1(
+Personne_id BIGINT NOT NULL PRIMARY KEY auto_increment,
+Personne_username CHAR(100) UNIQUE NOT NULL,
+Personne_password CHAR(40) NOT NULL,
+Personne_nom CHAR(100) NOT NULL,
+Personne_prenom CHAR(100) NOT NULL,
+Personne_adresse CHAR(200) NOT NULL,
+Personne_codepostal CHAR(5) NOT NULL,
+Personne_email CHAR(200) NOT NULL,
+Personne_ville CHAR(100) NOT NULL,
+INDEX('Personne_nom', 'Personne_prenom')
+)ENGINE=MyISAM;
+
+/* Nous créons la table du site 2 dans une base distincte mais sur le même serveur 
+Elle contient les mêmes champs que la table du site 1*/
+USE baseSite2;
+
+CREATE TABLE PersonneSite2(
+Personne_id BIGINT NOT NULL PRIMARY KEY auto_increment,
+Personne_username CHAR(100) UNIQUE NOT NULL,
+Personne_password CHAR(40) NOT NULL,
+Personne_nom CHAR(100) NOT NULL,
+Personne_prenom CHAR(100) NOT NULL,
+Personne_adresse CHAR(200) NOT NULL,
+Personne_codepostal CHAR(5) NOT NULL,
+Personne_email CHAR(200) NOT NULL,
+Personne_ville CHAR(100) NOT NULL,
+INDEX('Personne_nom', 'Personne_prenom')
+)ENGINE=MyISAM;
+
+/* Enfin on crée la table fusionnée qui comporte strictement les mêmes champs et indexes.
+On précise que l'union se fait sur les 2 tables et qu'on veut insérer dans la dernière table
+la liste
+Enfin, elle est créée dans la baseSite2 donc ne sera pas accessible dans baseSite1*/
+CREATE TABLE Personne(
+Personne_id BIGINT NOT NULL PRIMARY KEY auto_increment,
+Personne_username CHAR(100) UNIQUE NOT NULL,
+Personne_password CHAR(40) NOT NULL,
+Personne_nom CHAR(100) NOT NULL,
+Personne_prenom CHAR(100) NOT NULL,
+Personne_adresse CHAR(200) NOT NULL,
+Personne_codepostal CHAR(5) NOT NULL,
+Personne_email CHAR(200) NOT NULL,
+Personne_ville CHAR(100) NOT NULL,
+INDEX('Personne_nom', 'Personne_prenom')
+)ENGINE=MERGE UNION(baseSite1.PersonneSite1, baseSite2.PersonneSite2) INSERT_METHOD=LAST;</code></pre><h3 id="r-avantages-et-inconvenients-7" data-claire-element-id="352369">Avantages et inconvénients</h3><p id="r-352351" data-claire-element-id="352351">Avantages :</p><ul id="r-352360" data-claire-element-id="352360"><li id="r-352353" data-claire-element-id="352353"><p id="r-352352" data-claire-element-id="352352">Permet de gérer facilement des historiques : on place les données de chaque mois dans une nouvelle table qu'on fusionne avec les autres tables à l'aide de MERGE. Les données les plus récentes sont toujours envoyées dans la table la plus récente.</p></li><li id="r-352355" data-claire-element-id="352355"><p id="r-352354" data-claire-element-id="352354">Permet de regrouper les données de plusieurs sites en une seule table comme dans l'exemple</p></li><li id="r-352357" data-claire-element-id="352357"><p id="r-352356" data-claire-element-id="352356">MySQL fournit des fonctions de réparations de tables pour les fichiers endommagés. Il est possible de fusionner les tables se ressemblant pour les réparer plus efficacement car l'opération sera faite en une fois et les étapes communes du processus seront faites une seule fois.</p></li><li id="r-352359" data-claire-element-id="352359"><p id="r-352358" data-claire-element-id="352358">On peut créer des alias de tables en fusionnant une seule table dans une table MERGE, utile pour assurer une rétrocompatibilité tout en faisant évoluer son application</p></li></ul><p id="r-352361" data-claire-element-id="352361">Inconvénients :</p><ul id="r-352368" data-claire-element-id="352368"><li id="r-352363" data-claire-element-id="352363"><p id="r-352362" data-claire-element-id="352362">MERGE est plus gourmand en ressources système que MyISAM. Pour 1 table MERGE contenant 10 tables MyISAM avec chacune au moins un fichier d'index, vous vous retrouvez avec 21 descripteurs de fichier (1 table + 10 tables + 10 index). Multipliez ceci par le nombre d'utilisateurs qui utilisent la base et vous risquez de saturer assez vite le système.</p></li><li id="r-352365" data-claire-element-id="352365"><p id="r-352364" data-claire-element-id="352364">Les recherches sur les tables contenant des index sont plus lentes que sur des tables individuelles, car doit MERGE consulter les index de toutes les tables qu'il fusionne.</p></li><li id="r-352367" data-claire-element-id="352367"><p id="r-352366" data-claire-element-id="352366">Les tables fusionnées doivent être identiques au niveau de leur structure et de l'ordre de déclaration des index</p></li></ul>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql">Les moteurs de stockage de MySQL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/mysql-et-ses-droles-de-moteurs">
+MySQL et ses drôles de moteurs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/le-mot-cle-engine">
+Le mot clé ENGINE
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/deux-grandes-familles-de-moteurs">
+Deux grandes familles de moteurs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/myisam-1">
+MyISAM
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/innodb-1">
+InnoDB
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/memory-anciennement-heap">
+MEMORY (anciennement HEAP)
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/merge-anciemment-mrg-myisam">
+MERGE (anciemment MRG_MyISAM)
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/autres-moteurs">
+Autres moteurs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/essence-ou-diesel-quel-moteur-choisir">
+Essence ou Diesel ? Quel moteur choisir ?
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/memory-anciennement-heap">
+<span class="arrow"></span>
+<span class="next">MEMORY (anciennement HEAP)</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/autres-moteurs">
+<span class="next">Autres moteurs</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Autresmoteurs"></a><h2>Autres moteurs</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/merge-anciemment-mrg-myisam">
+<span class="arrow"></span>
+<span class="next">MERGE (anciemment MRG_MyISAM)</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/essence-ou-diesel-quel-moteur-choisir">
+<span class="next">Essence ou Diesel ? Quel moteur choisir ?</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<aside id="r-352372" data-claire-element-id="352372" data-claire-semantic="information"><p id="r-352371" data-claire-element-id="352371">Les moteurs suivants sont rarement utilisés soit parce qu'ils ont été remplacés par de nouveaux moteurs ayant les mêmes fonctions mais plus performants, soit parce qu'ils sont limités à des cas très particuliers. Il est cependant bon de les connaitre au cas où vous rencontreriez une situation où vous en avez besoin.</p></aside><h3 id="r-blackhole" data-claire-element-id="352376">BLACKHOLE</h3><p id="r-352373" data-claire-element-id="352373">Ou en français : trou noir.<br/> Ce moteur porte bien son nom, ce qu'on y stocke n'en ressort jamais, et pour cause, il est l'équivalent du /dev/null d'Unix/Linux.</p><p id="r-352374" data-claire-element-id="352374">Toute données envoyées dans une table BLACKHOLE est immédiatement détruite, mais l'action est cependant consignée dans les logs de MySQL.</p><p id="r-352375" data-claire-element-id="352375">Ce moteur de table est utile pour simuler des copies de tables ou vérifier la syntaxe d'un système de sauvegarde.<br/> Il permet entre autres de recherche facilement des goulots d'étranglement dans les requêtes SQL d'une application dans écrire réellement sur le disque, ou lorsqu'on désire tester les performances du système de logs de MySQL.<br/> On l'utilise aussi parfois afin de diminuer le trafic réseau lorsqu'on exécute une réplication de serveurs à des fins de sauvegarde (comme la réplication se base sur les logs de requêtes, le serveur copie croit que le serveur original est actif et se synchronise).<br/> Je vous renvois pour ça à la <a href="http://dev.mysql.com/doc/refman/5.5/en/blackhole-storage-engine.html">documentation de MySQL</a> pour de plus amples informations.</p><h3 id="r-berkeleydb-bdb" data-claire-element-id="352387">BerkeleyDB (BDB)</h3><p id="r-352377" data-claire-element-id="352377">BDB est un moteur assez peu utilisé, car assez lent, et dont les fonctionnalités intéressantes sont équivalentes à celles proposées par InnoDB.<br/><strong>Son principal défaut est de ne pas être inclus dans les versions standard de MySQL et de ne pas être non plus compatible avec certains systèmes d'exploitation, dont MacOS X et certaines versions 64bits du noyau Linux.</strong><br/> Il est par contre fourni en standard avec la distribution de MySQL de tous les Unix de la famille BSD (OpenBSD, NetBSD et FreeBSD).<br/> Il faut soit compiler MySQL avec ce moteur, soit prendre un binaire MySQL-max déjà compilé avec cette option.<br/> La version Windows de MySQL comprennait BDB en standard jusqu'à MySQL 5.5. Il a depuis été retiré de la distribution.</p><p id="r-352378" data-claire-element-id="352378">Ce moteur était surtout utile à l'époque des premières versions de MySQL, lorsqu'InnoDB n'existait pas. Il fonctionne de la même manière et propose les mêmes outils majeurs :</p><ul id="r-352385" data-claire-element-id="352385"><li id="r-352380" data-claire-element-id="352380"><p id="r-352379" data-claire-element-id="352379">gestion des transactions</p></li><li id="r-352382" data-claire-element-id="352382"><p id="r-352381" data-claire-element-id="352381">gestion des relations</p></li><li id="r-352384" data-claire-element-id="352384"><p id="r-352383" data-claire-element-id="352383">verrous de ligne au lieu de verrous de tables</p></li></ul><p id="r-352386" data-claire-element-id="352386">Même s'il est toujours maintenu, sa lenteur et ses problèmes de compatibilité l'éliminent pratiquement d'office. Cependant, sur des vieux serveurs MySQL, on peut le rencontrer.</p><h3 id="r-archive" data-claire-element-id="352390">ARCHIVE</h3><p id="r-352388" data-claire-element-id="352388">ARCHIVE est un moteur spécialisé dans le stockage de grosses quantités de données de manière très économique : les données sont compressées à leur insertion et aucun index n'est généré, ce qui améliore la rapidité en écriture.<br/><strong>Il ne gère ni les transactions, ni les relations ni les index</strong>, et ne permet de faire que des requete <code data-claire-semantic="sql">SELECT</code> et <code data-claire-semantic="sql">INSERT</code>. Les ordres de suppression ou de modifications seront refusés.</p><p id="r-352389" data-claire-element-id="352389">On peut ainsi conserver d'énormes quantités de données sans craindre qu'elles soient supprimées ou modifiées.</p><h3 id="r-csv" data-claire-element-id="352394">CSV</h3><p id="r-352391" data-claire-element-id="352391">Il s'agit du format de données basique utilisé habituellement par les tableurs. Les valeurs sont stockées dans un fichier texte, séparées par des virgules, les lignes sont séparées par des sauts de ligne. <strong>Le moteur ne gère ni relations, ni transactions, ni index</strong>.</p><p id="r-352392" data-claire-element-id="352392">Il permet une grande interopérabilité entre des systèmes externes à MySQL, en travaillant sur un format de données pratiquement universel, reconnu par tous les tableurs et de nombreux logiciels qui importent et exportent des données dans ce format.</p><p id="r-352393" data-claire-element-id="352393">Il est en outre extrêmement pratique lorsqu'on désire exporter une table au format CSV compatible avec Excel/OOo-Calc, il suffit de faire une copie de la table avec ce moteur pour la nouvelle table. Mais ceci nécessite d'avoir accès aux dossiers où sont contenus les fichiers de stockage de MySQL.</p><h3 id="r-federated" data-claire-element-id="352416">FEDERATED</h3><p id="r-352395" data-claire-element-id="352395">FEDERATED est un moteur assez complexe à appréhender. Il crée une définition de table, mais rien n'est stocké directement sur le serveur.<br/> Il s'agit d'un moteur de stockage distant : les données sont en réalité hébergées sur un autre serveur MySQL.<br/> Dans un premier temps, il fait une requête <code data-claire-semantic="sql">SELECT * FROM...</code> sur le serveur distant puis reconstruit une table temporaire en local, sur laquelle il exécute la requête de l'utilisateur.</p><p id="r-352396" data-claire-element-id="352396">Le moteur gère les commandes <code data-claire-semantic="sql">SELECT</code>, <code data-claire-semantic="sql">INSERT</code>, <code data-claire-semantic="sql">UPDATE</code> et<code data-claire-semantic="sql">DELETE</code>, ainsi que les index.</p><aside id="r-352398" data-claire-element-id="352398" data-claire-semantic="information"><p id="r-352397" data-claire-element-id="352397">FEDERATED utilise un champ supplémentaire pour spécifier la table utilisée sur le serveur distant. COMMENT='mysql://user@nomDuServer:port/federated/nomDeLatable';</p></aside><p id="r-352399" data-claire-element-id="352399">Ce moteur est assez contraignant :</p><ul id="r-352412" data-claire-element-id="352412"><li id="r-352401" data-claire-element-id="352401"><p id="r-352400" data-claire-element-id="352400">Il n'est pas activé par défaut, il faut démarrer le serveur MySQL avec le paramètre <code data-claire-semantic="console">--federated</code> pour en profiter</p></li><li id="r-352403" data-claire-element-id="352403"><p id="r-352402" data-claire-element-id="352402">Pas de gestion des transactions</p></li><li id="r-352405" data-claire-element-id="352405"><p id="r-352404" data-claire-element-id="352404">La table locale n'est pas prévenue si des modifications sont faites sur la table distante, ceci peut provoquer des incompatibilités ou des incohérences</p></li><li id="r-352407" data-claire-element-id="352407"><p id="r-352406" data-claire-element-id="352406">Impossibilité de modifier la table en local, il faut forcément le faire avec le serveur distant</p></li><li id="r-352409" data-claire-element-id="352409"><p id="r-352408" data-claire-element-id="352408">Le cache de requêtes de MySQL ne prend pas ces tables en compte, ce qui ralentit encore plus le traitement des requêtes.</p></li><li id="r-352411" data-claire-element-id="352411"><p id="r-352410" data-claire-element-id="352410">Si la connexion entre les deux serveurs est impossible, la table sera inaccessible</p></li></ul><p id="r-352413" data-claire-element-id="352413">FEDERATED s'utilise de la sorte :</p><pre id="r-352414" data-claire-element-id="352414"><code data-claire-semantic="sql">/*table MyISAM sur le serveur1*/
+CREATE TABLE test_table (
+    id     int(20) NOT NULL auto_increment,
+    name   varchar(32) NOT NULL default '',
+    other  int(20) NOT NULL default '0',
+    PRIMARY KEY  (id),
+    KEY name (name),
+    KEY other_key (other)
+)
+ENGINE=MyISAM;
+
+/*table FEDERATED sur le serveur2*/
+CREATE TABLE federated_table (
+    id     int(20) NOT NULL auto_increment,
+    name   varchar(32) NOT NULL default '',
+    other  int(20) NOT NULL default '0',
+    PRIMARY KEY  (id),
+    KEY name (name),
+    KEY other_key (other)
+)
+ENGINE=FEDERATED
+COMMENT='mysql://root@server1:9306/federated/test_table';</code></pre><p id="r-352415" data-claire-element-id="352415">Federated sera utilisé pour des cas où l'accès à une table doit se faire entre plusieurs serveurs. Par exemple une table utilisateurs commune à plusieurs serveurs dans une entreprise.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql">Les moteurs de stockage de MySQL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/mysql-et-ses-droles-de-moteurs">
+MySQL et ses drôles de moteurs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/le-mot-cle-engine">
+Le mot clé ENGINE
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/deux-grandes-familles-de-moteurs">
+Deux grandes familles de moteurs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/myisam-1">
+MyISAM
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/innodb-1">
+InnoDB
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/memory-anciennement-heap">
+MEMORY (anciennement HEAP)
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/merge-anciemment-mrg-myisam">
+MERGE (anciemment MRG_MyISAM)
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/autres-moteurs">
+Autres moteurs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/essence-ou-diesel-quel-moteur-choisir">
+Essence ou Diesel ? Quel moteur choisir ?
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/merge-anciemment-mrg-myisam">
+<span class="arrow"></span>
+<span class="next">MERGE (anciemment MRG_MyISAM)</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/essence-ou-diesel-quel-moteur-choisir">
+<span class="next">Essence ou Diesel ? Quel moteur choisir ?</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="EssenceouDieselQuelmoteurchoisir"></a><h2>Essence ou Diesel ? Quel moteur choisir ?</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/autres-moteurs">
+<span class="arrow"></span>
+<span class="next">Autres moteurs</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-352418" data-claire-element-id="352418">Nous l'avons vu, les moteurs disponibles sont nombreux.<br/> Chacun est performant dans une situation donnée mais pourrait être source de problèmes dans d'autres cas.</p><p id="r-352419" data-claire-element-id="352419">Dans la plupart des cas, le choix sera à faire entre MyISAM, InnoDB et MEMORY, les autres moteurs étant plus spécifiques.</p><p id="r-352420" data-claire-element-id="352420">Le raisonnement à tenir est le suivant :</p><div id="r-352422" data-claire-element-id="352422" data-claire-semantic="question"><p id="r-352421" data-claire-element-id="352421">Est-ce que mes données sont temporaires et peu importantes ?</p></div><p id="r-352423" data-claire-element-id="352423">Si les données sont temporaires et ne sont pas vitales à l'application, MEMORY sera un bon choix pour sa volatilité.</p><div id="r-352425" data-claire-element-id="352425" data-claire-semantic="question"><p id="r-352424" data-claire-element-id="352424">Est-ce que mes données sont en relations avec des données d'autres tables ?</p></div><p id="r-352426" data-claire-element-id="352426">Si les données sont liées à d'autres tables, on choisira InnoDB pour son respect des relations.</p><div id="r-352428" data-claire-element-id="352428" data-claire-semantic="question"><p id="r-352427" data-claire-element-id="352427">Est-ce que mes données doivent rester à tout prix intègres et ne pas contenir d'incohérences ?</p></div><p id="r-352429" data-claire-element-id="352429">Si la cohérence de la base de données et son intégrité sont primordiales, InnoDB sera choisi pour son respect des transactions.</p><div id="r-352431" data-claire-element-id="352431" data-claire-semantic="question"><p id="r-352430" data-claire-element-id="352430">Est-ce que je dois effectuer des recherches sur des textes de taille importante ?</p></div><p id="r-352432" data-claire-element-id="352432">Si des recherches sur des textes de grande taille sont à faire, MyISAM et ses index FULLTEXT seront un choix judicieux.</p><div id="r-352434" data-claire-element-id="352434" data-claire-semantic="question"><p id="r-352433" data-claire-element-id="352433">Est-ce que je dois faire plus d'insertions, modifications ou suppressions que de lectures dans ma table ?</p></div><p id="r-352435" data-claire-element-id="352435">MyISAM verrouille la table entière à chaque insertion, modification ou suppression. Si de nombreuses opérations de ce type sont faites, il faudra plutôt s'orienter vers InnoDB qui verrouille indépendamment chaque ligne et évite ainsi de ralentir inutilement l'application.</p><div id="r-352437" data-claire-element-id="352437" data-claire-semantic="question"><p id="r-352436" data-claire-element-id="352436">Est-ce que j'ai besoin d'historiser mes données ?</p></div><p id="r-352438" data-claire-element-id="352438">S'il est important de pouvoir historiser les données, MERGE sera interessant pour sa possiblité d'agrandir pratiquement à l'infini la table tout en structurant les données en sous-tables.</p><p id="r-352439" data-claire-element-id="352439">Les moteurs de stockage de MySQL sont des outils puissants lorsqu'ils sont utilisés de manière pertinente. MySQL donne au développeur la liberté de faire tout et n'importe quoi (la tendance naturelle de l'homme sera évidemment de faire n'importe quoi :p ).<br/> Il est ainsi important de connaitre les outils à notre disposition pour pouvoir choisir le plus adapté à la situation. On ne plante les carottes dans son jardin ni avec un cure-dents, ni avec une pelleteuse.</p><p id="r-352440" data-claire-element-id="352440">Il ne faut pas tomber dans le travers classique de vouloir utiliser un moteur partout parce qu'il est mieux dans 50% des cas. Dans les 50% restants, il sera inadapté.<br/> Toujours utiliser un moteur un peu lent &quot;parce qu'il gère mieux les relations en général&quot; alors qu'on travaille dans une base ne possédant pas de relations serait idiot et ralentirait l'application inutilement.</p><p id="r-352441" data-claire-element-id="352441">Comme dit le proverbe :</p><p id="r-352442" data-claire-element-id="352442"><cite>Citation</cite></p><blockquote id="r-352444" data-claire-element-id="352444"><p id="r-352443" data-claire-element-id="352443">Lorsqu'on a un marteau à la main, tout ressemble à un clou.</p></blockquote><p id="r-352445" data-claire-element-id="352445">C'est donc tout un travail de réflexion qui permettra de choisir le bon moteur pour la bonne table au sein d'une base. Plusieurs peuvent coexister sans pour autant poser de problèmes.<br/> La question n'est donc pas <em>&quot;Quel est le meilleur moteur ?</em>&quot; mais : &quot;<em>Dans ce cas précis, quel moteur m'apportera les fonctionnalités dont j'ai besoin ?</em>&quot;</p><h3 id="r-liens-utiles-3" data-claire-element-id="352453">liens utiles</h3><ul id="r-352452" data-claire-element-id="352452"><li id="r-352447" data-claire-element-id="352447"><p id="r-352446" data-claire-element-id="352446"><a href="http://dev.mysql.com/doc/refman/5.0/fr/storage-engines.html">Documentation MySQL relative aux moteurs</a> et son <a href="http://dev.mysql.com/doc/refman/5.0/fr/innodb.html">article spécifique à InnoDB</a></p></li><li id="r-352449" data-claire-element-id="352449"><p id="r-352448" data-claire-element-id="352448"><a href="http://kb.askmonty.org/v/mariadb-storage-engines">Les moteurs de stockage de MariaDB</a>, le fork de MySQL</p></li><li id="r-352451" data-claire-element-id="352451"><p id="r-352450" data-claire-element-id="352450"><a href="http://fr.wikipedia.org/wiki/Moteur_de_base_de_données">Les moteurs de base de données sur Wikipedia</a> article plus généraliste parlant aussi des autres SGBD</p></li></ul>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql">Les moteurs de stockage de MySQL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/mysql-et-ses-droles-de-moteurs">
+MySQL et ses drôles de moteurs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/le-mot-cle-engine">
+Le mot clé ENGINE
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/deux-grandes-familles-de-moteurs">
+Deux grandes familles de moteurs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/myisam-1">
+MyISAM
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/innodb-1">
+InnoDB
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/memory-anciennement-heap">
+MEMORY (anciennement HEAP)
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/merge-anciemment-mrg-myisam">
+MERGE (anciemment MRG_MyISAM)
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/autres-moteurs">
+Autres moteurs
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/essence-ou-diesel-quel-moteur-choisir">
+Essence ou Diesel ? Quel moteur choisir ?
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-moteurs-de-stockage-de-mysql/autres-moteurs">
+<span class="arrow"></span>
+<span class="next">Autres moteurs</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/les-moteurs-de-stockage-de-mysql.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 01:21:19 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/les-moteurs-de-stockage-de-mysql.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:21:40 GMT -->
+</html>

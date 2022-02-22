@@ -1,0 +1,421 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/les-erreurs-de-base-avec-mysql.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 07:31:36 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/les-erreurs-de-base-avec-mysql.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:23:11 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Les erreurs de base avec MySQL</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/les-erreurs-de-base-avec-mysql.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Les erreurs de base avec MySQL</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#LeserreursdebaseavecMySQL">Les erreurs de base avec MySQL</a><br/><a href="#Oncommence...">On commence...</a><br/><a href="#Ondcouvredesfonctionnalitsmconnues...">On découvre des fonctionnalités méconnues...</a><br/><a href="#...etcommentlesutiliserefficacement">... et comment les utiliser efficacement</a><br/><a href="#Deserreurs...etdessolutions">Des erreurs... et des solutions !</a><br/></div>
+<a name="LeserreursdebaseavecMySQL"></a><h2>Les erreurs de base avec MySQL</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-erreurs-de-base-avec-mysql/on-commence">
+<span class="next">On commence...</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-575280" data-claire-element-id="575280">Bonjour et bienvenue sur ce tutoriel.</p><p id="r-575281" data-claire-element-id="575281">Vous êtes sans doute au courant que les erreurs sont les cauchemars des développeurs PHP et/ou MySQL.<br/> Vous en avez sûrement déjà rencontré, et ce n'est pas fini. :p</p><p id="r-575282" data-claire-element-id="575282">Tout au long de ce tutoriel, vous apprendrez à déceler les <strong>erreurs de base</strong> dans une requête SQL qui provoquent des erreurs PHP.</p><div id="r-575284" data-claire-element-id="575284" data-claire-semantic="question"><p id="r-575283" data-claire-element-id="575283">Des erreurs PHP ? Tu voulais dire SQL !</p></div><p id="r-575285" data-claire-element-id="575285">Non, non, une erreur SQL entraîne forcément par la suite une erreur PHP de la fonction qui gère le retour des données (mysql_fetch_array, mysql_fetch_assoc, mysql_result...) :</p><aside id="r-575287" data-claire-element-id="575287" data-claire-semantic="error"><p id="r-575286" data-claire-element-id="575286">Warning: mysql_fetch_array(): supplied argument is not a valid MySQL result resource</p></aside><p id="r-575288" data-claire-element-id="575288">Allez, c'est parti...</p>
+</div><a name="Oncommence..."></a><h2>On commence...</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-erreurs-de-base-avec-mysql/on-decouvre-des-fonctionnalites-meconnues">
+<span class="next">On découvre des fonctionnalités méconnues...</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-575289" data-claire-element-id="575289">Tout au long de ce tutoriel, je vais vous expliquer ce que je vous dis à travers des exemples concrets.<br/> Pour éviter de vous perdre, je vais garder la même structure SQL et vous pourrez ainsi suivre l'évolution de notre script.<br/> La base de données s'appelle <strong>monsite</strong>, la table s'appelle <strong>membres</strong> et voici sa structure :</p><pre id="r-575290" data-claire-element-id="575290"><code data-claire-semantic="sql">CREATE TABLE membres (
+  id int(6) NOT NULL auto_increment,
+  pseudo varchar(20) collate latin1_bin NOT NULL,
+  motdepasse varchar(32) collate latin1_bin NOT NULL,
+  datenaissance date NOT NULL,
+  dateconnexion datetime NOT NULL,
+  email varchar(40) collate latin1_bin NOT NULL,
+  PRIMARY KEY  (id),
+  UNIQUE KEY pseudo (pseudo)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_bin AUTO_INCREMENT=1 ;</code></pre><p id="r-575291" data-claire-element-id="575291">Il s'agit d'une table très simplifiée pour les besoins de ce tutoriel, inutilisable en production (trop peu de champs).</p><p id="r-575292" data-claire-element-id="575292">Nous allons la remplir de quelques enregistrements :</p><pre id="r-575293" data-claire-element-id="575293"><code data-claire-semantic="sql">INSERT INTO membres (id, pseudo, motdepasse, datenaissance, dateconnexion, email) VALUES
+(1, 'S0pra', 'f71dbe52628a3f83a77ab494817525c6', '1991-06-28', '2008-04-19 08:45:37', '<a class="__cf_email__" href="http://www.cloudflare.com/email-protection" data-cfemail="cabeabb8beaba7baa3a5a48aada7aba3a6e4a9a5a7">[email&nbsp;protected]</a><script type="text/javascript">
+/* <![CDATA[ */
+(function(){try{var s,a,i,j,r,c,l,b=document.getElementsByTagName("script");l=b[b.length-1].previousSibling;a=l.getAttribute('data-cfemail');if(a){s='';r=parseInt(a.substr(0,2),16);for(j=2;a.length-j;j+=2){c=parseInt(a.substr(j,2),16)^r;s+=String.fromCharCode(c);}s=document.createTextNode(s);l.parentNode.replaceChild(s,l);}}catch(e){}})();
+/* ]]> */
+</script>'),
+(2, 'L''alter-ego', 'ea7d0b804bf0846c549d1b166526a88c', '1985-04-08', '2008-03-25 08:46:38', '<a class="__cf_email__" href="http://www.cloudflare.com/email-protection" data-cfemail="02636e7667705d67656d427b636a6d6d2c6470">[email&nbsp;protected]</a><script type="text/javascript">
+/* <![CDATA[ */
+(function(){try{var s,a,i,j,r,c,l,b=document.getElementsByTagName("script");l=b[b.length-1].previousSibling;a=l.getAttribute('data-cfemail');if(a){s='';r=parseInt(a.substr(0,2),16);for(j=2;a.length-j;j+=2){c=parseInt(a.substr(j,2),16)^r;s+=String.fromCharCode(c);}s=document.createTextNode(s);l.parentNode.replaceChild(s,l);}}catch(e){}})();
+/* ]]> */
+</script>'),
+(3, 'Martine Du 14', '2e3817293fc275dbee74bd71ce6eb056', '1956-11-20', '2008-04-13 09:09:12', '<a class="__cf_email__" href="http://www.cloudflare.com/email-protection" data-cfemail="0a7e637e63646f557c6566666f734a62657e676b6366246c78">[email&nbsp;protected]</a><script type="text/javascript">
+/* <![CDATA[ */
+(function(){try{var s,a,i,j,r,c,l,b=document.getElementsByTagName("script");l=b[b.length-1].previousSibling;a=l.getAttribute('data-cfemail');if(a){s='';r=parseInt(a.substr(0,2),16);for(j=2;a.length-j;j+=2){c=parseInt(a.substr(j,2),16)^r;s+=String.fromCharCode(c);}s=document.createTextNode(s);l.parentNode.replaceChild(s,l);}}catch(e){}})();
+/* ]]> */
+</script>'),
+(4, 'Sénèque', '925d7518fc597af0e43f5606f9a51512', '1981-08-17', '2008-04-17 09:10:37', '<a class="__cf_email__" href="http://www.cloudflare.com/email-protection" data-cfemail="92f8f1bcf0f3fef3fef3d2fde0f3fcf5f7bcf4e0">[email&nbsp;protected]</a><script type="text/javascript">
+/* <![CDATA[ */
+(function(){try{var s,a,i,j,r,c,l,b=document.getElementsByTagName("script");l=b[b.length-1].previousSibling;a=l.getAttribute('data-cfemail');if(a){s='';r=parseInt(a.substr(0,2),16);for(j=2;a.length-j;j+=2){c=parseInt(a.substr(j,2),16)^r;s+=String.fromCharCode(c);}s=document.createTextNode(s);l.parentNode.replaceChild(s,l);}}catch(e){}})();
+/* ]]> */
+</script>');</code></pre><p id="r-575294" data-claire-element-id="575294">Toutes les informations ont été choisies aléatoirement. Si vous vous reconnaissez, ce n'est que le pur hasard. :p</p><p id="r-575295" data-claire-element-id="575295">Bien sûr, cette table sera « alimentée » à chaque inscription sur votre site.</p><p id="r-575296" data-claire-element-id="575296">Dans la prochaine partie, vous découvrirez certaines fonctionnalités « cachées » et pourtant très utiles de PHP !</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-erreurs-de-base-avec-mysql">Les erreurs de base avec MySQL</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-erreurs-de-base-avec-mysql/on-commence">
+On commence...
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-erreurs-de-base-avec-mysql/on-decouvre-des-fonctionnalites-meconnues">
+On découvre des fonctionnalités méconnues...
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-erreurs-de-base-avec-mysql/et-comment-les-utiliser-efficacement">
+... et comment les utiliser efficacement
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-erreurs-de-base-avec-mysql/des-erreurs-et-des-solutions">
+Des erreurs... et des solutions !
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-erreurs-de-base-avec-mysql/on-decouvre-des-fonctionnalites-meconnues">
+<span class="next">On découvre des fonctionnalités méconnues...</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Ondcouvredesfonctionnalitsmconnues..."></a><h2>On découvre des fonctionnalités méconnues...</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-erreurs-de-base-avec-mysql/on-commence">
+<span class="arrow"></span>
+<span class="next">On commence...</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-erreurs-de-base-avec-mysql/et-comment-les-utiliser-efficacement">
+<span class="next">... et comment les utiliser efficacement</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-575298" data-claire-element-id="575298">Voilà : on a notre table, nos enregistrements, nous sommes prêts à faire un code PHP.<br/> Si vous avez bien suivi <a href="http://www.siteduzero.com/tuto-3-4-0-un-site-dynamique-avec-php.html">les tutoriels de M@teo21</a>, vous pouvez le faire et généralement, le script ressemblera plus ou moins à ceci :</p><pre id="r-575299" data-claire-element-id="575299"><code data-claire-semantic="html+php">&lt;?php
+mysql_connect(&quot;localhost&quot;, &quot;root&quot;, &quot;&quot;); // Connexion à MySQL (identifiants par défaut de WAMP)
+mysql_select_db(&quot;monsite&quot;); // Sélection de la base monsite
+
+// Travail sur la BDD
+
+// On a fini de travailler, on ferme la connexion.
+mysql_close(); // Déconnexion de MySQL
+?&gt;</code></pre><p id="r-575300" data-claire-element-id="575300">Par la suite, nous nous occuperons de la gestion des erreurs, surtout dans la partie « Travail sur la BDD », mais découvrons ensemble quelques fonctionnalités malheureusement méconnues de PHP.</p><h2 id="r-la-fonction-die" data-claire-element-id="575324">La fonction die</h2><div id="r-575302" data-claire-element-id="575302" data-claire-semantic="question"><p id="r-575301" data-claire-element-id="575301">Quoi, déjà la fin, je vais mourir ?</p></div><p id="r-575303" data-claire-element-id="575303">Oui, <em>die</em> en anglais veut dire mourir, mais ne vous inquiétez pas, vous resterez en vie jusqu'à la fin de ce tutoriel. ^^ La fonction die est <strong>un alias</strong> de la fonction exit en PHP.</p><div id="r-575305" data-claire-element-id="575305" data-claire-semantic="question"><p id="r-575304" data-claire-element-id="575304">C'est quoi, un alias ? C'est la série ?</p></div><p id="r-575306" data-claire-element-id="575306">Non, non, quand on développe en PHP, on ne regarde pas la télévision... :-° Un alias est en quelque sorte un surnom. C'est une fonction qui a exactement les mêmes caractéristiques, paramètres... que la fonction originale, mais elle n'a pas le même nom. Voici ce qu'en dit la documentation PHP :</p><p id="r-575307" data-claire-element-id="575307"><cite>Citation : Documentation PHP</cite></p><blockquote id="r-575309" data-claire-element-id="575309"><p id="r-575308" data-claire-element-id="575308">Ces modifications de noms ont été réalisées en général à cause d'un changement dans l'API d'origine ou pour d'autres raisons et les anciens noms sont conservés uniquement pour des raisons de compatibilité ascendante.</p></blockquote><p id="r-575310" data-claire-element-id="575310">Un peu compliqué pour vous dire que si une fonction change de nom au cours de l'évolution de PHP, on conserve l'ancien nom pour que les anciens scripts ne partent pas à la dérive.<br/> Vous trouverez une liste complète des alias en PHP <a href="http://fr.php.net/manual/fr/aliases.php">dans la documentation</a>.</p><p id="r-575311" data-claire-element-id="575311">Tout ça pour vous annoncer que die() est un alias.</p><div id="r-575313" data-claire-element-id="575313" data-claire-semantic="question"><p id="r-575312" data-claire-element-id="575312">Et alors ?</p></div><p id="r-575314" data-claire-element-id="575314">Voici la réponse officielle :</p><p id="r-575315" data-claire-element-id="575315"><cite>Citation : Documentation PHP</cite></p><blockquote id="r-575317" data-claire-element-id="575317"><p id="r-575316" data-claire-element-id="575316">C'est une très mauvaise habitude d'utiliser ces alias, car ils risquent à tout moment de disparaître.</p></blockquote><aside id="r-575319" data-claire-element-id="575319" data-claire-semantic="warning"><p id="r-575318" data-claire-element-id="575318">Par mesure de précaution, on utilisera donc toujours exit() et non die().</p></aside><p id="r-575320" data-claire-element-id="575320">L'utilisation d'exit() la plus simple est la suivante :</p><pre id="r-575321" data-claire-element-id="575321"><code data-claire-semantic="html+php">&lt;?php
+// Script, partie 1
+exit('Fin du Script');
+// Script, partie2
+?&gt;</code></pre><p id="r-575322" data-claire-element-id="575322">Avec ce code, PHP exécutera la partie 1 du script et cessera son exécution dès qu'il rencontrera exit. Il affichera alors (en effaçant ce qui avait été éventuellement affiché précédemment) la chaîne de caractères passée en paramètres. <strong>La partie 2 ne sera jamais exécutée !</strong></p><p id="r-575323" data-claire-element-id="575323">Voilà pour la fonction exit() ; passons ensuite à une seconde fonctionnalité « cachée ».</p><h2 id="r-les-operateurs-booleens" data-claire-element-id="575334">Les opérateurs booléens</h2><p id="r-575325" data-claire-element-id="575325">Vous les connaissez sûrement et vous les utilisez sans le savoir, c'est tout simplement ET, OU...</p><div id="r-575327" data-claire-element-id="575327" data-claire-semantic="question"><p id="r-575326" data-claire-element-id="575326">Mais ce n'est pas caché puisqu'on s'en sert dans toutes les conditions ! Tu nous prends pour des billes...</p></div><p id="r-575328" data-claire-element-id="575328">Attendez... vous allez voir qu'on peut les utiliser en dehors des conditions.<br/> Vous verrez dans <a href="http://www.php.net/">la documentation PHP</a> que certaines fonctions renvoient <strong>FALSE</strong> en cas d'erreur, et notamment la majorité des fonctions MySQL !<br/> Si en PHP j'écris ceci :</p><pre id="r-575329" data-claire-element-id="575329"><code data-claire-semantic="html+php">&lt;?php
+$var1 = 'Toto aime les frites';
+$var2 = 'Toto aime les frites';
+$var3 = 'Nina aime les frites';
+
+if ($var1 == $var2 OR $var2 == $var3) {
+	echo 'OK';
+}
+else {
+	echo 'Non OK';
+}
+?&gt;</code></pre><p id="r-575330" data-claire-element-id="575330">vous savez bien évidemment que le script affichera OK. <br/> Mais comme PHP est un peu fainéant, :-° puisque la première condition est vraie (dans le OR), pourquoi s'embêter à aller vérifier la deuxième ? En effet, TRUE OR FALSE et TRUE OR TRUE renverront TRUE (cf. <a href="http://fr.wikipedia.org/wiki/Opérateur_booléen">algèbre de Boole</a>).</p><p id="r-575331" data-claire-element-id="575331">Si maintenant j'écris ceci :</p><pre id="r-575332" data-claire-element-id="575332"><code data-claire-semantic="html+php">&lt;?php
+// Connexion à MySQL
+mysql_connect('localhost', 'root', '') or exit('Erreur à la connexion à MySQL');
+?&gt;</code></pre><p id="r-575333" data-claire-element-id="575333">on sait déjà que mysql_connect renvoie false au cas où la connexion échoue. Ainsi, dans ce cas-là (et uniquement dans ce cas), PHP ira exécuter la fonction qui se trouve de l'autre côté du or.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-erreurs-de-base-avec-mysql">Les erreurs de base avec MySQL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-erreurs-de-base-avec-mysql/on-commence">
+On commence...
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-erreurs-de-base-avec-mysql/on-decouvre-des-fonctionnalites-meconnues">
+On découvre des fonctionnalités méconnues...
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-erreurs-de-base-avec-mysql/et-comment-les-utiliser-efficacement">
+... et comment les utiliser efficacement
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-erreurs-de-base-avec-mysql/des-erreurs-et-des-solutions">
+Des erreurs... et des solutions !
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-erreurs-de-base-avec-mysql/on-commence">
+<span class="arrow"></span>
+<span class="next">On commence...</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-erreurs-de-base-avec-mysql/et-comment-les-utiliser-efficacement">
+<span class="next">... et comment les utiliser efficacement</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="...etcommentlesutiliserefficacement"></a><h2>... et comment les utiliser efficacement</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-erreurs-de-base-avec-mysql/on-decouvre-des-fonctionnalites-meconnues">
+<span class="arrow"></span>
+<span class="next">On découvre des fonctionnalités méconnues...</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-erreurs-de-base-avec-mysql/des-erreurs-et-des-solutions">
+<span class="next">Des erreurs... et des solutions !</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-575336" data-claire-element-id="575336">Si vous avez bien suivi la sous-partie précédente, vous connaissez l'utilité d'ajouter or exit('Erreur de MySQL'), comme ceci :</p><pre id="r-575337" data-claire-element-id="575337"><code data-claire-semantic="html+php">&lt;?php
+//Connexion à MySQL
+mysql_connect('localhost', 'root', '') or exit('Erreur à la connexion à MySQL');
+//Suite du script
+?&gt;</code></pre><p id="r-575338" data-claire-element-id="575338">Toute la subtilité est là : si le script rencontre une erreur à la connexion, on affiche « Erreur à la connexion à MySQL » et on s'arrête là. Il est inutile de continuer, d'exécuter des requêtes si la connexion a échoué.<br/> Le « problème », c'est que vous n'êtes pas tellement plus avancés. Vous avez localisé l'erreur mais seulement en partie.<br/> Oui, c'est vrai, avec cet exemple, vous savez que l'erreur se situe à la connexion, mais vous ne savez pas ce qui cloche !</p><div id="r-575340" data-claire-element-id="575340" data-claire-semantic="question"><p id="r-575339" data-claire-element-id="575339">Et alors, déjà ce n'est pas mal, je sais que c'est là. On ne va pas s'embêter à écrire des lignes de script juste pour déceler une petite erreur !</p></div><p id="r-575341" data-claire-element-id="575341">Petite ? Oui, mais croyez-moi, il est très utile de savoir avec précision où se situe l'erreur. En plus, pas besoin de nombreuses lignes de code, une seule fonction suffit.</p><div id="r-575343" data-claire-element-id="575343" data-claire-semantic="question"><p id="r-575342" data-claire-element-id="575342">Quoi ? Mais c'est fou, ça !</p></div><p id="r-575344" data-claire-element-id="575344">Eh oui, magie, magie... :magicien: mysql_error()<br/> Elle retourne le texte de la dernière erreur de MySQL.<br/> Son utilisation est très simple, dans le cadre de l'affichage d'erreur :</p><pre id="r-575345" data-claire-element-id="575345"><code data-claire-semantic="html+php">&lt;?php
+// Connexion à MySQL
+mysql_connect('localhost', 'root', '') or exit(mysql_error());
+mysql_select_db('monsite') or exit(mysql_error());
+?&gt;</code></pre><h2 id="r-en-savoir-plus-sur-exit" data-claire-element-id="575368">En savoir plus sur exit()</h2><h3 id="r-exit-et-include" data-claire-element-id="575351">exit() et include()</h3><p id="r-575346" data-claire-element-id="575346">Si votre script est inclus dans une page, le exit() n'effacera pas le texte précédemment inséré par les autres pages. Exemple :<br/><strong>index.php</strong></p><pre id="r-575347" data-claire-element-id="575347"><code data-claire-semantic="html+php">&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD XHTML 1.0 Strict//EN&quot; &quot;http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd&quot;&gt;
+&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot; xml:lang=&quot;fr&quot;&gt;
+	&lt;head&gt;
+		&lt;title&gt;
+		Titre de ma page
+		&lt;/title&gt;
+		&lt;link href=&quot;css/design.css&quot; rel=&quot;stylesheet&quot; title=&quot;Feuille de Style standard&quot; type=&quot;text/css&quot; media=&quot;screen&quot; /&gt;
+	&lt;/head&gt;
+	
+	&lt;body&gt;
+		&lt;?php
+		include ('mysql.php');
+		include('accueil.php');
+		?&gt;
+	&lt;/body&gt;
+&lt;/html&gt;</code></pre><p id="r-575348" data-claire-element-id="575348"><strong>mysql.php</strong></p><pre id="r-575349" data-claire-element-id="575349"><code data-claire-semantic="html+php">&lt;?php
+// Connexion à MySQL
+mysql_connect('localhost', 'root', '') or exit(mysql_error());
+mysql_select_db('monsite') or exit(mysql_error());
+?&gt;</code></pre><p id="r-575350" data-claire-element-id="575350">Au cas où une erreur se présente dans mysql.php, le HTML <strong>inséré avant l'appel de include('mysql.php')</strong> sera conservé. Le script affichera ensuite l'erreur et cessera son exécution (la page accueil.php ne sera pas incluse et &lt;/body&gt;&lt;/html&gt; ne sera pas affiché).</p><h3 id="r-les-constantes-line-et-file" data-claire-element-id="575367">Les constantes __LINE__ et __FILE__</h3><div id="r-575353" data-claire-element-id="575353" data-claire-semantic="question"><p id="r-575352" data-claire-element-id="575352">Quésaco ? Qu'est-ce que tu vas nous apprendre, encore ?</p></div><p id="r-575354" data-claire-element-id="575354">Peut-être n'êtes-vous pas au courant mais il existe des « constantes magiques » : <a href="http://www.php.net/manual/fr/language.constants.predefined.php">voir la documentation PHP à ce sujet</a>.<br/> Les constantes __FILE__ et __LINE__ sont sûrement les plus utilisées dans les scripts de base. Je ne sais pas pourquoi on les appelle constantes puisqu'elles varient.</p><div id="r-575356" data-claire-element-id="575356" data-claire-semantic="question"><p id="r-575355" data-claire-element-id="575355">Oh ! là ! là !... PHP, c'est tordu tout de même ! Tu nous dis que c'est constant, mais que ça varie !</p></div><p id="r-575357" data-claire-element-id="575357">Eh oui, elle est dure la vie ! :lol: En fait, __LINE__ contient le numéro de la ligne. Un script comme celui-ci :</p><pre id="r-575358" data-claire-element-id="575358"><code data-claire-semantic="html+php">&lt;?php
+echo __LINE__;
+?&gt;</code></pre><p id="r-575359" data-claire-element-id="575359">affichera 2.<br/>__FILE__ contient l'adresse absolue du fichier. Si cette constante est utilisée dans une fonction include, c'est l'adresse du fichier inclus qui est retournée.<br/> Reprenons l'exemple précédent, avec la même page index.php et changeons un peu le fichier mysql.php :</p><pre id="r-575360" data-claire-element-id="575360"><code data-claire-semantic="html+php">&lt;?php
+// Connexion à MySQL
+mysql_connect('localhost', 'root', '') or exit('Erreur dans le fichier '.__FILE__.'&lt;br /&gt;Ligne '.__LINE__.'&lt;br /&gt;MySQL dit : '.mysql_error());
+mysql_select_db('monsite') or exit('Erreur dans le fichier '.__FILE__.'&lt;br /&gt;Ligne '.__LINE__.'&lt;br /&gt;MySQL dit : '.mysql_error());
+?&gt;</code></pre><p id="r-575361" data-claire-element-id="575361">Et là, dès que vous aurez une erreur SQL, vous verrez quelque chose du style :</p><p id="r-575362" data-claire-element-id="575362"><cite>Citation</cite></p><blockquote id="r-575364" data-claire-element-id="575364"><p id="r-575363" data-claire-element-id="575363">Erreur dans le fichier C:\wamp\www\mysql.php<br/> Ligne 3<br/> MySQL dit : ERREUR SQL</p></blockquote><p id="r-575365" data-claire-element-id="575365">Note : l'erreur SQL n'est pas affichée, vous en verrez quelques-unes dans la prochaine sous-partie.</p><p id="r-575366" data-claire-element-id="575366">Bien sûr, pour la connexion à la base de données, étant donné que c'est souvent le même script qui la fait, ce n'est pas d'une utilité extrême.<br/> Mais quand vous avez un site complexe, avec des requêtes SQL pour le membre qui visite, pour l'affichage des messages et des catégories dans un forum (par exemple), croyez-moi, c'est appréciable de savoir quelle requête pose problème.<br/> Justement, la prochaine sous-partie est consacrée aux différents problèmes rencontrés.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-erreurs-de-base-avec-mysql">Les erreurs de base avec MySQL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-erreurs-de-base-avec-mysql/on-commence">
+On commence...
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-erreurs-de-base-avec-mysql/on-decouvre-des-fonctionnalites-meconnues">
+On découvre des fonctionnalités méconnues...
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-erreurs-de-base-avec-mysql/et-comment-les-utiliser-efficacement">
+... et comment les utiliser efficacement
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-erreurs-de-base-avec-mysql/des-erreurs-et-des-solutions">
+Des erreurs... et des solutions !
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-erreurs-de-base-avec-mysql/on-decouvre-des-fonctionnalites-meconnues">
+<span class="arrow"></span>
+<span class="next">On découvre des fonctionnalités méconnues...</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-erreurs-de-base-avec-mysql/des-erreurs-et-des-solutions">
+<span class="next">Des erreurs... et des solutions !</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Deserreurs...etdessolutions"></a><h2>Des erreurs... et des solutions !</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-erreurs-de-base-avec-mysql/et-comment-les-utiliser-efficacement">
+<span class="arrow"></span>
+<span class="next">... et comment les utiliser efficacement</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-575370" data-claire-element-id="575370">Des erreurs, il en existe de toutes sortes et c'est pour cela qu'il n'est pas facile de s'y retrouver pour un débutant.<br/> Je ne pouvais pas faire une partie contenant TOUTES les erreurs SQL. Elles ne constituent pas une quantité infinie, mais certaines ne sont que très peu rencontrées et il serait inutile de toutes les retenir. Retenez les principales pour les corriger rapidement et ne pas buter sur une simple erreur alors que des lignes de code attendent d'être écrites.</p><h2 id="r-a-la-connexion" data-claire-element-id="575380">À la connexion</h2><aside id="r-575372" data-claire-element-id="575372" data-claire-semantic="error"><p id="r-575371" data-claire-element-id="575371"><strong>Unknown MySQL server host 'locahlost'</strong></p></aside><p id="r-575373" data-claire-element-id="575373">Cette erreur apparaît quand MySQL ne trouve pas le serveur passé en premier paramètre de la fonction mysql_connect(). Si vous êtes en local, il s'agit de localhost. Sinon, c'est votre hébergeur qui vous donne le nom de son serveur MySQL. Notez ici la faute de frappe qui entraîne cette erreur.</p><aside id="r-575375" data-claire-element-id="575375" data-claire-semantic="error"><p id="r-575374" data-claire-element-id="575374"><strong>Can't connect to MySQL server on 'localhost'</strong></p></aside><p id="r-575376" data-claire-element-id="575376">Cette fois-ci, le nom du serveur semble correct mais il est impossible de s'y connecter. Si vous êtes en local, vérifiez que le service « MySQL » est lancé, c'est-à-dire que l'icône de WAMP est blanche. Redémarrez WAMP pour en être sûr. Si vous êtes sur un hébergeur distant, vérifiez que l'hébergeur a ouvert votre compte et que le serveur MySQL n'a pas de problèmes ces temps-ci.</p><aside id="r-575378" data-claire-element-id="575378" data-claire-semantic="error"><p id="r-575377" data-claire-element-id="575377"><strong>Access denied for user...</strong></p></aside><p id="r-575379" data-claire-element-id="575379">Ici, c'est le deuxième <strong>et/ou</strong> le troisième paramètre de mysql_connect qui est en cause. En local, il faut mettre root et non pas de mot de passe, par défaut. Vous avez peut-être changé ces informations et dans ce cas, vous en connaissez les valeurs. Sur un hébergeur distant, là encore, c'est lui qui vous en informe à votre inscription.</p><h2 id="r-a-la-selection-de-la-base-de-donnees" data-claire-element-id="575384">À la sélection de la base de données</h2><aside id="r-575382" data-claire-element-id="575382" data-claire-semantic="error"><p id="r-575381" data-claire-element-id="575381">Unknown database 'monsit'</p></aside><p id="r-575383" data-claire-element-id="575383">Vérifiez que le nom de la base de données, passé en paramètre à mysql_select_db est correct. Notez ici la faute de frappe qui engendre cette erreur.</p><h2 id="r-lors-d-une-requete" data-claire-element-id="575455">Lors d'une requête</h2><p id="r-575385" data-claire-element-id="575385">C'est dans cette partie qu'elles sont les plus nombreuses. Des règles d'or régissent la création de requêtes afin d'en éliminer d'ores et déjà 80 %.</p><div id="r-575387" data-claire-element-id="575387" data-claire-semantic="question"><p id="r-575386" data-claire-element-id="575386">Tu nous sors encore ta baguette magique, et une fonction qui les enlève ?</p></div><p id="r-575388" data-claire-element-id="575388">Hélas, non ! Au risque de vous décevoir, cette fois-ci, c'est à vous de travailler.<br/> On commence alors par les noms de tables et de champs.<br/><strong>Il ne faut pas entourer</strong> les noms de champs et de tables par des <em>backquotes</em> (`), sauf s'ils font partie des mots réservés de MySQL. Vous en trouverez une liste <a href="http://dev.mysql.com/doc/mysqld-version-reference/en/mysqld-version-reference-reservedwords-5-1.html">ici</a>.<br/> Quoi qu'il en soit, je ne vous conseille pas d'utiliser ces mots dans les noms de tables et de champs.<br/> Si vous vous rappelez bien la structure donnée au premier paragraphe, vous ferez donc une requête du style :</p><pre id="r-575389" data-claire-element-id="575389"><code data-claire-semantic="html+php">&lt;?php
+mysql_query('SELECT pseudo FROM membres') or exit('Erreur SQL ligne '.__LINE__.' : '.mysql_error());
+?&gt;</code></pre><p id="r-575390" data-claire-element-id="575390">Voilà pour les noms de tables et de champs. Passons aux valeurs des champs (dans un WHERE par exemple).</p><p id="r-575391" data-claire-element-id="575391">Chaque entrée provenant de l'utilisateur (par exemple dans un formulaire donc $_GET ou $_POST) doit passer par une fonction de sécurisation avant d'être insérée dans la base de données.</p><h3 id="r-les-nombres-entiers-2" data-claire-element-id="575396">Les nombres entiers</h3><p id="r-575392" data-claire-element-id="575392">Si le champ MySQL attend des nombres entiers (de type INT, BIGINT...) : intval() est votre ami !<br/> Exemples tirés de la documentation :</p><pre id="r-575393" data-claire-element-id="575393"><code data-claire-semantic="html+php">&lt;?php
+echo intval(42);			// 42
+echo intval(4.2);			// 4
+echo intval('42');			// 42
+echo intval('+42');			// 42
+echo intval('042');			// 42
+echo intval('Toto a mangé 4 fruits');	// 0	
+echo intval('4Toto');			// 4
+echo intval('u4u4u4o3');		// 0
+?&gt;</code></pre><p id="r-575394" data-claire-element-id="575394">Vous voyez, elle retourne toujours un nombre entier et c'est ce que vous voulez.<br/> De plus, dans une requête, ne mettez jamais de <em>quotes</em> (ni doubles, ni simples, ni <em>backquotes</em>) autour de la valeur d'un champ attendant des nombres entiers. Donc, par exemple :</p><pre id="r-575395" data-claire-element-id="575395"><code data-claire-semantic="html+php">&lt;?php
+mysql_query('SELECT `pseudo` FROM `membres` WHERE `id` = '.intval($_GET['id'])) or exit('Erreur SQL ligne '.__LINE__.' : '.mysql_error());
+?&gt;</code></pre><h3 id="r-les-chaines-de-caracteres-20" data-claire-element-id="575454">Les chaînes de caractères</h3><p id="r-575397" data-claire-element-id="575397">Si le champ est de type TEXT, VARCHAR, MySQL n'attend pas forcément une valeur numérique, mais la plupart du temps une chaîne de caractères : on sécurise avec <strong>mysql_real_escape_string()</strong>.<br/> Il faudra aussi la <strong>délimiter par des guillemets simples</strong> (<em>simples quotes</em>) « ' ».<br/> En effet, sinon MySQL pourrait la confondre avec un champ. Imaginons qu'un membre s'appelle mot_passe (pas très original...) :<br/> Une requête du type :</p><pre id="r-575398" data-claire-element-id="575398"><code data-claire-semantic="html+php">&lt;?php
+//$_POST['pseudo'] = 'mot_passe';
+$pseudo = mysql_real_escape_string($_POST['pseudo']);
+mysql_query('SELECT `email` FROM `membres` WHERE `pseudo` = '.$pseudo) or exit('Erreur SQL ligne '.__LINE__.' : '.mysql_error());
+?&gt;</code></pre><p id="r-575399" data-claire-element-id="575399">Là, bien que la variable soit sécurisée, MySQL cherche les enregistrements où le champ pseudo vaut la même chose que le champ mot_passe (puisque par hasard, le champ mot_passe existe) et c'est la catastrophe.</p><p id="r-575400" data-claire-element-id="575400">On entoure donc de guillemets :</p><pre id="r-575401" data-claire-element-id="575401"><code data-claire-semantic="html+php">&lt;?php
+//$_POST['pseudo'] = 'mot_passe';
+$pseudo = mysql_real_escape_string($_POST['pseudo']);
+mysql_query(&quot;SELECT `email` FROM `membres` WHERE `pseudo` = '$pseudo'&quot;) or exit('Erreur SQL ligne '.__LINE__.' : '.mysql_error());
+?&gt;</code></pre><p id="r-575402" data-claire-element-id="575402">Et voilà !</p><p id="r-575403" data-claire-element-id="575403">Outre les injections SQL que vous risquez de ne pas voir au premier coup d'œil, l'oubli de mysql_real_escape_string peut vous causer un autre souci.<br/> Imaginons que vous cherchiez l'adresse e-mail du membre L'alter ego :</p><pre id="r-575404" data-claire-element-id="575404"><code data-claire-semantic="html+php">&lt;?php
+//$_POST['pseudo'] = &quot;L'alter ego&quot;;
+mysql_query(&quot;SELECT `email` FROM `membres` WHERE `pseudo` = '$pseudo'&quot;) or exit('Erreur SQL ligne '.__LINE__.' : '.mysql_error());
+?&gt;</code></pre><p id="r-575405" data-claire-element-id="575405">Une belle erreur SQL !<br/> Regardons ce que vaut la requête et la coloration qui est faite :</p><pre id="r-575406" data-claire-element-id="575406"><code data-claire-semantic="sql">SELECT `email` FROM `membres` WHERE `pseudo` = 'L'alter ego'</code></pre><p id="r-575407" data-claire-element-id="575407">Vous voyez ? Un carré rouge qui vous avertit qu'il y a un problème. En effet, dans une chaîne délimitée par des « ' », il y a un « ' » non échappé. Comme en PHP, cela génère une erreur. Avec mysql_real_escape_string, la requête devient :</p><pre id="r-575408" data-claire-element-id="575408"><code data-claire-semantic="sql">SELECT `email` FROM `membres` WHERE `pseudo` = 'L\'alter ego'</code></pre><p id="r-575409" data-claire-element-id="575409">Voilà qui est mieux, le fait qu'il y ait deux guillemets côte à côte sera interprété comme un échappement par MySQL : il n'en considèrera qu'un seul =&gt; parfait !</p><p id="r-575410" data-claire-element-id="575410">S'il y a une chose essentielle à se souvenir du tutoriel :</p><table id="r-575448" data-claire-element-id="575448"><thead id="r-575418" data-claire-element-id="575418"><tr id="r-575417" data-claire-element-id="575417"><th id="r-575412" data-claire-element-id="575412"><p id="r-575411" data-claire-element-id="575411">Élément</p></th><th id="r-575414" data-claire-element-id="575414"><p id="r-575413" data-claire-element-id="575413">Fonction de sécurisation</p></th><th id="r-575416" data-claire-element-id="575416"><p id="r-575415" data-claire-element-id="575415">Délimité par</p></th></tr></thead><tbody id="r-575447" data-claire-element-id="575447"><tr id="r-575425" data-claire-element-id="575425"><td id="r-575420" data-claire-element-id="575420"><p id="r-575419" data-claire-element-id="575419">Nom de table</p></td><td id="r-575422" data-claire-element-id="575422"><p id="r-575421" data-claire-element-id="575421">Ø</p></td><td id="r-575424" data-claire-element-id="575424"><p id="r-575423" data-claire-element-id="575423">Ø</p></td></tr><tr id="r-575432" data-claire-element-id="575432"><td id="r-575427" data-claire-element-id="575427"><p id="r-575426" data-claire-element-id="575426">Nom de champ</p></td><td id="r-575429" data-claire-element-id="575429"><p id="r-575428" data-claire-element-id="575428">Ø</p></td><td id="r-575431" data-claire-element-id="575431"><p id="r-575430" data-claire-element-id="575430">Ø</p></td></tr><tr id="r-575439" data-claire-element-id="575439"><td id="r-575434" data-claire-element-id="575434"><p id="r-575433" data-claire-element-id="575433">Nombre entier</p></td><td id="r-575436" data-claire-element-id="575436"><p id="r-575435" data-claire-element-id="575435">intval()</p></td><td id="r-575438" data-claire-element-id="575438"><p id="r-575437" data-claire-element-id="575437">Ø</p></td></tr><tr id="r-575446" data-claire-element-id="575446"><td id="r-575441" data-claire-element-id="575441"><p id="r-575440" data-claire-element-id="575440">Chaîne de caractères</p></td><td id="r-575443" data-claire-element-id="575443"><p id="r-575442" data-claire-element-id="575442">mysql_real_escape_string()</p></td><td id="r-575445" data-claire-element-id="575445"><p id="r-575444" data-claire-element-id="575444">'</p></td></tr></tbody></table><p id="r-575449" data-claire-element-id="575449">Voilà : j'espère que ce tutoriel n'a pas été trop long, que j'ai été clair et que vous avez tout compris.</p><p id="r-575450" data-claire-element-id="575450">L'idée d'un tel tutoriel m'est venue quand j'ai vu sur le forum de très nombreuses questions concernant une telle erreur.<br/> Je n'ai pas pu faire une liste exhaustive de tous les problèmes éventuellement rencontrés : si vous en avez un qui n'est pas dans la liste, faites <a href="http://www.siteduzero.com/recherche-351.html">une recherche</a> ; puis si elle est infructueuse, <a href="http://www.siteduzero.com/forum-82-123.html">postez dans le forum PHP</a>.</p><p id="r-575451" data-claire-element-id="575451">Merci de m'avoir suivi, et peut-être à bientôt pour de nouvelles aventures. ;)</p><div id="r-575453" data-claire-element-id="575453"><p id="r-575452" data-claire-element-id="575452">Je remercie les personnes qui ont commenté ce tutoriel et ont permis de le faire évoluer vers plus de précisions, notamment sur les <em>backquotes</em>.</p></div>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-erreurs-de-base-avec-mysql">Les erreurs de base avec MySQL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-erreurs-de-base-avec-mysql/on-commence">
+On commence...
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-erreurs-de-base-avec-mysql/on-decouvre-des-fonctionnalites-meconnues">
+On découvre des fonctionnalités méconnues...
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-erreurs-de-base-avec-mysql/et-comment-les-utiliser-efficacement">
+... et comment les utiliser efficacement
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-erreurs-de-base-avec-mysql/des-erreurs-et-des-solutions">
+Des erreurs... et des solutions !
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-erreurs-de-base-avec-mysql/et-comment-les-utiliser-efficacement">
+<span class="arrow"></span>
+<span class="next">... et comment les utiliser efficacement</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/les-erreurs-de-base-avec-mysql.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 07:31:36 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/les-erreurs-de-base-avec-mysql.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:23:11 GMT -->
+</html>
