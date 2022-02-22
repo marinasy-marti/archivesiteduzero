@@ -1,0 +1,369 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/un-systeme-d-options.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 11:09:56 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/un-systeme-d-options.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:47:47 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Un système d&#039;options</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/un-systeme-d-options.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Un système d&#039;options</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Unsystmed039options">Un système d&#039;options</a><br/><a href="#Lesoptionssimplesuncaractre">Les options simples à un caractère</a><br/><a href="#D039autrestypesd039options">D&#039;autres types d&#039;options ?</a><br/></div>
+<a name="Unsystmed039options"></a><h2>Un système d&#039;options</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-systeme-d-options/les-options-simples-a-un-caractere">
+<span class="next">Les options simples à un caractère</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-345572" data-claire-element-id="345572">Bonjour à toi, ami lecteur :) .</p><p id="r-345573" data-claire-element-id="345573">Vous connaissez et utilisez les options. Et oui, quand vous tapez &quot;rm -rf foo.txt&quot;, vous indiquez 2 options : 'r' et 'f'. <br/> Ce tutoriel vous permettra de facilement stocker et récupérer ces options dans vos programmes en C.</p>
+</div><a name="Lesoptionssimplesuncaractre"></a><h2>Les options simples à un caractère</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-systeme-d-options/d-autres-types-d-options">
+<span class="next">D&#039;autres types d&#039;options ?</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-345574" data-claire-element-id="345574">Dans ce tutoriel, on va voir comment créer facilement un système d'options, comme il en existe pour de nombreux programmes. <br/> Par exemple, quand vous tapez :</p><pre id="r-345575" data-claire-element-id="345575"><code data-claire-semantic="bash">ls -la</code></pre><p id="r-345576" data-claire-element-id="345576">Vous demandez en fait les options 'l' et 'a' du programme ls. <br/> A chaque option correspond donc un caractère.</p><p id="r-345577" data-claire-element-id="345577">Comment faire pour récupérer au cours de l'exécution ces différentes options ?<br/> Une solution serait de parcourir a chaque fois le tableau des paramètres, mais ça peut être assez lent et pas forcément pratique si vous comptiez modifier le tableau des arguments.</p><p id="r-345578" data-claire-element-id="345578">Et si on stockait les options dans un tableau ? On sait qu'une option est représentée par un caractère, donc par un octet. Un octet peut avoir 28 (=256) valeurs différentes.</p><p id="r-345579" data-claire-element-id="345579">Une option est soit activée, soit désactivée. On peut donc dire qu'elle vaut soit 0 soit 1. Un char suffit amplement pour stocker ça.</p><p id="r-345580" data-claire-element-id="345580">On peut donc créer un tableau de 256 chars.</p><p id="r-345581" data-claire-element-id="345581">Une chaine d'options commence par '-'. Si on rencontre un argument contenant &quot;--&quot; ou ne commençant pas par '-', on arrête le parcours.</p><pre id="r-345582" data-claire-element-id="345582"><code data-claire-semantic="c">static char tab[1 &lt;&lt; (sizeof(char) &lt;&lt; 3)] = {0};    /* sizeof(char) = 1; 1&lt;&lt;(1&lt;&lt;3) = 1*2^(1*2^3) = 2^8 = 256; */
+
+void        my_options(const int argc, const char **argv)
+{
+    int     i;
+    size_t  j;
+
+    for (i = 1; i &lt; argc; ++i)
+    {
+        if (argv[i][0] != '-' || argv[i][1] == '-')
+            return;
+        for (j = 1; argv[i][j] != '\0'; ++j)
+            tab[(size_t)(unsigned char)argv[i][j]] = 1;
+    }
+}</code></pre><p id="r-345583" data-claire-element-id="345583">Ensuite, si vous avez besoin de savoir si l'option 'f' est activée, il suffit d'écrire <code data-claire-semantic="c">tab[(size_t)(unsigned char)'f'] </code>, ce qui vous renverra soit 0, soit 1. C'est assez optimisé, il n'y a aucune boucle à faire (enfin, une seule, au début) :) .</p><p id="r-345584" data-claire-element-id="345584">Le compilateur n'accepte pas (et il a raison) d'utiliser un char comme index. Le problème, c'est que nous on en a besoin. C'est pour cela que nous utilisons des <a href="http://fr.wikipedia.org/wiki/Conversion_de_type">casts</a> pour forcer le compilateur.</p><div id="r-345586" data-claire-element-id="345586" data-claire-semantic="question"><p id="r-345585" data-claire-element-id="345585">Pourquoi deux casts ?</p></div><p id="r-345587" data-claire-element-id="345587">Mmm... <code data-claire-semantic="c">argv[i][j] </code> est un char signé. L'utilisateur peut rentrer toute sorte de char, pas forcément des positifs. Que se passe-t-il si vous convertissez un char négatif en (unsigned int) ?</p><p id="r-345588" data-claire-element-id="345588">Testez le code suivant, et essayez de comprendre par vous-même <a href="http://fr.wikipedia.org/wiki/Complément_à_deux">en vous aidant du complément à 2</a> :</p><pre id="r-345589" data-claire-element-id="345589"><code data-claire-semantic="c">#include &lt;stdio.h&gt;
+
+int	main(void)
+{
+  char	c;
+
+  c = -1;
+  do
+  {
+    ++c;
+    printf(&quot;c : %u\tc : %u\n&quot;, (unsigned int)(unsigned char)c, (unsigned int)c);
+  }
+  while (c + 1 != 0);
+  return (0);
+}</code></pre><p id="r-345590" data-claire-element-id="345590">Pour ceux qui ne peuvent pas compiler, voici un extrait de ce qu'affiche le programme :<br/> c : 0 c : 0<br/> ...............<br/> c : 127 c : 127<br/> c : 128 c : 4294967168<br/> ...............<br/> c : 255 c : 4294967295</p><aside id="r-345592" data-claire-element-id="345592" data-claire-semantic="error"><p id="r-345591" data-claire-element-id="345591">Le cast (unsigned char) avant le (unsigned int) nous sauve du buffer overflow. En effet, nous utilisons ce nombre comme index pour accéder à notre tableau de 256 chars, et 4294967295 ça ferait plus que déborder :waw: . En binaire, 127 s'écrit 01111111 (le bit de signe est à 0), et 128 s'écrit 10000000 (le bit de signe est à 1, ce qui explique que c'est la première ligne qui comporte une erreur).</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-d-options">Un système d&#039;options</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-d-options/les-options-simples-a-un-caractere">
+Les options simples à un caractère
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-d-options/d-autres-types-d-options">
+D&#039;autres types d&#039;options ?
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-systeme-d-options/d-autres-types-d-options">
+<span class="next">D&#039;autres types d&#039;options ?</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="D039autrestypesd039options"></a><h2>D&#039;autres types d&#039;options ?</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-systeme-d-options/les-options-simples-a-un-caractere">
+<span class="arrow"></span>
+<span class="next">Les options simples à un caractère</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-345594" data-claire-element-id="345594">Pour les options longues (comme &quot;--help&quot;), vous pouvez garder le même principe, sauf qu'au lieu d'avoir un tableau de 256 chars, vous pouvez vous faire un tableau de listes chaînées, et accéder a la case qui vous intéresse en &quot;hachant&quot; la chaîne de caractères qui sert de clef. <br/> Je vous conseille de lire la page Wikipedia sur les <a href="http://fr.wikipedia.org/wiki/Table_de_hachage">tables de hachage</a> ;) .</p><aside id="r-345596" data-claire-element-id="345596" data-claire-semantic="information"><p id="r-345595" data-claire-element-id="345595">Une table de hash (ou &quot;table de hachage&quot;, ou encore &quot;hash table&quot;) est une structure de données très pratique. Grâce à elle on peut récupérer des données en donnant un index autre qu'un nombre.<br/> Si vous avez déjà fait du PHP, par exemple, vous avez pu utiliser les tableaux associatifs, où vous pouvez écrire <code data-claire-semantic="html+php">&lt;?php $aFoo['clef'] = 'valeur';?&gt; </code>. Une table de hash peut servir à ça, car elle permet de récupérer rapidement des données. <br/> Et oui, on a utilisé une mini table de hachage dans la partie précédente. On n'utilisait pas une string comme clé, mais un char. Le principe reste néanmoins le même.</p></aside><p id="r-345597" data-claire-element-id="345597">Pour les options à paramètres, pourquoi ne pas utiliser un tableau de 256 char* ?<br/> Chaque option pointerait alors sur le argv suivant. Attention, <code data-claire-semantic="c">argv[argc] </code> vaut <code data-claire-semantic="c">NULL </code>.</p><div id="r-345599" data-claire-element-id="345599" data-claire-semantic="question"><p id="r-345598" data-claire-element-id="345598">Tout d'abord, de quoi avons-nous besoin pour faire un système d'options &quot;complet&quot; (courtes, longues, avec ou sans parametres) ?</p></div><ul id="r-345612" data-claire-element-id="345612"><li id="r-345601" data-claire-element-id="345601"><p id="r-345600" data-claire-element-id="345600">Une gestion d'erreurs basique.</p></li><li id="r-345603" data-claire-element-id="345603"><p id="r-345602" data-claire-element-id="345602">Une liste des options que notre programme peut prendre, ainsi que leur type (courte ou longue, avec ou sans paramètres). La &quot;white-list&quot;.</p></li><li id="r-345605" data-claire-element-id="345605"><p id="r-345604" data-claire-element-id="345604">Une fonction de hachage.</p></li><li id="r-345607" data-claire-element-id="345607"><p id="r-345606" data-claire-element-id="345606">Un système de gestion de listes chaînées (le nom est pompeux, mais le code sera simple :p ).</p></li><li id="r-345609" data-claire-element-id="345609"><p id="r-345608" data-claire-element-id="345608">Une fonction stockant les différentes options rentrées à l'exécution.</p></li><li id="r-345611" data-claire-element-id="345611"><p id="r-345610" data-claire-element-id="345610">Une fonction récupérant les différentes options rentrées à l'exécution.</p></li></ul><h3 id="r-une-gestion-d-erreurs-basique" data-claire-element-id="345616">Une gestion d'erreurs basique</h3><p id="r-345613" data-claire-element-id="345613">Là, ce sera vraiment basique : on jouera avec les retours de fonctions, et on créera une variable globale, qui contiendra un numéro d'erreur (un enum serait un plus, je vous laisse le faire de vous-même) :</p><pre id="r-345614" data-claire-element-id="345614"><code data-claire-semantic="c">static size_t           erreur = 0;</code></pre><p id="r-345615" data-claire-element-id="345615">Je vous laisse vous débrouiller avec cette variable, suivant vos besoins. La gestion d'erreurs que je vous propose est VRAIMENT basique. A vous de jouer ;) .</p><h3 id="r-une-white-list" data-claire-element-id="345623">Une &quot;white-list&quot;</h3><div id="r-345618" data-claire-element-id="345618" data-claire-semantic="question"><p id="r-345617" data-claire-element-id="345617">Qu'est-ce qui définit une option ?</p></div><p id="r-345619" data-claire-element-id="345619">Je pense que vous serez d'accord avec moi, il y a tout d'abord son &quot;nom&quot; (&quot;r&quot; dans rm -rf, ou encore &quot;help&quot; dans foo --help), mais aussi son type (&quot;help&quot; est longue, tandis que &quot;r&quot; est courte, et le &quot;f&quot; du tar -cvf file.tar file1 prend un paramètre, ici &quot;file.tar&quot;), ainsi que son état/paramètre (activée-désactivée/pointeur sur le paramètre-pointeur NULL). <br/> Pour savoir si une option est &quot;longue&quot;, il suffit de regarder le nombre de caractère qui la compose, pas besoin d'aller plus loin. En revanche, on ne peut pas deviner qu'une option prend un paramètre. <br/> Je vous propose donc d'utiliser une structure que l'on définira comme ceci :</p><pre id="r-345620" data-claire-element-id="345620"><code data-claire-semantic="c">typedef struct  s_option
+{
+  char          *name;                  /* le nom de l'option */
+  int           is_parameterized;       /* doit-elle prendre un parametre ? */
+  char          *param;                 /* le pointeur sur le param ou pointeur sur l'option en cours si option sans parametre */
+  size_t		len;
+}               t_option;</code></pre><p id="r-345621" data-claire-element-id="345621">On créera ensuite un tableau de t_option, chaque case représentant une option. Une fois les options enregistrées, on ne les récupérera pas à partir de ce tableau, mais à partir d'un tableau de listes chaînées (qu'on appellera table de hachage). Pourquoi ne pas directement utiliser ce tableau ? Tout d'abord parce que je veux vous montrer comment utiliser une autre technique, et aussi parce que ca peut être utile si vous avez beaucoup d'options, avec des hash bien répartis, ce qui sera 256 fois plus rapide qu'un simple tableau pour récupérer une option ;) .</p><pre id="r-345622" data-claire-element-id="345622"><code data-claire-semantic="c">/* exemple de white-list. on set le nom, le is_parameterized aux valeurs qui nous interessent, et le param est, pour l'instant, useless */
+static t_option	white_list[] = {
+  {&quot;r&quot;, 0, NULL},
+  {&quot;help&quot;, 1, NULL}
+};</code></pre><h3 id="r-fonction-de-hachage" data-claire-element-id="345626">Fonction de hachage</h3><p id="r-345624" data-claire-element-id="345624">On veut a partir d'une chaine de caractères, accéder à une option. Je vous propose la fonction de hash suivante qui renvoie un size_t dans l'intervalle [0, 256[ (sur 1 octet, en bref). <br/> C'est VRAIMENT basique, &quot;abc&quot; donnera le meme hash que pour &quot;acb&quot;, &quot;bac&quot;, &quot;bca&quot;, &quot;cab&quot; ou &quot;cba&quot;, ce qui est sans doute pas le top IRL, mais ca suffit pour ce tuto :p .</p><pre id="r-345625" data-claire-element-id="345625"><code data-claire-semantic="c">static size_t           hash(char *str)
+{
+  unsigned char c;
+
+  for (c = 0; *str != '\0'; ++str)
+    c += *str;
+  return (c);
+}</code></pre><h3 id="r-fonction-s-de-gestion-des-listes-chainees" data-claire-element-id="345665">Fonction(s) de gestion des listes chainées</h3><p id="r-345627" data-claire-element-id="345627">Là, on n'a vu que la première moitié de la table de hachage, il reste encore les listes chaînées. Il y en aura 256. <br/> Notre &quot;data&quot; sera une option, c'est-à-dire une variable de type t_option. Comme on est fainéant, on ne va pas copier les structures présentes dans la white-list, mais pointer dessus si on a besoin d'elles.</p><p id="r-345628" data-claire-element-id="345628">La structure qu'on utilisera pour la liste chaînée sera la suivante :</p><pre id="r-345629" data-claire-element-id="345629"><code data-claire-semantic="c">typedef	struct	        s_lst
+{
+  struct s_option	*data;		/* pointeur sur notre data, declare dans la white-list */
+  struct s_lst          *next;          /* pointeur sur le maillon suivant, pointe sur NULL si dernier de la liste */
+}                       t_lst;</code></pre><p id="r-345630" data-claire-element-id="345630">On aura la variable suivante (la hash-table) dans l'espace global :</p><pre id="r-345631" data-claire-element-id="345631"><code data-claire-semantic="c">static t_lst            *hash_table[256];</code></pre><p id="r-345632" data-claire-element-id="345632">Avant toute chose, vous n'oublierez pas de remettre tous les octets de la hash_table à 0 :</p><pre id="r-345633" data-claire-element-id="345633"><code data-claire-semantic="c">/* `man memset` dit include de string.h, faites-le */
+memset(hash_table, 0, sizeof(hash_table));</code></pre><p id="r-345634" data-claire-element-id="345634">Pour stocker les options rentrées à l'exécution, j'ai voulu bien découper le travail. On aura :</p><ul id="r-345647" data-claire-element-id="345647"><li id="r-345636" data-claire-element-id="345636"><p id="r-345635" data-claire-element-id="345635">La fonction principale, prenant en paramètre le tableau de chaînes de caractère (la ligne de commandes) : <code data-claire-semantic="c">char *set_options(char *av[]); </code>.</p></li><li id="r-345638" data-claire-element-id="345638"><p id="r-345637" data-claire-element-id="345637">Une fonction insérant une option dans la table de hash : <code data-claire-semantic="c">static void insert_in_hash(t_option *white_list); </code>.</p></li><li id="r-345640" data-claire-element-id="345640"><p id="r-345639" data-claire-element-id="345639">Une fonction gérant un argument rempli d'options courtes : <code data-claire-semantic="c">static char *short_option(char **p); </code>.</p></li><li id="r-345642" data-claire-element-id="345642"><p id="r-345641" data-claire-element-id="345641">Une fonction gérant un argument contenant une option longue : <code data-claire-semantic="c">static char *long_option(char **p); </code>.</p></li><li id="r-345644" data-claire-element-id="345644"><p id="r-345643" data-claire-element-id="345643">Une fonction récupérant une option (un pointeur sur une option pour être exact) en fonction de son nom (elle hachera, accédera à la case de la table de hachage, parcourera la liste en faisant des strcmp entre le paramètre reçu et le name de l'élément) : static <code data-claire-semantic="c">t_option *get_option(char *str); </code>.</p></li><li id="r-345646" data-claire-element-id="345646"><p id="r-345645" data-claire-element-id="345645">Une fonction &quot;nettoyant&quot; la table de hash, en fonction d'un critère (un pointeur sur fonction, prenant en paramètre un pointeur sur t_lst, ou pas de paramètre) : static void clean_hash_table(int (*f)()).</p></li></ul><pre id="r-345648" data-claire-element-id="345648"><code data-claire-semantic="c">/*
+**  Stocke les options activees dans la hash_table
+**  Retourne NULL s'il n'y a pas d'erreurs dans les options rentrees
+*/
+char			*set_options(char *av[])
+{
+  size_t		i;
+  char			**p;
+  char			*ret;
+
+  /* on met tous les octets de hash_table a 0 */
+  memset(hash_table, 0, sizeof(hash_table));
+  /* on cree la table de hachage, qui contient TOUTES les options */
+  for (i = 0; i &lt; sizeof(white_list) / sizeof(*white_list); ++i)
+    {
+      white_list[i].len = strlen(white_list[i].name);
+      insert_in_hash(white_list + i);
+    }
+  /* On parcourt les arguments a la recherche des options */
+  for (p = av + 1; *p != NULL; ++p)
+    {
+      /*
+      ** si on trouve un argument qui, soit :
+      ** . ne commence pas par un '-'
+      ** . est &quot;--&quot;
+      */
+      if (**p != '-' || !strcmp(*p, &quot;--&quot;))
+	break ;
+      /* si ca commence par &quot;--&quot;, on appelle long_option(), sinon short_option() */
+      ret = ((p[0][1] == '-') ? long_option(&amp;p) : short_option(&amp;p));
+      /* 
+      ** L'utilisateur a rentre :
+      ** . une option invalide, ou
+      ** . une option a parametre sans indiquer de parametre
+      */
+      if (ret != NULL)
+	return (ret);
+    }
+  /* On supprime de la table de hash les options non activees */
+  clean_hash_table(has_not_been_met);
+  return (NULL);
+}</code></pre><p id="r-345649" data-claire-element-id="345649">La fonction qui insère une option dans la table de hachage. Rien de bien mystérieux, c'est <a href="http://www.siteduzero.com/tutoriel-3-115995-piles-et-files.html">une pile (LIFO)</a>.</p><pre id="r-345650" data-claire-element-id="345650"><code data-claire-semantic="c">/* Insere une option dans la table de hash :-o */
+static void             insert_in_hash(t_option *option)
+{
+  t_lst                 *lst;
+  const size_t          h = hash(option-&gt;name);
+
+  lst = malloc(sizeof(*lst));
+  /* et oui, c'est moche de faire un exit, mais c'est simple ^^ */
+  if (lst == NULL)
+    exit(EXIT_FAILURE);
+  lst-&gt;next = hash_table[h];
+  lst-&gt;data = option;
+  hash_table[h] = lst;
+}</code></pre><pre id="r-345651" data-claire-element-id="345651"><code data-claire-semantic="c">/* retourne NULL si erreur, sinon un pointeur sur t_option */
+static t_option		*get_option(char *str)
+{
+  const size_t		h = hash(str);
+  t_lst			*p;
+
+  /* on parcourt la liste a la case h de la hash_table */
+  for (p = hash_table[h]; p != NULL; p = p-&gt;next)
+    if (!strcmp(p-&gt;data-&gt;name, str))
+      return (p-&gt;data);
+  erreur = 1;
+  return (NULL);
+}</code></pre><pre id="r-345652" data-claire-element-id="345652"><code data-claire-semantic="c">/*
+** Gere les options courtes
+** char ***p pointe sur le pointeur pointant sur le parametre en cours (qui est un pointeur sur char)
+*/
+static char		*short_option(char ***p)
+{
+  /* **p pointe sur le premier caractere de l'option, le '-', c'est pourquoi on ajoute strlen(&quot;-&quot;) (1) */
+  char			*str = **p + 1;
+  t_option		*option;
+  char			b[2] = {0};
+  int			i = 0;
+
+  /*
+  ** on parcourt, tant qu'on a pas rencontre de '\0'
+  ** si l'option est vide (&quot;-&quot;), on veut que ca genere une erreur,
+  ** c'est pourquoi on utilise un do while et pas un while
+  */
+  do
+    {
+      *b = *str;
+      /* on recupere l'option dont le nom est la string d'un caractere (*str) */
+      option = get_option(b);
+      if (option == NULL)
+	return (str);
+      if ((option-&gt;param = p[0][option-&gt;is_parameterized]) == NULL)
+	{
+	  erreur = 2;
+	  return (str);
+	}
+      /* on retient s'il y a eu un parametre */
+      if (option-&gt;is_parameterized)
+	i = 1;
+      ++str;
+    }
+  while (*str != '\0');
+  /*
+  ** si on a un parametre, l'argument suivant est un parametre,
+  ** PAS une option, c'est pourquoi on avance *p de 1
+  */
+  if (i)
+    ++*p;
+  return (NULL);
+}</code></pre><pre id="r-345653" data-claire-element-id="345653"><code data-claire-semantic="c">/* c'est plus simple que pour les options courtes : pas besoin de boucle ;) */
+static char		*long_option(char ***p)
+{
+  /* **p pointe sur le premier caractere de l'option, le '-', c'est pourquoi on ajoute strlen(&quot;--&quot;) (2) */
+  char			*str = **p + 2;
+  t_option		*option;
+
+  option = get_option(str);
+  if (option == NULL)
+    return (str);
+  if ((option-&gt;param = p[0][option-&gt;is_parameterized]) == NULL)
+    return (str);
+  if (option-&gt;is_parameterized)
+    ++*p;
+  return (NULL);
+}</code></pre><p id="r-345654" data-claire-element-id="345654">Vient enfin la clean_hash_table() :</p><pre id="r-345655" data-claire-element-id="345655"><code data-claire-semantic="c">/* clean la hash-table en fonction de ce que renvoie f()  */
+static void		clean_hash_table(int (*f)())
+{
+  size_t		i;
+  t_lst			*old, *p, *next;
+
+  for (i = 0; i &lt; sizeof(hash_table) / sizeof(*hash_table); ++i)
+    {
+      old = NULL;
+      for (p = hash_table[i]; p != NULL; p = next)
+	{
+	  /* on sauvegarde le next, parce qu'on pourrait liberer p, et acceder a un membre d'une structure liberee, c'est pas top ^^ */
+	  next = p-&gt;next;
+	  /* on appelle f(), on lui envoie p, l'option en cours */
+	  if (f(p))
+	    {
+	      /* pour eviter que hash_table[i] pointe sur un t_lst libere */
+	      if (p == hash_table[i])
+		hash_table[i] = next;
+	      free(p);
+	      /* si old != NULL, f(old) =&gt; 0, donc on ne l'a pas libere : c'est le dernier element vu dans la liste qu'on a pas libere */
+	      if (old != NULL)
+		old-&gt;next = next;
+	    }
+	  else
+	    old = p;
+	}
+    }
+}</code></pre><p id="r-345656" data-claire-element-id="345656">En bonus, pour que ça compile :p , voici la fonction has_not_been_met(), utilisée dans set_options().</p><pre id="r-345657" data-claire-element-id="345657"><code data-claire-semantic="c">/* renvoie 1 si l'option pointee par p-&gt;data est activee, 0 sinon */
+static int		has_not_been_met(const t_lst *p)
+{
+  return ((p-&gt;data-&gt;param == NULL));
+}</code></pre><p id="r-345658" data-claire-element-id="345658">Et si vous voulez tester, rajoutez les 2 fonctions suivantes :</p><pre id="r-345659" data-claire-element-id="345659"><code data-claire-semantic="c">static int		all(void)
+{
+  return (1);
+}
+
+/* si ca refuse de compiler avec le __unused, enlevez-le, vous aurez juste un warning */
+int			main(__unused int ac, char *av[])
+{
+  size_t		i;
+  char			*ret;
+
+  if ((ret = set_options(av)) != NULL)
+    {
+      fprintf(stderr, &quot;Probleme avec l'option : \&quot;%s\&quot;\n&quot;, ret);
+      return (EXIT_FAILURE);
+    }
+  for (i = 0; i &lt; sizeof(white_list) / sizeof(*white_list); ++i)
+    {
+      printf(&quot;L'option \&quot;%s\&quot; est %sactivee\n&quot;, white_list[i].name, (white_list[i].param == NULL) ? &quot;des&quot; : &quot;&quot;);
+    }
+  /* On a plus besoin de la table de hash : on free les lst alloues */
+  clean_hash_table(all);
+  return (EXIT_SUCCESS);
+}</code></pre><p id="r-345660" data-claire-element-id="345660">Ça paraît mastoc comme solution, ça l'est volontairement.<br/> Vous savez utiliser une liste chainée basique, un tableau, et donc une table de hachage (qui est un compromis mixant les 2 types de structures). <br/> Et, accessoirement, vous avez un outil que vous pouvez &quot;recycler&quot; dans vos projets de programmation, un système de gestion d'options. <br/> Vous pouvez améliorer ce système, de façon à ce que vous sachiez où commencent les vraies arguments, ceux qui se trouvent après les options. <br/> Ça ne devrait pas être trop compliqué, dans set_options() vous savez quand vous quittez la boucle ;) .<br/><a href="http://www.gencode.org/sdz/tuto/options.c">J'ai rassemblé pour vous les sources en un seul fichier .c.</a></p><p id="r-345661" data-claire-element-id="345661">Et bien, voilà, le tuto est terminé. Vous avez de quoi gérer des options et faire mumuse avec des structures de données ^^ .</p><p id="r-345662" data-claire-element-id="345662">La première partie était simple. La deuxième un peu moins, donc si vous n'avez pas tout compris, posez votre question dans les forums.</p><p id="r-345663" data-claire-element-id="345663">Si je me suis trompé quelque part, dites-le ;) .</p><p id="r-345664" data-claire-element-id="345664">Ah, j'allais oublier : faites un `man 3 getopt` sous Linux :D .</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-d-options">Un système d&#039;options</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-d-options/les-options-simples-a-un-caractere">
+Les options simples à un caractère
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-d-options/d-autres-types-d-options">
+D&#039;autres types d&#039;options ?
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-systeme-d-options/les-options-simples-a-un-caractere">
+<span class="arrow"></span>
+<span class="next">Les options simples à un caractère</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/un-systeme-d-options.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 11:09:56 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/un-systeme-d-options.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:47:47 GMT -->
+</html>

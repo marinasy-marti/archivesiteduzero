@@ -1,0 +1,799 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/utilisation-d-un-moteur-de-templates-talus-tpl.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 06:36:44 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/utilisation-d-un-moteur-de-templates-talus-tpl.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:10:55 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Utilisation d&#039;un moteur de templates : Talus&#039; TPL</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Utilisation d&#039;un moteur de templates : Talus&#039; TPL</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Utilisationd039unmoteurdetemplatesTalus039TPL">Utilisation d&#039;un moteur de templates : Talus&#039; TPL</a><br/><a href="#Tlchargementetdcouverte">Téléchargement et découverte</a><br/><a href="#Notionsdebase">Notions de base</a><br/><a href="#Utiliserdesvariables">Utiliser des variables</a><br/><a href="#Employerdesconditions">Employer des conditions</a><br/><a href="#Etpourfairedesboucles">Et pour faire des boucles ?</a><br/><a href="#Maintenantlesinclusions">Maintenant, les inclusions !</a><br/><a href="#Miseenuvreunsystmedenews">Mise en œuvre : un système de news</a><br/></div>
+<a name="Utilisationd039unmoteurdetemplatesTalus039TPL"></a><h2>Utilisation d&#039;un moteur de templates : Talus&#039; TPL</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/telechargement-et-decouverte">
+<span class="next">Téléchargement et découverte</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-347315" data-claire-element-id="347315">Bonjour à tous. :)</p><p id="r-347316" data-claire-element-id="347316">Si vous venez ici, c'est par envie d'en savoir plus sur les moteurs de templates, et en particulier sur l'un d'entre eux : Talus' TPL. Comme vous l'avez sans doute remarqué, il existe déjà des tutos sur d'autres moteur de templates : Twig (<a href="http://62.4.17.167/tutoriel-3-432524-utilisation-de-twig-un-moteur-de-templates.html">voir le tuto</a>) ou encore Smarty (<a href="http://62.4.17.167/tutoriel-3-360073-un-moteur-de-template-smarty.html">voir le tuto</a>). Ce tuto n'a pas pour but de leur faire de la concurrence mais de vous initier à un autre moteur existant. Il utilise une syntaxe de type XML.</p><p id="r-347317" data-claire-element-id="347317"><strong>Pré-requis :</strong></p><ul id="r-347324" data-claire-element-id="347324"><li id="r-347319" data-claire-element-id="347319"><p id="r-347318" data-claire-element-id="347318">avoir lu les cours de M@teo21 en entier, toujours mieux pour avoir de bonnes bases ;</p></li><li id="r-347321" data-claire-element-id="347321"><p id="r-347320" data-claire-element-id="347320">avoir PHP 5.1 (ou plus) installé sur son serveur ;</p></li><li id="r-347323" data-claire-element-id="347323"><p id="r-347322" data-claire-element-id="347322">un petit plus : avoir lu le tutoriel de <a href="http://www.siteduzero.com/membres-294-85974.html">vyk12</a> sur <a href="http://www.siteduzero.com/tutoriel-3-147180-la-programmation-orientee-objet-en-php.html">la POO en PHP</a>.</p></li></ul><p id="r-347325" data-claire-element-id="347325">Sur ce, je vous souhaite une bonne lecture à la découverte de ce script.</p>
+</div><a name="Tlchargementetdcouverte"></a><h2>Téléchargement et découverte</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/notions-de-base-2">
+<span class="next">Notions de base</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<div id="r-347327" data-claire-element-id="347327" data-claire-semantic="question"><p id="r-347326" data-claire-element-id="347326">Eh, attends : c'est quoi, un moteur de templates ?</p></div><p id="r-347328" data-claire-element-id="347328">Ah, j'allais oublier. :D Je vais donc brièvement vous présenter l'utilité d'un tel script.</p><h3 id="r-rappels-notions-concernant-un-moteur-de-templates" data-claire-element-id="347346">Rappels / notions concernant un moteur de templates</h3><p id="r-347329" data-claire-element-id="347329">En général, vous avez souvent un seul fichier par page, qui contient aussi bien le code d'affichage que les requêtes à MySQL notamment, comme ceci :</p><pre id="r-347330" data-claire-element-id="347330"><code data-claire-semantic="html+php">&lt;h1&gt;Les news du site&lt;/h1&gt;
+ 
+&lt;?php
+// $pdo : instance de PDO, initialisée par vos soins
+$q = $pdo-&gt;query(&quot;SELECT id, auteur, titre, DATE_FORMAT(date, '%d/%m/%Y %Hh%i') AS date_formatee, contenu
+FROM news
+ORDER BY date DESC&quot;);
+foreach($q as &amp;$data){
+    echo '
+      &lt;div class=&quot;news&quot;&gt;
+          &lt;h2&gt;' . $data['titre'] . '&lt;/h2&gt;
+          &lt;p&gt;News postée le '.str_replace(' ', ' à ', $data['date_formatee']).' par ' . $data['auteur'] . '&lt;/p&gt;
+          &lt;p&gt;'.$data['contenu'].'&lt;/p&gt;
+      &lt;/div&gt;';
+}
+
+$q = null;</code></pre><p id="r-347331" data-claire-element-id="347331">Un moteur de templates vous permet de séparer ce fichier en deux. L'un est chargé de l'affichage du code xHTML, l'autre d'effectuer les requêtes à MySQL, et d'appeler le second fichier.</p><p id="r-347332" data-claire-element-id="347332">Vous lirez souvent <em>&quot;utiliser PHP comme moteur de templates&quot;</em>. Cela signifie que le second fichier contient alors du code PHP, et qu'il est appelé par un <code>include</code>... et est constitué à 90% d'<code>echo</code>, et autres <code>if</code> / <code>foreach</code>.</p><p id="r-347333" data-claire-element-id="347333">Ce que nous allons voir ici consiste à remplacer le code PHP par un pseudo-langage, présentant les avantages suivants.</p><ul id="r-347338" data-claire-element-id="347338"><li id="r-347335" data-claire-element-id="347335"><p id="r-347334" data-claire-element-id="347334">Ce langage est assez simple. On retrouve l'équivalent d'expressions PHP. Cela rend ce langage idéal pour être utilisé par un graphiste, qui n'a ainsi pas à apprendre à utiliser PHP, mais juste ce langage, forcément plus simple. :-°</p></li><li id="r-347337" data-claire-element-id="347337"><p id="r-347336" data-claire-element-id="347336">Nous en venons donc à un deuxième avantage : la présentation est totalement séparée de la logique du code, et de la récupération des données. On peut toucher au style du site sans toucher à la logique, et vice-versa.</p></li></ul><p id="r-347339" data-claire-element-id="347339">Mais bien entendu, il y a des inconvénients à utiliser un tel système.</p><ul id="r-347344" data-claire-element-id="347344"><li id="r-347341" data-claire-element-id="347341"><p id="r-347340" data-claire-element-id="347340">Le script pourra être plus long à charger. Néanmoins, le moteur que je vais vous présenter reste très léger. :)</p></li><li id="r-347343" data-claire-element-id="347343"><p id="r-347342" data-claire-element-id="347342">Un autre langage que PHP doit évidemment être appris.</p></li></ul><p id="r-347345" data-claire-element-id="347345">Notez enfin qu'un tel moteur s'interface très bien avec un modèle MVC (<a href="tutoriel-3-31452-adopter-un-style-de-programmation-clair-avec-le-modele-mvc.html">cet autre tutoriel pourra vous en apprendre plus</a>).</p><h3 id="r-presentation-et-telechargement-de-talus-tpl" data-claire-element-id="347351">Présentation et téléchargement de Talus' TPL</h3><p id="r-347347" data-claire-element-id="347347">Talus'TPL est un moteur portant le nom de son concepteur, <a href="http://www.siteduzero.com/membres-294-1256.html">Talus</a>. Il est disponible depuis le 2 février 2008, date de sortie de sa version 1.0.0. Il a depuis d'autres versions. La dernière est la 1.12. C'est avec celle-ci que nous allons travailler. Ce que je vous apprendrai ici sera valable avec toutes les versions après celle-ci, sauf qu'il est possible que quelques fonctionnalités récentes ne soient pas évoquées. J'essaierai de maintenir le tutoriel à jour autant que possible. ;)</p><p id="r-347348" data-claire-element-id="347348">Commencez donc par télécharger le script sur son forum officiel, <a href="http://www.talus-works.net/forum-13-p1-releases.html">rubrique <strong>Releases</strong></a>. Prenez la version la plus récente (je rappelle qu'au moment de l'écriture, la version la plus récente était la 1.12). Dans le premier message du sujet, vous trouverez les liens pour télécharger le script en <strong>.tgz</strong> ou en <strong>.zip</strong>. Pensez à revenir régulièrement pour vous tenir à jour.</p><p id="r-347349" data-claire-element-id="347349">Ensuite, décompressez l'archive et mettez-la sur votre site avec votre logiciel FTP favori. Vous pouvez mettre les fichiers à la racine ou bien dans un sous-dossier. Notez le dossier &quot;lib&quot; à la racine de l'archive : c'est celui-ci qui nous intéresse. Libre à vous de le renommer comme bon vous semble (comme <strong>includes</strong>, <strong>libs</strong>, etc.).</p><p id="r-347350" data-claire-element-id="347350">Aucune installation n'est nécessaire, il suffira d'inclure le script PHP principal contenu dans l'archive (soit, par défaut, <strong>/lib/Talus_TPL/Engine.php</strong>) dans vos pages PHP. Les autres fichiers .php contenus dans le répertoire <strong>lib/Talus_TPL/</strong> seront inclus automatiquement suivant les besoins du moteur... et vous retrouverez, à la racine de l'archive, des fichiers d'informations tels que le <em>changelog</em> ou encore la licence du moteur.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl">Utilisation d&#039;un moteur de templates : Talus&#039; TPL</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/telechargement-et-decouverte">
+Téléchargement et découverte
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/notions-de-base-2">
+Notions de base
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/utiliser-des-variables-2">
+Utiliser des variables
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/employer-des-conditions">
+Employer des conditions
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/et-pour-faire-des-boucles">
+Et pour faire des boucles ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/maintenant-les-inclusions">
+Maintenant, les inclusions !
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/mise-en-oeuvre-un-systeme-de-news">
+Mise en œuvre : un système de news
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/notions-de-base-2">
+<span class="next">Notions de base</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Notionsdebase"></a><h2>Notions de base</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/telechargement-et-decouverte">
+<span class="arrow"></span>
+<span class="next">Téléchargement et découverte</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/utiliser-des-variables-2">
+<span class="next">Utiliser des variables</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-347353" data-claire-element-id="347353">Nous allons donc commencer par voir comment utiliser les fonctions principales de Talus' TPL. La première chose à faire est <strong>d'instancier un objet de type <code data-claire-semantic="html+php">Talus_TPL</code></strong>. Ce vocabulaire est celui de la Programmation Orientée Objet (ou POO pour les intimes :p ). Je vous expliquerai rapidement tout ce qui est utile ici à ce propos.</p><h3 id="r-creation-de-l-objet" data-claire-element-id="347367">Création de l'objet</h3><p id="r-347354" data-claire-element-id="347354">Voici le code <em>minimal</em> permettant de créer l'objet <code data-claire-semantic="html+php">Talus_TPL</code> évoqué plus haut :</p><pre id="r-347355" data-claire-element-id="347355"><code data-claire-semantic="html+php">&lt;?php $tpl = new Talus_TPL_Engine($dossier_templates, $dossier_cache); ?&gt;</code></pre><p id="r-347356" data-claire-element-id="347356">En POO, l'opérateur <code data-claire-semantic="html+php">new</code> est indispensable pour créer une instance de l'objet. Pour définir les deux dossiers, j'ai personnellement recours à la fonction <a href="http://php.net/dirname">dirname</a>. Souvent, on se demande par rapport à quoi les chemins doivent être définis (dans un <a href="http://php.net/include">include</a> situé dans un fichier déjà inclus lui-même, par exemple). Ce bout de code affiche le chemin complet du fichier :</p><pre id="r-347357" data-claire-element-id="347357"><code data-claire-semantic="html+php">&lt;?php echo dirname(__FILE__); ?&gt;</code></pre><p id="r-347358" data-claire-element-id="347358"><code data-claire-semantic="html+php">__FILE__</code> est une constante contenant automatiquement le nom du fichier courant. Alors, pour inclure un fichier situé dans un dossier parent, je fais :</p><pre id="r-347359" data-claire-element-id="347359"><code data-claire-semantic="html+php">&lt;?php include dirname(__FILE__).'/../fichier.php'; ?&gt;</code></pre><p id="r-347360" data-claire-element-id="347360">Notez que depuis la version 5.3 de PHP, il est possible de simplement utiliser la constante __DIR__.</p><p id="r-347361" data-claire-element-id="347361">Tout ça pour dire que je vais employer la méthode suivante pour définir les deux dossiers. Voici donc le code final :</p><pre id="r-347362" data-claire-element-id="347362"><code data-claire-semantic="html+php">&lt;?php $tpl = new Talus_TPL_Engine(dirname(__FILE__).'/templates/', dirname(__FILE__).'/cache/'); ?&gt;</code></pre><p id="r-347363" data-claire-element-id="347363">Je me place donc dans mon cas personnel où le fichier se trouve à la racine du site, mes templates dans un dossier <strong>/templates/</strong> et mon dossier de cache dans <strong>/cache/</strong>. Adaptez bien sûr à votre cas.</p><aside id="r-347365" data-claire-element-id="347365" data-claire-semantic="error"><p id="r-347364" data-claire-element-id="347364">Ça marche pas ton code, tu m'as bien eu. :'(</p></aside><p id="r-347366" data-claire-element-id="347366">Ah, en effet. Mais vous devriez savoir pourquoi. :) <br/> ...<br/> ...<br/> Si vous avez trouvé, bravo. Il suffisait en effet de penser à inclure le script contenant la classe PHP, <strong>lib/Talus_TPL/Engine.php</strong>.</p><h3 id="r-creation-des-deux-fichiers" data-claire-element-id="347377">Création des deux fichiers</h3><p id="r-347368" data-claire-element-id="347368">Si vous avez bien tout compris, chaque fichier PHP va se trouver scindé en deux : la partie logique du code (en PHP toujours), et le fichier de template (utilisant la syntaxe de Talus' TPL). Avec Talus' TPL, le fichier de template porte l'extension <strong>.html</strong>. Sa syntaxe est de type XML. Pour plus d'infos, <a href="tutoriel-3-33440-le-point-sur-xml.html">ce tutoriel de Tangui</a> fait un point complet sur le XML. La syntaxe des fichiers de template ainsi que les fonctions PHP seront toutes détaillées par la suite.</p><p id="r-347369" data-claire-element-id="347369">Sachez que dans le fichier de template, vous aurez en gros deux types de structures :</p><ul id="r-347374" data-claire-element-id="347374"><li id="r-347371" data-claire-element-id="347371"><p id="r-347370" data-claire-element-id="347370">du code xHTML qui sera conservé ;</p></li><li id="r-347373" data-claire-element-id="347373"><p id="r-347372" data-claire-element-id="347372">du code utilisant la syntaxe particulière de Talus' TPL, qui sera converti en PHP lors de l'affichage, de façon transparente. Une fois la conversion effectuée, elle restera en cache (d'où l'utilité du dossier cache !), et le fichier résultant sera exécuté tel quel.</p></li></ul><aside id="r-347376" data-claire-element-id="347376" data-claire-semantic="information"><p id="r-347375" data-claire-element-id="347375">Tout code PHP dans le template sera affiché tel quel, et ne sera donc pas exécuté !</p></aside><h3 id="r-affecter-un-template-a-un-script-et-afficher-le-template" data-claire-element-id="347384">Affecter un template à un script, et afficher le template</h3><p id="r-347378" data-claire-element-id="347378">Dans cette partie, nous allons voir quelque chose de primordial : comment afficher un fichier de template. En effet, il ne suffit pas de faire un <a href="http://php.net/include">include</a>. Vous devez passer par une méthode dédiée.</p><p id="r-347379" data-claire-element-id="347379">La méthode <code data-claire-semantic="html+php">parse</code> vous permet de... parser le template. Comprenez que lorsque vous faites cela, toute la syntaxe spécifique de Talus' TPL est convertie en PHP, qui est enregistré (pour éviter de le retraduire à chaque fois). Ce code PHP est ensuite exécuté.</p><p id="r-347380" data-claire-element-id="347380">Le fichier PHP est modifié à chaque fois que votre template change, de façon automatique. Ce fichier intermédiaire est stocké dans le dossier de cache défini à l'instanciation de Talus_TPL_Engine. Vous pouvez forcer la compilation à se reproduire en spécifiant le second argument de <code data-claire-semantic="html+php">parse()</code> à <code data-claire-semantic="html+php">false</code>.</p><p id="r-347381" data-claire-element-id="347381">Lorsque vous appelez la méthode <code data-claire-semantic="html+php">parse()</code> de votre objet Talus_TPL_Engine (que j'instancie toujours dans une variable <code data-claire-semantic="html+php">$tpl</code>, question d'habitude), vous devez spécifier le nom du fichier de template à parser. Le chemin est - par rapport au chemin des fichiers de templates - indiqué lors de la création de <code data-claire-semantic="html+php">$tpl</code> (reportez-vous ci-dessus si ce n'est pas clair). Voici donc un schéma à retenir :</p><pre id="r-347382" data-claire-element-id="347382"><code data-claire-semantic="html+php">&lt;?php
+// Création de l'objet de template
+$tpl = new Talus_TPL_Engine(dirname(__FILE__).'/templates/', dirname(__FILE__).'/cache/');
+
+/* Diverses opérations que nous allons voir par la suite */
+
+// Parsage !
+$tpl-&gt;parse('template.html');</code></pre><p id="r-347383" data-claire-element-id="347383">Nous sommes maintenant prêts à voir ces fameuses instructions. Vous pourrez alors apprécier la puissance de ce script, et juger de ses différences par rapport à d'autres systèmes.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl">Utilisation d&#039;un moteur de templates : Talus&#039; TPL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/telechargement-et-decouverte">
+Téléchargement et découverte
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/notions-de-base-2">
+Notions de base
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/utiliser-des-variables-2">
+Utiliser des variables
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/employer-des-conditions">
+Employer des conditions
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/et-pour-faire-des-boucles">
+Et pour faire des boucles ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/maintenant-les-inclusions">
+Maintenant, les inclusions !
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/mise-en-oeuvre-un-systeme-de-news">
+Mise en œuvre : un système de news
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/telechargement-et-decouverte">
+<span class="arrow"></span>
+<span class="next">Téléchargement et découverte</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/utiliser-des-variables-2">
+<span class="next">Utiliser des variables</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Utiliserdesvariables"></a><h2>Utiliser des variables</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/notions-de-base-2">
+<span class="arrow"></span>
+<span class="next">Notions de base</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/employer-des-conditions">
+<span class="next">Employer des conditions</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h3 id="r-affecter-et-afficher-une-variable" data-claire-element-id="347392">Affecter et afficher une variable</h3><p id="r-347386" data-claire-element-id="347386">Une des opérations les plus simples à faire avec votre nouveau moteur de templates est de pouvoir afficher des variables. Comme toute opération (ou presque), elle se passera en deux temps :</p><ul id="r-347391" data-claire-element-id="347391"><li id="r-347388" data-claire-element-id="347388"><p id="r-347387" data-claire-element-id="347387">vous devrez commencer par ajouter un morceau de code côté PHP pour <strong>assigner la variable au moteur</strong> ;</p></li><li id="r-347390" data-claire-element-id="347390"><p id="r-347389" data-claire-element-id="347389">ensuite, il faudra l'afficher depuis votre template.</p></li></ul><h3 id="r-cote-php" data-claire-element-id="347397">Côté PHP</h3><p id="r-347393" data-claire-element-id="347393">Vous disposez d'une fonction au nom simple à retenir pour assigner des variables : <code data-claire-semantic="html+php">Talus_TPL::set()</code>. Elle peut s'utiliser de deux manières :</p><pre id="r-347394" data-claire-element-id="347394"><code data-claire-semantic="html+php">&lt;?php
+// Première méthode : on assigne 'abcd' à VAR
+$tpl-&gt;set('VAR', 'abcd');
+ 
+// Variante : on assigne 'abcd' à VAR par l'intermédiaire d'une variable PHP
+$texte = 'abcd';
+$tpl-&gt;set('VAR', $texte);
+ 
+// Seconde méthode : on assigne des variables multiples via un array
+$tpl-&gt;set(array('VAR1'=&gt;'abcd', 'VAR2'=&gt;'efgh', 'AUTRE_VAR'=&gt;12.5));</code></pre><p id="r-347395" data-claire-element-id="347395">Quelques remarques donc sur ce code.<br/> La fonction <code data-claire-semantic="html+php">Talus_TPL::set()</code> prend deux arguments : le nom de la variable qui sera utilisée côté template, et sa valeur. Les variables suivent les mêmes règles de nommage que pour PHP. Vous pouvez ensuite assigner une valeur de n'importe quel type, donc aussi bien un array qu'une chaîne de caractères qu'un entier... sauf un objet. Les variables côté PHP et côté template ne doivent pas nécessairement porter le même nom.</p><p id="r-347396" data-claire-element-id="347396">L'assignation avec <code data-claire-semantic="html+php">Talus_TPL::set()</code> permet aussi d'affecter plusieurs variables en une seule fois. La fonction reçoit un array, avec dans les clés le nom de la variable côté template et dans les valeurs... sa valeur.</p><h3 id="r-cote-template" data-claire-element-id="347406">Côté template</h3><p id="r-347398" data-claire-element-id="347398">L'affichage d'une variable est très simple :</p><pre id="r-347399" data-claire-element-id="347399"><code data-claire-semantic="xml">{VAR}</code></pre><p id="r-347400" data-claire-element-id="347400">affichera le contenu de la variable <code>VAR</code>. Vous pouvez aussi de la même manière accéder aux clés d'un array :</p><pre id="r-347401" data-claire-element-id="347401"><code data-claire-semantic="xml">{VAR[1]['cle1']}</code></pre><p id="r-347402" data-claire-element-id="347402">... ainsi qu'aux propriétés d'un objet (pour peu qu'elle soit publique, ou que la méthode __get() soit correctement implémentée) !</p><pre id="r-347403" data-claire-element-id="347403"><code data-claire-semantic="xml">{VAR-&gt;attribute}</code></pre><aside id="r-347405" data-claire-element-id="347405" data-claire-semantic="warning"><p id="r-347404" data-claire-element-id="347404">Pour des raisons techniques (limitation des expressions régulières), il est pour le moment impossible d'utiliser le symbole ']' dans la clé d'un array.</p></aside><h3 id="r-echapper-une-variable" data-claire-element-id="347416">Échapper une variable</h3><div id="r-347408" data-claire-element-id="347408" data-claire-semantic="question"><p id="r-347407" data-claire-element-id="347407">Et si je veux afficher <code>{VAR}</code> dans mon fichier <strong>.html</strong>, sans que cela soit interprété ?</p></div><p id="r-347409" data-claire-element-id="347409">Pour que <code>VAR</code> ne soit pas affichée, utilisez cela :</p><pre id="r-347410" data-claire-element-id="347410"><code data-claire-semantic="xml">{\VAR}</code></pre><p id="r-347411" data-claire-element-id="347411">Il s'affichera alors :</p><p id="r-347412" data-claire-element-id="347412"><cite>Citation : Rendu</cite></p><blockquote id="r-347414" data-claire-element-id="347414"><p id="r-347413" data-claire-element-id="347413">{VAR}</p></blockquote><p id="r-347415" data-claire-element-id="347415">On dit qu'on <em><strong>échappe</strong></em> la variable. ;)</p><h3 id="r-utiliser-la-variable-sans-l-afficher" data-claire-element-id="347421">Utiliser la variable sans l'afficher</h3><p id="r-347417" data-claire-element-id="347417">Pendant que j'y suis, une autre chose à connaître est la manière d'obtenir la variable sans l'afficher. Cela servira quand nous verrons les conditions et autres fonctionnalités de la syntaxe Talus' TPL.</p><pre id="r-347418" data-claire-element-id="347418"><code data-claire-semantic="xml">{$VAR}</code></pre><p id="r-347419" data-claire-element-id="347419">L'instruction renvoie la valeur de la variable, <strong>mais sans l'afficher</strong>. Un peu comme si vous faisiez de la manière suivante :</p><pre id="r-347420" data-claire-element-id="347420"><code data-claire-semantic="html+php">&lt;?php
+$VAR;</code></pre><h3 id="r-constantes-2" data-claire-element-id="347428">Constantes</h3><p id="r-347422" data-claire-element-id="347422">Enfin pour finir ce chapitre, voyons l'utilisation des constantes. Vous n'avez pas à les assigner à nouveau, elles sont accessibles depuis le fichier de template sans code additionnel côté PHP. :magicien:</p><pre id="r-347423" data-claire-element-id="347423"><code data-claire-semantic="xml">{__CONSTANTE__}</code></pre><p id="r-347424" data-claire-element-id="347424">Il suffit donc juste de l'entourer de deux tirets bas <strong>__</strong>. Pour obtenir leur valeur, même topo que précédemment :</p><pre id="r-347425" data-claire-element-id="347425"><code data-claire-semantic="xml">{__$CONSTANTE__}</code></pre><p id="r-347426" data-claire-element-id="347426">A propos de constantes, vous pouvez également utiliser des constantes de classes comme suite :</p><pre id="r-347427" data-claire-element-id="347427"><code data-claire-semantic="xml">{__Classe::CONST__}
+{__$Classe::CONST__}</code></pre><h3 id="r-utiliser-les-filtres" data-claire-element-id="347514">Utiliser les filtres</h3><p id="r-347429" data-claire-element-id="347429">Un ajout intéressant de Talus' TPL par rapport à d'autres moteurs de templates est l'utilisation de filtres. Ils fonctionnent de la même manière que dans <a href="http://www.djangoproject.com/">Django</a>. Leur rôle est d'appliquer une transformation à la variable. Ils peuvent s'utiliser indifféremment à l'affichage ou à la récupération d'une variable. Pour les utiliser, ajoutez-les à la suite de la variable, séparés par des barres verticales |. Ils sont cumulatifs.</p><pre id="r-347430" data-claire-element-id="347430"><code data-claire-semantic="xml">/* Affiche le contenu d'une variable en minuscules */
+{VAR|minimize}</code></pre><pre id="r-347431" data-claire-element-id="347431"><code data-claire-semantic="xml">/*
+ * Echappe les caractères HTML et convertit les sauts de ligne en &lt;br /&gt; ;  
+ */
+{VAR|protect|nl2br}</code></pre><p id="r-347432" data-claire-element-id="347432">donnera à la compilation quelque chose comme :</p><pre id="r-347433" data-claire-element-id="347433"><code data-claire-semantic="html+php">&lt;?php echo nl2br(htmlspecialchars($tpl-&gt;vars['VAR'])); ?&gt;</code></pre><p id="r-347434" data-claire-element-id="347434">J'ai pris cet exemple car ici l'ordre a de l'importance. Essayez d'inverser les filtres si vous ne me croyez pas. ;)</p><p id="r-347435" data-claire-element-id="347435">Les filtres peuvent aussi accepter des <em>arguments</em>. Pour cela, après le nom du filtre, séparez vos arguments par le symbole deux-points.</p><pre id="r-347436" data-claire-element-id="347436"><code data-claire-semantic="xml">/* Protège la variable VAR, la coupe à 50 caractères maximum, et interprete les sauts de ligne. */
+{VAR|protect|cut:50|nl2br}</code></pre><p id="r-347437" data-claire-element-id="347437">De même, vous pouvez aussi ajouter des filtres automatiques sur vos variables (lors de l'assignation via <code data-claire-semantic="html+php">set</code>, vos variables seront donc automatiquement transformées par le filtre renseigné), grâce à la méthode <code data-claire-semantic="html+php">Talus_TPL::autoFilters()</code> :</p><pre id="r-347438" data-claire-element-id="347438"><code data-claire-semantic="html+php">&lt;?php
+$tpl-&gt;autoFilters('protect'); // protect sera appliqué sur chaque variable déclarées dans l'objet $tpl</code></pre><p id="r-347439" data-claire-element-id="347439">Je finirai sur une petite liste des filtres disponibles de base, sachant que cette liste peut évoluer. Vous pouvez de plus facilement ajouter les vôtres. Notez que certains filtres peuvent avoir des paramètres supplémentaires, mais je vous laisser explorer à votre discrétion pour les découvrir !</p><table id="r-347512" data-claire-element-id="347512"><thead id="r-347445" data-claire-element-id="347445"><tr id="r-347444" data-claire-element-id="347444"><th id="r-347441" data-claire-element-id="347441"><p id="r-347440" data-claire-element-id="347440">Nom du filtre</p></th><th id="r-347443" data-claire-element-id="347443"><p id="r-347442" data-claire-element-id="347442">Usage</p></th></tr></thead><tbody id="r-347511" data-claire-element-id="347511"><tr id="r-347450" data-claire-element-id="347450"><td id="r-347447" data-claire-element-id="347447"><p id="r-347446" data-claire-element-id="347446">floor</p></td><td id="r-347449" data-claire-element-id="347449"><p id="r-347448" data-claire-element-id="347448">Arrondit le nombre à l'entier inférieur.</p></td></tr><tr id="r-347455" data-claire-element-id="347455"><td id="r-347452" data-claire-element-id="347452"><p id="r-347451" data-claire-element-id="347451">ceil</p></td><td id="r-347454" data-claire-element-id="347454"><p id="r-347453" data-claire-element-id="347453">Arrondit le nombre à l'entier supérieur.</p></td></tr><tr id="r-347460" data-claire-element-id="347460"><td id="r-347457" data-claire-element-id="347457"><p id="r-347456" data-claire-element-id="347456">protect</p></td><td id="r-347459" data-claire-element-id="347459"><p id="r-347458" data-claire-element-id="347458">Échappe les caractères HTML du contenu de la variable.</p></td></tr><tr id="r-347465" data-claire-element-id="347465"><td id="r-347462" data-claire-element-id="347462"><p id="r-347461" data-claire-element-id="347461">safe</p></td><td id="r-347464" data-claire-element-id="347464"><p id="r-347463" data-claire-element-id="347463">Désactive une application de protect sur le contenu de la variable. Utile si, par exemple, vous avez mis le filtre automatique &quot;protect&quot;.</p></td></tr><tr id="r-347470" data-claire-element-id="347470"><td id="r-347467" data-claire-element-id="347467"><p id="r-347466" data-claire-element-id="347466">maximize</p></td><td id="r-347469" data-claire-element-id="347469"><p id="r-347468" data-claire-element-id="347468">Met le contenu de la variable en majuscules.</p></td></tr><tr id="r-347475" data-claire-element-id="347475"><td id="r-347472" data-claire-element-id="347472"><p id="r-347471" data-claire-element-id="347471">minimize</p></td><td id="r-347474" data-claire-element-id="347474"><p id="r-347473" data-claire-element-id="347473">Met le contenu de la variable en minuscules.</p></td></tr><tr id="r-347480" data-claire-element-id="347480"><td id="r-347477" data-claire-element-id="347477"><p id="r-347476" data-claire-element-id="347476">ucfirst</p></td><td id="r-347479" data-claire-element-id="347479"><p id="r-347478" data-claire-element-id="347478">Met la première lettre du contenu de la variable en majuscule.</p></td></tr><tr id="r-347485" data-claire-element-id="347485"><td id="r-347482" data-claire-element-id="347482"><p id="r-347481" data-claire-element-id="347481">lcfirst</p></td><td id="r-347484" data-claire-element-id="347484"><p id="r-347483" data-claire-element-id="347483">Met la première lettre du contenu de la variable en minuscule.</p></td></tr><tr id="r-347490" data-claire-element-id="347490"><td id="r-347487" data-claire-element-id="347487"><p id="r-347486" data-claire-element-id="347486">invertCase</p></td><td id="r-347489" data-claire-element-id="347489"><p id="r-347488" data-claire-element-id="347488">Inverse la casse dans le contenu de la variable.</p></td></tr><tr id="r-347495" data-claire-element-id="347495"><td id="r-347492" data-claire-element-id="347492"><p id="r-347491" data-claire-element-id="347491">convertCase</p></td><td id="r-347494" data-claire-element-id="347494"><p id="r-347493" data-claire-element-id="347493">Convertit la casse du contenu de la variable</p></td></tr><tr id="r-347500" data-claire-element-id="347500"><td id="r-347497" data-claire-element-id="347497"><p id="r-347496" data-claire-element-id="347496">nl2br</p></td><td id="r-347499" data-claire-element-id="347499"><p id="r-347498" data-claire-element-id="347498">Convertit les sauts de ligne en &lt;br /&gt; dans le contenu de la variable.</p></td></tr><tr id="r-347505" data-claire-element-id="347505"><td id="r-347502" data-claire-element-id="347502"><p id="r-347501" data-claire-element-id="347501">paragraphy</p></td><td id="r-347504" data-claire-element-id="347504"><p id="r-347503" data-claire-element-id="347503">Transforme le contenu d'une variable en série de paragraphes ou sauts de ligne suivant le contexte.</p></td></tr><tr id="r-347510" data-claire-element-id="347510"><td id="r-347507" data-claire-element-id="347507"><p id="r-347506" data-claire-element-id="347506">slugify</p></td><td id="r-347509" data-claire-element-id="347509"><p id="r-347508" data-claire-element-id="347508">Convertit le contenu de la variable en <em>slug</em> (type celui qu'on trouve sur le site du zéro, dans la barre d'adresse, pour des sujets, news ou tutoriels).</p></td></tr></tbody></table><p id="r-347513" data-claire-element-id="347513">Notez qu'il existe un sujet sur Talus' Works, qui recense les filtres que les utilisateurs ont pu créer ; n'hésitez pas à <a href="http://www.talus-works.net/topic-118-p1-vos-filtres.html">consulter cette liste</a>, et même à proposer de nouveaux filtres ; peut-être seront-ils intégrés à une future version de Talus' TPL ? ;)</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl">Utilisation d&#039;un moteur de templates : Talus&#039; TPL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/telechargement-et-decouverte">
+Téléchargement et découverte
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/notions-de-base-2">
+Notions de base
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/utiliser-des-variables-2">
+Utiliser des variables
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/employer-des-conditions">
+Employer des conditions
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/et-pour-faire-des-boucles">
+Et pour faire des boucles ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/maintenant-les-inclusions">
+Maintenant, les inclusions !
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/mise-en-oeuvre-un-systeme-de-news">
+Mise en œuvre : un système de news
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/notions-de-base-2">
+<span class="arrow"></span>
+<span class="next">Notions de base</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/employer-des-conditions">
+<span class="next">Employer des conditions</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Employerdesconditions"></a><h2>Employer des conditions</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/utiliser-des-variables-2">
+<span class="arrow"></span>
+<span class="next">Utiliser des variables</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/et-pour-faire-des-boucles">
+<span class="next">Et pour faire des boucles ?</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-347516" data-claire-element-id="347516">Vous vous demandez sans doute à ce stade comment effectuer des tests simples sur les variables. Bien sûr que Talus' TPL vous l'autorise, et nous allons le voir maintenant. :pirate:</p><p id="r-347517" data-claire-element-id="347517">Il existe trois balises de noms identiques à ceux en PHP, à employer côté template. Notez qu'il n'y a aucune manipulation spéciale à effectuer du côté de PHP. Ces balises sont :</p><ul id="r-347524" data-claire-element-id="347524"><li id="r-347519" data-claire-element-id="347519"><p id="r-347518" data-claire-element-id="347518"><code>if</code> ;</p></li><li id="r-347521" data-claire-element-id="347521"><p id="r-347520" data-claire-element-id="347520"><code>elseif</code> ;</p></li><li id="r-347523" data-claire-element-id="347523"><p id="r-347522" data-claire-element-id="347522"><code>else</code>.</p></li></ul><p id="r-347525" data-claire-element-id="347525">Il y a un argument à passer aux balises <code>if</code> et <code>elseif</code> : la condition. En pratique, procédez comme suit (je pars du principe que j'ai créé une variable <code>VAR</code> dans le code PHP) :</p><pre id="r-347526" data-claire-element-id="347526"><code data-claire-semantic="xml">&lt;if condition=&quot;{$VAR} == 3&quot;&gt;
+	{\VAR} vaut 3
+	&lt;elseif condition=&quot;{$VAR} == 4&quot; /&gt;
+	{\VAR} vaut 4
+	&lt;elseif condition=&quot;{$VAR} == 5&quot; /&gt;
+	{\VAR} vaut 5
+	/* et ainsi de suite */
+	&lt;else /&gt;
+	{\VAR} a une autre valeur
+&lt;/if&gt; /* on n'oublie pas de fermer le if */</code></pre><p id="r-347527" data-claire-element-id="347527">Simple, non ? Notez au passage l'utilisation de l'échappement pour afficher le nom de la variable. N'oubliez pas non plus le signe dollar <code>$</code> devant la variable (on ne veut pas l'afficher mais <em>récupérer sa valeur</em>).</p><aside id="r-347537" data-claire-element-id="347537" data-claire-semantic="information"><p id="r-347528" data-claire-element-id="347528">Deux petits raccourcis pour les fainéants.</p><ul id="r-347535" data-claire-element-id="347535"><li id="r-347531" data-claire-element-id="347531"><p id="r-347529" data-claire-element-id="347529">Vous pouvez abréger l'attribut <code>condition</code> en <code>cond</code>. Le code devient donc :</p><pre id="r-347530" data-claire-element-id="347530"><code data-claire-semantic="xml">&lt;if cond=&quot;{$VAR} == 3&quot;&gt;
+	{\VAR} vaut 3
+	&lt;elseif cond=&quot;{$VAR} == 4&quot; /&gt;
+	{\VAR} vaut 4
+	&lt;elseif cond=&quot;{$VAR} == 5&quot; /&gt;
+	{\VAR} vaut 5
+	&lt;else /&gt;
+	{\VAR} a une autre valeur
+&lt;/if&gt;</code></pre></li><li id="r-347534" data-claire-element-id="347534"><p id="r-347532" data-claire-element-id="347532">La balise <code data-claire-semantic="xml">&lt;elseif&gt;</code> peut se raccourcir en <code data-claire-semantic="xml">&lt;elif&gt;</code> :</p><pre id="r-347533" data-claire-element-id="347533"><code data-claire-semantic="xml">&lt;if cond=&quot;{$VAR} == 3&quot;&gt;
+	{\VAR} vaut 3
+	&lt;elif condition=&quot;{$VAR} == 4&quot; /&gt;
+	{\VAR} vaut 4
+	&lt;elif condition=&quot;{$VAR} == 5&quot; /&gt;
+	{\VAR} vaut 5
+	&lt;else /&gt;
+	{\VAR} a une autre valeur
+&lt;/if&gt;</code></pre></li></ul><p id="r-347536" data-claire-element-id="347536">Les deux raccourcis sont bien évidemment cumulatifs ! ;)</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl">Utilisation d&#039;un moteur de templates : Talus&#039; TPL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/telechargement-et-decouverte">
+Téléchargement et découverte
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/notions-de-base-2">
+Notions de base
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/utiliser-des-variables-2">
+Utiliser des variables
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/employer-des-conditions">
+Employer des conditions
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/et-pour-faire-des-boucles">
+Et pour faire des boucles ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/maintenant-les-inclusions">
+Maintenant, les inclusions !
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/mise-en-oeuvre-un-systeme-de-news">
+Mise en œuvre : un système de news
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/utiliser-des-variables-2">
+<span class="arrow"></span>
+<span class="next">Utiliser des variables</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/et-pour-faire-des-boucles">
+<span class="next">Et pour faire des boucles ?</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Etpourfairedesboucles"></a><h2>Et pour faire des boucles ?</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/employer-des-conditions">
+<span class="arrow"></span>
+<span class="next">Employer des conditions</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/maintenant-les-inclusions">
+<span class="next">Maintenant, les inclusions !</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-347539" data-claire-element-id="347539">Justement ça tombe bien j'y viens. :D Les boucles sont très utilisées, que ce soit pour parcourir des array, ou récupérer un résultat provenant d'une base de données contenant plusieurs lignes.</p><h3 id="r-parcourir-un-array-avec-foreach" data-claire-element-id="347547">Parcourir un array avec foreach</h3><p id="r-347540" data-claire-element-id="347540">Vous êtes sans doute habitués à vous balader dans des array avec la structure <code data-claire-semantic="html+php">foreach</code> en PHP. Eh bien bonne nouvelle, vous pouvez faire la même chose avec Talus' TPL du côté des templates. Toutefois, La syntaxe est un peu différente de celle utilisée en PHP. Vous utiliserez la balise <code data-claire-semantic="xml">&lt;foreach&gt;</code>, mais en lui fournissant un seul argument : l'array à parcourir.</p><pre id="r-347541" data-claire-element-id="347541"><code data-claire-semantic="xml">&lt;foreach array=&quot;{$ARRAY}&quot;&gt;
+	/* Opérations sur l'array */
+&lt;/foreach&gt;</code></pre><p id="r-347542" data-claire-element-id="347542">Une fois entre les deux balises du <code data-claire-semantic="xml">&lt;foreach&gt;</code>, vous pouvez accéder soit à la clé, soit à la valeur contenue dans l'array. À chaque itération, ces données changent bien évidemment, comme en PHP. Vous devez donc concrètement spécifier si vous voulez la clé ou la valeur, et de quel array (cela vous permet d'imbriquer des <code>foreach</code> ; cependant, vous verrons ce point un peu plus tard).</p><pre id="r-347543" data-claire-element-id="347543"><code data-claire-semantic="xml">&lt;foreach ary=&quot;{$ARRAY}&quot;&gt;
+	La clé est {ARRAY.key} et sa valeur {ARRAY.value}
+	&lt;if cond=&quot;{$ARRAY.val} == 1&quot;&gt;Je dirais même que sa valeur est 1&lt;/if&gt;
+&lt;/foreach&gt;</code></pre><aside id="r-347545" data-claire-element-id="347545" data-claire-semantic="information"><p id="r-347544" data-claire-element-id="347544">Notez ici d'autres raccourcis pour fainéants, comme ceux évoqués lors des conditions : l'attribut &quot;array&quot; du foreach peut se condenser en &quot;ary&quot;, et &quot;value&quot; en &quot;val&quot; !</p></aside><p id="r-347546" data-claire-element-id="347546">Vous pouvez donc soit <strong>afficher</strong> les valeurs des variables (<code>{ARRAY.key}</code> et <code>{ARRAY.val}</code>), soit <strong>obtenir</strong> leurs valeurs pour effectuer des tests dessus (soient <code>{$ARRAY.key}</code> et <code>{$ARRAY.val}</code>).</p><h3 id="r-renommer-un-array-lors-de-l-iteration-a-travers-le-foreach" data-claire-element-id="347550">Renommer un array lors de l'itération à travers le <code data-claire-semantic="xml">&lt;foreach&gt;</code></h3><p id="r-347548" data-claire-element-id="347548">Vous avez aussi la possibilité de renommer un array ; cela vous permet d'imbriquer des array, éventuellement identiques. Si vous souhaitez procéder à ce genre de manipulation (surtout si vous voulez itérer à travers la valeur de l'array souhaité), l'attribut <code>as</code> est obligatoire. Ceci étant dit, procédez donc comme suit pour utiliser cette fonctionnalité :</p><pre id="r-347549" data-claire-element-id="347549"><code data-claire-semantic="xml">&lt;foreach ary=&quot;{ARRAY}&quot;&gt;
+    &lt;foreach ary=&quot;{$ARRAY.val}&quot; as=&quot;{$ARY}&quot;&gt;
+        La clé est {ARY.key} est sa valeur {ARY.value}
+        &lt;if cond=&quot;{$ARY.value} == 1&quot;&gt;Même que sa valeur est 1&lt;/if&gt;
+    &lt;/foreach&gt;
+&lt;/foreach&gt;</code></pre><h3 id="r-attributs-speciaux" data-claire-element-id="347566">Attributs spéciaux</h3><p id="r-347551" data-claire-element-id="347551">Des attributs sont automatiquement affectées à la boucle, sans que vous n'ayez rien à faire. Il s'agit de :</p><ul id="r-347560" data-claire-element-id="347560"><li id="r-347553" data-claire-element-id="347553"><p id="r-347552" data-claire-element-id="347552"><code>{$ARRAY.is_first}</code> : booléen indiquant si c'est la première occurrence du bloc ;</p></li><li id="r-347555" data-claire-element-id="347555"><p id="r-347554" data-claire-element-id="347554"><code>{$ARRAY.is_last}</code> : booléen indiquant si c'est la dernière occurrence du bloc ;</p></li><li id="r-347557" data-claire-element-id="347557"><p id="r-347556" data-claire-element-id="347556"><code>{$ARRAY.size}</code> : entier indiquant le nombre d'occurrences de votre array ;</p></li><li id="r-347559" data-claire-element-id="347559"><p id="r-347558" data-claire-element-id="347558"><code>{$ARRAY.current}</code> : entier indiquant à quelle occurence nous sommes actuellement.</p></li></ul><p id="r-347561" data-claire-element-id="347561">Vous les récupérez de la manière classique :</p><pre id="r-347562" data-claire-element-id="347562"><code data-claire-semantic="xml">&lt;foreach ary=&quot;{$ARRAY}&quot;&gt;
+    Ma valeur est {ARRAY.val} ({ARRAY.cur} occurence / {ARRAY.size} occurence(s))
+&lt;foreachelse /&gt;
+    Aucun membre.
+&lt;/foreach&gt;</code></pre><p id="r-347563" data-claire-element-id="347563">Notez, enfin, que vous pouvez voir l'alternative à un <code data-claire-semantic="xml">&lt;foreach&gt;</code> (dans le cas où le tableau à parcourir est vide, par exemple) par la balise <code data-claire-semantic="xml">&lt;foreachelse /&gt;</code>.</p><aside id="r-347565" data-claire-element-id="347565" data-claire-semantic="information"><p id="r-347564" data-claire-element-id="347564">Un autre raccourci s'est glissé dans le code. Sauriez-vous le retrouver ? :)</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl">Utilisation d&#039;un moteur de templates : Talus&#039; TPL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/telechargement-et-decouverte">
+Téléchargement et découverte
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/notions-de-base-2">
+Notions de base
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/utiliser-des-variables-2">
+Utiliser des variables
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/employer-des-conditions">
+Employer des conditions
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/et-pour-faire-des-boucles">
+Et pour faire des boucles ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/maintenant-les-inclusions">
+Maintenant, les inclusions !
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/mise-en-oeuvre-un-systeme-de-news">
+Mise en œuvre : un système de news
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/employer-des-conditions">
+<span class="arrow"></span>
+<span class="next">Employer des conditions</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/maintenant-les-inclusions">
+<span class="next">Maintenant, les inclusions !</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Maintenantlesinclusions"></a><h2>Maintenant, les inclusions !</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/et-pour-faire-des-boucles">
+<span class="arrow"></span>
+<span class="next">Et pour faire des boucles ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/mise-en-oeuvre-un-systeme-de-news">
+<span class="next">Mise en œuvre : un système de news</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-347568" data-claire-element-id="347568">Vous pouvez inclure un template depuis un autre fichier de template. Il vous suffit d'utiliser la balise <code data-claire-semantic="xml">&lt;include&gt;</code>, en envoyant comme argument le chemin vers le template à inclure. Vous pouvez spécifier si vous ne désirez l'inclure qu'une fois (à savoir que s'il a déjà été inclus, il ne pourra pas l'être à nouveau plus tard ; c'est l'équivalent de <code>include_once</code> en PHP), en envoyant un boolean (<code>true</code> ou <code>false</code>). Vous pouvez aussi demander un &quot;require&quot;, en changeant le nom de la balise en... <code data-claire-semantic="xml">&lt;require&gt;</code>.</p><pre id="r-347569" data-claire-element-id="347569"><code data-claire-semantic="xml">&lt;include tpl=&quot;menu.html&quot; /&gt; /* strictement équivalent à &lt;include tpl=&quot;menu.html&quot; once=&quot;false&quot; /&gt; */
+&lt;include tpl=&quot;erreur.html&quot; once=&quot;true&quot;&gt;
+&lt;require tpl=&quot;fichier_important.html&quot;&gt;</code></pre><p id="r-347570" data-claire-element-id="347570">Concernant l'argument &quot;tpl&quot;, il y a plusieurs remarques à savoir...</p><ul id="r-347575" data-claire-element-id="347575"><li id="r-347572" data-claire-element-id="347572"><p id="r-347571" data-claire-element-id="347571">les fichier doivent se terminer par <strong>.html</strong> ;</p></li><li id="r-347574" data-claire-element-id="347574"><p id="r-347573" data-claire-element-id="347573">vous pouvez, à la place d'un fichier, mettre une variable en paramètre : <code data-claire-semantic="xml">&lt;include tpl=&quot;{$MA_VAR}&quot;&gt;</code>.</p></li></ul><p id="r-347576" data-claire-element-id="347576">Enfin, une fonctionnalité intéressante : vous pouvez spécifier des variables spéciales à passer au fichier inclus. Celles-ci seront donc accessibles dans le template enfant (et seulement le template enfant !), ainsi que tous les fichiers qu'il inclut. Vous avez juste à ajouter, après le nom du template à ajouter, une <em>query string</em> (un peu comme quand vous transférez des variables de type GET) : <code data-claire-semantic="xml">&lt;include tpl=&quot;mon_template.html?var1=ma_valeur&amp;var2=autre_valeur&quot;&gt;</code>. Les variables <code>{var1}</code> et <code>{var2}</code> seront donc accessibles dans le template enfant.</p><p id="r-347577" data-claire-element-id="347577">Simple, clair et efficace. :)</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl">Utilisation d&#039;un moteur de templates : Talus&#039; TPL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/telechargement-et-decouverte">
+Téléchargement et découverte
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/notions-de-base-2">
+Notions de base
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/utiliser-des-variables-2">
+Utiliser des variables
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/employer-des-conditions">
+Employer des conditions
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/et-pour-faire-des-boucles">
+Et pour faire des boucles ?
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/maintenant-les-inclusions">
+Maintenant, les inclusions !
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/mise-en-oeuvre-un-systeme-de-news">
+Mise en œuvre : un système de news
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/et-pour-faire-des-boucles">
+<span class="arrow"></span>
+<span class="next">Et pour faire des boucles ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/mise-en-oeuvre-un-systeme-de-news">
+<span class="next">Mise en œuvre : un système de news</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Miseenuvreunsystmedenews"></a><h2>Mise en œuvre : un système de news</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/maintenant-les-inclusions">
+<span class="arrow"></span>
+<span class="next">Maintenant, les inclusions !</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-347579" data-claire-element-id="347579">Reprenons l'exemple usé jusqu'à la corde du système de news. Je vais vous donner un code PHP « banal », et à vous de l'adapter à ce moteur de template.</p><p id="r-347580" data-claire-element-id="347580">Voici le code pour créer une table news avec quelques éléments déjà insérés :</p><pre id="r-347581" data-claire-element-id="347581"><code data-claire-semantic="sql">CREATE TABLE `news` (
+`id` SMALLINT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+`titre` VARCHAR( 255 ) NOT NULL ,
+`auteur` VARCHAR( 255 ) NOT NULL ,
+`date` DATETIME NOT NULL ,
+`contenu` TEXT NOT NULL
+) ENGINE = MYISAM ;
+ 
+INSERT INTO `news` (
+`id` ,
+`titre` ,
+`auteur` ,
+`date` ,
+`contenu`
+)
+VALUES (
+NULL , 'Une première news', 'vincent1870', '2007-12-30 18:38:02', 'Bienvenue à tous sur ce beau site !&lt;br /&gt; &lt;br /&gt; Bon surf ! ;)'
+), (
+NULL , 'Et une deuxième', 'Arthur', '2007-12-11 18:38:44', 'Hello !&lt;br /&gt; What''s happening ?'
+);</code></pre><p id="r-347582" data-claire-element-id="347582">Copiez et collez ce code dans phpMyAdmin, onglet <strong>SQL</strong>, pour créer votre table.<br/> Et voici le code PHP. Je ne le commenterai pas ; si vous avez du mal à le comprendre, relisez les cours de M@teo21.</p><pre id="r-347583" data-claire-element-id="347583"><code data-claire-semantic="html+php">&lt;?php
+try {
+  $pdo = new PDO('mysql:host=localhost;dbname=tests', 'root', '');
+} catch (PDOException $e) {
+  die('Erreur : ' . $e-&gt;getMessage());
+}
+?&gt;
+ 
+&lt;h1&gt;Les news du site&lt;/h1&gt;
+ 
+&lt;?php
+$q = $pdo-&gt;query(&quot;SELECT id, auteur, titre, DATE_FORMAT(date, '%d/%m/%Y %Hh%i') AS date_formatee, contenu
+FROM news
+ORDER BY date DESC&quot;);
+foreach($q as &amp;$data){
+    echo '
+      &lt;div class=&quot;news&quot;&gt;
+          &lt;h2&gt;' . $data['titre'] . '&lt;/h2&gt;
+          &lt;p&gt;News postée le ' . str_replace(' ', ' à ', $data['date_formatee']) . ' par ' . $data['auteur'] . '&lt;/p&gt;
+          &lt;p&gt;' . $data['contenu'] . '&lt;/p&gt;
+      &lt;/div&gt;';
+}
+
+$q = null;
+ 
+//On ferme la connexion à MySQL
+$pdo = null;</code></pre><p id="r-347584" data-claire-element-id="347584">Bon, maintenant au boulot ! Vous devez me transformer ce script pour y intégrer Talus' TPL. Vous devrez donc créer un second fichier, contenant le template. Bonne chance !</p><p id="r-347585" data-claire-element-id="347585">...</p><p id="r-347586" data-claire-element-id="347586">Bien ! Voici maintenant le corrigé, pour comparer nos travaux. Je commence par <strong>news.php</strong> :</p><pre id="r-347587" data-claire-element-id="347587"><code data-claire-semantic="html+php">&lt;?php
+//On se connecte à MySQL
+try {
+  $pdo = new PDO('mysql:host=localhost;dbname=tests', 'root', '');
+} catch (PDOException $e) {
+  die('Erreur : ' . $e-&gt;getMessage());
+}
+ 
+//On inclut et démarre Talus' TPL
+require 'lib/Talus_TPL/Engine.php';
+$tpl = new Talus_TPL_Engine('./', 'cache/');
+ 
+//On stocke les news dans un array
+$news = array();
+$q = $pdo-&gt;query(&quot;
+    SELECT id, auteur, titre, DATE_FORMAT(date, '%d/%m/%Y \à %Hh%i') AS date_formatee, contenu
+    FROM news
+    ORDER BY date DESC&quot;);
+
+$data = $q-&gt;fetchAll();
+
+//On ferme la connexion à MySQL
+$q = null;
+$pdo = null;
+ 
+//On assigne la liste des news
+$tpl-&gt;set('NEWS', $news);
+ 
+//On affiche le résultat
+$tpl-&gt;parse('news.html');</code></pre><p id="r-347588" data-claire-element-id="347588">Le code se comprend facilement si vous avez lu tout ce qui précède. Je considère que le template est dans le même dossier, et que vous disposez d'un dossier <strong>cache/</strong> à la racine. Et voici le template <strong>news.html</strong> :</p><pre id="r-347589" data-claire-element-id="347589"><code data-claire-semantic="xml">&lt;h1&gt;Les news du site&lt;/h1&gt;
+ 
+&lt;foreach ary=&quot;{$NEWS}&quot;&gt;
+    &lt;div class=&quot;news&quot;&gt;
+        &lt;h2&gt;{NEWS.val['titre']}&lt;/h2&gt;
+        &lt;p&gt;News postée le {NEWS.val['date_formatee']} par {NEWS.val['auteur']}&lt;/p&gt;
+        &lt;p&gt;{NEWS.val['contenu']}&lt;/p&gt;
+    &lt;/div&gt;
+&lt;/foreach&gt;</code></pre><p id="r-347590" data-claire-element-id="347590">Je finirai par vous laisser quelques liens relatifs à Talus' TPL...</p><ul id="r-347599" data-claire-element-id="347599"><li id="r-347592" data-claire-element-id="347592"><p id="r-347591" data-claire-element-id="347591">Le site contenant les productions de Talus, <a href="http://www.talus-works.net/">Talus' Works</a>.</p></li><li id="r-347594" data-claire-element-id="347594"><p id="r-347593" data-claire-element-id="347593"><a href="http://www.talus-works.net/forum-7-p1-documentation.html">La documentation officielle</a>, plus complète que ce tuto, et plus vite mise à jour, mais moins explicative (<em>une doc n'est pas un tuto</em>).</p></li><li id="r-347596" data-claire-element-id="347596"><p id="r-347595" data-claire-element-id="347595"><a href="http://github.com/Taluu/Link-TPL">Le projet GitHub</a> : suivez l'avancement de Talus' TPL, au jour le jour.</p></li><li id="r-347598" data-claire-element-id="347598"><p id="r-347597" data-claire-element-id="347597">Un bug à rapporter ? Une suggestion à proposer ? <a href="https://github.com/Taluu/Talus-TPL/issues">Visitez le <em>bug tracker</em></a> ! :)</p></li></ul><p id="r-347600" data-claire-element-id="347600">J'espère que ce tutoriel vous a été profitable. Les commentaires sont là, mais je rappelle juste qu'ils ne doivent pas servir de support pour ce script. Les liens ci-dessus sont là pour ça !</p><p id="r-347601" data-claire-element-id="347601"><em>Je remercie <a href="http://www.siteduzero.com/membres-294-43623.html">vincent1870</a> pour son travail originel sur ce tutoriel, ainsi que <a href="http://www.siteduzero.com/membres-294-85974.html">vyk12</a> et lui-même pour leurs dernières relectures.</em></p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl">Utilisation d&#039;un moteur de templates : Talus&#039; TPL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/telechargement-et-decouverte">
+Téléchargement et découverte
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/notions-de-base-2">
+Notions de base
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/utiliser-des-variables-2">
+Utiliser des variables
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/employer-des-conditions">
+Employer des conditions
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/et-pour-faire-des-boucles">
+Et pour faire des boucles ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/maintenant-les-inclusions">
+Maintenant, les inclusions !
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/mise-en-oeuvre-un-systeme-de-news">
+Mise en œuvre : un système de news
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/utilisation-d-un-moteur-de-templates-talus-tpl/maintenant-les-inclusions">
+<span class="arrow"></span>
+<span class="next">Maintenant, les inclusions !</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/utilisation-d-un-moteur-de-templates-talus-tpl.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 06:36:45 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/utilisation-d-un-moteur-de-templates-talus-tpl.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:10:55 GMT -->
+</html>

@@ -1,0 +1,677 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/utilisation-de-twig-un-moteur-de-templates.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 02:48:36 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/utilisation-de-twig-un-moteur-de-templates.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:37:05 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Utilisation de Twig, un moteur de templates !</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Utilisation de Twig, un moteur de templates !</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#UtilisationdeTwigunmoteurdetemplates">Utilisation de Twig, un moteur de templates !</a><br/><a href="#Qu039estcequ039unmoteurdetemplates">Qu&#039;est ce qu&#039;un moteur de templates ?</a><br/><a href="#Miseenplace">Mise en place</a><br/><a href="#Notrepremiertemplate">Notre premier template</a><br/><a href="#Syntaxedebase">Syntaxe de base</a><br/><a href="#Quelquesajoutspratiques">Quelques ajouts pratiques</a><br/><a href="#FonctionnalitsctPHP">Fonctionnalités côté PHP</a><br/></div>
+<a name="UtilisationdeTwigunmoteurdetemplates"></a><h2>Utilisation de Twig, un moteur de templates !</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/qu-est-ce-qu-un-moteur-de-templates">
+<span class="next">Qu&#039;est ce qu&#039;un moteur de templates ?</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-442288" data-claire-element-id="442288">Bonjour à tous,</p><p id="r-442289" data-claire-element-id="442289">Aujourd'hui je vous propose de découvrir un moteur de templates du nom de Twig. Twig est le moteur de templates présent dans le célèbre <a href="http://www.siteduzero.com/tutoriel-3-517569-symfony2-un-tutoriel-pour-debuter-avec-le-framework-symfony2.html">framework Symfony</a>. Ce cours portera sur son utilisation &quot;seule&quot; (c'est-à-dire sans Symfony) mais il faut savoir que la syntaxe que vous apprendrez à mettre dans vos templates sera valable pour ce cours et pour l'utilisation des templates avec Symfony (ou si le moteur est intégré dans un autre framework).</p><p id="r-442290" data-claire-element-id="442290">Twig est un moteur de templates PHP. Je vous conseille donc d'avoir de bonnes bases en PHP et si possible en orienté objet (bien que ça ne soit pas indispensable). Une petite note : la syntaxe du moteur est énormément inspirée de <a href="http://jinja.pocoo.org/">Jinja</a>, le moteur de templates du framework web Python <a href="http://www.django-fr.org/">Django</a>. Un <a href="http://www.siteduzero.com/tutoriel-3-329045-developpez-vos-applications-web-avec-django.html">cours</a> est d'ailleurs disponible sur le site.</p><p id="r-442291" data-claire-element-id="442291">Je vous souhaite une agréable lecture !</p>
+</div><a name="Qu039estcequ039unmoteurdetemplates"></a><h2>Qu&#039;est ce qu&#039;un moteur de templates ?</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/mise-en-place-21">
+<span class="next">Mise en place</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-442292" data-claire-element-id="442292">Twig n'est pas le seul moteur de templates qui existe, et ce n'est pas non plus le meilleur. C'est un moteur parmi tant d'autres. Au même titre que Twig, ce cours n'est pas le seul à traiter du sujet. Vous pouvez également lire ces tutoriels :</p><ul id="r-442297" data-claire-element-id="442297"><li id="r-442294" data-claire-element-id="442294"><p id="r-442293" data-claire-element-id="442293"><a href="http://www.siteduzero.com/tutoriel-3-31259-utilisation-d-un-moteur-de-templates-talus-tpl.html">Utilisation d'un moteur de templates : Talus' TPL</a></p></li><li id="r-442296" data-claire-element-id="442296"><p id="r-442295" data-claire-element-id="442295"><a href="http://www.siteduzero.com/tutoriel-3-360073-un-moteur-de-template-smarty.html">Un moteur de template : Smarty</a></p></li></ul><h2 id="r-presentation-119" data-claire-element-id="442307">Présentation</h2><p id="r-442298" data-claire-element-id="442298">Je vais ici vous expliquer le fonctionnement d'un &quot;moteur de templates&quot;. Pour cela, je vous propose un exemple : la création d'un blog basique. L'organisation des fichiers que je vous propose ici est personnelle, c'est normal si pour vous la conception d'un blog est différente. Les grandes lignes sont là.</p><p id="r-442299" data-claire-element-id="442299">Pour créer votre blog, vous allez d'abord récupérer votre contenu stocké en base de données. Vous allez ensuite afficher via une boucle les différents articles. Dans certains cas, vous incluez aussi un en-tête et un pied de page.</p><pre id="r-442300" data-claire-element-id="442300"><code data-claire-semantic="html+php">&lt;?php include 'inc/header.php'; ?&gt;
+
+&lt;?php 
+    
+    $articles = $db-&gt;query('SELECT * FROM blog');
+    
+    while($article = $articles-&gt;fetch()) {
+
+	    ?&gt;
+        &lt;div class=&quot;article&quot;&gt;
+
+            &lt;div class=&quot;title&quot;&gt;&lt;?php echo $article['title']; ?&gt;&lt;/div&gt; 
+            &lt;div class=&quot;content&quot;&gt;
+                &lt;?php echo $article['content']; ?&gt;
+            &lt;/div&gt;
+
+        &lt;/div&gt;
+    }
+    
+
+&lt;?php include 'inc/footer.php'; ?&gt;</code></pre><p id="r-442301" data-claire-element-id="442301">Je n'explique pas ce code. Il est relativement simple.</p><p id="r-442302" data-claire-element-id="442302">Le moteur de templates va vous obliger à utiliser deux fichiers (plus si vous utilisez le modèle MVC). Vous allez d'une part avoir un fichier PHP avec l'obtention du contenu en base de données, des variables, la gestion des sessions, etc. et un fichier template qui gérera l'affichage de vos pages. Normalement, plus aucun code HTML ne doit apparaître dans vos fichiers PHP.</p><p id="r-442303" data-claire-element-id="442303">Voici donc ce que <strong>pourrait</strong> donner notre exemple précédent avec un moteur de templates :</p><pre id="r-442304" data-claire-element-id="442304"><code data-claire-semantic="html+php">&lt;?php include 'inc/header.php'; ?&gt;
+
+
+    &lt;?php 
+
+        $articlesQuery = $db-&gt;query('SELECT * FROM blog');
+        $articles = $articlesQuery-&gt;fetchAll();
+
+        $template = $twig-&gt;loadTemplate('blog.twig');
+        echo $template-&gt;render(array(
+		    'articles' =&gt; $articles,
+	    ));
+    ?&gt;
+&lt;?php include 'inc/footer.php'; ?&gt;</code></pre><pre id="r-442305" data-claire-element-id="442305"><code data-claire-semantic="html">{% for key, article in articles %}
+	&lt;div class=&quot;article&quot;&gt;
+
+            &lt;div class=&quot;title&quot;&gt;{{ article.title }}&lt;/div&gt; 
+            &lt;div class=&quot;content&quot;&gt;
+                {{ article.content }}
+            &lt;/div&gt;
+
+        &lt;/div&gt;
+{% endfor %}</code></pre><p id="r-442306" data-claire-element-id="442306">Je n'explique pas ce code pour le moment car vous allez apprendre cette syntaxe dans la suite du cours.</p><h2 id="r-pourquoi-utiliser-un-moteur-de-templates" data-claire-element-id="442319">Pourquoi utiliser un moteur de templates ?</h2><p id="r-442308" data-claire-element-id="442308">Depuis tout à l'heure je vous parle de Twig et je viens même de vous montrer les grandes lignes de son fonctionnement. Mais vous vous demandez peut-être pourquoi utiliser un moteur de templates ? Quel(s) avantage(s) peut-on avoir à l'utiliser par rapport à du PHP &quot;classique&quot; ?.</p><p id="r-442309" data-claire-element-id="442309">On peut y voir plusieurs avantages notables :</p><ul id="r-442316" data-claire-element-id="442316"><li id="r-442311" data-claire-element-id="442311"><p id="r-442310" data-claire-element-id="442310">Le code est plus clair : on sait où est le code HTML et on ne doit pas chercher après dans le code PHP</p></li><li id="r-442313" data-claire-element-id="442313"><p id="r-442312" data-claire-element-id="442312">Pour reprendre la phrase du dessus on peut noter le fait que vous savez quel fichier éditer quand vous savez d'où vient l'erreur. De plus pour reprendre l'exemple du blog, si un jour vous voulez modifier simplement l'affichage des billets, vous savez quelle partie du code éditer et vous n'avez pas à chercher.</p></li><li id="r-442315" data-claire-element-id="442315"><p id="r-442314" data-claire-element-id="442314">Si vous travaillez avec un graphiste, c'est un réel plus. Les graphistes connaissent généralement HTML et CSS et pas toujours PHP. Le graphiste s'y retrouve donc beaucoup plus facilement.</p></li></ul><p id="r-442317" data-claire-element-id="442317">Je pourrais en citer d'autres mais je pense que ce sont les plus importants qui m'ont fait adopter un tel système pour des sites de petites et moyennes tailles.</p><p id="r-442318" data-claire-element-id="442318">Si je vous ai convaincu, je vous propose de lire la suite de ce cours pour voir comment mettre en place Twig.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates">Utilisation de Twig, un moteur de templates !</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/qu-est-ce-qu-un-moteur-de-templates">
+Qu&#039;est ce qu&#039;un moteur de templates ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/mise-en-place-21">
+Mise en place
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/notre-premier-template">
+Notre premier template
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/syntaxe-de-base-3">
+Syntaxe de base
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/quelques-ajouts-pratiques">
+Quelques ajouts pratiques
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/fonctionnalites-cote-php">
+Fonctionnalités côté PHP
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/mise-en-place-21">
+<span class="next">Mise en place</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Miseenplace"></a><h2>Mise en place</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/qu-est-ce-qu-un-moteur-de-templates">
+<span class="arrow"></span>
+<span class="next">Qu&#039;est ce qu&#039;un moteur de templates ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/notre-premier-template">
+<span class="next">Notre premier template</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-442321" data-claire-element-id="442321">Avant de mettre en place le moteur sur votre site, il vous faut le télécharger. Je vous propose donc de lire la partie qui vous concerne pour le faire. Si vous ne savez pas laquelle choisir, lisez la partie juste en dessous.</p><h3 id="r-via-une-archive" data-claire-element-id="442325">Via une archive</h3><p id="r-442322" data-claire-element-id="442322">Pour télécharger Twig via une archive rien de plus simple, rendez vous sur <a href="http://twig.sensiolabs.org/">le site</a> et cliquez sur le lien &quot;Install now&quot;. Choisissez ensuite votre archive (en tar ou en zip). Si vous ne savez pas trop, je vous conseille de prendre tar si vous êtes sur un système (de type) UNIX et zip sur un système Windows.</p><p id="r-442323" data-claire-element-id="442323">Vous devez maintenant décompresser l'archive et copier les fichiers dans un dossier nommé &quot;twig&quot; dans le dossier de votre site. Vous pouvez, si vous le souhaitez, l'appeler différemment ; en sachant que dans ce cours je pars du principe que vous avez appelé votre dossier contenant ces sources &quot;twig&quot;.</p><p id="r-442324" data-claire-element-id="442324">Vous pouvez vous rendre à la partie &quot;Mise en place&quot;</p><h3 id="r-via-git" data-claire-element-id="442329">Via git</h3><p id="r-442326" data-claire-element-id="442326">Si vous voulez passer par Git, il vous suffit de vous placer dans le répertoire de votre site et de faire :</p><pre id="r-442327" data-claire-element-id="442327"><code data-claire-semantic="console">git clone http://github.com/fabpot/twig</code></pre><p id="r-442328" data-claire-element-id="442328">Un dossier twig contenant les fichiers sources va être créé. Vous pouvez vous rendre à la partie &quot;Mise en place&quot;</p><h3 id="r-via-subversion" data-claire-element-id="442333">Via Subversion</h3><p id="r-442330" data-claire-element-id="442330">Pour cloner le dépôt SVN, placez-vous dans le répertoire de votre projet et tapez :</p><pre id="r-442331" data-claire-element-id="442331"><code data-claire-semantic="console">svn co http://svn.twig-project.org/trunk/ twig</code></pre><p id="r-442332" data-claire-element-id="442332">Un dossier twig contenant les fichiers sources va être créé. Vous pouvez vous rendre à la partie &quot;Mise en place&quot;</p><h3 id="r-installation-via-pear" data-claire-element-id="442353">Installation via PEAR</h3><p id="r-442334" data-claire-element-id="442334">Pour les fans de PEAR, vous pouvez vous rendre sur <a href="http://pear.twig-project.org/">la page dédiée à PEAR</a>.</p><p id="r-442335" data-claire-element-id="442335"><strong>Note</strong> : à ma connaissance il n'existe pas de dépôt pour Mercurial ou pour CVS.</p><h2 id="r-mise-en-place-20" data-claire-element-id="442352">Mise en place</h2><p id="r-442336" data-claire-element-id="442336">Si vous le souhaitez, vous pouvez supprimer tous les fichiers et dossiers sauf le dossier lib et son contenu. Je vous conseille de laisser le dossier tel quel et de ne pas changer les fichiers de place.</p><p id="r-442337" data-claire-element-id="442337">Twig est un moteur de templates réalisé avec le langage PHP en orienté objet. Il va donc falloir créer une instance des classes en question. Voici donc le code que vous devez mettre en début de chaque fichier (que je vous conseille de charger via include).</p><p id="r-442338" data-claire-element-id="442338">Avant tout, je vous demanderais de créer un dossier &quot;templates&quot; contenant les templates de votre site.</p><pre id="r-442339" data-claire-element-id="442339"><code data-claire-semantic="html+php">&lt;?php
+    include_once('twig/lib/Twig/Autoloader.php');
+    Twig_Autoloader::register();
+    
+    $loader = new Twig_Loader_Filesystem('templates'); // Dossier contenant les templates
+    $twig = new Twig_Environment($loader, array(
+      'cache' =&gt; false
+    ));</code></pre><p id="r-442340" data-claire-element-id="442340">Le code ici est assez simple. On inclut le fichier Autoloader.php. Ensuite, on indique le fichier où se trouvent nos templates. Pour finir, on demande à Twig d'aller chercher les templates dans le dossier indiqué précédemment et on lui indique quelques options pour plus de &quot;souplesse&quot; pendant le développement de notre projet.</p><p id="r-442341" data-claire-element-id="442341">D'ailleurs, ici je n'ai mis que le cache mais il y a d'autres options possibles :</p><ul id="r-442348" data-claire-element-id="442348"><li id="r-442343" data-claire-element-id="442343"><p id="r-442342" data-claire-element-id="442342">cache : prend en argument le dossier où vous stockez les templates en cache ou bien false pour ne pas s'en servir. Je me permet de vous donner un conseil : en production, le cache peut être une bonne chose mais en développement le mieux est de le mettre à false.</p></li><li id="r-442345" data-claire-element-id="442345"><p id="r-442344" data-claire-element-id="442344">charset : par défaut à utf-8, définit l'encodage de votre projet.</p></li><li id="r-442347" data-claire-element-id="442347"><p id="r-442346" data-claire-element-id="442346">autoescape : échappe automatiquement les variables. Le code HTML contenu dedans n'est donc pas interprété. Par défaut à true.</p></li></ul><p id="r-442349" data-claire-element-id="442349">Pour plus d'options, je vous renvoie vers <a href="http://twig.sensiolabs.org/doc/api.html#environment-options">cette section</a> de la documentation.</p><p id="r-442350" data-claire-element-id="442350">Sachez aussi que si vous le souhaitez, vous pouvez mettre plusieurs dossiers contenants les templates. En sachant que Twig va d'abord regarder dans le premier, puis le suivant et ainsi de suite. Je vous montre ici un code demandant à Twig d'aller chercher dans deux dossiers différents, mais vous pouvez en mettre plus :</p><pre id="r-442351" data-claire-element-id="442351"><code data-claire-semantic="html+php">&lt;?php
+$loader = new Twig_Loader_Filesystem(array('templates', 'views'));</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates">Utilisation de Twig, un moteur de templates !</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/qu-est-ce-qu-un-moteur-de-templates">
+Qu&#039;est ce qu&#039;un moteur de templates ?
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/mise-en-place-21">
+Mise en place
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/notre-premier-template">
+Notre premier template
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/syntaxe-de-base-3">
+Syntaxe de base
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/quelques-ajouts-pratiques">
+Quelques ajouts pratiques
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/fonctionnalites-cote-php">
+Fonctionnalités côté PHP
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/qu-est-ce-qu-un-moteur-de-templates">
+<span class="arrow"></span>
+<span class="next">Qu&#039;est ce qu&#039;un moteur de templates ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/notre-premier-template">
+<span class="next">Notre premier template</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Notrepremiertemplate"></a><h2>Notre premier template</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/mise-en-place-21">
+<span class="arrow"></span>
+<span class="next">Mise en place</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/syntaxe-de-base-3">
+<span class="next">Syntaxe de base</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-442355" data-claire-element-id="442355">Je vous propose maintenant de voir la création de notre premier template. Avant toutes choses, créez un fichier appelé index.twig dans le dossier dans lequel vous stockez vos templates.</p><aside id="r-442357" data-claire-element-id="442357" data-claire-semantic="information"><p id="r-442356" data-claire-element-id="442356">Ici j'ai mis &quot;twig&quot; comme extension mais en fait vous pouvez mettre ce que vous voulez. La plupart du temps, il s'agit de html ou tpl mais vous pouvez mettre txt, etc.</p></aside><p id="r-442358" data-claire-element-id="442358">Ouvrez ce fichier avec votre éditeur favori et mettez-y le code suivant :</p><pre id="r-442359" data-claire-element-id="442359"><code data-claire-semantic="html">Vous venez de créer votre premier template avec {{ moteur_name }} !</code></pre><p id="r-442360" data-claire-element-id="442360">Nous reviendrons juste après sur cette portion de code. Ensuite, créez un fichier à la racine de votre site appelé index.php et mettez-y le code suivant (n'oubliez pas d'y inclure le fichier contenant le code qui instancie le moteur).</p><pre id="r-442361" data-claire-element-id="442361"><code data-claire-semantic="html+php">&lt;?php
+    $template = $twig-&gt;loadTemplate('index.twig');
+    echo $template-&gt;render(array(
+	'moteur_name' =&gt; 'Twig'
+    )); 
+?&gt;</code></pre><p id="r-442362" data-claire-element-id="442362">Vous pouvez aussi écrire ce qu'il y a au dessus de cette façon :</p><pre id="r-442363" data-claire-element-id="442363"><code data-claire-semantic="html+php">&lt;?php
+    echo $twig-&gt;render('index.twig', array(
+        'moteur_name' =&gt; 'Twig'
+    ));
+?&gt;</code></pre><p id="r-442364" data-claire-element-id="442364">Il n'y a pas énormément de différences mais cette portion de code est plus courte que la précédente.</p><p id="r-442365" data-claire-element-id="442365">Quand vous ouvrez le fichier, vous voyez &quot;Vous venez de créer votre premier template avec Twig&quot;. En fait, dans le template le {{ moteur_name }} est le nom de la variable que vous avez passé à Twig lors de l'affichage du template. Il s'agit de cette portion de code.</p><pre id="r-442366" data-claire-element-id="442366"><code data-claire-semantic="html+php">&lt;?php
+echo $template-&gt;render(array(
+	'moteur_name' =&gt; 'Twig'
+    )); 
+?&gt;</code></pre><p id="r-442367" data-claire-element-id="442367">Dans cet exemple, j'ai mis du texte entre guillemets, mais rien ne vous empêche de mettre des variables, des tableaux, etc.</p><p id="r-442368" data-claire-element-id="442368">Pour l'instant c'est plus que basique. Heureusement, Twig nous permet de faire bien plus de choses que ça. Je vous propose donc de voir les possibilités que nous offre Twig dans la partie suivante.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates">Utilisation de Twig, un moteur de templates !</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/qu-est-ce-qu-un-moteur-de-templates">
+Qu&#039;est ce qu&#039;un moteur de templates ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/mise-en-place-21">
+Mise en place
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/notre-premier-template">
+Notre premier template
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/syntaxe-de-base-3">
+Syntaxe de base
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/quelques-ajouts-pratiques">
+Quelques ajouts pratiques
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/fonctionnalites-cote-php">
+Fonctionnalités côté PHP
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/mise-en-place-21">
+<span class="arrow"></span>
+<span class="next">Mise en place</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/syntaxe-de-base-3">
+<span class="next">Syntaxe de base</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Syntaxedebase"></a><h2>Syntaxe de base</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/notre-premier-template">
+<span class="arrow"></span>
+<span class="next">Notre premier template</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/quelques-ajouts-pratiques">
+<span class="next">Quelques ajouts pratiques</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-442370" data-claire-element-id="442370">Cette partie est certainement la plus importante de ce cours. Vous allez apprendre à remplir vos templates avec la syntaxe proposée par le moteur. Vous pourrez donc faire des opérations complexes comme les conditions, les boucles, etc.</p><h2 id="r-affichage-des-variables-et-tableaux" data-claire-element-id="442378">Affichage des variables et tableaux</h2><p id="r-442371" data-claire-element-id="442371">Lors de l'affichage d'un template (vu un petit peu plus haut), vous passez en argument des variables, des tableaux, etc. Voyons un peu l'affichage côté template.</p><pre id="r-442372" data-claire-element-id="442372"><code data-claire-semantic="html">Votre nom est : {{ name }}</code></pre><p id="r-442373" data-claire-element-id="442373">Pour afficher une variable, il faut la placer entre accolades.</p><aside id="r-442375" data-claire-element-id="442375" data-claire-semantic="information"><p id="r-442374" data-claire-element-id="442374">Note : si vous comptez utiliser Twig par la suite pour vos projets, je vous conseille de mettre un raccourci dans votre éditeur pour les doubles accolades et le tag {% ... %} que nous verrons après.</p></aside><p id="r-442376" data-claire-element-id="442376">Supposons que vous voulez passer un tableau à votre template, il vous suffit de faire :</p><pre id="r-442377" data-claire-element-id="442377"><code data-claire-semantic="html">{{ array['key'] }} 
+{{ array.key }} &lt;!-- fait exactement la même chose qu'au dessus --&gt;</code></pre><h2 id="r-les-filtres-6" data-claire-element-id="442399">Les filtres</h2><p id="r-442379" data-claire-element-id="442379">Les filtres sont un concept que vous ne connaissez peut-être pas. En fait, un filtre agit comme une fonction. Il sont déjà définis mais vous pouvez créer les vôtres si vous le souhaitez. Pour appliquer un filtre à une variable, il faut séparer le nom de la variable et celui du filtre par un <em>pipe</em> ( | ). Je vous propose ici de voir quelques filtres utiles.</p><ul id="r-442390" data-claire-element-id="442390"><li id="r-442381" data-claire-element-id="442381"><p id="r-442380" data-claire-element-id="442380">upper : met la chaîne de caractères qui le concerne en majuscule ;</p></li><li id="r-442383" data-claire-element-id="442383"><p id="r-442382" data-claire-element-id="442382">lower : fait exactement l'inverse d'upper et va mettre toutes les lettres en minuscule ;</p></li><li id="r-442385" data-claire-element-id="442385"><p id="r-442384" data-claire-element-id="442384">title : met la première lettre de chaque mot de la chaîne de caractère en majuscule. Comme un titre de noblesse ;</p></li><li id="r-442387" data-claire-element-id="442387"><p id="r-442386" data-claire-element-id="442386">length : retourne le nombre de caractères dont la chaîne se compose ;</p></li><li id="r-442389" data-claire-element-id="442389"><p id="r-442388" data-claire-element-id="442388">escape &amp; e : pour échapper du code HTML vous pouvez utiliser escape ou e. Tous deux font la même chose mais l'un est plus court que l'autre.</p></li></ul><p id="r-442391" data-claire-element-id="442391">Il y a encore beaucoup d'autres filtres proposés par Twig, en voici <a href="http://twig.sensiolabs.org/doc/filters/index.html">la liste</a>.</p><h3 id="r-les-filtres-sur-les-blocs" data-claire-element-id="442398">Les filtres sur les blocs</h3><p id="r-442392" data-claire-element-id="442392">Si vous le souhaitez, plutôt que d'appliquer un filtre à chacune de vos variables, si vous comptez le faire sur beaucoup de variables ou une partie de votre site en particulier, je vous conseille de passer par cette méthode :</p><pre id="r-442393" data-claire-element-id="442393"><code data-claire-semantic="html">{% filter upper %}
+    je vais être écrit en majuscule
+    {{ moi_aussi }}
+{% endfilter %}</code></pre><p id="r-442394" data-claire-element-id="442394">Vous pouvez aussi chaîner les filtres en en mettant plusieurs à la suite :</p><pre id="r-442395" data-claire-element-id="442395"><code data-claire-semantic="html">{% filter upper|escape %}
+    je vais être écrit en majuscule &lt;em&gt;et échappé&lt;/em&gt;
+{% endfilter %}</code></pre><p id="r-442396" data-claire-element-id="442396">Concernant le filtre escape, un bloc spécial a été prévu à cet effet. Ainsi, si par exemple vous avez mis lors de l'initialisation de Twig autoespace à true, vous pouvez faire ceci :</p><pre id="r-442397" data-claire-element-id="442397"><code data-claire-semantic="html">{% autoescape false %}
+&lt;strong&gt;Je vais être affiché en gras&lt;/strong&gt;
+{% endautoescape %}</code></pre><h2 id="r-les-commentaires-19" data-claire-element-id="442402">Les commentaires</h2><p id="r-442400" data-claire-element-id="442400">Ici, c'est juste un petit plus. Ça n'est pas vraiment utile (c'est moins intuitif, dira-t-on) si vous n'avez pas l'habitude de les utiliser. C'est un plus pour ceux qui utilisent Django par exemple :</p><pre id="r-442401" data-claire-element-id="442401"><code data-claire-semantic="html">{# Je suis un commentaire #}</code></pre><h2 id="r-les-conditions-26" data-claire-element-id="442417">Les conditions</h2><p id="r-442403" data-claire-element-id="442403">Pour faire des conditions, rien de plus simple :</p><pre id="r-442404" data-claire-element-id="442404"><code data-claire-semantic="html">{% if online &gt; 1 %}
+  Il y a {{ online }} membres en ligne
+{% elseif online == 1 %}
+    Il n'y a qu'un seul utilisateur en ligne (Vous !)
+{% else %}
+    Il n'y a aucun utilisateur en ligne. Cette phrase ne sera, en principe, jamais lue sauf par toi. Ô grand développeur !.
+{% endif %}</code></pre><h3 id="r-les-tests-utiles-built-in-tests" data-claire-element-id="442406">Les tests utiles (built-in tests)</h3><p id="r-442405" data-claire-element-id="442405">Les tests utiles vous permettent de réaliser des conditions plus &quot;poussées&quot; et plus intuitives. Par exemple, avec, vous pouvez savoir si une variable est divisible par 10 ou si une variable est définie.</p><h3 id="r-defined-1" data-claire-element-id="442409">defined</h3><p id="r-442407" data-claire-element-id="442407">Celui-ci vous permet de savoir si une variable est définie ou pas. Il renverra true si c'est le cas et false si ça ne l'est pas.</p><pre id="r-442408" data-claire-element-id="442408"><code data-claire-semantic="html">{% if session.pseudo is defined %}
+    Votre pseudo est {{ session.pseudo}} .
+{% endif %}</code></pre><h3 id="r-divisibleby" data-claire-element-id="442412">divisibleby</h3><p id="r-442410" data-claire-element-id="442410">Une test très intéressant est celui de savoir si votre variable est divisible par un certain nombre.</p><pre id="r-442411" data-claire-element-id="442411"><code data-claire-semantic="html">{% if equipe.volley is divisibleby(6) %}
+    L'équipe sera divisé en 2 équipes de 6.
+{% endif %}</code></pre><h3 id="r-empty" data-claire-element-id="442416">empty</h3><p id="r-442413" data-claire-element-id="442413">Verifie si une variable est vide ou pas.</p><pre id="r-442414" data-claire-element-id="442414"><code data-claire-semantic="html">{% if equipe.volley is empty %}
+    Le match est annulé.
+{% endif %}</code></pre><p id="r-442415" data-claire-element-id="442415">Il y a encore beaucoup d'autres test-utiles mais je pense que vous avez compris le principe. Je vous renvoie donc vers <a href="http://twig.sensiolabs.org/doc/tests/index.html">la liste</a> de ces tests.</p><h2 id="r-la-boucle-for-12" data-claire-element-id="442426">La boucle for</h2><p id="r-442418" data-claire-element-id="442418">Ici rien de bien compliqué. Je vais surtout vous donner des exemples car il n'y a pas grand-choses à dire sur cette boucle.</p><pre id="r-442419" data-claire-element-id="442419"><code data-claire-semantic="html">{% for i in 0..50 %}
+    Ceci est la ligne {{ i }}
+{% enfor %}</code></pre><p id="r-442420" data-claire-element-id="442420">En sachant que ce que je viens de vous montrer marche aussi avec des lettres :</p><pre id="r-442421" data-claire-element-id="442421"><code data-claire-semantic="html">{% for lettre in 'a'..'z' %}
+    La lettre {{ letter }} est lettre numéro {{ loop.index }} de l'alphabet.
+    
+{% endfor %}</code></pre><p id="r-442422" data-claire-element-id="442422">Si vous vous demandez d'où je sors le loop.index, il contient en fait le numéro de tour de boucle actuel. Vous pouvez voir d'autres variables de ce type <a href="http://twig.sensiolabs.org/doc/tags/for.html">ici</a> (en scrollant un peu selon la taille de votre écran ; il s'agit du tableau).<br/> Vous pouvez également parcourir vos tableaux avec :</p><pre id="r-442423" data-claire-element-id="442423"><code data-claire-semantic="html">{% for joueur in club %}
+    Le joueur {{ joueur.nom }} joue dans l'équipe {{ joueur.equipe }}
+{% endfor %}</code></pre><p id="r-442424" data-claire-element-id="442424">Depuis la version 1.2 de Twig, il est possible de lancer une boucle selon une condition dans le même &quot;bloc&quot;. Ce n'est pas très clair alors je vous propose un exemple.</p><pre id="r-442425" data-claire-element-id="442425"><code data-claire-semantic="html">{% for joueur in club if equipe is not empty %}
+    Le joueur {{ joueur.nom }} joue dans l'équipe {{ joueur.equipe }}
+{% endfor %}</code></pre><h2 id="r-definir-des-variables" data-claire-element-id="442431">Définir des variables</h2><p id="r-442427" data-claire-element-id="442427">J'ai décidé de mettre cette partie en dernier pour une raison bien particulière. La logique d'un moteur de template veut qu'on sépare les variables et les fonctions php de l'affichage du contenu. Déclarer des variables dans un template casse la logique du système. Je vous le montre quand même car c'est quand même vous qui allez entretenir le code que vous écrivez par la suite (en principe) et vous faîtes comme vous le souhaitez.</p><pre id="r-442428" data-claire-element-id="442428"><code data-claire-semantic="html">{% set var = &quot;val&quot; %}</code></pre><p id="r-442429" data-claire-element-id="442429">Vous pouvez aussi définir des variables comme en Javascript. C'est à dire en mettant une seule fois &quot;set&quot; et en mettant à la suite les différentes variables séparées par des virgules :</p><pre id="r-442430" data-claire-element-id="442430"><code data-claire-semantic="html">{% set mascotte, os = 'beastie', 'bsd' %}</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates">Utilisation de Twig, un moteur de templates !</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/qu-est-ce-qu-un-moteur-de-templates">
+Qu&#039;est ce qu&#039;un moteur de templates ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/mise-en-place-21">
+Mise en place
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/notre-premier-template">
+Notre premier template
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/syntaxe-de-base-3">
+Syntaxe de base
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/quelques-ajouts-pratiques">
+Quelques ajouts pratiques
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/fonctionnalites-cote-php">
+Fonctionnalités côté PHP
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/notre-premier-template">
+<span class="arrow"></span>
+<span class="next">Notre premier template</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/quelques-ajouts-pratiques">
+<span class="next">Quelques ajouts pratiques</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Quelquesajoutspratiques"></a><h2>Quelques ajouts pratiques</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/syntaxe-de-base-3">
+<span class="arrow"></span>
+<span class="next">Syntaxe de base</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/fonctionnalites-cote-php">
+<span class="next">Fonctionnalités côté PHP</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-442433" data-claire-element-id="442433">Voici quelques fonctions, pas indispensables, mais qui peuvent se révéler utiles.</p><h2 id="r-les-includes" data-claire-element-id="442444">Les includes</h2><p id="r-442434" data-claire-element-id="442434">Vous pouvez aussi inclure des templates comme avec la fonction include de PHP. Pas besoin de vous écrire un roman :</p><pre id="r-442435" data-claire-element-id="442435"><code data-claire-semantic="html">{% include 'header.twig' %}</code></pre><p id="r-442436" data-claire-element-id="442436">Une chose que j'ai vraiment adorée c'est de pouvoir inclure des pages en leur restreignant l'accès à certaines variables.</p><pre id="r-442437" data-claire-element-id="442437"><code data-claire-semantic="html">{% include 'fichier.twig' with {'var': 'val'} only %}</code></pre><p id="r-442438" data-claire-element-id="442438">Ici, la page n'aura accès qu'à la variable var. Le only lui empêche d'accéder aux autres. Vous pouvez bien évidemment enlever le only pour que la page accède aux autres variables.</p><p id="r-442439" data-claire-element-id="442439">Une chose que j'ai aussi beaucoup aimée c'est la possibilité d'inclure des pages selon une condition. Par exemple :</p><pre id="r-442440" data-claire-element-id="442440"><code data-claire-semantic="html">{% include online ? 'options.twig' : 'connexion.twig' %}</code></pre><p id="r-442441" data-claire-element-id="442441">Un dernier point sur les include est le fait que vous pouvez inclure un template, lui passer des variables ou lui restreindre l'accès à certaines et indiquer à Twig que si le template est inexistant, aucune erreur ne sera renvoyée.</p><pre id="r-442442" data-claire-element-id="442442"><code data-claire-semantic="html">{% include &quot;sidebar.html&quot; ignore missing %}
+{% include &quot;sidebar.html&quot; ignore missing with {'foo': 'bar} %}
+{% include &quot;sidebar.html&quot; ignore missing only %}</code></pre><p id="r-442443" data-claire-element-id="442443">Cet exemple est tiré de la documentation.</p><h2 id="r-les-imports-3" data-claire-element-id="442451">Les imports</h2><p id="r-442445" data-claire-element-id="442445">On passe maintenant à une fonctionnalité que j'apprécie énormément : les imports.</p><p id="r-442446" data-claire-element-id="442446">Twig vous propose de créer un système équivalent aux helpers. Je vous copie le code de la documentation que je trouve tout simplement génial !<br/> Supposons que cette page s'appelle forms.html :</p><pre id="r-442447" data-claire-element-id="442447"><code data-claire-semantic="html">{% macro input(name, value, type, size) %}
+    &lt;input type=&quot;{{ type|default('text') }}&quot; name=&quot;{{ name }}&quot; value=&quot;{{ value|e }}&quot; size=&quot;{{ size|default(20) }}&quot; /&gt;
+{% endmacro %}
+
+{% macro textarea(name, value, rows) %}
+    &lt;textarea name=&quot;{{ name }}&quot; rows=&quot;{{ rows|default(10) }}&quot; cols=&quot;{{ cols|default(40) }}&quot;&gt;{{ value|e }}&lt;/textarea&gt;
+{% endmacro %}</code></pre><p id="r-442448" data-claire-element-id="442448">Et maintenant dans votre template, mettez le code suivant :</p><pre id="r-442449" data-claire-element-id="442449"><code data-claire-semantic="html">{% import 'forms.html' as forms %}
+
+&lt;dl&gt;
+    &lt;dt&gt;Username&lt;/dt&gt;
+    &lt;dd&gt;{{ forms.input('username') }}&lt;/dd&gt;
+    &lt;dt&gt;Password&lt;/dt&gt;
+    &lt;dd&gt;{{ forms.input('password', none, 'password') }}&lt;/dd&gt;
+&lt;/dl&gt;
+&lt;p&gt;{{ forms.textarea('comment') }}&lt;/p&gt;</code></pre><p id="r-442450" data-claire-element-id="442450">Les formulaires sont un aspect récurrent et assez prise de tête quelques fois. Cette fonctionnalité permet un réel gain de temps !</p><h2 id="r-heritage-4" data-claire-element-id="442456">Héritage</h2><p id="r-442452" data-claire-element-id="442452">Une autre fonctionnalité qui m'a beaucoup plu est la possibilité d'héritage entre templates. Dans la plupart des cas, vous avez une charte définie pour votre site et à part le contenu, peu de choses changent dans la présentation de votre page. Avec Twig, vous pouvez définir un template avec votre header, votre footer (ce n'est qu'un exemple) et faire un héritage entre les deux templates (celui qui affiche le contenu et celui contenant le header et le footer) pour que vous n'ayez qu'à modifier un seul fichier si vous voulez changer la structure de votre site. Je vous prends encore un exemple de la documentation. En premier le template parent et en second le template qui hérite du premier (l'enfant).</p><pre id="r-442453" data-claire-element-id="442453"><code data-claire-semantic="html">&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.01//EN&quot;&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+  {% block head %}
+    &lt;link rel=&quot;stylesheet&quot; href=&quot;style.css&quot; /&gt;
+    &lt;title&gt;{% block title %}{% endblock %} - My Webpage&lt;/title&gt;
+  {% endblock %}
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;div id=&quot;content&quot;&gt;{% block content %}{% endblock %}&lt;/div&gt;
+  &lt;div id=&quot;footer&quot;&gt;
+    {% block footer %}
+      &amp;copy; Copyright 2009 by &lt;a href=&quot;http://domain.invalid/&quot;&gt;you&lt;/a&gt;.
+    {% endblock %}
+  &lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre><pre id="r-442454" data-claire-element-id="442454"><code data-claire-semantic="html">{% extends &quot;base.html&quot; %}
+
+{% block title %}Index{% endblock %}
+{% block head %}
+  {{ parent() }}
+  &lt;style type=&quot;text/css&quot;&gt;
+    .important { color: #336699; }
+  &lt;/style&gt;
+{% endblock %}
+{% block content %}
+  &lt;h1&gt;Index&lt;/h1&gt;
+  &lt;p class=&quot;important&quot;&gt;
+    Welcome on my awesome homepage.
+  &lt;/p&gt;
+{% endblock %}</code></pre><p id="r-442455" data-claire-element-id="442455">Dans cet exemple, le template parent s'appelle base.html. Un petit point dans le template enfant. Dans le block head, il y a un {{ parent() }}. Cette fonction signifie que le bloc n'est pas nettoyé et le contenu du bloc head sera celui présent dans le template parent et le template enfant. Pratique non ?</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates">Utilisation de Twig, un moteur de templates !</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/qu-est-ce-qu-un-moteur-de-templates">
+Qu&#039;est ce qu&#039;un moteur de templates ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/mise-en-place-21">
+Mise en place
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/notre-premier-template">
+Notre premier template
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/syntaxe-de-base-3">
+Syntaxe de base
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/quelques-ajouts-pratiques">
+Quelques ajouts pratiques
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/fonctionnalites-cote-php">
+Fonctionnalités côté PHP
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/syntaxe-de-base-3">
+<span class="arrow"></span>
+<span class="next">Syntaxe de base</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/fonctionnalites-cote-php">
+<span class="next">Fonctionnalités côté PHP</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="FonctionnalitsctPHP"></a><h2>Fonctionnalités côté PHP</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/quelques-ajouts-pratiques">
+<span class="arrow"></span>
+<span class="next">Quelques ajouts pratiques</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-442458" data-claire-element-id="442458">Pour l'instant je vous ai montré des fonctionnalités en majorité valables pour les templates. Je vous propose ici de voir certains points intéressants côté PHP.</p><h2 id="r-modifier-les-tags" data-claire-element-id="442464">Modifier les tags</h2><p id="r-442459" data-claire-element-id="442459">Par défaut, Twig utilise la syntaxe des templates jinja. Pour afficher une variable il faut faire {{ variable }} et pour des instructions comme la boucle for, ou les conditions il faut faire {% if confition %}. Twig vous permet de modifier ces tags. Vous pouvez par exemple mettre les tags erb (moteur de template Ruby présent dans <a href="http://rubyonrails.org/">Ruby on Rails</a> et <a href="http://www.sinatrarb.com/">Sinatra</a> pour ne citer qu'eux) :</p><pre id="r-442460" data-claire-element-id="442460"><code data-claire-semantic="html+php">&lt;?php
+$syntaxe = new Twig_Lexer($twig, array(
+    'tag_comment'  =&gt; array('#', '#'),
+    'tag_block'    =&gt; array('&lt;%', '%&gt;'),
+    'tag_variable' =&gt; array('&lt;%=', '%&gt;')
+));</code></pre><p id="r-442461" data-claire-element-id="442461">Ensuite, il faut indiquer au moteur que vous voulez modifier la syntaxe dans vos templates.</p><pre id="r-442462" data-claire-element-id="442462"><code data-claire-semantic="html+php">&lt;?php $twig-&gt;setLexer($syntaxe); ?&gt;</code></pre><p id="r-442463" data-claire-element-id="442463">La variable $twig représente l'instance de la classe Twig_Environnement(). Si votre instance de la classe s'appelle différemment, changez en conséquence.</p><h2 id="r-etendre-twig" data-claire-element-id="442493">Étendre Twig</h2><p id="r-442465" data-claire-element-id="442465">Les personnes utilisant des moteurs de templates sont nombreuses. Mais tout le monde ne l'utilise pas pour des projets de même taille. Twig peut donc être &quot;étendu&quot;, c'est-à-dire qu'on peut lui rajouter des fonctionnalités très simplement grâce à des méthodes qui font tout le travail à notre place. Ça nous évite de toucher au code source pour ajouter un simple filtre par exemple.</p><p id="r-442466" data-claire-element-id="442466">Je vous propose ici de voir comment ajouter vos propres filtres et objets.</p><h3 id="r-ajouter-un-objet-global" data-claire-element-id="442474">Ajouter un objet &quot;global&quot;</h3><p id="r-442467" data-claire-element-id="442467">Un objet global, avec Twig, est un objet accessible depuis n'importe quel template. La documentation montre, par exemple, comment rajouter un objet &quot;text&quot; ayant une méthode lipsum. Je vous propose ici de voir comment intégrer cet objet.</p><p id="r-442468" data-claire-element-id="442468">Tout d'abord, il faut créer un fichier contenant une nouvelle classe :</p><pre id="r-442469" data-claire-element-id="442469"><code data-claire-semantic="html+php">&lt;?php
+class Text {
+
+    public $lipsum_text = 'Lorem ipsum dolor sit amet';
+
+
+    /**
+     * @param none
+     * @return lipsum_text
+     */
+
+    public function lipsum() {
+       
+        return $this-&gt;lipsum_text;
+   
+    }
+}</code></pre><p id="r-442470" data-claire-element-id="442470">Ensuite, indiquez à Twig que vous voulez ajouter votre objet dans les templates (il faut que le fichier contenant la classe soit inclus dans le fichier contenant cette instruction).</p><pre id="r-442471" data-claire-element-id="442471"><code data-claire-semantic="html+php">&lt;?php $twig-&gt;addGlobal('text', new Text());</code></pre><p id="r-442472" data-claire-element-id="442472">Le premier argument représente le nom de votre objet dans les templates et le second est une instance de la classe que vous avez précédemment créée. Et maintenant dans vos templates vous pouvez faire :</p><pre id="r-442473" data-claire-element-id="442473"><code data-claire-semantic="html">Voici un texte : &lt;br /&gt;
+{{ text.lipsum() }}</code></pre><h3 id="r-ajouter-des-filtres" data-claire-element-id="442492">Ajouter des filtres</h3><p id="r-442475" data-claire-element-id="442475">Maintenant que vous avez compris le principe pour les objets, les filtres vont aller tout seuls. C'est la même marche à suivre que précédemment. Ici vous créez une fonction (pas forcément une méthode de classe) et vous demandez à Twig de l'ajouter au parseur. Ici je vais vous montrer comment ajouter le filtre lower (même s'il existe déjà, c'est juste pour l'exemple).</p><pre id="r-442476" data-claire-element-id="442476"><code data-claire-semantic="html+php">&lt;?php $twig-&gt;addFilter('lower', new Twig_Filter_Function('strtolower')); ?&gt;</code></pre><p id="r-442477" data-claire-element-id="442477">Ici, je n'ai pas eu à créer la fonction car elle est native mais vous pouvez mettre les vôtres sans aucun problème. Vous pouvez aussi appeler la méthode d'une classe mais <strong>attention</strong>, il faut que la méthode soit statique. Par exemple :</p><pre id="r-442478" data-claire-element-id="442478"><code data-claire-semantic="html+php">&lt;?php $twig-&gt;addFilter('monfiltre', new Twig_Filter_Function('MaClasse::MaMethode')); ?&gt;</code></pre><p id="r-442479" data-claire-element-id="442479">Ce cours s'achève là. Je vous invite à poster un commentaire si vous avez des suggestions, des points que vous ne trouvez pas clairs, etc. Pour ce qui est de l'aide, je vous renvoie vers le <a href="http://www.siteduzero.com/forum-81-123-php.html">forum php</a>.</p><p id="r-442480" data-claire-element-id="442480">Avant de vous quitter, je peux vous conseiller quelques liens :</p><ul id="r-442491" data-claire-element-id="442491"><li id="r-442482" data-claire-element-id="442482"><p id="r-442481" data-claire-element-id="442481"><a href="http://www.siteduzero.com/tutoriel-3-517569-symfony2-un-tutoriel-pour-debuter-avec-le-framework-symfony2.html">Symfony2 - Un tutoriel pour débuter avec le framework Symfony2</a> : un cours sur le célèbre framework Symfony dans sa version 2. Le framework utilise Twig.</p></li><li id="r-442484" data-claire-element-id="442484"><p id="r-442483" data-claire-element-id="442483"><a href="http://twig.sensiolabs.org/documentation">La documentation Twig</a> : à mettre en favoris si vous comptez utiliser le moteur.</p></li><li id="r-442486" data-claire-element-id="442486"><p id="r-442485" data-claire-element-id="442485"><a href="http://blog.twig.sensiolabs.org/">Le blog</a> : Vous pouvez voir ici les actualités sur Twig (dans 90% des cas, il s'agit de l'annonce d'une nouvelle version).</p></li><li id="r-442488" data-claire-element-id="442488"><p id="r-442487" data-claire-element-id="442487"><a href="http://github.com/fabpot/Twig/issues">La page de rapports de bug</a></p></li><li id="r-442490" data-claire-element-id="442490"><p id="r-442489" data-claire-element-id="442489"><a href="https://github.com/fabpot/Twig">Dépôt Github</a> : ce dépôt contient les sources du projet. Ça peut être intéressant de voir comment fonctionne le moteur.</p></li></ul>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates">Utilisation de Twig, un moteur de templates !</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/qu-est-ce-qu-un-moteur-de-templates">
+Qu&#039;est ce qu&#039;un moteur de templates ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/mise-en-place-21">
+Mise en place
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/notre-premier-template">
+Notre premier template
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/syntaxe-de-base-3">
+Syntaxe de base
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/quelques-ajouts-pratiques">
+Quelques ajouts pratiques
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/fonctionnalites-cote-php">
+Fonctionnalités côté PHP
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/utilisation-de-twig-un-moteur-de-templates/quelques-ajouts-pratiques">
+<span class="arrow"></span>
+<span class="next">Quelques ajouts pratiques</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/utilisation-de-twig-un-moteur-de-templates.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 02:48:36 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/utilisation-de-twig-un-moteur-de-templates.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:37:05 GMT -->
+</html>

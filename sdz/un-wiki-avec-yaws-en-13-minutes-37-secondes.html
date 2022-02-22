@@ -1,0 +1,838 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/un-wiki-avec-yaws-en-13-minutes-37-secondes.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 01:19:15 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/un-wiki-avec-yaws-en-13-minutes-37-secondes.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:21:08 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Un wiki avec Yaws en 13 minutes 37 secondes</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Un wiki avec Yaws en 13 minutes 37 secondes</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#UnwikiavecYawsen13minutes37secondes">Un wiki avec Yaws en 13 minutes 37 secondes</a><br/><a href="#Initiation">Initiation</a><br/><a href="#Prparerleterrain">Préparer le terrain</a><br/><a href="#GETetPOST">GET et POST</a><br/><a href="#Crerdespages">Créer des pages</a><br/><a href="#Afficherlersultat">Afficher le résultat</a><br/><a href="#ditionetamliorations">Édition et améliorations</a><br/></div>
+<a name="UnwikiavecYawsen13minutes37secondes"></a><h2>Un wiki avec Yaws en 13 minutes 37 secondes</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/initiation">
+<span class="next">Initiation</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<aside id="r-345792" data-claire-element-id="345792" data-claire-semantic="information"><p id="r-345791" data-claire-element-id="345791">Ce tutoriel est destiné à des personnes connaissant déjà le langage de programmation Erlang ou aux personnes curieuses. Qu'ils soient toutefois prévenus que je vais tenir pour connues les principes de base du langage.</p></aside><p id="r-345793" data-claire-element-id="345793">À l'instar de nombreux tutos tels « un forum en 20 minutes avec Django » ou encore « un blog en 37 minutes 25 secondes avec RoR » j'ai choisi pour ce tuto un titre que j'espère accrocheur et humoristique : quand bien même ce serait de la publicité mensongère, passons, l'idée est là. De plus, ce tutoriel se démarque de ceux cités précédemment car il n'explique non pas comment utiliser tel ou tel framework web, mais plutôt comment configurer et utiliser un serveur web, j'ai nommé yaws.</p><p id="r-345794" data-claire-element-id="345794">À savoir qu'il existe un framework de développement web fonctionnant avec Yaws nommé ErlyWeb. J'ai toutefois décidé de ne pas détailler son utilisation ici pour plusieurs raisons. Tout d'abord, il est encore en développement, donc incomplet et surtout <strong>très peu</strong> documenté. Ensuite, le support de Mnesia (la base de données Erlang, pour ceux qui ne la connaîtraient pas encore) y est plus qu'approximatif. Je vais donc vous présenter Yaws qui a les avantages de nous permettre l'utilisation de Mnesia et d'être bien documenté. Cela va de plus nous éviter d'avoir à mettre en place une architecture de type MVC.</p><p id="r-345795" data-claire-element-id="345795">Dans ce tutoriel, je vais tout d'abord vous expliquer brièvement comment configurer Yaws pour le wiki auquel nous souhaitons aboutir. Je vais aussi vous présenter les <em>bases</em> du fonctionnement de Yaws avant de nous lancer dans la création du wiki.</p>
+</div><a name="Initiation"></a><h2>Initiation</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/preparer-le-terrain-1">
+<span class="next">Préparer le terrain</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-345796" data-claire-element-id="345796">Je m'excuse par avance car je risque d'en choquer certains, mais je ne vais pas vous expliquer comment installer Yaws. En effet, je considère que lorsqu'on s'intéresse à Yaws, c'est qu'on programme en Erlang, et qu'une personne programmant en Erlang est un minimum curieuse et débrouillarde, parce que bon, faut déjà être motivé pour faire de l'Erlang. Mais bref... :-°</p><h2 id="r-configurer-yaws" data-claire-element-id="345805">Configurer Yaws</h2><p id="r-345797" data-claire-element-id="345797">Bon, quand bien même je ne vous parle pas de l'installation de Yaws en elle-même, je vais quand même vous toucher deux mots quant à sa configuration. Tout ce dont nous allons nous occuper ici est de la modification du fichier yaws.conf. Encore une fois, je ne peux pas vous dire où le trouver, car je ne connais ni OS X, ni Windows et même sous Linux, cet emplacement varie selon votre installation, mais je suppose que vous saurez le trouver vous-mêmes. Chez les linuxiens, il sera très probablement dans /etc ou dans /usr/local/etc, pour les autres... Eh bien cherchez, c'est votre OS après tout. :-°</p><h3 id="r-le-fichier-yaws-conf" data-claire-element-id="345804">Le fichier yaws.conf</h3><p id="r-345798" data-claire-element-id="345798">Ceci est le fichier de configuration de Yaws, c'est grâce à ce fichier que nous allons spécifier les serveurs que nous souhaitons créer, à quelle IP écouter pour être connectés à ces serveurs, et surtout : où se trouvent les fichiers que nous souhaitons rendre disponibles.</p><p id="r-345799" data-claire-element-id="345799">Vous vous apercevrez que ce fichier est abondamment commenté. Parmi les variables qui vont nous servir, on peut noter dès le début du fichier : ebin_dir. Il faudra ici ajouter le dossier dans lequel on placera les fichiers beam allant avec votre projet. C'est tout pour les variables, intéressons-nous aux serveurs ; la <em>création</em> d'un serveur suit ce motif :</p><pre id="r-345800" data-claire-element-id="345800"><code>&lt;server localhost&gt;
+        port = 8000
+        listen = 127.0.0.1
+        docroot = /usr/local/var/yaws/www
+        appmods = &lt;cgi-bin, yaws_appmod_cgi&gt;
+&lt;/server&gt;</code></pre><p id="r-345801" data-claire-element-id="345801">Ça, c'est le serveur par défaut. Vous trouverez en dessous un autre serveur, avec plus d'options, il ne nous servira pas : vous pouvez donc entièrement le commenter. Il faudra ensuite modifier le serveur par défaut pour qu'il redirige les visiteurs vers notre wiki. Pour cela, il faut modifier la variable docroot ; vous pouvez aussi si vous le souhaitez modifier le port d'écoute, bien que ce ne soit pas obligatoire. Voici par exemple la configuration de mon serveur :</p><pre id="r-345802" data-claire-element-id="345802"><code>&lt;server localhost&gt;
+        port = 8000
+        listen = 127.0.0.1
+        docroot = /home/dark-side/wiki/www
+        appmods = &lt;cgi-bin, yaws_appmod_cgi&gt;
+&lt;/server&gt;</code></pre><p id="r-345803" data-claire-element-id="345803">Voilà, vous êtes désormais parés pour la suite ! :)</p><h2 id="r-lancer-votre-serveur" data-claire-element-id="345830">Lancer votre serveur</h2><h3 id="r-informations-complementaires" data-claire-element-id="345821">Informations complémentaires</h3><p id="r-345806" data-claire-element-id="345806">Nos pages seront écrites dans des fichiers .yaws, fichiers dans lesquels nous pourrons écrire de l'HTML. Pour introduire du code en Erlang, on se sert des balises <code>&lt;erl&gt; ... &lt;/erl&gt;</code>. Entre ces balises devra <strong>toujours</strong> figurer une fonction <code>out/1</code> dont l'argument sera un record que nous étudierons plus tard. Ces fonctions pourront renvoyer deux types de variables, un tuple du type : <code>{html, VosDonnees}</code>, qui est la manière la plus simple d'afficher des données, ou bien renvoyer un tuple du type <code>{ehtml, Ehtml}</code>, où <code>Ehtml</code> peut être au choix du type :</p><ul id="r-345815" data-claire-element-id="345815"><li id="r-345808" data-claire-element-id="345808"><p id="r-345807" data-claire-element-id="345807"><code>[Ehtml]</code></p></li><li id="r-345810" data-claire-element-id="345810"><p id="r-345809" data-claire-element-id="345809"><code>{Tag}</code></p></li><li id="r-345812" data-claire-element-id="345812"><p id="r-345811" data-claire-element-id="345811"><code>{Tag, Attrs}</code></p></li><li id="r-345814" data-claire-element-id="345814"><p id="r-345813" data-claire-element-id="345813"><code>{Tag, Attrs, Corps}</code></p></li></ul><p id="r-345816" data-claire-element-id="345816">Où <code>Tag</code> est un atome du nom d'une balise HTML, <code>Attrs</code> sera une liste de tuple du type : <code>{NomAttrs, Valeur}</code> ; de même, <code>NomAttrs</code> sera un atome, <code>Valeur</code> pourra par contre être soit un atome, soit un string. Et pour finir, <code>Corps</code> sera, lui, une variable similaire à <code>Ehtml</code>, suivant donc à nouveau la syntaxe décrite précédemment. Pour que ce soit bien clair, voilà un exemple :</p><pre id="r-345817" data-claire-element-id="345817"><code data-claire-semantic="erlang">{ehtml,
+   {table, [{bgcolor, red}],
+      [
+         {tr, [],
+            [
+               {td, [], &quot;(0, 0)&quot;},
+               {td, [], &quot;(1, 0)&quot;},
+               {td, [], &quot;(2, 0)&quot;}
+            ]},
+         {tr, [],
+            [
+               {td, [], &quot;(0, 1)&quot;},
+               {td, [], &quot;(1, 1)&quot;},
+               {td, [], &quot;(2, 1)&quot;}
+            ]},
+         {tr, [],
+            [
+               {td, [{colspan, &quot;3&quot;}], &quot;(*, 2)&quot;}
+            ]}
+      ]}
+  }</code></pre><p id="r-345818" data-claire-element-id="345818">Qui produira le code HTML suivant :</p><pre id="r-345819" data-claire-element-id="345819"><code data-claire-semantic="html">&lt;table bgcolor=&quot;red&quot;&gt;
+  &lt;tr&gt;
+    &lt;td&gt;(0, 0)&lt;/td&gt;
+    &lt;td&gt;(1, 0)&lt;/td&gt;
+    &lt;td&gt;(2, 0)&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+    &lt;td&gt;(0, 1)&lt;/td&gt;
+    &lt;td&gt;(1, 1)&lt;/td&gt;
+    &lt;td&gt;(2, 1)&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+    &lt;td colspan=&quot;3&quot;&gt;(*, 2)&lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/table&gt;</code></pre><p id="r-345820" data-claire-element-id="345820">Bon, c'est sûr que présenté comme ça, ce n'est pas forcément très esthétique, mais c'est très utile, et <strong>très</strong> pratique. Cela permet en effet d'afficher des structures plus <em>complexes</em> qu'avec un simple tuple {&lt;/minicode&gt;html, &lt;/minicode&gt;}. La dernière chose à savoir est que vous pouvez créer d'autres fonctions que la fonction <code>out/1</code> entre les balises <code>&lt;erl&gt;&lt;/erl&gt;</code>. Attention par contre car ces fonctions sont locales, c'est-à-dire que vous ne pourrez y accéder que dans le <em>bloc erl</em> dans lequel elles sont définies. <br/> Voilà : je crois que tout est dit. :)</p><h3 id="r-votre-premiere-page-1" data-claire-element-id="345825">Votre première page</h3><p id="r-345822" data-claire-element-id="345822">On va faire simple, affichons un <em>Hello, World!</em>, voyez plutôt :</p><pre id="r-345823" data-claire-element-id="345823"><code data-claire-semantic="html">&lt;html&gt;
+  &lt;head&gt;
+    &lt;title&gt;Wiki&lt;/title&gt;
+    &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=utf-8&quot; /&gt;
+  &lt;/head&gt;
+
+  &lt;body&gt;
+    &lt;p&gt;Un peu d'HTML...&lt;br&gt;
+    &lt;erl&gt;
+      out(_) -&gt;
+         Hello = io_lib:format(&quot;Hello, ~p!&quot;, [&quot;World&quot;]),
+         {html, Hello}.
+    &lt;/erl&gt;
+    &lt;br&gt;Et encore du HTML...&lt;/p&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</code></pre><p id="r-345824" data-claire-element-id="345824">Bon, d'accord : si j'avais voulu faire simple, j'aurais fait : <br/><code data-claire-semantic="erlang">out(_) -&gt; {html, &quot;Hello, World!&quot;} </code>.<br/> Mais c'était pour vous montrer qu'on peut <strong>vraiment</strong> mettre n'importe quel type de code entre ces balises.</p><h3 id="r-lancer-yaws" data-claire-element-id="345829">Lancer Yaws</h3><p id="r-345826" data-claire-element-id="345826">Placez-vous dans le dossier où se trouve l'exécutable, ouvrez la console et faites : <code>yaws -i</code>. Cela va lancer Yaws dans le mode interactif, c'est-à-dire avec l'interprète Erlang habituel. Ce mode est très utile lors du développement. Une fois que votre projet sera stable, vous voudrez probablement lancer Yaws comme un daemon : pour cela, il suffit de faire : <code>yaws -D -heart</code>. Le <code>-D</code> va vous permettre de lancer Yaws en tant que daemon et l'option <code>-heart</code> va lancer le programme du même nom, qui va se charger de relancer Yaws si celui-ci crashe, ou ne répond plus. <br/> Une fois ceci fait, vous pouvez ouvrir votre browser et vous rendre à l'adresse : http://localhost:8000.</p><aside id="r-345828" data-claire-element-id="345828" data-claire-semantic="information"><p id="r-345827" data-claire-element-id="345827">Selon votre installation, il se peut que Yaws plante dès le lancement. Pour corriger ça, il suffit de le lancer en tant qu'administrateur ! :)</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes">Un wiki avec Yaws en 13 minutes 37 secondes</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/initiation">
+Initiation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/preparer-le-terrain-1">
+Préparer le terrain
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/get-et-post">
+GET et POST
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/creer-des-pages">
+Créer des pages
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/afficher-le-resultat">
+Afficher le résultat
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/edition-et-ameliorations">
+Édition et améliorations
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/preparer-le-terrain-1">
+<span class="next">Préparer le terrain</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Prparerleterrain"></a><h2>Préparer le terrain</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/initiation">
+<span class="arrow"></span>
+<span class="next">Initiation</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/get-et-post">
+<span class="next">GET et POST</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-mise-en-place-de-la-base-de-donnees" data-claire-element-id="345836">Mise en place de la base de données</h2><p id="r-345832" data-claire-element-id="345832">Nous entrons maintenant dans le vif du sujet, à savoir les différents préparatifs avant de véritablement coder votre wiki. Il faut tout d'abord créer la base de données et les tables qui vont avec. Pour cela, nous utiliserons Mnesia, <strong>la</strong> base de données d'Erlang. Que je suppose connue de vous autres Erlangeux qui me lisez. Nous utiliserons un fichier .erl tiers, dans lesquels nous placerons une fonction qui se chargera des différentes tâches de création et d'initialisation. Je ne vais pas m'étendre sur ce fichier, qui ne nous intéresse que très peu, et qui est très facilement compréhensible, n'hésitez toutefois pas à le modifier pour qu'il corresponde à vos besoins.</p><pre id="r-345833" data-claire-element-id="345833"><code data-claire-semantic="erlang">-module(init_mnesia).
+-export([do_this_once/0, pre_fill/0]).
+
+-record(article, {id, titre, contenu}).
+
+do_this_once() -&gt;
+    mnesia:create_schema([node()]), %% Crée une base de données sur le noeud courant.
+    mnesia:start(),                 %% Lance la base de données tout juste créée.
+
+    %% La commande suivante ajoute une table nommée « article » et contenant les champs
+    %% du record article. On précise que les données seront ordonnées et qu'il y aura
+    %% une copie faite sur le disque dur.
+    mnesia:create_table(article, [{attributes, record_info(fields, article)},
+			    {type, ordered_set},
+			    {disc_copies, [node()]}]),
+
+    mnesia:stop(). %% On quitte la base de données pour que les changements soient enregistrés.
+
+pre_fill() -&gt;
+    Row = #article{id=&quot;0&quot;, titre=&quot;test&quot;, contenu=&quot;Ceci est un test.&quot;},
+    F = fun() -&gt; mnesia:write(Row) end,  %% crée la fonction qui va enregistrer Row dans la bdd
+    mnesia:transaction(F).               %% on effectue la transaction</code></pre><p id="r-345834" data-claire-element-id="345834">Ajoutez maintenant cette ligne à votre yaws.conf : <br/><code>ebin_dir={chemin_de_votre_projet}/beams</code>. <br/> Ouvrez ensuite un interprète Erlang basique, compilez votre fichier puis quittez. Placez ensuite le .beam que vous aurez obtenu dans un sous-dossier de votre projet que vous appellerez beams. Lancez Yaws et faites : <br/><code>init_mnesia:do_this_once().</code>, cela va vous créer votre base de données ainsi que la table <code>article</code>. Vous pouvez aussi vous servir de la fonction <code>pre_fill/0</code> afin de créer un premier article, histoire de voir à quoi ressemble votre wiki dès que vous le lancez, sans avoir à créer un article en l'utilisant.</p><p id="r-345835" data-claire-element-id="345835">Attention toutefois à bien relancer Mnesia avant d'utiliser cette fonction. À noter que désormais, chaque fois que vous lancerez Yaws, il faudra faire un <code>mnesia:start()</code>.</p><h2 id="r-le-probleme-11" data-claire-element-id="345838">Le problème</h2><p id="r-345837" data-claire-element-id="345837">Là où les choses se corsent, c'est que Mnesia contrairement à SQL n'a pas de champ du type « autoincrement ». Ce qu'il va falloir faire, c'est qu'à chaque fois que nous allons créer un nouvel article, nous allons devoir regarder dans la table l'id du dernier article rédigé. Heureusement pour nous, il y a déjà une fonction faite pour ça, c'est : <code>mnesia:last/1</code>. Celle-ci vous renvoie la <em>clé</em> du dernier élément de la table dont le nom a été passé en argument. La <em>clé</em> est la valeur dont se sert Mnesia pour ordonner les éléments de nos tables lorsque celles-ci sont de type <code>ordered_set</code>. Cette clé est par défaut la valeur du premier champ de l'élément. Dans notre exemple, ce sera la valeur du champ id, exactement ce qu'il nous faut ! :)</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes">Un wiki avec Yaws en 13 minutes 37 secondes</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/initiation">
+Initiation
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/preparer-le-terrain-1">
+Préparer le terrain
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/get-et-post">
+GET et POST
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/creer-des-pages">
+Créer des pages
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/afficher-le-resultat">
+Afficher le résultat
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/edition-et-ameliorations">
+Édition et améliorations
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/initiation">
+<span class="arrow"></span>
+<span class="next">Initiation</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/get-et-post">
+<span class="next">GET et POST</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="GETetPOST"></a><h2>GET et POST</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/preparer-le-terrain-1">
+<span class="arrow"></span>
+<span class="next">Préparer le terrain</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/creer-des-pages">
+<span class="next">Créer des pages</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-345840" data-claire-element-id="345840">Maintenant que vous avez un serveur prêt à l'emploi, il serait intéressant de voir comment ça fonctionne précisément. Il est notamment temps de s'intéresser au traitement des requêtes de type <code>GET</code> et <code>POST</code>. Pour ces dernières, nous allons devoir nous servir du record dont je vous ai parlé précédemment, si, si, souvenez-vous : celui que vos fonctions <code>out/1</code> reçoivent en argument. En fait, ce record est nommé <code>arg</code>. Il contient les champs : <code>headers</code>, <code>req</code> et <code>querydata</code>. Si durant votre utilisation de Yaws vous utiliserez manuellement le premier (puisque c'est lui-même un record), il existe des fonctions prédéfinies destinées à l'utilisation des deux autres : c'est ce que nous allons voir maintenant.</p><h2 id="r-les-requetes-de-type-get" data-claire-element-id="345842">Les requêtes de type GET</h2><p id="r-345841" data-claire-element-id="345841">Pour parser le résultat de ces requêtes, on va se servir de la fonction <code>yaws_api:parse_query/1</code>. Elle attend un record de type <code>arg</code> en argument et renvoie une liste de tuples. Ces tuples contiennent deux chaînes de caractères : la première contient le nom de la requête et la seconde sa valeur ; par exemple sur la page : <a href="http://www.monsite.eu/foo.yaws?bar=baz">http://www.monsite.eu/foo.yaws?bar=baz</a>, le résultat de parse_query sera : <code>[{&quot;bar&quot;, &quot;baz&quot;}]</code>. <br/> Facile, n'est-ce pas ? :)</p><h2 id="r-les-requetes-de-type-post" data-claire-element-id="345844">Les requêtes de type POST</h2><p id="r-345843" data-claire-element-id="345843">Le fonctionnement est ici identique, sauf qu'il faudra utiliser la fonction : <code>yaws_api:parse_post/1</code> au lieu de la fonction parse_query. Bref, rien de bouleversant. :) <br/> Nous pouvons désormais nous mettre au travail et commencer la création à proprement parler de notre wiki !</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes">Un wiki avec Yaws en 13 minutes 37 secondes</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/initiation">
+Initiation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/preparer-le-terrain-1">
+Préparer le terrain
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/get-et-post">
+GET et POST
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/creer-des-pages">
+Créer des pages
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/afficher-le-resultat">
+Afficher le résultat
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/edition-et-ameliorations">
+Édition et améliorations
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/preparer-le-terrain-1">
+<span class="arrow"></span>
+<span class="next">Préparer le terrain</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/creer-des-pages">
+<span class="next">Créer des pages</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Crerdespages"></a><h2>Créer des pages</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/get-et-post">
+<span class="arrow"></span>
+<span class="next">GET et POST</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/afficher-le-resultat">
+<span class="next">Afficher le résultat</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-345846" data-claire-element-id="345846">Eh oui, il est grand temps de mettre les mains dans le cambouis ! :pirate: <br/> Avant de nous occuper de l'affichage des pages, je pense qu'il convient de se concentrer sur leur création. Pour cela, on va créer une page edit.yaws qui va contenir le formulaire permettant de créer la page ou d'éditer des pages déjà créées. Commençons par mettre en place l'architecture HTML basique :</p><pre id="r-345847" data-claire-element-id="345847"><code data-claire-semantic="html">&lt;html&gt;
+  &lt;head&gt;
+    &lt;title&gt;Wiki&lt;/title&gt;
+    &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=utf-8&quot; /&gt;
+  &lt;/head&gt;
+
+  &lt;body&gt;
+    &lt;p&gt;Vous êtes actuellement en train de rédiger un article.&lt;br&gt;
+    &lt;erl&gt;
+      out(_) -&gt;
+         {ehtml,
+             {form, [{action, save.yaws}, {method, post}],
+                 [
+                     {input, [{type, hidden}, {name, id}, {value, &quot;new&quot;}], &quot;&quot;},
+                     {input, [{type, text}, {name, titre}, {value, &quot;Titre&quot;}], &quot;&lt;br&gt;&quot;},
+                     {textarea, [{name, contenu}, {rows, 10}, {cols, 80}], &quot;Votre article&quot;},
+                     {input, [{type, submit}, {value, &quot;Ok&quot;}], &quot;&quot;}
+                 ]
+             }
+         }
+    &lt;/erl&gt;
+    &lt;br&gt;Et encore du HTML...&lt;/p&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</code></pre><div id="r-345849" data-claire-element-id="345849" data-claire-semantic="question"><p id="r-345848" data-claire-element-id="345848">Eh ! Pourquoi est-ce que tu utilises un tuple <code>ehtml</code>, au lieu de placer du code HTML normal ?</p></div><p id="r-345850" data-claire-element-id="345850">Bonne question ! :D Eh bien en fait l'utilisation d'un tuple <code>ehtml</code> va pouvoir me permettre d'adapter très facilement la page pour qu'elle soit préremplie si nous éditons une page déjà créée. Bref, en attendant, voyons plutôt comment réceptionner le résultat de ce formulaire et comment l'enregistrer. Pour cela, créons une page save.yaws.</p><h2 id="r-enregistrer-la-page" data-claire-element-id="345865">Enregistrer la page</h2><aside id="r-345852" data-claire-element-id="345852" data-claire-semantic="information"><p id="r-345851" data-claire-element-id="345851">À partir de maintenant, je vais me passer de toute la structure HTML autour du code Erlang, car c'est légèrement répétitif et ça ralentit la lecture.</p></aside><p id="r-345853" data-claire-element-id="345853">Sur ce : place au code ! :)</p><pre id="r-345854" data-claire-element-id="345854"><code data-claire-semantic="erlang">out(Arg) -&gt;
+    case yaws_api:parse_post(Arg) of
+        [{&quot;id&quot;, I}, {&quot;titre&quot;, T}, {&quot;contenu&quot;, C}] -&gt;
+            case I of
+                &quot;new&quot; -&gt; Id = bdd:getNextId();
+                _ -&gt; Id = I
+            end,
+            case bdd:save(Id, T, C) of
+                ok -&gt; {html, &quot;&lt;p&gt;Votre article a bien été sauvegardé.&lt;/p&gt;&quot;};
+                _ -&gt; {html, &quot;&lt;p&gt;Un erreur est apparu, impossible d'enregistrer.&lt;/p&gt;&quot;}
+            end;
+        _ -&gt; {html, &quot;&lt;p&gt;Erreur, requête inconnue.&lt;/p&gt;&quot;}
+    end.</code></pre><p id="r-345855" data-claire-element-id="345855">Pour commenter rapidement ce que nous faisons ici : le premier filtrage de motif nous sert juste à vérifier que l'utilisateur est arrivé ici grâce au bon formulaire. Ensuite, on regarde si c'est un nouvel article ou juste un article qui a été modifié et on en déduit l'id en conséquence. Vient ensuite le moment où on essaye d'enregistrer dans la base de données : là, si tout se passe bien, on dit au visiteur que son article a bien été sauvegardé, sinon on l'informe qu'il y a eu un problème.</p><p id="r-345856" data-claire-element-id="345856">Bon sinon, je crois que quelques explications supplémentaires s'imposent. Notamment au niveau des expressions suivantes : <code>bdd:getNextId/0</code> et <code>bdd:save/3</code>. Voyez-vous, même s'il est possible de coder directement dans nos fichiers .yaws, je ne suis pas vraiment favorable à cette possibilité. Et ce, pour deux raisons :</p><ol id="r-345861" data-claire-element-id="345861"><li id="r-345858" data-claire-element-id="345858"><p id="r-345857" data-claire-element-id="345857">ça nuit à la lisibilité ;</p></li><li id="r-345860" data-claire-element-id="345860"><p id="r-345859" data-claire-element-id="345859">ce n'est pas vraiment le top côté réutilisation du code.</p></li></ol><p id="r-345862" data-claire-element-id="345862">C'est pourquoi je place le <em>gros</em> de mes codes dans des modules séparés que je peux ainsi appeler depuis n'importe quelle page. On voit d'ailleurs que j'ai déjà créé un nouveau module : bdd. Encore une fois pour ce qui est de la lisibilité : je préfère séparer les morceaux de code qui n'ont rien à voir ensemble, et je vous encourage à faire de même, quitte à avoir parfois des modules ne contenant qu'une unique fonction. Bref, voyons ce module :</p><pre id="r-345863" data-claire-element-id="345863"><code data-claire-semantic="erlang">-module(bdd).
+-compile(export_all).
+
+-record(article, {id, titre, contenu}).
+
+getNextId() -&gt;
+    Fun = fun() -&gt; mnesia:last(article) end,
+    case mnesia:transaction(Fun) of
+        {aborted, _Raison} -&gt; error;
+        {atomic, Id} -&gt; integer_to_list(list_to_integer(Id + 1))
+    end.
+
+save(Id, Titre, Contenu) -&gt;
+    Row = #article{id=Id, titre=Titre, contenu=Contenu},
+    Fun = fun() -&gt; mnesia:write(Row) end,
+    case mnesia:transaction(Fun) of
+        {aborted, _Raison} -&gt; error;
+        _ -&gt; ok
+    end.</code></pre><p id="r-345864" data-claire-element-id="345864">Si vous connaissez déjà le fonctionnement de Mnesia, je pense que vous n'avez eu aucun problème avec ce fichier. Pour les autres je vais rapidement décrire le fonctionnement de la fonction <code>save</code>, qui est la plus compliquée et vous devriez facilement comprendre <code>getNextId</code>. Commençons : <code>Row</code> contient un record de type article, c'est-à-dire correspondant à la table article. On essaye de l'écrire dans la table à l'aide de la fonction <code>mnesia:write/1</code> ; si la transaction échoue, Mnesia nous renvoie un tuple du type {<code>aborted, Raison</code>}, on informe alors l'utilisateur que l'écriture a échoué, sinon on dit que tout est ok.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes">Un wiki avec Yaws en 13 minutes 37 secondes</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/initiation">
+Initiation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/preparer-le-terrain-1">
+Préparer le terrain
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/get-et-post">
+GET et POST
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/creer-des-pages">
+Créer des pages
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/afficher-le-resultat">
+Afficher le résultat
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/edition-et-ameliorations">
+Édition et améliorations
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/get-et-post">
+<span class="arrow"></span>
+<span class="next">GET et POST</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/afficher-le-resultat">
+<span class="next">Afficher le résultat</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Afficherlersultat"></a><h2>Afficher le résultat</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/creer-des-pages">
+<span class="arrow"></span>
+<span class="next">Créer des pages</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/edition-et-ameliorations">
+<span class="next">Édition et améliorations</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-345867" data-claire-element-id="345867">Bien, maintenant que nous sommes capables de créer des articles, ça serait cool de les afficher, vous ne trouvez pas ? Pour cela on va créer une page see.yaws qui va se servir de l'id de l'article pour l'afficher. Pour lui communiquer cet id, on va se servir de requêtes de type <code>GET</code>. Comme je vous l'ai dit, le traitement de cette requête est <strong>identique</strong> au traitement d'une requête de type <code>POST</code>, si ce n'est la fonction qui change. Voyez vous-mêmes :</p><pre id="r-345868" data-claire-element-id="345868"><code data-claire-semantic="erlang">out(Arg) -&gt;
+    case yaws_api:parse_query(Arg) of
+        [{&quot;id&quot;, Id}] -&gt;
+            {Id, Titre, Contenu} = bdd:getById(Id),
+            Edit = io_lib:format(&quot;&lt;a href=\&quot;edit.yaws?id=~s\&quot;&gt;Éditer cet article.&lt;/a&gt;&quot;, [Id]),
+            {ehtml,
+                [
+                    {h1, [], Titre},
+                    {p, [], Contenu},
+                    {p, [], Edit}
+                ]
+            };
+        [] -&gt; {html, &quot;Erreur : vous devez préciser l'article à afficher&quot;};
+        _ -&gt; {html, &quot;Erreur : requête non reconnue&quot;}
+   end.</code></pre><p id="r-345869" data-claire-element-id="345869">Comme vous pouvez le voir, je fais appel à une nouvelle fonction :<code>bdd:getById/1</code>. Celle-ci va simplement sélectionner un article dans la base de données à l'aide de son id. Voyez plutôt :</p><pre id="r-345870" data-claire-element-id="345870"><code data-claire-semantic="erlang">getById(I) -&gt;
+    do(qlc:q([X || X &lt;- mnesia:table(article),
+	     I == X#article.id])).</code></pre><p id="r-345871" data-claire-element-id="345871">Cette fonction ne devrait pas vous sembler étrange si vous avez déjà utilisé Mnesia, pour les autres ? :-° Disons que c'est un poil différent de SQL : avec Mnesia, les requêtes (de sélection du moins) sont effectuées grâce à de la compréhension de liste, une notion que vous vous <strong>devez</strong> de connaître si vous faites de l'Erlang avec un minimum de sérieux. :)</p><p id="r-345872" data-claire-element-id="345872">Bref. Cette fois, il nous faut faire deux choses pour que cette fonction marche : inclure une <em>library</em> et créer la fonction <code>do</code>. Commençons par la library : placez la ligne suivante dans votre module bdd (avant toute fonction) : <br/><code>-include_lib(&quot;stdlib/include/qlc.hrl&quot;)</code>. <br/> Voici ensuite la fonction <code>do</code> :</p><pre id="r-345873" data-claire-element-id="345873"><code data-claire-semantic="erlang">do(Q) -&gt; 
+    F = fun() -&gt; qlc:e(Q) end,
+    {atomic, Val} = mnesia:transaction(F),
+    Val.</code></pre><p id="r-345874" data-claire-element-id="345874">C'est une fonction générique qu'on retrouve dans quasiment tous les projets utilisant Mnesia. Elle se charge tout simplement d'effectuer la transaction (c'est-à-dire exécuter la requête) avec Mnesia et de nous faire parvenir le résultat.</p><h2 id="r-acceder-a-see-yaws" data-claire-element-id="345882">Accéder à see.yaws</h2><p id="r-345875" data-claire-element-id="345875">Tout cela est bien joli, mais je doute que vos visiteurs aient l'idée de taper l'adresse de cette page dans leur navigateur, et ne parlons pas de leur connaissance des id des articles. :D Une des possibilités (et c'est celle que nous mettrons en place ici) est de modifier votre page d'accueil pour lister <em>tous</em> les articles, et pour chaque article de faire un lien vers see.yaws avec l'id correspondant. Au boulot ! :pirate:</p><pre id="r-345876" data-claire-element-id="345876"><code data-claire-semantic="erlang">out(_) -&gt;
+    List = bdd:getAll(),
+    ToShow = lists:map(fun({Id, Titre}) -&gt;
+     			 Lien = io_lib:format(&quot;&lt;a href=\&quot;see.yaws?id=~s\&quot;&gt;~s&lt;/a&gt;&quot;, [Id, Titre]),
+			 {li, [], Lien}
+		 end, List),
+    {ehtml, {ul, [], ToShow}}.</code></pre><p id="r-345877" data-claire-element-id="345877">Dans ce code, on va tout d'abord récupérer la liste de tous les articles existant dans la variable List, ensuite on va créer une nouvelle liste nommée ToShow. Cette liste va être de la même longueur que List, cela étant dû au fait que chacun de ses éléments seront ceux de List auquel on aura appliqué une fonction. Pour cela, nous nous servons de la fonction <code>lists:map/2</code>. Vous remarquerez que la fonction appliquée est ici une fonction anonyme introduite à l'aide du mot clé fun. Bref, cette fonction ne fait rien de particulier, elle formate juste les éléments de List pour qu'ils soient ensuite affichables par Yaws. Mais sinon : que nous manque-t-il, cette fois ? :D Au hasard, je dirais :<code>bdd:getAll/0</code>. Bon, heureusement qu'elle est facile, celle là, en plus c'est comme si on l'avait déjà faite, il suffit de reprendre <code>getById</code> en enlevant un garde. Le résultat :</p><pre id="r-345878" data-claire-element-id="345878"><code data-claire-semantic="erlang">getAll() -&gt; do(qlc:q([ {X#article.id, X#article.titre} || X &lt;- mnesia:table(article)])).</code></pre><aside id="r-345880" data-claire-element-id="345880" data-claire-semantic="warning"><p id="r-345879" data-claire-element-id="345879">Il faut bien penser à exporter toutes les fonctions (hormis la fonction <code>do</code>) qu'on vient de rajouter, sinon vous risquez d'avoir quelques problèmes.</p></aside><p id="r-345881" data-claire-element-id="345881">Une fois que vous aurez compilé tous vos fichiers et placé les .beam au bon endroit, je crois que nous serons parés pour quelques tests dans la joie et la bonne humeur ! :)</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes">Un wiki avec Yaws en 13 minutes 37 secondes</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/initiation">
+Initiation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/preparer-le-terrain-1">
+Préparer le terrain
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/get-et-post">
+GET et POST
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/creer-des-pages">
+Créer des pages
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/afficher-le-resultat">
+Afficher le résultat
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/edition-et-ameliorations">
+Édition et améliorations
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/creer-des-pages">
+<span class="arrow"></span>
+<span class="next">Créer des pages</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/edition-et-ameliorations">
+<span class="next">Édition et améliorations</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="ditionetamliorations"></a><h2>Édition et améliorations</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/afficher-le-resultat">
+<span class="arrow"></span>
+<span class="next">Afficher le résultat</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-editer-vos-pages" data-claire-element-id="345887">Éditer vos pages</h2><p id="r-345884" data-claire-element-id="345884">Bon : maintenant que vous pouvez créer des pages, il serait bien de pouvoir les éditer, c'est un wiki après tout. :) Pour cela, revenons sur le code de la page edit.yaws. Il faut la modifier pour recevoir le résultat d'une éventuelle requête de type <code>GET</code>. On sélectionnerait alors dans la table l'article demandé et on s'en servirait pour préremplir les champs de notre formulaire. Bref, après quelques secondes d'édition on aboutit à :</p><pre id="r-345885" data-claire-element-id="345885"><code data-claire-semantic="erlang">out(Arg) -&gt;
+    case yaws_api:parse_query(Arg) of
+        [{&quot;id&quot;, Id}] -&gt;
+            {Id, T, C} = bdd:getById(Id);
+        _ -&gt; T = &quot;Titre&quot;, Id = &quot;new&quot;, C = &quot;Votre article&quot;
+    end,
+    {ehtml,
+     {form, [{action, save.yaws}, {method, post}],
+      [
+       {input, [{type, hidden}, {name, id}, {value, Id}], &quot;&quot;},
+       {input, [{type, text}, {name, titre}, {value, T}], &quot;&lt;br&gt;&quot;},
+       {textarea, [{name, contenu}, {rows, 10}, {cols, 80}], C},
+       {input, [{type, submit}, {value, &quot;Ok&quot;}], &quot;&quot;}
+      ]
+     }
+    }.</code></pre><p id="r-345886" data-claire-element-id="345886">Et voilà ! Le wiki est désormais fini ! Comme promis, on a mis moins de XXX pour le créer, comme quoi même sans le dernier framework à la mode, on peut créer des trucs fonctionnels très rapidement. :)</p><h2 id="r-listing-des-fichiers" data-claire-element-id="345907">Listing des fichiers</h2><p id="r-345888" data-claire-element-id="345888">Je vous liste ici tous les fichiers et vous mets les codes correspondants, afin d'être sûr que vous n'ayez rien oublié ; j'ai aussi un peu modifié la structure HTML de certaines pages afin de faciliter la navigation des visiteurs ; bref, voilà les fichiers :</p><h3 id="r-bdd-erl" data-claire-element-id="345891">bdd.erl</h3><div id="r-345890" data-claire-element-id="345890"><pre id="r-345889" data-claire-element-id="345889"><code data-claire-semantic="erlang">-module(bdd).
+-compile(export_all).
+
+-record(article, {id, titre, contenu}).
+
+-include_lib(&quot;stdlib/include/qlc.hrl&quot;). % requis pour les requêtes vers Mnesia
+
+do(Q) -&gt;
+    F = fun() -&gt; qlc:e(Q) end,
+    {atomic, Val} = mnesia:transaction(F),
+    Val.
+
+getNextId() -&gt;
+    Fun = fun() -&gt; mnesia:last(article) end,
+    case mnesia:transaction(Fun) of
+    {aborted, _Raison} -&gt; error;
+    {atomic, Id} -&gt; integer_to_list(list_to_integer(Id) + 1)
+    end.
+
+getById(I) -&gt;
+    do(qlc:q([{X#article.id, X#article.titre, X#article.contenu} || X &lt;- mnesia:table(article),
+							        I == X#article.id])).
+
+getAll() -&gt; do(qlc:q([ {X#article.id, X#article.titre} || X &lt;- mnesia:table(article)])).
+
+save(Id, Titre, Contenu) -&gt;
+    Row = #article{id=Id, titre=Titre, contenu=Contenu},
+    Fun = fun() -&gt; mnesia:write(Row) end,
+    case mnesia:transaction(Fun) of
+    {aborted, _Raison} -&gt; error;
+    _ -&gt; ok
+    end.</code></pre></div><h3 id="r-edit-yaws" data-claire-element-id="345894">edit.yaws</h3><div id="r-345893" data-claire-element-id="345893"><pre id="r-345892" data-claire-element-id="345892"><code data-claire-semantic="html">&lt;html&gt;
+  &lt;head&gt;
+    &lt;title&gt;Wiki&lt;/title&gt;
+    &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=utf-8&quot; /&gt;
+  &lt;/head&gt;
+
+  &lt;body&gt;
+    &lt;p&gt;Vous êtes actuellement en train de rédiger un article.&lt;br&gt;
+      &lt;erl&gt;
+        out(Arg) -&gt;
+            case yaws_api:parse_query(Arg) of
+            [{&quot;id&quot;, Id}] -&gt; [{_, T, C}] = bdd:getById(Id);
+            _ -&gt; T = &quot;Titre&quot;, Id = &quot;new&quot;, C = &quot;Votre article&quot;
+            end,
+            {ehtml,
+             {form, [{action, save.yaws}, {method, post}],
+              [
+               {input, [{type, hidden}, {name, id}, {value, Id}], &quot;&quot;},
+               {input, [{type, text}, {name, titre}, {value, T}], &quot;&lt;br&gt;&quot;},
+               {textarea, [{name, contenu}, {rows, 10}, {cols, 80}], C},
+               {input, [{type, submit}, {value, &quot;Ok&quot;}], &quot;&quot;}
+              ]
+             }
+           }.
+      &lt;/erl&gt;
+      &lt;br&gt;Et encore du HTML...&lt;/p&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</code></pre></div><h3 id="r-index-yaws" data-claire-element-id="345897">index.yaws</h3><div id="r-345896" data-claire-element-id="345896"><pre id="r-345895" data-claire-element-id="345895"><code data-claire-semantic="html">&lt;html&gt;
+  &lt;head&gt;
+    &lt;title&gt;Wiki&lt;/title&gt;
+    &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=utf-8&quot; /&gt;
+  &lt;/head&gt;
+
+  &lt;body&gt;
+    &lt;p&gt;Bienvenue sur mon super wiki !&lt;br&gt;
+      &lt;erl&gt;
+    out(_) -&gt;
+        List = bdd:getAll(),
+        ToShow = lists:map(fun({Id, Titre}) -&gt;
+     			           Lien = io_lib:format(&quot;&lt;a href=\&quot;see.yaws?id=~s\&quot;&gt;~s&lt;/a&gt;&quot;, [Id, Titre]),
+                                   {li, [], Lien}
+		           end, List),
+        {ehtml, {ul, [], ToShow}}.
+      &lt;/erl&gt;
+      &lt;br&gt;Et encore du HTML...&lt;/p&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</code></pre></div><h3 id="r-init-mnesia-erl" data-claire-element-id="345900">init_mnesia.erl</h3><div id="r-345899" data-claire-element-id="345899"><pre id="r-345898" data-claire-element-id="345898"><code data-claire-semantic="erlang">-module(init_mnesia).
+-export([do_this_once/0, pre_fill/0]).
+
+-record(article, {id, titre, contenu}).
+
+do_this_once() -&gt;
+    mnesia:create_schema([node()]), %% Crée une base de données sur le noeud courant.
+    mnesia:start(),                 %% Lance la base de données tout juste créée.
+
+    %% La commande suivante ajoute une table nommée « article » et contenant les champs
+    %% du recorde article. On précise que les données seront ordonnées et qu'il y aura
+    %% une copie faite sur le disque dur.
+    mnesia:create_table(article, [{attributes, record_info(fields, article)},
+			      {type, ordered_set},
+			      {disc_copies, [node()]}]),
+
+    mnesia:stop(). %% On quitte la base de données pour que les changements soit enregistrés.
+
+pre_fill() -&gt;
+    Row = #article{id=&quot;0&quot;, titre=&quot;test&quot;, contenu=&quot;Ceci est un test.&quot;},
+    F = fun() -&gt; mnesia:write(Row) end,  %% crée la fonction qui va enregistrer Row dans la bdd
+    mnesia:transaction(F).               %% on effectue la transaction</code></pre></div><h3 id="r-save-yaws" data-claire-element-id="345903">save.yaws</h3><div id="r-345902" data-claire-element-id="345902"><pre id="r-345901" data-claire-element-id="345901"><code data-claire-semantic="html">&lt;html&gt;
+  &lt;head&gt;
+    &lt;title&gt;Wiki&lt;/title&gt;
+    &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=utf-8&quot; /&gt;
+  &lt;/head&gt;
+
+  &lt;body&gt;
+    &lt;p&gt;
+      &lt;erl&gt;
+        out(Arg) -&gt;
+            case yaws_api:parse_post(Arg) of
+            [{&quot;id&quot;, I}, {&quot;titre&quot;, T}, {&quot;contenu&quot;, C}] -&gt;
+                case I of
+	        &quot;new&quot; -&gt; Id = bdd:getNextId();
+	        _ -&gt; Id = I
+            end,
+            case bdd:save(Id, T, C) of
+	        ok -&gt; {html, &quot;Votre article a bien été sauvegardé.&quot;};
+	        _ -&gt; {html, &quot;Une erreur est apparue, impossible d'enregistrer.&quot;}
+           end;
+           _ -&gt; {html, &quot;Erreur, requête inconnue.&quot;}
+           end.
+      &lt;/erl&gt;
+      &lt;br&gt;Retour à l'&lt;a href=&quot;index.yaws&quot;&gt;index&lt;/a&gt;.&lt;/p&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</code></pre></div><h3 id="r-see-yaws" data-claire-element-id="345906">see.yaws</h3><div id="r-345905" data-claire-element-id="345905"><pre id="r-345904" data-claire-element-id="345904"><code data-claire-semantic="html">&lt;html&gt;
+  &lt;head&gt;
+    &lt;title&gt;Wiki&lt;/title&gt;
+    &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=utf-8&quot; /&gt;
+  &lt;/head&gt;
+
+  &lt;body&gt;
+    &lt;erl&gt;
+      out(Arg) -&gt;
+          case yaws_api:parse_query(Arg) of
+              [{&quot;id&quot;, Id}] -&gt;
+                  [{_, Titre, Contenu}] = bdd:getById(Id),
+                  Edit = io_lib:format(&quot;&lt;a href=\&quot;edit.yaws?id=~s\&quot;&gt;Éditer cet article.&lt;/a&gt;&quot;, [Id]),
+                  {ehtml,
+                   [
+                    {h1, [], Titre},
+                    {p, [], Contenu},
+                    {p, [], Edit}
+                   ]
+                 };
+             [] -&gt; {html, &quot;Erreur : vous devez préciser l'article à afficher&quot;};
+             _ -&gt; {html, &quot;Erreur : requête non reconnue&quot;}
+         end.
+    &lt;/erl&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</code></pre></div><h2 id="r-ameliorations-possibles-5" data-claire-element-id="345927">Améliorations possibles</h2><p id="r-345908" data-claire-element-id="345908">Bon, vous aurez pu vous en rendre compte, ce wiki est <strong>très</strong> basique. Notamment au niveau de l'affichage des pages, mais pas seulement. Voici une liste (non exhaustive) d'améliorations possibles :</p><ul id="r-345917" data-claire-element-id="345917"><li id="r-345910" data-claire-element-id="345910"><p id="r-345909" data-claire-element-id="345909">un système d'administration, histoire de supprimer les pages inutiles que des floodeurs pourraient créer ;</p></li><li id="r-345912" data-claire-element-id="345912"><p id="r-345911" data-claire-element-id="345911">un système d'historique pour les articles ;</p></li><li id="r-345914" data-claire-element-id="345914"><p id="r-345913" data-claire-element-id="345913">des catégories pour les articles ;</p></li><li id="r-345916" data-claire-element-id="345916"><p id="r-345915" data-claire-element-id="345915">?</p></li></ul><p id="r-345918" data-claire-element-id="345918">Bon courage en tout cas ! :)</p><p id="r-345919" data-claire-element-id="345919">Vous savez désormais créer un wiki avec yaws ! N'hésitez pas à aller sur le <a href="http://yaws.hyber.org/">site officiel</a> pour découvrir comment utiliser les cookies, les sessions, les includes et d'autres systèmes utiles dans ce style ! <br/> Si jamais vous avez des questions, n'hésitez pas à passer sur le forum ou sur IRC !</p><h3 id="r-notes-2" data-claire-element-id="345926">Notes</h3><p id="r-345920" data-claire-element-id="345920">Ce tuto a été écrit non pas en zCode, mais en mdown, un petit langage de mise en forme agréable à utiliser (et qui peut produire du zCode), conçu par <a href="http://www.siteduzero.com/membres-294-321.html">rz0</a> ; vous pourrez trouver une comparaison entre la syntaxe mdown et le zCode sur <a href="http://rzpages.ovh.org/projets/mdown/compar-zcode.php5">cette page</a>.</p><p id="r-345921" data-claire-element-id="345921">Merci à iPoulet, Pmol, Rudy et les autres pour leurs conseils et leurs nombreuses relectures ! :)</p><figure id="r-345923" data-claire-element-id="345924"><img id="r-345922" data-claire-element-id="345922" src="../../da-bhm.org/files/cats/bhm.png" alt="Image utilisateur"/></figure><p id="r-345925" data-claire-element-id="345925">Un tutoriel signé <a href="http://da-bhm.org/">PHM</a></p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes">Un wiki avec Yaws en 13 minutes 37 secondes</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/initiation">
+Initiation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/preparer-le-terrain-1">
+Préparer le terrain
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/get-et-post">
+GET et POST
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/creer-des-pages">
+Créer des pages
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/afficher-le-resultat">
+Afficher le résultat
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/edition-et-ameliorations">
+Édition et améliorations
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-wiki-avec-yaws-en-13-minutes-37-secondes/afficher-le-resultat">
+<span class="arrow"></span>
+<span class="next">Afficher le résultat</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/un-wiki-avec-yaws-en-13-minutes-37-secondes.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 01:19:15 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/un-wiki-avec-yaws-en-13-minutes-37-secondes.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:21:13 GMT -->
+</html>

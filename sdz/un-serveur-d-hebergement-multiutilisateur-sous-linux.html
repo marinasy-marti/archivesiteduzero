@@ -1,0 +1,1121 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/un-serveur-d-hebergement-multiutilisateur-sous-linux.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 08:38:51 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/un-serveur-d-hebergement-multiutilisateur-sous-linux.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:33:01 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Un serveur d&#039;hébergement multiutilisateur sous Linux</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Un serveur d&#039;hébergement multiutilisateur sous Linux</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Unserveurd039hbergementmultiutilisateursousLinux">Un serveur d&#039;hébergement multiutilisateur sous Linux</a><br/><a href="#Prrequis">Prérequis</a><br/><a href="#InstallerleserveurwebApache2">Installer le serveur web : Apache 2</a><br/><a href="#ConfigurerApache2aveclemodUserDir">Configurer Apache 2 avec le mod UserDir</a><br/><a href="#InstallerPHP5">Installer PHP5</a><br/><a href="#InstallerleserveurdebasededonnesMySQL">Installer le serveur de base de données : MySQL</a><br/><a href="#InstallerleserveurFTPvsFTPd">Installer le serveur FTP : vsFTPd</a><br/><a href="#ConfigurervsFTPdavecpam-mysql">Configurer vsFTPd avec pam-mysql</a><br/><a href="#Lesscriptsdegestiondescomptes">Les scripts de gestion des comptes</a><br/><a href="#Annexes">Annexes</a><br/></div>
+<a name="Unserveurd039hbergementmultiutilisateursousLinux"></a><h2>Un serveur d&#039;hébergement multiutilisateur sous Linux</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/prerequis-19">
+<span class="next">Prérequis</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-410441" data-claire-element-id="410441">Bonjour !</p><p id="r-410442" data-claire-element-id="410442">Le but de ce tuto est de vous apprendre à installer un serveur Linux qui permette l'hébergement de plusieurs utilisateurs. Chaque utilisateur aura un accès FTP, un dossier personnel, et un dossier web.</p><p id="r-410443" data-claire-element-id="410444"><a href="http://www.debian.org/"><img id="r-410444" data-claire-element-id="410443" src="medias/uploads.siteduzero.com_files_75001_76000_75309.jpg" alt="Debian"/></a></p><aside id="r-410446" data-claire-element-id="410446" data-claire-semantic="information"><p id="r-410445" data-claire-element-id="410445">Ici, j'utiliserai Debian parce que c'est une distribution répandue dans le monde des serveurs.<br/><em>Cependant, ça ne pose pas de problème de faire ça avec une autre distribution. ;)</em></p></aside><p id="r-410447" data-claire-element-id="410447">Je vous souhaite une bonne lecture !</p><aside id="r-410449" data-claire-element-id="410449" data-claire-semantic="warning"><p id="r-410448" data-claire-element-id="410448">Il faut connaître les bases du shell linux (cd, ls, cp, mv, etc...) pour comprendre le tuto.<br/> Il y a un très bon tuto là : <a href="http://www.siteduzero.com/tuto-3-1638-0-apprenez-le-shell.html">Apprenez le Shell</a>, écrit par <a href="http://www.siteduzero.com/membres-294-17616.html">Jarvis</a>.</p></aside>
+</div><a name="Prrequis"></a><h2>Prérequis</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-web-apache-2">
+<span class="next">Installer le serveur web : Apache 2</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<aside id="r-410451" data-claire-element-id="410451" data-claire-semantic="warning"><p id="r-410450" data-claire-element-id="410450"><strong>Ce tuto se fait en console</strong> : vous n'avez donc pas besoin d'installer un environnement graphique (KDE, Gnome, ...).<br/> Cependant, vous pouvez quand même le suivre si vous en avez un déjà installé : il suffit d'ouvrir un terminal (dans le menu Konsole, Terminal...).</p></aside><aside id="r-410453" data-claire-element-id="410453" data-claire-semantic="information"><p id="r-410452" data-claire-element-id="410452">Dans un serveur, on n'utilise pas d'environnement graphique, car celui-ci prend beaucoup de ressources alors que tout peut être fait en console pour davantage de performances. Alors autant prendre les bonnes habitudes ! :p</p></aside><aside id="r-410462" data-claire-element-id="410462" data-claire-semantic="warning"><p id="r-410454" data-claire-element-id="410454">Les opérations que vous allez réaliser nécessitent d'être faites en temps que <strong>root</strong>.<br/> L'utilisateur <strong>root</strong> a accès à tout, c'est le boss. ^^ <br/> Il y a 2 manières de s'identifier :</p><ul id="r-410461" data-claire-element-id="410461"><li id="r-410456" data-claire-element-id="410456"><p id="r-410455" data-claire-element-id="410455">si vous n'avez pas d'environnement graphique, vos identifiants vous seront demandés après le démarrage de votre ordinateur serveur ;</p></li><li id="r-410460" data-claire-element-id="410460"><p id="r-410457" data-claire-element-id="410457">si vous avez un environnement graphique, vous devez d'abord ouvrir une console (comme indiqué plus haut) et taper la commande</p><pre id="r-410458" data-claire-element-id="410458"><code data-claire-semantic="console">su - root</code></pre><p id="r-410459" data-claire-element-id="410459">qui vous demandera votre mot de passe root (renseigné à l'installation du système). (Les droits root iront à la console que vous avez ouverte ; si vous la fermez, il faudra retaper cette commande !)</p></li></ul></aside><aside id="r-410465" data-claire-element-id="410465" data-claire-semantic="information"><p id="r-410463" data-claire-element-id="410463">Sous Ubuntu, la commande est</p><pre id="r-410464" data-claire-element-id="410464"><code data-claire-semantic="console">sudo -s</code></pre></aside><p id="r-410466" data-claire-element-id="410466">Ceci étant dit, nous pouvons commencer !</p><p id="r-410467" data-claire-element-id="410467">Avant toute chose, assurez-vous d'avoir un fichier <strong>/etc/apt/sources.list</strong> bien configuré et un système à jour !</p><aside id="r-410469" data-claire-element-id="410469" data-claire-semantic="information"><p id="r-410468" data-claire-element-id="410468">Le fichier <strong>sources.list</strong> contient la liste des dépôts où se trouvent les applications que le système utilise ou que vous utilisez !<br/> Il faut donc qu'il soit complet pour ne pas passer à côté des mises à jour importantes, qu'elles soient de nature à augmenter la sécurité ou à corriger des bugs.</p></aside><p id="r-410470" data-claire-element-id="410470">Voici un <strong>exemple</strong> de sources.list :</p><pre id="r-410471" data-claire-element-id="410471"><code>#Attention, ce sources.list est fait pour la version &quot;testing&quot; de Debian, c'est-à-dire la future version stable.
+#Les paquets présents dans ces dépôts sont testés, mais pas totalement sûrs du point de vue de la stabilité.
+deb http://mir1.ovh.net/debian/ testing main non-free contrib
+deb http://security.debian.org/ testing/updates main contrib non-free</code></pre><p id="r-410472" data-claire-element-id="410472"><em>Pour la version stable, il faut remplacer les <strong>testing</strong> par des <strong>etch</strong>.</em></p><p id="r-410473" data-claire-element-id="410473">Il suffit ensuite de taper en console deux commandes pour avoir un système à jour !</p><pre id="r-410474" data-claire-element-id="410474"><code data-claire-semantic="console">aptitude update
+aptitude full-upgrade</code></pre><aside id="r-410476" data-claire-element-id="410476" data-claire-semantic="warning"><p id="r-410475" data-claire-element-id="410475">aptitude full-upgrade met à jour la <strong>distribution</strong>. Si vous ne souhaitez pas faire ça, contentez-vous de aptitude safe-upgrade.</p></aside><aside id="r-410478" data-claire-element-id="410478" data-claire-semantic="information"><p id="r-410477" data-claire-element-id="410477">Il est possible que le noyau soit mis à jour également. Dans ce cas-là, il faut redémarrer pour charger le nouveau noyau (utilisez la commande reboot).</p></aside><p id="r-410479" data-claire-element-id="410479">Par souci de simplicité, on va considérer que l'on est dans un réseau local qui contient notre serveur et un autre ordinateur qui permettra de tester le serveur.<br/> On va dire que l'adresse IP du serveur sera <strong>192.168.0.100</strong>, même si ça n'a pas d'importance pourvu qu'on la connaisse.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux">Un serveur d&#039;hébergement multiutilisateur sous Linux</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/prerequis-19">
+Prérequis
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-web-apache-2">
+Installer le serveur web : Apache 2
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/configurer-apache-2-avec-le-mod-userdir">
+Configurer Apache 2 avec le mod UserDir
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-php5">
+Installer PHP5
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-de-base-de-donnees-mysql">
+Installer le serveur de base de données : MySQL
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-ftp-vsftpd">
+Installer le serveur FTP : vsFTPd
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/configurer-vsftpd-avec-pam-mysql">
+Configurer vsFTPd avec pam-mysql
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/les-scripts-de-gestion-des-comptes">
+Les scripts de gestion des comptes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/annexes-35">
+Annexes
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-web-apache-2">
+<span class="next">Installer le serveur web : Apache 2</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="InstallerleserveurwebApache2"></a><h2>Installer le serveur web : Apache 2</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/prerequis-19">
+<span class="arrow"></span>
+<span class="next">Prérequis</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/configurer-apache-2-avec-le-mod-userdir">
+<span class="next">Configurer Apache 2 avec le mod UserDir</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-410481" data-claire-element-id="410481">Nous allons commencer par installer le serveur web !<br/> On va donc installer <strong>Apache 2</strong> à l'aide de cette commande (toutes les commandes sont à faire en tant que root) :</p><pre id="r-410482" data-claire-element-id="410482"><code data-claire-semantic="console">aptitude install apache2</code></pre><aside id="r-410484" data-claire-element-id="410484" data-claire-semantic="warning"><p id="r-410483" data-claire-element-id="410483">Il faut accepter les dépendances de apache2 en tapant &quot;<strong>o</strong>&quot; (pour oui) puis Entrée.</p></aside><p id="r-410485" data-claire-element-id="410485">Maintenant qu'Apache est installé, on va le tester !</p><p id="r-410486" data-claire-element-id="410486">À partir de votre autre ordinateur, lancez un navigateur web et accédez à l'URL du serveur : <a href="http://192.168.0.100/"><strong>http://192.168.0.100</strong></a>.</p><p id="r-410487" data-claire-element-id="410487">Logiquement, vous obtenez un énorme It works!</p><aside id="r-410489" data-claire-element-id="410489" data-claire-semantic="information"><p id="r-410488" data-claire-element-id="410488">On remarque également qu'on a été redirigé sur l'adresse <a href="http://192.168.0.100/apache2-default"><strong>http://192.168.0.100/apache2-default</strong></a>.<br/> Il s'agit de la configuration par défaut de Apache, nous allons arranger ça. :lol:</p></aside><p id="r-410490" data-claire-element-id="410490">On va aller dans un des fichiers de configuration :</p><pre id="r-410491" data-claire-element-id="410491"><code data-claire-semantic="console">nano /etc/apache2/sites-available/default</code></pre><p id="r-410492" data-claire-element-id="410492">Il suffira d'ajouter un dièse # au début de la ligne <strong>RedirectMatch ^/$ /apache2-default/</strong> pour la commenter.</p><p id="r-410493" data-claire-element-id="410493">On redémarre Apache :</p><pre id="r-410494" data-claire-element-id="410494"><code data-claire-semantic="console">/etc/init.d/apache2 restart</code></pre><p id="r-410495" data-claire-element-id="410495">On réessaye d'aller sur <a href="http://192.168.0.100/"><strong>http://192.168.0.100</strong></a>.<br/> Et là, magie ! Au lieu d'avoir le message de tout à l'heure, on a une arborescence qui contient uniquement le dossier apache2-default.</p><p id="r-410496" data-claire-element-id="410496">Ce dossier étant inutile, on va le supprimer :pirate: .<br/> Par défaut, Apache va chercher les pages dans <strong>/var/www/</strong>.<br/> On fait donc :</p><pre id="r-410497" data-claire-element-id="410497"><code data-claire-semantic="console">rm -r /var/www/apache2-default</code></pre><p id="r-410498" data-claire-element-id="410498">Maintenant que Apache 2 fonctionne, occupons-nous du mod <strong>UserDir</strong> !</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux">Un serveur d&#039;hébergement multiutilisateur sous Linux</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/prerequis-19">
+Prérequis
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-web-apache-2">
+Installer le serveur web : Apache 2
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/configurer-apache-2-avec-le-mod-userdir">
+Configurer Apache 2 avec le mod UserDir
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-php5">
+Installer PHP5
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-de-base-de-donnees-mysql">
+Installer le serveur de base de données : MySQL
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-ftp-vsftpd">
+Installer le serveur FTP : vsFTPd
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/configurer-vsftpd-avec-pam-mysql">
+Configurer vsFTPd avec pam-mysql
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/les-scripts-de-gestion-des-comptes">
+Les scripts de gestion des comptes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/annexes-35">
+Annexes
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/prerequis-19">
+<span class="arrow"></span>
+<span class="next">Prérequis</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/configurer-apache-2-avec-le-mod-userdir">
+<span class="next">Configurer Apache 2 avec le mod UserDir</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="ConfigurerApache2aveclemodUserDir"></a><h2>Configurer Apache 2 avec le mod UserDir</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-web-apache-2">
+<span class="arrow"></span>
+<span class="next">Installer le serveur web : Apache 2</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-php5">
+<span class="next">Installer PHP5</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-410500" data-claire-element-id="410500">Le mod <strong>UserDir</strong> est un mod installé par défaut avec Apache 2. Il permet, une fois configuré, de faire correspondre une URL de type <a href="http://192.168.0.100/~utilisateur"><strong>http://192.168.0.100/~utilisateur</strong></a> à un dossier <strong>/home/utilisateur</strong>, par exemple.</p><p id="r-410501" data-claire-element-id="410501">L'avantage est qu'il ne faut pas changer la configuration d'Apache 2 à chaque fois qu'on ajoute un utilisateur : à chaque fois qu'une URL comme la précédente sera appelée, Apache 2 vérifiera si le dossier correspondant existe sur le serveur. S'il existe, on accèdera à son contenu, sinon, on obtiendra l'erreur 404.</p><p id="r-410502" data-claire-element-id="410502">Pour commencer, activons le mod avec la commande suivante :</p><pre id="r-410503" data-claire-element-id="410503"><code data-claire-semantic="console">a2enmod userdir</code></pre><p id="r-410504" data-claire-element-id="410504"><em>Un message nous avertit qu'il faut recharger la configuration d'Apache, mais comme nous allons la modifier par la suite, nous la rechargerons plus tard.</em></p><p id="r-410505" data-claire-element-id="410505">Il faut ensuite configurer ce mod. Voici donc le fichier <strong>/etc/apache2/mods-available/userdir.conf</strong> tel que vous devez l'avoir par défaut :</p><pre id="r-410506" data-claire-element-id="410506"><code>&lt;IfModule mod_userdir.c&gt;
+        UserDir public_html
+        UserDir disabled root
+ 
+        &lt;Directory /home/*/public_html&gt;
+                AllowOverride FileInfo AuthConfig Limit
+                Options MultiViews Indexes SymLinksIfOwnerMatch IncludesNoExec
+        &lt;/Directory&gt;
+&lt;/IfModule&gt;</code></pre><p id="r-410507" data-claire-element-id="410507"><strong>UserDir public_html</strong> signifie que l'adresse <a href="http://192.168.0.100/~utilisateur"><strong>http://192.168.0.100/~utilisateur</strong></a> affichera le contenu du dossier <strong>[Répertoire home de utilisateur]/public_html</strong>. L'utilisateur doit donc être un utilisateur système valide !!<br/> Pour ne pas avoir à créer à chaque fois un utilisateur système, on peut remplacer cette ligne par <strong>UserDir /home/*/public_html</strong>. Du coup, il suffit juste de créer un dossier du nom de l'utilisateur dans <strong>/home</strong> ! :)</p><p id="r-410508" data-claire-element-id="410508"><strong>UserDir disabled [noms d'utilisateurs]</strong> permet de désactiver la fonctionnalité UserDir pour certains utilisateurs.</p><aside id="r-410510" data-claire-element-id="410510" data-claire-semantic="information"><p id="r-410509" data-claire-element-id="410509">Par défaut, c'est désactivé pour <strong>root</strong>, sinon on aurait accès au dossier <strong>/root</strong> (la configuration tient compte du dossier home de chaque utilisateur système, dont root).</p></aside><p id="r-410511" data-claire-element-id="410511">Le reste du fichier de configuration sert à définir les options sur les dossiers des utilisateurs.</p><p id="r-410512" data-claire-element-id="410512">Voici donc une version de ce même fichier plus optimisée pour nos besoins ^^ :</p><pre id="r-410513" data-claire-element-id="410513"><code>&lt;IfModule mod_userdir.c&gt;
+        UserDir /home/*/public_html
+ 
+        &lt;Directory /home/*/public_html&gt;
+                AllowOverride FileInfo AuthConfig Limit
+                Options MultiViews Indexes IncludesNoExec
+                IndexOptions FoldersFirst FancyIndexing IgnoreCase
+        &lt;/Directory&gt;
+&lt;/IfModule&gt;</code></pre><aside id="r-410515" data-claire-element-id="410515" data-claire-semantic="warning"><p id="r-410514" data-claire-element-id="410514">Les 3 <strong>IndexOptions</strong> que j'ai ajoutées permettent un affichage plus sympathique de la liste des fichiers (lorsqu'il n'y a pas de fichier index dans le dossier de l'utilisateur).<br/> Pour plus d'informations, voir le tuto <a href="http://www.siteduzero.com/tuto-3-13849-1-personnaliser-son-ftp.html">Personnaliser son FTP</a> de <a href="http://www.siteduzero.com/membres-294-1398.html">Thunderseb</a>.</p></aside><p id="r-410516" data-claire-element-id="410516">Vous pouvez maintenant recharger la configuration d'Apache 2 et tester tout ça !!</p><pre id="r-410517" data-claire-element-id="410517"><code data-claire-semantic="console">/etc/init.d/apache2 reload</code></pre><aside id="r-410521" data-claire-element-id="410521" data-claire-semantic="information"><p id="r-410518" data-claire-element-id="410518">Pour tester :</p><pre id="r-410519" data-claire-element-id="410519"><code data-claire-semantic="console">mkdir /home/test/
+mkdir /home/test/public_html</code></pre><p id="r-410520" data-claire-element-id="410520">Et puis on accède à l'adresse <a href="http://192.168.0.100/~test"><strong>http://192.168.0.100/~test</strong></a><br/> (ne pas oublier de faire un petit <strong>rm -r /home/test</strong> pour remettre en état :p ).</p></aside><p id="r-410522" data-claire-element-id="410522">À ce stade, nous pouvons donc créer un utilisateur web en créant 2 dossiers :</p><ul id="r-410527" data-claire-element-id="410527"><li id="r-410524" data-claire-element-id="410524"><p id="r-410523" data-claire-element-id="410523">le dossier <strong>/home/utilisateur</strong> qui sera la partie privée de l'utilisateur ;</p></li><li id="r-410526" data-claire-element-id="410526"><p id="r-410525" data-claire-element-id="410525">le dossier <strong>/home/utilisateur/public_html</strong> qui sera la partie publique accessible avec l'adresse <a href="http://192.168.0.100/~utilisateur"><strong>http://192.168.0.100/~utilisateur</strong></a>.</p></li></ul>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux">Un serveur d&#039;hébergement multiutilisateur sous Linux</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/prerequis-19">
+Prérequis
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-web-apache-2">
+Installer le serveur web : Apache 2
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/configurer-apache-2-avec-le-mod-userdir">
+Configurer Apache 2 avec le mod UserDir
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-php5">
+Installer PHP5
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-de-base-de-donnees-mysql">
+Installer le serveur de base de données : MySQL
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-ftp-vsftpd">
+Installer le serveur FTP : vsFTPd
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/configurer-vsftpd-avec-pam-mysql">
+Configurer vsFTPd avec pam-mysql
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/les-scripts-de-gestion-des-comptes">
+Les scripts de gestion des comptes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/annexes-35">
+Annexes
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-web-apache-2">
+<span class="arrow"></span>
+<span class="next">Installer le serveur web : Apache 2</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-php5">
+<span class="next">Installer PHP5</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="InstallerPHP5"></a><h2>Installer PHP5</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/configurer-apache-2-avec-le-mod-userdir">
+<span class="arrow"></span>
+<span class="next">Configurer Apache 2 avec le mod UserDir</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-de-base-de-donnees-mysql">
+<span class="next">Installer le serveur de base de données : MySQL</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-410529" data-claire-element-id="410529">:magicien: PHP5 ne résistera pas très longtemps à un simple</p><pre id="r-410530" data-claire-element-id="410530"><code data-claire-semantic="console">aptitude install php5</code></pre><aside id="r-410533" data-claire-element-id="410533" data-claire-semantic="warning"><p id="r-410531" data-claire-element-id="410531">Il faut redémarrer Apache 2 !</p><pre id="r-410532" data-claire-element-id="410532"><code data-claire-semantic="console">/etc/init.d/apache2 restart</code></pre></aside><p id="r-410534" data-claire-element-id="410534">Cette étape est rapide puisqu'une fois PHP5 installé, nos utilisateurs web peuvent l'utiliser.<br/> Vous pouvez reprendre le test que nous avons fait tout à l'heure pour vérifier.</p><p id="r-410535" data-claire-element-id="410535">Cependant, si vous poussez un peu ces tests, vous allez vous apercevoir (avec stupeur :p ) qu'il est parfaitement possible pour un utilisateur d'écrire un script PHP qui va voir chez le voisin... ce qui pose un gros problème de sécurité !</p><p id="r-410536" data-claire-element-id="410536">Nous allons donc devoir enfermer le PHP de chaque utilisateur dans son dossier respectif. Pour cela, il suffit d'ajouter une petite ligne de rien du tout dans notre fichier <strong>/etc/apache2/mods-available/userdir.conf</strong>. On obtient ceci :</p><pre id="r-410537" data-claire-element-id="410537"><code>&lt;IfModule mod_userdir.c&gt;
+        UserDir /home/*/public_html
+ 
+        &lt;Directory /home/*/public_html&gt;
+                AllowOverride FileInfo AuthConfig Limit
+                Options MultiViews Indexes IncludesNoExec
+                IndexOptions FoldersFirst FancyIndexing IgnoreCase
+                php_admin_value open_basedir &quot;..&quot; # &lt;-- voici la nouvelle ligne
+        &lt;/Directory&gt;
+&lt;/IfModule&gt;</code></pre><aside id="r-410545" data-claire-element-id="410545" data-claire-semantic="information"><ul id="r-410544" data-claire-element-id="410544"><li id="r-410539" data-claire-element-id="410539"><p id="r-410538" data-claire-element-id="410538"><strong>php_admin_value</strong> permet de modifier des options de <strong>php.ini</strong> directement dans la configuration d'Apache 2.</p></li><li id="r-410541" data-claire-element-id="410541"><p id="r-410540" data-claire-element-id="410540"><strong>open_basedir</strong> permet d'enfermer PHP dans un répertoire. À chaque fois qu'un fichier ou dossier sera ouvert en PHP, on obtiendra un message d'erreur si celui-ci n'est pas à l'intérieur du dossier spécifié.</p></li><li id="r-410543" data-claire-element-id="410543"><p id="r-410542" data-claire-element-id="410542"><strong>&quot;..&quot;</strong> est la valeur de l'option <strong>open_basedir</strong>. Les 2 points correspondent au dossier parent, c'est-à-dire dans notre cas au dossier <strong>/home/utilisateur</strong>.</p></li></ul></aside><aside id="r-410547" data-claire-element-id="410547" data-claire-semantic="error"><p id="r-410546" data-claire-element-id="410546">Et là, je vous dis que le problème n'est pas résolu ! &gt;_</p></aside><p id="r-410548" data-claire-element-id="410548">En effet, il existe une fonction PHP nommée <a href="http://fr.php.net/manual/fr/function.shell-exec.php">shell_exec()</a> qui permet d'exécuter des commandes shell (sous l'utilisateur www-data, l'utilisateur d'Apache 2).<br/> Il est donc possible de créer un script PHP dans son répertoire d'utilisateur web :</p><pre id="r-410549" data-claire-element-id="410549"><code data-claire-semantic="html+php">&lt;?php echo shell_exec('ls /home'); ?&gt;</code></pre><p id="r-410550" data-claire-element-id="410550">On a donc accès à la liste des utilisateurs !</p><p id="r-410551" data-claire-element-id="410551">Heureusement, PHP est doté une fonction, le <a href="http://fr.php.net/manual/fr/features.safe-mode.php">safe_mode</a>, qui permet d'interdire les fonctions de ce type. Notre fichier <strong>/etc/apache2/mods-available/userdir.conf</strong> devient donc :</p><pre id="r-410552" data-claire-element-id="410552"><code>&lt;IfModule mod_userdir.c&gt;
+        UserDir /home/*/public_html
+ 
+        &lt;Directory /home/*/public_html&gt;
+                AllowOverride FileInfo AuthConfig Limit
+                Options MultiViews Indexes IncludesNoExec
+                IndexOptions FoldersFirst FancyIndexing IgnoreCase
+                php_admin_value safe_mode &quot;1&quot;
+                php_admin_value open_basedir &quot;..&quot;
+        &lt;/Directory&gt;
+&lt;/IfModule&gt;</code></pre><p id="r-410553" data-claire-element-id="410553">Et voilà ! Nos utilisateurs peuvent mettre du PHP dans leur dossier <strong>public_html</strong> sans pour autant poser de problèmes de sécurité. :)</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux">Un serveur d&#039;hébergement multiutilisateur sous Linux</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/prerequis-19">
+Prérequis
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-web-apache-2">
+Installer le serveur web : Apache 2
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/configurer-apache-2-avec-le-mod-userdir">
+Configurer Apache 2 avec le mod UserDir
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-php5">
+Installer PHP5
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-de-base-de-donnees-mysql">
+Installer le serveur de base de données : MySQL
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-ftp-vsftpd">
+Installer le serveur FTP : vsFTPd
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/configurer-vsftpd-avec-pam-mysql">
+Configurer vsFTPd avec pam-mysql
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/les-scripts-de-gestion-des-comptes">
+Les scripts de gestion des comptes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/annexes-35">
+Annexes
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/configurer-apache-2-avec-le-mod-userdir">
+<span class="arrow"></span>
+<span class="next">Configurer Apache 2 avec le mod UserDir</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-de-base-de-donnees-mysql">
+<span class="next">Installer le serveur de base de données : MySQL</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="InstallerleserveurdebasededonnesMySQL"></a><h2>Installer le serveur de base de données : MySQL</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-php5">
+<span class="arrow"></span>
+<span class="next">Installer PHP5</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-ftp-vsftpd">
+<span class="next">Installer le serveur FTP : vsFTPd</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-410555" data-claire-element-id="410555">Il est l'heure d'installer MySQL, pour que nos utilisateurs aient leur base de données (MySQL servira également pour vsFTPd).</p><pre id="r-410556" data-claire-element-id="410556"><code data-claire-semantic="console">aptitude install mysql-server php5-mysql</code></pre><p id="r-410557" data-claire-element-id="410557">On exécute dans la foulée le script fourni avec MySQL qui permet de sécuriser la configuration de ce dernier :</p><pre id="r-410558" data-claire-element-id="410558"><code data-claire-semantic="console">mysql_secure_installation</code></pre><p id="r-410559" data-claire-element-id="410559">Histoire de ne pas tout avoir à faire en console, on installe PHPMyAdmin :</p><pre id="r-410560" data-claire-element-id="410560"><code data-claire-semantic="console">aptitude install phpmyadmin</code></pre><aside id="r-410562" data-claire-element-id="410562" data-claire-semantic="warning"><p id="r-410561" data-claire-element-id="410561">Il vous sera demandé quel est le serveur web ! Choisir <strong>apache2</strong> avec les flèches directionnelles, cocher avec Espace, et valider avec Entrée.</p></aside><p id="r-410563" data-claire-element-id="410563">Allez ensuite avec un navigateur à l'adresse <a href="http://192.168.0.100/phpmyadmin"><strong>http://192.168.0.100/phpmyadmin</strong></a>. Mettez la langue en français, le nom d'utilisateur (root) et votre mot de passe MySQL.</p><p id="r-410564" data-claire-element-id="410564">Direction la page Privilèges, puis Ajouter un utilisateur. Indiquez <strong>ftp</strong> comme nom d'utilisateur, sélectionnez <strong>Local</strong> dans la liste déroulante <strong>Serveur</strong>, et indiquez un mot de passe, compliqué si possible, car il ne sera utilisé que par des scripts (vous pouvez utiliser le bouton Générer). Cochez le bouton radio Créer une base portant son nom et donner à cet utilisateur tous les privilèges sur cette base et validez.</p><p id="r-410565" data-claire-element-id="410565">Retournez sur la page Privilèges (il y a un onglet en haut), et cliquez sur recharger les privilèges.</p><p id="r-410566" data-claire-element-id="410566">MySQL est maintenant installé, configuré, et nous avons créé un utilisateur et une base de données pour le serveur FTP...</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux">Un serveur d&#039;hébergement multiutilisateur sous Linux</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/prerequis-19">
+Prérequis
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-web-apache-2">
+Installer le serveur web : Apache 2
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/configurer-apache-2-avec-le-mod-userdir">
+Configurer Apache 2 avec le mod UserDir
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-php5">
+Installer PHP5
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-de-base-de-donnees-mysql">
+Installer le serveur de base de données : MySQL
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-ftp-vsftpd">
+Installer le serveur FTP : vsFTPd
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/configurer-vsftpd-avec-pam-mysql">
+Configurer vsFTPd avec pam-mysql
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/les-scripts-de-gestion-des-comptes">
+Les scripts de gestion des comptes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/annexes-35">
+Annexes
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-php5">
+<span class="arrow"></span>
+<span class="next">Installer PHP5</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-ftp-vsftpd">
+<span class="next">Installer le serveur FTP : vsFTPd</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="InstallerleserveurFTPvsFTPd"></a><h2>Installer le serveur FTP : vsFTPd</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-de-base-de-donnees-mysql">
+<span class="arrow"></span>
+<span class="next">Installer le serveur de base de données : MySQL</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/configurer-vsftpd-avec-pam-mysql">
+<span class="next">Configurer vsFTPd avec pam-mysql</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-410568" data-claire-element-id="410568">On installe maintenant vsFTPd et le module d'authentification par MySQL !</p><pre id="r-410569" data-claire-element-id="410569"><code data-claire-semantic="console">aptitude install vsftpd libpam-mysql</code></pre><aside id="r-410572" data-claire-element-id="410572" data-claire-semantic="warning"><p id="r-410570" data-claire-element-id="410570">Il faut supprimer quelques éléments de la configuration par défaut :</p><pre id="r-410571" data-claire-element-id="410571"><code data-claire-semantic="console">deluser --remove-home ftp</code></pre></aside><p id="r-410573" data-claire-element-id="410573">Remplaçons le fichier <strong>/etc/vsftpd.conf</strong> par celui-ci :</p><pre id="r-410574" data-claire-element-id="410574"><code># Ceci configure VSFTPd en mode &quot;standalone&quot;
+listen=YES
+
+# On désactive les connexions anonymes et on active les non-anonymes (c'est le cas des utilisateurs virtuels) :
+anonymous_enable=NO
+local_enable=YES
+
+# Pour des raisons de sécurité, on interdit toute action d'écriture :
+write_enable=NO
+anon_upload_enable=NO
+anon_mkdir_write_enable=NO
+anon_other_write_enable=NO
+
+# &quot;guest_enable&quot; active les utilisateurs virtuels
+# &quot;guest_username&quot; fait correspondre tous les utilisateurs virtuels à l'utilisateur d'Apache 2
+guest_enable=YES
+guest_username=www-data
+
+# On définit les droits par défaut des fichiers uploadés
+anon_umask=022
+
+# On enferme les utilisateurs virtuels dans leur dossier
+chroot_local_user=YES
+
+# On définit le nombre maximum de sessions à 100
+# On définit le nombre maximum de sessions par IP à 5
+max_clients=100
+max_per_ip=5
+
+####################################
+# Debian customization             #
+# (ou adoptons la Debian attitude) #
+####################################
+# Some of vsftpd's settings don't fit the Debian filesystem layout by
+# default.  These settings are more Debian-friendly.
+#
+# This option should be the name of a directory which is empty.  Also, the
+# directory should not be writable by the ftp user. This directory is used
+# as a secure chroot() jail at times vsftpd does not require filesystem
+# access.
+secure_chroot_dir=/var/run/vsftpd
+#
+# This string is the name of the PAM service vsftpd will use.
+pam_service_name=vsftpd
+#
+# This option specifies the location of the RSA certificate to use for SSL
+# encrypted connections.
+rsa_cert_file=/etc/ssl/certs/vsftpd.pem
+
+
+# Permet d'utiliser les configurations individuelles pour chaque utilisateur
+user_config_dir=/etc/vsftpd
+
+# Définir la plage de ports utilisée par le mode passif
+pasv_min_port=20000
+pasv_max_port=20050
+
+# Message d'accueil
+ftpd_banner=Bienvenue sur ce serveur FTP !
+
+# Autoriser les utilisateurs virtuels à changer les permissions de leurs fichiers
+chmod_enable=YES
+virtual_use_local_privs=YES
+
+# Utiliser le temps local et non pas le temps universel (UTC)
+use_localtime=YES
+
+# Activation du log
+xferlog_enable=YES
+log_ftp_protocol=YES</code></pre><p id="r-410575" data-claire-element-id="410575">Ce fichier étant commenté, je ne m'étends pas dessus. ;)</p><aside id="r-410578" data-claire-element-id="410578" data-claire-semantic="warning"><p id="r-410576" data-claire-element-id="410576">Il faut créer le dossier qui contiendra les fichiers de configuration pour chaque utilisateur :</p><pre id="r-410577" data-claire-element-id="410577"><code data-claire-semantic="console">mkdir /etc/vsftpd</code></pre></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux">Un serveur d&#039;hébergement multiutilisateur sous Linux</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/prerequis-19">
+Prérequis
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-web-apache-2">
+Installer le serveur web : Apache 2
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/configurer-apache-2-avec-le-mod-userdir">
+Configurer Apache 2 avec le mod UserDir
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-php5">
+Installer PHP5
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-de-base-de-donnees-mysql">
+Installer le serveur de base de données : MySQL
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-ftp-vsftpd">
+Installer le serveur FTP : vsFTPd
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/configurer-vsftpd-avec-pam-mysql">
+Configurer vsFTPd avec pam-mysql
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/les-scripts-de-gestion-des-comptes">
+Les scripts de gestion des comptes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/annexes-35">
+Annexes
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-de-base-de-donnees-mysql">
+<span class="arrow"></span>
+<span class="next">Installer le serveur de base de données : MySQL</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/configurer-vsftpd-avec-pam-mysql">
+<span class="next">Configurer vsFTPd avec pam-mysql</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="ConfigurervsFTPdavecpam-mysql"></a><h2>Configurer vsFTPd avec pam-mysql</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-ftp-vsftpd">
+<span class="arrow"></span>
+<span class="next">Installer le serveur FTP : vsFTPd</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/les-scripts-de-gestion-des-comptes">
+<span class="next">Les scripts de gestion des comptes</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-410580" data-claire-element-id="410580">vsFTPd va devoir accéder à la liste des utilisateurs, qui sera placée dans notre base de donnée MySQL. Le module pam-mysql permet de faire ça. :)</p><p id="r-410581" data-claire-element-id="410581">On va tout d'abord retourner sur PHPMyAdmin, se logger avec l'utilisateur <strong>ftp</strong>, et sélectionner la base de donnée ftp dans le menu de gauche. Ensuite, l'onglet SQL permet de coller et d'exécuter ce code :</p><pre id="r-410582" data-claire-element-id="410582"><code data-claire-semantic="sql">CREATE TABLE `ftp`.`users` (
+`name` TEXT NOT NULL ,
+ `pass` TEXT NOT NULL 
+) ENGINE = MYISAM</code></pre><p id="r-410583" data-claire-element-id="410583">Notre table étant créée, on va remplacer le fichier <strong>/etc/pam.d/vsftpd</strong> par le suivant (qui contient les informations d'accès à cette table) :</p><pre id="r-410584" data-claire-element-id="410584"><code>auth required pam_mysql.so host=localhost user=ftp passwd=votre_pass db=ftp table=users usercolumn=name passwdcolumn=pass crypt=1
+account required pam_mysql.so host=localhost user=ftp passwd=votre_pass db=ftp table=users usercolumn=name passwdcolumn=pass crypt=1</code></pre><aside id="r-410586" data-claire-element-id="410586" data-claire-semantic="warning"><p id="r-410585" data-claire-element-id="410585">N'oubliez pas de remplacer le mot de passe de l'utilisateur MySQL <strong>ftp</strong> (2 fois) dans ce fichier !</p></aside><p id="r-410587" data-claire-element-id="410587">On redémarre le serveur FTP !</p><pre id="r-410588" data-claire-element-id="410588"><code data-claire-semantic="console">/etc/init.d/vsftpd restart</code></pre><p id="r-410589" data-claire-element-id="410589">On va maintenant ajouter un utilisateur pour tester tout ça !</p><p id="r-410590" data-claire-element-id="410590">On repasse sur PHPMyAdmin (toujours avec l'utilisateur <strong>ftp</strong>) et on va ajouter un nouvel enregistrement à notre table fraîchement créée (onglet Insérer après avoir sélectionné la table). On renseigne un nom d'utilisateur et un mot de passe. Le mot de passe doit être crypté ! Il suffit de sélectionner ENCRYPT dans la liste déroulante, lors de l'insertion.</p><p id="r-410591" data-claire-element-id="410591">Il faut maintenant créer le fichier de configuration de l'utilisateur : <strong>/etc/vsftpd/[nom d'utilisateur]</strong>.</p><pre id="r-410592" data-claire-element-id="410592"><code>anon_world_readable_only=NO
+local_root=/home/utilisateur
+write_enable=YES
+anon_upload_enable=YES
+anon_mkdir_write_enable=YES
+anon_other_write_enable=YES
+hide_file=(none)
+force_dot_files=YES</code></pre><p id="r-410593" data-claire-element-id="410593">Pour le détail, je vous laisse la page de documentation : <a href="http://vsftpd.beasts.org/vsftpd_conf.html">http://vsftpd.beasts.org/vsftpd_conf.html</a>. Sachez qu'en gros, on définit le dossier dans lequel l'utilisateur est enfermé, on l'autorise à y écrire, et on lui permet de voir les fichiers cachés.</p><p id="r-410594" data-claire-element-id="410594">Et pour finir, le plus important : on crée le dossier de l'utilisateur (avec les bons droits !).</p><pre id="r-410595" data-claire-element-id="410595"><code data-claire-semantic="console">mkdir /home/[nom d'utilisateur]
+chown -R www-data.www-data /home/[nom d'utilisateur]
+chmod -R 700 /home/[nom d'utilisateur]</code></pre><p id="r-410596" data-claire-element-id="410596">Vous pouvez maintenant tenter une connexion à votre serveur FTP !</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux">Un serveur d&#039;hébergement multiutilisateur sous Linux</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/prerequis-19">
+Prérequis
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-web-apache-2">
+Installer le serveur web : Apache 2
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/configurer-apache-2-avec-le-mod-userdir">
+Configurer Apache 2 avec le mod UserDir
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-php5">
+Installer PHP5
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-de-base-de-donnees-mysql">
+Installer le serveur de base de données : MySQL
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-ftp-vsftpd">
+Installer le serveur FTP : vsFTPd
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/configurer-vsftpd-avec-pam-mysql">
+Configurer vsFTPd avec pam-mysql
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/les-scripts-de-gestion-des-comptes">
+Les scripts de gestion des comptes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/annexes-35">
+Annexes
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-ftp-vsftpd">
+<span class="arrow"></span>
+<span class="next">Installer le serveur FTP : vsFTPd</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/les-scripts-de-gestion-des-comptes">
+<span class="next">Les scripts de gestion des comptes</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lesscriptsdegestiondescomptes"></a><h2>Les scripts de gestion des comptes</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/configurer-vsftpd-avec-pam-mysql">
+<span class="arrow"></span>
+<span class="next">Configurer vsFTPd avec pam-mysql</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/annexes-35">
+<span class="next">Annexes</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-410598" data-claire-element-id="410598">Le plus gros a été fait ! L'idéal serait maintenant de créer des scripts qui permettent d'ajouter / d'enlever des utilisateurs à notre place.</p><aside id="r-410615" data-claire-element-id="410615" data-claire-semantic="information"><p id="r-410599" data-claire-element-id="410599">Pour résumer, voici la liste des opérations à faire lors de l'ajout d'un utilisateur :</p><ul id="r-410614" data-claire-element-id="410614"><li id="r-410601" data-claire-element-id="410601"><p id="r-410600" data-claire-element-id="410600">demander les identifiants ;</p></li><li id="r-410603" data-claire-element-id="410603"><p id="r-410602" data-claire-element-id="410602">vérifier si un utilisateur portant ce nom existe déjà ;</p></li><li id="r-410605" data-claire-element-id="410605"><p id="r-410604" data-claire-element-id="410604">créer les dossiers <strong>/home/[nom_utilisateur]</strong> et <strong>/home/[nom_utilisateur]/public_html</strong> ;</p></li><li id="r-410607" data-claire-element-id="410607"><p id="r-410606" data-claire-element-id="410606">régler le propriétaire et les droits du dossier <strong>/home/[nom_utilisateur]</strong> et de son contenu (www-data / 700) ;</p></li><li id="r-410609" data-claire-element-id="410609"><p id="r-410608" data-claire-element-id="410608">créer le fichier de configuration <strong>/etc/vsftpd/[nom_utilisateur]</strong> et le remplir selon le modèle précédemment vu (seule la ligne indiquant le dossier de l'utilisateur change) ;</p></li><li id="r-410611" data-claire-element-id="410611"><p id="r-410610" data-claire-element-id="410610">ajouter les identifiants de l'utilisateur dans la base de données ;</p></li><li id="r-410613" data-claire-element-id="410613"><p id="r-410612" data-claire-element-id="410612">créer un utilisateur MySQL (avec les identifiants fournis) et une base de données associée.</p></li></ul></aside><aside id="r-410630" data-claire-element-id="410630" data-claire-semantic="information"><p id="r-410616" data-claire-element-id="410616">Voici maintenant celle pour la suppression :</p><ul id="r-410629" data-claire-element-id="410629"><li id="r-410618" data-claire-element-id="410618"><p id="r-410617" data-claire-element-id="410617">demander les identifiants ;</p></li><li id="r-410620" data-claire-element-id="410620"><p id="r-410619" data-claire-element-id="410619">vérifier si un utilisateur portant ce nom existe bien ;</p></li><li id="r-410622" data-claire-element-id="410622"><p id="r-410621" data-claire-element-id="410621">supprimer les identifiants de l'utilisateur dans la base de données ;</p></li><li id="r-410624" data-claire-element-id="410624"><p id="r-410623" data-claire-element-id="410623">supprimer l'utilisateur MySQL et la base de données associée ;</p></li><li id="r-410626" data-claire-element-id="410626"><p id="r-410625" data-claire-element-id="410625">supprimer le fichier de configuration <strong>/etc/vsftpd/[nom_utilisateur]</strong> ;</p></li><li id="r-410628" data-claire-element-id="410628"><p id="r-410627" data-claire-element-id="410627">supprimer le dossier <strong>/home/[nom_utilisateur]</strong> et l'intégralité de son contenu.</p></li></ul></aside><p id="r-410631" data-claire-element-id="410631">Voici maintenant ma solution :</p><h2 id="r-adduser-sh" data-claire-element-id="410633">adduser.sh</h2><pre id="r-410632" data-claire-element-id="410632"><code data-claire-semantic="bash">#!/bin/sh
+ 
+# Informations à compléter
+pass_mysql_ftp=mot_de_passe_de_l'utilisateur_mysql_&quot;ftp&quot;
+pass_mysql_root=mot_de_passe_de_l'utilisateur_mysql_&quot;root&quot;
+ 
+# On demande la saisie d'un nom d'utilisateur et du mot de passe (2 fois)
+echo -n &quot;Nom d'utilisateur : &quot;
+read nom
+echo &quot;Mot de passe : &quot;
+read -s pass
+echo &quot;Mot de passe (le retour) : &quot;
+read -s pass2
+ 
+# On vérifie que les 2 mots de passe soient identiques
+if test $pass = $pass2 ; then
+ 
+        # On vérifie qu'il n'existe pas déjà un autre utilisateur du même nom
+        if test -d /home/$nom ; then
+                echo &quot;L'utilisateur existe deja&quot;
+        else
+                # On crée les dossiers et on fixe les droits
+                mkdir /home/$nom
+                mkdir /home/$nom/public_html
+                chown -R www-data.www-data /home/$nom
+                chmod -R 700 /home/$nom
+ 
+                # On crée le fichier de configuration pour vsFTPd
+                echo &quot;anon_world_readable_only=NO&quot; &gt; /etc/vsftpd/$nom
+                echo &quot;local_root=/home/$nom&quot; &gt;&gt; /etc/vsftpd/$nom
+                echo &quot;write_enable=YES&quot; &gt;&gt; /etc/vsftpd/$nom
+                echo &quot;anon_upload_enable=YES&quot; &gt;&gt; /etc/vsftpd/$nom
+                echo &quot;anon_mkdir_write_enable=YES&quot; &gt;&gt; /etc/vsftpd/$nom
+                echo &quot;anon_other_write_enable=YES&quot; &gt;&gt; /etc/vsftpd/$nom
+                echo &quot;hide_file=(none)&quot; &gt;&gt; /etc/vsftpd/$nom
+                echo &quot;force_dot_files=YES&quot; &gt;&gt; /etc/vsftpd/$nom
+ 
+                # On ajoute l'utilisateur dans la base de données
+                mysql -u ftp -p&quot;$pass_mysql_ftp&quot; -D ftp -e &quot;INSERT INTO users (name ,pass) VALUES ('$nom', ENCRYPT( '$pass' ));&quot;
+ 
+                # On crée une base de données où l'utilisateur est tout-puissant
+                mysql -u root -p&quot;$pass_mysql_root&quot; -e &quot;CREATE USER '$nom'@'localhost' IDENTIFIED BY '$pass';GRANT USAGE ON *.* TO '$nom'@'localhost' IDENTIFIED BY '$pass' WITH MAX_QUERIES_PER_HOUR 0 MAX_CONNECTIONS_PER_HOUR 0 MAX_UPDATES_PER_HOUR 0 MAX_USER_CONNECTIONS 0;CREATE DATABASE IF NOT EXISTS $nom;GRANT ALL PRIVILEGES ON $nom.* TO '$nom'@'localhost';&quot;
+                
+                echo &quot;Utilisateur ajoute avec succes&quot;
+        fi
+ 
+else
+ 
+        echo &quot;Les 2 mots de passe ne sont pas identiques&quot;
+ 
+fi</code></pre><h2 id="r-deluser-sh" data-claire-element-id="410641">deluser.sh</h2><pre id="r-410634" data-claire-element-id="410634"><code data-claire-semantic="bash">#!/bin/sh
+ 
+# Informations à compléter
+pass_mysql_ftp=mot_de_passe_de_l'utilisateur_mysql_&quot;ftp&quot;
+pass_mysql_root=mot_de_passe_de_l'utilisateur_mysql_&quot;root&quot;
+ 
+# On demande la saisie du nom de l'utilisateur à supprimer
+echo -n &quot;Nom d'utilisateur : &quot;
+read nom
+ 
+# On vérifie qu'il existe
+if test -d /home/$nom ; then
+ 
+        # On le supprime de la liste des utilisateurs de vsFTPd
+        mysql -u ftp -p&quot;$pass_mysql_ftp&quot; -D ftp -e &quot;DELETE FROM users WHERE name='$nom';&quot;
+ 
+        # On supprime son compte et sa base de donnée MySQL
+        mysql -u root -p&quot;$pass_mysql_root&quot; -e &quot;DROP USER $nom@'localhost';DROP DATABASE IF EXISTS $nom;&quot;
+ 
+        # On supprime son fichier de configuration vsFTPd
+        rm -f /etc/vsftpd/$nom
+ 
+        # On supprime son dossier
+        rm -fr /home/$nom
+ 
+        echo &quot;Utilisateur DETRUIT&quot;
+else
+        echo &quot;L'utilisateur n'existe pas&quot;
+fi</code></pre><aside id="r-410637" data-claire-element-id="410637" data-claire-semantic="information"><p id="r-410635" data-claire-element-id="410635">Pour exécuter ces scripts, en admettant qu'il soient enregistrés dans <strong>/root</strong>, il faut utiliser la commande suivante :</p><pre id="r-410636" data-claire-element-id="410636"><code data-claire-semantic="console">sh /root/mon_du_script.sh</code></pre></aside><aside id="r-410639" data-claire-element-id="410639" data-claire-semantic="information"><p id="r-410638" data-claire-element-id="410638">J'ai fait des scripts shell, mais rien ne vous empêche de les faire en PHP, par exemple.<br/> Il faudrait dans ce cas-là installer le paquet <strong>php5-cli</strong>.</p></aside><p id="r-410640" data-claire-element-id="410640">Vous voilà donc en possession d'un système d'hébergement multiutilisateurs ! :D <br/> Je vous propose quelques annexes, pour préciser ou améliorer certains points. ;)</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux">Un serveur d&#039;hébergement multiutilisateur sous Linux</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/prerequis-19">
+Prérequis
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-web-apache-2">
+Installer le serveur web : Apache 2
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/configurer-apache-2-avec-le-mod-userdir">
+Configurer Apache 2 avec le mod UserDir
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-php5">
+Installer PHP5
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-de-base-de-donnees-mysql">
+Installer le serveur de base de données : MySQL
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-ftp-vsftpd">
+Installer le serveur FTP : vsFTPd
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/configurer-vsftpd-avec-pam-mysql">
+Configurer vsFTPd avec pam-mysql
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/les-scripts-de-gestion-des-comptes">
+Les scripts de gestion des comptes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/annexes-35">
+Annexes
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/configurer-vsftpd-avec-pam-mysql">
+<span class="arrow"></span>
+<span class="next">Configurer vsFTPd avec pam-mysql</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/annexes-35">
+<span class="next">Annexes</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Annexes"></a><h2>Annexes</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/les-scripts-de-gestion-des-comptes">
+<span class="arrow"></span>
+<span class="next">Les scripts de gestion des comptes</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-securite-1" data-claire-element-id="410658">Sécurité</h2><aside id="r-410644" data-claire-element-id="410644" data-claire-semantic="warning"><p id="r-410643" data-claire-element-id="410643">Il faut faire attention à ce que seul l'utilisateur <strong>root</strong> puisse lire les scripts que nous avons créés, car ils contiennent des mots de passe ! De plus, on pourrait créer des utilisateurs sans être <strong>root</strong>...</p></aside><p id="r-410645" data-claire-element-id="410645">On va donc résumer quels sont nos fichiers / dossiers et leurs permissions :</p><ul id="r-410656" data-claire-element-id="410656"><li id="r-410647" data-claire-element-id="410647"><p id="r-410646" data-claire-element-id="410646"><strong>/home/utilisateur</strong> : Propriétairewww-data / Groupewww-data / Permissions700 (www-data peut tout faire) ;</p></li><li id="r-410649" data-claire-element-id="410649"><p id="r-410648" data-claire-element-id="410648"><strong>/etc/vsftpd</strong> : Propriétaireroot / Groupewww-data / Permissions740 (root peut tout faire ; www-data peut lire) ;</p></li><li id="r-410651" data-claire-element-id="410651"><p id="r-410650" data-claire-element-id="410650"><strong>/etc/vsftpd/utilisateur</strong> : Propriétaireroot / Groupewww-data / Permissions740 ;</p></li><li id="r-410653" data-claire-element-id="410653"><p id="r-410652" data-claire-element-id="410652"><strong>/root/adduser.sh</strong> : Propriétaireroot / Grouperoot / Permissions700 ;</p></li><li id="r-410655" data-claire-element-id="410655"><p id="r-410654" data-claire-element-id="410654"><strong>/root/deluser.sh</strong> : Propriétaireroot / Grouperoot / Permissions700.</p></li></ul><p id="r-410657" data-claire-element-id="410657">Changer le propriétaire et le groupe d'un fichier : <strong>chown proprietaire.groupe fichier</strong><br/> Changer le propriétaire et le groupe d'un dossier (et de son contenu) : <strong>chown -R proprietaire.groupe dossier</strong><br/> Changer les permissions d'un fichier : <strong>chmod permissions fichier</strong><br/> Changer les permissions d'un dossier (et de son contenu) : <strong>chmod -R permissions dossier</strong></p><h2 id="r-administrer-les-fichiers-des-utilisateurs" data-claire-element-id="410675">Administrer les fichiers des utilisateurs</h2><p id="r-410659" data-claire-element-id="410659">Posons deux choses :</p><ul id="r-410664" data-claire-element-id="410664"><li id="r-410661" data-claire-element-id="410661"><p id="r-410660" data-claire-element-id="410660">vous voulez pouvoir gérer les fichiers des utilisateurs situés dans le dossier <strong>/home</strong> avec un client FTP ;</p></li><li id="r-410663" data-claire-element-id="410663"><p id="r-410662" data-claire-element-id="410662">Vous voulez aussi pouvoir gérer votre page d'accueil qui, elle, se trouve dans <strong>/var/www</strong>.</p></li></ul><aside id="r-410666" data-claire-element-id="410666" data-claire-semantic="error"><p id="r-410665" data-claire-element-id="410665">Une solution serait de créer 2 comptes FTP manuellement, un dont le dossier est <strong>/home</strong> et l'autre <strong>/var/www</strong>.<br/> Seulement, on ne va pas tout compliquer avec 2 comptes FTP lorsqu'il ne pourrait n'y en avoir qu'un ! :p</p></aside><p id="r-410667" data-claire-element-id="410667">On va donc créer un compte <strong>admin</strong> dont le dossier est <strong>/home</strong>. Il ne faut surtout pas utiliser le script, mais bien créer le fichier de configuration <strong>/etc/vsftpd/admin</strong> à la main et ajouter l'utilisateur <strong>admin</strong> dans la base de donnée avec PHPMyAdmin.</p><p id="r-410668" data-claire-element-id="410668">Nous avons donc un compte FTP <strong>admin</strong> pouvant naviguer et écrire dans les dossiers des utilisateurs.<br/> On va maintenant monter le dossier <strong>/var/www</strong> dans le dossier <strong>/home/www</strong> que nous créerons. Le dossier <strong>/home/www</strong> sera donc une sorte de redirection vers <strong>/var/www</strong>.</p><p id="r-410669" data-claire-element-id="410669">On crée le dossier <strong>/home/www</strong> et on règle ses permissions, ainsi que celle de <strong>/var/www</strong> :</p><pre id="r-410670" data-claire-element-id="410670"><code data-claire-semantic="console">mkdir /home/www
+chown -R www-data.www-data /home/www
+chmod -R 700 /home/www
+chown -R www-data.www-data /var/www
+chmod -R 700 /var/www</code></pre><p id="r-410671" data-claire-element-id="410671">On va ensuite modifier le fichier <strong>/etc/fstab</strong>, qui contient les informations sur les montages à faire au démarrage, et insérer la ligne suivante :</p><pre id="r-410672" data-claire-element-id="410672"><code>/var/www        /home/www        none        bind        0        0</code></pre><p id="r-410673" data-claire-element-id="410673">On n'a plus qu'à faire un petit <strong>mount -a</strong> pour que les modifications soient appliquées.</p><p id="r-410674" data-claire-element-id="410674">On a alors accès à la racine du serveur web avec notre compte <strong>admin</strong> ! :D</p><h2 id="r-voir-l-espace-disque-occupe" data-claire-element-id="410681">Voir l'espace disque occupé</h2><p id="r-410676" data-claire-element-id="410676">Encore une idée d'amélioration : créer un script permettant de connaître l'espace disque occupé par chaque utilisateur.<br/> La solution qui me semble la meilleure est tout simplement d'afficher séparément la taille de tous les dossiers contenus dans le dossier <strong>/home</strong>.</p><p id="r-410677" data-claire-element-id="410677">Voici donc une application de cette solution :</p><pre id="r-410678" data-claire-element-id="410678"><code data-claire-semantic="bash">#!/bin/sh
+ 
+# Pour chaque dossier contenu dans /home
+for dir in /home/* ; do
+        
+        # Si le dossier n'est pas /home/www
+        if test $dir != &quot;/home/www&quot; ; then
+ 
+                # On affiche sa taille
+                du -hs $dir
+        else
+                du -hs /var/www
+        fi
+done</code></pre><aside id="r-410680" data-claire-element-id="410680" data-claire-semantic="warning"><p id="r-410679" data-claire-element-id="410679">Ce script ne tient pas compte de la taille de la base de données de l'utilisateur.</p></aside><h2 id="r-installer-des-extensions-php" data-claire-element-id="410684">Installer des extensions PHP</h2><p id="r-410682" data-claire-element-id="410682">Si vous avez besoin d'installer certaines extensions à PHP, comme GD pour pouvoir traiter des images par exemple, il suffit juste de l'installer avec <strong>aptitude</strong> de la manière suivante :</p><pre id="r-410683" data-claire-element-id="410683"><code data-claire-semantic="console">aptitude install php5-gd</code></pre><h2 id="r-les-fichiers-htaccess" data-claire-element-id="410695">Les fichiers .htaccess</h2><p id="r-410685" data-claire-element-id="410685">Les fichiers <strong>.htaccess</strong> permettent de modifier la configuration d'Apache 2 de manière exceptionnelle, c'est-à-dire seulement pour le dossier dans lequel le fichier <strong>.htaccess</strong> se trouve et sans pour autant avoir à modifier le fichier de configuration principal d'Apache 2.</p><p id="r-410686" data-claire-element-id="410686">Pour résumer, un <strong>.htaccess</strong> peut permettre à un utilisateur de modifier la configuration d'Apache 2, avec certaines limites.</p><p id="r-410687" data-claire-element-id="410687">Ces limites sont définies dans notre fichier <strong>/etc/apache2/mods-available/userdir.conf</strong> :</p><pre id="r-410688" data-claire-element-id="410688"><code>AllowOverride FileInfo AuthConfig Limit</code></pre><aside id="r-410690" data-claire-element-id="410690" data-claire-semantic="information"><p id="r-410689" data-claire-element-id="410689"><strong>AllowOverride None</strong> interdit l'usage des fichiers <strong>.htaccess</strong>.<br/><strong>AllowOverride All</strong>, au contraire, ne leur donne pas de restriction.</p></aside><p id="r-410691" data-claire-element-id="410691">Pour plus d'informations sur la commande AllowOverride, jetez un coup d'oeil à la <a href="http://httpd.apache.org/docs/2.2/mod/core.html#allowoverride">documentation d'Apache 2.2</a> ! ;)</p><p id="r-410692" data-claire-element-id="410692">J'espère que ce tuto vous a été profitable !</p><p id="r-410693" data-claire-element-id="410693">Vous pouvez me contacter par <a href="mp-273-23683.html">MP</a> si vous avez un problème.</p><p id="r-410694" data-claire-element-id="410694"><em>Je remercie <a href="http://www.siteduzero.com/membres-294-43623.html">vincent1870</a> pour sa correction de qualité malgré le fait qu'il était occupé :) .</em></p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux">Un serveur d&#039;hébergement multiutilisateur sous Linux</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/prerequis-19">
+Prérequis
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-web-apache-2">
+Installer le serveur web : Apache 2
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/configurer-apache-2-avec-le-mod-userdir">
+Configurer Apache 2 avec le mod UserDir
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-php5">
+Installer PHP5
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-de-base-de-donnees-mysql">
+Installer le serveur de base de données : MySQL
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/installer-le-serveur-ftp-vsftpd">
+Installer le serveur FTP : vsFTPd
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/configurer-vsftpd-avec-pam-mysql">
+Configurer vsFTPd avec pam-mysql
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/les-scripts-de-gestion-des-comptes">
+Les scripts de gestion des comptes
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/annexes-35">
+Annexes
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-serveur-d-hebergement-multiutilisateur-sous-linux/les-scripts-de-gestion-des-comptes">
+<span class="arrow"></span>
+<span class="next">Les scripts de gestion des comptes</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/un-serveur-d-hebergement-multiutilisateur-sous-linux.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 08:38:52 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/un-serveur-d-hebergement-multiutilisateur-sous-linux.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:33:02 GMT -->
+</html>

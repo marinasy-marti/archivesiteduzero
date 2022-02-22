@@ -1,0 +1,552 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 08:55:59 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:35:41 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Un système de news sans base de données grâce à serialize et unserialize</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Un système de news sans base de données grâce à serialize et unserialize</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Unsystmedenewssansbasededonnesgrceserializeetunserialize">Un système de news sans base de données grâce à serialize et unserialize</a><br/><a href="#Introduction">Introduction</a><br/><a href="#Listerlesnews">Lister les news</a><br/><a href="#Ajouterunenews">Ajouter une news</a><br/><a href="#Supprimerunenews">Supprimer une news</a><br/><a href="#Quelquesamliorationspossibles">Quelques améliorations possibles</a><br/></div>
+<a name="Unsystmedenewssansbasededonnesgrceserializeetunserialize"></a><h2>Un système de news sans base de données grâce à serialize et unserialize</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/introduction-65">
+<span class="next">Introduction</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-450588" data-claire-element-id="450588">Bonjour, <br/> Vous avez besoin de développer deux ou trois modules simples pour votre site perso, mais vous ne voulez pas vous embêter à gérer vos bases de données et à inclure des fichiers de configuration de partout ?<br/> Ce tutoriel est fait pour vous. ;) <br/> Nous allons voir, étape par étape, la création d'un système basique de news à l'aide des fichiers et de deux fonctions bien pratiques de PHP ...</p><aside id="r-450590" data-claire-element-id="450590" data-claire-semantic="warning"><p id="r-450589" data-claire-element-id="450589">Je préfère vous prévenir tout de suite, il n'est absolument pas pratique d'effectuer des sélections complexes (conditions, ordonnage) en se basant sur ce système.<br/> Si vous avez besoin de quelque chose de tel, préférez utiliser une base de données.</p></aside>
+</div><a name="Introduction"></a><h2>Introduction</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/lister-les-news">
+<span class="next">Lister les news</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-pourquoi-les-fichiers" data-claire-element-id="450592">Pourquoi les fichiers ?</h2><p id="r-450591" data-claire-element-id="450591">Vous vous demandez peut-être quel est l'intérêt d'utiliser les fichiers plutôt qu'une base de données.<br/> La principale réponse est : les fichiers sont beaucoup plus rapides que la communication avec une base de données, environ 5 fois selon des tests que j'ai effectués !</p><h2 id="r-serialize-et-unserialize" data-claire-element-id="450594">Serialize et unserialize</h2><p id="r-450593" data-claire-element-id="450593">Je ne m'attarderai pas sur ces deux fonctions, étant donné qu'il y a déjà <a href="http://www.siteduzero.com/tutoriel-3-31574-conservons-nos-variables-avec-serialize.html">un tutoriel</a> qui en parle.<br/> Sachez seulement qu'elles permettent de sauvegarder des données quelque part (fichier, base de données) en conservant leur format (type de variable, array, etc). ;)</p><h2 id="r-notre-systeme-de-news" data-claire-element-id="450608">Notre système de news</h2><p id="r-450595" data-claire-element-id="450595">Le système de news que nous allons coder ici est très basique.<br/> Pour chaque news, nous aurons quatre informations :</p><ul id="r-450604" data-claire-element-id="450604"><li id="r-450597" data-claire-element-id="450597"><p id="r-450596" data-claire-element-id="450596"><strong>id</strong>, l'identificateur unique de la news ;</p></li><li id="r-450599" data-claire-element-id="450599"><p id="r-450598" data-claire-element-id="450598"><strong>titre</strong>, le titre de la news ;</p></li><li id="r-450601" data-claire-element-id="450601"><p id="r-450600" data-claire-element-id="450600"><strong>auteur</strong>, l'auteur de la news ;</p></li><li id="r-450603" data-claire-element-id="450603"><p id="r-450602" data-claire-element-id="450602"><strong>contenu</strong>, le contenu de la news.</p></li></ul><p id="r-450605" data-claire-element-id="450605">Le principe est le suivant : dans le fichier <strong>news.txt</strong>, se trouve un array sérialisé (traité par la fonction serialize ;) ) contenant les informations sur les news.<br/> Cet array ressemble à ça lorsqu'il n'est pas encore sérialisé :</p><pre id="r-450606" data-claire-element-id="450606"><code data-claire-semantic="html+php">&lt;?php
+$news = array(1 =&gt; array('auteur' =&gt; 'christophetd', 'titre' =&gt; 'Ma première news', 'contenu' =&gt; 'Test'));
+?&gt;</code></pre><p id="r-450607" data-claire-element-id="450607">Lorsque l'on voudra lister toutes les news, nous n'aurons qu'à faire un <strong>foreach()</strong> sur cet array pour obtenir les informations sur les news.<br/> Vous êtes prêts ? Let's begin to code. :pirate:</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize">Un système de news sans base de données grâce à serialize et unserialize</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/introduction-65">
+Introduction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/lister-les-news">
+Lister les news
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/ajouter-une-news">
+Ajouter une news
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/supprimer-une-news">
+Supprimer une news
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/quelques-ameliorations-possibles-3">
+Quelques améliorations possibles
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/lister-les-news">
+<span class="next">Lister les news</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Listerlesnews"></a><h2>Lister les news</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/introduction-65">
+<span class="arrow"></span>
+<span class="next">Introduction</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/ajouter-une-news">
+<span class="next">Ajouter une news</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-450610" data-claire-element-id="450610">Nous allons commencer par établir une liste des news.<br/> Tout d'abord, pour que nous ayions quelque chose à afficher, commencez par insérer le texte ci-dessous dans le fichier <em>news.txt</em> :</p><p id="r-450611" data-claire-element-id="450611"></p><div id="r-450613" data-claire-element-id="450613"><p id="r-450612" data-claire-element-id="450612">a:2:{i:0;a:3:{s:5:&quot;titre&quot;;s:16:&quot;Une news de test&quot;;s:6:&quot;auteur&quot;;s:12:&quot;christophetd&quot;;s:7:&quot;contenu&quot;;s:77:&quot;J'ai remarqué que les news de test portaient souvent toutes le même titre ...&quot;;}i:1;a:3:{s:5:&quot;titre&quot;;s:14:&quot;Une autre news&quot;;s:6:&quot;auteur&quot;;s:8:&quot;tarzoune&quot;;s:7:&quot;contenu&quot;;s:35:&quot;Bonjour, <br/> J'aime bien les news !&quot;;}}</p></div><p id="r-450614" data-claire-element-id="450614">(Ne vous occupez pas de savoir ce que ça signifie, il s'agit en fait d'un array sérialisé ;) )</p><p id="r-450615" data-claire-element-id="450615">Nous allons commencer par récupérer le contenu du fichier en utilisant la fonction <a href="http://php.net/file_get_contents">file_get_contents()</a> :</p><pre id="r-450616" data-claire-element-id="450616"><code data-claire-semantic="html+php">&lt;?php
+$contenu_fichier_news = file_get_contents('news.txt');
+?&gt;</code></pre><p id="r-450617" data-claire-element-id="450617">Ensuite, nous allons transformer le contenu (qui est actuellement sérialisé, souvenez-vous ;) ) en un array exploitable à l'aide de unserialize() :</p><pre id="r-450618" data-claire-element-id="450618"><code data-claire-semantic="html+php">&lt;?php
+$liste_news = unserialize(file_get_contents('news.txt'));
+?&gt;</code></pre><p id="r-450619" data-claire-element-id="450619">Tiens, voyons un peu ce que cet array a dans le ventre :</p><pre id="r-450620" data-claire-element-id="450620"><code data-claire-semantic="html+php">&lt;?php
+echo '&lt;pre&gt;'.print_r($liste_news, true).'&lt;/pre&gt;';
+?&gt;</code></pre><p id="r-450621" data-claire-element-id="450621">Ce qui nous renvoie :</p><pre id="r-450622" data-claire-element-id="450622"><code>Array
+(
+    [0] =&gt; Array
+        (
+            [titre] =&gt; Une news de test
+            [auteur] =&gt; christophetd
+            [contenu] =&gt; J'ai remarqué que les news de test portaient souvent toutes le même titre ...
+        )
+
+    [1] =&gt; Array
+        (
+            [titre] =&gt; Une autre news
+            [auteur] =&gt; tarzoune
+            [contenu] =&gt; Bonjour, 
+J'aime bien les news !
+        )
+
+)</code></pre><p id="r-450623" data-claire-element-id="450623">Il ne nous reste plus qu'à vérifier si le tableau récupéré n'est pas vide (au cas où il n'y aurait pas de news), puis de le parcourir à l'aide d'un foreach().<br/> Je vous laisse le faire, c'est pas bien compliqué. :D</p><p id="r-450624" data-claire-element-id="450624"></p><div id="r-450628" data-claire-element-id="450628"><pre id="r-450625" data-claire-element-id="450625"><code data-claire-semantic="html+php">&lt;?php
+$liste_news = unserialize(file_get_contents('news.txt'));
+if(!empty($liste_news)) {
+	foreach($liste_news as $id =&gt; $news) {
+		$news = array_map('htmlspecialchars', $news);
+		?&gt;
+		&lt;h2&gt;&lt;?php echo $news['titre'] ?&gt;&lt;/h2&gt;
+			&lt;i&gt;Ajout&amp;eacute;e par &lt;?php echo $news['auteur'] ?&gt;&lt;/i&gt; &lt;br /&gt;
+			&lt;p&gt;&lt;?php echo $news['contenu'] ?&gt;&lt;/p&gt;
+			&lt;i&gt;&lt;a href=&quot;supprimer_news.php?id=&lt;?php echo $id ?&gt;&quot; onclick=&quot;return confirm('Etes-vous s&amp;ucirc;r de vouloir supprimer cette news ?');&quot;&gt;Supprimer&lt;/a&gt;
+			&amp;nbsp;
+			&lt;a href=&quot;editer_news.php?id=&lt;?php echo $id ?&gt;&quot;&gt;Editer&lt;/a&gt;&lt;/i&gt;
+			&lt;br /&gt;&lt;br /&gt;
+		&lt;?php
+	}
+}
+else {
+	echo 'Il n\'y a aucune news pour le moment&lt;br /&gt;';
+}
+echo '&lt;a href=&quot;ajouter_news.php&quot;&gt;Ajouter une news&lt;/a&gt;';</code></pre><aside id="r-450627" data-claire-element-id="450627" data-claire-semantic="information"><p id="r-450626" data-claire-element-id="450626">J'utilise ici la fonction <a href="http://www.php.net/htmlspecialchars">htmlspecialchars()</a>, qui permet de remplacer tous les caractères spéciaux (&lt;, &gt;, etc) par leur équivalent HTML.<br/> Vous pouvez bien entendu utiliser la fonction dont vous avez besoin (parsage de bbcode par exemple).</p></aside></div>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize">Un système de news sans base de données grâce à serialize et unserialize</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/introduction-65">
+Introduction
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/lister-les-news">
+Lister les news
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/ajouter-une-news">
+Ajouter une news
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/supprimer-une-news">
+Supprimer une news
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/quelques-ameliorations-possibles-3">
+Quelques améliorations possibles
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/introduction-65">
+<span class="arrow"></span>
+<span class="next">Introduction</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/ajouter-une-news">
+<span class="next">Ajouter une news</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Ajouterunenews"></a><h2>Ajouter une news</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/lister-les-news">
+<span class="arrow"></span>
+<span class="next">Lister les news</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/supprimer-une-news">
+<span class="next">Supprimer une news</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-450630" data-claire-element-id="450630">Bien, maintenant qu'on peut afficher une liste des news, je suppose que vous aimeriez bien pouvoir en ajouter. :) <br/> Tout d'abord, commençons par créer la page <em>ajouter_news.php</em>, et liez-là dans index.php.</p><p id="r-450631" data-claire-element-id="450631">Il va nous falloir un formulaire contenant les champs <strong>pseudo, titre</strong> et <strong>contenu</strong> :</p><pre id="r-450632" data-claire-element-id="450632"><code data-claire-semantic="html+php">&lt;form action=&quot;&quot; method=&quot;post&quot;&gt;
+	&lt;label for=&quot;pseudo&quot;&gt;Votre pseudo :&lt;/label&gt; &lt;input type=&quot;text&quot; name=&quot;pseudo&quot; id=&quot;pseudo&quot; /&gt;&lt;br /&gt;
+	&lt;label for=&quot;titre&quot;&gt;Titre de la news :&lt;/label&gt; &lt;input type=&quot;text&quot; name=&quot;titre&quot; id=&quot;titre&quot; /&gt;&lt;br /&gt;
+	&lt;label for=&quot;contenu&quot;&gt;Contenu de la news :&lt;/label&gt; &lt;br /&gt;
+	&lt;textarea name=&quot;contenu&quot; id=&quot;contenu&quot; rows=&quot;20&quot; cols=&quot;60&quot;&gt;&lt;/textarea&gt;&lt;br /&gt;
+	     &lt;input type=&quot;submit&quot; value=&quot;Ajouter la news&quot; /&gt;
+&lt;/form&gt;</code></pre><p id="r-450633" data-claire-element-id="450633">Ensuite, on va vérifier si le formulaire a été soumis / correctement rempli. Si c'est le cas, on va récupérer les valeurs entrées, puis les insérer à la suite de l'array désérialisé contenu dans news.txt :</p><pre id="r-450634" data-claire-element-id="450634"><code data-claire-semantic="html+php">&lt;?php
+if(isset($_POST['titre']) &amp;&amp; isset($_POST['contenu']) &amp;&amp; isset($_POST['pseudo'])) {
+        //On définit les variables
+	$titre = $_POST['titre'];
+        $contenu = $_POST['contenu'];
+        $pseudo = $_POST['pseudo'];
+
+	//Puis on récupère les news qui existent déjà, et on stocke le tout dans $news
+	$news = unserialize(file_get_contents('news.txt'));
+	//On ajoute les données de la news à la suite de l'array
+	$news[] = array('titre' =&gt; $titre, 'auteur' =&gt; $pseudo, 'contenu' =&gt; $contenu);
+	
+	//Et pour finir, on enregistre le tout
+	file_put_contents('news.txt', serialize($news));
+	echo 'La news a bien été ajoutée !';
+} else {
+    //Affichage du formulaire
+}
+?&gt;</code></pre><p id="r-450635" data-claire-element-id="450635">Vous pouvez tester ce code, et vous verrez qu'il marche (qui a osé en douter ? :-° ).</p><aside id="r-450637" data-claire-element-id="450637" data-claire-semantic="warning"><p id="r-450636" data-claire-element-id="450636">La fonction <a href="http://www.php.net/file_put_contents">file_put_contents()</a> n'est active que depuis PHP5, donc il est fort probable qu'elle ne soit pas disponible si votre hébergeur a une version plus ancienne de PHP.<br/> Si vous n'êtes pas certains que votre hébergeur supporte PHP5, ou si vous souhaitez rendre votre code compatible PHP4 comme PHP5, vous pouvez placer ce bout de code dans vos scripts qui permet de définir la fonction file_put_contents au cas où elle serait absente.</p></aside><pre id="r-450638" data-claire-element-id="450638"><code data-claire-semantic="html+php">&lt;?php
+if (!function_exists('file_put_contents')) {
+	function file_put_contents($filename, $data) {
+		$f = @fopen($filename, 'w');
+		if (!$f) {
+			return false;
+		} else {
+			$bytes = fwrite($f, $data);
+			fclose($f);
+			return $bytes;
+		}
+	}
+}
+?&gt;</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize">Un système de news sans base de données grâce à serialize et unserialize</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/introduction-65">
+Introduction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/lister-les-news">
+Lister les news
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/ajouter-une-news">
+Ajouter une news
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/supprimer-une-news">
+Supprimer une news
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/quelques-ameliorations-possibles-3">
+Quelques améliorations possibles
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/lister-les-news">
+<span class="arrow"></span>
+<span class="next">Lister les news</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/supprimer-une-news">
+<span class="next">Supprimer une news</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Supprimerunenews"></a><h2>Supprimer une news</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/ajouter-une-news">
+<span class="arrow"></span>
+<span class="next">Ajouter une news</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/quelques-ameliorations-possibles-3">
+<span class="next">Quelques améliorations possibles</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-450640" data-claire-element-id="450640">Créez la page <em>supprimer_news.php</em>.<br/> Elle recevra en paramètre (GET) l'id de la news à supprimer.</p><p id="r-450641" data-claire-element-id="450641">Pour supprimer, nous allons utiliser la fonction <a href="http://php.net/unset">unset()</a>.<br/> Elle permet d'effacer aussi bien une variable que l'index d'un tableau (exactement ce dont nous avons besoin :p ).<br/> Par exemple, en faisant :</p><pre id="r-450642" data-claire-element-id="450642"><code data-claire-semantic="html+php">&lt;?php
+$array = array('nom' =&gt; 'Dupont', 'prenom' =&gt; 'Jean');
+unset($array['nom']);
+?&gt;</code></pre><p id="r-450643" data-claire-element-id="450643">L'array ne contiendra plus que l'index 'prenom'. <br/> Vous voyez où je veux en venir ? Nous allons faire la même chose avec notre array $news :</p><pre id="r-450644" data-claire-element-id="450644"><code data-claire-semantic="html+php">&lt;?php
+//Si l'id passé en paramètre dans l'url n'existe pas, c'est que le visiteur a été amenené ici par hasard
+if(!isset($_GET['id'])) {
+	//Donc on redirige vers index.php
+	header('Location: index.php');
+	//Puis on stoppe l'exécution du script
+	exit();
+}
+//On récupère l'array des news
+$news = unserialize(file_get_contents('news.txt'));
+//Puis l'id passé en paramètre
+$id = (int) $_GET['id'];
+
+//Si la news existe
+if(isset($news[$id])) {
+	//On efface l'index correspondant à l'id de la news
+	unset($news[$id]);
+	
+	//Puis on sauvegarde le tout
+	file_put_contents('news.txt', serialize($news));
+
+	echo 'La news a bien &amp;eacute;t&amp;eacute; supprim&amp;eacute;e !';
+}
+else {
+	echo 'La news n\'existe pas.';
+}
+echo '&lt;br /&gt;';
+echo '&lt;a href=&quot;index.php&quot;&gt;Retour&lt;/a&gt;';</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize">Un système de news sans base de données grâce à serialize et unserialize</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/introduction-65">
+Introduction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/lister-les-news">
+Lister les news
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/ajouter-une-news">
+Ajouter une news
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/supprimer-une-news">
+Supprimer une news
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/quelques-ameliorations-possibles-3">
+Quelques améliorations possibles
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/ajouter-une-news">
+<span class="arrow"></span>
+<span class="next">Ajouter une news</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/quelques-ameliorations-possibles-3">
+<span class="next">Quelques améliorations possibles</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Quelquesamliorationspossibles"></a><h2>Quelques améliorations possibles</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/supprimer-une-news">
+<span class="arrow"></span>
+<span class="next">Supprimer une news</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-450646" data-claire-element-id="450646">Ce script ne demande qu'à être amélioré :</p><ul id="r-450653" data-claire-element-id="450653"><li id="r-450648" data-claire-element-id="450648"><p id="r-450647" data-claire-element-id="450647">Il serait mieux, pour récupérer l'array des news, d'appeller une fonction getNews() plutôt que d'avoir à chaque fois recourt à unserialize() et file_get_contents()</p></li><li id="r-450652" data-claire-element-id="450652"><p id="r-450649" data-claire-element-id="450649">Vous serez sûrement d'accord avec moi si je vous dit qu'il manque un petit quelque chose ... que diriez-vous de coder la page editer_news.php ? Elle fonctionne sur le même principe que supprimer_news.php, sauf qu'au lieu d'effacer la news de l'array, on va la modifier. ;) <br/> Voici la correction :</p><div id="r-450651" data-claire-element-id="450651"><pre id="r-450650" data-claire-element-id="450650"><code data-claire-semantic="html+php">&lt;?php
+//Si l'id passé en paramètre dans l'url n'existe pas, c'est que le visiteur a été amenené ici par hasard
+if(!isset($_GET['id'])) {
+	//Donc on redirige vers index.php
+	header('Location: index.php');
+	//Puis on stoppe l'exécution du script
+	exit();
+}
+//On récupère l'array des news
+$news = unserialize(file_get_contents('news.txt'));
+$newsAmodifier = (int) $_GET['id'];
+
+//Si le formulaire a été soumis
+if(isset($_POST['titre']) &amp;&amp; isset($_POST['contenu'])) {
+	//On modifie les infos de la news
+	$news[$newsAmodifier]['titre'] = $_POST['titre'];
+	$news[$newsAmodifier]['contenu'] = $_POST['contenu'];
+	
+	//Puis on sauvegarde le tout
+	file_put_contents('news.txt', serialize($news));
+	echo 'La news a bien &amp;eacute;t&amp;eacute; edit&amp;eacute;e.';
+	echo '&lt;br /&gt;';
+	echo '&lt;a href=&quot;index.php&quot;&gt;Retour&lt;/a&gt;';
+} else { //Sinon, on affiche le formulaire d'édition
+	?&gt;
+	&lt;form action=&quot;&quot; method=&quot;POST&quot;&gt;
+	Auteur : &lt;strong&gt;&lt;?php echo $news[$newsAmodifier]['auteur'] ?&gt;&lt;/strong&gt;&lt;br /&gt;
+	&lt;label for=&quot;titre&quot;&gt;Titre de la news :&lt;/label&gt; &lt;input type=&quot;text&quot; name=&quot;titre&quot; id=&quot;titre&quot; value=&quot;&lt;?php echo $news[$newsAmodifier]['titre'] ?&gt;&quot; &gt;&lt;br /&gt;
+	&lt;label for=&quot;contenu&quot;&gt;Contenu de la news : &lt;/label&gt;&lt;br /&gt;
+	&lt;textarea name=&quot;contenu&quot; id=&quot;contenu&quot; rows=&quot;20&quot; cols=&quot;60&quot;&gt;&lt;?php echo $news[$newsAmodifier]['contenu'] ?&gt;&lt;/textarea&gt;&lt;br /&gt;
+		&lt;input type=&quot;submit&quot; value=&quot;Appliquer les modifications&quot; /&gt;
+	&lt;/form&gt;
+	&lt;?php
+}</code></pre></div></li></ul><p id="r-450654" data-claire-element-id="450654">Voilà, c'est fini pour ce tutoriel.<br/> J'espère qu'il vous a plu et que vous saurez vous en servir à bon escient. ;) <br/> Notez toutefois qu'il est impossible (ou vraiment pas pratique) d'utiliser une telle sorte de système pour des modules plus complexes tels qu'un forum, un système de tutoriels, etc.</p><p id="r-450655" data-claire-element-id="450655">Le script complet du tutoriel est disponible au téléchargement <a href="http://www.christophetd.fr/tutos/news.zip">ici</a>.</p><p id="r-450656" data-claire-element-id="450656">Si vous avez un problème ou une question avec ce tutoriel, n'hésitez pas à poster un commentaire (réponse assurée :p ) ou à m'envoyer un MP. ;)</p><div id="r-450658" data-claire-element-id="450658"><p id="r-450657" data-claire-element-id="450657">Je remercie <a href="http://www.siteduzero.com/membres-294-85974.html"><em>vyk12</em></a> et <a href="http://www.siteduzero.com/membres-294-92147.html"><em>tarzoune</em></a> pour leurs remarques et corrections pertinentes.</p></div>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize">Un système de news sans base de données grâce à serialize et unserialize</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/introduction-65">
+Introduction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/lister-les-news">
+Lister les news
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/ajouter-une-news">
+Ajouter une news
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/supprimer-une-news">
+Supprimer une news
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/quelques-ameliorations-possibles-3">
+Quelques améliorations possibles
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize/supprimer-une-news">
+<span class="arrow"></span>
+<span class="next">Supprimer une news</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 08:55:59 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/un-systeme-de-news-sans-base-de-donnees-grace-a-serialize-et-unserialize.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:35:42 GMT -->
+</html>

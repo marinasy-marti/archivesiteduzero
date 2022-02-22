@@ -1,0 +1,233 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/un-systeme-de-cache-simple.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 06:37:02 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/un-systeme-de-cache-simple.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:11:02 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Un système de cache simple</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/un-systeme-de-cache-simple.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Un système de cache simple</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Unsystmedecachesimple">Un système de cache simple</a><br/><a href="#Prparationduscript">Préparation du script</a><br/><a href="#Ralisationduscript">Réalisation du script</a><br/></div>
+<a name="Unsystmedecachesimple"></a><h2>Un système de cache simple</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-cache-simple/preparation-du-script">
+<span class="next">Préparation du script</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-371651" data-claire-element-id="371651">Beaucoup de sites ne sont malheureusement pas assez optimisés, et cela pour plusieurs raisons :</p><ul id="r-371660" data-claire-element-id="371660"><li id="r-371653" data-claire-element-id="371653"><p id="r-371652" data-claire-element-id="371652">les jointures ou les unions SQL ne sont pas utilisées ;</p></li><li id="r-371655" data-claire-element-id="371655"><p id="r-371654" data-claire-element-id="371654">les &quot; sont utilisés à la place des ' ;</p></li><li id="r-371657" data-claire-element-id="371657"><p id="r-371656" data-claire-element-id="371656">des inclusions de fichiers inutiles ;</p></li><li id="r-371659" data-claire-element-id="371659"><p id="r-371658" data-claire-element-id="371658">l'absence d'un système de cache.</p></li></ul><p id="r-371661" data-claire-element-id="371661">Je vais vous apprendre dans ce tutoriel à réaliser un système de cache simple, basé sur un ou plusieurs fichiers (tout dépend si vous souhaitez installer un ou plusieurs caches). :)</p><p id="r-371662" data-claire-element-id="371662">Nous prendrons l'exemple de l'ancien menu « <strong>Livre d'or</strong> » du Site du Zéro : chaque message est mis en cache pendant une minute pour être ensuite mis à jour en puisant un autre message dans la base de données.</p>
+</div><a name="Prparationduscript"></a><h2>Préparation du script</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-cache-simple/realisation-du-script-1">
+<span class="next">Réalisation du script</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-371663" data-claire-element-id="371663">Nous allons commencer par préparer notre script. :)</p><h3 id="r-creation-du-fichier-cache" data-claire-element-id="371686">Création du fichier .cache</h3><p id="r-371664" data-claire-element-id="371664">Pour cela, il vous faut créer un fichier *.cache.</p><p id="r-371665" data-claire-element-id="371665">Par souci d'organisation, je vous conseille de mettre tous vos fichiers *.cache dans des dossiers différents, tous stockés dans le répertoire /cache. ;)</p><p id="r-371666" data-claire-element-id="371666">Pour notre script, nous allons créer un fichier cache contenant un message du livre d'or, qui changera toutes les minutes et qui s'affichera dans un block du menu. Cette information apparaîtra sur toutes les pages (puisque le menu figure sur toutes les pages). Nous allons donc mettre ça directement dans le dossier /cache :</p><p id="r-371667" data-claire-element-id="371667"><strong>/cache/livre_or.cache</strong></p><p id="r-371668" data-claire-element-id="371668">Créez donc ce fichier et mettez-le en <a href="tuto-3-172-1-lire-et-ecrire-dans-un-fichier.html#ss_part_1">CHMOD 777</a> (tous les droits).</p><div id="r-371670" data-claire-element-id="371670" data-claire-semantic="question"><p id="r-371669" data-claire-element-id="371669">Et ce fichier va me servir à quoi ?</p></div><p id="r-371671" data-claire-element-id="371671">En fait, je vais être franc avec vous : il ne vous servira à rien… Il sera en revanche très utile à PHP ! ^^</p><p id="r-371672" data-claire-element-id="371672">PHP va s'en servir pour stocker des informations temporaires (ici, le message du livre d'or).<br/> Sur votre site ne s'affichera que le texte contenu dans le fichier, et non le texte issu de la requête SQL qui récupère les informations dans la base de données.</p><p id="r-371673" data-claire-element-id="371673">Cette requête ne s'effectuera que ponctuellement. Dans notre exemple, la requête ne s'exécutera qu'une seule fois toutes les minutes grâce à notre système de cache. C'est un gain énorme de performance, et là réside tout son intérêt !</p><div id="r-371675" data-claire-element-id="371675" data-claire-semantic="question"><p id="r-371674" data-claire-element-id="371674">Mais, mais ! Comment je fais, moi, si je veux que le message soit affiché en permanence ?</p></div><p id="r-371676" data-claire-element-id="371676">Un système de cache est justement conçu pour cela.<br/> La requête ne s'effectue qu'une seule fois par minute et son contenu, lui, est affiché en permanence !</p><p id="r-371677" data-claire-element-id="371677">Au final, tout le monde est gagnant :</p><ul id="r-371682" data-claire-element-id="371682"><li id="r-371679" data-claire-element-id="371679"><p id="r-371678" data-claire-element-id="371678"><strong>le serveur MySQL :</strong> il respire un peu et reçoit moins de requêtes par page ;</p></li><li id="r-371681" data-claire-element-id="371681"><p id="r-371680" data-claire-element-id="371680"><strong>les visiteurs :</strong> votre site est plus rapide sans pour autant que son contenu diminue.</p></li></ul><p id="r-371683" data-claire-element-id="371683">Il y a donc tout à gagner en intégrant des caches sur votre site ! ;)</p><aside id="r-371685" data-claire-element-id="371685" data-claire-semantic="information"><p id="r-371684" data-claire-element-id="371684">Même si vous utilisez des jointures, certaines grosses jointures peuvent être lourdes pour le serveur MySQL, et nécessitent aussi un système de cache.<br/> Ne vous dites donc pas que c'est parce que votre site utilise des jointures que le serveur MySQL ne souffre pas. ;)</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-cache-simple">Un système de cache simple</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-cache-simple/preparation-du-script">
+Préparation du script
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-cache-simple/realisation-du-script-1">
+Réalisation du script
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-cache-simple/realisation-du-script-1">
+<span class="next">Réalisation du script</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Ralisationduscript"></a><h2>Réalisation du script</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-cache-simple/preparation-du-script">
+<span class="arrow"></span>
+<span class="next">Préparation du script</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-371688" data-claire-element-id="371688">Nous avons tout préparé comme il faut !</p><p id="r-371689" data-claire-element-id="371689">Nous avons créé notre fichier .cache et nous allons maintenant nous en servir par le biais de PHP. ;)</p><p id="r-371690" data-claire-element-id="371690">Nous allons donc commencer par vérifier l'ancienneté du fichier. Pour cela, nous allons utiliser la fonction <a href="http://fr.php.net/filemtime">filemtime()</a>. C'est une fonction qui renvoie le <a href="tuto-3-186-1-les-dates.html#ss_part_2">timestamp</a> de la date de dernière modification d'un fichier.</p><p id="r-371691" data-claire-element-id="371691">Nous allons ensuite, à partir du timestamp actuel (récupéré grâce à la fonction <a href="http://fr.php.net/time">time()</a>) et à partir de celui de la dernière modification du fichier cache, calculer le nombre de secondes écoulées depuis la dernière modification de notre fichier. Si ça fait plus de 60 secondes, on mettra à jour le cache.</p><p id="r-371692" data-claire-element-id="371692">Pour cela, une simple soustraction suffit :</p><pre id="r-371693" data-claire-element-id="371693"><code data-claire-semantic="html+php">&lt;?php
+// On soustrait du timestamp actuel celui de la dernière modification pour obtenir le nombre de secondes écoulées depuis la dernière modification
+$modif_ago = time() - filemtime('cache/livre_or.cache');
+?&gt;</code></pre><p id="r-371694" data-claire-element-id="371694">Maintenant, nous allons vérifier si notre fichier est assez ancien.<br/> Sachant que le timestamp est une valeur en secondes, nous allons vérifier si le fichier a été modifié il y a plus de 60 secondes :</p><pre id="r-371695" data-claire-element-id="371695"><code data-claire-semantic="html+php">&lt;?php
+if($modif_ago &gt; 60) { // SI le fichier a été modifié il y a plus d'une minute
+     // ON MET LE FICHIER À JOUR \\
+}
+?&gt;</code></pre><p id="r-371696" data-claire-element-id="371696">Nous n'avons pas besoin de else, car nous n'avons rien d'autre à faire si le fichier est assez récent. ;)</p><p id="r-371697" data-claire-element-id="371697">Nous allons maintenant nous occuper de la mise à jour de notre fichier. :) <br/> Pour cela, nous devons tout d'abord récupérer un message aléatoirement dans la base de données et exporter les données :</p><pre id="r-371698" data-claire-element-id="371698"><code data-claire-semantic="html+php">&lt;?php
+$select_message_aleatoire = mysql_query('SELECT * FROM livre_or ORDER BY RAND() LIMIT 1'); // On sélectionne un message aléatoirement
+$infos_message = mysql_fetch_array($select_message_aleatoire);
+?&gt;</code></pre><aside id="r-371700" data-claire-element-id="371700" data-claire-semantic="information"><p id="r-371699" data-claire-element-id="371699">Dans ce code, les mots clés ORDER BY RAND() permettent d'organiser tous les messages aléatoirement, et le mot clé LIMIT 1 permet la sélection d'un seul message dans cette liste.</p></aside><p id="r-371701" data-claire-element-id="371701">Étape suivante : nous devons rédiger un code qui met à jour le fichier.</p><p id="r-371702" data-claire-element-id="371702">Nous utiliserons <a href="http://fr.php.net/fopen">fopen()</a> avec l'option w+.<br/> Cette option permet de réaliser plusieurs choses.</p><ul id="r-371709" data-claire-element-id="371709"><li id="r-371704" data-claire-element-id="371704"><p id="r-371703" data-claire-element-id="371703">Elle positionne le pointeur de fichier à 0 automatiquement (comme si elle remettait votre souris au début d'un fichier texte). Nous n'avons donc pas besoin d'utiliser la fonction <a href="http://fr.php.net/fseek">fseek()</a>.</p></li><li id="r-371706" data-claire-element-id="371706"><p id="r-371705" data-claire-element-id="371705">Autre avantage : nous n'avons pas besoin d'effacer le contenu du fichier avant d'y écrire quoi que ce soit, car cette option réduit automatiquement la taille du fichier à 0 (elle efface donc son contenu).</p></li><li id="r-371708" data-claire-element-id="371708"><p id="r-371707" data-claire-element-id="371707">Enfin, par mesure de prévention, le fichier sera créé automatiquement si jamais un jour il est supprimé par mégarde. Cette option est représentée par le + de w+. ;)</p></li></ul><p id="r-371710" data-claire-element-id="371710">Nous allons également utiliser la fonction <a href="http://fr.php.net/fwrite">fwrite()</a>, qui écrit dans le fichier ; et pour finir, <a href="http://fr.php.net/fclose">fclose()</a> qui ferme la « connexion » au fichier.</p><pre id="r-371711" data-claire-element-id="371711"><code data-claire-semantic="html+php">&lt;?php
+$select_message_aleatoire = mysql_query('SELECT * FROM livre_or ORDER BY RAND() LIMIT 1'); // On sélectionne un message aléatoirement
+$infos_message = mysql_fetch_array($select_message_aleatoire);
+ 
+// On fait un stripslashes sur toutes les entrées de l'array $infos_message, la fonction array_map() permettant d'effectuer une fonction sur toutes les entrées d'un array. Ici, la fonction stripslashes() sera donc effectuée sur toutes les informations que l'on a récupérées grâce à la requête SQL
+array_map('stripslashes', $infos_message);
+// On crée notre code xHTML
+$xHTML = 'Par &lt;strong&gt;' . $infos_message['pseudo'] . '&lt;/strong&gt; :&lt;br /&gt;
+&amp;quot;&lt;em&gt;' . nl2br($infos_message['message']) . '&lt;/em&gt;&amp;quot;';
+// On enregistre notre code dans le fichier...
+        // On va commencer par ouvrir le fichier en w+
+        $fichier = fopen('cache/livre_or.cache', 'w+');
+        /* Rappel : l'option w+ ne nécessite pas le replacement du pointeur
+        ni l'effacement du fichier. */
+        
+        // On écrit le code xHTML dans le fichier
+        fwrite($fichier, $xHTML);
+        
+        // Pour finir, on coupe la communication avec le fichier
+        fclose($fichier);
+?&gt;</code></pre><p id="r-371712" data-claire-element-id="371712">Votre code devrait maintenant ressembler à ce qui suit. :)</p><pre id="r-371713" data-claire-element-id="371713"><code data-claire-semantic="html+php">&lt;?php
+// On soustrait du timestamp actuel celui de la dernière modification pour obtenir le nombre de secondes écoulées depuis la dernière modification
+$modif_ago = time() - filemtime('cache/livre_or.cache');
+ 
+if($modif_ago &gt; 60) { // SI le fichier a été modifié il y a plus d'une minute
+ 
+$select_message_aleatoire = mysql_query('SELECT * FROM livre_or ORDER BY RAND() LIMIT 1'); // On sélectionne un message aléatoirement
+$infos_message = mysql_fetch_array($select_message_aleatoire);
+
+        // On fait un stripslashes sur toutes les entrées de l'array $infos_message, la fonction array_map() permettant d'effectuer une fonction sur toutes les entrées d'un array. Ici, la fonction stripslashes() sera donc effectuée sur toutes les informations que l'on a récupérées grâce à la requête SQL
+        array_map('stripslashes', $infos_message);
+        // On crée notre code xHTML
+        $xHTML = 'Par &lt;strong&gt;' . $infos_message['pseudo'] . '&lt;/strong&gt; :&lt;br /&gt;
+        &amp;quot;&lt;em&gt;' . nl2br($infos_message['message']) . '&lt;/em&gt;&amp;quot;';
+        // On enregistre notre code dans le fichier...
+                // On va commencer par ouvrir le fichier en w+
+                $fichier = fopen('cache/livre_or.cache', 'w+');
+                /* Rappel : l'option w+ ne nécessite pas le replacement du pointeur
+                ni l'effacement du fichier. */
+                
+                // On écrit le code xHTML dans le fichier
+                fwrite($fichier, $xHTML);
+                
+                // Pour finir, on coupe la communication avec le fichier
+                fclose($fichier);
+}
+?&gt;</code></pre><h3 id="r-afficher-le-contenu-du-fichier" data-claire-element-id="371738">Afficher le contenu du fichier</h3><p id="r-371714" data-claire-element-id="371714">Nous avons maintenant terminé le système de mise en cache ! :D</p><p id="r-371715" data-claire-element-id="371715">Il nous suffit juste d'afficher le fichier, qui est le message aléatoire « mis en cache ». ;) <br/> Et cela s'effectue grâce à la fonction <a href="http://fr.php.net/file_get_contents">file_get_contents()</a> :</p><pre id="r-371716" data-claire-element-id="371716"><code data-claire-semantic="html+php">&lt;?php
+// On récupère le contenu de notre fichier
+$message_aleatoire = file_get_contents('cache/livre_or.cache');
+// On l'affiche
+echo $message_aleatoire;
+?&gt;</code></pre><p id="r-371717" data-claire-element-id="371717">Et voilà ! :D <br/> Votre code est entièrement fini !<br/> Voici à quoi devrait ressembler votre code à présent :</p><pre id="r-371718" data-claire-element-id="371718"><code data-claire-semantic="html+php">&lt;?php
+// On soustrait du timestamp actuel celui de la dernière modification pour obtenir le nombre de secondes écoulées depuis la dernière modification
+$modif_ago = time() - filemtime('cache/livre_or.cache');
+ 
+if($modif_ago &gt; 60) { // SI le fichier a été modifié il y a plus d'une minute
+ 
+$select_message_aleatoire = mysql_query('SELECT * FROM livre_or ORDER BY RAND() LIMIT 1'); // On sélectionne un message aléatoirement
+$infos_message = mysql_fetch_array($select_message_aleatoire);
+ 
+        // On fait un stripslashes sur toutes les entrées de l'array $infos_message, la fonction array_map() permettant d'effectuer une fonction sur toutes les entrées d'un array. Ici, la fonction stripslashes() sera donc effectuée sur toutes les informations que l'on a récupérées grâce à la requête SQL
+        array_map('stripslashes', $infos_message);
+        // On crée notre code xHTML
+        $xHTML = 'Par &lt;strong&gt;' . $infos_message['pseudo'] . '&lt;/strong&gt; :&lt;br /&gt;
+        &amp;quot;&lt;em&gt;' . nl2br($infos_message['message']) . '&lt;/em&gt;&amp;quot;';
+        // On enregistre notre code dans le fichier...
+                // On va commencer par ouvrir le fichier en w+
+                $fichier = fopen('cache/livre_or.cache', 'w+');
+                /* Rappel : l'option w+ ne nécessite pas le replacement du pointeur
+                ni l'effacement du fichier. */
+                
+                // On écrit le code xHTML dans le fichier
+                fwrite($fichier, $xHTML);
+                
+                // Pour finir, on coupe la communication avec le fichier
+                fclose($fichier);
+}
+ 
+// On récupère le contenu de notre fichier
+$message_aleatoire = file_get_contents('cache/livre_or.cache');
+// On l'affiche
+echo $message_aleatoire;
+?&gt;</code></pre><p id="r-371719" data-claire-element-id="371719">Ce qu'il se passera est simple.</p><ul id="r-371726" data-claire-element-id="371726"><li id="r-371721" data-claire-element-id="371721"><p id="r-371720" data-claire-element-id="371720">Le script vérifie si le fichier cache n'est pas « trop vieux ».</p></li><li id="r-371723" data-claire-element-id="371723"><p id="r-371722" data-claire-element-id="371722">S'il est trop vieux, il exécute la requête et met à jour le fichier. S'il n'est pas trop vieux, il laisse le fichier tel quel.</p></li><li id="r-371725" data-claire-element-id="371725"><p id="r-371724" data-claire-element-id="371724">Le script affiche le fichier cache dans tous les cas (le code est en dehors de la condition).</p></li></ul><p id="r-371727" data-claire-element-id="371727">Le livre d'or est un exemple, mais sachez que vous pouvez aussi écrire du code PHP dans un fichier .php, par exemple ; ce sera tout de même un système de cache. :)</p><p id="r-371728" data-claire-element-id="371728">Enfin, pour ceux qui se poseraient la question…</p><div id="r-371730" data-claire-element-id="371730" data-claire-semantic="question"><p id="r-371729" data-claire-element-id="371729">Pourquoi écrire tout ce code alors qu'une requête seule est plus rapide ?</p></div><p id="r-371731" data-claire-element-id="371731">Je vous dirais : <strong>non, non et non !</strong> :p</p><p id="r-371732" data-claire-element-id="371732">En effet, le fait de passer par des fichiers est plus rapide pour PHP que de communiquer avec le serveur MySQL. Notamment dans le cas de grosses requêtes qui sont assez « longues » à exécuter. ;)</p><p id="r-371733" data-claire-element-id="371733">Si vous n'avez pas un site très fréquenté, il est clair qu'un tel système pour la sélection d'un message au hasard dans le livre d'or ne vous servira pratiquement à rien (juste à savoir faire marcher un système de cache, ce qui n'est pas inutile pour l'avenir ;) ). Si en revanche votre site reçoit beaucoup de visiteurs, la moindre requête économisée peut être bénéfique. ;)</p><p id="r-371734" data-claire-element-id="371734">Vous venez de créer un système de cache !</p><p id="r-371735" data-claire-element-id="371735">Cette méthode est assez simple, vous avez dû le remarquer. ;) Il se peut que plus tard, vous conceviez un système plus poussé ; et donc, normalement, plus performant.</p><p id="r-371736" data-claire-element-id="371736">Faites-en bon usage. :D</p><p id="r-371737" data-claire-element-id="371737">En cas de problème, <a href="mp-273-92.html">envoyez-moi un MP</a>, ou mieux : <a href="membres-294-92.html">contactez-moi par MSN</a>. ;)</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-cache-simple">Un système de cache simple</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-cache-simple/preparation-du-script">
+Préparation du script
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-cache-simple/realisation-du-script-1">
+Réalisation du script
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/un-systeme-de-cache-simple/preparation-du-script">
+<span class="arrow"></span>
+<span class="next">Préparation du script</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/un-systeme-de-cache-simple.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 06:37:03 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/un-systeme-de-cache-simple.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:11:03 GMT -->
+</html>
