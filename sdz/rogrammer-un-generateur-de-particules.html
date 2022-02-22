@@ -1,0 +1,335 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/rogrammer-un-generateur-de-particules.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 02:52:44 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/rogrammer-un-generateur-de-particules.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:37:50 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Programmer un générateur de particules</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/programmer-un-generateur-de-particules.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Programmer un générateur de particules</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Programmerungnrateurdeparticules">Programmer un générateur de particules</a><br/><a href="#I-Structureduprogrammeetfonctionsdebase">I - Structure du programme et fonctions de base</a><br/><a href="#II-Legnrateur">II - Le générateur</a><br/></div>
+<a name="Programmerungnrateurdeparticules"></a><h2>Programmer un générateur de particules</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/programmer-un-generateur-de-particules/i-structure-du-programme-et-fonctions-de-base">
+<span class="next">I - Structure du programme et fonctions de base</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-341903" data-claire-element-id="341903">Non, nous n'allons pas faire ici de la physique nucléaire :) ! Ce tuto va essayer de vous faire comprendre le fonctionnement d'un générateur de particules tel qu'on en trouve dans la plupart des jeux 3D.</p><div id="r-341905" data-claire-element-id="341905" data-claire-semantic="question"><p id="r-341904" data-claire-element-id="341904">Oui mais c'est quoi un <em>générateur de particules</em>?</p></div><p id="r-341906" data-claire-element-id="341906">Dans un environnement 3D, on utilise le concept de <em>particule</em> dès qu'on veut reproduire un phénomène physique complexe comme le feu, l'eau, la fumée, le brouillard, etc. Ces phénomènes sont modélisés par un grand nombre de petits objets ayant chacun un comportement autonome. Le <em>générateur de particules</em> est un programme qui va produire ces objets et gérer leur &quot;vie&quot;. Comme souvent en 3D si on veut être réaliste, on doit mettre beaucoup de particules (plusieurs dizaine de milliers pour une explosion par exemple)... et forcément on augmente énormément le temps de calcul et les ressources utilisées par le programme. A tel point qu'aujourd'hui les puces 3D de nouvelle génération possèdent des circuits qui gèrent eux-même les particules afin de réduire l'utilisation du processeur.</p><div id="r-341908" data-claire-element-id="341908" data-claire-semantic="question"><p id="r-341907" data-claire-element-id="341907">Mais comment va-t'on gérer 10 000 particules en même temps? Ca a l'air super difficile ton tuto !</p></div><p id="r-341909" data-claire-element-id="341909">Rassurez-vous, nous n'allons pas réécrire le générateur de fumée d'Half-Life :) ! Je vais essayer de vous expliquer le principe de fonctionnement d'un générateur très simple qui peut gérer plusieurs milliers de particules en même temps tout en consommant très peu de ressources.</p><p id="r-341910" data-claire-element-id="341910">Sur cet exemple, le générateur est utilisé pour le réacteur de la fusée :</p><figure id="r-341912" data-claire-element-id="341913"><img id="r-341911" data-claire-element-id="341911" src="medias/uploads.siteduzero.com_files_39001_40000_39165.jpg" alt="Image utilisateur"/></figure><div id="r-341915" data-claire-element-id="341915" data-claire-semantic="question"><p id="r-341914" data-claire-element-id="341914">Et de quoi a-t'on besoin pour ce cours ?</p></div><p id="r-341916" data-claire-element-id="341916">La méthode que je présente est très simple et peut être programmée dans n'importe quel langage sachant gérer l'OpenGL mais pour être cohérent avec les cours de M@teo et de Kayl, je l'ai programmé en C. Ce qui veut dire que vous devez avoir suivi tous les tutos de M@teo sur le C/SDL et aussi ceux de Kayl sur l'OpenGL.</p><aside id="r-341918" data-claire-element-id="341918" data-claire-semantic="information"><p id="r-341917" data-claire-element-id="341917">Pour rendre à César ce qui lui appartient... En plus des tutos du site du Zéro, j'ai utilisé pour construire ce programme une partie de l'algorithme expliqué par NeHe sur son <a href="http://nehe.gamedev.net/">site</a> (le code est un peu vieux et doit être adapté mais ce site reste quand même la bible d'OpenGL).</p></aside><p id="r-341919" data-claire-element-id="341919">Voilà, après cette (longue) introduction, nous pouvons attaquer le tuto :pirate: !</p>
+</div><a name="I-Structureduprogrammeetfonctionsdebase"></a><h2>I - Structure du programme et fonctions de base</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/programmer-un-generateur-de-particules/ii-le-generateur">
+<span class="next">II - Le générateur</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-341920" data-claire-element-id="341920">La structure du programme est quasiment la même que celle utilisée par Kayl dans ses tutos, je ne vais donc pas la détailler, je me contente de vous fournir le code.</p><pre id="r-341921" data-claire-element-id="341921"><code data-claire-semantic="c">#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;math.h&gt;
+#include &lt;SDL/SDL.h&gt;
+#include &lt;GL/gl.h&gt;
+#include &lt;GL/glu.h&gt;
+/* Attention, j'utilise la bibliothèque de Kayl pour  */
+/* afficher les axes donc pensez à l'inclure */
+#include &quot;sdlglutils.h&quot;
+
+/* CONSTANTES */
+#define LARGEUR 640
+#define HAUTEUR 480
+#define REFRESH_DELAY 20
+
+...
+
+/* FONCTIONS */
+double myRand(double min, double max);
+void dessinerScene();
+...
+
+/* FONCTION PRINCIPALE */
+int main(int argc, char *argv[])
+{   SDL_Surface *ecran = NULL;
+    SDL_Event event;
+    int continuer = 1;
+    int previousTime = SDL_GetTicks();
+    int elapsedTime = 0;
+
+    /* INITIALISATIONS */
+    SDL_Init(SDL_INIT_VIDEO); /* Initialisation de la SDL */
+    SDL_WM_SetCaption(&quot;Particle Engine&quot;, NULL);
+    /* Ouverture de la fenêtre */
+    ecran = SDL_SetVideoMode(LARGEUR, HAUTEUR, 32, SDL_OPENGL); 
+
+    /* Initialisation du mode 3D */
+    glMatrixMode( GL_PROJECTION );
+    glLoadIdentity( );
+    gluPerspective(70,(double)LARGEUR/HAUTEUR,1,1000);
+
+    glEnable(GL_DEPTH_TEST);  /* Initialisation du Z-Buffer */
+    glEnable(GL_BLEND);   // Autoriser la transparence
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE);   // Type de transparence
+    
+    /* Ces 2 lignes améliorent le rendu mais ne sont pas nécessaires */
+    glHint(GL_PERSPECTIVE_CORRECTION_HINT,GL_NICEST);
+    glHint(GL_POINT_SMOOTH_HINT,GL_NICEST);
+
+    /* On efface le tampon d'affichage */
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);   
+    glFlush();
+    SDL_GL_SwapBuffers();
+
+    ...
+    
+    /* Boucle Générale */
+    while (continuer)
+    {   SDL_PollEvent(&amp;event);
+        switch(event.type)
+        {   case SDL_QUIT:
+                continuer = 0;
+                break;
+            case SDL_KEYDOWN:
+                 switch(event.key.keysym.sym)
+                 {   case SDLK_ESCAPE:
+                          continuer=0;
+                          break;
+                     default:break;
+                 }
+                 break;
+        }
+
+        /* Appel de la fonction principale de dessin */
+        dessinerScene();
+
+        /* On attend le tour suivant */
+        elapsedTime = SDL_GetTicks() - previousTime;
+        if (elapsedTime &lt; REFRESH_DELAY)
+        {
+            SDL_Delay(REFRESH_DELAY - elapsedTime);
+        }
+        previousTime = SDL_GetTicks();
+    }
+
+    SDL_Quit(); /* Arrêt de la SDL */
+
+    return EXIT_SUCCESS; /* Fermeture du programme */
+}
+
+/* FONCTIONS SECONDAIRES */
+
+double myRand(double min, double max)
+{   return (double) (min + ((float) rand() / RAND_MAX * (max - min + 1.0)));
+}
+
+void dessinerScene()
+{   /* Initialisation */
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    /* Position Camera gluLookAt(positionCamera, positionCible, vecteurVertical) */
+    gluLookAt(2,2,-1, 0,0,0, 0,0,1);
+    drawAxis(1.0);
+
+    /* Dessin */
+    ...
+
+    /* MAJ de l'écran */
+    glFlush();
+    SDL_GL_SwapBuffers();
+}</code></pre><p id="r-341922" data-claire-element-id="341922">Normalement vous devez obtenir une fenêtre qui ressemble à ça :</p><figure id="r-341924" data-claire-element-id="341925"><img id="r-341923" data-claire-element-id="341923" src="medias/uploads.siteduzero.com_files_39001_40000_39167.jpg" alt="Image utilisateur"/></figure><p id="r-341926" data-claire-element-id="341926">J'ai choisi l'axe Z comme axe vertical parceque j'ai l'habitude comme ça mais rien ne vous interdit de changer. J'ai aussi pour habitude de sortir la fonction de dessin du <em>main()</em> mais là aussi ça n'a pas vraiment d'importance :)</p><p id="r-341927" data-claire-element-id="341927">Enfin j'ai rajouté une petite fonction secondaire:</p><pre id="r-341928" data-claire-element-id="341928"><code data-claire-semantic="c">double myRand(double min, double max)
+{  return (double) (min + ((float) rand() / RAND_MAX * (max - min + 1.0)));
+}</code></pre><p id="r-341929" data-claire-element-id="341929">C'est une fonction ultra-simple pour programmeur paresseux :-° qui renvoie un nombre aléatoire compris entre <em>min</em> et <em>max</em>. On en aura besoin plus tard.</p><p id="r-341930" data-claire-element-id="341930">Maintenant qu'on à un squelette correct on va pouvoir remplir les pointillés ;)</p><h2 id="r-definition-des-particules" data-claire-element-id="341939">Définition des particules</h2><p id="r-341931" data-claire-element-id="341931">On va commencer par définir le nombre total de particules que le générateur devra gérer. Pour l'instant, on va se contenter de 1000 objets. Il faut donc rajouter la ligne suivante dans le code:</p><pre id="r-341932" data-claire-element-id="341932"><code data-claire-semantic="c">#define MAX_PARTICLES 1000</code></pre><p id="r-341933" data-claire-element-id="341933">Maintenant qu'on sait combien on en veut, il va falloir expliquer au programme ce que c'est qu'une particule. Pour cela nous allons définir une structure &quot;<em>particles</em>&quot; qui contiendra 7 paramètres:</p><pre id="r-341934" data-claire-element-id="341934"><code data-claire-semantic="c">typedef struct // Création de la structure
+{  bool active; // Active (1=Oui/0=Non)
+   double life; // Durée de vie
+   double fade; // Vitesse de disparition
+   double r, g, b; // Valeurs RGB pour la couleur
+   double x, y, z; // Position
+   double xi, yi, zi; // Vecteur de déplacement
+   double xg, yg, zg; // Gravité
+}particles;</code></pre><p id="r-341935" data-claire-element-id="341935">Cette structure définit l'état d'une particule à un instant donné. Son &quot;état de santé&quot; et représenté par un taux de transparence (le paramètre <em>life</em>). Une particule &quot;meurt&quot; quand elle devient totalement transparente. Le paramètre <em>fade</em> représentent la quantité de &quot;vie&quot; que la particule va perdre à la prochaine itération de la boucle principale du programme. Les vecteurs <em>position</em> et <em>déplacement</em> représente où est la particule et de combien elle va bouger. Quand au vecteur <em>gravité</em> il va venir perturber le mouvement pour le rendre plus réaliste (du genre si vous codez une fontaine, ça serait bien si l'eau retombait vers le sol, non ? ^^ ).</p><p id="r-341936" data-claire-element-id="341936">Enfin, il faut réserver la mémoire dont on aura besoin pour stocker tous ces objets. Pour cela on construit un tableau de taille MAX_PARTICLES et du type <em>particles</em> défini précédemment.</p><pre id="r-341937" data-claire-element-id="341937"><code data-claire-semantic="c">/* Tableau de stockage des particules */
+particles particle[MAX_PARTICLES];</code></pre><p id="r-341938" data-claire-element-id="341938">Bon, on en a fini avec les déclarations, il ne reste plus qu'à coder le générateur o_O .</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/programmer-un-generateur-de-particules">Programmer un générateur de particules</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/programmer-un-generateur-de-particules/i-structure-du-programme-et-fonctions-de-base">
+I - Structure du programme et fonctions de base
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/programmer-un-generateur-de-particules/ii-le-generateur">
+II - Le générateur
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/programmer-un-generateur-de-particules/ii-le-generateur">
+<span class="next">II - Le générateur</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="II-Legnrateur"></a><h2>II - Le générateur</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/programmer-un-generateur-de-particules/i-structure-du-programme-et-fonctions-de-base">
+<span class="arrow"></span>
+<span class="next">I - Structure du programme et fonctions de base</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-341941" data-claire-element-id="341941">Si vous avez bien compris la structure précédente, vous devez avoir une idée du fonctionnement de ce générateur (enfin j'espère :) )On a des variables qui décrivent l'état actuel, et des variables qui décrivent comment cet état va être modifié au tour suivant. <br/> Le générateur va donc être composé de deux éléments :</p><ul id="r-341946" data-claire-element-id="341946"><li id="r-341943" data-claire-element-id="341943"><p id="r-341942" data-claire-element-id="341942">Une fonction d'initialisation qui met en place les particules.</p></li><li id="r-341945" data-claire-element-id="341945"><p id="r-341944" data-claire-element-id="341944">Une fonction de &quot;suivi&quot; qui réactualise l'état des particules à chaque tour.</p></li></ul><h2 id="r-1-la-fonction-d-initialisation-initparticles" data-claire-element-id="341952">1 - La fonction d'initialisation: initParticles()</h2><p id="r-341947" data-claire-element-id="341947">Cette fonction va définir l'état de chaque particule lors du lancement du programme et ne servira qu'une fois. Elle doit donc se trouver avant la boucle générale.</p><pre id="r-341948" data-claire-element-id="341948"><code data-claire-semantic="c">int initParticles()
+{   for(int i=0; i&lt;MAX_PARTICLES; i++)   // Boucle sur toutes les particules
+    {   particle[i].active = true;       // On rend la particule active
+        particle[i].life = 1.0;   // Maximum de vie
+
+        particle[i].fade = myRand(0.01,0.05);   // Vitesse de disparition aléatoire
+
+        particle[i].r=myRand(0.0,1.0);  // Quantité aléatoire de Rouge
+        particle[i].g=myRand(0.0,1.0);  // Quantité aléatoire de Vert
+        particle[i].b=myRand(0.0,1.0);  // Quantité aléatoire de Bleu
+
+        particle[i].xi = myRand(-10.0,10.0);   // Vitesse aléatoire
+        particle[i].yi = myRand(-10.0,10.0);
+        particle[i].zi = myRand(10.0,20.0);
+
+        particle[i].xg = 0.0;       // Gravité dirigée selon l'axe -Z
+        particle[i].yg = 0.0;
+        particle[i].zg = -1.0;
+    }
+    return 0;    // Initialisation OK
+}</code></pre><p id="r-341949" data-claire-element-id="341949">J'ai décidé de modéliser une sorte de fontaine donc la vitesse est plus forte selon la direction verticale pour représenter le fait que les particules sont projetées vers le haut.</p><p id="r-341950" data-claire-element-id="341950">Une fois que cette fonction est définie, n'oubliez pas de la rajouter dans les déclarations au début du programme.</p><pre id="r-341951" data-claire-element-id="341951"><code data-claire-semantic="c">int initParticles();</code></pre><h2 id="r-2-la-fonction-de-suivi-dessinerparticules" data-claire-element-id="341982">2 - La fonction de suivi: dessinerParticules()</h2><p id="r-341953" data-claire-element-id="341953">C'est la fonction la plus importante de ce tuto et aussi la plus difficile à écrire mais rassurez-vous, on va y aller tranquillement.</p><p id="r-341954" data-claire-element-id="341954">Cette fonction va être appelée à chaque tour de la boucle générale et elle doit être placée dans la fonction dessinerScene() que nous avons écrite au début de ce tuto.</p><p id="r-341955" data-claire-element-id="341955">Voici un petit résumé ce qu'elle doit faire pour chaque particule:</p><ul id="r-341962" data-claire-element-id="341962"><li id="r-341957" data-claire-element-id="341957"><p id="r-341956" data-claire-element-id="341956">afficher l'état actuel</p></li><li id="r-341959" data-claire-element-id="341959"><p id="r-341958" data-claire-element-id="341958">modifier les valeurs pour passer à l'état suivant</p></li><li id="r-341961" data-claire-element-id="341961"><p id="r-341960" data-claire-element-id="341960">(régénérer les particules &quot;mortes&quot;)</p></li></ul><p id="r-341963" data-claire-element-id="341963">La troisième action est optionnelle; tout dépend de ce que vous voulez modéliser. Si c'est une explosion, vous n'avez pas besoin de régénérer les particules, alors que c'est indispensable dans le cas d'un phénomène continu.</p><p id="r-341964" data-claire-element-id="341964">Passons au code:</p><pre id="r-341965" data-claire-element-id="341965"><code data-claire-semantic="c">int dessinerParticules()
+{   for(int i=0; i&lt;MAX_PARTICLES; i++) // Pour chaque particule
+    {   if(particle[i].active)         // Si elle est active
+        {   float x = particle[i].x;   // On récupère sa position
+            float y = particle[i].y;
+            float z = particle[i].z;
+
+            /* Couleur de la particule; transparence = vie */
+            glColor4d(particle[i].r, particle[i].g, particle[i].b, particle[i].life);
+
+            /* Dessin de carrés à partir de deux triangles (plus rapide pour la carte video */
+            glBegin(GL_TRIANGLE_STRIP);
+              glVertex3d(x+0.1,y,z+0.1); // Nord-Ouest
+              glVertex3d(x-0.1,y,z+0.1); // Nord-Est
+              glVertex3d(x+0.1,y,z-0.1); // Sud-Ouest
+              glVertex3d(x-0.1,y,z-0.1); // Sud-Est
+            glEnd();
+
+            /* Déplacement */
+            particle[i].x += particle[i].xi/1000;
+            particle[i].y += particle[i].yi/1000;
+            particle[i].z += particle[i].zi/1000;
+
+            /* Gravité */
+            particle[i].xi += particle[i].xg;
+            particle[i].yi += particle[i].yg;
+            particle[i].zi += particle[i].zg;
+
+            /* &quot;Vie&quot; */
+            particle[i].life -= particle[i].fade;
+
+            /* Si la particule est &quot;morte&quot; on la régénère */
+            if (particle[i].life &lt; 0.0)
+            {   particle[i].life = 1.0;    // Maximum de vie
+                particle[i].fade = myRand(0.01,0.05);
+
+                particle[i].x = 0.0; // On renvoie la particule au centre
+                particle[i].y = 0.0;
+                particle[i].z = 0.0;
+
+                particle[i].xi = myRand(-10.0,10.0);   // Vitesse aléatoire
+                particle[i].yi = myRand(-10.0,10.0);
+                particle[i].zi = myRand(10.0,20.0);
+
+                particle[i].r=myRand(0.0,1.0);  // Quantité aléatoire de Rouge
+                particle[i].g=myRand(0.0,1.0);  // Quantité aléatoire de Vert
+                particle[i].b=myRand(0.0,1.0);  // Quantité aléatoire de Bleu
+            }
+        }
+    }
+    return 0; // Dessin OK
+}</code></pre><p id="r-341966" data-claire-element-id="341966">Là encore, n'oubliez pas de rajouter cette fonction dans vos déclarations:</p><pre id="r-341967" data-claire-element-id="341967"><code data-claire-semantic="c">int dessinerParticules();</code></pre><p id="r-341968" data-claire-element-id="341968">Une petite compilation et voici le résultat :</p><figure id="r-341970" data-claire-element-id="341971"><img id="r-341969" data-claire-element-id="341969" src="medias/uploads.siteduzero.com_files_39001_40000_39168.jpg" alt="Image utilisateur"/></figure><p id="r-341972" data-claire-element-id="341972">Voilà, le code est assez commenté pour que vous puissiez suivre mais je vais quand même ajouter quelques précisions. J'ai représenté les particules par des carrés. Bien évidemment vous pouvez utiliser n'importe quelle forme... tout dépend de votre carte graphique :) En effet, les performances de ce code ne dépendent que de deux paramètres : le nombre de particules et leur forme. En particulier, les cartes graphiques sont optimisées pour dessiner plus facilement des triangles. C'est pour cela que même si mes particules sont carrées, je les ai décomposées en 2 triangles qui seront dessinés plus rapidement qu'un carré.</p><p id="r-341973" data-claire-element-id="341973">Vous pouvez aussi remarquer que les vitesses définies lors de l'initialisation et la régénération sont les mêmes. Si vous choisissez des vitesses plus grandes lors de l'initialisation, vous obtiendrez un effet d'explosion assez réaliste.</p><p id="r-341974" data-claire-element-id="341974">A vous maintenant d'adapter ce code en fonction de vos besoins. Tout est modulable, et rien ne vous empêche d'inventer de nouveaux paramètres pour les particules ou de gérer leurs collisions (mais là c'est une autre paire de manches !). Par exemple pour la demo d'une fusée tournant autour de la Lune (à télécharger à la fin du tuto) je n'ai pas attribué de couleur aux particules mais plutôt une texture de feu pour évoquer les flammes qui sortent du réacteur.</p><p id="r-341975" data-claire-element-id="341975">Pour utiliser ce code, rappelez-vous seulement ces deux points importants :</p><ul id="r-341980" data-claire-element-id="341980"><li id="r-341977" data-claire-element-id="341977"><p id="r-341976" data-claire-element-id="341976">la fonction initParticles() doit être appelée avant la boucle principale,</p></li><li id="r-341979" data-claire-element-id="341979"><p id="r-341978" data-claire-element-id="341978">la fonction dessinerParticules() dessine à partir du point de coordonnées (0,0,0) donc pensez à bien faire vos transformations de repère avant de l'utiliser</p></li></ul><p id="r-341981" data-claire-element-id="341981">Bon codage et n'hésitez pas à me poser des questions si certains points ne sont pas clairs ;)</p><h2 id="r-telechargements-1" data-claire-element-id="341984">Téléchargements</h2><p id="r-341983" data-claire-element-id="341983">Sources et exécutable du tuto: <a href="http://galeriephp.free.fr/tutos/particle_engine.zip">particle_engine.zip</a><br/> Demo d'exemple: <a href="http://galeriephp.free.fr/tutos/demo_fusee.zip">demo_fusee.zip</a></p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/programmer-un-generateur-de-particules">Programmer un générateur de particules</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/programmer-un-generateur-de-particules/i-structure-du-programme-et-fonctions-de-base">
+I - Structure du programme et fonctions de base
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/programmer-un-generateur-de-particules/ii-le-generateur">
+II - Le générateur
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/programmer-un-generateur-de-particules/i-structure-du-programme-et-fonctions-de-base">
+<span class="arrow"></span>
+<span class="next">I - Structure du programme et fonctions de base</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/rogrammer-un-generateur-de-particules.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 02:52:45 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/rogrammer-un-generateur-de-particules.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:37:51 GMT -->
+</html>

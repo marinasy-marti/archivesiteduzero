@@ -1,0 +1,473 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/securiser-son-serveur-linux.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 19:50:11 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/securiser-son-serveur-linux.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 03:34:33 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Sécuriser son serveur Linux</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/securiser-son-serveur-linux.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Sécuriser son serveur Linux</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#ScurisersonserveurLinux">Sécuriser son serveur Linux</a><br/><a href="#Filtrerletraficvialefirewall">Filtrer le trafic via le firewall</a><br/><a href="#Seprmunircontrelesintrusions">Se prémunir contre les intrusions</a><br/><a href="#Surveillerleslogs">Surveiller les logs</a><br/><a href="#Dubonusagedesonserveur">Du bon usage de son serveur</a><br/><a href="#Testerlasuretdesonserveur">Tester la sureté de son serveur</a><br/></div>
+<a name="ScurisersonserveurLinux"></a><h2>Sécuriser son serveur Linux</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/filtrer-le-trafic-via-le-firewall">
+<span class="next">Filtrer le trafic via le firewall</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-207996" data-claire-element-id="207996">Ce guide va vous apprendre à sécuriser un serveur et donc vous initier aux thématiques de la sécurité informatique. En quoi est-ce important ? Par définition, un serveur est ouvert sur le monde, un minimum de sécurité est donc intéressant afin de se prémunir des attaques les plus simplistes.</p><p id="r-207997" data-claire-element-id="207997">La marche à suivre sera donc la suivante :</p><ul id="r-208002" data-claire-element-id="208002"><li id="r-207999" data-claire-element-id="207999"><p id="r-207998" data-claire-element-id="207998">présentation des failles ;</p></li><li id="r-208001" data-claire-element-id="208001"><p id="r-208000" data-claire-element-id="208000">présentation des outils pour y pallier.</p></li></ul><p id="r-208003" data-claire-element-id="208003">Bien entendu, je ne fais pas un cours complet de sécurité informatique, ce tutoriel est une initiation. Pour faire simple, c'est un peu comme fermer les volets la nuit.</p><p id="r-208004" data-claire-element-id="208004">Point de vue matériel, voilà ce qu'il vous faudra :</p><ul id="r-208009" data-claire-element-id="208009"><li id="r-208006" data-claire-element-id="208006"><p id="r-208005" data-claire-element-id="208005">un serveur embarquant une distribution xBuntu ou Debian (pour les autres distribs, le principe sera le même, mais les commandes risquent d'être différentes) ;</p></li><li id="r-208008" data-claire-element-id="208008"><p id="r-208007" data-claire-element-id="208007">un accès root (en ssh par exemple) et une console.</p></li></ul><p id="r-208010" data-claire-element-id="208010">Tout le tutoriel se passe en ligne de commande afin de pouvoir être accessible à tous. Comme il faudra éditer des fichiers, veuillez vous assurer d'avoir un éditeur de fichier en ligne de commande (j'utiliserai personnellement nano qui est très simple).</p><p id="r-208011" data-claire-element-id="208011">C’est parti !</p>
+</div><a name="Filtrerletraficvialefirewall"></a><h2>Filtrer le trafic via le firewall</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/se-premunir-contre-les-intrusions">
+<span class="next">Se prémunir contre les intrusions</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-presentation-44" data-claire-element-id="208019">Présentation</h2><p id="r-208012" data-claire-element-id="208012">Le <em>firewall</em> (pare-feu en français) est l’élément indispensable pour sécuriser son serveur. Il va en effet filtrer tout le trafic en n’autorisant que les échanges permis par l’administrateur. Sans <em>firewall</em> correctement réglé, tous les trafics sont plus ou moins permis (c’est-à-dire qu’un attaquant peut faire ce qu’il veut chez vous) et ce genre de faille est détectable par un simple <em>scan</em> de ports.</p><p id="r-208013" data-claire-element-id="208013">Or, le noyau Linux offre déjà un pare-feu à l’utilisateur, qu’il est possible de configurer via le logiciel <em>iptables </em>(normalement contenu dans /sbin/iptables). S’il n’est pas installé :</p><pre id="r-208014" data-claire-element-id="208014"><code data-claire-semantic="console">apt-get install iptables</code></pre><p id="r-208015" data-claire-element-id="208015">Nous allons maintenant détailler le fonctionnement d’un <em>firewall</em> - relativement simple. Un <em>firewall</em> analyse tout le trafic et vérifie si chaque paquet échangé respecte bien ses règles (critères de filtrage). Donc, il suffit de spécifier de bonnes règles pour interdire tout trafic superflu.</p><p id="r-208016" data-claire-element-id="208016">Les critères peuvent être divers (filtrer les ports, les protocoles, les adresses IP, etc). De base, nous allons spécifier nos règles sur les ports. Bien entendu, il faut être le plus strict possible quant au choix des règles ; c’est pourquoi, par défaut, tout <em>firewall</em> se règle en premier lieu en bloquant tout, absolument tout. Ensuite, nous allons « ouvrir » (autoriser le trafic) certains ports que nous voulons utiliser (par exemple pour un serveur web, nous allons ouvrir le port 80 afin que le site web soit accessible).</p><aside id="r-208018" data-claire-element-id="208018" data-claire-semantic="error"><p id="r-208017" data-claire-element-id="208017">Pour plus de souplesse, nous allons écrire nos règles sous forme de script <em>bash</em>. Petite mesure de prudence si vous êtes loggué sur votre machine à distance (ssh), soyez bien sûr de ne pas vous bloquer l’accès ou - le cas échéant - de pouvoir <em>rebooter </em>la machine. Sinon, j’ai bien peur que récupérer votre serveur sera compliqué !</p></aside><h2 id="r-declaration-des-regles" data-claire-element-id="208121">Déclaration des règles</h2><h3 id="r-filtrage-integral" data-claire-element-id="208037">Filtrage intégral</h3><aside id="r-208021" data-claire-element-id="208021" data-claire-semantic="information"><p id="r-208020" data-claire-element-id="208020">Notez que la commande <em>iptables -L -v</em> vous permettra de consulter les règles courantes.</p></aside><p id="r-208022" data-claire-element-id="208022">Suit la marche à suivre pour créer les règles :</p><p id="r-208023" data-claire-element-id="208023"><strong>1. Créons le script :</strong></p><pre id="r-208024" data-claire-element-id="208024"><code data-claire-semantic="console">nano /etc/init.d/firewall</code></pre><p id="r-208025" data-claire-element-id="208025">Et on y écrit : #!/bin/sh</p><p id="r-208026" data-claire-element-id="208026"><strong>2. On efface les règles précédentes pour partir sur de bonnes bases :</strong></p><pre id="r-208027" data-claire-element-id="208027"><code data-claire-semantic="bash">iptables -t filter -F 
+iptables -t filter -X</code></pre><p id="r-208028" data-claire-element-id="208028"><strong>3. On bloque par défaut tout le trafic</strong> (si vous êtes en <em>ssh</em>, bien entendu, n’exécutez pas encore le script !) :</p><pre id="r-208029" data-claire-element-id="208029"><code data-claire-semantic="bash">iptables -t filter -P INPUT DROP 
+iptables -t filter -P FORWARD DROP 
+iptables -t filter -P OUTPUT DROP</code></pre><p id="r-208030" data-claire-element-id="208030"><strong>4. On ne ferme pas les connexions déjà établies :</strong></p><pre id="r-208031" data-claire-element-id="208031"><code data-claire-semantic="bash">iptables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT 
+iptables -A OUTPUT -m state --state RELATED,ESTABLISHED -j ACCEPT</code></pre><p id="r-208032" data-claire-element-id="208032">Nous indiquons avec les paramètres -m et --state de ne pas fermer les connexions qui sont déjà établies.</p><p id="r-208033" data-claire-element-id="208033"><strong>5. On autorise le <em>loopback</em></strong> (on ne va pas se bloquer nous-mêmes !)</p><pre id="r-208034" data-claire-element-id="208034"><code data-claire-semantic="bash">iptables -t filter -A INPUT -i lo -j ACCEPT 
+iptables -t filter -A OUTPUT -o lo -j ACCEPT</code></pre><p id="r-208035" data-claire-element-id="208035">Note : lo signifie <em>localhost </em>(le serveur lui-même).</p><p id="r-208036" data-claire-element-id="208036">Tout est bloqué, il ne nous reste plus qu’à ouvrir les ports utilisés.</p><h3 id="r-ouvrir-les-ports-utilises" data-claire-element-id="208120">Ouvrir les ports utilisés</h3><p id="r-208038" data-claire-element-id="208038">À partir de maintenant, observons plus en détail les paramètres de <em>iptables </em>:</p><ul id="r-208049" data-claire-element-id="208049"><li id="r-208040" data-claire-element-id="208040"><p id="r-208039" data-claire-element-id="208039"><strong>-t</strong> : vaudra par défaut « filter » ;</p></li><li id="r-208042" data-claire-element-id="208042"><p id="r-208041" data-claire-element-id="208041"><strong>-A</strong> : servira à indiquer le sens du trafic : INPUT (entrant) ou OUTPUT (sortant) ;</p></li><li id="r-208044" data-claire-element-id="208044"><p id="r-208043" data-claire-element-id="208043"><strong>-p</strong> : indique le protocole (TCP ou UDP en principe) ;</p></li><li id="r-208046" data-claire-element-id="208046"><p id="r-208045" data-claire-element-id="208045"><strong>--dport et --sport</strong> : respectivement port destination et port source (comme nous sommes le serveur, nous utiliserons principalement <em>dport</em>) ;</p></li><li id="r-208048" data-claire-element-id="208048"><p id="r-208047" data-claire-element-id="208047"><strong>-j</strong> : comment traiter le paquet (nous nous servirons d'ACCEPT et de DROP pour respectivement accepter et refuser le paquet).</p></li></ul><p id="r-208050" data-claire-element-id="208050">Plus nous serons précis, plus nous serons sécurisés. Renseigner ces quelques options est donc le minimum.</p><p id="r-208051" data-claire-element-id="208051">Ainsi, une règle simple aura la forme suivante :</p><pre id="r-208052" data-claire-element-id="208052"><code data-claire-semantic="bash">iptables -t filter -A INPUT/OUTPUT -p protocole --dport port_a_ouvrir -j ACCEPT</code></pre><p id="r-208053" data-claire-element-id="208053">Notez enfin que si vous voulez un échange, il faut toujours ouvrir le port dans les deux sens (INPUT et OUTPUT)... logique.</p><p id="r-208054" data-claire-element-id="208054">Exemple si l’on a un serveur web (port 80) :</p><pre id="r-208055" data-claire-element-id="208055"><code data-claire-semantic="bash">iptables -t filter -A OUTPUT -p tcp --dport 80 -j ACCEPT 
+iptables -t filter -A INPUT -p tcp --dport 80 -j ACCEPT</code></pre><aside id="r-208057" data-claire-element-id="208057" data-claire-semantic="error"><p id="r-208056" data-claire-element-id="208056">Vous pourriez me dire qu’il suffirait de n’écrire qu’une seule fois la ligne sans préciser l’argument -A... mais suivant notre politique de précision, ce serait une erreur car il existe d’autres valeurs que INPUT et OUTPUT pour lesquelles nous ne voulons pas permettre le trafic (FORWARD par exemple).</p></aside><p id="r-208058" data-claire-element-id="208058">Il ne vous reste qu’à spécifier toutes les règles nécessaires. Voici un petit tableau pour vous aider (il s’agit de données par défaut) :</p><table id="r-208117" data-claire-element-id="208117"><thead id="r-208066" data-claire-element-id="208066"><tr id="r-208065" data-claire-element-id="208065"><th id="r-208060" data-claire-element-id="208060"><p id="r-208059" data-claire-element-id="208059">service</p></th><th id="r-208062" data-claire-element-id="208062"><p id="r-208061" data-claire-element-id="208061">port d’écoute</p></th><th id="r-208064" data-claire-element-id="208064"><p id="r-208063" data-claire-element-id="208063">protocole</p></th></tr></thead><tbody id="r-208116" data-claire-element-id="208116"><tr id="r-208073" data-claire-element-id="208073"><td id="r-208068" data-claire-element-id="208068"><p id="r-208067" data-claire-element-id="208067">ssh</p></td><td id="r-208070" data-claire-element-id="208070"><p id="r-208069" data-claire-element-id="208069">22</p></td><td id="r-208072" data-claire-element-id="208072"><p id="r-208071" data-claire-element-id="208071">tcp</p></td></tr><tr id="r-208080" data-claire-element-id="208080"><td id="r-208075" data-claire-element-id="208075"><p id="r-208074" data-claire-element-id="208074">web/HTTP</p></td><td id="r-208077" data-claire-element-id="208077"><p id="r-208076" data-claire-element-id="208076">80</p></td><td id="r-208079" data-claire-element-id="208079"><p id="r-208078" data-claire-element-id="208078">tcp</p></td></tr><tr id="r-208087" data-claire-element-id="208087"><td id="r-208082" data-claire-element-id="208082"><p id="r-208081" data-claire-element-id="208081">FTP</p></td><td id="r-208084" data-claire-element-id="208084"><p id="r-208083" data-claire-element-id="208083">20 et 21</p></td><td id="r-208086" data-claire-element-id="208086"><p id="r-208085" data-claire-element-id="208085">tcp</p></td></tr><tr id="r-208094" data-claire-element-id="208094"><td id="r-208089" data-claire-element-id="208089"><p id="r-208088" data-claire-element-id="208088">mail/SMTP</p></td><td id="r-208091" data-claire-element-id="208091"><p id="r-208090" data-claire-element-id="208090">25</p></td><td id="r-208093" data-claire-element-id="208093"><p id="r-208092" data-claire-element-id="208092">tcp</p></td></tr><tr id="r-208101" data-claire-element-id="208101"><td id="r-208096" data-claire-element-id="208096"><p id="r-208095" data-claire-element-id="208095">mail/POP3</p></td><td id="r-208098" data-claire-element-id="208098"><p id="r-208097" data-claire-element-id="208097">110</p></td><td id="r-208100" data-claire-element-id="208100"><p id="r-208099" data-claire-element-id="208099">tcp</p></td></tr><tr id="r-208108" data-claire-element-id="208108"><td id="r-208103" data-claire-element-id="208103"><p id="r-208102" data-claire-element-id="208102">mail/IMAP</p></td><td id="r-208105" data-claire-element-id="208105"><p id="r-208104" data-claire-element-id="208104">143</p></td><td id="r-208107" data-claire-element-id="208107"><p id="r-208106" data-claire-element-id="208106">tcp</p></td></tr><tr id="r-208115" data-claire-element-id="208115"><td id="r-208110" data-claire-element-id="208110"><p id="r-208109" data-claire-element-id="208109">DNS</p></td><td id="r-208112" data-claire-element-id="208112"><p id="r-208111" data-claire-element-id="208111">53</p></td><td id="r-208114" data-claire-element-id="208114"><p id="r-208113" data-claire-element-id="208113">tcp et udp</p></td></tr></tbody></table><p id="r-208118" data-claire-element-id="208118"><strong>Cas particulier du ping</strong><br/> Le <em>ping </em>est basé sur un protocole particulier (ICMP) qui n’a pas de port prédéfini. Mais il faut absolument autoriser le <em>ping </em>car c’est la méthode la plus couramment utilisée pour savoir si votre serveur est en vie. Voici donc les règles :</p><pre id="r-208119" data-claire-element-id="208119"><code data-claire-semantic="bash">iptables -t filter -A INPUT -p icmp -j ACCEPT 
+iptables -t filter -A OUTPUT -p icmp -j ACCEPT</code></pre><h2 id="r-demarrage-du-firewall" data-claire-element-id="208128">Démarrage du <em>firewall</em></h2><p id="r-208122" data-claire-element-id="208122">Enfin, nous allons lancer notre <em>firewall</em> :</p><pre id="r-208123" data-claire-element-id="208123"><code data-claire-semantic="console">chmod +x /etc/init.d/firewall
+/etc/init.d/firewall</code></pre><p id="r-208124" data-claire-element-id="208124">Tester abondamment que tout se passe bien. Vous pouvez notamment utiliser l’utilitaire <em>nmap </em>pour vérifier qu’il n’y a pas plus de ports ouverts que voulu (cf partie 5).</p><aside id="r-208126" data-claire-element-id="208126" data-claire-semantic="warning"><p id="r-208125" data-claire-element-id="208125">Il est important de charger ce script au démarrage de la machine afin qu’un simple <em>reboot </em>ne vous laisse pas sans protection :</p></aside><pre id="r-208127" data-claire-element-id="208127"><code data-claire-semantic="console">update-rc.d firewall defaults</code></pre><h2 id="r-exemple-de-script" data-claire-element-id="208132">Exemple de script</h2><p id="r-208129" data-claire-element-id="208129">Ci-dessous, je vous montre un exemple de script basique autorisant le minimum vital pour un serveur web (HTTP, FTP, mail et résolution de DNS). Je vous encourage à lire des docs et des tutos plus complets si vous voulez aller plus loin dans le paramétrage de votre <em>firewall</em>.</p><div id="r-208131" data-claire-element-id="208131"><pre id="r-208130" data-claire-element-id="208130"><code data-claire-semantic="bash">#!/bin/sh 
+ 
+# Réinitialise les règles
+sudo iptables -t filter -F 
+sudo iptables -t filter -X 
+ 
+# Bloque tout le trafic
+sudo iptables -t filter -P INPUT DROP 
+sudo iptables -t filter -P FORWARD DROP 
+sudo iptables -t filter -P OUTPUT DROP 
+ 
+# Autorise les connexions déjà établies et localhost
+sudo iptables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT 
+sudo iptables -A OUTPUT -m state --state RELATED,ESTABLISHED -j ACCEPT 
+sudo iptables -t filter -A INPUT -i lo -j ACCEPT 
+sudo iptables -t filter -A OUTPUT -o lo -j ACCEPT 
+ 
+# ICMP (Ping)
+sudo iptables -t filter -A INPUT -p icmp -j ACCEPT 
+sudo iptables -t filter -A OUTPUT -p icmp -j ACCEPT 
+ 
+# SSH
+sudo iptables -t filter -A INPUT -p tcp --dport 22 -j ACCEPT 
+sudo iptables -t filter -A OUTPUT -p tcp --dport 22 -j ACCEPT 
+ 
+# DNS
+sudo iptables -t filter -A OUTPUT -p tcp --dport 53 -j ACCEPT 
+sudo iptables -t filter -A OUTPUT -p udp --dport 53 -j ACCEPT 
+sudo iptables -t filter -A INPUT -p tcp --dport 53 -j ACCEPT 
+sudo iptables -t filter -A INPUT -p udp --dport 53 -j ACCEPT 
+ 
+# HTTP
+sudo iptables -t filter -A OUTPUT -p tcp --dport 80 -j ACCEPT 
+sudo iptables -t filter -A INPUT -p tcp --dport 80 -j ACCEPT 
+
+# FTP 
+sudo iptables -t filter -A OUTPUT -p tcp --dport 20:21 -j ACCEPT 
+sudo iptables -t filter -A INPUT -p tcp --dport 20:21 -j ACCEPT 
+
+# Mail SMTP 
+iptables -t filter -A INPUT -p tcp --dport 25 -j ACCEPT 
+iptables -t filter -A OUTPUT -p tcp --dport 25 -j ACCEPT 
+ 
+# Mail POP3
+iptables -t filter -A INPUT -p tcp --dport 110 -j ACCEPT 
+iptables -t filter -A OUTPUT -p tcp --dport 110 -j ACCEPT 
+ 
+# Mail IMAP
+iptables -t filter -A INPUT -p tcp --dport 143 -j ACCEPT 
+iptables -t filter -A OUTPUT -p tcp --dport 143 -j ACCEPT 
+
+# NTP (horloge du serveur) 
+sudo iptables -t filter -A OUTPUT -p udp --dport 123 -j ACCEPT</code></pre></div><h2 id="r-allez-un-peu-plus-loin" data-claire-element-id="208154">Allez un peu plus loin</h2><p id="r-208133" data-claire-element-id="208133">Le <em>firewall</em>, outre que c’est l’outil de base de tout système de sécurité, permet des manipulations plus poussées que filtrer des ports. Je vais vous montrer quelques exemples.</p><h3 id="r-flood-ou-deni-de-service" data-claire-element-id="208143">Flood ou déni de service</h3><p id="r-208134" data-claire-element-id="208134">Ce genre d’attaque vise à surcharger la machine de requête. Il est possible de s’en prémunir pas mal directement au niveau du <em>firewall</em> :</p><pre id="r-208135" data-claire-element-id="208135"><code data-claire-semantic="bash">iptables -A FORWARD -p tcp --syn -m limit --limit 1/second -j ACCEPT</code></pre><p id="r-208136" data-claire-element-id="208136">Le <em>flags </em>TCP <em>syn </em>engendre des demandes de connexions, et le but de cette règle est donc de les limiter à une par seconde (champs <em>limit</em>).</p><aside id="r-208138" data-claire-element-id="208138" data-claire-semantic="warning"><p id="r-208137" data-claire-element-id="208137">Il est cependant déconseillé de monter au-delà de la seconde (sous peine de gêner le contrôle de flux et la récupération d’erreur de TCP).</p></aside><p id="r-208139" data-claire-element-id="208139">On peut faire de même avec les protocoles UDP et ICMP :</p><pre id="r-208140" data-claire-element-id="208140"><code data-claire-semantic="bash">iptables -A FORWARD -p udp -m limit --limit 1/second -j ACCEPT
+iptables -A FORWARD -p icmp --icmp-type echo-request -m limit --limit 1/second -j ACCEPT</code></pre><aside id="r-208142" data-claire-element-id="208142" data-claire-semantic="information"><p id="r-208141" data-claire-element-id="208141">Notez cependant que ce type d’attaque permet de faire tomber le serveur, mais pas d’en prendre l’accès. C’est pourquoi le risque d’en être la cible est assez mince (sauf si l’on s’appelle Google). En général, un logiciel simple anti-intrusion comme <em>fail2ban </em>(cf partie 2) est suffisant, suivant le niveau de sécurité recherché.</p></aside><h3 id="r-scan-de-ports" data-claire-element-id="208149"><em>Scan</em> de ports</h3><p id="r-208144" data-claire-element-id="208144">On peut aussi limiter un tant soit peu le <em>scan</em> de ports (qui consiste à tester tous vos ports afin de détecter ceux qui sont ouverts). Pour cela, une règle de ce genre irait :</p><pre id="r-208145" data-claire-element-id="208145"><code data-claire-semantic="bash">iptables -A FORWARD -p tcp --tcp-flags SYN,ACK,FIN,RST RST -m limit --limit 1/s -j ACCEPT</code></pre><p id="r-208146" data-claire-element-id="208146">C’est un peu le même principe que ci-dessus. Sachant qu’une connexion TCP en bon et due forme requiert trois paquets avec trois <em>flags </em>différents, on voit tout de suite la finesse de cette règle qui peut travailler paquet par paquet. Pour plus d’infos sur les <em>flags </em>TCP, cf Wikipédia.</p><aside id="r-208148" data-claire-element-id="208148" data-claire-semantic="information"><p id="r-208147" data-claire-element-id="208147">Notez que cette règle basique n’est pas très efficace, c’est une protection de base. La partie 2 ira plus loin dans le blocage des <em>scans</em> de ports.</p></aside><h3 id="r-bannir-une-ip" data-claire-element-id="208153">Bannir une IP</h3><p id="r-208150" data-claire-element-id="208150">Si vous repérez dans les <em>logs</em> ou autre une adresse IP suspecte, vous pouvez la bannir aisément au niveau du <em>firewall </em>via la commande :</p><pre id="r-208151" data-claire-element-id="208151"><code data-claire-semantic="console">iptables -A INPUT -s adresse_ip -j DROP</code></pre><p id="r-208152" data-claire-element-id="208152">Notez cependant qu’il n’est pas conseillé de bannir les IP à tour de bras.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux">Sécuriser son serveur Linux</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/filtrer-le-trafic-via-le-firewall">
+Filtrer le trafic via le firewall
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/se-premunir-contre-les-intrusions">
+Se prémunir contre les intrusions
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/surveiller-les-logs">
+Surveiller les logs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/du-bon-usage-de-son-serveur">
+Du bon usage de son serveur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/tester-la-surete-de-son-serveur">
+Tester la sureté de son serveur
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/se-premunir-contre-les-intrusions">
+<span class="next">Se prémunir contre les intrusions</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Seprmunircontrelesintrusions"></a><h2>Se prémunir contre les intrusions</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/filtrer-le-trafic-via-le-firewall">
+<span class="arrow"></span>
+<span class="next">Filtrer le trafic via le firewall</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/surveiller-les-logs">
+<span class="next">Surveiller les logs</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-208156" data-claire-element-id="208156">Actuellement, le <em>firewall</em> va bloquer toutes tentatives de connexions sur les ports fermés. Mais qu’en est-il des ports ouverts ? Afin de contrôler plus précisément ce qui se passe dessus, le <em>firewall</em> n’est pas suffisant et nous allons devoir utiliser d’autres outils, appelés IDS (<em>Intrusion Detection System</em>) et IPS (<em>Intrusion Prevention System</em>). Ces deux catégories de logiciels vont - comme leur nom l’indique - surveiller toute tentative d’intrusion sur le serveur.</p><p id="r-208157" data-claire-element-id="208157">La démarche qui va suivre va vous montrer comment réagir à chaque étape d’une tentative intrusion classique, à savoir :<br/> 1. le scan de port (plus généralement, la collecte d’informations) afin de trouver les vulnérabilités ;<br/> 2. les attaques « simples », témoins d’une faible sécurité ;<br/> 3. l’intrusion (via des techniques qui ne seront pas décrites ici car dépassant notre cadre de travail) ;<br/> 4. l’installation d’un moyen de se logguer sur le serveur à volonté (si l’attaquant parvient jusqu’ici avec succès, on peut dire que la machine lui appartient).</p><h2 id="r-portsentry-scan-de-ports" data-claire-element-id="208172">Portsentry (<em>scan</em> de ports)</h2><p id="r-208158" data-claire-element-id="208158">Cet utilitaire permet de bloquer en temps réel la plupart des <em>scans</em> de port connus (même très discrets et échappant aux règles de filtrage du <em>firewall</em> basiques). Je rappelle au passage que scanner les ports signifie tester tous les ports d’une machine afin de déterminer ceux qui sont ouverts (les portes d’entrées en gros). Cependant, il ne faut pas paniquer si votre serveur est la cible d’un simple <em>scan</em> de port, cela sera monnaie courante, et si vous êtes bien protégé, le pirate passera sa route.</p><p id="r-208159" data-claire-element-id="208159"><em>Portsentry </em>est donc sympa si vous voulez compliquer la tâche de l’attaquant :</p><pre id="r-208160" data-claire-element-id="208160"><code data-claire-semantic="console">apt-get install portsentry</code></pre><p id="r-208161" data-claire-element-id="208161">Pour le configurer :</p><pre id="r-208162" data-claire-element-id="208162"><code data-claire-semantic="console">nano /usr/local/psionic/portsentry/portsentry.conf</code></pre><p id="r-208163" data-claire-element-id="208163">Ou :</p><pre id="r-208164" data-claire-element-id="208164"><code data-claire-semantic="console">nano /etc/portsentry/portsentry.conf</code></pre><p id="r-208165" data-claire-element-id="208165">Commentez les lignes <em>KILL_HOSTS_DENY</em>.<br/> Décommentez la ligne <em>KILL_ROUTE=&quot;/sbin/iptables -I INPUT -s $TARGET$ -j DROP&quot;</em>.</p><p id="r-208166" data-claire-element-id="208166">Ainsi, <em>Portsentry </em>ajoutera une règle dans le <em>firewall</em> (<em>iptables</em>) pour rejeter les paquets en cas de <em>scans</em>.</p><p id="r-208167" data-claire-element-id="208167">On démarre le logiciel (il faut le lancer deux fois, pour TCP et UDP) :</p><pre id="r-208168" data-claire-element-id="208168"><code data-claire-semantic="console">portsentry –audp
+portsentry –atcp</code></pre><p id="r-208169" data-claire-element-id="208169">Vous pouvez tester tout ça avec <em>nmap </em>(si vous voulez tester en local, il vous faut modifier le fichier portsentry.ignore en enlevant le <em>localhost</em>).</p><aside id="r-208171" data-claire-element-id="208171" data-claire-semantic="information"><p id="r-208170" data-claire-element-id="208170">Si vous souhaitez que vos réglages restent même après un nouveau lancement de portsentry, vous devrez modifier le fichier portsentry.ignore.static</p></aside><h2 id="r-fail2ban-brute-force-dictionnaire-deni-de-service" data-claire-element-id="208188">Fail2ban (brute-force, dictionnaire, déni de service)</h2><p id="r-208173" data-claire-element-id="208173">Comme je l’ai dit, les ports ouverts sur la machine sont à priori sans grande protection, et sujet à des attaques simples telles que la tentative de connexion par brute-force ou par dictionnaire (par exemple, tester toutes les combinaisons de mots de passe pour se logguer en ssh), le déni de services (surcharger le serveur de requêtes) ou - plus bêtement - la recherche d’utilisateurs sans mots de passe... Si votre machine est infiltrée aussi facilement, l’attaquant sera vraiment content.</p><p id="r-208174" data-claire-element-id="208174"><em>Fail2ban </em>est un petit utilitaire qui se base sur les <em>logs </em>de la machine pour chercher des actions suspectes répétées (par exemple, des erreurs de mots de passe) dans un laps de temps donné. S’il en trouve, il bannira l’IP de l’attaquant via <em>iptables</em>. Ce type de logiciel est indispensable, car, bien que léger, il offre une bonne protection contre les attaques basiques indiquées ci-dessus.</p><p id="r-208175" data-claire-element-id="208175">Pour l’installation :</p><pre id="r-208176" data-claire-element-id="208176"><code data-claire-semantic="console">apt-get install fail2ban</code></pre><p id="r-208177" data-claire-element-id="208177">Pour la configuration :</p><pre id="r-208178" data-claire-element-id="208178"><code data-claire-semantic="console">nano /etc/fail2ban/jail.conf</code></pre><p id="r-208179" data-claire-element-id="208179">Je vous encourage à remplir le champ ci-dessous :<br/> - <strong>destmail</strong> : indiquez une adresse mail si vous voulez recevoir des mails d’alerte de la part de <em>fail2ban</em>.</p><p id="r-208180" data-claire-element-id="208180">Le niveau de protection peut être modulé via les champs suivants (notez que la configuration par défaut suffit normalement) :<br/> - <strong>bantime </strong>: temps de bannissement des IP suspectes ;<br/> - <strong>maxretry </strong>: nombre de tentatives de connexion permise avant bannissement.</p><aside id="r-208182" data-claire-element-id="208182" data-claire-semantic="warning"><p id="r-208181" data-claire-element-id="208181">Notez que dans la partie JAILS (dans nano : ctrl w =&gt; rechercher JAILS) figure tous les services que <em>fail2ban </em>surveillera. Si vous avez modifié les ports par défaut, il faut les indiquer là aussi. Par exemple avec <em>ssh </em>:</p></aside><pre id="r-208183" data-claire-element-id="208183"><code data-claire-semantic="console">nano /etc/fail2ban/jail.conf
+ctrl+w =&gt; chercher [ssh]
+port : indiquer le port</code></pre><p id="r-208184" data-claire-element-id="208184">Enregistrez et quittez.</p><p id="r-208185" data-claire-element-id="208185">Je vous encourage à parcourir rapidement le reste des options afin de personnaliser un peu votre soft.</p><p id="r-208186" data-claire-element-id="208186">Enfin, pour recharger la nouvelle configuration :</p><pre id="r-208187" data-claire-element-id="208187"><code data-claire-semantic="console">/etc/init.d/fail2ban restart</code></pre><h2 id="r-snort-detection-d-intrusions" data-claire-element-id="208194">Snort (détection d’intrusions)</h2><p id="r-208189" data-claire-element-id="208189">Le problème quand on commence à sécuriser est de savoir s’arrêter à un moment donné. <em>Snort </em>est un outil très puissant, pouvant en fait détecter la plupart des attaques qui échapperaient à un utilitaire comme <em>fail2ban</em>. Bien entendu, il ne servira pas dans 90 % des cas et comme ce n’est qu’un outil de détection, ce sera à vous de rendre les mesures nécessaires s’il détecte une intrusion. Enfin, comme il analyse le trafic en temps réel, cela ralentit forcément un peu les flux. L’installer n’est donc pas indispensable, cela dépend du degré de sécurité recherché !</p><p id="r-208190" data-claire-element-id="208190">Comme ce logiciel dépasse un peu le cadre de ce tutoriel, je vous propose de consulter ces guides pour l’installer : <br/><a href="http://www.trustonme.net/didactels/187.html">http://www.trustonme.net/didactels/187.html</a><br/><a href="http://doc.ubuntu-fr.org/snort">http://doc.ubuntu-fr.org/snort</a></p><p id="r-208191" data-claire-element-id="208191">J’en ai juste parlé car en matière de sécurité, c’est un outil très poussé.</p><aside id="r-208193" data-claire-element-id="208193" data-claire-semantic="warning"><p id="r-208192" data-claire-element-id="208192">Notez que ce logiciel fonctionne à partir de règles de sécurité écrites par des utilisateurs, et parfois erronées. En cas d’erreur au démarrage, n’hésitez pas à aller commenter les règles buguées (que vous trouverez dans /var/log/syslog).</p></aside><h2 id="r-rkhunter-rootkit-et-backdoors" data-claire-element-id="208203">Rkhunter (<em>rootkit </em>et <em>backdoors</em>)</h2><p id="r-208195" data-claire-element-id="208195">Dernier volet de cette section intrusion, les <em>backdoors</em>. Si par malheur un attaquant arrive à prendre possession de votre machine, il y a fort à parier qu’il y laisse une <em>backdoor </em>(porte dérobée) qui lui permettrait d’en reprendre le contrôle plus tard, ainsi qu’un <em>rootkit </em>pour la dissimuler : l’attaquant maintient ainsi un accès frauduleux à votre machine.</p><p id="r-208196" data-claire-element-id="208196"><em>Rkhunter </em>est un utilitaire qui est chargé de détecter d’éventuels <em>rootkits </em>sur votre serveur. Il est relativement léger (s’exécute une fois par jour par défaut) donc on aurait tort de se priver.</p><pre id="r-208197" data-claire-element-id="208197"><code data-claire-semantic="console">apt-get install rkhunter</code></pre><p id="r-208198" data-claire-element-id="208198">Il est conseillé de modifier un peu la configuration :</p><pre id="r-208199" data-claire-element-id="208199"><code data-claire-semantic="console">nano /etc/default/rkhunter</code></pre><p id="r-208200" data-claire-element-id="208200">- <strong>REPORT_EMAIL</strong> : indiquez un mail pour recevoir des alertes de <em>Rkhunter </em>;<br/> - <strong>CRON_DAILY_RUN</strong> : mettez « <em>yes</em> » pour une vérification quotidienne de votre machine via un <em>cron</em>.</p><aside id="r-208202" data-claire-element-id="208202" data-claire-semantic="information"><p id="r-208201" data-claire-element-id="208201">Notez que Rkhunter se trompe parfois en déclarant comme infectés des fichiers sains (« faux positifs »), donc il faut être critique à l’égard des rapports. Par contre, s’il s’avère que l’alerte est justifiée, cela signifie que vous avez un <em>rootkit</em> ainsi qu’une faille de sécurité qui a été découverte et exploitée. Méfiance donc !</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux">Sécuriser son serveur Linux</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/filtrer-le-trafic-via-le-firewall">
+Filtrer le trafic via le firewall
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/se-premunir-contre-les-intrusions">
+Se prémunir contre les intrusions
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/surveiller-les-logs">
+Surveiller les logs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/du-bon-usage-de-son-serveur">
+Du bon usage de son serveur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/tester-la-surete-de-son-serveur">
+Tester la sureté de son serveur
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/filtrer-le-trafic-via-le-firewall">
+<span class="arrow"></span>
+<span class="next">Filtrer le trafic via le firewall</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/surveiller-les-logs">
+<span class="next">Surveiller les logs</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Surveillerleslogs"></a><h2>Surveiller les logs</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/se-premunir-contre-les-intrusions">
+<span class="arrow"></span>
+<span class="next">Se prémunir contre les intrusions</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/du-bon-usage-de-son-serveur">
+<span class="next">Du bon usage de son serveur</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-208205" data-claire-element-id="208205">La plupart des logiciels cités plus haut vous enverront des notifications par mail en cas d’alerte. Cependant, surveiller les <em>logs </em>est important, car ils reflètent la « vie » de votre serveur. Les <em>logs </em>les plus intéressants sont notamment :</p><ul id="r-208216" data-claire-element-id="208216"><li id="r-208207" data-claire-element-id="208207"><p id="r-208206" data-claire-element-id="208206"><strong>/var/log/auth.log</strong> qui contient toutes les tentatives d’accès au serveur. Il peut être utile de filtrer le contenu, par exemple : <em>cat /var/log/auth.log | grep authentication failure</em> ;</p></li><li id="r-208209" data-claire-element-id="208209"><p id="r-208208" data-claire-element-id="208208"><strong>/var/log/message</strong> et <strong>/var/log/syslog</strong> contient un peu de tout (erreurs, <em>bugs</em>, informations, etc) ;</p></li><li id="r-208211" data-claire-element-id="208211"><p id="r-208210" data-claire-element-id="208210"><strong>/var/log/fail2ban</strong> est le <em>log </em>d’alerte de <em>fail2ban</em>. Cherchez notamment : <em>cat /var/log/fail2ban | grep ban</em> ;</p></li><li id="r-208213" data-claire-element-id="208213"><p id="r-208212" data-claire-element-id="208212"><strong>/var/log/snort/alert</strong> vous indiquera les <em>logs </em>d’alertes de <em>Snort </em>;</p></li><li id="r-208215" data-claire-element-id="208215"><p id="r-208214" data-claire-element-id="208214"><strong>/var/log/rkhunter</strong> pour voir les rapports quotidien de <em>Rkhunter</em>. Faites attention aux erreurs trouvées, ce n’est pas bon signe (même si le risque de faux positifs existe ici).</p></li></ul><h3 id="r-logwatch" data-claire-element-id="208223">Logwatch</h3><p id="r-208217" data-claire-element-id="208217">Il est aussi possible d’utiliser des utilitaires qui vous simplifient un peu ce travail de lecture des <em>logs</em>. <em>Logwatch </em>notamment permet de résumer plusieurs logs afin de ne vous retourner que des anomalies si possible. Cela évite un long et fastidieux travail de recherche.</p><p id="r-208218" data-claire-element-id="208218">Installation :</p><pre id="r-208219" data-claire-element-id="208219"><code data-claire-semantic="console">apt-get install logwatch 
+nano /usr/share/logwatch/default.conf/logwatch.conf</code></pre><p id="r-208220" data-claire-element-id="208220">Spécifiez l’option « MailTo » car <em>logwatch </em>envoie ses résumés de <em>logs </em>par mail.<br/> Il va normalement s’exécuter tous les jours (<em>ls -l /etc/cron.daily/ | grep logwatch</em> pour s’en assurer).</p><aside id="r-208222" data-claire-element-id="208222" data-claire-semantic="information"><p id="r-208221" data-claire-element-id="208221">Il peut aussi être intéressant de suivre l’état du réseau et du système (monitoring) afin de détecter par exemple une brusque montée en charge, synonyme de problèmes. Mais comme il est délicat de réagir vite, je vous laisse vous renseigner de vous-mêmes.</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux">Sécuriser son serveur Linux</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/filtrer-le-trafic-via-le-firewall">
+Filtrer le trafic via le firewall
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/se-premunir-contre-les-intrusions">
+Se prémunir contre les intrusions
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/surveiller-les-logs">
+Surveiller les logs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/du-bon-usage-de-son-serveur">
+Du bon usage de son serveur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/tester-la-surete-de-son-serveur">
+Tester la sureté de son serveur
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/se-premunir-contre-les-intrusions">
+<span class="arrow"></span>
+<span class="next">Se prémunir contre les intrusions</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/du-bon-usage-de-son-serveur">
+<span class="next">Du bon usage de son serveur</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Dubonusagedesonserveur"></a><h2>Du bon usage de son serveur</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/surveiller-les-logs">
+<span class="arrow"></span>
+<span class="next">Surveiller les logs</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/tester-la-surete-de-son-serveur">
+<span class="next">Tester la sureté de son serveur</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-le-bon-sens" data-claire-element-id="208235">Le bon sens</h2><p id="r-208225" data-claire-element-id="208225">90 % des problèmes informatiques relèvent de l’utilisateur. C’est pourquoi, avant même de penser à sécuriser sa machine, il faut garder en mémoire quelques règles de bon sens :</p><ul id="r-208234" data-claire-element-id="208234"><li id="r-208227" data-claire-element-id="208227"><p id="r-208226" data-claire-element-id="208226">interdire les utilisateurs sans mot de passe (ce sont d’énormes failles potentielles) ;</p></li><li id="r-208229" data-claire-element-id="208229"><p id="r-208228" data-claire-element-id="208228">toujours choisir de bons mots de passe : 8 caractères minimum, pas un mot qui se trouve dans le dictionnaire, si possible des chiffres, des majuscules, des symboles... au besoin, un outil comme <em>pwgen </em>vous en génèrera automatiquement des bons (<em>apt-get install pwgen</em>) ;</p></li><li id="r-208231" data-claire-element-id="208231"><p id="r-208230" data-claire-element-id="208230">maintenir son système à jour (<em>apt-get update</em> et <em>apt-get upgrade</em>) ;</p></li><li id="r-208233" data-claire-element-id="208233"><p id="r-208232" data-claire-element-id="208232">toujours utiliser <em>ssh </em>pour l’accès à distance (et non <em>telnet </em>ou des services graphiques, sauf s’ils sont en tunnel à travers <em>ssh</em>).</p></li></ul><h2 id="r-configurer-les-logiciels" data-claire-element-id="208274">Configurer les logiciels</h2><p id="r-208236" data-claire-element-id="208236">Il peut aussi être bon d’améliorer un peu la sécurité des logiciels installés sur la machine, car il seront en première ligne pour traiter les paquets autorisés.</p><h3 id="r-ssh" data-claire-element-id="208242">SSH</h3><p id="r-208237" data-claire-element-id="208237">En premier lieu, il faut regarder du côté de <em>ssh</em>, puisque c’est tout de même un accès direct à votre machine. <br/> Pour ce faire...</p><pre id="r-208238" data-claire-element-id="208238"><code data-claire-semantic="console">nano /etc/ssh/sshd_config</code></pre><p id="r-208239" data-claire-element-id="208239">... et il est conseillé de changer les champs suivants :<br/> - <strong>Port </strong>: le port par défaut est 22... et n’importe quel attaquant le sait. Changer le port force à effectuer un <em>scan </em>(ou équivalent) avant de réfléchir à attaquer (attention de bien changer le port dans le <em>firewall</em>) ;<br/> - <strong>PermitRootLogin </strong>: mettre à « no » afin d’interdire le <em>login </em>en <em>root </em>; <br/> - <strong>AllowUsers </strong>: indique une liste d’utilisateur autorisé à se connecter via <em>ssh</em>. Cela peut être utile si vous avez des utilisateurs qui ne sont pas censés se connecter sur la machine.</p><p id="r-208240" data-claire-element-id="208240">Et on redémarre :</p><pre id="r-208241" data-claire-element-id="208241"><code data-claire-semantic="console">/etc/init.d/ssh restart</code></pre><h3 id="r-apache" data-claire-element-id="208247">Apache</h3><p id="r-208243" data-claire-element-id="208243"><em>Apache </em>- le serveur web le plus courant - donne par défaut de nombreuses informations à quiconque s’y connecte. Vu que cela ne sert à rien que votre serveur web donne au monde votre distribution Linux, autant limiter cela :</p><pre id="r-208244" data-claire-element-id="208244"><code data-claire-semantic="console">nano /etc/apache2/apache2.conf</code></pre><p id="r-208245" data-claire-element-id="208245">Passez <em>ServerSignature </em>à « off » et <em>ServerTokens </em>à « Prod » pour rendre votre serveur web plus discret.</p><pre id="r-208246" data-claire-element-id="208246"><code data-claire-semantic="console">/etc/init.d/apache2 restart</code></pre><h3 id="r-autres-8" data-claire-element-id="208273">Autres</h3><p id="r-208248" data-claire-element-id="208248">Pour la plupart des logiciels de base, il existe quelques recommandations de prudence. Voici une liste non exhaustive :</p><table id="r-208271" data-claire-element-id="208271"><thead id="r-208254" data-claire-element-id="208254"><tr id="r-208253" data-claire-element-id="208253"><th id="r-208250" data-claire-element-id="208250"><p id="r-208249" data-claire-element-id="208249">service</p></th><th id="r-208252" data-claire-element-id="208252"><p id="r-208251" data-claire-element-id="208251">conseil</p></th></tr></thead><tbody id="r-208270" data-claire-element-id="208270"><tr id="r-208259" data-claire-element-id="208259"><td id="r-208256" data-claire-element-id="208256"><p id="r-208255" data-claire-element-id="208255">mysql</p></td><td id="r-208258" data-claire-element-id="208258"><p id="r-208257" data-claire-element-id="208257">interdire les accès sans mot de passe (on peut exécuter l’utilitaire <em>/usr/bin/mysql_secure_installation</em> fourni avec <em>mysql-server</em>)</p></td></tr><tr id="r-208264" data-claire-element-id="208264"><td id="r-208261" data-claire-element-id="208261"><p id="r-208260" data-claire-element-id="208260">FTP</p></td><td id="r-208263" data-claire-element-id="208263"><p id="r-208262" data-claire-element-id="208262">ne surtout pas créer de FTP anonymes</p></td></tr><tr id="r-208269" data-claire-element-id="208269"><td id="r-208266" data-claire-element-id="208266"><p id="r-208265" data-claire-element-id="208265">Mail</p></td><td id="r-208268" data-claire-element-id="208268"><p id="r-208267" data-claire-element-id="208267">utiliser un anti-spam (<em>spamassassin </em>par exemple) et - si possible - utiliser les connexions sécurisées (SSL ou TLS) offertes par tout serveur de mail qui se respecte</p></td></tr></tbody></table><p id="r-208272" data-claire-element-id="208272">Et bien d’autres, à vous de vous renseigner.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux">Sécuriser son serveur Linux</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/filtrer-le-trafic-via-le-firewall">
+Filtrer le trafic via le firewall
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/se-premunir-contre-les-intrusions">
+Se prémunir contre les intrusions
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/surveiller-les-logs">
+Surveiller les logs
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/du-bon-usage-de-son-serveur">
+Du bon usage de son serveur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/tester-la-surete-de-son-serveur">
+Tester la sureté de son serveur
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/surveiller-les-logs">
+<span class="arrow"></span>
+<span class="next">Surveiller les logs</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/tester-la-surete-de-son-serveur">
+<span class="next">Tester la sureté de son serveur</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Testerlasuretdesonserveur"></a><h2>Tester la sureté de son serveur</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/du-bon-usage-de-son-serveur">
+<span class="arrow"></span>
+<span class="next">Du bon usage de son serveur</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-208276" data-claire-element-id="208276">Il est bien connu que pour éprouver la sécurité de son serveur, le plus simple est encore de se mettre dans la peau d’un pirate. Sans aller jusque-là, il existe néanmoins quelques outils intéressants pour rapidement déterminer s’il existe une grosse faille ou non.</p><h3 id="r-scanner-de-port" data-claire-element-id="208284">Scanner de port</h3><p id="r-208277" data-claire-element-id="208277"><em>nmap </em>est le meilleur outil de <em>scan </em>de ports : il va tenter d’ouvrir des connexions sur un grand nombre de ports de votre machine afin de déterminer s’ils sont ouverts ou non.</p><pre id="r-208278" data-claire-element-id="208278"><code data-claire-semantic="console">apt-get install nmap</code></pre><p id="r-208279" data-claire-element-id="208279">Comme c’est notre serveur, le mieux est d’effectuer le <em>scan </em>le plus incisif (et par conséquent, le moins discret) possible :</p><pre id="r-208280" data-claire-element-id="208280"><code data-claire-semantic="console">nmap -v ip_ou_nom_de_la_machine</code></pre><p id="r-208281" data-claire-element-id="208281">Vous aurez alors la liste des ports ouverts.<br/> Vous pouvez aussi tester un port en particulier avec l’argument <em>-p port</em>. Il n’est pas recommandé d’utiliser <em>nmap </em>sur quiconque autre que vous-mêmes ;)</p><aside id="r-208283" data-claire-element-id="208283" data-claire-semantic="information"><p id="r-208282" data-claire-element-id="208282">Si vous avez pris des mesures pour bloquer (au mieux) le <em>scan </em>de port, il est conseillé dans un premier temps de les désactiver le temps du <em>scan </em>(car un port ouvert sans que vous le sachiez est une faille), et dans un second temps de jouer avec <em>nmap </em>pour voir si vos règles sont efficaces ou pas (par exemple avec les options <em>-sS</em>, <em>-sN</em> ou <em>-sI</em>, cf le manuel).</p></aside><h3 id="r-scanner-de-vulnerabilite" data-claire-element-id="208289">Scanner de vulnérabilité</h3><p id="r-208285" data-claire-element-id="208285">Là, le but est de chercher en général les failles de votre machine. Et il convient de les régler toutes si possible, car l’attaquant peut les trouver aussi bien que vous.</p><p id="r-208286" data-claire-element-id="208286">Pour cela, <em>Nessus </em>est un des utilitaires les plus performants. Comme le logiciel est propriétaire et qu’il s’utilise via une interface graphique, je vous laisse suivre un tuto détaillé dessus, par exemple :<br/><a href="http://doc.ubuntu-fr.org/nessus">http://doc.ubuntu-fr.org/nessus</a><br/><a href="http://www.linux-pour-lesnuls.com/nessus.php">http://www.linux-pour-lesnuls.com/nessus.php</a></p><p id="r-208287" data-claire-element-id="208287">La sécurité informatique est un vaste domaine dont j'espère vous avoir donné un bon aperçu à travers ces exemples d'applications. Cependant, il existe de bien nombreux autres système de défense et si la sécurisation à outrance est inutile, la connaissance à outrance ne l'est sûrement pas !</p><p id="r-208288" data-claire-element-id="208288">Quelques liens intéressants donc :<br/><a href="http://www.linux-france.org/prj/inetdoc/securite/tutoriel/">http://www.linux-france.org/prj/inetdo [...] ite/tutoriel/</a><br/><a href="http://securite.developpez.com/cours/">http://securite.developpez.com/cours/</a><br/> Et bien d'autres sur Google.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux">Sécuriser son serveur Linux</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/filtrer-le-trafic-via-le-firewall">
+Filtrer le trafic via le firewall
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/se-premunir-contre-les-intrusions">
+Se prémunir contre les intrusions
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/surveiller-les-logs">
+Surveiller les logs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/du-bon-usage-de-son-serveur">
+Du bon usage de son serveur
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/tester-la-surete-de-son-serveur">
+Tester la sureté de son serveur
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/securiser-son-serveur-linux/du-bon-usage-de-son-serveur">
+<span class="arrow"></span>
+<span class="next">Du bon usage de son serveur</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/securiser-son-serveur-linux.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 19:50:11 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/securiser-son-serveur-linux.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 03:34:33 GMT -->
+</html>

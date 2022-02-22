@@ -1,0 +1,549 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/securisation-des-failles-csrf.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 08:28:27 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/securisation-des-failles-csrf.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:31:19 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Sécurisation des failles CSRF</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/securisation-des-failles-csrf.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Sécurisation des failles CSRF</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#ScurisationdesfaillesCSRF">Sécurisation des failles CSRF</a><br/><a href="#CSRFksako">CSRF, késako?</a><br/><a href="#Lejetondescuritoutoken">Le jeton de sécurité ou token</a><br/><a href="#Lereferer">Le referer</a><br/><a href="#Autresconseils">Autres conseils</a><br/><a href="#Lesbonus">Les bonus</a><br/></div>
+<a name="ScurisationdesfaillesCSRF"></a><h2>Sécurisation des failles CSRF</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/csrf-kesako">
+<span class="next">CSRF, késako?</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-413145" data-claire-element-id="413145">Bienvenue à tous !</p><p id="r-413146" data-claire-element-id="413146">Aujourd'hui, je vais vous introduire une nouvelle faille de sécurité, et vous expliquer comment vous en protéger au mieux.</p><p id="r-413147" data-claire-element-id="413147">Si vous êtes développeur et que la notion de &quot;token&quot; ne vous dit rien, lisez vite ce tuto, on est peut-être déjà en train de vous pirater !</p><aside id="r-413149" data-claire-element-id="413149" data-claire-semantic="warning"><p id="r-413148" data-claire-element-id="413148">Ce tutoriel concerne les sites PHP, vous devez donc maîtriser ce langage (c.f. : <a href="http://www.siteduzero.com/tutoriel-3-14668-un-site-dynamique-avec-php.html">le tuto de M@teo21</a>). Il est surtout utile pour les sites en activité, et assez complets, puisque ceux-ci doivent reposer sur un système de privilèges.</p></aside><p id="r-413150" data-claire-element-id="413150">C'est partiiiii ! ;)</p>
+</div><a name="CSRFksako"></a><h2>CSRF, késako?</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/le-jeton-de-securite-ou-token">
+<span class="next">Le jeton de sécurité ou token</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-413151" data-claire-element-id="413151">Je suis sûr que vous vous demandez :</p><div id="r-413153" data-claire-element-id="413153" data-claire-semantic="question"><p id="r-413152" data-claire-element-id="413152">Mais c'est quoi ce CSRF dont il nous parle depuis tout à l'heure ?</p></div><p id="r-413154" data-claire-element-id="413154">Ah oui, j'avais oublié de vous expliquer ! :diable:</p><p id="r-413155" data-claire-element-id="413155">CSRF signifie &quot;Cross-Site Request Forgeries&quot;. Je vous donne un exemple : <br/> Paul est newser d'un site, il peut donc ajouter, modifier, et supprimer une news, ce qu'un utilisateur du site lambda ne peut PAS faire.<br/> Jean est un de ces utilisateurs lambda, et il aimerait pirater le site de Paul ! :pirate: Il va donc récupérer l'adresse permettant de supprimer une news, et envoyer un message privé à Paul contenant une image dont l'adresse sera celle de la page de suppression de news.</p><p id="r-413156" data-claire-element-id="413156">Et là, le navigateur entre en jeu. En essayant d'afficher l'image, il va aller sur la page web permettant de supprimer la news et donc l'exécuter. Or, Paul était identifié en tant que newser, la news sera donc supprimée car <strong>IL</strong> a affiché la page.</p><p id="r-413157" data-claire-element-id="413157">Sur le même principe, si Paul peut recevoir une requête ajax qui en s'exécutant va poster ou modifier une news !<br/> C'est-à-dire que Paul recevra un code javascript qui &quot;forcera&quot; le navigateur à appeler la page que le pirate veut que Paul exécute.</p><p id="r-413158" data-claire-element-id="413158">On va donc apprendre à se protéger de ces failles très dangereuses, sachant qu'il n'existe pas de protection parfaite.</p><p id="r-413159" data-claire-element-id="413159">Avant d'entrer dans le vif du sujet, je précise à toutes fins utiles que cette faille ne s'applique pas uniquement au cas que je présente dans ce tuto (c'est à dire le &quot;piratage&quot; d'un espace d'administration), mais peut-être utilisée dans de nombreux domaines où le but est de faire générer une requête par le navigateur de la victime (pour truquer des votes par exemple).</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf">Sécurisation des failles CSRF</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/csrf-kesako">
+CSRF, késako?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/le-jeton-de-securite-ou-token">
+Le jeton de sécurité ou token
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/le-referer">
+Le referer
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/autres-conseils">
+Autres conseils
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/les-bonus">
+Les bonus
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/le-jeton-de-securite-ou-token">
+<span class="next">Le jeton de sécurité ou token</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lejetondescuritoutoken"></a><h2>Le jeton de sécurité ou token</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/csrf-kesako">
+<span class="arrow"></span>
+<span class="next">CSRF, késako?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/le-referer">
+<span class="next">Le referer</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-413161" data-claire-element-id="413161">Alors, pour commencer, voyons la protection la plus courante. :) <br/> Elle consiste à stocker un jeton unique (clairement une suite de nombres et de lettres) associé à la date d'affichage pour chaque visiteur qui affiche un formulaire dans une session, et ce même jeton dans un champ caché. Ceci permet que la personne qui tente d'exécuter la page est bien passée par le formulaire avant, où on lui a délivré le jeton.</p><p id="r-413162" data-claire-element-id="413162">Ce qui donne :</p><pre id="r-413163" data-claire-element-id="413163"><code data-claire-semantic="html+php">&lt;?php
+//On démarre les sessions
+session_start();
+//On génére un jeton totalement unique (c'est capital :D)
+$token = uniqid(rand(), true);
+//Et on le stocke
+$_SESSION['token'] = $token;
+//On enregistre aussi le timestamp correspondant au moment de la création du token
+$_SESSION['token_time'] = time();
+
+//Maintenant, on affiche notre page normalement, le champ caché token en plus
+?&gt;&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD XHTML 1.0 Transitional//EN&quot; &quot;http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd&quot;&gt;
+&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot;&gt;
+&lt;head&gt;
+&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=utf-8&quot; /&gt;
+&lt;title&gt;Mon formulaire anti CSRF&lt;/title&gt;
+&lt;/head&gt;
+
+&lt;body&gt;
+&lt;form id=&quot;form&quot; name=&quot;form&quot; method=&quot;post&quot; action=&quot;traitement.php&quot;&gt;
+  &lt;p&gt;Pseudo : 
+    &lt;label&gt;
+      &lt;input type=&quot;text&quot; name=&quot;pseudo&quot; id=&quot;pseudo&quot; /&gt;
+    &lt;/label&gt;
+  &lt;/p&gt;
+  &lt;p&gt;E-mail : 
+    &lt;label&gt;
+      &lt;input type=&quot;text&quot; name=&quot;email&quot; id=&quot;email&quot; /&gt;
+    &lt;/label&gt;
+  &lt;/p&gt;
+  &lt;p&gt;Nom : 
+    &lt;label&gt;
+      &lt;input type=&quot;text&quot; name=&quot;nom&quot; id=&quot;nom&quot; /&gt;
+    &lt;/label&gt;
+    &lt;input type=&quot;hidden&quot; name=&quot;token&quot; id=&quot;token&quot; value=&quot;&lt;?php
+//Le champ caché a pour valeur le jeton
+echo $token;
+	?&gt;&quot;/&gt;
+  &lt;/p&gt;
+  &lt;p&gt;
+    &lt;label&gt;
+      &lt;input type=&quot;submit&quot; name=&quot;Envoyer&quot; id=&quot;Envoyer&quot; value=&quot;Envoyer&quot; /&gt;
+    &lt;/label&gt;
+  &lt;/p&gt;
+&lt;/form&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre><p id="r-413164" data-claire-element-id="413164">Bon, jusque-là, c'est bon je pense... Les commentaires sont explicites. :soleil:</p><aside id="r-413166" data-claire-element-id="413166" data-claire-semantic="error"><p id="r-413165" data-claire-element-id="413165">Je rappelle que session_start() se place avant tout affichage, c'est souvent une cause d'erreurs inexpliquées. Vous pouvez outrepasser cette limitation grâce aux fonctions ob_, mais c'est moins propre.</p></aside><p id="r-413167" data-claire-element-id="413167">Ensuite, on passe à la page du traitement, et vous vous rendrez compte qu'il est très simple de se protéger efficacement.</p><p id="r-413168" data-claire-element-id="413168">On va déjà vérifier la présence du token, de sa date dans la session, et du token envoyé par POST. Donc, si la personne qui exécute la page n'est pas passée par le formulaire, ça bloque...</p><p id="r-413169" data-claire-element-id="413169">Le token doit aussi être valide, c'est-à-dire identique à celui envoyé par POST, et non-expiré, c'est-à-dire que sa génération ne remonte pas à trop longtemps.</p><p id="r-413170" data-claire-element-id="413170">Puis on vérifie aussi si le token de $_POST est le même que celui de $_SESSION. Ce qui donne finalement :</p><pre id="r-413171" data-claire-element-id="413171"><code data-claire-semantic="html+php">&lt;?php
+session_start();
+//On va vérifier :
+//Si le jeton est présent dans la session et dans le formulaire
+if(isset($_SESSION['token']) &amp;&amp; isset($_SESSION['token_time']) &amp;&amp; isset($_POST['token']))
+{
+	//Si le jeton de la session correspond à celui du formulaire
+	if($_SESSION['token'] == $_POST['token'])
+	{
+		//On stocke le timestamp qu'il était il y a 15 minutes
+		$timestamp_ancien = time() - (15*60);
+		//Si le jeton n'est pas expiré
+		if($_SESSION['token_time'] &gt;= $timestamp_ancien)
+		{
+				//ON FAIT TOUS LES TRAITEMENTS ICI
+				//...
+				//...
+		}
+	}
+}
+//SINON, ON RAJOUTE DES ELSE ET DES MESSAGES D'ERREUR
+?&gt;</code></pre><aside id="r-413173" data-claire-element-id="413173" data-claire-semantic="information"><p id="r-413172" data-claire-element-id="413172">Je vous conseille si vous utilisez cette méthode sur plusieurs scripts de nommer vos sessions pour ne pas confondre les jetons. Par exemple, $_SESSION['token_time'] devient $_SESSION['inscription_token_time'].</p></aside><p id="r-413174" data-claire-element-id="413174">Voilà pour la protection de base. Suivez le guide, on va rentrer dans d'autres petites sécurités à mettre en place pour bien gêner le pirate. :diable:</p><p id="r-413175" data-claire-element-id="413175">Évidemment, on peut utiliser un token pour des actions qui ne passent pas par un formulaire.<br/> Par exemple : sur une page ou l'administrateur peut supprimer des news, il y a plusieurs liens vers : supprimer_news.php?id=34</p><p id="r-413176" data-claire-element-id="413176">Au lieu de transmettre le jeton par POST, on le transmet par GET, comme les autres données (en l'occurence l'ID de la news à supprimer). Le principe reste sinon le même, mais le POST est plus sûr.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf">Sécurisation des failles CSRF</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/csrf-kesako">
+CSRF, késako?
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/le-jeton-de-securite-ou-token">
+Le jeton de sécurité ou token
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/le-referer">
+Le referer
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/autres-conseils">
+Autres conseils
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/les-bonus">
+Les bonus
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/csrf-kesako">
+<span class="arrow"></span>
+<span class="next">CSRF, késako?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/le-referer">
+<span class="next">Le referer</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lereferer"></a><h2>Le referer</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/le-jeton-de-securite-ou-token">
+<span class="arrow"></span>
+<span class="next">Le jeton de sécurité ou token</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/autres-conseils">
+<span class="next">Autres conseils</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-413178" data-claire-element-id="413178">On va donc poursuivre notre long chemin vers la vérité. ;)</p><p id="r-413179" data-claire-element-id="413179">Imaginons que le pirate fasse une injection CSRF et que, au moyen de requêtes AJAX, il fasse afficher à l'admin la page du formulaire puis la page du traitement...</p><p id="r-413180" data-claire-element-id="413180">Une requête AJAX, c'est un code Javascript qui s'exécute et qui appelle en arrière plan (c'est à dire que c'est invisible pour l'utilisateur) une page distante. Le javascript étant un langage client, c'est à dire exécuté par l'utilisateur et non par le serveur, le site qui reçoit la requête AJAX est appelé comme si l'utilisateur victime l'avait appelé consciemment. C'est donc un moyen de réaliser une attaquer CSRF. Je vous renvoie vers <a href="http://www.siteduzero.com/tutoriel-3-4745-ajax-et-l-echange-de-donnees-en-javascript.html">ce tuto.</a></p><p id="r-413181" data-claire-element-id="413181">Eh bien l'injection serait réussie :waw: , car le token aurait bien été généré par la page 1, et la vérification sera passée avec succès sur la page 2, sauf si vous vérifiez que la page qui a conduit le visiteur à la page de traitement est bien le formulaire, c'est à dire que le visiteur a cliqué sur un lien ou un bouton de la page 1 qui l'a directement conduit à la page 2.</p><div id="r-413183" data-claire-element-id="413183" data-claire-semantic="question"><p id="r-413182" data-claire-element-id="413182">On peut vraiment faire ça ? :honte:</p></div><p id="r-413184" data-claire-element-id="413184">Oui, bien sûr, grâce à $_SERVER['HTTP_REFERER']. C'est une variable disponible n'importe où dans votre script sans rien à faire de particulier (comme toutes ses cousines $_SERVER['...']), et elle contient l'adresse, si elle existe, de la page qui a amené votre visiteur sur le script en cours.</p><aside id="r-413186" data-claire-element-id="413186" data-claire-semantic="error"><p id="r-413185" data-claire-element-id="413185">ATTENTION : cette variable renvoie une adresse absolue, par exemple http://lesite.com/dossier1/url_a_rallonge.html, et non pas ../url_a_rallonge.html</p></aside><p id="r-413187" data-claire-element-id="413187">Donc, on va rajouter un if qui vérifiera si cette variable est égale à la page formulaire.php, je vous laisse trouver ça tout seul (je sais, je suis cruel :diable: ).</p><p id="r-413188" data-claire-element-id="413188">Ramassage des copies, et correction :</p><div id="r-413190" data-claire-element-id="413190"><pre id="r-413189" data-claire-element-id="413189"><code data-claire-semantic="html+php">&lt;?php
+session_start();
+//On va vérifier :
+//Si le jeton est présent dans la session et dans le formulaire
+if(isset($_SESSION['token']) &amp;&amp; isset($_SESSION['token_time']) &amp;&amp; isset($_POST['token']))
+{
+	//Si le jeton de la session correspond à celui du formulaire
+	if($_SESSION['token'] == $_POST['token'])
+	{
+		//On stocke le timestamp qu'il était il y a 15 minutes
+		$timestamp_ancien = time() - (15*60);
+		//Si le jeton n'est pas expiré
+		if($_SESSION['token_time'] &gt;= $timestamp_ancien)
+		{
+			//Si le referer est bon
+			if($_SERVER['HTTP_REFERER'] == 'http://monserveur.com/leformulaire.php')
+			{
+				//ON FAIT TOUS LES TRAITEMENTS ICI
+				//...
+				//...
+			}
+		}
+	}
+}
+//SINON, ON RAJOUTE DES ELSE ET DES MESSAGES D'ERREUR
+?&gt;</code></pre></div><p id="r-413191" data-claire-element-id="413191">Remplacez évidemment l'adresse du formulaire par la bonne. :)</p><aside id="r-413193" data-claire-element-id="413193" data-claire-semantic="error"><p id="r-413192" data-claire-element-id="413192">Le referer est envoyé par le navigateur du client, en d'autres termes il est très facile de le modifier ! Ne vous fiez donc pas à lui à 100%, ce n'est qu'une protection complémentaire.</p></aside><p id="r-413194" data-claire-element-id="413194">Voilà, vous êtes déjà bien protégés, mais il y a encore quelques petites choses à voir... On continue!</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf">Sécurisation des failles CSRF</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/csrf-kesako">
+CSRF, késako?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/le-jeton-de-securite-ou-token">
+Le jeton de sécurité ou token
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/le-referer">
+Le referer
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/autres-conseils">
+Autres conseils
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/les-bonus">
+Les bonus
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/le-jeton-de-securite-ou-token">
+<span class="arrow"></span>
+<span class="next">Le jeton de sécurité ou token</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/autres-conseils">
+<span class="next">Autres conseils</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Autresconseils"></a><h2>Autres conseils</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/le-referer">
+<span class="arrow"></span>
+<span class="next">Le referer</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/les-bonus">
+<span class="next">Les bonus</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<aside id="r-413197" data-claire-element-id="413197" data-claire-semantic="warning"><p id="r-413196" data-claire-element-id="413196">Je vous rappelle qu'aucune protection n'est parfaite, mais que les pirates sont des feignants et donc s'ils doivent passer 50h avant de vous pirater, il vont chercher une autre victime !</p></aside><p id="r-413198" data-claire-element-id="413198">Donc, premièrement, passez le plus de données possibles en POST, ça oblige à monter une attaque avec des requêtes AJAX, puisque la technique de l'image (voir partie I) ne permet pas de passer des données en POST à la page appelée, mais seulement en GET (dans l'URL).<br/> De plus, la taille des URL est limitée à 255 caractères, donc ça fait pas lourd.<br/> Privilégiez le POST, mais avec discernement, pour passer un id dans l'URL, par exemple, <code data-claire-semantic="html">profil.php?id_membre=1</code>, pas la peine d'utiliser POST, GET suffira bien.</p><p id="r-413199" data-claire-element-id="413199">Ensuite, on a obligé le pirate à nous envoyer du code AJAX qui sera exécuté par l'administrateur. Hé, il me vient une idée, si on l'empêchait de le faire ? Allez, lançons-nous ! :magicien:</p><p id="r-413200" data-claire-element-id="413200">On va échapper les caractères HTML nécessaires par exemple le &lt; et les ' &quot; qui sont indispensables pour ce type d'attaque (ne soupirez pas, c'est plus que simplissime). La plupart de vous doit s'en douter, on va utiliser <strong>htmlspecialchars()</strong>.</p><aside id="r-413202" data-claire-element-id="413202" data-claire-semantic="information"><p id="r-413201" data-claire-element-id="413201">Vous utilisez peut-être déjà <strong>htmlentities()</strong>, sachez que c'est <strong>htmlspecialchars()</strong> + d'autres choses, donc ça convient très bien !</p></aside><p id="r-413203" data-claire-element-id="413203">Il suffit donc de passer tout ce qui risque de contenir du code qui sera affiché à travers cette fonction, par exemple (vous pouvez changer le nom des variables :D ):</p><pre id="r-413204" data-claire-element-id="413204"><code data-claire-semantic="html+php">&lt;?php
+$chaine_securisee = htmlentities($chaine_a_risque);
+?&gt;</code></pre><p id="r-413205" data-claire-element-id="413205">À la poursuite de la protection parfaite :ange: , vous pouvez aussi sur la page traitement demander une confirmation avant de valider l'action. Donc, à moins que le webmaster clique sur poursuivre, rien ne sera exécuté. Mais réservez cette technique aux points clés du site, parce que c'est très lourd ! <br/> Dans le même ton, il est possible d'exiger une double connexion pour obtenir l'accès à la partie d'administration, comme dans certains forums PhPBB. Ainsi, on peut conserver une option de connexion automatique (bien pratique) sans risque, puisque si l'administrateur veut se connecter à l'administration, il devra se reconnecter.</p><p id="r-413206" data-claire-element-id="413206">Vous pouvez aussi sur le même principe demander avant une action critique de retaper le mot de passe.</p><p id="r-413207" data-claire-element-id="413207">Enfin, je vous conseille de lire <a href="http://www.siteduzero.com/tutoriel-3-31976-stocker-les-sessions-dans-votre-base-de-donnees.html">ce tuto</a>, qui vous donnera des pistes pour contrer le vol de session, qui ici peut constituer une faille dans le système.</p><p id="r-413208" data-claire-element-id="413208">Il existe donc de nombreux moyens de vous protéger, je ne les ai pas tous cités, et je vous invite donc à vous documenter, puisque le Web ne manque pas d'informations à ce sujet, et de jeter un coup d'oeil à la partie bonus ! L'idéal est de choisir une ou un ensemble de protections qui combinent praticité et efficacité, c'est à dire le compromis entre sécurité et ergonomie. Là, vous êtes les seuls juges.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf">Sécurisation des failles CSRF</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/csrf-kesako">
+CSRF, késako?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/le-jeton-de-securite-ou-token">
+Le jeton de sécurité ou token
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/le-referer">
+Le referer
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/autres-conseils">
+Autres conseils
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/les-bonus">
+Les bonus
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/le-referer">
+<span class="arrow"></span>
+<span class="next">Le referer</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/les-bonus">
+<span class="next">Les bonus</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lesbonus"></a><h2>Les bonus</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/autres-conseils">
+<span class="arrow"></span>
+<span class="next">Autres conseils</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h3 id="r-resume-de-nos-fonctions" data-claire-element-id="413220">Résumé de nos fonctions</h3><p id="r-413210" data-claire-element-id="413210">Vous êtes encore là ? Très bien, pour vous féliciter de votre persévérance, je vous ai récapitulé tout le code, évidemment, à vous de l'adapter à vos besoins.</p><p id="r-413211" data-claire-element-id="413211">Voici donc 2 petites fonctions qui récapitulent les principales protections, pour les explications référez-vous aux commentaires :</p><pre id="r-413212" data-claire-element-id="413212"><code data-claire-semantic="html+php">&lt;?php
+
+//Cette fonction génère, sauvegarde et retourne un token
+//Vous pouvez lui passer en paramètre optionnel un nom pour différencier les formulaires
+function generer_token($nom = '')
+{
+	session_start();
+	$token = uniqid(rand(), true);
+	$_SESSION[$nom.'_token'] = $token;
+	$_SESSION[$nom.'_token_time'] = time();
+	return $token;
+}
+
+
+//**************************************************************************//
+//**************************************************************************//
+//**************************************************************************//
+
+
+//Cette fonction vérifie le token
+//Vous passez en argument le temps de validité (en secondes)
+//Le referer attendu (adresse absolue, rappelez-vous :D)
+//Le nom optionnel si vous en avez défini un lors de la création du token
+function verifier_token($temps, $referer, $nom = '')
+{
+session_start();
+if(isset($_SESSION[$nom.'_token']) &amp;&amp; isset($_SESSION[$nom.'_token_time']) &amp;&amp; isset($_POST['token']))
+	if($_SESSION[$nom.'_token'] == $_POST['token'])
+		if($_SESSION[$nom.'_token_time'] &gt;= (time() - $temps))
+			if($_SERVER['HTTP_REFERER'] == $referer)
+				return true;
+return false;
+}
+?&gt;</code></pre><p id="r-413213" data-claire-element-id="413213">Bon, je vous donne quand même un exemple d'utilisation mes chers Zéros. Voici la page du formulaire :</p><pre id="r-413214" data-claire-element-id="413214"><code data-claire-semantic="html+php">&lt;?php
+$token = generer_token('forum');
+//Ensuite, le formulaire normal, pensez au champ caché. ;)
+?&gt;</code></pre><p id="r-413215" data-claire-element-id="413215">Et voici la page de traitement :</p><pre id="r-413216" data-claire-element-id="413216"><code data-claire-semantic="html+php">&lt;?php
+if(verifier_token(600, 'http://test.fr/formulaire.php', 'forum'))
+{
+	//TRAITEMENTS
+	//..
+	//..
+}
+else
+{
+	//ERREUR	
+}
+?&gt;</code></pre><div id="r-413218" data-claire-element-id="413218" data-claire-semantic="question"><p id="r-413217" data-claire-element-id="413217">Mais pourquoi met-on if(verifier_token(...)) ? Ça n'a aucun sens ?</p></div><p id="r-413219" data-claire-element-id="413219">Eh bien si : la fonction renvoie true si le token est valide, et false s'il est invalide, ce qui donne : <br/> Si le token est validé : if(true), ce qui équivaut à &quot;si vrai&quot;, donc la condition est vérifiée<br/> Sinon, c'est if(false), si faux, condition non valide, on exécute le else.</p><h3 id="r-pour-approfondir" data-claire-element-id="413235">Pour approfondir</h3><p id="r-413221" data-claire-element-id="413221">Si vous voulez en apprendre plus, je vous conseille les sites suivants :</p><ul id="r-413229" data-claire-element-id="413229"><li id="r-413223" data-claire-element-id="413223"><p id="r-413222" data-claire-element-id="413222"><a href="http://fr.wikipedia.org/wiki/Cross-site_request_forgery">Wikipédia</a></p></li><li id="r-413225" data-claire-element-id="413225"><p id="r-413224" data-claire-element-id="413224"><a href="http://www.xmcopartners.com/article-attaque-CSRF.html">XMCOPartners(audit informatique)</a></p></li><li id="r-413227" data-claire-element-id="413227"><p id="r-413226" data-claire-element-id="413226"><a href="http://www.mti.epita.fr/blogs/2009/03/07/securiser-son-site-web-33-attaque-de-type-csrf/">MTI</a></p></li><p id="r-413228" data-claire-element-id="413228">Il est aussi intéressant de voir comment les grands scripts open-source (PhPBB, Joomla, etc.) se protègent de ce genre d'attaques. Les parades qu'ils déploient sont réfléchies par toute une communauté, ça les rend donc efficaces.Enfin, j'attire votre attention sur le fait que certains frameworks facilitent la gestion de la sécurité, nativement ou avec des modules, comme <a href="http://guides.rubyonrails.org/security.html">Ruby on Rails</a>, <a href="http://docs.djangoproject.com/en/dev/ref/contrib/csrf/?from=olddocs">Django</a>, etc.</p></ul><p id="r-413230" data-claire-element-id="413230">Voilà, c'est fini ! :'(</p><p id="r-413231" data-claire-element-id="413231">Vous avez appris à vous protéger contre un type de faille assez méconnu chez les débutants. N'hésitez pas à poster un commentaire si vous avez un problème, j'y répondrai, mais pas MP par contre. ;)</p><p id="r-413232" data-claire-element-id="413232">Avant de nous quitter, je tiens à remercier les différents Zér0s qui m'ont aidé par leurs commentaires à ajouter, modifier et améliorer certains points du tuto. Je vous encourage aussi à me faire part de vos commentaires, pour pouvoir avancer. ;)</p><p id="r-413233" data-claire-element-id="413233">Enfin, je précise, pour éviter les critiques acerbes de certains, que ce tutoriel n'est qu'une <em>introduction </em> aux failles CSRF. Il ne les traite pas exhaustivement, l'intérêt étant surtout d'attirer l'attention des webmestres débutants sur le fait qu'il existe des failles très dangereuses auxquelles on ne pense pas immédiatement, CSRF en étant un bon exemple.</p><p id="r-413234" data-claire-element-id="413234">Merci de votre lecture, à bientôt!</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf">Sécurisation des failles CSRF</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/csrf-kesako">
+CSRF, késako?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/le-jeton-de-securite-ou-token">
+Le jeton de sécurité ou token
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/le-referer">
+Le referer
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/autres-conseils">
+Autres conseils
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/les-bonus">
+Les bonus
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/securisation-des-failles-csrf/autres-conseils">
+<span class="arrow"></span>
+<span class="next">Autres conseils</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/securisation-des-failles-csrf.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 08:28:27 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/securisation-des-failles-csrf.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:31:19 GMT -->
+</html>

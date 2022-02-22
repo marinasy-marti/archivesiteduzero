@@ -1,0 +1,550 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/restreindre-l-acces-d-un-site-a-certaines-adresses-ip.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 06:50:25 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/restreindre-l-acces-d-un-site-a-certaines-adresses-ip.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:14:31 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Restreindre l&#039;accès d&#039;un site à certaines adresses IP</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/restreindre-l-acces-d-un-site-a-certaines-adresses-ip.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Restreindre l&#039;accès d&#039;un site à certaines adresses IP</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Restreindrel039accsd039unsitecertainesadressesIP">Restreindre l&#039;accès d&#039;un site à certaines adresses IP</a><br/><a href="#Dtecterl039adresseIPduclient">Détecter l&#039;adresse IP du client</a><br/><a href="#PremiresolutionMySQL">Première solution : MySQL</a><br/><a href="#Secondesolutionunfichiertexte">Seconde solution : un fichier texte</a><br/><a href="#Interdirel039accsauxadressesretenues">Interdire l&#039;accès aux adresses retenues</a><br/></div>
+<a name="Restreindrel039accsd039unsitecertainesadressesIP"></a><h2>Restreindre l&#039;accès d&#039;un site à certaines adresses IP</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/restreindre-l-acces-d-un-site-a-certaines-adresses-ip/detecter-l-adresse-ip-du-client">
+<span class="next">Détecter l&#039;adresse IP du client</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-562347" data-claire-element-id="562347">Il nous arrive parfois, lorsque l'on est webmaster d'un site, de se retrouver aux prises avec des gens agissant de manière douteuse sur notre site web. Parfois, le problème peut venir de robots qui postent un peu partout sur le site (dans le livre d'or, sur le forum, etc.).</p><p id="r-562348" data-claire-element-id="562348">Dans ces circonstances, il est pratique d'avoir des solutions d'urgence qui peuvent être mises en place rapidement et efficacement.</p>
+</div><a name="Dtecterl039adresseIPduclient"></a><h2>Détecter l&#039;adresse IP du client</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/restreindre-l-acces-d-un-site-a-certaines-adresses-ip/premiere-solution-mysql">
+<span class="next">Première solution : MySQL</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-562349" data-claire-element-id="562349">Détecter une adresse IP est quelque chose de très simple en soi. Lors de l'exécution des pages PHP, la variable superglobale <strong>$_SERVER</strong> contient des informations sur la page en cours de chargement, et sur les communications effectuées entre le serveur et le client lors de cette requête. L'entrée <strong>REMOTE_ADDR</strong> nous donne l'IP du client qui a demandé la page.</p><figure id="r-562351" data-claire-element-id="562352"><img id="r-562350" data-claire-element-id="562350" src="medias/uploads.siteduzero.com_files_54001_55000_54931.png" alt="Image utilisateur"/></figure><p id="r-562353" data-claire-element-id="562353">Ainsi, ce code affiche l'IP du visiteur :</p><pre id="r-562354" data-claire-element-id="562354"><code data-claire-semantic="html+php">&lt;?php
+print ('Votre adresse IP est &lt;strong&gt;' . $_SERVER['REMOTE_ADDR'] . '&lt;/strong&gt;');
+?&gt;</code></pre><p id="r-562355" data-claire-element-id="562355">C'est donc quelque chose de très simple en soi, comme je l'ai dit. Par contre, il arrive que des internautes se connectent à ce que l'on appelle des serveurs <em>proxy</em>. Un serveur <em>proxy</em>, c'est un serveur qui sert d'intermédiaire entre un visiteur et un site web. L'avantage pour un internaute, c'est que son adresse IP n'est pas affichée directement sur le serveur qui reçoit sa requête ; c'est celle du serveur <em>proxy</em> qui est affichée, car c'est lui qui transmet la requête.</p><figure id="r-562357" data-claire-element-id="562358"><img id="r-562356" data-claire-element-id="562356" src="medias/uploads.siteduzero.com_files_54001_55000_54933.png" alt="Image utilisateur"/></figure><p id="r-562359" data-claire-element-id="562359">Ce procédé permet de berner les protections de la plupart des sites web. Nous nous créerons donc une fonction qui nous permettra de récupérer l'IP du véritable client. Ce n'est pas difficile, encore une fois.</p><p id="r-562360" data-claire-element-id="562360">Lorsque c'est un serveur <em>proxy</em> qui effectue la requête pour un autre client, une nouvelle case est créée dans notre tableau <strong>$_SERVER</strong>. Cette case a pour clé HTTP_X_FORWARDED_FOR. Elle signifie « <em>effectue la requête pour</em> ». À partir de ça, on peut donc créer notre fonction :</p><pre id="r-562361" data-claire-element-id="562361"><code data-claire-semantic="html+php">&lt;?php
+//Retourne la vraie adresse IP
+function get_ip() {
+        if (isset($_SERVER['HTTP_X_FORWARDED_FOR']))
+                $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+        else
+                $ip = $_SERVER['REMOTE_ADDR'];
+        return $ip;
+}
+?&gt;</code></pre><p id="r-562362" data-claire-element-id="562362">De manière totalement personnelle, je préfère abréger cela à l'aide d'un ternaire :</p><pre id="r-562363" data-claire-element-id="562363"><code data-claire-semantic="html+php">&lt;?php
+//Retourne la vraie adresse IP
+function get_ip() {
+        return (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : $_SERVER['REMOTE_ADDR'];
+}
+?&gt;</code></pre><p id="r-562364" data-claire-element-id="562364">Assurez-vous d'inclure le fichier dans lequel vous placerez la fonction partout où vous en aurez besoin. Personnellement, je dédie un fichier unique à cette fonction, dans un dossier <strong>libs/div/</strong>. Cette protection n'est pas fiable à 100 %, car il existe plusieurs niveaux de <em>proxy</em>, des « peu anonymes » aux « super anonymes ». Dans le cas des <em>proxy</em> considérés comme très confidentiels, il est pratiquement impossible de détecter le client pour qui ils effectuent les requêtes, voire de détecter qu'il s'agit d'un <em>proxy</em>. ;) Mais on n'aura rien à se reprocher, car on aura fait tout ce qui était possible.</p><p id="r-562365" data-claire-element-id="562365">Nous allons maintenant créer une petite interface nous permettant de bannir rapidement des adresses IP. Je vois deux façons de le faire. La première façon utilise une table MySQL et la seconde un simple fichier texte. Il est peut-être plus astucieux d'utiliser la seconde solution, car le premier cas implique que nous exécutions une requête SQL de plus à tous les chargements de page, sans exception.</p><p id="r-562366" data-claire-element-id="562366">Par contre, en utilisant MySQL, il vous sera plus facile d'ajouter des options utiles comme l'affichage de raisons personnalisées pour les bannissements, les débannissements automatiques, etc.</p><p id="r-562367" data-claire-element-id="562367">Alors là, on va en bannir, des IP ! :D</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/restreindre-l-acces-d-un-site-a-certaines-adresses-ip">Restreindre l&#039;accès d&#039;un site à certaines adresses IP</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/restreindre-l-acces-d-un-site-a-certaines-adresses-ip/detecter-l-adresse-ip-du-client">
+Détecter l&#039;adresse IP du client
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/restreindre-l-acces-d-un-site-a-certaines-adresses-ip/premiere-solution-mysql">
+Première solution : MySQL
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/restreindre-l-acces-d-un-site-a-certaines-adresses-ip/seconde-solution-un-fichier-texte">
+Seconde solution : un fichier texte
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/restreindre-l-acces-d-un-site-a-certaines-adresses-ip/interdire-l-acces-aux-adresses-retenues">
+Interdire l&#039;accès aux adresses retenues
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/restreindre-l-acces-d-un-site-a-certaines-adresses-ip/premiere-solution-mysql">
+<span class="next">Première solution : MySQL</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="PremiresolutionMySQL"></a><h2>Première solution : MySQL</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/restreindre-l-acces-d-un-site-a-certaines-adresses-ip/detecter-l-adresse-ip-du-client">
+<span class="arrow"></span>
+<span class="next">Détecter l&#039;adresse IP du client</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/restreindre-l-acces-d-un-site-a-certaines-adresses-ip/seconde-solution-un-fichier-texte">
+<span class="next">Seconde solution : un fichier texte</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-562369" data-claire-element-id="562369">Pour commencer, il vous faut créer une table sur votre base de données (si vous n'en avez pas, passez à la seconde solution ^^ ). Je vous donne une structure d'exemple, changez-la comme vous voulez pour l'adapter à vos besoins :</p><pre id="r-562370" data-claire-element-id="562370"><code data-claire-semantic="sql">CREATE TABLE `ban` (
+     `ban_id` MEDIUMINT( 9 ) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+     `ban_ip` INT NOT NULL ,
+     UNIQUE (`ban_ip`)
+);</code></pre><p id="r-562371" data-claire-element-id="562371">Cela fait, nous allons créer un nouveau fichier dont le code ne vous sera donné qu'en guise d'exemple. Prenez note que je n'ai pas pris soin de protéger les codes, car vous seuls savez comment les intégrer à votre site web et à votre interface d'administration. <strong>Vous devez protéger l'accès à ces sections !</strong> Bien entendu, il va de soi que je ne vous donnerai pas de fichiers complets, seulement les parties concernées. ;)</p><h2 id="r-bannir-une-adresse-ip" data-claire-element-id="562389">Bannir une adresse IP</h2><p id="r-562372" data-claire-element-id="562372">Pour bannir une adresse IP, nous suivrons cette démarche :</p><ul id="r-562381" data-claire-element-id="562381"><li id="r-562374" data-claire-element-id="562374"><p id="r-562373" data-claire-element-id="562373">on affiche un formulaire demandant l'adresse à bannir ;</p></li><li id="r-562376" data-claire-element-id="562376"><p id="r-562375" data-claire-element-id="562375">si le formulaire est posté, on vérifie la validité de l'adresse IP ;</p></li><li id="r-562378" data-claire-element-id="562378"><p id="r-562377" data-claire-element-id="562377">si celle-ci est valide, on la convertit en entité numérique grâce à <a href="http://php.net/ip2long">ip2long()</a>, sinon on réaffiche le formulaire avec une erreur ;</p></li><li id="r-562380" data-claire-element-id="562380"><p id="r-562379" data-claire-element-id="562379">si tout est valide, on insère une entrée dans notre table et on affiche un message d'information.</p></li></ul><p id="r-562382" data-claire-element-id="562382">Tout d'abord, le formulaire :</p><pre id="r-562383" data-claire-element-id="562383"><code data-claire-semantic="html">&lt;form action=&quot;ban.php&quot; method=&quot;post&quot;&gt;
+     &lt;fieldset&gt;
+          &lt;legend&gt;Bannir une adresse IP&lt;/legend&gt;
+          &lt;p&gt;&lt;label for=&quot;ip&quot;&gt;Adresse à bannir : &lt;/label&gt;&lt;/p&gt;
+          &lt;input type=&quot;text&quot; name=&quot;ip&quot; id=&quot;ip&quot; /&gt;
+          &lt;input type=&quot;submit&quot; value=&quot;Bannir&quot; /&gt;
+     &lt;/fieldset&gt;
+&lt;/form&gt;</code></pre><p id="r-562384" data-claire-element-id="562384">Pensez bien à remplacer l'action du formulaire pour y donner le bon nom de page vers laquelle poster. Pour ceux qui se posent la question, la balise &lt;label&gt;&lt;/label&gt; sert à joindre un bout de texte à un champ de formulaire. Ainsi, en cliquant sur « Adresse à bannir », le focus sera donné au champ dont l'id est « ip ». Très pratique. :)</p><p id="r-562385" data-claire-element-id="562385">Maintenant, on va traiter les données de ce formulaire. Le code ci-dessous suppose que vous ayez une connexion MySQL active. Il reprend le formulaire ci-dessus et l'inclut dans le cas où il n'a pas été posté :</p><pre id="r-562386" data-claire-element-id="562386"><code data-claire-semantic="html+php">&lt;?php
+$isset = isset($_POST['ip']); //true si le formulaire est posté
+$erreur = false; //On change cette valeur à la moindre erreur
+if ($isset) {
+     //Si le formulaire a été posté
+     if (!empty($_POST['ip'])) {
+          $ip = ip2long($_POST['ip']);
+          if ($ip != false &amp;&amp; $ip != -1) {
+               //Si l'ip est valide
+ 
+               require ('libs/div/is_ban.php');
+               if (!is_ban($ip)) {
+                    mysql_query('INSERT INTO ban (`ip`) VALUES(\'' . $ip . '\')');
+                    print('Cette adresse est désormais non-autorisée.');
+               }
+               else
+                    print ('Cette adresse est déjà bannie.');
+          }
+          else 
+               $erreur = 1; //L'ip est invalide, erreur #1
+     }
+     else
+          $erreur = 0; //Le champ est vide, erreur #0
+}
+if (!$isset || $erreur !== false) {
+     //Si le formulaire n'a pas été posté ou qu'une erreur a été détectée
+     $erreurs = array('Vous devez entrer une adresse ip.', 'L\'adresse ip est invalide.');
+     
+     if ($erreur !== false) {
+          //Si on a une erreur, on l'affiche
+          print('&lt;p style=&quot;color: red; font-weight: bold;&quot;&gt;' . $erreurs[$erreur] . '&lt;/p&gt;');
+     }
+     
+     //On affiche le formulaire
+     print ('&lt;form action=&quot;ban.php&quot; method=&quot;post&quot;&gt;
+               &lt;fieldset&gt;
+                    &lt;legend&gt;Bannir une adresse IP&lt;/legend&gt;
+                    &lt;p&gt;&lt;label for=&quot;ip&quot;&gt;Adresse à bannir : &lt;/label&gt;&lt;/p&gt;
+                    &lt;input type=&quot;text&quot; name=&quot;ip&quot; id=&quot;ip&quot; /&gt;
+                    &lt;input type=&quot;submit&quot; value=&quot;Bannir&quot; /&gt;
+               &lt;/fieldset&gt;
+             &lt;/form&gt;');
+}
+?&gt;</code></pre><p id="r-562387" data-claire-element-id="562387">Je vous l'ai dit, c'est super simple ! À vous d'inclure ce code à votre panneau d'administration, et je le répète, protégez-le ! ;)</p><p id="r-562388" data-claire-element-id="562388">La fonction ip2long() retourne l'adresse IP sous forme d'entité numérique, je l'ai dit. Si l'adresse IP est invalide, elle retourne -1 avec PHP3 et PHP4, tandis qu'avec PHP5, elle retourne false : un caprice. Vous pouvez modifier le script pour n'effectuer que le test logique qui correspond à la version de PHP que vous utilisez, si vous la connaissez (sinon, phpinfo).</p><h2 id="r-obtenir-la-liste-des-adresses-bannies" data-claire-element-id="562393">Obtenir la liste des adresses bannies</h2><p id="r-562390" data-claire-element-id="562390">Pour voir la liste des adresses bannies, il nous suffit de faire une simple requête SELECT sur notre table. Lorsque l'on aura écrit le script pour débannir des adresses, il serait astucieux de placer, sur chaque adresse de cette liste, des liens pour débannir. ;) Le code, vous êtes capables de le faire seuls, je l'espère. :p Enfin, pour rassurer les plus inquiets (le code suppose que vous avez une connexion MySQL active) :</p><pre id="r-562391" data-claire-element-id="562391"><code data-claire-semantic="html+php">&lt;?php
+//Quoi de plus bête comme requête :p
+$req = mysql_query(&quot;SELECT * FROM ban&quot;);
+if($res = mysql_fetch_assoc($req)) {
+        print('&lt;ul&gt;');
+        do {
+                print ('&lt;li&gt;' . long2ip($res['ban_ip']) . '&lt;/li&gt;');
+        } while($res = mysql_fetch_assoc($req));
+        print ('&lt;/ul&gt;');
+}
+else
+        print ('Aucune adresse IP bannie.'); //Personne de banni, on le signale 
+?&gt;</code></pre><p id="r-562392" data-claire-element-id="562392">C'est très simple et encore une fois, je vous laisse le soin de protéger le tout efficacement.</p><h2 id="r-debannir-une-adresse-ip" data-claire-element-id="562399">Débannir une adresse IP</h2><p id="r-562394" data-claire-element-id="562394">Pour débannir une adresse, nous n'avons qu'à supprimer l'entrée correspondante dans la base de données. Pour rappel, afin de supprimer une entrée dans une table MySQL, nous devons utiliser la requête DELETE. Voici un code tout simple :</p><pre id="r-562395" data-claire-element-id="562395"><code data-claire-semantic="html+php">&lt;?php
+if (isset($_GET['ip'])) {
+     mysql_query('DELETE FROM ban WHERE ban_ip=\'' . $_GET['ip'] . '\'');
+     if (mysql_affected_rows() == 0) 
+          print ('Cette adresse IP n\'était pas bannie.');
+     else
+          print ('L\'adresse IP a été débannie.');
+}
+else
+     print ('Vous n\'avez spécifié aucune adresse IP.');
+?&gt;</code></pre><p id="r-562396" data-claire-element-id="562396">Vous pouvez maintenant ajouter les liens à votre liste d'adresses IP, avec cette ligne dans votre boucle par exemple :</p><pre id="r-562397" data-claire-element-id="562397"><code data-claire-semantic="html+php">print ('&lt;li&gt;&lt;a href=&quot;supp.php?ip=' . $dselect['ban_ip'] . '&quot; title=&quot;Débannir cette adresse&quot;&gt;' . long2ip($dselect['ban_ip']) . '&lt;/a&gt;&lt;/li&gt;');</code></pre><p id="r-562398" data-claire-element-id="562398">Voilà, c'est tout pour MySQL, vous pouvez passer à la dernière partie qui consiste à restreindre l'accès aux adresses IP bannies (non, ça ne se fait pas tout seul :p ).</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/restreindre-l-acces-d-un-site-a-certaines-adresses-ip">Restreindre l&#039;accès d&#039;un site à certaines adresses IP</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/restreindre-l-acces-d-un-site-a-certaines-adresses-ip/detecter-l-adresse-ip-du-client">
+Détecter l&#039;adresse IP du client
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/restreindre-l-acces-d-un-site-a-certaines-adresses-ip/premiere-solution-mysql">
+Première solution : MySQL
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/restreindre-l-acces-d-un-site-a-certaines-adresses-ip/seconde-solution-un-fichier-texte">
+Seconde solution : un fichier texte
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/restreindre-l-acces-d-un-site-a-certaines-adresses-ip/interdire-l-acces-aux-adresses-retenues">
+Interdire l&#039;accès aux adresses retenues
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/restreindre-l-acces-d-un-site-a-certaines-adresses-ip/detecter-l-adresse-ip-du-client">
+<span class="arrow"></span>
+<span class="next">Détecter l&#039;adresse IP du client</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/restreindre-l-acces-d-un-site-a-certaines-adresses-ip/seconde-solution-un-fichier-texte">
+<span class="next">Seconde solution : un fichier texte</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Secondesolutionunfichiertexte"></a><h2>Seconde solution : un fichier texte</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/restreindre-l-acces-d-un-site-a-certaines-adresses-ip/premiere-solution-mysql">
+<span class="arrow"></span>
+<span class="next">Première solution : MySQL</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/restreindre-l-acces-d-un-site-a-certaines-adresses-ip/interdire-l-acces-aux-adresses-retenues">
+<span class="next">Interdire l&#039;accès aux adresses retenues</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-562401" data-claire-element-id="562401">Ici, on va apprendre à utiliser une solution plus légère. Forcément, vu la quantité très mince de ressources consommées par cette alternative, les options possibles en sont réduites. Mais soyez sans crainte, vous pourrez gérer des centaines de bannissements de cette manière : c'est plutôt au niveau des débannissements automatiques et des messages personnalisés que ça se complique. Mais tout ça, c'est facultatif. ;)</p><p id="r-562402" data-claire-element-id="562402">Tout d'abord, créez un fichier ips.txt, puis placez-le où vous en avez envie. N'oubliez pas de modifier les chemins d'accès de mes exemples. ;) Ce fichier contiendra une adresse IP par ligne. Vous l'aurez deviné, les adresses figurant dans ce fichier seront interdites d'accès au site.</p><h2 id="r-bannir-une-adresse-ip-1" data-claire-element-id="562418">Bannir une adresse ip</h2><p id="r-562403" data-claire-element-id="562403">Pour bannir une adresse ip, nous devons ajouter une ligne contenant l'adresse en question au fichier ips.txt. Nous allons élaborer notre script en suivant les étapes suivantes :</p><ul id="r-562412" data-claire-element-id="562412"><li id="r-562405" data-claire-element-id="562405"><p id="r-562404" data-claire-element-id="562404">on affiche le formulaire demandant l'adresse à bannir ;</p></li><li id="r-562407" data-claire-element-id="562407"><p id="r-562406" data-claire-element-id="562406">si le formulaire est posté, on vérifie la validité de l'adresse IP ;</p></li><li id="r-562409" data-claire-element-id="562409"><p id="r-562408" data-claire-element-id="562408">si celle-ci est valide, on la convertit en entité numérique grâce à <a href="http://php.net/ip2long">ip2long()</a>, sinon on réaffiche le formulaire avec une erreur ;</p></li><li id="r-562411" data-claire-element-id="562411"><p id="r-562410" data-claire-element-id="562410">si tout est valide, on ajoute une ligne dans notre fichier, et on affiche un message d'information.</p></li></ul><p id="r-562413" data-claire-element-id="562413">Le formulaire demandant l'adresse IP est le même que celui que vous auriez écrit si vous aviez opté pour la solution MySQL :</p><pre id="r-562414" data-claire-element-id="562414"><code data-claire-semantic="html">&lt;form action=&quot;ban.php&quot; method=&quot;post&quot;&gt;
+     &lt;fieldset&gt;
+          &lt;legend&gt;Bannir une adresse IP&lt;/legend&gt;
+          &lt;p&gt;&lt;label for=&quot;ip&quot;&gt;Adresse à bannir : &lt;/label&gt;&lt;/p&gt;
+          &lt;input type=&quot;text&quot; name=&quot;ip&quot; id=&quot;ip&quot; /&gt;
+          &lt;input type=&quot;submit&quot; value=&quot;Bannir&quot; /&gt;
+     &lt;/fieldset&gt;
+&lt;/form&gt;</code></pre><p id="r-562415" data-claire-element-id="562415">Maintenant, nous allons traiter les données de ce formulaire. Pour ouvrir notre fichier, nous utiliserons la fonction <a href="http://php.net/fopen">fopen()</a> et nous ouvrirons le fichier en mode 'a', un mode d'écriture qui place le pointeur à la fin du fichier. Pour ouvrir votre fichier, le dossier qui le contient et lui-même doivent avoir un <em>chmod</em> de 777. Voici le code, dont la structure est la même que celui de la première solution :</p><pre id="r-562416" data-claire-element-id="562416"><code data-claire-semantic="html+php">&lt;?php
+$isset = isset($_POST['ip']); //true si le formulaire est posté
+$erreur = false; //On change cette valeur à la moindre erreur
+if ($isset) {
+     //Si le formulaire a été posté
+     if (!empty($_POST['ip'])) {
+          $ip = ip2long($_POST['ip']);
+          if ($ip != false &amp;&amp; $ip != -1) {
+               //Si l'IP est valide
+               
+               require ('libs/div/is_ban.php');
+               if (!is_ban(long2ip($ip))) {
+                    $fichier = fopen('ips.txt', 'a'); //On ouvre en mode 'a'
+                    fwrite($fichier, $ip . &quot;\n&quot;); //On ajoute la ligne avec l'IP
+                    fclose($fichier); //On ferme le fichier    
+                    print('Cette adresse est désormais non-autorisée.');
+               }
+               else
+                    print ('Cette adresse est déjà bannie.');
+          }
+          else 
+               $erreur = 1; //L'IP est invalide, erreur #1
+     }
+     else
+          $erreur = 0; //Le champ est vide, erreur #0
+}
+if (!$isset || $erreur !== false) {
+     //Si le formulaire n'a pas été posté ou qu'une erreur a été détectée
+     $erreurs = array('Vous devez entrer une adresse IP.', 'L\'adresse IP est invalide.');
+     
+     if ($erreur !== false) {
+          //Si on a une erreur, on l'affiche
+          print('&lt;p style=&quot;color: red; font-weight: bold;&quot;&gt;' . $erreurs[$erreur] . '&lt;/p&gt;');
+     }
+     
+     //On affiche le formulaire
+     print ('&lt;form action=&quot;ban.php&quot; method=&quot;post&quot;&gt;
+               &lt;fieldset&gt;
+                    &lt;legend&gt;Bannir une adresse IP&lt;/legend&gt;
+                    &lt;p&gt;&lt;label for=&quot;ip&quot;&gt;Adresse à bannir : &lt;/label&gt;&lt;/p&gt;
+                    &lt;input type=&quot;text&quot; name=&quot;ip&quot; id=&quot;ip&quot; /&gt;
+                    &lt;input type=&quot;submit&quot; value=&quot;Bannir&quot; /&gt;
+               &lt;/fieldset&gt;
+             &lt;/form&gt;');
+}
+?&gt;</code></pre><p id="r-562417" data-claire-element-id="562417">Maintenant que nous pouvons bannir des adresses IP, nous allons voir comment récupérer la liste des adresses bannies. ;)</p><h2 id="r-obtenir-la-liste-des-adresses-bannies-1" data-claire-element-id="562422">Obtenir la liste des adresses bannies</h2><p id="r-562419" data-claire-element-id="562419">Pour récupérer cette liste, nous devrons tout d'abord lire le contenu de notre fichier et le stocker dans une variable. Pour ce faire, nous utiliserons la fonction <a href="http://php.net/file">file()</a> qui nous retourne un <em>array</em> contenant les différentes lignes du fichier. Si ce n'est déjà fait, créez un fichier <strong>ips.txt</strong> que vous laissez vide. Voici un exemple très simple :</p><pre id="r-562420" data-claire-element-id="562420"><code data-claire-semantic="html+php">&lt;?php
+//On récupère les adresses dans un tableau
+$adresses = explode(&quot;\n&quot;, file_get_contents('ips.txt'));
+$nbr = count($adresses);
+if ($nbr != 0)
+     print ('&lt;ul&gt;'); //S'il y a des adresses, on ouvre une liste
+foreach ($adresses as $key=&gt;$value) {
+        if ($value != '')
+             print ('&lt;li&gt;' . long2ip($value) . '&lt;/li&gt;'); //On affiche l'ip
+}
+if ($nbr != 0) 
+     print ('&lt;/ul&gt;'); //On ferme la liste s'il y a lieu
+else
+     print ('Aucune adresse IP bannie.'); //Personne de banni, on le signale
+?&gt;</code></pre><p id="r-562421" data-claire-element-id="562421">Voilà pour la liste ! Intégrez-la à votre panneau d'administration et surtout, protégez-la. ;)</p><h2 id="r-debannir-une-adresse-ip-1" data-claire-element-id="562426">Débannir une adresse IP</h2><p id="r-562423" data-claire-element-id="562423">Oui, c'est pratique de pouvoir débannir des adresses :p . Si pour en bannir nous devions ajouter une ligne au fichier <em>ips.txt</em>, pour en débannir nous devrons en retirer une. Nous allons utiliser la fonction <a href="http://php.net/str_replace">str_replace()</a> qui sert à remplacer un bout de chaîne par un autre dans un texte. Nous allons supposer que l'adresse IP est contenue dans la variable <strong>$_GET['ip']</strong> sous sa forme numérique. C'est parti !</p><pre id="r-562424" data-claire-element-id="562424"><code data-claire-semantic="html+php">&lt;?php
+if (isset($_GET['ip'])) {
+     $contenu_debut = file_get_contents('ips.txt');
+     $contenu = str_replace($_GET['ip'] . &quot;\n&quot;, '', $contenu_debut);
+     
+     $fichier = fopen('ips.txt', 'w');
+     fwrite($fichier, $contenu);
+     fclose($fichier);
+     if ($contenu_debut == $contenu) 
+          print ('Cette adresse IP n\'était pas bannie.');
+     else
+          print ('L\'adresse IP a été débannie.');
+}
+else
+     print ('Vous n\'avez spécifié aucune adresse IP.');
+?&gt;</code></pre><p id="r-562425" data-claire-element-id="562425">C'est maintenant terminé pour la gestion des adresses bannies. Dans la dernière partie, nous verrons comment interdire l'accès à ceux dont l'IP est sur la liste. :pirate:</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/restreindre-l-acces-d-un-site-a-certaines-adresses-ip">Restreindre l&#039;accès d&#039;un site à certaines adresses IP</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/restreindre-l-acces-d-un-site-a-certaines-adresses-ip/detecter-l-adresse-ip-du-client">
+Détecter l&#039;adresse IP du client
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/restreindre-l-acces-d-un-site-a-certaines-adresses-ip/premiere-solution-mysql">
+Première solution : MySQL
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/restreindre-l-acces-d-un-site-a-certaines-adresses-ip/seconde-solution-un-fichier-texte">
+Seconde solution : un fichier texte
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/restreindre-l-acces-d-un-site-a-certaines-adresses-ip/interdire-l-acces-aux-adresses-retenues">
+Interdire l&#039;accès aux adresses retenues
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/restreindre-l-acces-d-un-site-a-certaines-adresses-ip/premiere-solution-mysql">
+<span class="arrow"></span>
+<span class="next">Première solution : MySQL</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/restreindre-l-acces-d-un-site-a-certaines-adresses-ip/interdire-l-acces-aux-adresses-retenues">
+<span class="next">Interdire l&#039;accès aux adresses retenues</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Interdirel039accsauxadressesretenues"></a><h2>Interdire l&#039;accès aux adresses retenues</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/restreindre-l-acces-d-un-site-a-certaines-adresses-ip/seconde-solution-un-fichier-texte">
+<span class="arrow"></span>
+<span class="next">Seconde solution : un fichier texte</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-562428" data-claire-element-id="562428">Jusqu'à présent, les adresses IP que nous avons relevées peuvent toujours accéder au site. Nous créerons donc une fonction <strong>is_ban($ip)</strong> qui retournera true dans le cas où l'adresse est bannie, et false si elle ne l'est pas. Pour commencer, on va créer un simple fichier HTML qui sera affiché en cas d'interdiction. Je vous en propose un, faites comme vous voulez :</p><pre id="r-562429" data-claire-element-id="562429"><code data-claire-semantic="html">&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD XHTML 1.0 Strict//EN&quot; &quot;http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd&quot;&gt;
+&lt;html&gt;
+        &lt;head&gt;
+          &lt;title&gt;Vous n'êtes pas autorisé&lt;/title&gt;
+          &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=iso-8859-1&quot; /&gt;
+          &lt;style type=&quot;text/css&quot;&gt;
+          #main {
+               font-family: 'Trebuchet Ms', Serif;
+               font-size: 13px;
+               position: absolute;
+               top: 50%;
+               margin-top: -150px;
+               height: 150px;
+               left: 50%;
+               margin-left: -300px;
+               width: 600px;
+          }
+          .message {
+               border: 1px solid #c1c1c1;
+               padding: 10px;
+               margin-bottom: 10px;
+               height: 150px;
+          }
+          h1 {
+               font-family: Arial, Serif;
+               font-size: 30px;
+               text-align: center;
+          }
+          &lt;/style&gt;
+        &lt;/head&gt;
+        
+        &lt;body&gt;
+            &lt;div id=&quot;main&quot;&gt;              
+                 &lt;div class=&quot;message&quot;&gt;
+                 &lt;h1&gt;Vous n'êtes plus autorisé&lt;/h1&gt;
+                 &lt;p&gt;L'accès à ce site vous est désormais interdit. Pour plus d'informations, contactez le webmaster.&lt;/p&gt;
+                 &lt;/div&gt;
+         &lt;/div&gt;
+        &lt;/body&gt;
+&lt;/html&gt;</code></pre><p id="r-562430" data-claire-element-id="562430">Vous avez le CSS en prime. :p</p><h2 id="r-la-fonction-avec-mysql" data-claire-element-id="562434">La fonction avec MySQL</h2><p id="r-562431" data-claire-element-id="562431">Dans le cas de MySQL, nous allons simplement sélectionner les entrées où l'adresse IP correspond à celle du visiteur. Si on récupère plus de 0 entrées, on retourne true. Sinon on retourne false.</p><pre id="r-562432" data-claire-element-id="562432"><code data-claire-semantic="html+php">&lt;?php
+//Indique si une adresse est bannie
+function is_ban($ip) {
+     $ip = ip2long($ip);
+     $query = mysql_query('SELECT * FROM ban WHERE ban_ip=\'' . $ip . '\'');
+     $nbr = mysql_num_rows($query);
+     
+     if ($nbr == 0)
+          return (false);
+     else
+          return (true);
+}
+?&gt;</code></pre><p id="r-562433" data-claire-element-id="562433">Dédiez un fichier entier à cette fonction et enregistrez-la où vous en avez envie. ;)</p><h2 id="r-la-fonction-pour-un-fichier-texte" data-claire-element-id="562438">La fonction pour un fichier texte</h2><p id="r-562435" data-claire-element-id="562435">Dans le cas d'un fichier texte, nous allons procéder d'une manière qui peut être discutée, car il en existe des tonnes. Nous allons utiliser la fonction <a href="http://php.net/strpos">strpos()</a> qui nous retourne la position d'une chaîne dans une autre. Dans le cas où la première chaîne n'apparaît pas dans la seconde, la fonction retourne false. Prenez note qu'il est très important d'utiliser la comparaison de valeur et de type (===) car strpos retourne 0 si la position est 0.</p><pre id="r-562436" data-claire-element-id="562436"><code data-claire-semantic="html+php">&lt;?php
+//Indique si une adresse est bannie
+function is_ban($ip) {
+     return strpos(ip2long($ip) . &quot;\n&quot;, file_get_contents('ips.txt')) === false ? false : true;
+ 
+}
+?&gt;</code></pre><p id="r-562437" data-claire-element-id="562437">Voilà pour le fichier texte, il ne nous reste plus qu'à utiliser cette fonction. :)</p><h2 id="r-traiter-la-fonction-et-afficher-la-page-d-interdiction" data-claire-element-id="562445">Traiter la fonction et afficher la page d'interdiction</h2><p id="r-562439" data-claire-element-id="562439">Le code qui suit devra être placé sur toutes les pages dont vous désirez interdire l'accès aux adresses IP bannies. Vous pouvez aussi le placer dans un include que vous placerez sur toutes les pages de votre site. Dans le cas de MySQL, assurez-vous que votre connexion soit active au moment où vous exécutez la fonction. Bien entendu, si vous utilisez un système qui divise votre système en modules et que tout est basé sur la page <strong>index.php</strong>, vous êtes avantagés ici, car vous n'avez qu'à inclure le fichier sur cette page !</p><p id="r-562440" data-claire-element-id="562440">N'oubliez pas de placer le code qui suit avant tout code HTML, car sinon vous pourriez vous retrouver avec deux Doctype par exemple ;) :</p><pre id="r-562441" data-claire-element-id="562441"><code data-claire-semantic="html+php">&lt;?php
+//On inclut notre fonction pour avoir l'IP (modifiez le chemin) ;)
+require ('libs/div/get_ip.php');
+$ip = get_ip();
+ 
+require ('libs/div/is_ban.php');
+if (is_ban($ip)) {
+     //L'IP est bannie, on affiche la page et on arrête le script
+     readfile('interdiction.html');
+     die();
+}
+?&gt;</code></pre><p id="r-562442" data-claire-element-id="562442">Je le répète, n'oubliez pas de modifier les chemins d'accès aux fichiers à inclure. ;)</p><p id="r-562443" data-claire-element-id="562443">Maintenant que vous avez un moyen efficace de bloquer l'accès à votre site, n'en abusez pas ! Par ailleurs, je tiens à vous préciser que la plus mauvaise idée qui pourrait vous traverser l'esprit, c'est de bloquer l'adresse IP du robot de Google. :-°</p><p id="r-562444" data-claire-element-id="562444">Ah ! J'allais oublier : il existe des solutions encore plus efficaces pour bloquer l'accès à un site web ou à un seul dossier du serveur. Vous pouvez notamment le faire à l'aide des fichiers .htaccess mais ça devient un peu plus difficile à gérer dynamiquement.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/restreindre-l-acces-d-un-site-a-certaines-adresses-ip">Restreindre l&#039;accès d&#039;un site à certaines adresses IP</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/restreindre-l-acces-d-un-site-a-certaines-adresses-ip/detecter-l-adresse-ip-du-client">
+Détecter l&#039;adresse IP du client
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/restreindre-l-acces-d-un-site-a-certaines-adresses-ip/premiere-solution-mysql">
+Première solution : MySQL
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/restreindre-l-acces-d-un-site-a-certaines-adresses-ip/seconde-solution-un-fichier-texte">
+Seconde solution : un fichier texte
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/restreindre-l-acces-d-un-site-a-certaines-adresses-ip/interdire-l-acces-aux-adresses-retenues">
+Interdire l&#039;accès aux adresses retenues
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/restreindre-l-acces-d-un-site-a-certaines-adresses-ip/seconde-solution-un-fichier-texte">
+<span class="arrow"></span>
+<span class="next">Seconde solution : un fichier texte</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/restreindre-l-acces-d-un-site-a-certaines-adresses-ip.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 06:50:26 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/restreindre-l-acces-d-un-site-a-certaines-adresses-ip.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:14:32 GMT -->
+</html>

@@ -1,0 +1,223 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/roblematique-et-principes-fondamentaux-du-recyclage-automatique-de-la-memoire.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 07:31:15 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/roblematique-et-principes-fondamentaux-du-recyclage-automatique-de-la-memoire.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:23:06 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Problématique et principes fondamentaux du recyclage automatique de la mémoire</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/problematique-et-principes-fondamentaux-du-recyclage-automatique-de-la-memoire.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Problématique et principes fondamentaux du recyclage automatique de la mémoire</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Problmatiqueetprincipesfondamentauxdurecyclageautomatiquedelammoire">Problématique et principes fondamentaux du recyclage automatique de la mémoire</a><br/><a href="#Prsentation">Présentation</a><br/><a href="#Accessibilitdesdonnes">Accessibilité des données</a><br/><a href="#Unepremiremthodemarkampsweep">Une première méthode : mark&amp;sweep</a><br/></div>
+<a name="Problmatiqueetprincipesfondamentauxdurecyclageautomatiquedelammoire"></a><h2>Problématique et principes fondamentaux du recyclage automatique de la mémoire</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/problematique-et-principes-fondamentaux-du-recyclage-automatique-de-la-memoire/presentation-156">
+<span class="next">Présentation</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-587826" data-claire-element-id="587826">Ce premier article de la série que j'envisage d'écrire vous propose de découvrir le recyclage automatique <em>(garbage collection)</em>, une approche de gestion de la mémoire que vous avez sans doute déjà utilisée, peut-être sans vous en rendre compte, à travers des langages de haut niveau tels que Lisp, Java ou encore PHP.</p><p id="r-587827" data-claire-element-id="587827">Je tiens à remercier <a href="http://www.siteduzero.com/membres-294-227.html">bluestorm</a> pour l'adaptation du code LaTeX d'origine en zCode et l'amélioration du script MetaPost ayant servi à la création de la quatrième figure.</p>
+</div><a name="Prsentation"></a><h2>Présentation</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/problematique-et-principes-fondamentaux-du-recyclage-automatique-de-la-memoire/accessibilite-des-donnees">
+<span class="next">Accessibilité des données</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-587828" data-claire-element-id="587828">Un programme manipule, produit et stocke un nombre considérable de données durant son exécution. Nous pouvons classifier celles-ci selon leur durée de vie, c'est-à-dire l'intervalle de temps pendant lequel elles sont nécessaires au programme. Il existe ainsi plusieurs types de durées de vie. Certains objets vivent et meurent avec le programme qui les emploie ; leur existence est toujours requise par le programme.</p><p id="r-587829" data-claire-element-id="587829">Nous serions bien à notre aise si nous pouvions nous contenter de cette première catégorie. Nous pourrions alors créer des objets sans jamais nous soucier de remplir la mémoire de notre ordinateur. Malheureusement, la mémoire est physiquement limitée et il arrive un moment où il nous faut recycler les objets devenus inutiles pour leur attribuer de nouvelles informations.</p><p id="r-587830" data-claire-element-id="587830">Plusieurs approches existent. Beaucoup de langages, par exemple, proposent un concept apparenté aux variables automatiques (souvent appelées variables locales) du C, dont l'existence est régie par un bloc. Le principe est alors de structurer le programme : de placer des contraintes sur la durée de vie de certains objets ; dans notre exemple, il s'agit d'entourer les déclarations de variables concernées avec un bloc, visuellement, des accolades. Une autre perspective consiste à pourvoir le codeur d'outils lui permettant de contrôler directement la vie et la mort de ses objets ; les langages plus proches de la machine tels que le C proposent de telles constructions (les fonctions malloc, calloc et free, du C en sont un exemple).</p><p id="r-587831" data-claire-element-id="587831">Les langages de plus haut niveau adoptent, quant à eux, une vision différente du sujet. De tels langages vous permettent de créer à loisir autant d'objets que possible, sans jamais vous soucier de les détruire un jour. La mémoire vous apparaît alors effectivement illimitée.</p><p id="r-587832" data-claire-element-id="587832">En vérité, c'est le système (je ne parle pas forcément ici de votre système d'exploitation, mais du système offert par le langage, souvent appelé <em>implémentation</em>) qui se charge de réclamer de lui-même la mémoire inutilisée. Nous allons présenter, dans ce court article, les grands principes derrière ce mécanisme quelques fois bien pratique.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/problematique-et-principes-fondamentaux-du-recyclage-automatique-de-la-memoire">Problématique et principes fondamentaux du recyclage automatique de la mémoire</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/problematique-et-principes-fondamentaux-du-recyclage-automatique-de-la-memoire/presentation-156">
+Présentation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/problematique-et-principes-fondamentaux-du-recyclage-automatique-de-la-memoire/accessibilite-des-donnees">
+Accessibilité des données
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/problematique-et-principes-fondamentaux-du-recyclage-automatique-de-la-memoire/une-premiere-methode-mark-sweep">
+Une première méthode : mark&amp;sweep
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/problematique-et-principes-fondamentaux-du-recyclage-automatique-de-la-memoire/accessibilite-des-donnees">
+<span class="next">Accessibilité des données</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Accessibilitdesdonnes"></a><h2>Accessibilité des données</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/problematique-et-principes-fondamentaux-du-recyclage-automatique-de-la-memoire/presentation-156">
+<span class="arrow"></span>
+<span class="next">Présentation</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/problematique-et-principes-fondamentaux-du-recyclage-automatique-de-la-memoire/une-premiere-methode-mark-sweep">
+<span class="next">Une première méthode : mark&amp;sweep</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-587834" data-claire-element-id="587834">La technique repose sur le concept d'accessibilité des objets. Un objet est <em>accessible</em> à un moment donné de l'exécution du programme s'il est susceptible d'être encore utilisé par celui-ci. Cela ne signifie aucunement qu'il le sera, simplement qu'il peut l'être.</p><p id="r-587835" data-claire-element-id="587835">Idéalement, nous saurions voir l'avenir et distinguer à l'avance l'utile de l'inutile qui pourrait être immédiatement <em>recyclé</em>. Nous nous contentons cependant d'une approximation de ce résultat, qui a l'avantage d'être calculable, en effectuant la démarche inverse : nous ne savons pas quels objets vont être réutilisés, mais pouvons sereinement éliminer les objets inaccessibles.</p><p id="r-587836" data-claire-element-id="587836">Le coeur du problème réside donc dans l'évaluation de l'accessibilité des divers objets qui composent les données du programme.</p><h2 id="r-references-et-liens-entre-objets" data-claire-element-id="587855">Références et liens entre objets</h2><p id="r-587837" data-claire-element-id="587837">Les données sont rarement indépendantes les unes des autres, et il arrive fréquemment que les objets soient liés entre eux pour former des structures de données, telles que les listes chaînées. Ils n'en sont pour autant pas moins des objets différents, utilisés ensembles. Toutefois, il est à noter que le lien n'est pas toujours réciproque. Souvent, un objet dépend d'un autre, sans que l'inverse soit vrai. On dit alors que le premier contient une <em>référence</em> au second.</p><p id="r-587838" data-claire-element-id="587838">Un objet B est <em>accessible depuis</em> un objet A si A comporte une référence à B. Par extension, si C est accessible depuis B et B est accessible depuis A, alors C est <em>accessible depuis</em> A.<br/> Une autre perspective consiste à considérer les références comme des voies d'accès à sens unique reliant deux points ; la succession de plusieurs voies de même sens constitue un chemin. On définit alors l'accessibilité de B depuis A comme l'existence d'un chemin de A à B.</p><h3 id="r-un-exemple-les-listes" data-claire-element-id="587854">Un exemple : les listes</h3><p id="r-587839" data-claire-element-id="587839">Le cas le plus simple de structures offrant des perspectives de liens entre les objets est la liste simplement chaînée. Les listes peuvent être définies en termes de noeuds. Chaque noeud contient une valeur et une référence vers la suite de la liste. En C, nous implanterions cela à l'aide d'une structure à deux champs, dont l'un est un pointeur vers une autre structure semblable.</p><pre id="r-587840" data-claire-element-id="587840"><code data-claire-semantic="c">struct node {
+        struct node *ref;
+        Whatever value;
+};</code></pre><p id="r-587841" data-claire-element-id="587841">Afin d'illustrer la notion d'accessibilité, étudions trois exemples de disposition possibles de listes en mémoire. Les cadres représentent des objets de type struct noeud et les flèches, les références d'un objet à un autre. Un objet est accessible à partir d'un autre s'il est graphiquement possible d'arriver à sa case représentative, depuis le départ voulu, en suivant les flèches.</p><figure id="r-587843" data-claire-element-id="587844"><img id="r-587842" data-claire-element-id="587842" src="medias/uploads.siteduzero.com_files_77001_78000_77380.png" alt="Image utilisateur"/></figure><p id="r-587845" data-claire-element-id="587845">Ci-dessus, une liste fictive présentant cinq éléments numérotés de 0 à 4. Le 0 donne accès à tous les autres éléments, mais le 2 ne permet d'accéder qu'aux valeurs qui le suivent : 3 et 4.</p><figure id="r-587847" data-claire-element-id="587848"><img id="r-587846" data-claire-element-id="587846" src="medias/uploads.siteduzero.com_files_77001_78000_77381.png" alt="Image utilisateur"/></figure><p id="r-587849" data-claire-element-id="587849">Ici, de même, cinq éléments sont présents, mais ils forment, cette fois, deux listes plutôt qu'une. Le diagramme montre clairement qu'il n'existe aucun chemin menant d'un élément de la première (prenons le 1) à un élément de la seconde (prenons le 3).</p><figure id="r-587851" data-claire-element-id="587852"><img id="r-587850" data-claire-element-id="587850" src="medias/uploads.siteduzero.com_files_77001_78000_77382.png" alt="Image utilisateur"/></figure><p id="r-587853" data-claire-element-id="587853">Notre dernier exemple présente un cas particulier, où la valeur d'une cellule peut elle-même être un pointeur sur une liste. Ainsi, nous pouvons former des listes de listes. Dans ce cas précis, le 1 donne accès au 2, comme précédemment, mais également au 3 ainsi qu'au 4 qui le suit.</p><h2 id="r-application-au-recyclage" data-claire-element-id="587863">Application au recyclage</h2><p id="r-587856" data-claire-element-id="587856">Grâce à la relation précédente, nous sommes capables de déterminer, étant donné un objet A, l'ensemble des objets accessibles depuis A. Nous pouvons ensuite en déduire l'ensemble des objets inaccessibles par différence (tout objet absent de l'ensemble des objets accessibles est inaccessible). Nous allons maintenant tenter d'appliquer ceci à notre problème initial.</p><p id="r-587857" data-claire-element-id="587857">Sans plus d'informations, les notions d'accessibilité ne nous sont d'aucune aide, puisqu'elles permettent seulement d'affirmer une dépendance entre deux objets. Il est nécessaire, afin d'en faire usage, de posséder des informations sur au moins un objet.</p><p id="r-587858" data-claire-element-id="587858">De plus, une propriété essentielle de tout programme de recyclage est que la valeur d'un objet actuellement ou potentiellement en usage n'est pas affectée par le processus de récupération. De ce fait, il nous faut non seulement fournir des informations sur les objets connus, mais il est également nécessaire que ces informations soient complètes, c'est-à-dire qu'elles permettent de déduire tous les objets accessibles par le programme. L'ensemble de ces objets connus suffisants est appelé <em>ensemble des racines</em> (et chaque membre est une <em>racine</em>).</p><p id="r-587859" data-claire-element-id="587859">Il n'existe pas de règle universelle pour le choix de cet ensemble, celui-ci dépend tout entier de la manière dont le langage visé est implanté. Il est possible, par exemple, d'utiliser un jeu plus ou moins riche de racines.</p><p id="r-587860" data-claire-element-id="587860"><strong>Point technique (facultatif)</strong></p><p id="r-587861" data-claire-element-id="587861">Le jeu de racines minimal peut, toutefois, dans la grande majorité des langages, être assimilé à un objet contenant un nombre limité et prédéfini de références. Ce modèle repose sur l'observation intuitive que tout code qui n'est pas modifié durant l'exécution du programme n'a accès qu'aux informations disponibles lors de la compilation ou du chargement. Ceci étant, tout accès qu'il contient devra passer par un objet globalement connu de tous les acteurs contribuant au bon déroulement des opérations (compilation, chargement, exécution, etc.).</p><p id="r-587862" data-claire-element-id="587862">La plupart des langages à base de procédures peuvent décrire leur ensemble de racines comme étant la réunion des objets globalement visibles et des objets présents sur la pile d'exécution. Toutefois, il est tout à fait possible de considérer que la pile n'est elle-même qu'une structure de données dont la tête est référencée par une entité globale.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/problematique-et-principes-fondamentaux-du-recyclage-automatique-de-la-memoire">Problématique et principes fondamentaux du recyclage automatique de la mémoire</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/problematique-et-principes-fondamentaux-du-recyclage-automatique-de-la-memoire/presentation-156">
+Présentation
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/problematique-et-principes-fondamentaux-du-recyclage-automatique-de-la-memoire/accessibilite-des-donnees">
+Accessibilité des données
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/problematique-et-principes-fondamentaux-du-recyclage-automatique-de-la-memoire/une-premiere-methode-mark-sweep">
+Une première méthode : mark&amp;sweep
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/problematique-et-principes-fondamentaux-du-recyclage-automatique-de-la-memoire/presentation-156">
+<span class="arrow"></span>
+<span class="next">Présentation</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/problematique-et-principes-fondamentaux-du-recyclage-automatique-de-la-memoire/une-premiere-methode-mark-sweep">
+<span class="next">Une première méthode : mark&amp;sweep</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Unepremiremthodemarkampsweep"></a><h2>Une première méthode : mark&amp;sweep</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/problematique-et-principes-fondamentaux-du-recyclage-automatique-de-la-memoire/accessibilite-des-donnees">
+<span class="arrow"></span>
+<span class="next">Accessibilité des données</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-587865" data-claire-element-id="587865">Les outils développés dans la section précédente permettent d'établir les ensembles d'objets accessibles et inaccessibles. Cette information est à la base de tout programme de recyclage. Une fois celle-ci acquise, nous pouvons effectuer diverses opérations sur les données, maintenant classées, selon qu'elles sont utiles ou inutiles. Les données devenues inutiles sont typiquement mises en réserve en attente d'une prochaine demande de mémoire. Les données désignées comme potentiellement nécessaires sont conservées.</p><p id="r-587866" data-claire-element-id="587866">Il apparaît ainsi que le travail peut être scindé en deux phases : une <em>phase d'analyse</em>, servant à déterminer l'accessibilité de chaque objet et une <em>phase de nettoyage</em>, chargée de libérer la mémoire marquée par l'analyse comme récupérable. C'est le principe du recyclage <em>mark &amp; sweep</em> que nous allons brièvement étudier dans cette section. C'est l'une des méthodes les plus basiques de collecte de la mémoire.</p><p id="r-587867" data-claire-element-id="587867">L'algorithme que nous allons aborder est très naïf et il existe maintes façons de l'améliorer (façons qui, je l'espère, trouveront leur place dans un article futur ;) ). Il possède cependant l'avantage incontestable de la simplicité.</p><h2 id="r-principe-de-l-analyse" data-claire-element-id="587886">Principe de l'analyse</h2><p id="r-587868" data-claire-element-id="587868">L'analyse consiste à parcourir, depuis l'ensemble des racines, tous les objets accessibles. C'est un processus servant à déterminer l'ensemble des objets accessibles.</p><p id="r-587869" data-claire-element-id="587869">Au départ, aucune information n'est connue sur quelque objet que ce soit. Tous les objets atteints par l'analyse sont considérés comme accessibles par le programme. On dit que chaque objet atteint est <em>marqué</em> par l'analyse, d'où le nom de l'algorithme.</p><p id="r-587870" data-claire-element-id="587870">Lorsque l'analyse découvre un nouvel objet, deux cas se présentent :</p><ul id="r-587875" data-claire-element-id="587875"><li id="r-587872" data-claire-element-id="587872"><p id="r-587871" data-claire-element-id="587871">si l'objet n'a pas été marqué, il est marqué ;</p></li><li id="r-587874" data-claire-element-id="587874"><p id="r-587873" data-claire-element-id="587873">si l'objet a déjà été marqué, nous sommes revenus sur nos pas, et le marquage s'arrête, pour ce chemin.</p></li></ul><p id="r-587876" data-claire-element-id="587876">L'analyse procède ensuite récursivement en examinant tous les objets associés aux références contenues dans l'objet en cours. Elle traverse ainsi tous les objets accessibles, par plusieurs chemins. Un chemin se termine si l'objet analysé ne contient aucune référence, ou s'il a déjà été marqué. L'image suivante présente ce processus récursif à l'aide de couleurs.</p><figure id="r-587878" data-claire-element-id="587879"><img id="r-587877" data-claire-element-id="587877" src="medias/uploads.siteduzero.com_files_77001_78000_77379.png" alt="Image utilisateur"/></figure><p id="r-587880" data-claire-element-id="587880">Les blocs contigus représentent des objets et les flèches, des références. L'unique racine est prise comme étant le premier élément.</p><p id="r-587881" data-claire-element-id="587881">Les différents tons de gris marquent la progression du collecteur à travers les objets ; la nuance indique la profondeur du parcours, c'est-à-dire la distance, en termes de liens suivis, entre la racine et l'élément coloré.</p><p id="r-587882" data-claire-element-id="587882">Les blocs demeurés blancs n'ont pas été atteints par l'analyse et peuvent donc être réclamés.</p><p id="r-587883" data-claire-element-id="587883"><strong>Point technique (facultatif)</strong></p><p id="r-587884" data-claire-element-id="587884">En pratique, il existe de diverses façons d'implanter l'information d'appartenance au premier ou au second ensemble. Une solution simple (mais contraignante, dans une certaine mesure) est d'utiliser des listes doubles, reliant les objets d'un même ensemble entre eux. Chaque passage sur un objet modifierait les listes de manière appropriée.</p><p id="r-587885" data-claire-element-id="587885">D'autres stratégies, telles que l'utilisation d'un tableau de bits, ou le placement d'un bit d'état au début de chaque objet, sont également envisageables, pour peu qu'il soit possible de parcourir intégralement la mémoire de manière linéaire. Cette gestion fine de la mémoire est disponible sur beaucoup de systèmes d'exploitation, et peut être simulée (non sans peine) en C normal.</p><h2 id="r-principe-du-nettoyage" data-claire-element-id="587889">Principe du nettoyage</h2><p id="r-587887" data-claire-element-id="587887">La phase de nettoyage est, en règle générale, triviale. Il suffirait, dans le plus simple des cas, de parcourir l'ensemble des éléments qui n'ont pas été marqués (restés blancs dans l'exemple de la figure) et de leur appliquer l'opération de libération de la mémoire (par exemple, free).</p><p id="r-587888" data-claire-element-id="587888">Le point clé affectant la phase de nettoyage réside dans le choix de la représentation des ensembles <em>blanc</em> et <em>marqué</em>, déjà discuté.</p><h2 id="r-caracteristiques-de-l-algorithme" data-claire-element-id="587910">Caractéristiques de l'algorithme</h2><p id="r-587890" data-claire-element-id="587890">L'algorithme que nous avons étudié présente les caractéristiques suivantes :</p><ul id="r-587899" data-claire-element-id="587899"><li id="r-587892" data-claire-element-id="587892"><p id="r-587891" data-claire-element-id="587891">il est capable de collecter tous types de structures, y compris les structures formant des cycles ;</p></li><li id="r-587894" data-claire-element-id="587894"><p id="r-587893" data-claire-element-id="587893">il parcourt l'intégralité des objets utiles, et nécessite l'accès à l'ensemble de tous les objets pour opérer ;</p></li><li id="r-587896" data-claire-element-id="587896"><p id="r-587895" data-claire-element-id="587895">il effectue son travail en un seul passage constitué de deux phases ;</p></li><li id="r-587898" data-claire-element-id="587898"><p id="r-587897" data-claire-element-id="587897">il peut engendrer une fragmentation importante de la mémoire.</p></li></ul><p id="r-587900" data-claire-element-id="587900">Ces propriétés ne sont pas partagées par tous les algorithmes de recyclage. Les deux premiers contrastent avec le comptage de référence. La continuité du travail est le souci des algorithmes par incréments, et de collecte partielle. La fragmentation est mitigée par les algorithmes de copie et de compactage de la mémoire.</p><p id="r-587901" data-claire-element-id="587901">Le problème de la fragmentation survient du fait de la continuité de la mémoire. Réclamer des blocs de mémoire crée des zones inoccupées entre les objets occupés. Dans l'exemple du <em>mark&amp;sweep</em>, les cellules restées blanches deviendront libres lors du nettoyage. Deux inconvénients se trouvent liés à cette fragmentation :</p><ul id="r-587906" data-claire-element-id="587906"><li id="r-587903" data-claire-element-id="587903"><p id="r-587902" data-claire-element-id="587902">la création de petits espaces contigus libres ne permet pas l'allocation de larges blocs ;</p></li><li id="r-587905" data-claire-element-id="587905"><p id="r-587904" data-claire-element-id="587904">les objets utiles sont dispersés dans la mémoire, ce qui nuit à la localité spatiale.</p></li></ul><p id="r-587907" data-claire-element-id="587907">Ces mêmes désagréments accompagnent l'usage de routines d'allocation manuelle. Cependant, un programme utilisant ces dernières aura tendance à n'exploiter la mémoire dynamique qu'en cas de nécessité. En revanche, selon le niveau d'optimisation offerte par le compilateur du langage visé, il se peut que cette mémoire soit bien davantage sollicitée, dans le cas d'un environnement à gestion automatique de la mémoire, et ce, même pour des objets à courte durée de vie.</p><p id="r-587908" data-claire-element-id="587908">Dans cet article, nous avons posé les fondements du problème de la collecte de la mémoire, et exposé les premiers outils permettant d'automatiser cette tâche. L'algorithme expliqué est naïf, mais quelques légères variations en feraient déjà un choix parfaitement viable pour certains environnements relativement réduits et fermés. Bien que nous n'en ayons donné aucune implantation, l'écriture devrait être triviale, et peut constituer un bon exercice pour le lecteur, s'il désire acquérir quelques compétences pratiques complémentaires.</p><p id="r-587909" data-claire-element-id="587909">Le <a href="http://www.siteduzero.com/tuto-3-22176-1-recyclage-progressif-de-la-memoire.html">second article</a>, portant sur le recyclage progressif <em>(incremental)</em>, est maintenant disponible sur le Site du Zéro ; je vous invite donc à le lire si vous souhaitez découvrir une des techniques plus avancées de gestion de la mémoire automatique.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/problematique-et-principes-fondamentaux-du-recyclage-automatique-de-la-memoire">Problématique et principes fondamentaux du recyclage automatique de la mémoire</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/problematique-et-principes-fondamentaux-du-recyclage-automatique-de-la-memoire/presentation-156">
+Présentation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/problematique-et-principes-fondamentaux-du-recyclage-automatique-de-la-memoire/accessibilite-des-donnees">
+Accessibilité des données
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/problematique-et-principes-fondamentaux-du-recyclage-automatique-de-la-memoire/une-premiere-methode-mark-sweep">
+Une première méthode : mark&amp;sweep
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/problematique-et-principes-fondamentaux-du-recyclage-automatique-de-la-memoire/accessibilite-des-donnees">
+<span class="arrow"></span>
+<span class="next">Accessibilité des données</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/roblematique-et-principes-fondamentaux-du-recyclage-automatique-de-la-memoire.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 07:31:16 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/roblematique-et-principes-fondamentaux-du-recyclage-automatique-de-la-memoire.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:23:07 GMT -->
+</html>

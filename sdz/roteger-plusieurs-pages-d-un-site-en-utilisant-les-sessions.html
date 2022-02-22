@@ -1,0 +1,425 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/roteger-plusieurs-pages-d-un-site-en-utilisant-les-sessions.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 07:01:52 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/roteger-plusieurs-pages-d-un-site-en-utilisant-les-sessions.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:16:26 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Protéger plusieurs pages d&#039;un site en utilisant les sessions</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/proteger-plusieurs-pages-d-un-site-en-utilisant-les-sessions.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Protéger plusieurs pages d&#039;un site en utilisant les sessions</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Protgerplusieurspagesd039unsiteenutilisantlessessions">Protéger plusieurs pages d&#039;un site en utilisant les sessions</a><br/><a href="#L039indexetl039identification">L&#039;index et l&#039;identification</a><br/><a href="#Pagequelconque">Page quelconque</a><br/><a href="#Ladconnexion">La déconnexion</a><br/></div>
+<a name="Protgerplusieurspagesd039unsiteenutilisantlessessions"></a><h2>Protéger plusieurs pages d&#039;un site en utilisant les sessions</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/proteger-plusieurs-pages-d-un-site-en-utilisant-les-sessions/l-index-et-l-identification">
+<span class="next">L&#039;index et l&#039;identification</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-549611" data-claire-element-id="549611">En rédigeant un site professionnel, j'ai été confronté à la nécessité d'en sécuriser les données. Je me suis basé sur <a href="http://www.siteduzero.com/tuto-3-4-0-un-site-dynamique-avec-php.html">le cours de PHP </a>de M@teo21 et sur quelques conseils que j'ai pu glaner sur <a href="http://www.siteduzero.com/forum-81-123-php.html">le forum du SdZ</a> (merci à greenpinguin :p ) afin de sécuriser mes pages.</p><aside id="r-549613" data-claire-element-id="549613" data-claire-semantic="warning"><p id="r-549612" data-claire-element-id="549612">Je tiens à vous mettre en garde : cette sécurité est toute relative. Elle permet uniquement d'éviter qu'une personne qui tomberait par hasard sur le site puisse consulter le contenu des pages sans être identifiée. Un :pirate: mal intentionné aura vite fait, je pense, de contourner la difficulté.</p></aside>
+</div><a name="L039indexetl039identification"></a><h2>L&#039;index et l&#039;identification</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/proteger-plusieurs-pages-d-un-site-en-utilisant-les-sessions/page-quelconque">
+<span class="next">Page quelconque</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-declaration-des-variables" data-claire-element-id="549620">Déclaration des variables</h2><h3 id="r-1-la-session-start" data-claire-element-id="549615">1) La &quot;session_start();&quot;</h3><p id="r-549614" data-claire-element-id="549614">Cette fonction permet de récupérer les variables $_SESSION[] sur toutes les pages où elle aura été réalisée. On doit la placer avant tout code HTML, sur toutes les pages à sécuriser.</p><h3 id="r-2-la-variable-session-connect" data-claire-element-id="549617">2) La variable &quot;$_SESSION['connect'];&quot;</h3><p id="r-549616" data-claire-element-id="549616">Par défaut, on lui donne comme valeur &quot;0&quot;. Vous pouvez lui donner le nom que vous voulez, mais connect est assez parlant je trouve. :D Elle prendra la valeur &quot;1&quot; lorsque l'identification aura été vérifiée.</p><h3 id="r-3-les-variables-transmises-par-le-formulaire-d-identification" data-claire-element-id="549619">3) Les variables transmises par le formulaire d'identification</h3><p id="r-549618" data-claire-element-id="549618">Elles sont transmises par la méthode &quot;post&quot;. On les nomme $_POST['login'] et $_POST['mot_de_passe']. Elles vont nous permettre de savoir si la personne qui s'est identifiée est bien une de celles que l'on attend.</p><h2 id="r-le-code-de-l-index" data-claire-element-id="549636">Le code de l'index</h2><aside id="r-549622" data-claire-element-id="549622" data-claire-semantic="information"><p id="r-549621" data-claire-element-id="549621">Je vais le découper en plusieurs morceaux pour que vous puissiez bien en saisir la structure. Mais tout est à mettre sur une seule et même page intitulée index.php. ;)</p></aside><p id="r-549623" data-claire-element-id="549623">J'ai placé des commentaires après chaque ligne afin de vous permettre de bien en comprendre le sens.</p><pre id="r-549624" data-claire-element-id="549624"><code data-claire-semantic="html+php">&lt;?php
+session_start();// À placer obligatoirement avant tout code HTML.
+ 
+$_SESSION['connect']=0; //Initialise la variable 'connect'.
+ 
+if (isset($_POST['mot_de_passe']) AND isset($_POST['login'])) // Si les variables existent.
+{
+        $mot_de_passe=$_POST['mot_de_passe'];
+        $login=$_POST['login'];//On récupère les données envoyées par la méthode POST du formulaire d'identification.
+}
+ 
+else // Les variables n'existent pas encore.
+{
+        $mot_de_passe=&quot;&quot;;
+        $login=&quot;&quot;;// On crée des variables $mot_de_passe  et $login vides.
+}
+ 
+if (($mot_de_passe == &quot;SITEDUZERO&quot; AND $login == &quot;ZOZOR&quot;) OR ($mot_de_passe == &quot;MONSITEAMOI&quot; AND $login == &quot;POILU&quot;)OR ($mot_de_passe == &quot;NONMONMIEN&quot; AND $login == &quot;ZOZORETTE&quot;) OR ($mot_de_passe == &quot;KANGOUROU&quot; AND $login == &quot;JERRY&quot;))
+// Si le mot de passe et le login sont bons (valable pour 1 utilisateur ou plus). J'ai mis plusieurs identifiants et mots de passe.
+ 
+{
+        $_SESSION['connect']=1; // Change la valeur de la variable connect. C'est elle qui nous permettra de savoir s'il y a eu identification.
+        $_SESSION['login']=$login;// Permet de récupérer le login afin de personnaliser la navigation.
+// On affiche la page cachée.
+?&gt;</code></pre><p id="r-549625" data-claire-element-id="549625">Et le code HTML de la page cachée en exemple :</p><pre id="r-549626" data-claire-element-id="549626"><code data-claire-semantic="html"></code></pre><p id="r-549627" data-claire-element-id="549627">Ce code est donc celui que vous souhaitez protéger.</p><p id="r-549628" data-claire-element-id="549628">Nous allons voir maintenant celui de la page d'identification.</p><p id="r-549629" data-claire-element-id="549629">Il fait appel aux formulaires. Je ne m'étendrai pas dessus car c'est un simple code HTML.</p><p id="r-549630" data-claire-element-id="549630">Il doit être placé entre deux bouts de code PHP afin de finaliser celui commencé plus haut :</p><pre id="r-549631" data-claire-element-id="549631"><code data-claire-semantic="html+php">&lt;?php
+}
+ 
+else // Le mot de passe n'est pas bon.
+{
+// On affiche la zone de texte pour rentrer le mot de passe.
+?&gt;</code></pre><pre id="r-549632" data-claire-element-id="549632"><code data-claire-semantic="html">&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD XHTML 1.0 Strict//EN&quot; &quot;http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd&quot;&gt;
+&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot; xml:lang=&quot;fr&quot; lang=&quot;fr&quot;&gt;
+    &lt;head&gt;
+        &lt;title&gt;Identification&lt;/title&gt;
+        &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=iso-8859-1&quot; /&gt;
+        &lt;link rel=&quot;stylesheet&quot; media=&quot;screen&quot; type=&quot;text/css&quot; title=&quot;TNM&quot; href=&quot;design_accueil.css&quot; /&gt;
+        &lt;!-- Lien vers la favicon --&gt;      
+   &lt;link rel=&quot;shortcut icon&quot; type=&quot;image/x-icon&quot; href=&quot;images/favicon.ico&quot; height=&quot;48&quot; width=&quot;48&quot;/&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+   
+    &lt;!-- Le corps --&gt;
+   
+     &lt;div id=&quot;corps&quot;&gt;
+&lt;p&gt;Veuillez vous identifier pour accéder au site :&lt;/p&gt;
+ 
+&lt;form action=&quot;index.php&quot; method=&quot;post&quot;&gt;
+&lt;p&gt;
+Votre login : &lt;input type=&quot;text&quot; name=&quot;login&quot;/&gt;
+Votre mot de passe : &lt;input type=&quot;password&quot; name=&quot;mot_de_passe&quot;/&gt;&lt;input type=&quot;submit&quot; value=&quot;Valider&quot;/&gt;
+&lt;/p&gt;
+&lt;/form&gt;
+        &lt;/div&gt;
+       
+        &lt;!-- Le pied de page --&gt;
+ 
+           &lt;div id=&quot;pied_de_page1&quot;&gt;
+           
+       &lt;/div&gt;
+       
+    &lt;/body&gt;
+&lt;/html&gt;</code></pre><pre id="r-549633" data-claire-element-id="549633"><code data-claire-semantic="html+php">&lt;?php
+ 
+} // Fin du else.
+ 
+// Fin du code. :)
+?&gt;</code></pre><p id="r-549634" data-claire-element-id="549634">Voilà. Nos pages index et identification sont finies (en fait c'est la même page mais l'affichage est fonction du code PHP).</p><p id="r-549635" data-claire-element-id="549635">Nous allons voir maintenant la structure d'une autre page du site.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/proteger-plusieurs-pages-d-un-site-en-utilisant-les-sessions">Protéger plusieurs pages d&#039;un site en utilisant les sessions</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/proteger-plusieurs-pages-d-un-site-en-utilisant-les-sessions/l-index-et-l-identification">
+L&#039;index et l&#039;identification
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/proteger-plusieurs-pages-d-un-site-en-utilisant-les-sessions/page-quelconque">
+Page quelconque
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/proteger-plusieurs-pages-d-un-site-en-utilisant-les-sessions/la-deconnexion-2">
+La déconnexion
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/proteger-plusieurs-pages-d-un-site-en-utilisant-les-sessions/page-quelconque">
+<span class="next">Page quelconque</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Pagequelconque"></a><h2>Page quelconque</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/proteger-plusieurs-pages-d-un-site-en-utilisant-les-sessions/l-index-et-l-identification">
+<span class="arrow"></span>
+<span class="next">L&#039;index et l&#039;identification</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/proteger-plusieurs-pages-d-un-site-en-utilisant-les-sessions/la-deconnexion-2">
+<span class="next">La déconnexion</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<aside id="r-549639" data-claire-element-id="549639" data-claire-semantic="information"><p id="r-549638" data-claire-element-id="549638">Le principe est grosso modo le même que pour la page d'index. Mais cette fois, il n'y a pas de page d'identification.</p></aside><h2 id="r-verification-des-variables" data-claire-element-id="549651">Vérification des variables</h2><p id="r-549640" data-claire-element-id="549640">La première chose à faire est de vérifier que l'identification a bien eu lieu. Cela se traduit par le fait que la variable $_SESSION['connect'] est passée de l'état &quot;0&quot; à l'état &quot;1&quot; (voir code PHP de l'index :) ). Si c'est le cas, on affiche la page. Sinon, on demande au visiteur de s'identifier.</p><p id="r-549641" data-claire-element-id="549641">Là encore, il est nécessaire de placer session_start(); avant tout code XHTML.</p><p id="r-549642" data-claire-element-id="549642">Un petit code vaut mieux qu'un long discours : :lol:</p><pre id="r-549643" data-claire-element-id="549643"><code data-claire-semantic="html+php">&lt;?php
+session_start();
+if (isset($_SESSION['connect']))//On vérifie que le variable existe.
+{
+        $connect=$_SESSION['connect'];//On récupère la valeur de la variable de session.
+}
+else
+{
+        $connect=0;//Si $_SESSION['connect'] n'existe pas, on donne la valeur &quot;0&quot;.
+}
+       
+if ($connect == &quot;1&quot;) // Si le visiteur s'est identifié.
+{
+// On affiche la page cachée.
+?&gt;</code></pre><pre id="r-549644" data-claire-element-id="549644"><code data-claire-semantic="html">&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD XHTML 1.1//EN&quot; &quot;http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd&quot;&gt;
+&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot; xml:lang=&quot;fr&quot; &gt;
+   &lt;head&gt;
+&lt;title&gt;Site super&lt;/title&gt;
+&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=iso-8859-1&quot; /&gt;
+ 
+   &lt;!-- Lien vers la favicon --&gt;               
+&lt;link rel=&quot;shortcut icon&quot; type=&quot;image/x-icon&quot; href=&quot;images/favicon.ico&quot;/&gt;
+   &lt;!-- Ci-dessous le design &quot;par défaut&quot; du site --&gt;
+&lt;link rel=&quot;stylesheet&quot; media=&quot;screen&quot; type=&quot;text/css&quot; title=&quot;design&quot; href=&quot;design_par_defaut.css&quot; /&gt;
+   &lt;/head&gt;
+ 
+   &lt;body&gt;
+       &lt;div id=&quot;en_tete&quot;&gt;           
+       &lt;/div&gt;
+          
+        &lt;div id=&quot;menus&quot;&gt;
+        &lt;/div&gt;
+ 
+       &lt;!-- Le corps --&gt;
+ 
+       &lt;div id=&quot;corps&quot;&gt;
+ 
+ 
+&lt;h1&gt;Blabla&lt;/h1&gt;
+&lt;p&gt;Que du blabla sur mon site&lt;/p&gt;
+ 
+       &lt;/div&gt;
+ 
+       &lt;!-- Le pied de page --&gt;
+ 
+       &lt;div id=&quot;pied_de_page&quot;&gt;
+           
+       &lt;/div&gt;
+ 
+   &lt;/body&gt;
+&lt;/html&gt;</code></pre><aside id="r-549646" data-claire-element-id="549646" data-claire-semantic="information"><p id="r-549645" data-claire-element-id="549645">Si le visiteur ne s'est pas identifié (s'il a tapé directement l'adresse de la page), il faut lui demander de s'identifier et on lui affiche une autre page.</p></aside><pre id="r-549647" data-claire-element-id="549647"><code data-claire-semantic="html+php">&lt;?php
+}
+ 
+else // Le mot de passe n'est pas bon.
+{
+// On affiche la zone de texte pour rentrer le mot de passe.
+?&gt;</code></pre><pre id="r-549648" data-claire-element-id="549648"><code data-claire-semantic="html">&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD XHTML 1.0 Strict//EN&quot; &quot;http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd&quot;&gt;
+&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot; xml:lang=&quot;fr&quot; lang=&quot;fr&quot;&gt;
+    &lt;head&gt;
+&lt;title&gt;Visiteur inconnu&lt;/title&gt;
+&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=iso-8859-1&quot; /&gt;
+&lt;link rel=&quot;stylesheet&quot; media=&quot;screen&quot; type=&quot;text/css&quot; title=&quot;suite&quot; href=&quot;design_accueil.css&quot; /&gt;
+        &lt;!-- Lien vers la favicon --&gt;      
+&lt;link rel=&quot;shortcut icon&quot; type=&quot;image/x-icon&quot; href=&quot;images/favicon.ico&quot; height=&quot;48&quot; width=&quot;48&quot;/&gt;
+    &lt;/head&gt;
+ 
+    &lt;body&gt;
+   
+    &lt;!-- Le corps --&gt;
+   
+     &lt;div id=&quot;corps&quot;&gt;
+&lt;p&gt;Veuillez vous identifier pour accéder au site :&lt;/p&gt;
+ 
+&lt;form action=&quot;index.php&quot; method=&quot;post&quot;&gt;
+&lt;p&gt;
+&lt;input type=&quot;submit&quot; value=&quot;OK&quot; /&gt;
+&lt;/p&gt;
+&lt;/form&gt;
+        &lt;/div&gt;
+       
+        &lt;!-- Le pied de page --&gt;
+ 
+           &lt;div id=&quot;pied_de_page1&quot;&gt;
+           
+       &lt;/div&gt;
+       
+    &lt;/body&gt;
+&lt;/html&gt;</code></pre><p id="r-549649" data-claire-element-id="549649">Et on finit le code PHP précédemment commencé car là encore, tout ne tient en fait que sur une seule page. ^^</p><pre id="r-549650" data-claire-element-id="549650"><code data-claire-semantic="html+php">&lt;?php
+ 
+} // Fin du else.
+ 
+// Fin du code. :)
+?&gt;</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/proteger-plusieurs-pages-d-un-site-en-utilisant-les-sessions">Protéger plusieurs pages d&#039;un site en utilisant les sessions</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/proteger-plusieurs-pages-d-un-site-en-utilisant-les-sessions/l-index-et-l-identification">
+L&#039;index et l&#039;identification
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/proteger-plusieurs-pages-d-un-site-en-utilisant-les-sessions/page-quelconque">
+Page quelconque
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/proteger-plusieurs-pages-d-un-site-en-utilisant-les-sessions/la-deconnexion-2">
+La déconnexion
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/proteger-plusieurs-pages-d-un-site-en-utilisant-les-sessions/l-index-et-l-identification">
+<span class="arrow"></span>
+<span class="next">L&#039;index et l&#039;identification</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/proteger-plusieurs-pages-d-un-site-en-utilisant-les-sessions/la-deconnexion-2">
+<span class="next">La déconnexion</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Ladconnexion"></a><h2>La déconnexion</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/proteger-plusieurs-pages-d-un-site-en-utilisant-les-sessions/page-quelconque">
+<span class="arrow"></span>
+<span class="next">Page quelconque</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<aside id="r-549654" data-claire-element-id="549654" data-claire-semantic="information"><p id="r-549653" data-claire-element-id="549653">Pour clôturer le site proprement, il est de bon ton de se déconnecter. Même si l'utilisateur ne le fait pas et ferme la fenêtre du navigateur, la session est quand même en théorie supprimée.</p></aside><p id="r-549655" data-claire-element-id="549655">Le mieux, pour que l'utilisateur pense à se déconnecter, est de mettre le bouton de déconnexion en évidence. J'utilise pour ma part un formulaire, car cela permet d'avoir un bouton facilement mis en page (je suis un peu feignasse, je dois l'avouer :-° ).</p><aside id="r-549657" data-claire-element-id="549657" data-claire-semantic="warning"><p id="r-549656" data-claire-element-id="549656">Il doit être placé <strong>sur toutes vos pages</strong> quelle que soit sa forme (lien basique ou formulaire).</p></aside><p id="r-549658" data-claire-element-id="549658">Voici ce que j'utilise.</p><pre id="r-549659" data-claire-element-id="549659"><code data-claire-semantic="html">&lt;p&gt;
+&lt;form action=&quot;déconnexion.php&quot; method=&quot;post&quot;&gt;
+&lt;p&gt;
+&lt;input type=&quot;submit&quot; value=&quot;Déconnexion&quot; /&gt;
+&lt;/p&gt;</code></pre><p id="r-549660" data-claire-element-id="549660">Une fois sur la page de déconnexion, il est nécessaire de &quot;mettre à jour&quot; les variables $_SESSION et d'effacer ce qu'elles pourraient éventuellement contenir.</p><p id="r-549661" data-claire-element-id="549661">Pour cela, je vous conseille de &quot;ratisser&quot; large.</p><p id="r-549662" data-claire-element-id="549662">Pour pouvoir les effacer, il faut tout d'abord pouvoir les appeler. :p<br/> À nouveau, une session_start(); est nécessaire.</p><p id="r-549663" data-claire-element-id="549663">Les sessions étant des <em>arrays</em>, on va tout simplement en vider le contenu par la ligne de code suivante :</p><pre id="r-549664" data-claire-element-id="549664"><code data-claire-semantic="html+php">$_SESSION = array();</code></pre><p id="r-549665" data-claire-element-id="549665">Un <em>cookie</em> est automatiquement généré lors de l'utilisation des sessions. Il est normalement effacé à la clôture de la session. Par précaution, il vaut mieux l'effacer manuellement en procédant ainsi :</p><pre id="r-549666" data-claire-element-id="549666"><code data-claire-semantic="html+php">if (isset($_COOKIE[session_name()]))
+{setcookie(session_name(),'',time()-4200,'/');}</code></pre><p id="r-549667" data-claire-element-id="549667">Ensuite, et c'est fini, on détruit la session avec la fonction session_destroy();.</p><p id="r-549668" data-claire-element-id="549668">Le code de la page se résume donc ainsi :</p><pre id="r-549669" data-claire-element-id="549669"><code data-claire-semantic="html+php">&lt;?php
+session_start();
+ 
+$_SESSION = array();
+if (isset($_COOKIE[session_name()]))
+{setcookie(session_name(),'',time()-4200,'/');}
+ 
+session_destroy();
+?&gt;</code></pre><pre id="r-549670" data-claire-element-id="549670"><code data-claire-semantic="html">&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD XHTML 1.1//EN&quot; &quot;http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd&quot;&gt;
+&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot; xml:lang=&quot;fr&quot; &gt;
+   &lt;head&gt;
+&lt;title&gt;Au revoir&lt;/title&gt;
+&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=iso-8859-1&quot; /&gt;
+               
+   &lt;!-- Lien vers la favicon --&gt;               
+&lt;link rel=&quot;shortcut icon&quot; type=&quot;image/x-icon&quot; href=&quot;images/favicon.ico&quot; height=&quot;48&quot; width=&quot;48&quot;/&gt;
+   &lt;!-- Ci-dessous le design &quot;par d&amp;eacute;faut&quot; du site --&gt;
+&lt;link rel=&quot;stylesheet&quot; media=&quot;screen&quot; type=&quot;text/css&quot; title=&quot;TNM&quot; href=&quot;design_accueil.css&quot; /&gt;
+   
+   &lt;/head&gt;
+ 
+   &lt;body&gt;
+   
+       
+       &lt;div id=&quot;corps&quot;&gt;
+&lt;h1 style=&quot;color-font: #6ba5ef; font-size: 2em;&quot;&gt;Vous êtes à présent déconnecté&lt;/h1&gt;
+ 
+&lt;form action=&quot;index.php&quot; method=&quot;post&quot;&gt;
+&lt;p&gt;
+&lt;input type=&quot;submit&quot; value=&quot;OK&quot;/&gt;
+&lt;/p&gt;
+&lt;/form&gt;
+                &lt;/div&gt;
+ 
+ 
+       &lt;!-- Le pied de page --&gt;
+ 
+       &lt;div id=&quot;pied_de_page3&quot;&gt;
+           
+       &lt;/div&gt;
+ 
+   &lt;/body&gt;
+&lt;/html&gt;</code></pre><p id="r-549671" data-claire-element-id="549671">Mon site est hébergé en intranet, ce qui limite énormément la présence de hackers. :D</p><aside id="r-549673" data-claire-element-id="549673" data-claire-semantic="information"><p id="r-549672" data-claire-element-id="549672">Cette méthode peut être pratique mais je tiens à préciser que je ne suis pas responsable de l'utilisation que vous en ferez. :-°</p></aside><p id="r-549674" data-claire-element-id="549674">Voici quelques liens qui peuvent être utiles et que je vous recommande vivement de lire.<br/><a href="http://fr.php.net/manual/fr/security.intro.php">Introduction à la sécurité en PHP</a> : quelques considérations générales sur la sécurité en PHP. Très instructif (de même que les chapitres suivants).<br/><a href="http://fr.php.net/manual/fr/book.session.php">Les sessions</a> : pour ceux qui veulent en savoir plus.</p><p id="r-549675" data-claire-element-id="549675">Et je finirai sur ces quelques mots empruntés à ce fameux miguel euh, non, manuel :</p><p id="r-549676" data-claire-element-id="549676"><cite>Citation : Manuel PHP</cite></p><blockquote id="r-549678" data-claire-element-id="549678"><p id="r-549677" data-claire-element-id="549677">Un principe qu'il est bon de retenir : un système est aussi sûr que son maillon le plus faible.</p></blockquote><p id="r-549679" data-claire-element-id="549679">À méditer. ;)</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/proteger-plusieurs-pages-d-un-site-en-utilisant-les-sessions">Protéger plusieurs pages d&#039;un site en utilisant les sessions</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/proteger-plusieurs-pages-d-un-site-en-utilisant-les-sessions/l-index-et-l-identification">
+L&#039;index et l&#039;identification
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/proteger-plusieurs-pages-d-un-site-en-utilisant-les-sessions/page-quelconque">
+Page quelconque
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/proteger-plusieurs-pages-d-un-site-en-utilisant-les-sessions/la-deconnexion-2">
+La déconnexion
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/proteger-plusieurs-pages-d-un-site-en-utilisant-les-sessions/page-quelconque">
+<span class="arrow"></span>
+<span class="next">Page quelconque</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/roteger-plusieurs-pages-d-un-site-en-utilisant-les-sessions.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 07:01:52 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/roteger-plusieurs-pages-d-un-site-en-utilisant-les-sessions.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:16:27 GMT -->
+</html>

@@ -1,0 +1,522 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/ri-rapide-ameliorations.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 08:47:40 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/ri-rapide-ameliorations.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:34:21 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Tri rapide : Améliorations</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/tri-rapide-ameliorations.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Tri rapide : Améliorations</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#TrirapideAmliorations">Tri rapide : Améliorations</a><br/><a href="#Rappelsprincipeetcomplexit">Rappels : principe et complexité</a><br/><a href="#Rcursionterminale">Récursion terminale</a><br/><a href="#Choixdupivottri3-mdiane">Choix du pivot : tri 3-médiane</a><br/><a href="#Trialternatifl039amliorationdeSedgewick">Tri alternatif : l&#039;amélioration de Sedgewick</a><br/><a href="#Profondeurdercursionintrosort">Profondeur de récursion : introsort</a><br/></div>
+<a name="TrirapideAmliorations"></a><h2>Tri rapide : Améliorations</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/rappels-principe-et-complexite">
+<span class="next">Rappels : principe et complexité</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-532351" data-claire-element-id="532351">Le tri rapide (supposé connu) peut se révéler très efficace en pratique.</p><p id="r-532352" data-claire-element-id="532352">Il a cependant un énorme défaut : son pire des cas est quadratique (c'est-à-dire en O(n^2) où n est la taille de l'entrée), contrairement au tri par tas par exemple. De plus, il est moins efficace que le tri par insertion sur de petits ensembles. À partir de là, on peut s'appuyer sur ces deux constats en améliorant le tri rapide, et pourquoi pas, chercher d'autres voies d'optimisation.</p><p id="r-532353" data-claire-element-id="532353">C'est le but de ce cours, qui est en quelque sorte une suite du cours sur le <a href="http://www.siteduzero.com/tutoriel-3-36691-le-tri-rapide-qsort.html">tri rapide</a> déjà présent sur le site. Afin qu'un maximum de personnes puissent comprendre les codes proposés, ils seront écrits en C++ et auront une sémantique abordable.</p>
+</div><a name="Rappelsprincipeetcomplexit"></a><h2>Rappels : principe et complexité</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/recursion-terminale-2">
+<span class="next">Récursion terminale</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-532354" data-claire-element-id="532354">Il existe de nombreuses approches permettant de trier des données. Certaines sont même capables de se passer de l'opérateur de comparaison en faisant des suppositions sur ses données (par exemple : ce sont des entiers uniformément répartis, dans le cas du <a href="http://www.siteduzero.com/tutoriel-3-36649-le-tri-a-paniers.html">tri à paniers</a>). Il a été démontré mathématiquement qu'un tri basé sur les comparaisons ne pouvait faire mieux que O(n\log{n}) en terme de complexité algorithmique, où n est la taille de l'entrée.</p><h2 id="r-principe-53" data-claire-element-id="532359">Principe</h2><p id="r-532355" data-claire-element-id="532355">Le tri rapide, ou quicksort, fait partie des tris qui utilisent les comparaisons. Son principe suit l'approche &quot;diviser pour régner&quot; : on sélectionne un élément de l'ensemble (le <em>pivot</em>) avant de placer d'un coté les éléments inférieurs ou égaux à cet élément, et de l'autre ceux qui lui sont supérieurs. On parle de <em>partitionnement</em>. On applique à nouveau le même procédé sur les deux sous-ensembles, et ainsi de suite. On dit que c'est un algorithme récursif car il s'utilise lui-même. Il peut se résumer de la manière suivante : On partitionne l'ensemble en deux et on trie séparément les deux partitions.</p><p id="r-532356" data-claire-element-id="532356">Dès lors qu'il est question de récursivité, il faut se poser la question de la condition d'arrêt : quand est-ce qu'on s'arrête ? Ici, c'est trivial : on stoppe les appels récursifs quand les sous-ensembles sont vides ou ne comportent plus qu'un élément (singleton), puisqu'il s'agit d'ensembles déjà triés.</p><p id="r-532357" data-claire-element-id="532357">Ce tutoriel a pour but de présenter les améliorations &quot;classiques&quot; que l'on peut apporter au tri rapide. Ci-dessous une implémentation d'un tri rapide ordinaire. Il se base sur deux <a href="http://www.cplusplus.com/reference/std/iterator/RandomAccessIterator/"><em>random access iterator</em></a> pour délimiter le segment à trier.</p><pre id="r-532358" data-claire-element-id="532358"><code data-claire-semantic="cpp">template &lt; typename Iterator &gt;
+void quicksort(Iterator begin, Iterator end)
+{
+    // Si l'ensemble est vide ou est un singleton, il est déjà trié :
+    if(begin == end || begin+1 == end)
+        return;
+
+    typedef typename Iterator::value_type value_type;
+
+    // On ne se soucie pas de l'algorithme de partitionnement :
+    Iterator middle = std::partition(begin+1, end, std::bind2nd(std::less &lt; value_type &gt;(), *begin));
+    std::iter_swap(begin, middle-1);
+
+    // Appels récursifs sur les deux partitions :
+    quicksort(begin, middle-1);
+    quicksort(middle, end);
+}</code></pre><h2 id="r-complexite-10" data-claire-element-id="532367">Complexité</h2><p id="r-532360" data-claire-element-id="532360">Le tri rapide ne nécessite pas de structure de données supplémentaire : il trie les éléments directement dans l'ensemble. C'est un tri dit <em>en place</em>. Cependant, les appels récursifs obligent l'utilisation d'une pile d'appel pour garder trace de leur contexte ; cette pile a en moyenne une taille de l'ordre de <code>log</code>2<code>(n)</code>, mais peut atteindre un ordre de grandeur de <code>n</code> dans le pire des cas.</p><p id="r-532361" data-claire-element-id="532361">Là où la question de la complexité se pose, c'est au niveau du nombre de comparaisons que l'algorithme effectue en fonction de la taille de l'entrée. Je donne la complexité moyenne : O(n\log{n}). Son calcul, assez long et difficile, n'aurait pas sa place ici. Néanmoins, si vous êtes intéressés, je vous renvoie à <a href="http://fr.wikipedia.org/wiki/Loi_de_Bernoulli%23Co.C3.BBt_moyen_de_l.27algorithme_de_tri_rapide">ce document</a>.</p><p id="r-532362" data-claire-element-id="532362">La complexité au meilleur des cas est asymptotiquement la même. Pour vous en rendre compte, imaginez que l'ensemble soit systématiquement partitionné selon la valeur médiane. Cela impliquerait que les deux partitions résultantes ont plus ou moins la même taille, c'est-à-dire grosso modo la moitié de la taille d'origine. En somme, la profondeur de récursion atteindrait alors \log{n}, et comme à chaque niveau on effectue n opérations pour le partitionnement, on a bien une complexité de O(n\log{n}).</p><p id="r-532363" data-claire-element-id="532363">On sait que le tri rapide est bon, ce n'est donc pas le meilleur des cas qui nous intéresse, mais bien le pire. Supposez que le pivot ne soit pas systématiquement la médiane, mais une borne de l'ensemble à trier (par exemple le plus petit élément). Le partitionnement donnera un ensemble vide et un ensemble de taille <code>n-1</code> si la taille initiale était <code>n</code>. À la première étape, cette répartition nécessite <code>n</code> opérations. Le coup suivant, elle en nécessitera <code>n-1</code>, puis <code>n-2</code>, jusqu'à ce qu'il ne reste plus rien à trier. C'est exactement le principe du tri par sélection, qui est en O(n^2).</p><p id="r-532364" data-claire-element-id="532364">Dans le pire des cas, le tri rapide est donc quadratique. Dans ce cas, pourquoi l'utiliser quand on pense qu'il existe des tris qui se comportent toujours de façon optimale ?</p><p id="r-532365" data-claire-element-id="532365">Le tri rapide est en moyenne plus efficace qu'un autre pour des raisons de localité de données : chaque appel va &quot;travailler&quot; sur des données très proches en mémoire. En raison des caches permettant des optimisations considérables quand les données ont une forte localité, l'algorithme présente de meilleures performances, c'est normal.</p><p id="r-532366" data-claire-element-id="532366">En plus de ça, il peut se révéler fiable si on l'améliore dans le but d'éviter son &quot;pire des cas&quot;.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations">Tri rapide : Améliorations</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/rappels-principe-et-complexite">
+Rappels : principe et complexité
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/recursion-terminale-2">
+Récursion terminale
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/choix-du-pivot-tri-3-mediane">
+Choix du pivot : tri 3-médiane
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/tri-alternatif-l-amelioration-de-sedgewick">
+Tri alternatif : l&#039;amélioration de Sedgewick
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/profondeur-de-recursion-introsort">
+Profondeur de récursion : introsort
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/recursion-terminale-2">
+<span class="next">Récursion terminale</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Rcursionterminale"></a><h2>Récursion terminale</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/rappels-principe-et-complexite">
+<span class="arrow"></span>
+<span class="next">Rappels : principe et complexité</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/choix-du-pivot-tri-3-mediane">
+<span class="next">Choix du pivot : tri 3-médiane</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-532369" data-claire-element-id="532369">Dans cette section comme dans la suivante, nous allons étudier l'une des nombreuses améliorations &quot;en interne&quot; du tri rapide.</p><p id="r-532370" data-claire-element-id="532370">Quand une fonction est récursive, c'est-à-dire quand dans sa définition on retrouve au moins un appel à la même fonction, l'environnement d'exécution doit garder trace des différents contextes d'appel. C'est assez bien expliqué dans le cours sur <a href="http://www.siteduzero.com/tutoriel-3-36703-la-recursivite.html#ss_part_3">la récursivité</a>. En réalité, dès qu'un appel de fonction est exécuté, il est enregistré dans une pile appelée <em>callstack</em> (pile d'appel) et en est effacé à la sortie de la fonction. Avoir de nombreux appels récursifs, comme c'est le cas pour le tri rapide, implique une taille potentiellement importante de la callstack. C'est pourquoi on peut parler d'une complexité mémoire.</p><p id="r-532371" data-claire-element-id="532371">Le tri rapide a une complexité mémoire en moyenne de O(\log{n}), mais dans le pire des cas (entrée quadratique), elle peut être en O(n). Heureusement, on peut y remédier.</p><p id="r-532372" data-claire-element-id="532372">Connaissez-vous la récursion terminale (<em>tail-rec</em>) ? Il s'agit simplement du fait qu'un appel récursif soit situé en dernière instruction de la fonction. Comme il n'y a plus rien à faire &quot;après&quot;, il est inutile de garder trace du contexte. Du coup, le compilateur optimise : si l'on peut se passer du contexte, on peut se passer de la pile d'appel ! Cette approche peut être utilisée pour améliorer la complexité mémoire du tri rapide.</p><p id="r-532373" data-claire-element-id="532373">Comment ? C'est simple : il faut voir que dans le cas du quicksort, il y a deux appels récursifs et qu'en pratique ils ne travaillent que très rarement sur des sous-ensembles de taille identique comme le voudrait le cas optimal. L'idée est alors de placer l'appel sur le segment <em>le plus long</em> en dernière instruction pour bénéficier de l'optimisation par récursion terminale pour la partition qui prendra le plus de temps à être triée. De toute façon, l'ordre des deux appels récursifs n'a aucune incidence sur le résultat : les deux travaillent sur des segments indépendants.</p><p id="r-532374" data-claire-element-id="532374">De cette manière, on arrive à éliminer le cas où la complexité mémoire est en O(n). Elle sera toujours de l'ordre de O(\log{n}) et, étonnement dans le pire des cas - en termes de complexité algorithmique - en O(1).</p><pre id="r-532375" data-claire-element-id="532375"><code data-claire-semantic="cpp">template &lt; typename Iterator &gt;
+void quicksort_recopt(Iterator begin, Iterator end)
+{
+    if(begin == end || begin+1 == end)
+        return;
+
+    typedef typename Iterator::value_type value_type;
+    Iterator middle = std::partition(begin+1, end, std::bind2nd(std::less &lt; value_type &gt;(), *begin));
+    std::iter_swap(begin, middle-1);
+
+    if(middle-1 - begin &gt; end - middle)
+    {
+        quicksort_recopt(middle, end);
+        quicksort_recopt(begin, middle-1);
+    }
+    else
+    {
+        quicksort_recopt(begin, middle-1);
+        quicksort_recopt(middle, end);
+    }
+}</code></pre><p id="r-532376" data-claire-element-id="532376">Malgré une bonne optimisation mémoire, cette technique est en général légèrement plus lente qu'un tri rapide ordinaire. Cela vient du fait qu'un test supplémentaire est effectué pour déterminer la partition la plus grande. Sur 3 millions d'éléments générés aléatoirement, j’obtiens 2.217 secondes pour un tri rapide à callstack optimisé contre seulement 2.183 pour un tri rapide classique.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations">Tri rapide : Améliorations</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/rappels-principe-et-complexite">
+Rappels : principe et complexité
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/recursion-terminale-2">
+Récursion terminale
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/choix-du-pivot-tri-3-mediane">
+Choix du pivot : tri 3-médiane
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/tri-alternatif-l-amelioration-de-sedgewick">
+Tri alternatif : l&#039;amélioration de Sedgewick
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/profondeur-de-recursion-introsort">
+Profondeur de récursion : introsort
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/rappels-principe-et-complexite">
+<span class="arrow"></span>
+<span class="next">Rappels : principe et complexité</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/choix-du-pivot-tri-3-mediane">
+<span class="next">Choix du pivot : tri 3-médiane</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Choixdupivottri3-mdiane"></a><h2>Choix du pivot : tri 3-médiane</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/recursion-terminale-2">
+<span class="arrow"></span>
+<span class="next">Récursion terminale</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/tri-alternatif-l-amelioration-de-sedgewick">
+<span class="next">Tri alternatif : l&#039;amélioration de Sedgewick</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-532378" data-claire-element-id="532378">Il est facile de voir que l'élément déterminant dans les performances du tri rapide est le pivot. C'est en fonction de lui que les partitions sont crées et plus précisément c'est lui qui va déterminer la taille de chacune des deux partitions. Ces tailles jouent beaucoup : quand elles sont à peu près égales ou que l'écart reste globalement raisonnable tout au long du tri, ce dernier se comporte de façon optimale, c'est-à-dire en O(n\log{n}). Cela survient quand le pivot se trouve être la médiane ou un élément qui s'en rapproche. En revanche, quand la première partition est toujours beaucoup plus grande que la seconde (ou l'inverse), le tri devient quadratique. Dans ce cas, le pivot est soit une valeur minimal, soit une valeur maximale (&quot;une&quot; parce que ce ne sont pas nécessairement les bornes de l'ensemble).</p><p id="r-532379" data-claire-element-id="532379">Le code de base que l'on s'est fixé en première sous-partie choisi systématiquement la première valeur du segment comme pivot. Dans le cas d'une entrée triée dans un sens ou dans l'autre, cette première valeur sera minimale ou maximale. Quicksort ne sera donc plus efficace du tout. Il est regrettable qu'un tri si prometteur se comporte aussi mal sur une entrée triée. Peut-on y remédier ?</p><p id="r-532380" data-claire-element-id="532380">Une approche naïve consiste alors à ne plus choisir la première valeur comme pivot, mais la valeur centrale. Dans le cas d'une entrée triée, le tri devient alors optimal puisque le pivot se trouvera être systématiquement la médiane du segment. Il ne faut pas crier victoire trop vite, ce changement est en réalité une illusion : le cas quadratique n'est pas éliminé, il prend simplement une autre forme. En réalité, vous pouvez vous fixer le pivot que vous voulez, vous n'arriverez pas à éliminer le cas quadratique de cette façon.</p><p id="r-532381" data-claire-element-id="532381">Il en va de même pour un pivot sélectionné aléatoirement, à la différence près qu'on ne sera alors plus en mesure de prédire le cas quadratique. Cela peut se révéler utile : un pirate ne pourra plus volontairement planter votre tri. La situation est exagérée, mais l'idée est là. Mais sinon, que faire ?</p><h2 id="r-trouver-la-mediane-entre-trois-elements" data-claire-element-id="532389">Trouver la médiane entre trois éléments</h2><p id="r-532382" data-claire-element-id="532382">Une approche plus recherchée consiste alors à choisir trois éléments, de préférence la première et la dernière valeur avec la valeur centrale, et à en déterminer la médiane. Par exemple le triplet <code>(4 9 2)</code> admet 4 comme médiane.</p><p id="r-532383" data-claire-element-id="532383">Cette technique est plus efficace que de partir sur un choix unique de pivot dès le départ. L'espérance mathématique que l'algorithme se comporte en temps quadratique est considérablement diminuée, bien qu'existante. En revanche, déterminer la médiane d'un triplet d'éléments est une tâche légèrement plus compliquée que d'en trouver le maximum ou le minimum.</p><p id="r-532384" data-claire-element-id="532384">En partant par exemple du triplet <code>(a b c)</code> dont on ne connait pas les valeurs, déterminer le maximum revient à trouver la valeur maximale entre a et b, que nous allons appeler max, et à la comparer à c. Si elle est inférieure, le maximum est c, sinon c'est max. Pour la médiane, c'est plus subtil : dès qu'on a déterminé max, on peut dire que c'est la médiane qu'à partir du moment où max &lt; c. Quand max &gt; c, il faut comparer c au minimum entre a et b, appelé min. Le schéma d'analyse suivant résume cet algorithme :</p><figure id="r-532386" data-claire-element-id="532387"><img id="r-532385" data-claire-element-id="532385" src="medias/uploads.siteduzero.com_files_369001_370000_369647.png" alt="Image utilisateur"/></figure><p id="r-532388" data-claire-element-id="532388"><em>Algorithme de calcul de la médiane d'un triplet (a b c)</em></p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations">Tri rapide : Améliorations</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/rappels-principe-et-complexite">
+Rappels : principe et complexité
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/recursion-terminale-2">
+Récursion terminale
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/choix-du-pivot-tri-3-mediane">
+Choix du pivot : tri 3-médiane
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/tri-alternatif-l-amelioration-de-sedgewick">
+Tri alternatif : l&#039;amélioration de Sedgewick
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/profondeur-de-recursion-introsort">
+Profondeur de récursion : introsort
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/recursion-terminale-2">
+<span class="arrow"></span>
+<span class="next">Récursion terminale</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/tri-alternatif-l-amelioration-de-sedgewick">
+<span class="next">Tri alternatif : l&#039;amélioration de Sedgewick</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Trialternatifl039amliorationdeSedgewick"></a><h2>Tri alternatif : l&#039;amélioration de Sedgewick</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/choix-du-pivot-tri-3-mediane">
+<span class="arrow"></span>
+<span class="next">Choix du pivot : tri 3-médiane</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/profondeur-de-recursion-introsort">
+<span class="next">Profondeur de récursion : introsort</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-532391" data-claire-element-id="532391">Vous l'avez bien compris : le tri rapide utilise l'approche &quot;diviser pour régner&quot;. Pour que le concept de &quot;régner&quot; (synonyme d'efficacité) prenne son sens, il faut partir sur un grand nombre d'éléments. Utiliser la même approche sur une petite quinzaine d'éléments par exemple, c'est un peu sortir l'arme nucléaire pour tuer une mouche. L'utilisation d'un tri rapide est-elle donc encore justifiée ?</p><p id="r-532392" data-claire-element-id="532392">La réponse est non, bien évidemment. On n'est pas les premiers à y penser ; un informaticien américain du nom de Robert Sedgewick a suggéré l'utilisation d'un tri plus simple quand la taille des sous-ensembles devient trop ridicule face à l'approche du tri rapide. Cette technique porte d'ailleurs son nom : c'est le tri de Sedgewick, ou <em>sedgesort</em>.</p><p id="r-532393" data-claire-element-id="532393">Toute la question est de savoir quel tri alternatif choisir et quand l'appliquer. Une approche assez répandue consiste à stopper le tri rapide quand il arrive sur de petits ensembles et à appliquer un <a href="http://www.siteduzero.com/tutoriel-3-36679-le-tri-par-insertion.html">tri par insertion</a> sur l'ensemble final alors presque trié. La raison est simple : le tri par insertion, de par son principe et sa simplicité, se comporte bien mieux que la plupart des tris sur des ensembles déjà <em>presque</em> triés. En général, le nombre d'opérations est alors de l'ordre de O(n).</p><p id="r-532394" data-claire-element-id="532394">Cependant, l'optimisation par l'utilisation des caches - qui fait l'une des forces du tri rapide - est ici à notre désavantage : on perdrait en efficacité à vouloir appliquer un seul tri par insertion tout à la fin plutôt que de l'appliquer étape par étape pour chaque segment devenu trop petit. Cependant, vous ne remarquerez pas de différence entre un tri rapide et un tri par insertion sur un ensemble d'environ 50 éléments. Cette optimisation vaut-elle donc le coup d'être appliquée ? En réalité, quand il y en a beaucoup de ces ensembles, les gains de performance se font étonnement bien sentir. L'utilisation du sedgesort est donc tout à fait justifiée.</p><p id="r-532395" data-claire-element-id="532395">Pour rendre cette stratégie la plus efficace possible, il faut déterminer à quel moment on arrête le tri rapide, c'est-à-dire qu'il faut se fixer une bonne taille pour les &quot;petits&quot; ensembles. D'une manière assez surprenante, cette taille va être déterminante. Vous n'aurez par exemple pas du tout les mêmes performances en vous fixant une limite de 10 qu'en vous fixant une limite de 20. Ce qui est regrettable, c'est que cette limite dépend avant tout de votre matériel.</p><p id="r-532396" data-claire-element-id="532396">J'ai ainsi effectué un petit test de performance du sedgesort sur ma machine en observant ce que ça donne pour des limites allant de 2 à 10 éléments :</p><pre id="r-532397" data-claire-element-id="532397"><code data-claire-semantic="autre">Tri de 3 millions d'éléments générés aléatoirement :
+Quicksort   : 2.167 s (sans l'amélioration de Sedgewick)
+Sedgesort   :
+limite : 2  : 2.134 s
+limite : 3  : 2.118 s
+limite : 4  : 2.108 s
+limite : 5  : 2.099 s
+limite : 6  : 2.101 s
+limite : 7  : 2.107 s
+limite : 8  : 2.117 s
+limite : 9  : 2.124 s
+limite : 10 : 2.134 s</code></pre><p id="r-532398" data-claire-element-id="532398">Il serait inutile de tester le pire des cas puisqu'il est assez prévisible. En effet, on se retrouverait à appliquer un tri par insertion sur <em>un</em> petit sous-ensemble au total, le reste ayant été trié à la manière d'un tri par sélection. Globalement, on est alors de l'ordre du quadratique.</p><p id="r-532399" data-claire-element-id="532399">En répétant le test sur plusieurs tableaux de taille différente (générés aléatoirement), il est devenu évident que sur mon architecture, la limite optimale pour un tri rapide &quot;partiel&quot; est de 5. En général, on n'en est pas loin, certains conseillent cependant de se situer aux alentours de 15. Le mieux est encore d'effectuer le test sur sa propre machine. La comparaison par rapport au temps d'exécution d'un tri rapide basique est sans appel : sedgesort peut réellement se montrer plus efficace.</p><p id="r-532400" data-claire-element-id="532400">Une implémentation possible du tri de Sedgewick (utilisée pour le test de performance) :</p><pre id="r-532401" data-claire-element-id="532401"><code data-claire-semantic="cpp">template &lt; typename Iterator &gt;
+void insertion_sort(Iterator begin, Iterator end)
+{
+    if(begin == end)
+        return;
+    Iterator forward = begin+1, back;
+    for(; forward != end; ++forward)
+        for(back = forward; back != begin; --back)
+            if(*back &lt; *(back-1))
+                std::iter_swap(back, back-1);
+            else break;
+}
+
+template &lt; typename Iterator &gt;
+void sedgesort(Iterator begin, Iterator end, int limite = 5)
+{
+    if(begin + limite &gt;= end)
+    {
+        insertion_sort(begin, end);
+        return;
+    }
+
+    typedef typename Iterator::value_type value_type;
+    Iterator middle = std::partition(begin+1, end, std::bind2nd(std::less &lt; value_type &gt;(), *begin));
+    std::iter_swap(begin, middle-1);
+
+    sedgesort(begin, middle-1, limite);
+    sedgesort(middle, end, limite);
+}</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations">Tri rapide : Améliorations</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/rappels-principe-et-complexite">
+Rappels : principe et complexité
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/recursion-terminale-2">
+Récursion terminale
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/choix-du-pivot-tri-3-mediane">
+Choix du pivot : tri 3-médiane
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/tri-alternatif-l-amelioration-de-sedgewick">
+Tri alternatif : l&#039;amélioration de Sedgewick
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/profondeur-de-recursion-introsort">
+Profondeur de récursion : introsort
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/choix-du-pivot-tri-3-mediane">
+<span class="arrow"></span>
+<span class="next">Choix du pivot : tri 3-médiane</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/profondeur-de-recursion-introsort">
+<span class="next">Profondeur de récursion : introsort</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Profondeurdercursionintrosort"></a><h2>Profondeur de récursion : introsort</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/tri-alternatif-l-amelioration-de-sedgewick">
+<span class="arrow"></span>
+<span class="next">Tri alternatif : l&#039;amélioration de Sedgewick</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-532403" data-claire-element-id="532403">Pour l'instant, nous sommes en mesure d'optimiser l'utilisation de la pile d'appel, de choisir un meilleur pivot que le premier élément et d'appliquer un tri plus rapide sur les petits segments quand ceux-ci se présentent au tri rapide. Avec tout ça, on n'a toujours pas éliminer le fameux risque du cas quadratique qui est un peu la bête noire du tri rapide.</p><p id="r-532404" data-claire-element-id="532404">Que fait-on, on laisse tomber le tri rapide pour un tri par tas qui a l'avantage d'être toujours optimal ? Bien sûr que non, il existe un moyen de contrer ce pire des cas. L'idée qu'a eu David Musser en 1997, c'est de stopper le tri rapide <em>avant</em> qu'il ne dégénère en O(n^2) puis à appliquer un algorithme optimal sur ce qu'il reste à trier.</p><p id="r-532405" data-claire-element-id="532405">Pour cela, il faut pouvoir détecter quand les choses commencent à mal se présenter. Le problème du tri rapide est au niveau du pivot, quand celui-ci est un minimum ou un maximum du segment, on se retrouve avec un tri par sélection implémenté récursivement. Au lieu d'arriver à une profondeur de récursion en O(\log{n}), elle est alors en O(n). On ne parle évidemment pas de la pile d'appel : bien que les contextes d'appel ne soient peut-être pas enregistrés dans la callstack, l'algorithme effectue tout de même O(n) opérations à chaque appel, ce qui donne bien une complexité globale quadratique.</p><p id="r-532406" data-claire-element-id="532406">L'astuce consiste alors à utiliser un <em>compteur</em> de récursion. Il est incrémenté pour chaque appel récursif. Dès que ce compteur dépasse K\log{n} où K est une constante, on arrête le tri rapide et on le remplace par un tri optimal, par exemple le tri par tas. De cette manière, on élimine la possibilité d'une exécution en temps quadratique tout en gardant les avantages de l'optimisation par les caches du tri rapide.</p><p id="r-532407" data-claire-element-id="532407">Cette alternative est l'<em>introsort</em>.</p><p id="r-532408" data-claire-element-id="532408">Afin de comparer l'efficacité de cette technique en fonction de la fameuse constante K, voici quelques tests effectués sur un tableau de grande taille généré aléatoirement :</p><pre id="r-532409" data-claire-element-id="532409"><code data-claire-semantic="autre">Tri de 3 millions d'éléments générés aléatoirement :
+Quicksort : 2.189 s
+Introsort :
+K = 1     : 2.781 s
+K = 2     : 2.251 s
+K = 3     : 2.169 s
+K = 4     : 2.169 s
+K = 5     : 2.173 s
+K = 6     : 2.171 s
+K = 7     : 2.171 s
+K = 8     : 2.172 s</code></pre><p id="r-532410" data-claire-element-id="532410">En réalité, dans le cas d'une entrée très désordonnée, les gains de performance sont minimes voire dans certains cas inexistants. Là où ça devient très intéressant, c'est quand on présente une entrée presque déjà triée à quicksort et à introsort en comparant le temps d'exécution des deux. Je pars d'une implémentation où le pivot est le premier élément du segment, c'est-à-dire où une entrée presque déjà triée rend le tri rapide quadratique.</p><p id="r-532411" data-claire-element-id="532411">Les résultats sont sans appel :</p><pre id="r-532412" data-claire-element-id="532412"><code data-claire-semantic="autre">Tri de 90 000 éléments presque triés :
+Quicksort : 38.859 s
+Introsort :
+K = 1     : 0.092 s
+K = 2     : 0.108 s
+K = 3     : 0.127 s
+K = 4     : 0.144 s
+K = 5     : 0.163 s
+K = 6     : 0.180 s
+K = 7     : 0.197 s
+K = 8     : 0.216 s</code></pre><p id="r-532413" data-claire-element-id="532413">Quand on ne sait pas à quelle entrée s'attendre, K=3 présente donc un bon compromis entre gain de temps et niveau de désordre de l'entrée. Voici l'implémentation d'introsort que j'ai écrite pour réaliser ce test :</p><pre id="r-532414" data-claire-element-id="532414"><code data-claire-semantic="cpp">template &lt; typename Iterator &gt;
+void introsort(Iterator begin, Iterator end, unsigned int max_depth, unsigned int depth = 0)
+{
+    if(begin == end || begin+1 == end)
+        return;
+
+    if(depth &gt; max_depth)
+    {
+        std::make_heap(begin, end);
+        std::sort_heap(begin, end);  // tri par tas
+        return;
+    }
+
+    typedef typename Iterator::value_type value_type;
+    Iterator middle = std::partition(begin+1, end, std::bind2nd(std::less &lt; value_type &gt;(), *begin));
+    std::iter_swap(begin, middle-1);
+
+    introsort(begin, middle-1, max_depth, depth+1);
+    introsort(middle, end, max_depth, depth+1);
+}</code></pre><p id="r-532415" data-claire-element-id="532415">Introsort peut bien entendu être couplé avec l'amélioration de Sedgewick pour le rendre encore plus efficace, et pourquoi ne pas y ajouter l'astuce 3-médiane. À vous de jouer !</p><p id="r-532416" data-claire-element-id="532416">J'espère que ce petit exposé sur les améliorations du tri rapide vous a plu. En regardant de plus près, j'ai constaté que ma propre bibliothèque standard C++ implémentait la fonction <code data-claire-semantic="cpp">std::sort</code> de l'entête <code data-claire-semantic="cpp">algorithm</code> sous la forme d'une combinaison entre un introsort et un tri 3-mediane. Du coup, il n'est pas surprenant qu'elle soit si efficace !</p><p id="r-532417" data-claire-element-id="532417">D'autres améliorations avaient été proposées pour le tri rapide et notamment l'utilisation de l'algorithme BFPRT pour calculer de façon déterministe la médiane du segment à trier. En réalité, BFPRT permet de calculer en temps linéaire le n-ième plus grand élément d'un tableau, donc a fortiori la <a href="http://fr.wikipedia.org/wiki/Médiane_des_médianes">médiane</a>. En théorie, c'était magique : on pouvait enfin rendre quicksort optimal dans tous les cas sans changer de méthode de tri. Dans la pratique, le calcul de la médiane était cependant bien trop coûteux pour être réellement utilisable, c'est pourquoi cette technique a été jetée aux oubliettes.</p><p id="r-532418" data-claire-element-id="532418">L'algorithme de partitionnement est également déterminant dans l'efficacité du tri rapide. Une implémentation naïve place tous les éléments égaux au pivot du même côté. C'est pour cette raison que quicksort peut très mal se comporter sur de grands tableaux ne comportant que des éléments de même valeur. Pour y remédier, il existe un algorithme de partitionnement plus complexe mais tout de même linéaire, plus d'infos <a href="http://fr.wikipedia.org/wiki/Tri_rapide%23Algorithme_de_partitionnement_alternatif">ici</a>.</p><p id="r-532419" data-claire-element-id="532419">L'implémentation du partitionnement de la STL - <code data-claire-semantic="cpp">std::partition</code> - n'est pas stable, c'est-à-dire qu'elle ne conserve pas l'ordre qu'il y avait au départ entre les éléments égaux. Ceci peut être gênant, par exemple quand on trie une liste de couples selon le premier élément. Pour deux couples ayant la même première valeur, on n'est pas sûr de retrouver la deuxième valeur dans le même ordre après partitionnement. Pour y remédier, la STL nous propose une autre fonction - <code data-claire-semantic="cpp">std::stable_partition</code> - généralement plus gourmande en mémoire.</p><p id="r-532420" data-claire-element-id="532420">Le domaine des algorithmes de tri est vaste est intéressant. Il existe de nombreuses manières de trier, et il est difficile d'en faire le tour. Par exemple, une amélioration du tri par tas a été proposé par l'informaticien Edsger Dijkstra en 1981 : <a href="http://en.wikipedia.org/wiki/Smoothsort">smoothsort</a>. Ce tri, basé sur les comparaisons, a la particularité d'être toujours optimal et de présenter une complexité en O(n) dans le cas d'une entrée déjà presque triée. Impressionnant !</p><p id="r-532421" data-claire-element-id="532421">Olivier</p><div id="r-532423" data-claire-element-id="532423"><p id="r-532422" data-claire-element-id="532422">Merci à <a href="http://www.siteduzero.com/membres-294-41803.html">GuilOooo</a> pour sa relecture.</p></div><figure id="r-532425" data-claire-element-id="532426"><img id="r-532424" data-claire-element-id="532424" src="medias/upload.wikimedia.org_wikipedia_commons_6_6a_Sorting_quicksort_anim.gif" alt="Image utilisateur"/></figure><figure id="r-532428" data-claire-element-id="532429"><img id="r-532427" data-claire-element-id="532427" src="medias/upload.wikimedia.org_wikipedia_commons_a_a5_Smoothsort.gif" alt="Image utilisateur"/></figure><p id="r-532430" data-claire-element-id="532430"><em>Quicksort et smoothsort en image</em></p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations">Tri rapide : Améliorations</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/rappels-principe-et-complexite">
+Rappels : principe et complexité
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/recursion-terminale-2">
+Récursion terminale
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/choix-du-pivot-tri-3-mediane">
+Choix du pivot : tri 3-médiane
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/tri-alternatif-l-amelioration-de-sedgewick">
+Tri alternatif : l&#039;amélioration de Sedgewick
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/profondeur-de-recursion-introsort">
+Profondeur de récursion : introsort
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/tri-rapide-ameliorations/tri-alternatif-l-amelioration-de-sedgewick">
+<span class="arrow"></span>
+<span class="next">Tri alternatif : l&#039;amélioration de Sedgewick</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/ri-rapide-ameliorations.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 08:47:49 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/ri-rapide-ameliorations.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:34:21 GMT -->
+</html>

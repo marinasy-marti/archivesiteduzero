@@ -1,0 +1,668 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/securisation-d-un-chat-reseau-qt-avec-qsslsocket.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 06:10:49 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/securisation-d-un-chat-reseau-qt-avec-qsslsocket.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:07:20 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Sécurisation d&#039;un chat réseau Qt avec QSslSocket</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Sécurisation d&#039;un chat réseau Qt avec QSslSocket</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Scurisationd039unchatrseauQtavecQSslSocket">Sécurisation d&#039;un chat réseau Qt avec QSslSocket</a><br/><a href="#SSLC039estquicelui-l">SSL ? C&#039;est qui celui-là ?</a><br/><a href="#Otrouverlescls">Où trouver les clés ?</a><br/><a href="#Leserveur">Le serveur</a><br/><a href="#Leclient">Le client</a><br/><a href="#Letest">Le test</a><br/></div>
+<a name="Scurisationd039unchatrseauQtavecQSslSocket"></a><h2>Sécurisation d&#039;un chat réseau Qt avec QSslSocket</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/ssl-c-est-qui-celui-la">
+<span class="next">SSL ? C&#039;est qui celui-là ?</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-586752" data-claire-element-id="586752">Bonjour à tous ! :)<br/> Aujourd'hui, toutes les applications de chat connues sont cryptées. C'est pourquoi j'ai cherché pendant de nombreuses heures comment crypter le système du chat issue de <a href="http://www.siteduzero.com/tutoriel-3-11396-communiquer-en-reseau-avec-son-programme.html">ce tutoriel</a>. Sans cryptage, n'importe quelle personne avec un minimum de compétences informatiques est capable d'espionner vos conversations les plus intimes.</p><p id="r-586753" data-claire-element-id="586753">Je vous mets ici le résultat de mes recherches, je tiens à préciser que je suis débutant et qu'il peut y avoir des erreurs. :-°</p><p id="r-586754" data-claire-element-id="586754">J'ai choisi de me servir de <a href="http://www.siteduzero.com/tutoriel-3-11240-introduction-a-qt.html">Qt</a>, en utilisant QSslSocket qui implémente le protocole SSL dans un QTcpSocket. Ceci n'est pas une solution exhaustive, il a de nombreuses façons de crypter une communication en C++.</p>
+</div><a name="SSLC039estquicelui-l"></a><h2>SSL ? C&#039;est qui celui-là ?</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/ou-trouver-les-cles">
+<span class="next">Où trouver les clés ?</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-586755" data-claire-element-id="586755">SSL est un protocole de sécurisation des échanges sur internet. Il est notamment utilisé dans les sites en « https ». Il sert à la fois à crypter les données transmises et à vérifier l’identité des acteurs du dialogue (clients et serveur).</p><p id="r-586756" data-claire-element-id="586756">SSL utilise le principe de la <a href="http://fr.wikipedia.org/wiki/Cryptographie_asymétrique">cryptographie asymétrique</a>.<br/> Il repose sur le principe d'une clé publique et d'une clé privée par acteur. La clé publique sert à crypter et la clé privée sert à décrypter.<br/> La clé privée doit absolument rester PRIVÉE, c'est pour cela qu'elle est généralement stockée dans un fichier crypté par une passphrase.</p><p id="r-586757" data-claire-element-id="586757">A l'établissement de la connexion, les différents acteurs s'échangent leurs clés publiques, on parle de transaction :</p><figure id="r-586759" data-claire-element-id="586760"><img id="r-586758" data-claire-element-id="586758" src="medias/uploads.siteduzero.com_files_245001_246000_245929.png" alt="Image utilisateur"/></figure><p id="r-586761" data-claire-element-id="586761">Ainsi le serveur possède la clé publique du client1 et du client2, le client1 et le client2 possèdent celle du serveur.</p><p id="r-586762" data-claire-element-id="586762">Lorsque le client1 va vouloir dialoguer avec le serveur (exemple : « Salut tu vas bien ? »), il va crypter le message avec la clé publique du serveur.<br/> Il n'y a que le serveur qui est capable de décrypter le message car il est le seul à posséder la clé privée.</p><figure id="r-586764" data-claire-element-id="586765"><img id="r-586763" data-claire-element-id="586763" src="medias/uploads.siteduzero.com_files_245001_246000_245935.png" alt="Image utilisateur"/></figure><p id="r-586766" data-claire-element-id="586766">L'échange serveur vers client se fera de la même façon :</p><figure id="r-586768" data-claire-element-id="586769"><img id="r-586767" data-claire-element-id="586767" src="medias/uploads.siteduzero.com_files_245001_246000_245932.png" alt="Image utilisateur"/></figure><p id="r-586770" data-claire-element-id="586770">Un problème de sécurité reste cependant présent :( <br/> Vous ne le voyez pas ? :-° <br/> Comment peut-on être sûr que l'on utilise la bonne clé publique pour crypter ? En effet un « méchant pirate » peut s'interposer entre le client et le serveur en injectant sa clé publique au client. Il sera donc capable de déchiffrer tout ce qui vient du client.</p><figure id="r-586772" data-claire-element-id="586773"><img id="r-586771" data-claire-element-id="586771" src="medias/uploads.siteduzero.com_files_245001_246000_245942.png" alt="Image utilisateur"/></figure><p id="r-586774" data-claire-element-id="586774">Pour résoudre ce problème de sécurité, on a crée des autorités de certification qui signent les clés publiques. Cette signature permet de certifier l'origine de la clé publique. Une clé publique signée s'appelle un certificat.</p><p id="r-586775" data-claire-element-id="586775">Cette page n'a pas pour but de vous former entièrement sur SSL, elle pose juste les bases nécessaires à la compréhension du reste du tutoriel. Pour plus d'informations, vous pouvez lire <a href="http://www.authsecu.com/ssl-tls/ssl-tls.php">la bible du SSL en français</a>.</p><p id="r-586776" data-claire-element-id="586776">Nous allons donc utiliser SSL pour crypter les connexions entre notre serveur de chat et les clients. Il faut donc générer des clés pour le serveur et tous les clients.</p><p id="r-586777" data-claire-element-id="586777">Pour obtenir plus d'information sur le cryptage, je vous invite à lire le tutoriel de <a href="http://www.siteduzero.com/tutoriel-3-2299-crypter-et-decrypter.html#ss_part_1">L01c et Yruama</a>.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket">Sécurisation d&#039;un chat réseau Qt avec QSslSocket</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/ssl-c-est-qui-celui-la">
+SSL ? C&#039;est qui celui-là ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/ou-trouver-les-cles">
+Où trouver les clés ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/le-serveur-6">
+Le serveur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/le-client-4">
+Le client
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/le-test-1">
+Le test
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/ou-trouver-les-cles">
+<span class="next">Où trouver les clés ?</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Otrouverlescls"></a><h2>Où trouver les clés ?</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/ssl-c-est-qui-celui-la">
+<span class="arrow"></span>
+<span class="next">SSL ? C&#039;est qui celui-là ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/le-serveur-6">
+<span class="next">Le serveur</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-586779" data-claire-element-id="586779">Les clés privées et publiques ne se trouvent pas comme ça, il faut les générer !</p><h2 id="r-installation-d-openssl" data-claire-element-id="586791">Installation d'OpenSSL</h2><p id="r-586780" data-claire-element-id="586780">J'ai choisi d'utiliser OpenSSL pour créer mes clés.</p><h3 id="r-installation-pour-linux" data-claire-element-id="586785">Installation pour Linux</h3><p id="r-586781" data-claire-element-id="586781"><strong>Avec les sources :</strong><br/> Vous devez télécharger l'archive la plus récente sur le site officiel, c'est à dire <a href="http://www.openssl.org/source/">ici</a>. Ensuite il vous suffit d'effectuer les commandes suivantes</p><pre id="r-586782" data-claire-element-id="586782"><code data-claire-semantic="bash">./Configure linux-elf --prefix=/usr --openssldir=/usr/openssl 
+make 
+su 
+make install 
+exit</code></pre><p id="r-586783" data-claire-element-id="586783">Pour Debian :<br/> Si vous utilisez Debian, l'installation est encore plus simple<strong> :</strong><br/> Si vous utilisez Debian, l'installation est encore plus simple :</p><pre id="r-586784" data-claire-element-id="586784"><code data-claire-semantic="bash">apt-get install openssl</code></pre><h3 id="r-installation-pour-windows" data-claire-element-id="586790">Installation pour Windows</h3><p id="r-586786" data-claire-element-id="586786">Pour installer OpenSSL pour Windows, il vous suffit de télécharger un des installateur suivant et de réaliser l'installation.</p><p id="r-586787" data-claire-element-id="586787"><a href="http://www.slproweb.com/download/Win32OpenSSL-1_0_0a.exe">Windows 32 bits</a></p><p id="r-586788" data-claire-element-id="586788"><a href="http://www.slproweb.com/download/Win64OpenSSL-1_0_0a.exe">Windows 64 bits</a></p><p id="r-586789" data-claire-element-id="586789">A la fin de l'installation l'exécutable openSSL.exe se trouve dans &quot; C:\OpenSSL-Win32\bin\ &quot; ou &quot; C:\OpenSSL-Win64\bin\ &quot;</p><h2 id="r-generation-des-cles" data-claire-element-id="586828">Génération des clés</h2><p id="r-586792" data-claire-element-id="586792">Nous allons tout d'abord générer la clé et le certificat de notre CA (autorité de certification), j'ai choisi de faire un certificat autosigné dans le cadre du tutoriel, pour une mise en production, il faudra prévoir l'achat d'un certificat trust et la création de clé minimum 1024 bits (<code data-claire-semantic="console">man openssl</code> :p je vais pas tout faire à votre place :D).</p><h3 id="r-on-genere-la-cle-privee-de-notre-autorite" data-claire-element-id="586803">On génère la clé privée de notre autorité</h3><p id="r-586793" data-claire-element-id="586793">Cette clé nous permettra de signer tous les certificat émis par notre CA ! L'option des3 permet d'ajouter une passphrase pour crypter notre clé.</p><pre id="r-586794" data-claire-element-id="586794"><code data-claire-semantic="bash">openssl genrsa -des3 -out ca/ca.key</code></pre><p id="r-586795" data-claire-element-id="586795"><strong>Résultat :</strong></p><pre id="r-586796" data-claire-element-id="586796"><code data-claire-semantic="console">Generating RSA private key, 512 bit long modulus
+...............++++++++++++
+...............++++++++++++
+e is 65537 (0x10001)
+Enter pass phrase for ca.key:
+Verifying - Enter pass phrase for ca.key:</code></pre><p id="r-586797" data-claire-element-id="586797">Notez bien cette passphrase, elle vous sera utile pour tout le reste du tuto (voir de votre vie) si vous la perdez, il vous faudra tout recommencer ! :colere2:</p><p id="r-586798" data-claire-element-id="586798"><strong>Une clé privée non cryptée</strong> ressemble à ça:</p><pre id="r-586799" data-claire-element-id="586799"><code>-----BEGIN RSA PRIVATE KEY-----
+MIICXgIBAAKBgQDQG9wvnuLC4aqzaJCAWGA1AxFzg00hjPObhq1mukzsGyuuWBFG
+vj/k9vFNYX55DHctb/4cXtsZRWWvgcjtYnCVwRu+DAjFsk//kOMfhplmiv9xQ+ZL
+8w/Xrnm8JWdSS+S4LCMnsuIiQtLbhMrQnUV02hAtbIZiSM3k6OjShEZhDQIDAQAB
+AoGAHi0cBW+1k+qjFPbBlUq7UJSMUEKmyYmlvVSPCklTZB0gfVxZzPdDTpEcNks/
+yo+rLFSD9Vsvy/9LGmLoXruadWlK67PCUnpM5/oRRGgy8t73YKrxflAU5Gtymjvc
+ZCf0CAs6wBft3yLU31Qc4WqVM2vTyUH76jebVhxEw8k63OUCQQD/1OmAXV+TxBPG
+ZTPFbzUeAE5rQqqOW4aoMNvM61Yn/19h6SzY2MfSQvF1BNns/efCRrqOMeyvPWUG
+g1okfogTAkEA0D7pDf/D2Yu5msbOAGF4QBU1erLzpi/s6Rv6VEPYCGnHQlo3jbg9
+FZbjHJ4UcYyYaA8jIrkY+FIJM88YlGbWXwJBAILEdvJ5R/CFCkKf2j2yIWmLaIol
+En8fw43XI5L0PB7Hxx6KDLVu4XzVYQyahTZBdqR0eMlUNZJBhJE2tO3wi2cCQQCp
+JkCFd3es0BrNxqfzlThozRFofcz88za7TldydL0YcFtC4Sb4vWsYizwktZ6jcPEm
+rQz8Gl9W7MO+ynwLptB/AkEA1tsnFXoYzI71enmTdugGxbv0RqAd5iQpDYQkDSdn
+2LImp/3YnXNJ9qpY91j87tKthh/Oetu6SHlmLg1LOYNIdw==
+-----END RSA PRIVATE KEY-----</code></pre><p id="r-586800" data-claire-element-id="586800">… et <strong>une clé privée cryptée</strong> à ça:</p><pre id="r-586801" data-claire-element-id="586801"><code>-----BEGIN RSA PRIVATE KEY-----
+Proc-Type: 4,ENCRYPTED
+DEK-Info: DES-EDE3-CBC,F1AB4765D89854CA
+
+twxvZobZKXDaJFv8LBkYlbv2OyP8/X3WeLMyJVhHauhAXzcYlxS1DBWgcp6Lb6Yt
+LrYS95NSs34ymH84j9kIfu/xp3XPMy+6s/0BMAmSIr+kK1n/0KbaEJHxrEhXKr2b
+UQtGa8qMC1+z9T8sDXk0CEe8Ar1C14qNseCjON4RTOXQx0HQ2LIJjPdzestZSglQ
+cFk1xhibSBorsKDWIn91I9+dpDtXL3Os+FLjABkHH3JK2qsk7Tf8zEKjzuVuJJJY
+mfnH0UJX8qZ3fuJmCJ4FIeh1yhUeELlxlNgxB8lcJudktBO6rD8SomppAhdfkONx
+Nml97DsFTQopzKf4qDYuMPwv1EtlJu8OO+jZWHiBGn1VDvcePlTxXRdkil1/aO7D
+ly9RXRUN4Y2D9G+UizBasNUiFNoHmpvudwe+XmGIwoY=
+-----END RSA PRIVATE KEY-----</code></pre><p id="r-586802" data-claire-element-id="586802">On peut remarquer les informations sur l'algorithme de cryptage dans les en-têtes PEM de la clé privée cryptée.(Proc-Type: 4,ENCRYPTED DEK-Info: DES-EDE3-CBC,F1AB4765D89854CA). Cela vous permet de vérifier que votre clé a bien été cryptée, sans ces en-têtes, en lisant seulement la clé je suis incapable de vous dire si elle est cryptée ou non.</p><h3 id="r-on-cree-le-certificat-autosigne" data-claire-element-id="586810">On crée le certificat autosigné</h3><p id="r-586804" data-claire-element-id="586804">Le certificat est la clé publique de notre CA signé par… heu, notre CA. Je vous rappelle que pour que votre certificat soit <em>trust</em>, il faut normalement le faire signer par une autre CA reconnu, ce qui vous permet de créer une CA intermédiaire. Pour avoir plus de détails sur la mise en production, je vous conseille le site de <a href="http://www.tbs-x509.com/subca.html">TBS</a></p><pre id="r-586805" data-claire-element-id="586805"><code data-claire-semantic="bash">openssl req -new -x509 -key ca/ca.key -out ca/ca.pem</code></pre><p id="r-586806" data-claire-element-id="586806">Je vous laisse remplir les informations demandées tout seuls, vous êtes grands ! :D <br/> je ne vous fait pas l'affront de vous le traduire. :)</p><pre id="r-586807" data-claire-element-id="586807"><code data-claire-semantic="console">Country Name (2 letter code) [AU]:FR
+State or Province Name (full name) [Some-State]:
+Locality Name (eg, city) []:
+Organization Name (eg, company) [Internet Widgits Pty Ltd]:
+Organizational Unit Name (eg, section) []:
+Common Name (eg, YOUR name) []:
+Email Address []:</code></pre><p id="r-586808" data-claire-element-id="586808"><strong>Le fichier généré est :</strong></p><pre id="r-586809" data-claire-element-id="586809"><code>-----BEGIN CERTIFICATE-----
+MIICKzCCAdWgAwIBAgIJAJ5/od5TrWDmMA0GCSqGSIb3DQEBBQUAMEUxCzAJBgNV
+BAYTAkZSMRMwEQYDVQQIEwpTb21lLVN0YXRlMSEwHwYDVQQKExhJbnRlcm5ldCBX
+aWRnaXRzIFB0eSBMdGQwHhcNMTAwNzE1MDkxMzI5WhcNMTAwODE0MDkxMzI5WjBF
+MQswCQYDVQQGEwJGUjETMBEGA1UECBMKU29tZS1TdGF0ZTEhMB8GA1UEChMYSW50
+ZXJuZXQgV2lkZ2l0cyBQdHkgTHRkMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAMzN
+5M2f7NP1yohEk4tw+V3LI0wyxWe6guT7sZO0NJDE3qNqK7LE6u6INJeEFUKREdJj
+DdHieoVJT/26qN0zkSMCAwEAAaOBpzCBpDAdBgNVHQ4EFgQUwLP8aXE8dKQso73D
+1oXf2xYCyh0wdQYDVR0jBG4wbIAUwLP8aXE8dKQso73D1oXf2xYCyh2hSaRHMEUx
+CzAJBgNVBAYTAkZSMRMwEQYDVQQIEwpTb21lLVN0YXRlMSEwHwYDVQQKExhJbnRl
+cm5ldCBXaWRnaXRzIFB0eSBMdGSCCQCef6HeU61g5jAMBgNVHRMEBTADAQH/MA0G
+CSqGSIb3DQEBBQUAA0EAAH5/Ml4mqw3rjooMStA7S1gFeDOPvSVdOCdhjiNeA2BW
+j+pJH49hIKhgptZrW0GbbvjXGAYCq7y9QN676a1BHg==
+-----END CERTIFICATE-----</code></pre><h3 id="r-on-genere-la-cle-privee-du-client" data-claire-element-id="586815">On génère la clé privée du client</h3><p id="r-586811" data-claire-element-id="586811">Si l'on veut crypter la clé on peut utiliser l'option -des3</p><pre id="r-586812" data-claire-element-id="586812"><code data-claire-semantic="bash">openssl genrsa -out client-key.pem</code></pre><pre id="r-586813" data-claire-element-id="586813"><code data-claire-semantic="console">Generating RSA private key, 512 bit long modulus
+....................++++++++++++
+...++++++++++++
+e is 65537 (0x10001)</code></pre><p id="r-586814" data-claire-element-id="586814">On obtient un fichier client-key.pem</p><h3 id="r-on-genere-la-demande-de-certificat" data-claire-element-id="586818">On génère la demande de certificat</h3><pre id="r-586816" data-claire-element-id="586816"><code data-claire-semantic="bash">openssl req -new -key client-key.pem &gt; client.csr</code></pre><pre id="r-586817" data-claire-element-id="586817"><code data-claire-semantic="console">-----
+Country Name (2 letter code) [AU]:FR
+State or Province Name (full name) [Some-State]:
+Locality Name (eg, city) []:
+Organization Name (eg, company) [Internet Widgits Pty Ltd]:
+Organizational Unit Name (eg, section) []:
+Common Name (eg, YOUR name) []:
+Email Address []:
+
+Please enter the following 'extra' attributes
+to be sent with your certificate request
+A challenge password []:
+An optional company name []:</code></pre><h3 id="r-on-genere-le-certificat-signe-par-notre-ca" data-claire-element-id="586820">On génére le certificat signé par notre CA</h3><pre id="r-586819" data-claire-element-id="586819"><code data-claire-semantic="bash">openssl x509 -req -in client.csr -out client-crt.pem -CA ca/ca.pem -CAkey ca/ca.key -CAcreateserial -CAserial ca.srl</code></pre><h3 id="r-on-genere-la-cle-du-serveur" data-claire-element-id="586822">On génère la clé du serveur</h3><pre id="r-586821" data-claire-element-id="586821"><code data-claire-semantic="bash">openssl genrsa -out server-key.pem</code></pre><h3 id="r-on-genere-la-demande-de-certificat-1" data-claire-element-id="586824">On génère la demande de certificat</h3><pre id="r-586823" data-claire-element-id="586823"><code data-claire-semantic="bash">openssl req -new -key server-key.pem &gt; server.csr</code></pre><h3 id="r-on-genere-le-certificat-signe-par-notre-ca-1" data-claire-element-id="586827">On génère le certificat signé par notre CA</h3><pre id="r-586825" data-claire-element-id="586825"><code data-claire-semantic="bash">openssl x509 -req -in server.csr -out server-crt.pem -CA ca/ca.pem -CAkey ca/ca.key -CAcreateserial -CAserial ca.srl</code></pre><p id="r-586826" data-claire-element-id="586826">Voila nous avons généré nos clés :) (le plus dur est derrière nous) !<br/> Si vous avez plus d'un client il vous faudra générer une clé et un certificat pour chaque client.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket">Sécurisation d&#039;un chat réseau Qt avec QSslSocket</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/ssl-c-est-qui-celui-la">
+SSL ? C&#039;est qui celui-là ?
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/ou-trouver-les-cles">
+Où trouver les clés ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/le-serveur-6">
+Le serveur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/le-client-4">
+Le client
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/le-test-1">
+Le test
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/ssl-c-est-qui-celui-la">
+<span class="arrow"></span>
+<span class="next">SSL ? C&#039;est qui celui-là ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/le-serveur-6">
+<span class="next">Le serveur</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Leserveur"></a><h2>Le serveur</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/ou-trouver-les-cles">
+<span class="arrow"></span>
+<span class="next">Où trouver les clés ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/le-client-4">
+<span class="next">Le client</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-586830" data-claire-element-id="586830">Pour suivre cette partie, vous devez connaitre Qt. Si ce n'est pas le cas il faut commencer par <a href="http://www.siteduzero.com/tutoriel-3-11406-apprenez-a-programmer-en-c.html">là</a> !</p><p id="r-586831" data-claire-element-id="586831">Qt, depuis sa version 4.3, permet d'utiliser des socket SSL via la classe QSslSocket, je vous invite à ouvrir la <a href="http://doc.trolltech.com/4.4/qsslsocket.html">documentation</a> en parallèle de ce tutoriel car c'est cette classe que nous allons utiliser ici.</p><p id="r-586832" data-claire-element-id="586832">J'ai choisi de ne pas vous mettre le code complet du serveur, juste les parties qui utilisent SSL, :( ne soyez pas tristes vous trouverez tous les éléments manquants <a href="http://www.siteduzero.com/tutoriel-3-11396-communiquer-en-reseau-avec-son-programme.html">ici</a>.</p><p id="r-586833" data-claire-element-id="586833">J'ai choisi d'utiliser 3 classes :</p><ul id="r-586840" data-claire-element-id="586840"><li id="r-586835" data-claire-element-id="586835"><p id="r-586834" data-claire-element-id="586834">FenServeur pour la fenêtre principale de mon serveur</p></li><li id="r-586837" data-claire-element-id="586837"><p id="r-586836" data-claire-element-id="586836">Serveur pour ma classe serveur</p></li><li id="r-586839" data-claire-element-id="586839"><p id="r-586838" data-claire-element-id="586838">ClientServeur pour les socket du serveur</p></li></ul><h3 id="r-la-classe-serveur" data-claire-element-id="586844">La classe Serveur</h3><pre id="r-586841" data-claire-element-id="586841"><code data-claire-semantic="cpp">#ifndef SERVEUR_H
+#define SERVEUR_H
+
+#include &lt;QTcpServer&gt;
+#include &lt;ClientServeur.h&gt;
+
+class Serveur : public QTcpServer
+{
+        Q_OBJECT
+
+public:
+        Serveur( QObject *parent = 0 );
+
+signals:
+        void nouveauClient(ClientServeur *client);
+        void sslErreur(const QString &amp;error);
+
+protected:
+        void incomingConnection( int descriptionSocket );
+
+};
+
+#endif</code></pre><pre id="r-586842" data-claire-element-id="586842"><code data-claire-semantic="cpp">#include &quot;Serveur.h&quot;
+
+#include &quot;ClientServeur.h&quot;
+
+Serveur::Serveur( QObject *parent ) :QTcpServer( parent )
+{
+}
+
+//on surcharge la methode incomingConnection
+//le but ici est de récupérer un QSslSocket au lieu d'un QTcpSocket
+void Serveur::incomingConnection( int descriptionSocket )
+{
+    ClientServeur *client    =new ClientServeur( descriptionSocket, this );
+    connect(client, SIGNAL(sslError(const QString&amp;)),this,  SIGNAL(sslErreur(const QString&amp;))  );
+    emit nouveauClient(client);
+}</code></pre><p id="r-586843" data-claire-element-id="586843">Cette classe est obligatoire, elle hérite de QTcpServer et surchage la méthode incomingConnection.<br/> Dans cette méthode j'instancie un ClientServeur qui hérite de QSslSocket.</p><h3 id="r-la-classe-clientserveur" data-claire-element-id="586848">La classe ClientServeur</h3><pre id="r-586845" data-claire-element-id="586845"><code data-claire-semantic="cpp">#ifndef CLIENTSERVEUR_H
+#define CLIENTSERVEUR_H
+
+#include &lt;QSslSocket&gt;
+#include &lt;QtGui&gt;
+#include &lt;QtNetwork&gt;
+class ClientServeur: public QSslSocket
+{
+        Q_OBJECT
+
+public:
+        ClientServeur( int descriptionSocket, QObject *parent );
+
+signals:
+        void sslError(const QString &amp;erreur);
+
+private slots:
+        void sslErreur( const QList&lt;QSslError&gt; &amp;err );
+
+};
+
+#endif</code></pre><pre id="r-586846" data-claire-element-id="586846"><code data-claire-semantic="cpp">#include &quot;ClientServeur.h&quot;
+
+ClientServeur::ClientServeur( int descriptionSocket, QObject *parent )
+        : QSslSocket( parent )
+{
+        connect( this, SIGNAL(disconnected()), SLOT(deleteLater()) );
+        connect( this, SIGNAL(sslErrors(QList&lt;QSslError&gt;)),
+                        SLOT(sslErrors(QList&lt;QSslError&gt;)) );
+
+        if( !setSocketDescriptor( descriptionSocket ) )
+        {
+                return;
+        }
+
+        //on charge la clé privé    
+        QFile file( &quot;../../key/server-key.pem&quot; );
+        if( ! file.open( QIODevice::ReadOnly ) )
+        {
+            qDebug() &lt;&lt; &quot;ouverture de la clé impossible&quot; &lt;&lt; &quot;../../key/server-key.pem&quot;;
+            return;
+        }
+        QSslKey key( &amp;file, QSsl::Rsa, QSsl::Pem, QSsl::PrivateKey, &quot;mapassphrase&quot; );
+        file.close();
+        setPrivateKey( key );
+        //on charge le certificat de la ca
+        if( ! addCaCertificates( &quot;../../key/ca/ca.pem&quot; ) )
+        {
+            qDebug() &lt;&lt; &quot;ouverture du certificat de la ca impossible&quot; &lt;&lt; &quot;../../key/ca/ca.pem&quot;;
+            return;
+        }
+        
+        //on charge le certificat du serveur
+        setLocalCertificate( &quot;../../key/server-crt.pem&quot; );
+        
+        //j'enleve la vérification des clients, mon but ici est de crypter la connexion pas de  vérifier l'identité des différents clients 
+        setPeerVerifyMode(QSslSocket::VerifyNone);
+        
+        //on ignore les erreurs ssl car on a un certificat autosigné qui est donc non sure, on a la possiblité de choisir les erreurs à ignorer en les passant en arguments à la méthode
+        ignoreSslErrors();
+        
+        //on demarre le cryptage
+        startServerEncryption();
+}
+
+void ClientServeur::sslErreur( const QList&lt;QSslError&gt; &amp;errors )
+{
+        foreach( const QSslError &amp;error, errors )
+        {
+            emit sslError(QString::number(error.error()));
+        }
+}</code></pre><p id="r-586847" data-claire-element-id="586847">Cette classe va charger la clé et le certificat de notre serveur, elle va aussi charger le certificat de notre CA. Ce certificat est utilisé si on active la vérification des peers dans SSL avec l'option setPeerVerifyMode. J'ai choisi ici de supprimer cette vérification pour rendre le tutoriel plus simple.<br/> N'oubliez pas de changer « mapassphrase » par votre passphrase (enregistrée lors de la génération des clés).</p><h3 id="r-la-classe-fenserveur" data-claire-element-id="586852">La classe FenServeur</h3><p id="r-586849" data-claire-element-id="586849">Dans la classe FenServeur, il suffit juste d'instancier un Server et de connecter les signaux.</p><pre id="r-586850" data-claire-element-id="586850"><code data-claire-semantic="cpp">serveur = new Serveur(this);
+if (!serveur-&gt;listen(QHostAddress::Any, 50885)) // Démarrage du serveur sur toutes les IP disponibles et sur le port 50585
+{
+    // Si le serveur n'a pas été démarré correctement
+    etatServeur-&gt;setText(tr(&quot;Le serveur n'a pas pu être démarré. Raison :&lt;br /&gt;&quot;) + serveur-&gt;errorString());
+}
+else
+{
+    // Si le serveur a été démarré correctement
+    etatServeur-&gt;setText(tr(&quot;Le serveur a été démarré sur le port1 &lt;strong&gt;&quot;) + QString::number(serveur-&gt;serverPort()) + tr(&quot;&lt;/strong&gt;.&lt;br /&gt;Des clients peuvent maintenant se connecter.&quot;));
+    connect(serveur, SIGNAL(nouveauClient(ClientServeur*)), this, SLOT(nouvelleConnexion(ClientServeur*)));
+    connect(serveur, SIGNAL(sslErrors(const QString &amp;)),this,  SLOT(sslErreur(const QString &amp;))  );
+}
+//on affiche les erreurs ssl
+void FenServeur::sslErreur(const QString &amp;erreur)
+{
+    QMessageBox::warning(this,&quot;erreur&quot;,erreur);
+}
+//on enregistre les nouveau client
+void FenServeur::nouvelleConnexion(ClientServer* nouveauClient)
+{
+        etatServeur-&gt;setText(&quot;client &quot;+QString(nouveauClient-&gt;socketDescriptor()));
+        connect(nouveauClient, SIGNAL(readyRead()), this, SLOT(donneesRecues()));
+        connect(nouveauClient, SIGNAL(disconnected()), this, SLOT(deconnexionClient()));
+}
+//le serveur recoit des données
+void FenServeur::donneesRecues()
+{
+        MyClient *client=NULL;
+        // On détermine quel client envoie le message (recherche du QSslSocket du client)
+        //on cast le sender() pour obtenir  le QSslSocket du client
+       QSslSocket *socket = qobject_cast&lt;QSslSocket *&gt;(sender());
+
+        if (socket == 0) // Si par hasard on n'a pas trouvé le client à l'origine du signal, on arrête la méthode
+       {
+            qDebug() &lt;&lt; &quot;pas de client à l'origine du signal&quot;;
+            return;
+        }
+
+..... Traitement des données recues
+
+}</code></pre><p id="r-586851" data-claire-element-id="586851">Dans cette classe on connecte les signaux qui permettront de traiter les erreurs et la réception des données des clients.</p><h3 id="r-petite-astuce-2" data-claire-element-id="586856">Petite astuce :</h3><p id="r-586853" data-claire-element-id="586853">Il est possible de récupérer les informations saisies lors de la création du certificat par exemple pour récupérer le CN :</p><pre id="r-586854" data-claire-element-id="586854"><code data-claire-semantic="cpp">socket-&gt;peerCertificate().subjectInfo(QSslCertificate::CommonName)</code></pre><p id="r-586855" data-claire-element-id="586855">Voilà, notre serveur est terminé, si vous avez des problèmes de compilation vérifiez la présence de network dans votre fichier.pro (QT += network).</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket">Sécurisation d&#039;un chat réseau Qt avec QSslSocket</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/ssl-c-est-qui-celui-la">
+SSL ? C&#039;est qui celui-là ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/ou-trouver-les-cles">
+Où trouver les clés ?
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/le-serveur-6">
+Le serveur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/le-client-4">
+Le client
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/le-test-1">
+Le test
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/ou-trouver-les-cles">
+<span class="arrow"></span>
+<span class="next">Où trouver les clés ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/le-client-4">
+<span class="next">Le client</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Leclient"></a><h2>Le client</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/le-serveur-6">
+<span class="arrow"></span>
+<span class="next">Le serveur</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/le-test-1">
+<span class="next">Le test</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-586858" data-claire-element-id="586858">J'ai choisi de ne pas vous mettre le code complet du client, juste les parties qui utilisent SSL, :( ne soyez pas triste vous trouverez tous les éléments manquants <a href="http://www.siteduzero.com/tutoriel-3-11396-communiquer-en-reseau-avec-son-programme.html">ici</a>.</p><pre id="r-586859" data-claire-element-id="586859"><code data-claire-semantic="cpp">//on instancie un QSslSocket
+socket = new  QSslSocket(this);
+
+
+//on connect les différents signaux
+    connect(socket, SIGNAL(encrypted()), this, SLOT(ready()));
+    connect(socket, SIGNAL(readyRead()), this, SLOT(donneesRecues()));
+    connect(socket, SIGNAL(connected()), this, SLOT(connecte()));
+    connect(socket, SIGNAL(disconnected()), this, SLOT(deconnecte()));
+
+//on charge la clé privé du client
+QFile file( &quot;../../key/client-key.pem&quot; );
+if( ! file.open( QIODevice::ReadOnly ) )
+{
+    qDebug() &lt;&lt; &quot;la clé du client ne peut pas être chargé&quot; &lt;&lt;&quot;../../key/client-key.pem&quot;;
+    return;
+}
+QSslKey key( &amp;file, QSsl::Rsa, QSsl::Pem, QSsl::PrivateKey, &quot;mapassphrase&quot; );
+file.close();
+socket-&gt;setPrivateKey( key );
+    
+//on charge le certificat du client
+socket-&gt; setLocalCertificate( &quot;../../key/client-crt.pem&quot; );
+    
+//on charge le certificat de notre ca
+if( ! addCaCertificates( &quot;../../key/ca/ca.pem&quot; ) )
+{
+     qDebug() &lt;&lt; &quot;ouverture du certificat de la ca impossible&quot; &lt;&lt; &quot;../../key/ca/ca.pem&quot;;
+     return;
+}
+//on supprime la vérification du serveur
+socket-&gt;setPeerVerifyMode(QSslSocket::VerifyNone);
+    
+//on ignore les erreurs car on a un certificat auto signé
+socket-&gt;ignoreSslErrors();
+    
+// On désactive les connexions précédentes s'il y en a
+socket-&gt;abort(); 
+    
+//on se connecte au serveur
+socket-&gt;connectToHostEncrypted(serveurIP-&gt;text(), serveurPort-&gt;value());
+
+//on commence l'encryptage
+socket-&gt;startClientEncryption();</code></pre><p id="r-586860" data-claire-element-id="586860">Il faut attendre l'émission du signal encrypted pour pouvoir envoyer les données cryptées.</p><p id="r-586861" data-claire-element-id="586861">Cette classe instancie un QSslSocket et connecte les différents signaux aux slots de traitement. Pour que SSL fonctionne, il faut charger la clé, le certificat client et le certificat de notre CA. Une fois que tous les éléments sont chargés, on se connecte à notre serveur via connectToHostEncrypted.<br/> N'oubliez pas de changer « mapassphrase » par votre passphrase (enregistrée lors de la génération des clés).</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket">Sécurisation d&#039;un chat réseau Qt avec QSslSocket</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/ssl-c-est-qui-celui-la">
+SSL ? C&#039;est qui celui-là ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/ou-trouver-les-cles">
+Où trouver les clés ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/le-serveur-6">
+Le serveur
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/le-client-4">
+Le client
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/le-test-1">
+Le test
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/le-serveur-6">
+<span class="arrow"></span>
+<span class="next">Le serveur</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/le-test-1">
+<span class="next">Le test</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Letest"></a><h2>Le test</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/le-client-4">
+<span class="arrow"></span>
+<span class="next">Le client</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-pourquoi-et-comment-tester" data-claire-element-id="586878">Pourquoi et comment tester ?</h2><p id="r-586863" data-claire-element-id="586863">Vu que je ne fais confiance qu'à ce que je vois :D et que la conversation entre mon client et mon serveur est super confidentielle, je préfère être sûr que mon cryptage fonctionne ;).</p><p id="r-586864" data-claire-element-id="586864">Pour débugger et vérifier que ce que j'ai programmé fonctionne, j'utilise souvent <a href="http://www.wireshark.org/download.html">Wireshark</a>. Il permet de capturer tous les paquets qui passent par ma carte réseau. Ainsi cela me permet d'avoir une vision réseau de mon application en fonctionnement. Le but ici est de vérifier que la communication entre mon client et mon serveur est bien cryptée.</p><p id="r-586865" data-claire-element-id="586865">Voici une vidéo qui vous explique comment utiliser Wireshark, malheureusement pour certains elle est en anglais.</p><p id="r-586866" data-claire-element-id="586866"><a href="http://www.dailymotion.com/swf/video/xc7c7u_introduction-a-wireshark_tech">http://www.dailymotion.com/swf/video/xc7c7u_introduction-a-wireshark_tech</a></p><ul id="r-586877" data-claire-element-id="586877"><li id="r-586868" data-claire-element-id="586868"><p id="r-586867" data-claire-element-id="586867">Je démarre Wireshark en mode capture.</p></li><li id="r-586870" data-claire-element-id="586870"><p id="r-586869" data-claire-element-id="586869">Je démarre ensuite mon client et mon serveur.</p></li><li id="r-586872" data-claire-element-id="586872"><p id="r-586871" data-claire-element-id="586871">Une fois que tout est fonctionnel, je tente une connexion de mon client.</p></li><li id="r-586874" data-claire-element-id="586874"><p id="r-586873" data-claire-element-id="586873">Une fois le client connecté, j'envoie des données à mon serveur pour faire du dialogue réseau.</p></li><li id="r-586876" data-claire-element-id="586876"><p id="r-586875" data-claire-element-id="586875">J'arrête la capture sur Wireshark et voila ce que cela me donne :</p></li></ul><h2 id="r-le-resultat-du-test" data-claire-element-id="586885">Le résultat du test</h2><figure id="r-586880" data-claire-element-id="586881"><img id="r-586879" data-claire-element-id="586879" src="medias/uploads.siteduzero.com_files_249001_250000_249616.png" alt="Image utilisateur"/></figure><p id="r-586882" data-claire-element-id="586882">Les deux premières trames initialisent la connexion TCP, elles sont donc non cryptées. Une fois la connexion établie, on remarque que toutes les connexions sont cryptées ! ^^ <br/> On a donc atteint notre but et plus personne ne peut écouter nos conversations passionnantes sur le chat !</p><p id="r-586883" data-claire-element-id="586883">J'espère que cela aidera quelques personnes ;)<br/> Vous pouvez utiliser SSL avec tous les programmes qui ont besoin d'envoyer des informations sur le réseau, par exemple l'envoi de photos en mode crypté, un système de login-mot de passe sur un serveur, et vous pouvez même utiliser les certificats pour faire un login automatique d'un utilisateur.</p><p id="r-586884" data-claire-element-id="586884">Je suis ouvert à toute suggestion et amélioration, c'est comme cela que l'on devient meilleur :D</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket">Sécurisation d&#039;un chat réseau Qt avec QSslSocket</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/ssl-c-est-qui-celui-la">
+SSL ? C&#039;est qui celui-là ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/ou-trouver-les-cles">
+Où trouver les clés ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/le-serveur-6">
+Le serveur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/le-client-4">
+Le client
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/le-test-1">
+Le test
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/securisation-d-un-chat-reseau-qt-avec-qsslsocket/le-client-4">
+<span class="arrow"></span>
+<span class="next">Le client</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/securisation-d-un-chat-reseau-qt-avec-qsslsocket.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 06:11:00 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/securisation-d-un-chat-reseau-qt-avec-qsslsocket.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:07:21 GMT -->
+</html>

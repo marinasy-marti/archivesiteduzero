@@ -1,0 +1,753 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/stocker-et-serialiser-des-objets-avec-qt.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 23:50:54 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/stocker-et-serialiser-des-objets-avec-qt.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:12:25 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Stocker et sérialiser des objets avec Qt</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/stocker-et-serialiser-des-objets-avec-qt.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Stocker et sérialiser des objets avec Qt</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#StockeretsrialiserdesobjetsavecQt">Stocker et sérialiser des objets avec Qt</a><br/><a href="#PourquoiutiliserQt">Pourquoi utiliser Qt ?</a><br/><a href="#SrialiseravecQVariant">Sérialiser avec QVariant</a><br/><a href="#LestockageavecQDataStream">Le stockage avec QDataStream</a><br/><a href="#TP-exemplegreruncontact">TP-exemple : gérer un contact</a><br/></div>
+<a name="StockeretsrialiserdesobjetsavecQt"></a><h2>Stocker et sérialiser des objets avec Qt</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/stocker-et-serialiser-des-objets-avec-qt/pourquoi-utiliser-qt">
+<span class="next">Pourquoi utiliser Qt ?</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<aside id="r-589186" data-claire-element-id="589186" data-claire-semantic="information"><p id="r-589185" data-claire-element-id="589185">Pour pouvoir comprendre parfaitement (et exploiter au maximum de ses capacités) ce tutoriel, il faut que vous connaissiez <a href="http://www.siteduzero.com/tutoriel-3-11406-apprenez-a-programmer-en-c.html">le cours de M@teo21 sur le C++</a> jusqu'à la partie 2 (non incluse si vous connaissez déjà Qt).</p></aside><p id="r-589187" data-claire-element-id="589187">Il arrive forcément, comme à tout programmeur qui se respecte, un jour où on a besoin de manipuler le contenu d'un objet, par exemple pour le placer dans un fichier (ce qui est souvent le cas, mais cela peut être pour une autre raison). En d'autres termes, vous souhaitez <a href="http://fr.wikipedia.org/wiki/Sérialisation">sérialiser</a> votre objet.</p><p id="r-589188" data-claire-element-id="589188">Dans le cas d'un objet simple (avec seulement quatre entiers par exemple), on peut se débrouiller tout seul. Mais imaginez maintenant que vous ayez un objet contenant les listes des chaînes de caractères, ainsi que plein d'autres valeurs... Tout à coup, ça devient beaucoup plus compliqué.</p><p id="r-589189" data-claire-element-id="589189">C'est pourquoi je vous propose, par le biais de ce tutoriel, de découvrir les outils proposés par Qt, à travers la classe <a href="http://doc.trolltech.com/qvariant.html">QVariant</a>, qui vont vous faciliter <strong>grandement</strong> les choses.</p>
+</div><a name="PourquoiutiliserQt"></a><h2>Pourquoi utiliser Qt ?</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/stocker-et-serialiser-des-objets-avec-qt/serialiser-avec-qvariant">
+<span class="next">Sérialiser avec QVariant</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-589190" data-claire-element-id="589190">Je pense qu'il est très important de savoir que la sérialisation des objets n'est pas proposée <strong>que</strong> par Qt. En effet, de nombreuses bibliothèques proposent des outils analogues à ceux de Qt.</p><div id="r-589192" data-claire-element-id="589192" data-claire-semantic="question"><p id="r-589191" data-claire-element-id="589191">Pourquoi utiliser Qt, et pas une autre bibliothèque comme Boost ?</p></div><p id="r-589193" data-claire-element-id="589193">Je pourrais être tenté de vous répondre simplement &quot;pourquoi pas ?&quot;, mais le choix de Qt ne relève pas d'une simple décision arbitraire.</p><p id="r-589194" data-claire-element-id="589194">Le premier avantage de Qt est que lorsqu'on souhaite sérialiser un objet, on n'a pas besoin de modifier le code de l'objet concerné. Si on prend exemple sur la bibliothèque Boost qui propose aussi une manière de sérialiser vos objets, Boost vous impose d'ajouter une fonction <em>serialise</em>.<br/> Dans le cas où vous utilisez Qt, toutes les opérations de sérialisation se déroulent hors de la classe. Cet avantage peut aussi permettre la sérialisation d'objets auxquels on n'a pas accès au code source, comme c'est souvent le cas pour des objets situés dans des bibliothèques.</p><p id="r-589195" data-claire-element-id="589195">La seconde raison de mon choix vient du fait que, contrairement à Boost, Qt utilise une seule et unique classe pour vous permettre de sérialiser vos objets. Donc pas besoin de plonger à chaque fois dans la documentation d'une demi-douzaine de classes pour réussir votre sérialisation.</p><p id="r-589196" data-claire-element-id="589196">Et enfin, la dernière raison est qu'avec Qt, il y a très peu de code à ajouter pour sérialiser un objet, et que celui-ci peut être placé à peu près n'importe où.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/stocker-et-serialiser-des-objets-avec-qt">Stocker et sérialiser des objets avec Qt</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/stocker-et-serialiser-des-objets-avec-qt/pourquoi-utiliser-qt">
+Pourquoi utiliser Qt ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/stocker-et-serialiser-des-objets-avec-qt/serialiser-avec-qvariant">
+Sérialiser avec QVariant
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/stocker-et-serialiser-des-objets-avec-qt/le-stockage-avec-qdatastream">
+Le stockage avec QDataStream
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/stocker-et-serialiser-des-objets-avec-qt/tp-exemple-gerer-un-contact">
+TP-exemple : gérer un contact
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/stocker-et-serialiser-des-objets-avec-qt/serialiser-avec-qvariant">
+<span class="next">Sérialiser avec QVariant</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="SrialiseravecQVariant"></a><h2>Sérialiser avec QVariant</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/stocker-et-serialiser-des-objets-avec-qt/pourquoi-utiliser-qt">
+<span class="arrow"></span>
+<span class="next">Pourquoi utiliser Qt ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/stocker-et-serialiser-des-objets-avec-qt/le-stockage-avec-qdatastream">
+<span class="next">Le stockage avec QDataStream</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-589198" data-claire-element-id="589198">Pour débuter, je vous propose d'apprendre à sérialiser vos objets.</p><div id="r-589200" data-claire-element-id="589200" data-claire-semantic="question"><p id="r-589199" data-claire-element-id="589199">Désolé de déjà t'interrompre, mais tu entends quoi par <em>&quot;sérialiser&quot;</em> ?</p></div><p id="r-589201" data-claire-element-id="589201">Pour tout savoir, allez sur <a href="http://fr.wikipedia.org/wiki/Sérialisation">wikipédia</a>. Même si ce n'est pas très clair, continuez à lire ce tutoriel, vous verrez vite à quoi ça peut servir.</p><p id="r-589202" data-claire-element-id="589202">Afin de simplifier la sérialisation d'objet, Qt à créé une classe dédiée à la sérialisation : <a href="http://doc.trolltech.com/qvariant.html">QVariant</a>. D'une manière extrêmement générale, on peut considérer que QVariant est la représentation d'un objet quelconque sérialisé.<br/> Le fonctionnement de QVariant est très simple : à partir du moment où un objet est sérialisable (on verra un peu plus bas comment faire pour rendre un objet sérialisable), on peut sérialiser l'objet et le placer dans un QVariant. Ensuite vous en faites ce que vous voulez.</p><p id="r-589203" data-claire-element-id="589203">Pour éviter l'apparition de multiples sérialisations des objets &quot;de base&quot; de Qt, ceux-ci ont déjà été déclarés comme sérialisables. Donc QVariant fonctionne déjà avec la plus grande partie des objets du module <a href="http://doc.trolltech.com/qtcore.html">QtCore</a>, ainsi qu'une partie de ceux du module <a href="http://doc.trolltech.com/qtgui.html">QtGui</a>. Une liste (malheureusement incomplète) des objets sérialisables avec QVariant est disponible <a href="http://doc.trolltech.com/qvariant.html#Type-enum">ici</a>.</p><p id="r-589204" data-claire-element-id="589204">On va donc procéder en deux parties : dans un premier temps, on va voir comment faire pour utiliser QVariant avec des objets sérialisables. Puis ensuite, on va voir comment faire pour rendre un objet quelconque sérialisable.</p><h2 id="r-qvariant-et-les-objets-serialisables" data-claire-element-id="589231">QVariant et les objets sérialisables</h2><p id="r-589205" data-claire-element-id="589205">On dispose de trois façons pour créer un QVariant à partir d'un objet sérialisable (ça permet une manipulation plus aisée) :</p><ul id="r-589212" data-claire-element-id="589212"><li id="r-589207" data-claire-element-id="589207"><p id="r-589206" data-claire-element-id="589206">Par le <a href="http://doc.trolltech.com/qvariant.html#QVariant">constructeur</a> : c'est la méthode par défaut, mais elle n'est possible qu'avec les objets sérialisables de Qt (donc pas avec vos objets sérialisables) ;</p></li><li id="r-589209" data-claire-element-id="589209"><p id="r-589208" data-claire-element-id="589208">Par la méthode <a href="http://doc.trolltech.com/qvariant.html#setValue">setValue</a>, qui affecte une copie de l'objet au QVariant concerné ;</p></li><li id="r-589211" data-claire-element-id="589211"><p id="r-589210" data-claire-element-id="589210">Par la méthode (statique) <a href="http://doc.trolltech.com/qvariant.html#fromValue">fromValue</a>, qui crée un nouveau QVariant à partir d'une copie de l'objet donné.</p></li></ul><aside id="r-589214" data-claire-element-id="589214" data-claire-semantic="error"><p id="r-589213" data-claire-element-id="589213">Les deux dernières méthodes citées ne fonctionnent pas avec le compilateur MSVC 6. Si c'est celui dont vous vous servez, vous pouvez utiliser respectivement les fonctions <a href="http://doc.trolltech.com/qvariant.html#qVariantSetValue">qVariantSetValue</a> et <a href="http://doc.trolltech.com/qvariant.html#qVariantFromValue">qVariantFromValue</a>.</p></aside><p id="r-589215" data-claire-element-id="589215">On distingue encore trois manières de récupérer la classe voulue à partir d'un QVariant (dans ce cas là, on parle de <em>désérialisation</em>) :</p><ul id="r-589222" data-claire-element-id="589222"><li id="r-589217" data-claire-element-id="589217"><p id="r-589216" data-claire-element-id="589216">Par les fonctions de la forme &quot;toClass&quot;, où <em>Class</em> représente le type à obtenir (exemple : <a href="http://doc.trolltech.com/qvariant.html">toInt</a> pour obtenir un entier, ou encore <a href="http://doc.trolltech.com/qvariant.html">toString</a> pour renvoyer une <a href="http://doc.trolltech.com/qstring.html">QString</a>). Ces fonctions ne sont disponibles que pour les objets sérialisables de Qt ;</p></li><li id="r-589219" data-claire-element-id="589219"><p id="r-589218" data-claire-element-id="589218">Par la fonction <a href="http://doc.trolltech.com/qvariant.html#value">value</a>, qui renvoie la classe demandée (exemple : <code data-claire-semantic="cpp">var.value&lt;QString&gt;() </code> qui renvoie un <a href="http://doc.trolltech.com/qstring.html">QString</a>) ;</p></li><li id="r-589221" data-claire-element-id="589221"><p id="r-589220" data-claire-element-id="589220">Par la fonction <a href="http://doc.trolltech.com/qvariant.html#qvariant_cast">qvariant_cast</a>, qui s'emploie comme la précédente : <code data-claire-semantic="cpp">qvariant_cast&lt;QString&gt;(var); </code>.</p></li></ul><aside id="r-589224" data-claire-element-id="589224" data-claire-semantic="error"><p id="r-589223" data-claire-element-id="589223">Comme précédemment, la fonction <a href="http://doc.trolltech.com/qvariant.html#value">value</a> ne marche pas avec MSVC 6. Dans ce cas, vous pouvez employer la fonction <a href="http://doc.trolltech.com/qvariant.html#qVariantValue">qVariantValue</a>.</p></aside><p id="r-589225" data-claire-element-id="589225">Dans la suite de ce tutoriel, je vais utiliser les fonctions <a href="http://doc.trolltech.com/qvariant.html#setValue">setValue</a> et <a href="http://doc.trolltech.com/qvariant.html#value">value</a>, mais vous pouvez vous servir de celles que vous voulez.</p><p id="r-589226" data-claire-element-id="589226">Voici un petit exemple qui montre la sérialisation puis la désérialisation d'une chaîne de caractère (<a href="http://doc.trolltech.com/qstring.html">QString</a>) et puis qui compare le résultat :</p><pre id="r-589227" data-claire-element-id="589227"><code data-claire-semantic="cpp">#include &lt;QCoreApplication&gt;
+#include &lt;QString&gt;
+#include &lt;QVariant&gt;
+
+#include &lt;iostream&gt;
+
+int main (int argc, char ** argv)
+{
+	QCoreApplication app(argc, argv);
+	QString initial = &quot;Ceci est le texte à sérialiser&quot;, final = &quot;&quot;;
+
+	QVariant chaine_serialise;
+	chaine_serialise.setValue(initial);
+	final = chaine_serialise.value&lt;QString&gt;();
+
+	if(initial == final)
+	{
+		std::cout &lt;&lt; &quot;Les deux chaines sont identiques&quot; &lt;&lt; std::endl;
+	}
+	else
+	{
+		std::cout &lt;&lt; &quot;Les deux chaines sont differentes&quot; &lt;&lt; std::endl;
+	}
+    getchar();
+    
+    app.quit();
+    return 0;
+}</code></pre><aside id="r-589229" data-claire-element-id="589229" data-claire-semantic="warning"><p id="r-589228" data-claire-element-id="589228">N'oubliez pas de rajouter &quot;CONFIG += console&quot; à votre .pro, sinon la console n'affichera rien.</p></aside><p id="r-589230" data-claire-element-id="589230">Juste avec la sérialisation des objets de Qt, on dispose déjà de quelque chose d'extrêmement puissant. Mais Qt fourni aussi la possibilité de rendre sérialisable n'importe quel objet, même appartenant à une autre librairie dont le code source ne serait pas disponible.</p><h2 id="r-rendre-un-objet-quelconque-serialisable" data-claire-element-id="589251">Rendre un objet quelconque sérialisable</h2><p id="r-589232" data-claire-element-id="589232">Bon, malgré le coté parfait de QVariant, on ne peut pas tout faire non plus :o. Afin de pouvoir rendre sérialisable un objet, celui-ci doit respecter les trois règles suivantes :</p><ul id="r-589239" data-claire-element-id="589239"><li id="r-589234" data-claire-element-id="589234"><p id="r-589233" data-claire-element-id="589233">L'objet doit posséder un constructeur public par défaut (ou alors tous ses arguments doivent avoir une valeur par défaut) ;</p></li><li id="r-589236" data-claire-element-id="589236"><p id="r-589235" data-claire-element-id="589235">L'objet doit posséder un constructeur de copie public ;</p></li><li id="r-589238" data-claire-element-id="589238"><p id="r-589237" data-claire-element-id="589237">L'objet doit posséder un destructeur public.</p></li></ul><aside id="r-589241" data-claire-element-id="589241" data-claire-semantic="information"><p id="r-589240" data-claire-element-id="589240">Il n'est pas obligatoire de définir soi-même ces fonctions puisque celles fournies par défaut conviennent très bien (c'est notamment utile pour les structures).</p></aside><p id="r-589242" data-claire-element-id="589242">À partir du moment où ces trois conditions sont respectées, l'objet est prêt à être sérialisé. Pour faire cela, il suffit d'appeler la macro <a href="http://doc.trolltech.com/qmetatype.html#Q_DECLARE_METATYPE">Q_DECLARE_METATYPE</a> de la manière qui suit (dans le cas où on cherche à rendre sérialisable un objet <em>MaClasse</em>) :</p><pre id="r-589243" data-claire-element-id="589243"><code data-claire-semantic="cpp">Q_DECLARE_METATYPE(MaClasse)</code></pre><p id="r-589244" data-claire-element-id="589244">Ce morceau de code est à placer hors de tout objet et de toute fonction. On le met, la plupart du temps, à la suite de la déclaration de l'objet concernée.</p><div id="r-589246" data-claire-element-id="589246" data-claire-semantic="question"><p id="r-589245" data-claire-element-id="589245">Tout à l'heure, tu as dit qu'il était possible de rendre sérialisable un objet qui appartient à une bibliothèque (dont le code source est inaccessible). Je le met où, ce code, alors ? o_O</p></div><p id="r-589247" data-claire-element-id="589247">L'endroit n'a pas une grande importance, tant que ce code précède <strong>toutes</strong> les fonctions qui vont manipuler l'objet. En général, on le place dans le ou les fichier(s) qui inclue(nt) la librairie en question, juste après l'inclusion :</p><p id="r-589248" data-claire-element-id="589248"><em>Inclusion.h</em></p><pre id="r-589249" data-claire-element-id="589249"><code data-claire-semantic="cpp">#ifndef INCLUDE_H
+#define INCLUDE_H
+
+	// Voici un exemple avec la structure SDL_Event de la bibliothèque SDL
+
+	#include &lt;QVariant&gt;
+	#include &lt;SDL.h&gt;
+	Q_DECLARE_METATYPE(SDL_Event);
+
+#endif</code></pre><p id="r-589250" data-claire-element-id="589250">Notez que j'ai appelé la macro <strong>après</strong> avoir inclus QVariant, ce qui est parfaitement logique.<br/> Pour ceux qui on du mal à saisir, jetez un coup d'oeil au TP-exemple à la fin de ce tutoriel.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/stocker-et-serialiser-des-objets-avec-qt">Stocker et sérialiser des objets avec Qt</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/stocker-et-serialiser-des-objets-avec-qt/pourquoi-utiliser-qt">
+Pourquoi utiliser Qt ?
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/stocker-et-serialiser-des-objets-avec-qt/serialiser-avec-qvariant">
+Sérialiser avec QVariant
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/stocker-et-serialiser-des-objets-avec-qt/le-stockage-avec-qdatastream">
+Le stockage avec QDataStream
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/stocker-et-serialiser-des-objets-avec-qt/tp-exemple-gerer-un-contact">
+TP-exemple : gérer un contact
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/stocker-et-serialiser-des-objets-avec-qt/pourquoi-utiliser-qt">
+<span class="arrow"></span>
+<span class="next">Pourquoi utiliser Qt ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/stocker-et-serialiser-des-objets-avec-qt/le-stockage-avec-qdatastream">
+<span class="next">Le stockage avec QDataStream</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="LestockageavecQDataStream"></a><h2>Le stockage avec QDataStream</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/stocker-et-serialiser-des-objets-avec-qt/serialiser-avec-qvariant">
+<span class="arrow"></span>
+<span class="next">Sérialiser avec QVariant</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/stocker-et-serialiser-des-objets-avec-qt/tp-exemple-gerer-un-contact">
+<span class="next">TP-exemple : gérer un contact</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<div id="r-589254" data-claire-element-id="589254" data-claire-semantic="question"><p id="r-589253" data-claire-element-id="589253">Pourquoi parles-tu de stocker avec QDataStream ? QVariant ne suffit-il pas ?</p></div><p id="r-589255" data-claire-element-id="589255">Non. QVariant est une classe très puissante, mais elle ne peut pas tout faire non plus. Cette partie est là pour résoudre un problème qui apparaît lorsqu'on tente d'enregistrer un objet sérialisé dans un fichier (par exemple).<br/> En effet, jusqu'à maintenant, on s'est contenté de dire à Qt que tel ou tel objet pouvait être sérialisé. Ces déclarations suffisaient totalement à QVariant pour gérer les objets concernés. Mais dans le cadre de l'enregistrement (en général dans un fichier) de l'objet, QVariant a besoin de savoir quelles données et surtout dans quel ordre ces données de l'objet doivent être stockées.</p><p id="r-589256" data-claire-element-id="589256">Contrairement à Boost qui impose de créer une fonction <em>serialise</em> dans l'objet (ce qui peut se révéler réducteur), Qt profite du fait qu'on peut sur-définir les opérateurs. Dans le cas de la sérialisation, ce sont les opérateurs de flux (&quot;&lt;&lt;&quot; et &quot;&gt;&gt;&quot;) vers <a href="http://doc.trolltech.com/qdatastream.html">QDataStream</a> qui ont été choisis.</p><h2 id="r-les-operateurs-de-flux-vers-qdatastream" data-claire-element-id="589276">Les opérateurs de flux vers QDataStream</h2><p id="r-589257" data-claire-element-id="589257">La classe QDataStream est là pour fournir un moyen de stocker des suites d'octets, généralement dans un fichier. Avant de passer à la sur-définition des opérateurs de flux manquants, je vais vous expliquer pourquoi est-ce qu'il sera très simple de les mettre en œuvre.</p><p id="r-589258" data-claire-element-id="589258">D'origine, QDataStream possède de nombreux opérateurs de flux déjà définis pour les classes de Qt utiles dans ce contexte (la liste complète est visible ici : <a href="http://doc.trolltech.com/datastreamformat.html">Format des opérateurs de QDatastream</a>). Puisque la plupart des objets que l'on crée ou rencontre sont majoritairement constitués de ces types, il suffit de réemployer ces opérateurs.</p><p id="r-589259" data-claire-element-id="589259">On va donc réaliser les opérateurs &quot;&lt;&lt;&quot; et &quot;&gt;&gt;&quot; vers QDataStream. Voici leur prototype (à placer en-dehors de la déclaration de l'objet concerné) :</p><pre id="r-589260" data-claire-element-id="589260"><code data-claire-semantic="cpp">QDataStream &amp; operator &lt;&lt; (QDataStream &amp; out, const MaClasse &amp; Valeur);
+QDataStream &amp; operator &gt;&gt; (QDataStream &amp; in, MaClasse &amp; Valeur);</code></pre><p id="r-589261" data-claire-element-id="589261">Comme la plupart des opérateurs de flux, ils renvoient le QDataStream donné en paramètre, afin de permettre l'enchaînement des opérateurs.<br/> La technique à employer est simple : pour chaque variable membre (que vous voulez stocker) de l'objet, envoyez celle-ci vers le QDataStream (ou bien sortez-l'en).<br/> Ainsi que vous l'avez peut-être vu dans la <a href="http://doc.trolltech.com/datastreamformat.html">liste des opérateurs de flux</a> de QDataStream, il est possible d'envoyer directement des <a href="http://doc.trolltech.com/qlist.html">QList</a>, <a href="http://doc.trolltech.com/qmap.html">QMap</a> et autres conteneurs au QDataStream. La seule condition est que le type du conteneur ait des opérateurs de flux vers QDataStream.</p><aside id="r-589263" data-claire-element-id="589263" data-claire-semantic="warning"><p id="r-589262" data-claire-element-id="589262">Les valeurs à stocker doivent être envoyées et sorties d'un QDataStream dans le même ordre, ou bien elles ne correspondront plus.</p></aside><p id="r-589264" data-claire-element-id="589264">Voici un exemple, où <em>nom</em> est une QString et <em>numero_rue</em> un entier :</p><pre id="r-589265" data-claire-element-id="589265"><code data-claire-semantic="cpp">QDataStream &amp; operator &lt;&lt; (QDataStream &amp; out, const MaClasse &amp; Valeur)
+{
+	out &lt;&lt; Valeur.nom &lt;&lt; static_cast&lt;quint16&gt;(Valeur.numero_rue);
+	
+	return out;
+}</code></pre><p id="r-589266" data-claire-element-id="589266">Extrêmement difficile, n'est-ce pas ? :-°</p><aside id="r-589268" data-claire-element-id="589268" data-claire-semantic="information"><p id="r-589267" data-claire-element-id="589267">Pour ceux qui veulent être véritablement portables et durables dans le temps, vous devriez consulter les informations relatives à la version du QDataStream. Tout y est très bien expliqué.</p></aside><p id="r-589269" data-claire-element-id="589269">Pour terminer, il reste deux fonctions de la classe <a href="http://doc.trolltech.com/qmetatype.html">QMetaType</a> à appeler pour indiquer à QVariant que les opérateurs de flux ont été définis (il ne le devine pas tout seul o_O). Pour des raisons pratiques, je les place généralement dans une fonction <em>initMaClasseSystem</em>, que j'appelle dans le &quot;main&quot;.<br/> Les voici :</p><ul id="r-589274" data-claire-element-id="589274"><li id="r-589271" data-claire-element-id="589271"><p id="r-589270" data-claire-element-id="589270"><a href="http://doc.trolltech.com/qmetatype.html#qRegisterMetaTypeStreamOperators">qRegisterMetaTypeStreamOperators</a> : c'est la fonction qui finit de déclarer pour QVariant les opérateurs de flux (facile à deviner vu le nom). On l'utilise comme suit : <code data-claire-semantic="cpp">qRegisterMetaTypeStreamOperators&lt;MaClasse&gt;(&quot;MaClasse&quot;);</code></p></li><li id="r-589273" data-claire-element-id="589273"><p id="r-589272" data-claire-element-id="589272"><a href="http://doc.trolltech.com/qmetatype.html#qMetaTypeId">qMetaTypeId</a> : elle n'est pas obligatoire, mais très utile : en effet, dans le cas où le <a href="http://doc.trolltech.com/qmetatype.html#Q_DECLARE_METATYPE">Q_DECLARE_METATYPE</a> échoue (conditions non respectées, par exemple), la compilation échoue elle aussi (ne vous étonnez pas si le compilateur vous envoie des erreurs concernant le code source de Qt). Vous pouvez l'utiliser ainsi : <code data-claire-semantic="cpp">qMetaTypeId&lt;MaClasse&gt;();</code></p></li></ul><p id="r-589275" data-claire-element-id="589275">Comme je le disais ci-dessus, il suffit de les mettre dans une fonction d'initialisation par exemple, et d'appeler celle-ci dans le main (un seul appel suffit).</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/stocker-et-serialiser-des-objets-avec-qt">Stocker et sérialiser des objets avec Qt</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/stocker-et-serialiser-des-objets-avec-qt/pourquoi-utiliser-qt">
+Pourquoi utiliser Qt ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/stocker-et-serialiser-des-objets-avec-qt/serialiser-avec-qvariant">
+Sérialiser avec QVariant
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/stocker-et-serialiser-des-objets-avec-qt/le-stockage-avec-qdatastream">
+Le stockage avec QDataStream
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/stocker-et-serialiser-des-objets-avec-qt/tp-exemple-gerer-un-contact">
+TP-exemple : gérer un contact
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/stocker-et-serialiser-des-objets-avec-qt/serialiser-avec-qvariant">
+<span class="arrow"></span>
+<span class="next">Sérialiser avec QVariant</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/stocker-et-serialiser-des-objets-avec-qt/tp-exemple-gerer-un-contact">
+<span class="next">TP-exemple : gérer un contact</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="TP-exemplegreruncontact"></a><h2>TP-exemple : gérer un contact</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/stocker-et-serialiser-des-objets-avec-qt/le-stockage-avec-qdatastream">
+<span class="arrow"></span>
+<span class="next">Le stockage avec QDataStream</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-589278" data-claire-element-id="589278">Que ce soit pour tester vos connaissances fraîchement acquises ou pour comprendre un peu mieux ce qui vient d'être dit, voici un TP expliqué pas à pas pour vous guider dans la sérialisation complète d'une classe représentant un contact.</p><h2 id="r-la-classe-contact" data-claire-element-id="589285">La classe <em>Contact</em></h2><p id="r-589279" data-claire-element-id="589279">La classe <em>Contact</em> comporte cinq propriétés : le numéro de la rue, l'adresse, le nom, la date d'anniversaire et la liste des sites web du contact. Chacune des propriétés a son propre type, afin de bien mettre en évidence la puissance de ce que je vous explique. En outre, les sites webs sont représentés par une structure incluant le nom et l'adresse du site web.<br/> Le but n'est pas de travailler sur la réalisation de la classe <em>Contact</em> elle-même, aussi je vous donne directement son code :</p><p id="r-589280" data-claire-element-id="589280"><em>Contact.h</em></p><pre id="r-589281" data-claire-element-id="589281"><code data-claire-semantic="cpp">#ifndef CONTACT_H
+#define CONTACT_H
+ 
+	#include &lt;QUrl&gt;
+	#include &lt;QString&gt;
+	#include &lt;QList&gt;
+	#include &lt;QDate&gt;
+
+	class Contact		// Représentation d'un Contact
+	{
+		public:
+			struct SiteWeb
+			{
+				SiteWeb (const QString Nom = &quot;&quot;, const QUrl Adr = &quot;&quot;);
+
+				QString name;
+				QUrl adresse;
+			};
+			typedef QList&lt;SiteWeb&gt; SiteWebList;
+
+			Contact (const quint16 NumeroMaison = 0,
+						const QString Adresse = &quot;&quot;,
+						const QString Nom = &quot;&quot;,
+						const QDate Aniv = QDate(),
+						const SiteWebList Sites = SiteWebList());	// Constructeur par défaut public
+			Contact (const Contact &amp; Copie);					// Constructeur de copie public
+			~Contact ();								// Destructeur public
+
+			void afficher () const;							// Affiche les informations du contact dans la console
+
+		private:
+			quint16 m_numeroMaison;		// Le n° de la maison
+			QString m_adresse;		// L'adresse (sans le n°)
+			QString m_nom;			// Le nom
+			QDate m_aniv;			// La date d'anniversaire
+
+			SiteWebList m_sites;		// La liste des sites webs
+	};
+
+#endif</code></pre><p id="r-589282" data-claire-element-id="589282"><em>Contact.cpp</em></p><pre id="r-589283" data-claire-element-id="589283"><code data-claire-semantic="cpp">#include &quot;Contact.h&quot;
+
+#include &lt;iostream&gt;
+
+
+Contact::SiteWeb::SiteWeb (const QString Nom, const QUrl Adr)
+{
+	name = Nom;
+	adresse = Adr;
+}
+
+
+Contact::Contact (const quint16 NumeroMaison,
+					const QString Adresse,
+					const QString Nom,
+					const QDate Aniv,
+					const SiteWebList Sites)
+	:	m_numeroMaison(NumeroMaison),
+		m_adresse(Adresse),
+		m_nom(Nom),
+		m_aniv(Aniv),
+		m_sites(Sites)
+{}
+Contact::Contact (const Contact &amp; Copie)
+{
+	m_numeroMaison = Copie.m_numeroMaison;
+	m_adresse = Copie.m_adresse;
+	m_nom = Copie.m_nom;
+	m_aniv = Copie.m_aniv;
+	m_sites = Copie.m_sites;
+}
+Contact::~Contact()
+{}
+
+void Contact::afficher () const
+{
+	std::cout	&lt;&lt; &quot;Le contact &quot;
+				&lt;&lt; m_nom.toStdString()
+				&lt;&lt; &quot; nee le &quot;
+				&lt;&lt; m_aniv.day() &lt;&lt; &quot;/&quot; &lt;&lt; m_aniv.month() &lt;&lt; &quot;/&quot; &lt;&lt; m_aniv.year()
+				&lt;&lt; &quot; et qui loge au &quot;
+				&lt;&lt; static_cast&lt;int&gt;(m_numeroMaison) &lt;&lt; &quot; &quot; &lt;&lt; m_adresse.toStdString()
+				&lt;&lt; &quot; possede les sites webs suivant : &quot;;
+
+	SiteWeb curr;
+	foreach(curr, m_sites)
+		std::cout &lt;&lt; curr.name.toStdString() &lt;&lt; &quot;:&quot; &lt;&lt; curr.adresse.toString().toStdString() &lt;&lt; &quot; - &quot;;
+
+	std::cout &lt;&lt; std::endl;
+}</code></pre><p id="r-589284" data-claire-element-id="589284">J'ai simplement ajouté une fonction <em>afficher</em>, qui résume les informations sur le contact.</p><h2 id="r-rendre-serialisable-notre-objet" data-claire-element-id="589292">Rendre sérialisable notre objet</h2><p id="r-589286" data-claire-element-id="589286"><em>A priori</em>, cela ne devrait pas poser de problème, mais voici les détails.</p><p id="r-589287" data-claire-element-id="589287">La première chose, c'est d'ajouter QVariant à notre fichier (sans quoi le compilateur ne trouvera pas la macro <a href="http://doc.trolltech.com/qmetatype.html#Q_DECLARE_METATYPE">Q_DECLARE_METATYPE</a>), au début :</p><pre id="r-589288" data-claire-element-id="589288"><code data-claire-semantic="cpp">#include &lt;QVariant&gt;</code></pre><p id="r-589289" data-claire-element-id="589289">Ensuite, il faut étendre la classe.</p><pre id="r-589290" data-claire-element-id="589290"><code data-claire-semantic="cpp">Q_DECLARE_METATYPE(Contact::SiteWeb)
+Q_DECLARE_METATYPE(Contact)</code></pre><p id="r-589291" data-claire-element-id="589291">Comme la structure <em>SiteWeb</em> n'est pas accessible directement en-dehors de la classe <em>Contact</em>, il faut se servir de l'opérateur de résolution de portée &quot;::&quot;. Le code est à mettre après la déclaration de la classe <em>Contact</em>.</p><h2 id="r-definir-les-operateurs-de-flux" data-claire-element-id="589314">Définir les opérateurs de flux</h2><h3 id="r-declaration-de-contact-contact-h" data-claire-element-id="589300">Déclaration de Contact (Contact.h)</h3><p id="r-589293" data-claire-element-id="589293">Bon, à partir de là c'est beaucoup plus dur, alors on va y aller doucement. On commence d'abord par mettre les prototypes, sans oublier ceux de <em>Position3D</em> si on veut que ça fonctionne :</p><pre id="r-589294" data-claire-element-id="589294"><code data-claire-semantic="cpp">QDataStream &amp; operator &lt;&lt; (QDataStream &amp; out, const Contact::SiteWeb &amp; Valeur);
+QDataStream &amp; operator &gt;&gt; (QDataStream &amp; in, Contact::SiteWeb &amp; Valeur);
+
+QDataStream &amp; operator &lt;&lt; (QDataStream &amp; out, const Contact &amp; Valeur);
+QDataStream &amp; operator &gt;&gt; (QDataStream &amp; in, Contact &amp; Valeur);</code></pre><p id="r-589295" data-claire-element-id="589295">Comme précédemment, on utilise l'opérateur &quot;::&quot; pour accéder à <em>SiteWeb</em>.<br/> Il serait bien utile de pouvoir accéder aux variables membres privées de la classe <em>Contact</em>, mais les prototypes sont hors de la classe alors on ne peut pas. Afin de résoudre ce problème, nous allons employer les fonctions amies. Il faut donc ajouter le code suivant, <strong>dans</strong> la classe <em>Contact</em> :</p><pre id="r-589296" data-claire-element-id="589296"><code data-claire-semantic="cpp">/* Les opérateurs de flux sont des fonctions amies */
+friend QDataStream &amp; operator &lt;&lt; (QDataStream &amp;, const Contact::SiteWeb &amp;);
+friend QDataStream &amp; operator &gt;&gt; (QDataStream &amp;, Contact::SiteWeb &amp;);
+
+friend QDataStream &amp; operator &lt;&lt; (QDataStream &amp;, const Contact &amp;);
+friend QDataStream &amp; operator &gt;&gt; (QDataStream &amp;, Contact &amp;);</code></pre><p id="r-589297" data-claire-element-id="589297">Avec ça, on obtient le fichier <em>Contact.h</em> suivant :</p><p id="r-589298" data-claire-element-id="589298"><em>Contact.h</em></p><pre id="r-589299" data-claire-element-id="589299"><code data-claire-semantic="cpp">#ifndef CONTACT_H
+#define CONTACT_H
+
+	#include &lt;QVariant&gt;
+
+	#include &lt;QUrl&gt;
+	#include &lt;QString&gt;
+	#include &lt;QList&gt;
+	#include &lt;QDate&gt;
+
+	class Contact		// Représentation d'un Contact
+	{
+		public:
+			struct SiteWeb
+			{
+				SiteWeb (const QString Nom = &quot;&quot;, const QUrl Adr = &quot;&quot;);
+
+				QString name;
+				QUrl adresse;
+			};
+			typedef QList&lt;SiteWeb&gt; SiteWebList;
+
+			Contact (const quint16 NumeroMaison = 0,
+						const QString Adresse = &quot;&quot;,
+						const QString Nom = &quot;&quot;,
+						const QDate Aniv = QDate(),
+						const SiteWebList Sites = SiteWebList());	// Constructeur par défaut public
+			Contact (const Contact &amp; Copie);						// Constructeur de copie public
+			~Contact ();											// Destructeur public
+
+			void afficher () const;									// Affiche les informations du contact dans la console
+
+		private:
+			quint16 m_numeroMaison;		// Le n° de la maison
+			QString m_adresse;			// L'adresse (sans le n°)
+			QString m_nom;				// Le nom
+			QDate m_aniv;				// La date d'anniversaire
+
+			SiteWebList m_sites;		// La liste des sites webs
+
+			/* Les opérateurs de flux sont des fonctions amies */
+			friend QDataStream &amp; operator &lt;&lt; (QDataStream &amp;, const Contact::SiteWeb &amp;);
+			friend QDataStream &amp; operator &gt;&gt; (QDataStream &amp;, Contact::SiteWeb &amp;);
+
+			friend QDataStream &amp; operator &lt;&lt; (QDataStream &amp;, const Contact &amp;);
+			friend QDataStream &amp; operator &gt;&gt; (QDataStream &amp;, Contact &amp;);
+	};
+
+	Q_DECLARE_METATYPE(Contact::SiteWeb)
+	QDataStream &amp; operator &lt;&lt; (QDataStream &amp; out, const Contact::SiteWeb &amp; Valeur);
+	QDataStream &amp; operator &gt;&gt; (QDataStream &amp; in, Contact::SiteWeb &amp; Valeur);
+
+	Q_DECLARE_METATYPE(Contact)
+	QDataStream &amp; operator &lt;&lt; (QDataStream &amp; out, const Contact &amp; Valeur);
+	QDataStream &amp; operator &gt;&gt; (QDataStream &amp; in, Contact &amp; Valeur);
+
+#endif</code></pre><h3 id="r-definition-de-contact-contact-cpp" data-claire-element-id="589313">Définition de Contact (Contact.cpp)</h3><p id="r-589301" data-claire-element-id="589301">Maintenant que l'on a déclaré les prototypes, il ne reste plus qu'à définir les opérateurs. Je commence par l'opérateur &quot;&lt;&lt;&quot; entre <em>SiteWeb</em> et QDataStream :</p><pre id="r-589302" data-claire-element-id="589302"><code data-claire-semantic="cpp">QDataStream &amp; operator &lt;&lt; (QDataStream &amp; out, const Contact::SiteWeb &amp; Valeur)
+{
+	out &lt;&lt; Valeur.name
+		&lt;&lt; Valeur.adresse;
+
+	return out;
+}</code></pre><p id="r-589303" data-claire-element-id="589303">Pas grand chose de nouveau sous le soleil, je passe mes valeurs à la suite puis je renvoie le flux. Au tour de l'opérateur inverse (&quot;&gt;&gt;&quot;) :</p><pre id="r-589304" data-claire-element-id="589304"><code data-claire-semantic="cpp">QDataStream &amp; operator &gt;&gt; (QDataStream &amp; in, Contact::SiteWeb &amp; Valeur)
+{
+	in &gt;&gt; Valeur.name;
+	in &gt;&gt; Valeur.adresse;
+
+	return in;
+}</code></pre><p id="r-589305" data-claire-element-id="589305">Là, je fais donc exactement le contraire : je récupère mes valeurs une à une, puis je renvoie à nouveau le flux. Vous pouvez noter que j'ai respecté l'ordre d'entrée pour faire l'ordre de sortie (on ne tient pas à mélanger des valeurs).<br/> Pour continuer, on peut ajouter la définition des deux opérateurs mais pour la classe <em>Contact</em>. Puisque on a déjà défini les opérateurs pour <em>SiteWeb</em>, on peut directement le passer ou le recevoir de QDataStream :</p><pre id="r-589306" data-claire-element-id="589306"><code data-claire-semantic="cpp">QDataStream &amp; operator &lt;&lt; (QDataStream &amp; out, const Contact &amp; Valeur)
+{
+	out &lt;&lt; Valeur.m_numeroMaison
+		&lt;&lt; Valeur.m_adresse
+		&lt;&lt; Valeur.m_nom
+		&lt;&lt; Valeur.m_aniv
+		&lt;&lt; Valeur.m_sites;
+
+	return out;
+}
+QDataStream &amp; operator &gt;&gt; (QDataStream &amp; in, Contact &amp; Valeur)
+{
+	in &gt;&gt; Valeur.m_numeroMaison;
+	in &gt;&gt; Valeur.m_adresse;
+	in &gt;&gt; Valeur.m_nom;
+	in &gt;&gt; Valeur.m_aniv;
+	in &gt;&gt; Valeur.m_sites;
+
+	return in;
+}</code></pre><p id="r-589307" data-claire-element-id="589307">Si vous n'y arrivez pas, ne sombrez pas dans un profond désespoir :lol:. Il faut toujours un petit moment, le temps de s'habituer. Après deux, trois tentatives, vous vous débrouillerez comme des pros.</p><p id="r-589308" data-claire-element-id="589308">Comme je l'ai indiqué à la fin de la sous-partie précédente, il manque encore deux fonctions. Je les ai rassemblé dans une même fonction : <em>initContactSystem</em>, que je déclare comme fonction statique de <em>Contact</em> :</p><pre id="r-589309" data-claire-element-id="589309"><code data-claire-semantic="cpp">static void initContactSystem ();</code></pre><p id="r-589310" data-claire-element-id="589310">Rien de transcendant, un simple prototype. Enfin, il ne nous reste plus qu'à la définir (j'ai également ajouté les fonctions de test) :</p><pre id="r-589311" data-claire-element-id="589311"><code data-claire-semantic="cpp">void Contact::initContactSystem ()
+{
+	qRegisterMetaTypeStreamOperators&lt;Contact::SiteWeb&gt;(&quot;Contact::SiteWeb&quot;);
+	qRegisterMetaTypeStreamOperators&lt;Contact&gt;(&quot;Contact&quot;);
+
+	qMetaTypeId&lt;Contact::SiteWeb&gt;();	// Teste la validité de la structure SiteWeb
+	qMetaTypeId&lt;Contact&gt;();				// Teste la validité de la classe Contact
+}</code></pre><p id="r-589312" data-claire-element-id="589312">Et voilà, c'est fini. Toujours en vie ? :ange:</p><h2 id="r-la-fonction-main-4" data-claire-element-id="589321">La fonction main</h2><p id="r-589315" data-claire-element-id="589315">Bon, ça été long, parfois difficile, mais si vous lisez ça c'est sûrement que vous avez survécu :lol: . Alors, pour vous remercier de m'avoir suivi jusqu'ici, je vous donne une fonction <em>main</em> toute faite pour tester notre classe <em>Contact</em>. Je teste la transformation en QVariant avec la fonction <a href="http://doc.trolltech.com/qvariant.html#qVariantFromValue">qVariantFromValue</a>, ainsi que l'opérateur inverse avec la fonction <a href="http://doc.trolltech.com/qvariant.html#value">value</a> (ligne 21).<br/> Pour mettre à l'épreuve notre stockage dans un fichier, j'emploie <a href="http://doc.trolltech.com/qsettings.html">QSettings</a> (lisez la <a href="http://doc.trolltech.com/qsettings.html">doc</a> et <a href="http://www.siteduzero.com/tutoriel-3-71845-enregistrer-vos-options-avec-qsettings.html">ce tuto</a> de <a href="http://www.siteduzero.com/membres-294-116778.html">granarc</a> pour en savoir plus sur son utilité et comment l'utiliser). En fait, j'écris notre classe <em>Contact</em> sous la forme d'un QVariant (si vous ouvrez le fichier <em>Test.ini</em>, qui apparaît après l'exécution, vous pourrez le voir) ; puis je lis le fichier que je viens d'écrire, et j'affiche notre contact afin de voir si c'est le même.<br/> Le code pour faire tout ça :</p><p id="r-589316" data-claire-element-id="589316"><em>main.cpp</em></p><pre id="r-589317" data-claire-element-id="589317"><code data-claire-semantic="cpp">#include &quot;Contact.h&quot;
+
+#include &lt;QFile&gt;
+#include &lt;QSettings&gt;
+
+int main()
+{
+	Contact::initContactSystem();
+	QFile::remove(&quot;Test.ini&quot;);
+
+	Contact::SiteWeb site1(QString(&quot;Site du Zero&quot;), QUrl(&quot;www.siteduzero.com&quot;)), site2(QString(&quot;Google&quot;), QUrl(&quot;www.google.fr&quot;));
+	Contact::SiteWebList sites;
+	sites &lt;&lt; site1 &lt;&lt; site2;
+
+	Contact smith(12, &quot;boulevard des sports&quot;, &quot;Smith&quot;, QDate(1972, 7, 14), sites);
+	smith.afficher();
+
+	QSettings fichier_ecrire(&quot;Test.ini&quot;, QSettings::IniFormat);
+	fichier_ecrire.setValue(&quot;Contact&quot;, qVariantFromValue(smith));
+	fichier_ecrire.sync();
+
+	Contact contact_lu;
+	QSettings fichier_lire(&quot;Test.ini&quot;, QSettings::IniFormat);
+	contact_lu = fichier_lire.value(&quot;Contact&quot;, qVariantFromValue(Contact())).value&lt;Contact&gt;();
+	contact_lu.afficher();
+        
+        system(&quot;PAUSE&quot;);
+	return 0;
+}</code></pre><p id="r-589318" data-claire-element-id="589318">Il ne reste plus qu'à compiler... (toujours avec &quot;CONFIG += console&quot; dans votre .pro) et exécuter votre super fichier &quot;.exe&quot;, et tadam !</p><pre id="r-589319" data-claire-element-id="589319"><code data-claire-semantic="console">Le contact Smith nee le 14/7/1972 et qui loge au 12 boulevard des sports possede les sites webs suivant : Site du Zero:www.siteduzero.com - Google:www.google.fr -
+Le contact Smith nee le 14/7/1972 et qui loge au 12 boulevard des sports possede les sites webs suivant : Site du Zero:www.siteduzero.com - Google:www.google.fr -</code></pre><p id="r-589320" data-claire-element-id="589320">Ce sont les mêmes ! Vous avez réussi, bravo :-°.</p><h2 id="r-les-fichiers-finaux" data-claire-element-id="589331">Les fichiers finaux</h2><p id="r-589322" data-claire-element-id="589322">Bon, un dernier cadeau pour la route : tous les fichiers, complets cette fois ci :</p><p id="r-589323" data-claire-element-id="589323"><em>Contact.h</em></p><pre id="r-589324" data-claire-element-id="589324"><code data-claire-semantic="cpp">#ifndef CONTACT_H
+#define CONTACT_H
+
+	#include &lt;QVariant&gt;
+
+	#include &lt;QUrl&gt;
+	#include &lt;QString&gt;
+	#include &lt;QList&gt;
+	#include &lt;QDate&gt;
+
+	class Contact		// Représentation d'un Contact
+	{
+		public:
+			struct SiteWeb
+			{
+				SiteWeb (const QString Nom = &quot;&quot;, const QUrl Adr = &quot;&quot;);
+
+				QString name;
+				QUrl adresse;
+			};
+			typedef QList&lt;SiteWeb&gt; SiteWebList;
+
+			Contact (const quint16 NumeroMaison = 0,
+						const QString Adresse = &quot;&quot;,
+						const QString Nom = &quot;&quot;,
+						const QDate Aniv = QDate(),
+						const SiteWebList Sites = SiteWebList());	// Constructeur par défaut public
+			Contact (const Contact &amp; Copie);						// Constructeur de copie public
+			~Contact ();											// Destructeur public
+
+			void afficher () const;									// Affiche les informations du contact dans la console
+
+			static void initContactSystem ();
+
+		private:
+			quint16 m_numeroMaison;		// Le n° de la maison
+			QString m_adresse;			// L'adresse (sans le n°)
+			QString m_nom;				// Le nom
+			QDate m_aniv;				// La date d'anniversaire
+
+			SiteWebList m_sites;		// La liste des sites webs
+
+			/* Les opérateurs de flux sont des fonctions amies */
+			friend QDataStream &amp; operator &lt;&lt; (QDataStream &amp;, const Contact::SiteWeb &amp;);
+			friend QDataStream &amp; operator &gt;&gt; (QDataStream &amp;, Contact::SiteWeb &amp;);
+
+			friend QDataStream &amp; operator &lt;&lt; (QDataStream &amp;, const Contact &amp;);
+			friend QDataStream &amp; operator &gt;&gt; (QDataStream &amp;, Contact &amp;);
+	};
+
+	Q_DECLARE_METATYPE(Contact::SiteWeb)
+	QDataStream &amp; operator &lt;&lt; (QDataStream &amp; out, const Contact::SiteWeb &amp; Valeur);
+	QDataStream &amp; operator &gt;&gt; (QDataStream &amp; in, Contact::SiteWeb &amp; Valeur);
+
+	Q_DECLARE_METATYPE(Contact)
+	QDataStream &amp; operator &lt;&lt; (QDataStream &amp; out, const Contact &amp; Valeur);
+	QDataStream &amp; operator &gt;&gt; (QDataStream &amp; in, Contact &amp; Valeur);
+
+#endif</code></pre><p id="r-589325" data-claire-element-id="589325"><em>Contact.cpp</em></p><pre id="r-589326" data-claire-element-id="589326"><code data-claire-semantic="cpp">#include &quot;Contact.h&quot;
+
+#include &lt;iostream&gt;
+
+
+Contact::SiteWeb::SiteWeb (const QString Nom, const QUrl Adr)
+{
+	name = Nom;
+	adresse = Adr;
+}
+
+
+Contact::Contact (const quint16 NumeroMaison,
+					const QString Adresse,
+					const QString Nom,
+					const QDate Aniv,
+					const SiteWebList Sites)
+	:	m_numeroMaison(NumeroMaison),
+		m_adresse(Adresse),
+		m_nom(Nom),
+		m_aniv(Aniv),
+		m_sites(Sites)
+{}
+Contact::Contact (const Contact &amp; Copie)
+{
+	m_numeroMaison = Copie.m_numeroMaison;
+	m_adresse = Copie.m_adresse;
+	m_nom = Copie.m_nom;
+	m_aniv = Copie.m_aniv;
+	m_sites = Copie.m_sites;
+}
+Contact::~Contact()
+{}
+
+void Contact::afficher () const
+{
+	std::cout	&lt;&lt; &quot;Le contact &quot;
+				&lt;&lt; m_nom.toStdString()
+				&lt;&lt; &quot; nee le &quot;
+				&lt;&lt; m_aniv.day() &lt;&lt; &quot;/&quot; &lt;&lt; m_aniv.month() &lt;&lt; &quot;/&quot; &lt;&lt; m_aniv.year()
+				&lt;&lt; &quot; et qui loge au &quot;
+				&lt;&lt; static_cast&lt;int&gt;(m_numeroMaison) &lt;&lt; &quot; &quot; &lt;&lt; m_adresse.toStdString()
+				&lt;&lt; &quot; possede les sites webs suivant : &quot;;
+
+	SiteWeb curr;
+	foreach(curr, m_sites)
+		std::cout &lt;&lt; curr.name.toStdString() &lt;&lt; &quot;:&quot; &lt;&lt; curr.adresse.toString().toStdString() &lt;&lt; &quot; - &quot;;
+
+	std::cout &lt;&lt; std::endl;
+}
+
+
+void Contact::initContactSystem ()
+{
+	qRegisterMetaTypeStreamOperators&lt;Contact::SiteWeb&gt;(&quot;Contact::SiteWeb&quot;);
+	qRegisterMetaTypeStreamOperators&lt;Contact&gt;(&quot;Contact&quot;);
+
+	qMetaTypeId&lt;Contact::SiteWeb&gt;();	// Teste la validité de la structure SiteWeb
+	qMetaTypeId&lt;Contact&gt;();				// Teste la validité de la classe Contact
+}
+
+QDataStream &amp; operator &lt;&lt; (QDataStream &amp; out, const Contact::SiteWeb &amp; Valeur)
+{
+	out &lt;&lt; Valeur.name
+		&lt;&lt; Valeur.adresse;
+
+	return out;
+}
+QDataStream &amp; operator &gt;&gt; (QDataStream &amp; in, Contact::SiteWeb &amp; Valeur)
+{
+	in &gt;&gt; Valeur.name;
+	in &gt;&gt; Valeur.adresse;
+
+	return in;
+}
+
+QDataStream &amp; operator &lt;&lt; (QDataStream &amp; out, const Contact &amp; Valeur)
+{
+	out &lt;&lt; Valeur.m_numeroMaison
+		&lt;&lt; Valeur.m_adresse
+		&lt;&lt; Valeur.m_nom
+		&lt;&lt; Valeur.m_aniv
+		&lt;&lt; Valeur.m_sites;
+
+	return out;
+}
+QDataStream &amp; operator &gt;&gt; (QDataStream &amp; in, Contact &amp; Valeur)
+{
+	in &gt;&gt; Valeur.m_numeroMaison;
+	in &gt;&gt; Valeur.m_adresse;
+	in &gt;&gt; Valeur.m_nom;
+	in &gt;&gt; Valeur.m_aniv;
+	in &gt;&gt; Valeur.m_sites;
+
+	return in;
+}</code></pre><p id="r-589327" data-claire-element-id="589327"><em>main.cpp</em></p><pre id="r-589328" data-claire-element-id="589328"><code data-claire-semantic="cpp">#include &quot;Contact.h&quot;
+
+#include &lt;QFile&gt;
+#include &lt;QSettings&gt;
+
+int main()
+{
+	Contact::initContactSystem();
+	QFile::remove(&quot;Test.ini&quot;);
+
+	Contact::SiteWeb site1(QString(&quot;Site du Zero&quot;), QUrl(&quot;www.siteduzero.com&quot;)), site2(QString(&quot;Google&quot;), QUrl(&quot;www.google.fr&quot;));
+	Contact::SiteWebList sites;
+	sites &lt;&lt; site1 &lt;&lt; site2;
+
+	Contact smith(12, &quot;boulevard des sports&quot;, &quot;Smith&quot;, QDate(1972, 7, 14), sites);
+	smith.afficher();
+
+	QSettings fichier_ecrire(&quot;Test.ini&quot;, QSettings::IniFormat);
+	fichier_ecrire.setValue(&quot;Contact&quot;, qVariantFromValue(smith));
+	fichier_ecrire.sync();
+
+	Contact contact_lu;
+	QSettings fichier_lire(&quot;Test.ini&quot;, QSettings::IniFormat);
+	contact_lu = fichier_lire.value(&quot;Contact&quot;, qVariantFromValue(Contact())).value&lt;Contact&gt;();
+	contact_lu.afficher();
+        
+        system(&quot;PAUSE&quot;);
+	return 0;
+}</code></pre><p id="r-589329" data-claire-element-id="589329">Et voilà, c'est fini (hé oui, déjà).</p><p id="r-589330" data-claire-element-id="589330">N'hésitez surtout pas à vous entraîner (ne vous en faites pas, le coup de main vient rapidement) et à faire plein d'essais, avec toutes les combinaisons possibles (une classe, dans une classe, dans une ... :lol:). Et si vous avez des questions, il y a le forum.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/stocker-et-serialiser-des-objets-avec-qt">Stocker et sérialiser des objets avec Qt</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/stocker-et-serialiser-des-objets-avec-qt/pourquoi-utiliser-qt">
+Pourquoi utiliser Qt ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/stocker-et-serialiser-des-objets-avec-qt/serialiser-avec-qvariant">
+Sérialiser avec QVariant
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/stocker-et-serialiser-des-objets-avec-qt/le-stockage-avec-qdatastream">
+Le stockage avec QDataStream
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/stocker-et-serialiser-des-objets-avec-qt/tp-exemple-gerer-un-contact">
+TP-exemple : gérer un contact
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/stocker-et-serialiser-des-objets-avec-qt/le-stockage-avec-qdatastream">
+<span class="arrow"></span>
+<span class="next">Le stockage avec QDataStream</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/stocker-et-serialiser-des-objets-avec-qt.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 23:50:54 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/stocker-et-serialiser-des-objets-avec-qt.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:12:26 GMT -->
+</html>

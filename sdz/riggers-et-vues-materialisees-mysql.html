@@ -1,0 +1,2001 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/riggers-et-vues-materialisees-mysql.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 11:05:19 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/riggers-et-vues-materialisees-mysql.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:47:22 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Triggers et vues matérialisées (MySQL)</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/triggers-et-vues-materialisees-mysql.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Triggers et vues matérialisées (MySQL)</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#TriggersetvuesmatrialisesMySQL">Triggers et vues matérialisées (MySQL)</a><br/><a href="#Unexemplesimple">Un exemple simple</a><br/><a href="#CrationdevuesVIEW">Création de vues (VIEW)</a><br/><a href="#Qu039est-cequ039unevuematrialise">Qu&#039;est-ce qu&#039;une vue matérialisée ?</a><br/><a href="#Qu039est-cequ039untrigger">Qu&#039;est-ce qu&#039;un trigger ?</a><br/><a href="#Initialiserlesvuesmatrialises">Initialiser les vues matérialisées</a><br/><a href="#Lestriggersenaction">Les triggers en action</a><br/><a href="#Untriggerpourcalculerlavaleurpardfautd039unecolonne">Un trigger pour calculer la valeur par défaut d&#039;une colonne</a><br/><a href="#Untriggerpourhistoriserlesmodificationsd039unetable">Un trigger pour historiser les modifications d&#039;une table</a><br/><a href="#Historisationvariante">Historisation : variante</a><br/><a href="#Autresexemplesdetriggers">Autres exemples de triggers</a><br/><a href="#Mfions-nousdeslocks">Méfions-nous des locks</a><br/><a href="#Mfions-nousdeMySQL">Méfions-nous de MySQL</a><br/></div>
+<a name="TriggersetvuesmatrialisesMySQL"></a><h2>Triggers et vues matérialisées (MySQL)</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-exemple-simple-3">
+<span class="next">Un exemple simple</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-386143" data-claire-element-id="386143">Ce tutoriel a pour but de vous familiariser avec les différents concepts suivants :</p><ul id="r-386152" data-claire-element-id="386152"><li id="r-386145" data-claire-element-id="386145"><p id="r-386144" data-claire-element-id="386144">les triggers ;</p></li><li id="r-386147" data-claire-element-id="386147"><p id="r-386146" data-claire-element-id="386146">les vues ;</p></li><li id="r-386149" data-claire-element-id="386149"><p id="r-386148" data-claire-element-id="386148">le maintien à jour de tables via des <em>triggers</em> ;</p></li><li id="r-386151" data-claire-element-id="386151"><p id="r-386150" data-claire-element-id="386150">l'utilisation de ces tables comme un cache pour accélérer grandement certaines requêtes.</p></li></ul><p id="r-386153" data-claire-element-id="386153">Nous utiliserons MySQL 5 ; bien sûr, tout cela fonctionne aussi sous PostgreSQL à condition de changer un peu la syntaxe des exemples.</p><p id="r-386154" data-claire-element-id="386154"><strong>Prérequis</strong></p><ul id="r-386163" data-claire-element-id="386163"><li id="r-386156" data-claire-element-id="386156"><p id="r-386155" data-claire-element-id="386155"><a href="http://www.siteduzero.com/tutoriel-3-214617-introduction-aux-jointures-sql.html">Jointures.</a></p></li><li id="r-386158" data-claire-element-id="386158"><p id="r-386157" data-claire-element-id="386157"><a href="http://www.siteduzero.com/tutoriel-3-32310-creer-des-relations-dans-votre-base-de-donnees.html">Relations.</a></p></li><li id="r-386160" data-claire-element-id="386160"><p id="r-386159" data-claire-element-id="386159">Transactions et différences MyISAM/InnoDB.</p></li><li id="r-386162" data-claire-element-id="386162"><p id="r-386161" data-claire-element-id="386161">Savoir ce qu'est une <a href="http://www.siteduzero.com/tutoriel-3-34590-procedure-stockee.html">procédure stockée.</a></p></li></ul>
+</div><a name="Unexemplesimple"></a><h2>Un exemple simple</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/creation-de-vues-view">
+<span class="next">Création de vues (VIEW)</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-386164" data-claire-element-id="386164">Supposons que nous ayons une équipe de vendeurs, que nous rentrons dans la base de données sous la forme suivante :</p><pre id="r-386165" data-claire-element-id="386165"><code data-claire-semantic="sql">CREATE TABLE vendeurs (
+  vd_id    INTEGER PRIMARY KEY AUTO_INCREMENT,
+  vd_name  TEXT NOT NULL
+) ENGINE=InnoDB;</code></pre><p id="r-386166" data-claire-element-id="386166">Le patron veut que chaque vendeur entre dans la base de données, chaque jour, le total de ses recettes. Nous créons donc une table pour stocker ces informations :</p><pre id="r-386167" data-claire-element-id="386167"><code data-claire-semantic="sql">CREATE TABLE recettes_vendeurs (
+  vd_id       INTEGER NOT NULL REFERENCES vendeurs( vd_id ) ON DELETE RESTRICT,
+  rc_date     DATE NOT NULL,
+  rc_montant  NUMERIC( 12, 2 ),
+  PRIMARY KEY( vd_id, rc_date ),
+  KEY( rc_date, vd_id )
+) ENGINE=InnoDB;</code></pre><p id="r-386168" data-claire-element-id="386168">Quelques explications s'imposent.</p><p id="r-386169" data-claire-element-id="386169">Nous créons une <strong>relation</strong> entre la table « recettes_vendeurs » et la table « vendeurs » par « vd_id REFERENCES vendeurs( vd_id ) ». Chaque ligne de « recettes_vendeurs » doit donc contenir l'<em>id</em> d'un vendeur existant. Comme nous n'avons par défini de contrainte d'unicité sur « recettes_vendeurs.vd_id », chaque vendeur peut avoir plusieurs lignes lui faisant référence dans « recettes_vendeurs ».</p><p id="r-386170" data-claire-element-id="386170">« ON DELETE RESTRICT » empêche la suppression d'un vendeur si des lignes de « recettes_vendeurs » lui font référence. En effet ici, on souhaite garder l'historique des recettes en comptabilité. Pour gérer le <em>turnover</em>, on ajoutera par exemple dans la table « vendeurs » des colonnes permettant de savoir si le vendeur est encore employé par la société, sa date d'embauche et éventuellement de départ, etc.</p><p id="r-386171" data-claire-element-id="386171">Pour d'autres applications où l'on souhaite supprimer automatiquement les lignes faisant référence au parent lorsque celui-ci est supprimé, on utilisera « ON DELETE CASCADE ».</p><p id="r-386172" data-claire-element-id="386172">Pour plus d'explications sur les relations : <a href="http://www.siteduzero.com/tutoriel-3-32310-creer-des-relations-dans-votre-base-de-donnees.html">voir ce tutoriel</a>.</p><p id="r-386173" data-claire-element-id="386173">La clé primaire naturelle de la table est (vd_id, rc_date) : elle est unique, une ligne par date et par vendeur. On aurait tout aussi bien pu utiliser (rc_date, vd_id). Il n'est pas nécessaire de créer une autre clé primaire. On crée aussi un index sur la date.</p><p id="r-386174" data-claire-element-id="386174">Pour la suite, nous allons remplir les tables avec ce petit script PHP très simple :</p><pre id="r-386175" data-claire-element-id="386175"><code data-claire-semantic="html+php">&lt;?php
+
+// On place la connexion à MySQL dans un include pour éviter de 
+// diffuser par inadvertance des mots de passe sur le Net
+// par copier-coller, ou dans Subversion/Git...
+require_once &quot;dbconn.php&quot;;
+
+// Si les triggers sont actifs lors du remplissage de la table et que le
+// but est de les tester, mieux vaut réduire ces valeurs.
+$max_vendeurs	= 100;
+$max_jours	= 5000;
+
+function query( $sql ) 
+{ 
+	$t = microtime( true );
+	$q = mysql_query( $sql );
+	if( $q  )
+	{
+		printf( &quot;&lt;p&gt;%.02f ms : %s&lt;/p&gt;&quot;, (microtime(true) - $t)*1000, $sql );
+		return $q;
+	}
+	echo &quot;&lt;pre&gt;&quot;;
+	var_dump( debug_backtrace() );
+	echo &quot;\n&quot;;
+	exit( mysql_error() ); 
+}
+
+query( &quot;BEGIN&quot; );
+query( &quot;TRUNCATE recettes_vendeurs&quot; );
+query( &quot;TRUNCATE vendeurs&quot; );
+query( &quot;TRUNCATE recettes_jour_mat&quot; );
+query( &quot;TRUNCATE recettes_mois_mat&quot; );
+query( &quot;TRUNCATE recettes_vendeur_mois_mat&quot; );
+
+$values = array();
+for( $vendeur_id=1; $vendeur_id&lt;=$max_vendeurs; $vendeur_id++ )
+	$values[] = &quot;($vendeur_id,'vendeur $vendeur_id')&quot;;
+
+query( &quot;INSERT INTO vendeurs (vd_id, vd_name) VALUES &quot;.implode(',',$values) );
+
+for( $jour=0; $jour&lt;$max_jours; $jour++ )
+	query( &quot;INSERT INTO recettes_vendeurs (vd_id, rc_date, rc_montant) 
+		SELECT vd_id, DATE_SUB( now(), INTERVAL $jour DAY ), pow(rand(),4) * 10000
+		FROM vendeurs&quot; );
+       
+query( &quot;COMMIT&quot; );</code></pre><p id="r-386176" data-claire-element-id="386176">Cela nous crée une base de données de test avec 500 000 lignes, ce qui est relativement petit, mais permettra de voir rapidement si une requête est optimisée ou non.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql">Triggers et vues matérialisées (MySQL)</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-exemple-simple-3">
+Un exemple simple
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/creation-de-vues-view">
+Création de vues (VIEW)
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/qu-est-ce-qu-une-vue-materialisee">
+Qu&#039;est-ce qu&#039;une vue matérialisée ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/qu-est-ce-qu-un-trigger-1">
+Qu&#039;est-ce qu&#039;un trigger ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/initialiser-les-vues-materialisees">
+Initialiser les vues matérialisées
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/les-triggers-en-action">
+Les triggers en action
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-trigger-pour-calculer-la-valeur-par-defaut-d-une-colonne">
+Un trigger pour calculer la valeur par défaut d&#039;une colonne
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-trigger-pour-historiser-les-modifications-d-une-table">
+Un trigger pour historiser les modifications d&#039;une table
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/historisation-variante">
+Historisation : variante
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/autres-exemples-de-triggers">
+Autres exemples de triggers
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/mefions-nous-des-locks">
+Méfions-nous des locks
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/mefions-nous-de-mysql">
+Méfions-nous de MySQL
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/creation-de-vues-view">
+<span class="next">Création de vues (VIEW)</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="CrationdevuesVIEW"></a><h2>Création de vues (VIEW)</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-exemple-simple-3">
+<span class="arrow"></span>
+<span class="next">Un exemple simple</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/qu-est-ce-qu-une-vue-materialisee">
+<span class="next">Qu&#039;est-ce qu&#039;une vue matérialisée ?</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-386178" data-claire-element-id="386178">Nous voulons récupérer les informations suivantes :<br/> 1) total des recettes par jour ;<br/> 2) total des recettes par vendeur et par mois ;<br/> 2) total des recettes par mois.</p><p id="r-386179" data-claire-element-id="386179">Pour simplifier nos autres requêtes, nous allons utiliser des vues représentant ces trois requêtes.<br/> Une vue (VIEW) est une requête SQL stockée sur le serveur que l'on peut appeler par son nom, et utiliser exactement comme une table.<br/> Cela permet de stocker une tartine de SQL et de l'utiliser simplement.</p><pre id="r-386180" data-claire-element-id="386180"><code data-claire-semantic="sql">CREATE VIEW recettes_jour AS 
+  SELECT rc_date, sum( rc_montant ) AS rc_montant 
+  FROM recettes_vendeurs
+  GROUP BY rc_date;
+
+CREATE VIEW recettes_mois AS 
+  SELECT YEAR( rc_date )   AS rc_year,
+         MONTH( rc_date )  AS rc_month,
+         sum( rc_montant ) AS rc_montant 
+  FROM recettes_vendeurs
+  GROUP BY rc_year, rc_month;
+
+CREATE VIEW recettes_vendeur_mois AS 
+  SELECT YEAR( rc_date )   AS rc_year,
+         MONTH( rc_date )  AS rc_month,
+         vd_id,
+         sum( rc_montant ) AS rc_montant 
+  FROM recettes_vendeurs
+  GROUP BY rc_year, rc_month, vd_id;</code></pre><p id="r-386181" data-claire-element-id="386181">Une vue se comporte exactement comme une table. Par exemple, on peut la faire apparaître dans un SELECT :</p><pre id="r-386182" data-claire-element-id="386182"><code data-claire-semantic="sql">SELECT * FROM recettes_vendeur_mois WHERE rc_year=2009 AND vd_id BETWEEN 1 AND 2;
++---------+----------+-------+------------+
+| rc_year | rc_month | vd_id | rc_montant |
++---------+----------+-------+------------+
+|    2009 |        1 |     1 |   56534.90 |
+|    2009 |        1 |     2 |   60471.68 |
+|    2009 |        2 |     1 |   74446.72 |
+|    2009 |        2 |     2 |   53958.03 |
+|    2009 |        3 |     1 |   46140.94 |
+|    2009 |        3 |     2 |   81320.11 |
+|    2009 |        4 |     1 |   34460.82 |
+|    2009 |        4 |     2 |   55439.18 |
+|    2009 |        5 |     1 |   52062.94 |
+|    2009 |        5 |     2 |   70186.89 |
+|    2009 |        6 |     1 |   79167.22 |
+|    2009 |        6 |     2 |   71725.05 |
+|    2009 |        7 |     1 |   75596.33 |
+|    2009 |        7 |     2 |   68066.56 |
+|    2009 |        8 |     1 |   49466.99 |
+|    2009 |        8 |     2 |   71283.26 |
+|    2009 |        9 |     1 |   41135.17 |
+|    2009 |        9 |     2 |   89311.28 |
+|    2009 |       10 |     1 |   63664.04 |
+|    2009 |       10 |     2 |   69149.33 |
+|    2009 |       11 |     1 |   48181.47 |
+|    2009 |       11 |     2 |   67718.38 |
+|    2009 |       12 |     1 |   75128.19 |
+|    2009 |       12 |     2 |   37845.85 |
++---------+----------+-------+------------+</code></pre><p id="r-386183" data-claire-element-id="386183">Quels ont été nos meilleurs vendeurs, sur un mois, en 2009 ?</p><pre id="r-386184" data-claire-element-id="386184"><code data-claire-semantic="sql">SELECT * FROM recettes_vendeur_mois WHERE rc_year=2009 ORDER BY rc_montant DESC LIMIT 5;
++---------+----------+-------+------------+
+| rc_year | rc_month | vd_id | rc_montant |
++---------+----------+-------+------------+
+|    2009 |        7 |    39 |  110352.47 |
+|    2009 |        4 |    31 |  109560.18 |
+|    2009 |        7 |    56 |  106520.38 |
+|    2009 |       12 |    87 |  103366.81 |
+|    2009 |        7 |    66 |  100009.22 |
++---------+----------+-------+------------+</code></pre><p id="r-386185" data-claire-element-id="386185">Pas besoin de réécrire les clauses GROUP BY, etc., on utilise simplement la VIEW.</p><p id="r-386186" data-claire-element-id="386186">Faisons maintenant un test de performances. Pour mesurer de manière fiable la durée d'une requête avec MySQL, il faut l'exécuter par exemple en PHP, et mesurer le temps passé avec <code data-claire-semantic="html+php">microtime() </code>. Ou, plus simplement, exécuter la requête dans phpMyAdmin.</p><p id="r-386187" data-claire-element-id="386187">Cependant, si la même requête est exécutée plusieurs fois de suite, ce qui risque de se produire ici, MySQL va garder le résultat en cache et le chronométrage sera biaisé : à partir de la deuxième exécution, la requête semblera très rapide, en effet elle n'est pas traitée du tout.</p><p id="r-386188" data-claire-element-id="386188">Le mot-clé SQL_NO_CACHE, spécifique à MySQL, désactive le cache pour la requête qui le contient. Il doit être placé juste après SELECT. Il faut toujours l'utiliser pour chronométrer une requête.</p><p id="r-386189" data-claire-element-id="386189">Nous apercevons ici une limitation de MySQL, particulièrement sur la requête suivante :</p><pre id="r-386190" data-claire-element-id="386190"><code data-claire-semantic="sql">SELECT SQL_NO_CACHE * FROM recettes_vendeur_mois WHERE rc_year=2009 AND vd_id BETWEEN 1 AND 2;</code></pre><p id="r-386191" data-claire-element-id="386191">qui correspond en fait à :</p><pre id="r-386192" data-claire-element-id="386192"><code data-claire-semantic="sql">SELECT SQL_NO_CACHE YEAR( rc_date )   AS rc_year,
+         MONTH( rc_date )  AS rc_month,
+         vd_id,
+         sum( rc_montant ) AS rc_montant 
+  FROM recettes_vendeurs
+  WHERE YEAR( rc_date )=2009 AND vd_id BETWEEN 1 AND 2
+  GROUP BY rc_year, rc_month, vd_id;</code></pre><p id="r-386193" data-claire-element-id="386193">En écrivant la requête complète, l'index sur la table « recettes_vendeurs » est utilisé et la requête prend moins de 5 ms.<br/> En utilisant la VIEW, l'index n'est pas utilisé, et par conséquent la requête prend plus de 0.58 seconde, ce qui est énorme.</p><p id="r-386194" data-claire-element-id="386194">Une base de données plus évoluée, comme PostgreSQL, est bien sûr capable de transformer la première requête sous la forme de la deuxième, pour utiliser tous les index possibles. Ce n'est pas toujours le cas de MySQL. Par conséquent, les VIEW sont d'une utilité limitée sous MySQL.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql">Triggers et vues matérialisées (MySQL)</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-exemple-simple-3">
+Un exemple simple
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/creation-de-vues-view">
+Création de vues (VIEW)
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/qu-est-ce-qu-une-vue-materialisee">
+Qu&#039;est-ce qu&#039;une vue matérialisée ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/qu-est-ce-qu-un-trigger-1">
+Qu&#039;est-ce qu&#039;un trigger ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/initialiser-les-vues-materialisees">
+Initialiser les vues matérialisées
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/les-triggers-en-action">
+Les triggers en action
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-trigger-pour-calculer-la-valeur-par-defaut-d-une-colonne">
+Un trigger pour calculer la valeur par défaut d&#039;une colonne
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-trigger-pour-historiser-les-modifications-d-une-table">
+Un trigger pour historiser les modifications d&#039;une table
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/historisation-variante">
+Historisation : variante
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/autres-exemples-de-triggers">
+Autres exemples de triggers
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/mefions-nous-des-locks">
+Méfions-nous des locks
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/mefions-nous-de-mysql">
+Méfions-nous de MySQL
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-exemple-simple-3">
+<span class="arrow"></span>
+<span class="next">Un exemple simple</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/qu-est-ce-qu-une-vue-materialisee">
+<span class="next">Qu&#039;est-ce qu&#039;une vue matérialisée ?</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Qu039est-cequ039unevuematrialise"></a><h2>Qu&#039;est-ce qu&#039;une vue matérialisée ?</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/creation-de-vues-view">
+<span class="arrow"></span>
+<span class="next">Création de vues (VIEW)</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/qu-est-ce-qu-un-trigger-1">
+<span class="next">Qu&#039;est-ce qu&#039;un trigger ?</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-386196" data-claire-element-id="386196">Les vues sont des outils très pratiques, mais leur utilisation peut causer certains problèmes de performances. En effet, on ne peut pas créer d'index sur une VIEW. Par conséquent, sur cette requête :</p><pre id="r-386197" data-claire-element-id="386197"><code data-claire-semantic="sql">SELECT * FROM recettes_vendeur_mois WHERE rc_year=2009 ORDER BY rc_montant DESC LIMIT 5;</code></pre><p id="r-386198" data-claire-element-id="386198">l'agrégat sum() doit être calculé pour toutes les lignes de l'année 2009, puis les résultats doivent être triés.</p><p id="r-386199" data-claire-element-id="386199">Souvent, nous aimerions avoir accès directement aux résultats du calcul, sans devoir effectuer ce calcul. Par exemple, dans un forum, il faut stocker dans la table « topics » ces informations :</p><ul id="r-386204" data-claire-element-id="386204"><li id="r-386201" data-claire-element-id="386201"><p id="r-386200" data-claire-element-id="386200">nombre de <em>posts</em> dans le <em>topic</em> ;</p></li><li id="r-386203" data-claire-element-id="386203"><p id="r-386202" data-claire-element-id="386202">date du dernier <em>post</em> dans le <em>topic</em>.</p></li></ul><p id="r-386205" data-claire-element-id="386205">Cela nous permet de poser un index sur la date du dernier <em>post</em>, par exemple.</p><p id="r-386206" data-claire-element-id="386206">Reprenons notre exemple de comptabilité. Ici, nous n'avons pas de tables existantes (comme la table « topics ») où stocker les résultats de nos calculs ; nous allons donc en créer.</p><p id="r-386207" data-claire-element-id="386207">Nous allons matérialiser les vues créées plus haut :</p><pre id="r-386208" data-claire-element-id="386208"><code data-claire-semantic="sql">CREATE TABLE recettes_jour_mat (
+  rc_date        DATE NOT NULL,
+  rc_montant     NUMERIC( 12, 2 ),
+  PRIMARY KEY ( rc_date )
+) ENGINE=InnoDB;
+
+CREATE TABLE recettes_mois_mat (
+  rc_year        INTEGER NOT NULL,
+  rc_month       INTEGER NOT NULL,
+  rc_montant     NUMERIC( 12, 2 ),
+  PRIMARY KEY( rc_year, rc_month )
+) ENGINE=InnoDB;
+
+CREATE TABLE recettes_vendeur_mois_mat ( 
+  rc_year        INTEGER NOT NULL,
+  rc_month       INTEGER NOT NULL,
+  vd_id          INTEGER NOT NULL REFERENCES vendeurs( vd_id ) ON DELETE RESTRICT,
+  rc_montant     NUMERIC( 12, 2 ),
+  PRIMARY KEY( rc_year, rc_month, vd_id ),
+  KEY( vd_id )
+) ENGINE=InnoDB;</code></pre><p id="r-386209" data-claire-element-id="386209">Après avoir créé ces tables, il va falloir les remplir, puis les tenir à jour en fonction des modifications de la table « recettes_vendeurs ».</p><p id="r-386210" data-claire-element-id="386210">Ces opérations peuvent se faire dans l'application, mais cela présente de nombreux inconvénients :</p><ul id="r-386217" data-claire-element-id="386217"><li id="r-386212" data-claire-element-id="386212"><p id="r-386211" data-claire-element-id="386211">il faut penser à faire les requêtes de mise à jour à chaque fois qu'on touche à la table « recettes » ;</p></li><li id="r-386214" data-claire-element-id="386214"><p id="r-386213" data-claire-element-id="386213">l'ajout d'une autre vue matérialisée oblige à ajouter des requêtes de mise à jour un peu partout dans l'application ;</p></li><li id="r-386216" data-claire-element-id="386216"><p id="r-386215" data-claire-element-id="386215">les performances ne sont pas les meilleures possibles.</p></li></ul><p id="r-386218" data-claire-element-id="386218">La solution correcte pour ce genre de problème est de laisser la base de données s'en occuper, en créant un TRIGGER.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql">Triggers et vues matérialisées (MySQL)</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-exemple-simple-3">
+Un exemple simple
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/creation-de-vues-view">
+Création de vues (VIEW)
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/qu-est-ce-qu-une-vue-materialisee">
+Qu&#039;est-ce qu&#039;une vue matérialisée ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/qu-est-ce-qu-un-trigger-1">
+Qu&#039;est-ce qu&#039;un trigger ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/initialiser-les-vues-materialisees">
+Initialiser les vues matérialisées
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/les-triggers-en-action">
+Les triggers en action
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-trigger-pour-calculer-la-valeur-par-defaut-d-une-colonne">
+Un trigger pour calculer la valeur par défaut d&#039;une colonne
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-trigger-pour-historiser-les-modifications-d-une-table">
+Un trigger pour historiser les modifications d&#039;une table
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/historisation-variante">
+Historisation : variante
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/autres-exemples-de-triggers">
+Autres exemples de triggers
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/mefions-nous-des-locks">
+Méfions-nous des locks
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/mefions-nous-de-mysql">
+Méfions-nous de MySQL
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/creation-de-vues-view">
+<span class="arrow"></span>
+<span class="next">Création de vues (VIEW)</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/qu-est-ce-qu-un-trigger-1">
+<span class="next">Qu&#039;est-ce qu&#039;un trigger ?</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Qu039est-cequ039untrigger"></a><h2>Qu&#039;est-ce qu&#039;un trigger ?</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/qu-est-ce-qu-une-vue-materialisee">
+<span class="arrow"></span>
+<span class="next">Qu&#039;est-ce qu&#039;une vue matérialisée ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/initialiser-les-vues-materialisees">
+<span class="next">Initialiser les vues matérialisées</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-386220" data-claire-element-id="386220"><cite>Citation : Documentation PostgreSQL</cite></p><blockquote id="r-386222" data-claire-element-id="386222"><p id="r-386221" data-claire-element-id="386221">Un déclencheur (TRIGGER) spécifie que la base de données doit exécuter automatiquement une fonction donnée chaque fois qu'un certain type d'opération est exécuté. Les fonctions déclencheurs peuvent être définies pour s'exécuter avant ou après une commande INSERT, UPDATE ou DELETE, soit une fois par ligne modifiée, soit une fois par expression SQL.</p></blockquote><p id="r-386223" data-claire-element-id="386223">Nous voulons maintenir à jour nos vues matérialisées en fonction des modifications sur la table « recettes_vendeurs ». Par conséquent, nous allons créer trois <em>triggers</em> sur cette table.</p><p id="r-386224" data-claire-element-id="386224">La documentation complète se trouve <a href="http://dev.mysql.com/doc/refman/5.0/en/trigger-syntax.html">ici</a>.</p><p id="r-386225" data-claire-element-id="386225">La commande « delimiter » permet au client MySQL en ligne de commande de ne pas couper les lignes sur les « ; » qui sont dans le code des <em>triggers</em>. Si les commandes sont collées dans un phpMyAdmin, il faut l'inclure.</p><pre id="r-386226" data-claire-element-id="386226"><code data-claire-semantic="sql">delimiter //
+
+CREATE TRIGGER recettes_vendeurs_insert_t
+BEFORE INSERT ON recettes_vendeurs
+FOR EACH ROW
+BEGIN
+    INSERT INTO recettes_jour_mat (rc_date, rc_montant) VALUES (NEW.rc_date, NEW.rc_montant)
+        ON DUPLICATE KEY UPDATE rc_montant = rc_montant + NEW.rc_montant;
+        
+    INSERT INTO recettes_mois_mat (rc_year, rc_month, rc_montant)
+        VALUES (YEAR( NEW.rc_date ), MONTH( NEW.rc_date ), NEW.rc_montant)
+        ON DUPLICATE KEY UPDATE rc_montant = rc_montant + NEW.rc_montant;
+
+    INSERT INTO recettes_vendeur_mois_mat (rc_year, rc_month, vd_id, rc_montant)
+        VALUES (YEAR( NEW.rc_date ), MONTH( NEW.rc_date ), NEW.vd_id, NEW.rc_montant)
+        ON DUPLICATE KEY UPDATE rc_montant = rc_montant + NEW.rc_montant;
+END//
+
+CREATE TRIGGER recettes_vendeurs_update_t
+BEFORE UPDATE ON recettes_vendeurs
+FOR EACH ROW
+BEGIN
+    UPDATE recettes_jour_mat 
+        SET     rc_montant  = rc_montant - OLD.rc_montant
+        WHERE   rc_date     = OLD.rc_date;
+
+    UPDATE recettes_jour_mat 
+        SET     rc_montant  = rc_montant + NEW.rc_montant
+        WHERE   rc_date     = NEW.rc_date;
+        
+    UPDATE recettes_mois_mat 
+        SET     rc_montant  = rc_montant - OLD.rc_montant
+        WHERE   rc_year     = YEAR( OLD.rc_date )
+            AND rc_month    = MONTH( OLD.rc_date );
+
+    UPDATE recettes_mois_mat 
+        SET     rc_montant  = rc_montant + NEW.rc_montant
+        WHERE   rc_year     = YEAR( NEW.rc_date )
+            AND rc_month    = MONTH( NEW.rc_date );
+
+    UPDATE recettes_vendeur_mois_mat 
+        SET     rc_montant  = rc_montant - OLD.rc_montant
+        WHERE   rc_year     = YEAR( OLD.rc_date )
+            AND rc_month    = MONTH( OLD.rc_date )
+            AND vd_id       = OLD.vd_id;
+
+    UPDATE recettes_vendeur_mois_mat 
+        SET     rc_montant  = rc_montant + NEW.rc_montant
+        WHERE   rc_year     = YEAR( NEW.rc_date )
+            AND rc_month    = MONTH( NEW.rc_date )
+            AND vd_id       = NEW.vd_id;
+END//
+
+CREATE TRIGGER recettes_vendeurs_delete_t
+BEFORE DELETE ON recettes_vendeurs
+FOR EACH ROW
+BEGIN
+    UPDATE recettes_jour_mat 
+        SET     rc_montant  = rc_montant - OLD.rc_montant
+        WHERE   rc_date     = OLD.rc_date;
+
+    UPDATE recettes_mois_mat 
+        SET     rc_montant  = rc_montant - OLD.rc_montant
+        WHERE   rc_year     = YEAR( OLD.rc_date )
+            AND rc_month    = MONTH( OLD.rc_date );
+
+    UPDATE recettes_vendeur_mois_mat 
+        SET     rc_montant  = rc_montant - OLD.rc_montant
+        WHERE   rc_year     = YEAR( OLD.rc_date )
+            AND rc_month    = MONTH( OLD.rc_date )
+            AND vd_id       = OLD.vd_id;
+END//
+
+delimiter ;</code></pre><p id="r-386227" data-claire-element-id="386227">Voilà, nos <em>triggers</em> sont créés.</p><p id="r-386228" data-claire-element-id="386228">Lors de l'insertion, on utilise INSERT ... ON DUPLICATE KEY UPDATE pour tenir à jour les tables. Cela fonctionne, car nous avons utilisé des clés primaires (uniques) qui conviennent : par exemple, dans « recettes_mois_mat », la clé primaire est (rc_year, rc_month) ; il ne peut y avoir qu'une seule ligne pour un mois d'une année en particulier. C'est ce que nous voulons.</p><p id="r-386229" data-claire-element-id="386229">Les <em>triggers</em> contiennent les mots-clés NEW et OLD qui font référence à la ligne qui est insérée (NEW), supprimée (OLD) ou mise à jour (OLD = ancienne version, NEW = nouvelle version) dans la table sur laquelle nous avons créé le <em>trigger</em>.</p><p id="r-386230" data-claire-element-id="386230">Pour le <em>trigger</em> sur UPDATE, il serait tout à fait possible de supprimer la moitié des requêtes, en utilisant :</p><pre id="r-386231" data-claire-element-id="386231"><code data-claire-semantic="sql">SET rc_montant = rc_montant + (NEW.rc_montant - OLD.rc_montant)</code></pre><p id="r-386232" data-claire-element-id="386232">à condition cependant de bien vérifier que les colonnes vd_id et rc_date n'ont pas été modifiées.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql">Triggers et vues matérialisées (MySQL)</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-exemple-simple-3">
+Un exemple simple
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/creation-de-vues-view">
+Création de vues (VIEW)
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/qu-est-ce-qu-une-vue-materialisee">
+Qu&#039;est-ce qu&#039;une vue matérialisée ?
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/qu-est-ce-qu-un-trigger-1">
+Qu&#039;est-ce qu&#039;un trigger ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/initialiser-les-vues-materialisees">
+Initialiser les vues matérialisées
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/les-triggers-en-action">
+Les triggers en action
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-trigger-pour-calculer-la-valeur-par-defaut-d-une-colonne">
+Un trigger pour calculer la valeur par défaut d&#039;une colonne
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-trigger-pour-historiser-les-modifications-d-une-table">
+Un trigger pour historiser les modifications d&#039;une table
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/historisation-variante">
+Historisation : variante
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/autres-exemples-de-triggers">
+Autres exemples de triggers
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/mefions-nous-des-locks">
+Méfions-nous des locks
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/mefions-nous-de-mysql">
+Méfions-nous de MySQL
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/qu-est-ce-qu-une-vue-materialisee">
+<span class="arrow"></span>
+<span class="next">Qu&#039;est-ce qu&#039;une vue matérialisée ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/initialiser-les-vues-materialisees">
+<span class="next">Initialiser les vues matérialisées</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Initialiserlesvuesmatrialises"></a><h2>Initialiser les vues matérialisées</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/qu-est-ce-qu-un-trigger-1">
+<span class="arrow"></span>
+<span class="next">Qu&#039;est-ce qu&#039;un trigger ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/les-triggers-en-action">
+<span class="next">Les triggers en action</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-386234" data-claire-element-id="386234">Les <em>triggers</em> maintiennent les vues matérialisées à jour, mais si la table « recettes_vendeurs » contient déjà des données, les vues matérialisées ne seront pas initialisées avec les valeurs correctes.</p><p id="r-386235" data-claire-element-id="386235">Nous avons deux solutions :</p><p id="r-386236" data-claire-element-id="386236">1. vider toutes les tables et remplir « recettes_vendeurs », laissant le trigger d'INSERT faire son travail ;<br/> 2. ou bien préremplir les vues matérialisées et n'utiliser les <em>triggers</em> que pour les modifications futures.</p><p id="r-386237" data-claire-element-id="386237">La première solution est la plus simple, mais la seconde est la plus rapide.</p><p id="r-386238" data-claire-element-id="386238">Pour la première solution, nous ferions transiter les données par une table temporaire :</p><pre id="r-386239" data-claire-element-id="386239"><code data-claire-semantic="sql">DROP TABLE IF EXISTS recettes_vendeurs_2;
+CREATE TABLE recettes_vendeurs_2 AS SELECT * FROM recettes_vendeurs LIMIT 0;
+
+BEGIN;
+INSERT INTO recettes_vendeurs_2 SELECT * FROM recettes_vendeurs FOR UPDATE;
+DELETE FROM recettes_vendeurs;
+DELETE FROM recettes_jour_mat;
+DELETE FROM recettes_mois_mat;
+DELETE FROM recettes_vendeur_mois_mat;
+INSERT INTO recettes_vendeurs SELECT * FROM recettes_vendeurs_2;
+COMMIT;
+DROP TABLE recettes_vendeurs_2;
+
+SELECT * FROM recettes_mois WHERE rc_year=2009;
++---------+----------+------------+
+| rc_year | rc_month | rc_montant |
++---------+----------+------------+
+|    2009 |        1 |  110529.59 |
+|    2009 |        2 |  142694.42 |
+|    2009 |        3 |  113394.46 |
+|    2009 |        4 |  147740.43 |
+|    2009 |        5 |  110104.06 |
+|    2009 |        6 |  113821.84 |
+|    2009 |        7 |  146420.22 |
+|    2009 |        8 |  112581.44 |
+|    2009 |        9 |  106731.73 |
+|    2009 |       10 |  192303.25 |
+|    2009 |       11 |  114419.72 |
+|    2009 |       12 |  107647.62 |
++---------+----------+------------+</code></pre><p id="r-386240" data-claire-element-id="386240">La deuxième solution est plus simple, car nous avons déjà créé les vues qui nous intéressent. Il suffit de verrouiller les tables, et de remplir les vues matérialisées avec le contenu des vues précédemment définies. On pourrait aussi ne pas avoir défini de vues du tout et utiliser des requêtes SQL directement.</p><pre id="r-386241" data-claire-element-id="386241"><code data-claire-semantic="sql">LOCK TABLES recettes_vendeurs READ, recettes_jour_mat WRITE, recettes_mois_mat WRITE, recettes_vendeur_mois_mat WRITE;
+BEGIN;
+DELETE FROM recettes_jour_mat;
+DELETE FROM recettes_mois_mat;
+DELETE FROM recettes_vendeur_mois_mat;
+INSERT INTO recettes_jour_mat SELECT * FROM recettes_jour;
+INSERT INTO recettes_mois_mat SELECT * FROM recettes_mois;
+INSERT INTO recettes_vendeur_mois_mat SELECT * FROM recettes_vendeur_mois;
+COMMIT;
+UNLOCK TABLES;</code></pre><p id="r-386242" data-claire-element-id="386242">Nos vues matérialisées sont maintenant prêtes.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql">Triggers et vues matérialisées (MySQL)</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-exemple-simple-3">
+Un exemple simple
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/creation-de-vues-view">
+Création de vues (VIEW)
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/qu-est-ce-qu-une-vue-materialisee">
+Qu&#039;est-ce qu&#039;une vue matérialisée ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/qu-est-ce-qu-un-trigger-1">
+Qu&#039;est-ce qu&#039;un trigger ?
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/initialiser-les-vues-materialisees">
+Initialiser les vues matérialisées
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/les-triggers-en-action">
+Les triggers en action
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-trigger-pour-calculer-la-valeur-par-defaut-d-une-colonne">
+Un trigger pour calculer la valeur par défaut d&#039;une colonne
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-trigger-pour-historiser-les-modifications-d-une-table">
+Un trigger pour historiser les modifications d&#039;une table
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/historisation-variante">
+Historisation : variante
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/autres-exemples-de-triggers">
+Autres exemples de triggers
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/mefions-nous-des-locks">
+Méfions-nous des locks
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/mefions-nous-de-mysql">
+Méfions-nous de MySQL
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/qu-est-ce-qu-un-trigger-1">
+<span class="arrow"></span>
+<span class="next">Qu&#039;est-ce qu&#039;un trigger ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/les-triggers-en-action">
+<span class="next">Les triggers en action</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lestriggersenaction"></a><h2>Les triggers en action</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/initialiser-les-vues-materialisees">
+<span class="arrow"></span>
+<span class="next">Initialiser les vues matérialisées</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-trigger-pour-calculer-la-valeur-par-defaut-d-une-colonne">
+<span class="next">Un trigger pour calculer la valeur par défaut d&#039;une colonne</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<pre id="r-386244" data-claire-element-id="386244"><code data-claire-semantic="sql">SELECT max(rc_date) FROM recettes_vendeurs;
++--------------+
+| max(rc_date) |
++--------------+
+| 2010-02-24   |
++--------------+</code></pre><p id="r-386245" data-claire-element-id="386245">Supposons qu'on se trouve maintenant demain. On ajoute un jour à la date.</p><pre id="r-386246" data-claire-element-id="386246"><code data-claire-semantic="sql">SELECT * FROM recettes_vendeurs WHERE rc_date &gt;= '2010-02-25';
+--&gt; rien
+
+SELECT * FROM recettes_jour_mat WHERE rc_date &gt;= '2010-02-25';
+--&gt; rien
+
+SELECT * FROM recettes_mois_mat WHERE rc_year = 2010 AND rc_month = 2;
++---------+----------+------------+
+| rc_year | rc_month | rc_montant |
++---------+----------+------------+
+|    2010 |        2 | 5019640.78 |
++---------+----------+------------+</code></pre><p id="r-386247" data-claire-element-id="386247">Quelques vendeurs insèrent leurs données :</p><pre id="r-386248" data-claire-element-id="386248"><code data-claire-semantic="sql">INSERT INTO recettes_vendeurs (vd_id, rc_date, rc_montant) VALUES
+(1,'2010-02-25',100), (2,'2010-02-25',1000), (3,'2010-02-25',10), (4,'2010-02-25',1);</code></pre><p id="r-386249" data-claire-element-id="386249">Comme par magie, on a maintenant :</p><pre id="r-386250" data-claire-element-id="386250"><code data-claire-semantic="sql">SELECT * FROM recettes_jour_mat WHERE rc_date &gt;= '2010-02-25';
++------------+------------+
+| rc_date    | rc_montant |
++------------+------------+
+| 2010-02-25 |    1111.00 |
++------------+------------+
+1 row in set (0,00 sec)
+
+SELECT * FROM recettes_mois_mat WHERE rc_year = 2010 AND rc_month = 2;
++---------+----------+------------+
+| rc_year | rc_month | rc_montant |
++---------+----------+------------+
+|    2010 |        2 | 5020751.78 |
++---------+----------+------------+</code></pre><p id="r-386251" data-claire-element-id="386251">Et voilà, le <em>trigger</em> a maintenu les informations à jour automatiquement.</p><p id="r-386252" data-claire-element-id="386252">Quel est le meilleur vendeur, chaque mois ?</p><p id="r-386253" data-claire-element-id="386253">Nous pouvons l'exprimer en SQL comme suit, de deux façons différentes. La seconde donne les ex-æquo aussi.</p><pre id="r-386254" data-claire-element-id="386254"><code data-claire-semantic="sql">SELECT 
+    best.*,
+    v.vd_name,
+    rm.rc_montant
+FROM
+    (SELECT 
+        rm.rc_year,
+        rm.rc_month,
+        (SELECT vm.vd_id 
+            FROM recettes_vendeur_mois vm 
+            WHERE vm.rc_year = rm.rc_year AND vm.rc_month = rm.rc_month 
+            ORDER BY rc_montant DESC LIMIT 1
+        ) AS vd_id
+        FROM recettes_mois rm
+    ) AS best
+    JOIN vendeurs v ON (v.vd_id = best.vd_id)
+    JOIN recettes_vendeur_mois rm 
+        ON (rm.vd_id = best.vd_id AND rm.rc_year = best.rc_year AND rm.rc_month = best.rc_month )
+ORDER BY rc_year, rc_month;
+
+SELECT 
+    best.*,
+    rm.vd_id,
+    v.vd_name
+FROM
+    (SELECT rc_year, rc_month, max(rc_montant) AS rc_montant FROM recettes_vendeur_mois GROUP BY rc_year, rc_month) AS best
+    JOIN recettes_vendeur_mois rm 
+        ON (rm.rc_year = best.rc_year AND rm.rc_month = best.rc_month AND rm.rc_montant = best.rc_montant )
+    JOIN vendeurs v ON (v.vd_id = rm.vd_id)
+ORDER BY rc_year, rc_month;</code></pre><p id="r-386255" data-claire-element-id="386255">Ces requêtes sont un peu compliquées, et aucun index ne peut être utilisé, puisque les conditions sont appliquées au résultat de l'agrégat sum(). Elles sont donc très lentes (2.2 s pour la première, et 1.8 s pour la seconde).</p><p id="r-386256" data-claire-element-id="386256">Utilisons nos vues matérialisées. Un de leurs avantages est qu'elles contiennent beaucoup moins de lignes que la table « recettes_vendeurs » :</p><pre id="r-386257" data-claire-element-id="386257"><code data-claire-semantic="sql">SELECT count(*) FROM recettes_vendeurs;            500004
+SELECT count(*) FROM recettes_vendeur_mois_mat;    16500
+SELECT count(*) FROM recettes_mois_mat;            165
+SELECT count(*) FROM recettes_jour_mat;            5001</code></pre><p id="r-386258" data-claire-element-id="386258">Par conséquent, cela risque d'être beaucoup plus rapide. Dans les deux grosses requêtes précédentes, il suffit de remplacer « recettes_vendeur_mois » par « recettes_vendeur_mois_mat » et « recettes_mois » par « recettes_mois_mat ».</p><p id="r-386259" data-claire-element-id="386259">Et nous pouvons aussi créer un index sur :</p><pre id="r-386260" data-claire-element-id="386260"><code data-claire-semantic="sql">ALTER TABLE recettes_vendeur_mois_mat ADD KEY (rc_year, rc_month, rc_montant);</code></pre><p id="r-386261" data-claire-element-id="386261">Résultat : 900 fois plus rapide (en bas à droite). Et pan.</p><pre id="r-386262" data-claire-element-id="386262"><code>&gt;           VIEWs    mat-VIEWs   mat-VIEWs + index
+Requête 1   2.2 s    0.95 s      0.95  s
+Requête 2   1.8 s    0.01 s      0.002 s</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql">Triggers et vues matérialisées (MySQL)</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-exemple-simple-3">
+Un exemple simple
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/creation-de-vues-view">
+Création de vues (VIEW)
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/qu-est-ce-qu-une-vue-materialisee">
+Qu&#039;est-ce qu&#039;une vue matérialisée ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/qu-est-ce-qu-un-trigger-1">
+Qu&#039;est-ce qu&#039;un trigger ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/initialiser-les-vues-materialisees">
+Initialiser les vues matérialisées
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/les-triggers-en-action">
+Les triggers en action
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-trigger-pour-calculer-la-valeur-par-defaut-d-une-colonne">
+Un trigger pour calculer la valeur par défaut d&#039;une colonne
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-trigger-pour-historiser-les-modifications-d-une-table">
+Un trigger pour historiser les modifications d&#039;une table
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/historisation-variante">
+Historisation : variante
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/autres-exemples-de-triggers">
+Autres exemples de triggers
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/mefions-nous-des-locks">
+Méfions-nous des locks
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/mefions-nous-de-mysql">
+Méfions-nous de MySQL
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/initialiser-les-vues-materialisees">
+<span class="arrow"></span>
+<span class="next">Initialiser les vues matérialisées</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-trigger-pour-calculer-la-valeur-par-defaut-d-une-colonne">
+<span class="next">Un trigger pour calculer la valeur par défaut d&#039;une colonne</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Untriggerpourcalculerlavaleurpardfautd039unecolonne"></a><h2>Un trigger pour calculer la valeur par défaut d&#039;une colonne</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/les-triggers-en-action">
+<span class="arrow"></span>
+<span class="next">Les triggers en action</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-trigger-pour-historiser-les-modifications-d-une-table">
+<span class="next">Un trigger pour historiser les modifications d&#039;une table</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-386264" data-claire-element-id="386264">Supposons que nous ayons une flotte de véhicules à gérer. Les véhicules peuvent être de plusieurs types (tourisme, commercial, etc).</p><p id="r-386265" data-claire-element-id="386265">Le système devra gérer les dates de contrôles techniques des véhicules, et calculer automatiquement la date du prochain contrôle, qui dépend du type de véhicule.</p><p id="r-386266" data-claire-element-id="386266">Normalement, nous utiliserions une table types_vehicules contenant les différents types de véhicules et leurs intervalles de renouvellement de contrôles techniques. Pour simplifier (et aussi parce que MySQL ne sait pas stocker un intervalle dans une table...), nous allons seulement créer une table pour les véhicules :</p><pre id="r-386267" data-claire-element-id="386267"><code data-claire-semantic="sql">CREATE TABLE vehicules(
+   vehicule_id          INTEGER PRIMARY KEY AUTO_INCREMENT,
+   vehicule_type        VARCHAR(2) NOT NULL, -- 'vt' pour tourisme et 'vc' pour commercial
+   vehicule_date_mes    DATE NOT NULL,  -- date de mise en service
+   vehicule_dernier_ct  DATE NULL       -- date du dernier contrôle technique
+) ENGINE=InnoDB;
+
+INSERT INTO vehicules (vehicule_type, vehicule_date_mes, vehicule_dernier_ct) VALUES
+ ('vc', '2010-01-01', NULL),
+ ('vt', '2010-01-01', NULL),
+ ('vc', '2005-01-01', '2009-01-01'),
+ ('vt', '2005-01-01', '2009-01-01');
+
+SELECT * FROM vehicules;
++-------------+---------------+-------------------+---------------------+
+| vehicule_id | vehicule_type | vehicule_date_mes | vehicule_dernier_ct |
++-------------+---------------+-------------------+---------------------+
+|           1 | vc            | 2010-01-01        | NULL                |
+|           2 | vt            | 2010-01-01        | NULL                |
+|           3 | vc            | 2005-01-01        | 2009-01-01          |
+|           4 | vt            | 2005-01-01        | 2009-01-01          |
++-------------+---------------+-------------------+---------------------+</code></pre><p id="r-386268" data-claire-element-id="386268">Pour calculer la date du prochain contrôle technique de chaque véhicule, nous pouvons utiliser une vue :</p><pre id="r-386269" data-claire-element-id="386269"><code data-claire-semantic="sql">CREATE VIEW vehicules_ct AS
+SELECT *, CASE 
+     WHEN vehicule_dernier_ct IS NULL THEN DATE_ADD(vehicule_date_mes, INTERVAL 4 YEAR)
+     WHEN vehicule_type = 'vt' THEN DATE_ADD(vehicule_dernier_ct, INTERVAL 2 YEAR)
+     WHEN vehicule_type = 'vc' THEN DATE_ADD(vehicule_dernier_ct, INTERVAL 1 YEAR)
+     ELSE NULL END AS vehicule_prochain_ct
+FROM vehicules;
+
+SELECT * FROM vehicules_ct;
++-------------+---------------+-------------------+---------------------+-----------------------+
+| vehicule_id | vehicule_type | vehicule_date_mes | vehicule_dernier_ct | vehicule_prochain_ct |
++-------------+---------------+-------------------+---------------------+-----------------------+
+|           1 | vc            | 2010-01-01        | NULL                | 2014-01-01            |
+|           2 | vt            | 2010-01-01        | NULL                | 2014-01-01            |
+|           3 | vc            | 2005-01-01        | 2009-01-01          | 2010-01-01            |
+|           4 | vt            | 2005-01-01        | 2009-01-01          | 2011-01-01            |
++-------------+---------------+-------------------+---------------------+-----------------------+</code></pre><p id="r-386270" data-claire-element-id="386270">La date du prochain contrôle est recalculée à chaque utilisation de la vue (qui n'est en réalité qu'un SELECT auquel on donne un nom) :</p><pre id="r-386271" data-claire-element-id="386271"><code data-claire-semantic="sql">UPDATE vehicules SET vehicule_dernier_ct = CURRENT_DATE WHERE vehicule_id = 3;
+SELECT * FROM vehicules_ct WHERE vehicule_id = 3;
++-------------+---------------+-------------------+---------------------+-----------------------+
+| vehicule_id | vehicule_type | vehicule_date_mes | vehicule_dernier_ct | vehicule_prochain_ct |
++-------------+---------------+-------------------+---------------------+-----------------------+
+|           3 | vc            | 2005-01-01        | 2011-06-20          | 2012-06-20            |
++-------------+---------------+-------------------+---------------------+-----------------------+</code></pre><p id="r-386272" data-claire-element-id="386272">La date du prochain contrôle est donc mise à jour en temps réel. Pour connaître les véhicules dont il faut prévoir le contrôle prochainement, un SELECT suffit :</p><pre id="r-386273" data-claire-element-id="386273"><code data-claire-semantic="sql">SELECT *, vehicule_prochain_ct &lt; CURRENT_DATE AS en_retard
+FROM vehicules_ct WHERE vehicule_prochain_ct &lt; CURRENT_DATE - INTERVAL 1 MONTH;
++-------------+---------------+-------------------+---------------------+----------------------+-----------+
+| vehicule_id | vehicule_type | vehicule_date_mes | vehicule_dernier_ct | vehicule_prochain_ct | en_retard |
++-------------+---------------+-------------------+---------------------+----------------------+-----------+
+|           4 | vt            | 2005-01-01        | 2009-01-01          | 2011-01-01           |         1 |
++-------------+---------------+-------------------+---------------------+----------------------+-----------+</code></pre><p id="r-386274" data-claire-element-id="386274">Un avantage appréciable de la vue est que l'algorithme de calcul de la date du prochain contrôle est placé dans la vue, au lieu d'être copié-collé dans l'application en plusieurs endroits, ce qui rend le système beaucoup plus facile à modifier si la législation vient à changer.</p><p id="r-386275" data-claire-element-id="386275">Nous aurions aussi pu placer ce calcul dans une fonction, par exemple.</p><p id="r-386276" data-claire-element-id="386276">Ici, la condition du WHERE est appliquée sur une colonne qui est calculée par la vue. MySQL ne supportant pas l'indexation des expressions ou des vues, cette condition n'est pas indexable, donc toutes les lignes devront être examinées, ce qui peut prendre un certain temps sur une grosse table.</p><p id="r-386277" data-claire-element-id="386277">Nous allons matérialiser la colonne vehicule_prochain_ct dans la table vehicules pour pouvoir l'indexer, et la tenir à jour avec des triggers.</p><p id="r-386278" data-claire-element-id="386278">Il s'agit d'une dénormalisation puisque cette colonne ne contient aucune information nouvelle (elle est calculée à partir de colonnes existantes). Le choix de la matérialiser dans la table est donc un compromis : on dénormalise pour gagner en performance.</p><pre id="r-386279" data-claire-element-id="386279"><code data-claire-semantic="sql">DROP TABLE vehicules;
+
+CREATE TABLE vehicules(
+   vehicule_id          INTEGER PRIMARY KEY AUTO_INCREMENT,
+   vehicule_type        VARCHAR(2) NOT NULL, -- 'vt' pour tourisme et 'vc' pour commercial
+   vehicule_date_mes    DATE NOT NULL,  -- date de mise en service
+   vehicule_dernier_ct  DATE NULL,      -- date du dernier contrôle technique
+   vehicule_prochain_ct DATE NULL       -- date du prochain contrôle technique
+) ENGINE=InnoDB;</code></pre><p id="r-386280" data-claire-element-id="386280">La table est la même que la précédente, plus la colonne vehicule_prochain_ct.</p><p id="r-386281" data-claire-element-id="386281">Un trigger BEFORE INSERT (ou BEFORE UPDATE) peut manipuler les données <strong>avant</strong> leur insertion dans la table, ce qui permet, entre autres, de :</p><ul id="r-386290" data-claire-element-id="386290"><li id="r-386283" data-claire-element-id="386283"><p id="r-386282" data-claire-element-id="386282">Mettre dans une colonne une valeur par défaut dépendant des autres colonnes ou d'un calcul</p></li><li id="r-386285" data-claire-element-id="386285"><p id="r-386284" data-claire-element-id="386284">Vérifier la validité des informations et renvoyer une erreur le cas échéant</p></li><li id="r-386287" data-claire-element-id="386287"><p id="r-386286" data-claire-element-id="386286">Entraîner une action si la valeur d'une colonne change dans un UPDATE (NEW.colonne != OLD.colonne)</p></li><li id="r-386289" data-claire-element-id="386289"><p id="r-386288" data-claire-element-id="386288">etc.</p></li></ul><p id="r-386291" data-claire-element-id="386291">Un trigger AFTER INSERT (ou AFTER UPDATE) ne peut pas manipuler ces données, car la table a déjà été mise à jour lors de l'appel du trigger.</p><p id="r-386292" data-claire-element-id="386292">Pour modifier la ligne avant son insertion, on n'utilise pas la commande UPDATE (qui modifie le contenu d'une table). Il faut modifier le contenu de la variable NEW. MySQL utilise une syntaxe particulière (SET), à retenir.</p><p id="r-386293" data-claire-element-id="386293">Dans un trigger BEFORE INSERT, nous avons accès à la variable NEW uniquement (contenu de la ligne à insérer, provenant des VALUES() de la commande INSERT, plus les DEFAULT)<br/> Dans un trigger BEFORE UPDATE, nous avons accès aux variables NEW (nouveau contenu de la ligne, modifié par l'UPDATE) et OLD (ancien contenu de la ligne).</p><p id="r-386294" data-claire-element-id="386294">Ce trigger sera donc très simple : il suffit de changer la valeur de NEW.vehicule_prochain_ct en fonction des autres colonnes.</p><pre id="r-386295" data-claire-element-id="386295"><code data-claire-semantic="sql">DELIMITER //
+CREATE TRIGGER vehicules_bi BEFORE INSERT
+ON vehicules
+FOR EACH ROW
+BEGIN
+   SET NEW.vehicule_prochain_ct = CASE 
+     WHEN NEW.vehicule_dernier_ct IS NULL THEN DATE_ADD(NEW.vehicule_date_mes, INTERVAL 4 YEAR)
+     WHEN NEW.vehicule_type = 'vt' THEN DATE_ADD(NEW.vehicule_dernier_ct, INTERVAL 2 YEAR)
+     WHEN NEW.vehicule_type = 'vc' THEN DATE_ADD(NEW.vehicule_dernier_ct, INTERVAL 1 YEAR)
+     ELSE NULL END;
+END; 
+//
+CREATE TRIGGER vehicules_bu BEFORE UPDATE
+ON vehicules
+FOR EACH ROW
+BEGIN
+   SET NEW.vehicule_prochain_ct = CASE 
+     WHEN NEW.vehicule_dernier_ct IS NULL THEN DATE_ADD(NEW.vehicule_date_mes, INTERVAL 4 YEAR)
+     WHEN NEW.vehicule_type = 'vt' THEN DATE_ADD(NEW.vehicule_dernier_ct, INTERVAL 2 YEAR)
+     WHEN NEW.vehicule_type = 'vc' THEN DATE_ADD(NEW.vehicule_dernier_ct, INTERVAL 1 YEAR)
+     ELSE NULL END;
+END; 
+//
+DELIMITER ;</code></pre><p id="r-386296" data-claire-element-id="386296">Dans le trigger BEFORE UPDATE, NEW.vehicule_prochain_ct est toujours modifié : tout UPDATE modifiant cette colonne sera donc écrasé avec la valeur calculée.</p><p id="r-386297" data-claire-element-id="386297">Il serait possible de modifier ce comportement : soit permettre la modification (pourquoi faire ?), soit provoquer une erreur si une modification est tentée (avec un IF NEW.vehicule_prochain_ct != OLD.vehicule_prochain_ct placé avant le SET).</p><pre id="r-386298" data-claire-element-id="386298"><code data-claire-semantic="sql">INSERT INTO vehicules (vehicule_type, vehicule_date_mes, vehicule_dernier_ct) VALUES
+ ('vc', '2010-01-01', NULL),
+ ('vt', '2010-01-01', NULL),
+ ('vc', '2005-01-01', '2009-01-01'),
+ ('vt', '2005-01-01', '2009-01-01');
+
+SELECT * FROM vehicules;
++-------------+---------------+-------------------+---------------------+----------------------+
+| vehicule_id | vehicule_type | vehicule_date_mes | vehicule_dernier_ct | vehicule_prochain_ct |
++-------------+---------------+-------------------+---------------------+----------------------+
+|           1 | vc            | 2010-01-01        | NULL                | 2014-01-01           |
+|           2 | vt            | 2010-01-01        | NULL                | 2014-01-01           |
+|           3 | vc            | 2005-01-01        | 2009-01-01          | 2010-01-01           |
+|           4 | vt            | 2005-01-01        | 2009-01-01          | 2011-01-01           |
++-------------+---------------+-------------------+---------------------+----------------------+</code></pre><p id="r-386299" data-claire-element-id="386299">Les modifications sont gérées par le trigger BEFORE UPDATE :</p><pre id="r-386300" data-claire-element-id="386300"><code data-claire-semantic="sql">UPDATE vehicules SET vehicule_dernier_ct = CURRENT_DATE WHERE vehicule_id = 3;
+SELECT * FROM vehicules_ct WHERE vehicule_id = 3;
++-------------+---------------+-------------------+---------------------+----------------------+
+| vehicule_id | vehicule_type | vehicule_date_mes | vehicule_dernier_ct | vehicule_prochain_ct |
++-------------+---------------+-------------------+---------------------+----------------------+
+|           3 | vc            | 2005-01-01        | 2011-06-20          | 2012-06-20           |
++-------------+---------------+-------------------+---------------------+----------------------+</code></pre><p id="r-386301" data-claire-element-id="386301">Le comportement est identique à celui de la vue : la colonne vehicule_prochain_ct est tenue à jour.</p><p id="r-386302" data-claire-element-id="386302">Les modifications (INSERT, UPDATE) sont légèrement ralenties puisqu'il faut exécuter le trigger. Par contre, la colonne vehicule_prochain_ct existe réellement, elle peut donc être indexée, ce qui peut être utile.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql">Triggers et vues matérialisées (MySQL)</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-exemple-simple-3">
+Un exemple simple
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/creation-de-vues-view">
+Création de vues (VIEW)
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/qu-est-ce-qu-une-vue-materialisee">
+Qu&#039;est-ce qu&#039;une vue matérialisée ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/qu-est-ce-qu-un-trigger-1">
+Qu&#039;est-ce qu&#039;un trigger ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/initialiser-les-vues-materialisees">
+Initialiser les vues matérialisées
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/les-triggers-en-action">
+Les triggers en action
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-trigger-pour-calculer-la-valeur-par-defaut-d-une-colonne">
+Un trigger pour calculer la valeur par défaut d&#039;une colonne
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-trigger-pour-historiser-les-modifications-d-une-table">
+Un trigger pour historiser les modifications d&#039;une table
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/historisation-variante">
+Historisation : variante
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/autres-exemples-de-triggers">
+Autres exemples de triggers
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/mefions-nous-des-locks">
+Méfions-nous des locks
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/mefions-nous-de-mysql">
+Méfions-nous de MySQL
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/les-triggers-en-action">
+<span class="arrow"></span>
+<span class="next">Les triggers en action</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-trigger-pour-historiser-les-modifications-d-une-table">
+<span class="next">Un trigger pour historiser les modifications d&#039;une table</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Untriggerpourhistoriserlesmodificationsd039unetable"></a><h2>Un trigger pour historiser les modifications d&#039;une table</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-trigger-pour-calculer-la-valeur-par-defaut-d-une-colonne">
+<span class="arrow"></span>
+<span class="next">Un trigger pour calculer la valeur par défaut d&#039;une colonne</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/historisation-variante">
+<span class="next">Historisation : variante</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-386304" data-claire-element-id="386304">Qui a modifié cette maudite fiche client ? C'est encore la faute du stagiaire !...</p><p id="r-386305" data-claire-element-id="386305">Certaines bases de données proposent des fonctions PITR (Point in time recovery) pour retrouver l'état de la base de donnée à un instant précis, ou bien des systèmes de versions qui permettent de tracer l'historique d'une ligne dans une table.</p><p id="r-386306" data-claire-element-id="386306">Ici, nous verrons un exemple simple d'utilisation de triggers pour enregistrer une historique des modifications d'une table.</p><p id="r-386307" data-claire-element-id="386307">Soit une table d'utilisateurs :</p><pre id="r-386308" data-claire-element-id="386308"><code data-claire-semantic="sql">CREATE TABLE users (
+   user_id           INTEGER PRIMARY KEY AUTO_INCREMENT,
+   user_create_dt    DATETIME NOT NULL,          -- date de création
+
+   -- colonnes historisées :
+   user_name         VARCHAR( 255 ) NOT NULL,
+   user_level        INTEGER NOT NULL DEFAULT 0, -- droits de l'utilisateur
+   user_comment      TEXT NULL,                  -- commentaires de l'admin
+   user_lastmod_dt   DATETIME NOT NULL,          -- date de dernière modification 
+   user_lastmod_db_user VARCHAR( 255 ) NOT NULL, -- qui a effectué la dernière modification (login mysql)
+   user_lastmod_user_id INTEGER NULL             -- qui a effectué la dernière modification (id utilisateur)
+                        REFERENCES users( user_id ) ON DELETE SET NULL
+) ENGINE=InnoDB;</code></pre><p id="r-386309" data-claire-element-id="386309">Mettons que user_level vaut 0 pour un utilisateur standard, 1 pour un modérateur, et 2 pour un admin par exemple.</p><p id="r-386310" data-claire-element-id="386310">Une table pour l'historique :</p><pre id="r-386311" data-claire-element-id="386311"><code data-claire-semantic="sql">CREATE TABLE users_history (
+   user_id           INTEGER NOT NULL REFERENCES users( user_id ) ON DELETE CASCADE,
+   user_lastmod_dt   DATETIME NOT NULL,
+   PRIMARY KEY (user_id,user_lastmod_dt),
+
+   -- colonnes historisées :
+   user_name         VARCHAR( 255 ) NOT NULL,
+   user_level        INTEGER NOT NULL DEFAULT 0, -- droits de l'utilisateur
+   user_comment      TEXT NULL,                  -- commentaires de l'admin
+   user_lastmod_db_user VARCHAR( 255 ) NOT NULL, -- qui a effectué la dernière modification (login mysql)
+   user_lastmod_user_id INTEGER NULL             -- qui a effectué la dernière modification (id utilisateur)
+                        REFERENCES users( user_id ) ON DELETE SET NULL
+) ENGINE=InnoDB;</code></pre><p id="r-386312" data-claire-element-id="386312">Nous allons donc stocker les informations <strong>courantes</strong> dans la table users, et les informations <strong>passées</strong> (l'historique) dans users_history.</p><p id="r-386313" data-claire-element-id="386313">Il y a d'autres façons de faire : par exemple nous aurions pu définir que les valeurs courantes sont données par l'enregistrement le plus récent dans users_history, et supprimer les colonnes concernées de la table users, mais cela générerait des jointures complexes pour récupérer les dernières informations, ce qui peut être gênant si on les utilise souvent.</p><p id="r-386314" data-claire-element-id="386314">Ici, les suppressions ne seront pas gérées : la suppression d'un utilisateur entraînera la suppression de son historique. Nous pourrions aussi créer des tables d'archivage, et au moyen d'un trigger ON DELETE, déplacer la ligne de la table users, et les lignes de la table users_history qui en dépendent, vers ces tables d'archivage. Pour des utilisateurs (cas d'un forum par exemple) le choix le plus courant est de ne pas effacer les utilisateurs mais plutôt de les désactiver, car cela entraînerait des problèmes avec les références depuis les tables de posts (affichage de pseudos inconnus, etc).</p><p id="r-386315" data-claire-element-id="386315">Définissions les triggers : quand une modification est effectuée sur la table des utilisateurs, les valeurs précédentes doivent être déplacées vers la table d'historique. Puisque les valeurs courantes sont stockées dans la table users, l'insertion d'une ligne ne créera pas d'historique, mais il nous faut tout de même un trigger BEFORE INSERT pour gérer les valeurs par défaut des colonnes.</p><p id="r-386316" data-claire-element-id="386316">Pour enregistrer l'utilisateur qui a effectué les modifications, il y a plusieurs options :</p><ul id="r-386321" data-claire-element-id="386321"><li id="r-386318" data-claire-element-id="386318"><p id="r-386317" data-claire-element-id="386317">Utiliser l'utilisateur SQL courant : c'est le plus robuste puisque MySQL gère les permissions et les comptes, mais cela oblige à créer un compte MySQL par utilisateur.</p></li><li id="r-386320" data-claire-element-id="386320"><p id="r-386319" data-claire-element-id="386319">Utiliser une variable de session qui contient l'id de l'utilisateur qui fait la modification (ici, un utilisateur de site web, stocké dans la table users) ce qui permet d'éviter de créer un compte MySQL par utilisateur, mais oblige à initialiser une variable de session à la connection.</p></li></ul><p id="r-386322" data-claire-element-id="386322">Les deux façons de faire sont montrées ici.</p><pre id="r-386323" data-claire-element-id="386323"><code data-claire-semantic="sql">DELIMITER //
+CREATE TRIGGER users_bi BEFORE INSERT
+ON users
+FOR EACH ROW
+BEGIN
+   -- MySQL ne sait pas faire &quot;DEFAULT now()&quot;... 
+   SET NEW.user_create_dt  = NOW();
+
+   -- Valeurs par défaut des autres colonnes :
+   SET NEW.user_lastmod_dt      = NEW.user_create_dt;
+   SET NEW.user_lastmod_db_user = CURRENT_USER;
+   SET NEW.user_lastmod_user_id = @current_user_id;
+END;
+//
+CREATE TRIGGER users_bu BEFORE UPDATE
+ON users
+FOR EACH ROW
+BEGIN
+   -- mise à jour des informations courantes dans la table users
+   -- par modification de la ligne en cours (variable NEW)
+   SET NEW.user_lastmod_dt      = NOW();
+   SET NEW.user_lastmod_db_user = CURRENT_USER;
+   SET NEW.user_lastmod_user_id = @current_user_id;
+
+   -- enregistrement dans la table d'historique des valeurs précédentes (variable OLD)
+   INSERT INTO users_history (
+      user_id,
+      user_lastmod_dt,
+      user_name,
+      user_level,
+      user_comment,
+      user_lastmod_db_user,
+      user_lastmod_user_id)
+   VALUES (
+      OLD.user_id,
+      OLD.user_lastmod_dt,
+      OLD.user_name,
+      OLD.user_level,
+      OLD.user_comment,
+      OLD.user_lastmod_db_user,
+      OLD.user_lastmod_user_id
+   );
+END; 
+//
+DELIMITER ;</code></pre><p id="r-386324" data-claire-element-id="386324">En avant pour le test : il faut d'abord créer un utilisateur &quot;racine&quot; qui devra créer les autres.</p><pre id="r-386325" data-claire-element-id="386325"><code data-claire-semantic="sql">mysql&gt; INSERT INTO users (user_name, user_level) VALUES ('Admin',2);
+Query OK, 1 row affected, 3 warnings (0.02 sec)
+
+mysql&gt; SHOW WARNINGS;
++---------+------+-----------------------------------------------------------+
+| Level   | Code | Message                                                   |
++---------+------+-----------------------------------------------------------+
+| Warning | 1364 | Field 'user_create_dt' doesn't have a default value       |
+| Warning | 1364 | Field 'user_lastmod_dt' doesn't have a default value      |
+| Warning | 1364 | Field 'user_lastmod_db_user' doesn't have a default value |
++---------+------+-----------------------------------------------------------+
+
+mysql&gt; select * from users;
++---------+---------------------+-----------+------------+--------------+---------------------+----------------------+----------------------+
+| user_id | user_create_dt      | user_name | user_level | user_comment | user_lastmod_dt     | user_lastmod_db_user | user_lastmod_user_id |
++---------+---------------------+-----------+------------+--------------+---------------------+----------------------+----------------------+
+|       1 | 2011-06-20 16:58:21 | Admin     |          2 | NULL         | 2011-06-20 16:58:21 | lord@localhost       |                 NULL |
++---------+---------------------+-----------+------------+--------------+---------------------+----------------------+----------------------+</code></pre><p id="r-386326" data-claire-element-id="386326">Il y a des warnings... en effet les 3 colonnes qui sont initialisées par le trigger valent, au départ, NULL. Et elles sont spécifiées comme NOT NULL. Pour éviter les warnings, il faudrait se répéter et mettre des valeurs par défaut dans l'INSERT, ce qui n'est pas vraiment utile. Le trigger a en tout cas fonctionné : nous ne voyons pas &quot;ERROR 1048 (23000): Column 'machin' cannot be null&quot;.</p><p id="r-386327" data-claire-element-id="386327">Supposons que l'utilisateur &quot;admin&quot; se log sur le site et créé deux utilisateurs :</p><pre id="r-386328" data-claire-element-id="386328"><code data-claire-semantic="sql">SET @current_user_id = 1; -- effectué au login sur le site
+
+INSERT INTO users (user_name, user_level) VALUES ('Modérateur',1);
+INSERT INTO users (user_name, user_level) VALUES ('Machin',0);
+
++---------+---------------------+-------------+------------+--------------+---------------------+----------------------+----------------------+
+| user_id | user_create_dt      | user_name   | user_level | user_comment | user_lastmod_dt     | user_lastmod_db_user | user_lastmod_user_id |
++---------+---------------------+-------------+------------+--------------+---------------------+----------------------+----------------------+
+|       1 | 2011-06-20 16:58:21 | Admin       |          2 | NULL         | 2011-06-20 16:58:21 | lord@localhost       |                 NULL |
+|       2 | 2011-06-20 16:58:43 | Modérateur  |          1 | NULL         | 2011-06-20 16:58:43 | lord@localhost       |                    1 |
+|       3 | 2011-06-20 16:58:43 | Machin      |          0 | NULL         | 2011-06-20 16:58:43 | lord@localhost       |                    1 |
++---------+---------------------+-------------+------------+--------------+---------------------+----------------------+----------------------+</code></pre><p id="r-386329" data-claire-element-id="386329">Les colonnes de DATETIME ainsi que user_lastmod_db_user et user_lastmod_user_id ont bien été mises à jour.</p><p id="r-386330" data-claire-element-id="386330">Supposons que l'utilisateur &quot;Modérateur&quot; se log sur le site et modifie l'utilisateur &quot;Machin&quot; pour lui donner des droits :</p><pre id="r-386331" data-claire-element-id="386331"><code data-claire-semantic="sql">SET @current_user_id = 2; -- effectué au login sur le site
+
+UPDATE users SET user_level = 1, user_comment = 'Pistonné' WHERE user_id = 3;
+
+mysql&gt; SELECT * FROM users;
++---------+---------------------+-------------+------------+--------------+---------------------+----------------------+----------------------+
+| user_id | user_create_dt      | user_name   | user_level | user_comment | user_lastmod_dt     | user_lastmod_db_user | user_lastmod_user_id |
++---------+---------------------+-------------+------------+--------------+---------------------+----------------------+----------------------+
+|       1 | 2011-06-20 16:58:21 | Admin       |          2 | NULL         | 2011-06-20 16:58:21 | lord@localhost       |                 NULL |
+|       2 | 2011-06-20 16:58:43 | Modérateur  |          1 | NULL         | 2011-06-20 16:58:43 | lord@localhost       |                    1 |
+|       3 | 2011-06-20 16:58:43 | Machin      |          1 | Pistonné     | 2011-06-20 16:59:11 | lord@localhost       |                    2 |
++---------+---------------------+-------------+------------+--------------+---------------------+----------------------+----------------------+
+
+mysql&gt; SELECT * FROM users_history;
++---------+---------------------+-----------+------------+--------------+----------------------+----------------------+
+| user_id | user_lastmod_dt     | user_name | user_level | user_comment | user_lastmod_db_user | user_lastmod_user_id |
++---------+---------------------+-----------+------------+--------------+----------------------+----------------------+
+|       3 | 2011-06-20 16:58:43 | Machin    |          0 | NULL         | lord@localhost       |                    1 |
++---------+---------------------+-----------+------------+--------------+----------------------+----------------------+</code></pre><p id="r-386332" data-claire-element-id="386332">Le trigger a modifié les colonnes user_lastmod_dt et user_lastmod_user_id dans la table users, et inséré une ligne dans users_history avec les anciennes informations.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql">Triggers et vues matérialisées (MySQL)</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-exemple-simple-3">
+Un exemple simple
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/creation-de-vues-view">
+Création de vues (VIEW)
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/qu-est-ce-qu-une-vue-materialisee">
+Qu&#039;est-ce qu&#039;une vue matérialisée ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/qu-est-ce-qu-un-trigger-1">
+Qu&#039;est-ce qu&#039;un trigger ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/initialiser-les-vues-materialisees">
+Initialiser les vues matérialisées
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/les-triggers-en-action">
+Les triggers en action
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-trigger-pour-calculer-la-valeur-par-defaut-d-une-colonne">
+Un trigger pour calculer la valeur par défaut d&#039;une colonne
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-trigger-pour-historiser-les-modifications-d-une-table">
+Un trigger pour historiser les modifications d&#039;une table
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/historisation-variante">
+Historisation : variante
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/autres-exemples-de-triggers">
+Autres exemples de triggers
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/mefions-nous-des-locks">
+Méfions-nous des locks
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/mefions-nous-de-mysql">
+Méfions-nous de MySQL
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-trigger-pour-calculer-la-valeur-par-defaut-d-une-colonne">
+<span class="arrow"></span>
+<span class="next">Un trigger pour calculer la valeur par défaut d&#039;une colonne</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/historisation-variante">
+<span class="next">Historisation : variante</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Historisationvariante"></a><h2>Historisation : variante</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-trigger-pour-historiser-les-modifications-d-une-table">
+<span class="arrow"></span>
+<span class="next">Un trigger pour historiser les modifications d&#039;une table</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/autres-exemples-de-triggers">
+<span class="next">Autres exemples de triggers</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-386334" data-claire-element-id="386334">Nous pouvons aussi stocker les informations courantes dans la table d'historique. Pour les retrouver facilement, nous utiliserons la date de dernière modification de la table principale.</p><pre id="r-386335" data-claire-element-id="386335"><code data-claire-semantic="sql">CREATE TABLE users (
+   user_id           INTEGER PRIMARY KEY AUTO_INCREMENT,
+   user_create_dt    DATETIME NOT NULL,          -- date de création
+   user_lastmod_dt   DATETIME NOT NULL           -- date de dernière modification 
+) ENGINE=InnoDB;
+
+CREATE TABLE users_history (
+   user_id           INTEGER NOT NULL REFERENCES users( user_id ) ON DELETE CASCADE,
+   user_lastmod_dt   DATETIME NOT NULL,
+   PRIMARY KEY (user_id,user_lastmod_dt),
+
+   -- colonnes historisées :
+   user_name         VARCHAR( 255 ) NOT NULL,
+   user_level        INTEGER NOT NULL DEFAULT 0, -- droits de l'utilisateur
+   user_comment      TEXT NULL,                  -- commentaires de l'admin
+   user_lastmod_db_user VARCHAR( 255 ) NOT NULL, -- qui a effectué la dernière modification (login mysql)
+   user_lastmod_user_id INTEGER NULL             -- qui a effectué la dernière modification (id utilisateur)
+                        REFERENCES users( user_id ) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+DELIMITER //
+CREATE TRIGGER users_history_ai BEFORE INSERT
+ON users_history
+FOR EACH ROW
+BEGIN
+   SET NEW.user_lastmod_dt      = NOW();
+   SET NEW.user_lastmod_db_user = CURRENT_USER;
+   SET NEW.user_lastmod_user_id = @current_user_id;
+
+   -- reporte le timestamp de la dernière version de l'historique dans la table users
+   UPDATE users SET user_lastmod_dt = NEW.user_lastmod_dt WHERE user_id=NEW.user_id;
+END;
+//
+DELIMITER ;
+
+-- une vue pour récupérer l'état courant
+CREATE VIEW users_current AS
+SELECT * FROM users LEFT JOIN users_history USING (user_id, user_lastmod_dt);</code></pre><p id="r-386336" data-claire-element-id="386336">L'insertion d'un utilisateur se fait en deux parties puisqu'il faut entrer une ligne dans chaque table. Les valeurs de datetime à insérer dans users seront modifiées par l'insertion dans users_history, mais comme les colonnes sont NOT NULL, il faut mettre une valeur bidon, par exemple now().</p><pre id="r-386337" data-claire-element-id="386337"><code data-claire-semantic="sql">SET @current_user_id = NULL;
+
+BEGIN;
+INSERT INTO users (user_create_dt,user_lastmod_dt) VALUES (NOW(),NOW());
+INSERT INTO users_history (user_id, user_name, user_level) VALUES (LAST_INSERT_ID(), 'Admin', 2);
+COMMIT;
+
+-- Admin se log
+SET @current_user_id = 1; -- effectué au login sur le site
+
+-- Admin créé 2 utilisateurs
+BEGIN;
+INSERT INTO users (user_create_dt,user_lastmod_dt) VALUES (NOW(),NOW());
+INSERT INTO users_history (user_id, user_name, user_level) VALUES (LAST_INSERT_ID(), 'Modérateur', 1);
+
+INSERT INTO users (user_create_dt,user_lastmod_dt) VALUES (NOW(),NOW());
+INSERT INTO users_history (user_id, user_name, user_level) VALUES (LAST_INSERT_ID(), 'Machin', 0);
+COMMIT;
+
+
+mysql&gt; SELECT * FROM users_current;
++---------+---------------------+---------------------+-------------+------------+--------------+----------------------+----------------------+
+| user_id | user_lastmod_dt     | user_create_dt      | user_name   | user_level | user_comment | user_lastmod_db_user | user_lastmod_user_id |
++---------+---------------------+---------------------+-------------+------------+--------------+----------------------+----------------------+
+|       1 | 2011-06-20 17:28:48 | 2011-06-20 17:28:48 | Admin       |          2 | NULL         | lord@localhost       |                 NULL |
+|       2 | 2011-06-20 17:34:51 | 2011-06-20 17:34:51 | Modérateur  |          1 | NULL         | lord@localhost       |                 NULL |
+|       3 | 2011-06-20 17:34:51 | 2011-06-20 17:34:51 | Machin      |          0 | NULL         | lord@localhost       |                 NULL |
++---------+---------------------+---------------------+-------------+------------+--------------+----------------------+----------------------+</code></pre><p id="r-386338" data-claire-element-id="386338">Avec la VIEW, le résultat est identique à celui de la méthode précédente. On ne sait pas d'où viennent les données.</p><p id="r-386339" data-claire-element-id="386339">On pourrait éventuellement créer une RULE sur la VIEW, pour qu'un UPDATE sur cette VIEW soit transformé directement en INSERT dans la table d'historique. Mais MySQL ne supporte pas les RULEs... ni les triggers sur les views d'ailleurs.</p><p id="r-386340" data-claire-element-id="386340">Un UPDATE sur la table users doit donc être remplacé par un INSERT dans la table users_history, avec les nouvelles valeurs à utiliser.</p><p id="r-386341" data-claire-element-id="386341">Comme plus haut, supposons que l'utilisateur &quot;Modérateur&quot; se log sur le site et modifie l'utilisateur &quot;Machin&quot; pour lui donner des droits :</p><pre id="r-386342" data-claire-element-id="386342"><code data-claire-semantic="sql">SET @current_user_id = 2; -- effectué au login sur le site
+
+INSERT INTO users_history (user_id, user_name, user_level, user_comment) VALUES (3, 'Machin', 1, 'Pistonné');
+
+mysql&gt; SELECT * FROM users_current;
++---------+---------------------+---------------------+-------------+------------+--------------+----------------------+----------------------+
+| user_id | user_lastmod_dt     | user_create_dt      | user_name   | user_level | user_comment | user_lastmod_db_user | user_lastmod_user_id |
++---------+---------------------+---------------------+-------------+------------+--------------+----------------------+----------------------+
+|       1 | 2011-06-20 17:28:48 | 2011-06-20 17:28:48 | Admin       |          2 | NULL         | lord@localhost       |                 NULL |
+|       2 | 2011-06-20 17:34:51 | 2011-06-20 17:34:51 | Modérateur  |          1 | NULL         | lord@localhost       |                 NULL |  
+|       3 | 2011-06-20 17:36:55 | 2011-06-20 17:34:51 | Machin      |          1 | Pistonné     | lord@localhost       |                    2 |
++---------+---------------------+---------------------+-------------+------------+--------------+----------------------+----------------------+
+3 rows in set (0.00 sec)
+
+mysql&gt; SELECT * FROM users_history;
++---------+---------------------+-------------+------------+--------------+----------------------+----------------------+
+| user_id | user_lastmod_dt     | user_name   | user_level | user_comment | user_lastmod_db_user | user_lastmod_user_id |
++---------+---------------------+-------------+------------+--------------+----------------------+----------------------+
+|       1 | 2011-06-20 17:28:48 | Admin       |          2 | NULL         | lord@localhost       |                 NULL |
+|       2 | 2011-06-20 17:34:51 | Modérateur  |          1 | NULL         | lord@localhost       |                 NULL |
+|       3 | 2011-06-20 17:34:51 | Machin      |          0 | NULL         | lord@localhost       |                 NULL |
+|       3 | 2011-06-20 17:36:55 | Machin      |          1 | Pistonné     | lord@localhost       |                    2 |
++---------+---------------------+-------------+------------+--------------+----------------------+----------------------+</code></pre><p id="r-386343" data-claire-element-id="386343">La table users_history contient alors au minimum une ligne par utilisateur (contrairement à l'exemple précédent où elle pouvait n'en contenir aucune) et ici, une ligne plus ancienne pour l'utilisateur 3.</p><p id="r-386344" data-claire-element-id="386344">Quelle solution est la meilleure ? Ça dépend...</p><p id="r-386345" data-claire-element-id="386345">Si on souhaitait ajouter d'autres informations à l'historique, qui n'ont pas leur place dans la table principale, la seconde solution est la plus pertinente : par exemple, pour gérer des véhicules, la table d'historique pourrait contenir des informations sur les interventions effectuées, réparations, devis, factures, et commentaires. La vue qui donne l'état courant du véhicule ne pourrait montrer que certaines colonnes de cette table d'historique, par exemple l'état courant. Mais on s'éloigne d'une historisation pure...</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql">Triggers et vues matérialisées (MySQL)</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-exemple-simple-3">
+Un exemple simple
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/creation-de-vues-view">
+Création de vues (VIEW)
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/qu-est-ce-qu-une-vue-materialisee">
+Qu&#039;est-ce qu&#039;une vue matérialisée ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/qu-est-ce-qu-un-trigger-1">
+Qu&#039;est-ce qu&#039;un trigger ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/initialiser-les-vues-materialisees">
+Initialiser les vues matérialisées
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/les-triggers-en-action">
+Les triggers en action
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-trigger-pour-calculer-la-valeur-par-defaut-d-une-colonne">
+Un trigger pour calculer la valeur par défaut d&#039;une colonne
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-trigger-pour-historiser-les-modifications-d-une-table">
+Un trigger pour historiser les modifications d&#039;une table
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/historisation-variante">
+Historisation : variante
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/autres-exemples-de-triggers">
+Autres exemples de triggers
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/mefions-nous-des-locks">
+Méfions-nous des locks
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/mefions-nous-de-mysql">
+Méfions-nous de MySQL
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-trigger-pour-historiser-les-modifications-d-une-table">
+<span class="arrow"></span>
+<span class="next">Un trigger pour historiser les modifications d&#039;une table</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/autres-exemples-de-triggers">
+<span class="next">Autres exemples de triggers</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Autresexemplesdetriggers"></a><h2>Autres exemples de triggers</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/historisation-variante">
+<span class="arrow"></span>
+<span class="next">Historisation : variante</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/mefions-nous-des-locks">
+<span class="next">Méfions-nous des locks</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-386347" data-claire-element-id="386347">Voici quelques exemples (non vérifiés) de ce que l'on peut faire avec des <em>triggers</em>.</p><p id="r-386348" data-claire-element-id="386348">Mettre à jour les colonnes d'un <em>topic</em> à chaque fois qu'un <em>post</em> est inséré dedans :</p><pre id="r-386349" data-claire-element-id="386349"><code data-claire-semantic="sql">CREATE TRIGGER posts_insert_t
+AFTER INSERT ON posts
+FOR EACH ROW
+BEGIN
+    UPDATE topics SET
+        last_post_id = NEW.post_id,
+        last_post_time = NEW.post_time,
+        last_post_user_id = NEW.user_id,
+        post_count = post_count + 1
+        WHERE topic_id = NEW.topic_id;
+END;</code></pre><p id="r-386350" data-claire-element-id="386350">Un <em>trigger</em> du même style mettra à jour la table « forums » en fonction des <em>topics</em>, et il faudra gérer la suppression des topics et des posts pour décrémenter le nombre de topics/posts.</p><p id="r-386351" data-claire-element-id="386351">On peut aussi, lors de l'insertion ou de la modification d'une ligne, utiliser un <em>trigger</em> pour ajouter une tâche à faire plus tard dans une table de <em>jobs</em>. Un programme en tâche de fond examine régulièrement cette table, exécute les <em>jobs</em> et supprime les lignes. Cela permet de répondre rapidement à l'utilisateur, sans devoir attendre la fin du traitement. Par exemple :</p><ul id="r-386366" data-claire-element-id="386366"><li id="r-386353" data-claire-element-id="386353"><p id="r-386352" data-claire-element-id="386352">réindexer un texte dans Xapian ;</p></li><li id="r-386355" data-claire-element-id="386355"><p id="r-386354" data-claire-element-id="386354">redimensionner une image ;</p></li><li id="r-386357" data-claire-element-id="386357"><p id="r-386356" data-claire-element-id="386356">réencoder un fichier vidéo ;</p></li><li id="r-386359" data-claire-element-id="386359"><p id="r-386358" data-claire-element-id="386358">faire valider un profil par un humain ;</p></li><li id="r-386361" data-claire-element-id="386361"><p id="r-386360" data-claire-element-id="386360">envoyer des <em>newsletters</em> ;</p></li><li id="r-386363" data-claire-element-id="386363"><p id="r-386362" data-claire-element-id="386362">mettre à jour un cache ;</p></li><li id="r-386365" data-claire-element-id="386365"><p id="r-386364" data-claire-element-id="386364">etc.</p></li></ul><p id="r-386367" data-claire-element-id="386367">Les <em>triggers</em> peuvent aussi être utilisés pour vérifier des contraintes : comme MySQL ne supporte pas de contrainte CHECK, on peut utiliser un <em>trigger</em> qui vérifie les données ; et si elles sont erronées, il provoque une erreur.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql">Triggers et vues matérialisées (MySQL)</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-exemple-simple-3">
+Un exemple simple
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/creation-de-vues-view">
+Création de vues (VIEW)
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/qu-est-ce-qu-une-vue-materialisee">
+Qu&#039;est-ce qu&#039;une vue matérialisée ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/qu-est-ce-qu-un-trigger-1">
+Qu&#039;est-ce qu&#039;un trigger ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/initialiser-les-vues-materialisees">
+Initialiser les vues matérialisées
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/les-triggers-en-action">
+Les triggers en action
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-trigger-pour-calculer-la-valeur-par-defaut-d-une-colonne">
+Un trigger pour calculer la valeur par défaut d&#039;une colonne
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-trigger-pour-historiser-les-modifications-d-une-table">
+Un trigger pour historiser les modifications d&#039;une table
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/historisation-variante">
+Historisation : variante
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/autres-exemples-de-triggers">
+Autres exemples de triggers
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/mefions-nous-des-locks">
+Méfions-nous des locks
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/mefions-nous-de-mysql">
+Méfions-nous de MySQL
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/historisation-variante">
+<span class="arrow"></span>
+<span class="next">Historisation : variante</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/mefions-nous-des-locks">
+<span class="next">Méfions-nous des locks</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Mfions-nousdeslocks"></a><h2>Méfions-nous des locks</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/autres-exemples-de-triggers">
+<span class="arrow"></span>
+<span class="next">Autres exemples de triggers</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/mefions-nous-de-mysql">
+<span class="next">Méfions-nous de MySQL</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-386369" data-claire-element-id="386369">Il faut aussi se méfier des <em>locks</em> : dans l'exemple cité, les INSERT sur la table « recettes_vendeurs » déclenchent une UPDATE sur la table « recettes_mois ». Par conséquent, on ne peut exécuter simultanément deux INSERT INTO recettes_vendeurs, si les deux dates insérées sont dans le même mois : les INSERT seront sérialisées.</p><p id="r-386370" data-claire-element-id="386370">À l'extrême, si l'on utilisait des <em>triggers</em> pour mettre à jour un compteur global par exemple, tous les INSERTS seraient sérialisées. Il faut tenter d'éviter cette situation, et utiliser des transactions courtes (par exemple, l'<em>output buffering</em> de PHP doit être activé), car les <em>locks</em> subsistent jusqu'au COMMIT.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql">Triggers et vues matérialisées (MySQL)</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-exemple-simple-3">
+Un exemple simple
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/creation-de-vues-view">
+Création de vues (VIEW)
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/qu-est-ce-qu-une-vue-materialisee">
+Qu&#039;est-ce qu&#039;une vue matérialisée ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/qu-est-ce-qu-un-trigger-1">
+Qu&#039;est-ce qu&#039;un trigger ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/initialiser-les-vues-materialisees">
+Initialiser les vues matérialisées
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/les-triggers-en-action">
+Les triggers en action
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-trigger-pour-calculer-la-valeur-par-defaut-d-une-colonne">
+Un trigger pour calculer la valeur par défaut d&#039;une colonne
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-trigger-pour-historiser-les-modifications-d-une-table">
+Un trigger pour historiser les modifications d&#039;une table
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/historisation-variante">
+Historisation : variante
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/autres-exemples-de-triggers">
+Autres exemples de triggers
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/mefions-nous-des-locks">
+Méfions-nous des locks
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/mefions-nous-de-mysql">
+Méfions-nous de MySQL
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/autres-exemples-de-triggers">
+<span class="arrow"></span>
+<span class="next">Autres exemples de triggers</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/mefions-nous-de-mysql">
+<span class="next">Méfions-nous de MySQL</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Mfions-nousdeMySQL"></a><h2>Méfions-nous de MySQL</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/mefions-nous-des-locks">
+<span class="arrow"></span>
+<span class="next">Méfions-nous des locks</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-386372" data-claire-element-id="386372"><strong>MySQL ne déclenche pas les triggers pour toute opération qui résulte d'une contrainte de clé étrangère</strong>.</p><p id="r-386373" data-claire-element-id="386373">Autrement dit, si nous faisons un DELETE sur la table topics pour supprimer un topic, les posts de ce topic seront supprimés (par ON DELETE CASCADE sur la clé étrangère topic_id), mais un éventuel trigger ON DELETE sur la table posts ne sera pas appelé.</p><p id="r-386374" data-claire-element-id="386374">Par conséquent, si on utilise les triggers pour tenir des comptes à jour, il faut bien garder cela à l'esprit. Par exemple, un trigger ON DELETE sur la table des topics devra décrémenter le nombre de topics dans le forum parent, mais aussi le nombre de posts, et ne pas déléguer cette opération aux triggers de la table posts.</p><p id="r-386375" data-claire-element-id="386375">Toutes les autres BDD (y compris sqlite) permettent aux triggers de fonctionner normalement suite aux opérations de cascade de clés étrangères, donc cet avertissement ne s'applique qu'à MySQL.</p><p id="r-386376" data-claire-element-id="386376">Nous avons vu sur un petit exemple comment utiliser des <em>triggers</em> pour maintenir à jour des tables qui contiennent une représentation d'informations déjà présentes dans la base de données, mais sous une autre forme, en l'occurrence des agrégats et des sommes par mois et par vendeur.</p><p id="r-386377" data-claire-element-id="386377">Bien sûr, maintenir ces informations à jour a un coût : il faut exécuter les requêtes présentes dans le <em>trigger</em>. Toute opération d'écriture (hors SELECT, donc) sur une table dotée de <em>triggers</em> sera plus lente que sans <em>triggers</em>.</p><p id="r-386378" data-claire-element-id="386378">Toutefois, comme on l'a vu, l'utilisation de <em>materialized views</em> permet d'accélérer certaines requêtes d'une façon stupéfiante, car :</p><ul id="r-386385" data-claire-element-id="386385"><li id="r-386380" data-claire-element-id="386380"><p id="r-386379" data-claire-element-id="386379">les tables obtenues sont de vraies tables, les données sont immédiatement accessibles, et non le résultat d'un calcul potentiellement lent ;</p></li><li id="r-386382" data-claire-element-id="386382"><p id="r-386381" data-claire-element-id="386381">on peut créer des index dessus ;</p></li><li id="r-386384" data-claire-element-id="386384"><p id="r-386383" data-claire-element-id="386383">elles peuvent être beaucoup plus petites que les tables d'origine, si la vue en question est une agrégation (dernier élément, somme, etc.).</p></li></ul><p id="r-386386" data-claire-element-id="386386">Ce type de technique est donc adapté dans une situation où l'on écrit peu et où l'on lit beaucoup.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql">Triggers et vues matérialisées (MySQL)</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-exemple-simple-3">
+Un exemple simple
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/creation-de-vues-view">
+Création de vues (VIEW)
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/qu-est-ce-qu-une-vue-materialisee">
+Qu&#039;est-ce qu&#039;une vue matérialisée ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/qu-est-ce-qu-un-trigger-1">
+Qu&#039;est-ce qu&#039;un trigger ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/initialiser-les-vues-materialisees">
+Initialiser les vues matérialisées
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/les-triggers-en-action">
+Les triggers en action
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-trigger-pour-calculer-la-valeur-par-defaut-d-une-colonne">
+Un trigger pour calculer la valeur par défaut d&#039;une colonne
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/un-trigger-pour-historiser-les-modifications-d-une-table">
+Un trigger pour historiser les modifications d&#039;une table
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/historisation-variante">
+Historisation : variante
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/autres-exemples-de-triggers">
+Autres exemples de triggers
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/mefions-nous-des-locks">
+Méfions-nous des locks
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/mefions-nous-de-mysql">
+Méfions-nous de MySQL
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/triggers-et-vues-materialisees-mysql/mefions-nous-des-locks">
+<span class="arrow"></span>
+<span class="next">Méfions-nous des locks</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/riggers-et-vues-materialisees-mysql.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 11:05:19 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/riggers-et-vues-materialisees-mysql.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:47:22 GMT -->
+</html>

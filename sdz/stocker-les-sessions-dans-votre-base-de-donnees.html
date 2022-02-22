@@ -1,0 +1,418 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/stocker-les-sessions-dans-votre-base-de-donnees.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 05:39:15 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/stocker-les-sessions-dans-votre-base-de-donnees.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:00:01 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Stocker les sessions dans votre base de données</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/stocker-les-sessions-dans-votre-base-de-donnees.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Stocker les sessions dans votre base de données</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Stockerlessessionsdansvotrebasededonnes">Stocker les sessions dans votre base de données</a><br/><a href="#Lessessionsetlascurit">Les sessions et la sécurité</a><br/><a href="#QuandPHPvientnotresecours...">Quand PHP vient à notre secours...</a><br/><a href="#Assemblagefinal">Assemblage final</a><br/></div>
+<a name="Stockerlessessionsdansvotrebasededonnes"></a><h2>Stocker les sessions dans votre base de données</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/stocker-les-sessions-dans-votre-base-de-donnees/les-sessions-et-la-securite">
+<span class="next">Les sessions et la sécurité</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<aside id="r-541612" data-claire-element-id="541612" data-claire-semantic="warning"><p id="r-541611" data-claire-element-id="541611">Ce tutoriel nécessite d'avoir entièrement lu et compris le tutoriel sur le <a href="http://www.siteduzero.com/tuto-3-4-0-un-site-dynamique-avec-php.html">PHP</a> de M@teo21.<br/> Une connaissance de la <a href="http://www.siteduzero.com/tutoriel-3-147180-poo-programmer-oriente-objet-en-php.html">POO</a> peut aussi s'avérer utile...</p></aside><p id="r-541613" data-claire-element-id="541613">Bonjour, dans ce tutoriel je vais tenter de vous expliquer le plus clairement possible comment utiliser la base de données pour stocker et sécuriser des sessions. Je vais prendre pour exemple le SGBD MySQL, mais si vous utilisez un autre SGBD ou une classe SQL, il vous suffira d'adapter le script.<br/> Accrochez-vous, c'est parti ! :pirate:</p>
+</div><a name="Lessessionsetlascurit"></a><h2>Les sessions et la sécurité</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/stocker-les-sessions-dans-votre-base-de-donnees/quand-php-vient-a-notre-secours">
+<span class="next">Quand PHP vient à notre secours...</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<div id="r-541615" data-claire-element-id="541615" data-claire-semantic="question"><p id="r-541614" data-claire-element-id="541614">Mais c'est quoi déjà, les sessions ?</p></div><p id="r-541616" data-claire-element-id="541616">Petit rappel pour ceux qui ne s'en souviendraient plus ou qui n'auraient pas le courage d'aller relire le tutoriel sur le PHP :p . Les sessions sont de petits fichiers stockés du côté serveur, contrairement aux cookies qui eux sont stockés chez le client.<br/> Les sessions sont stockées dans le dossier <em>tmp</em> de votre serveur (sauf si vous utilisez Free, auquel cas vous avez sans doute créé votre propre dossier).</p><p id="r-541617" data-claire-element-id="541617">Ce dossier est sécurisé et caché, de façon à ce que personne ne puisse y accéder.</p><div id="r-541619" data-claire-element-id="541619" data-claire-semantic="question"><p id="r-541618" data-claire-element-id="541618">Mais pourquoi alors voudrais-tu qu'on les stocke dans la base de données ?</p></div><p id="r-541620" data-claire-element-id="541620">J'y arrive... ^^ <br/> Le problème c'est que comme tout ce qui est caché et protégé, il est possible d'y accéder !</p><p id="r-541621" data-claire-element-id="541621">Un des problèmes qui peut se poser, c'est qu'il y a deux moyens de transmettre le nom du fichier correspondant à vos informations : dans les cookies de préférence (si vous ouvrez vos cookies, vous devriez voir des cookies s'appelant <em>PHPSESSID</em>) et si l'utilisateur ne les accepte pas, dans l'URL (évidement, le fait de mettre les sessions dans la base de données ne change en rien cela ;) ).</p><p id="r-541622" data-claire-element-id="541622">Et c'est là que le bât blesse, car si vous donnez un lien contenant dans l'URL l'identification de votre session, il peut être assez facile d'accéder aux informations de votre session pour un hacker. Et ensuite, bah... d'avoir accès à votre e-mail, ou toute autre information contenue dans la session, par exemple.</p><p id="r-541623" data-claire-element-id="541623">Cela est d'autant plus facile si vous êtes hébergés chez Free car votre dossier n'est même pas protégé. &gt;_</p><p id="r-541624" data-claire-element-id="541624">Bon arrêtons là, car sinon je sens que vous allez devenir paranoïaques ;) .<br/> Stocker vos sessions dans la base de données peut aussi être un moyen de contourner la limite de vie de vos sessions fixée par votre hébergeur...</p><p id="r-541625" data-claire-element-id="541625">Si vous êtes prêts, je vous propose d'entrer dans le vif du sujet.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/stocker-les-sessions-dans-votre-base-de-donnees">Stocker les sessions dans votre base de données</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/stocker-les-sessions-dans-votre-base-de-donnees/les-sessions-et-la-securite">
+Les sessions et la sécurité
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/stocker-les-sessions-dans-votre-base-de-donnees/quand-php-vient-a-notre-secours">
+Quand PHP vient à notre secours...
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/stocker-les-sessions-dans-votre-base-de-donnees/assemblage-final">
+Assemblage final
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/stocker-les-sessions-dans-votre-base-de-donnees/quand-php-vient-a-notre-secours">
+<span class="next">Quand PHP vient à notre secours...</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="QuandPHPvientnotresecours..."></a><h2>Quand PHP vient à notre secours...</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/stocker-les-sessions-dans-votre-base-de-donnees/les-sessions-et-la-securite">
+<span class="arrow"></span>
+<span class="next">Les sessions et la sécurité</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/stocker-les-sessions-dans-votre-base-de-donnees/assemblage-final">
+<span class="next">Assemblage final</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-541627" data-claire-element-id="541627">Là, normalement, vous êtes en train de vous demander : &quot;<em>Mais comment je vais bien pouvoir faire pour stocker les sessions dans ma base de données ? À tous les coups, il va nous sortir un truc super compliqué...</em>&quot;.<br/> Rassurez-vous, les développeurs de PHP ont pensé à tout :-° ...</p><p id="r-541628" data-claire-element-id="541628">Cette solution a un nom : session_set_save_handler ! :magicien:</p><div id="r-541630" data-claire-element-id="541630" data-claire-semantic="question"><p id="r-541629" data-claire-element-id="541629">Hein ? Mais qu'est-ce que c'est que ça ?</p></div><h2 id="r-une-fonction-assez-utile" data-claire-element-id="541640">Une fonction assez utile</h2><p id="r-541631" data-claire-element-id="541631">Et ensuite, ce n'est pas <strong>ça</strong>, mais une fonction PHP qui va nous être bien utile...<br/> En effet cette fonction, comme l'auront peut-être compris certains en voyant son nom, permet de définir les fonctions à utiliser pour utiliser les sessions.</p><p id="r-541632" data-claire-element-id="541632">La voilà en entier :</p><figure id="r-541634" data-claire-element-id="541635"><img id="r-541633" data-claire-element-id="541633" src="medias/uploads.siteduzero.com_files_113001_114000_113014.png" alt="Image utilisateur"/></figure><div id="r-541637" data-claire-element-id="541637" data-claire-semantic="question"><p id="r-541636" data-claire-element-id="541636">Heu :o , tu peux nous la décrire un peu ?</p></div><p id="r-541638" data-claire-element-id="541638">Mais oui, bien sûr, j'y arrive !<br/> Alors tout d'abord, comme vous pouvez le voir, cette fonction renvoie un <em>bool</em> soit... un booléen : logiquement <em>true</em> si elle a réussi, ou <em>false</em> si elle a échoué.</p><p id="r-541639" data-claire-element-id="541639">Ce qui est sans doute un peu plus mystérieux, ce sont ses paramètres. En effet, elle prend des <em>callbacks</em>...<br/> Qu'est-ce que ces <em>callbacks</em> ?</p><h2 id="r-les-callbacks" data-claire-element-id="541651">Les callbacks</h2><p id="r-541641" data-claire-element-id="541641">Je vais être obligé de faire une petite digression, pour que tout le monde comprenne. Si vous connaissez déjà les callbacks, vous pouvez passer et aller directement à la présentation des fonctions prises en paramètre.</p><p id="r-541642" data-claire-element-id="541642">Bon : alors ces callbacks, qu'est-ce que c'est ?</p><p id="r-541643" data-claire-element-id="541643">Il s'agit d'un type de paramètre de fonction. Ce sont en fait des noms de fonctions !<br/> Pas plus clair ?</p><p id="r-541644" data-claire-element-id="541644">Alors on continue :p . <br/> Pour faire simple, on va donner à notre fonction en paramètre le nom d'une autre fonction (ou méthode de classe) sous forme d'une chaîne de caractères pour une fonction. Chaîne de caractères ayant pour valeur le nom de la fonction à appeler.<br/> Pour les méthodes, on donne un array (l'élément 0 correspond à l'objet instancié, et l'élément 1 au nom de la méthode).</p><p id="r-541645" data-claire-element-id="541645">Bon, je vous donne un petit exemple, ça sera peut-être plus clair :</p><pre id="r-541646" data-claire-element-id="541646"><code data-claire-semantic="html+php">&lt;?php
+	call_user_func('mafonction');//dans le cas d'un fonction
+
+	$object = new Ma_class();//une class diverse
+	call_user_func(array($object, 'maméthode'));//dans le cas d'une méthode de class	
+?&gt;</code></pre><p id="r-541647" data-claire-element-id="541647">Je crois que cela mérite quelques explications, non ?<br/> Tout d'abord call_user_func est une fonction prenant comme paramètre un callback. J'ai utilisé cette fonction car elle est relativement simple et prend un seul paramètre : le nom de la fonction à appeler.<br/> Bon, pour le reste je pense que cela a dû vous aider à comprendre le fonctionnement des callbacks.<br/> En effet $object correspond donc à un objet de la classe Ma_class, et <em>maméthode</em> est une méthode de cette class, peu importe ce qu'elle fait. <br/> Le callback pour cette méthode est donc le tableau : array($object, 'maméthode').</p><aside id="r-541649" data-claire-element-id="541649" data-claire-semantic="warning"><p id="r-541648" data-claire-element-id="541648">Il ne faut surtout pas fournir les paramètres de la fonction. Vous donnez juste son nom !</p></aside><p id="r-541650" data-claire-element-id="541650">Ok, maintenant que la question des callbacks est réglée, on peut revenir à notre sujet initial. :-°</p><h2 id="r-presentation-des-fonctions-prises-en-argument" data-claire-element-id="541683">Présentation des fonctions prises en argument</h2><p id="r-541652" data-claire-element-id="541652">Je vous remets la fonction :</p><figure id="r-541654" data-claire-element-id="541655"><img id="r-541653" data-claire-element-id="541653" src="medias/uploads.siteduzero.com_files_113001_114000_113014.png" alt="Image utilisateur"/></figure><p id="r-541656" data-claire-element-id="541656">Cette fonction prend 6 paramètres : les 6 fonctions d'opération sur les sessions.<br/> Étudions si vous le voulez bien d'un peu plus près ces fonctions.</p><h3 id="r-open" data-claire-element-id="541660">Open</h3><p id="r-541657" data-claire-element-id="541657">Cette fonction prend normalement en paramètre le nom du fichier à ouvrir et le chemin d'accès ; mais nous, on va se contenter d'ouvrir la connexion à la base de données.</p><pre id="r-541658" data-claire-element-id="541658"><code data-claire-semantic="html+php">&lt;?php
+function open()
+{
+	global $host,$user,$pass,$db,$connect;//toutes les constantes de connexion
+		
+	$connect = mysql_connect($host, $user, $pass,1);//on se connecte à la bdd
+	$bdd = mysql_select_db($db,$connect);//on sélectionne la base de données
+	return $bdd;
+}
+?&gt;</code></pre><p id="r-541659" data-claire-element-id="541659">Je pense que vous avez tous compris ce code, cependant le &quot;1&quot; en quatrième paramètre de mysql_connect vous est sans doute plus obscur. <br/> Il est préférable de le mettre car il permet d'avoir plusieurs connexions ouvertes sur la même page. Je vous renvoie <a href="http://fr.php.net/mysql_connect">là</a> pour ceux qui voudraient plus de précisions.</p><h3 id="r-close" data-claire-element-id="541664">Close</h3><p id="r-541661" data-claire-element-id="541661">Elle est à peu près aussi explicite : elle ne prend aucun paramètre et se contente de fermer le fichier ou la connexion. Nous allons fermer la connexion à la base de données.</p><pre id="r-541662" data-claire-element-id="541662"><code data-claire-semantic="html+php">&lt;?php
+ function close()
+{
+	global $connect;
+	$bdd = mysql_close($connect);//on ferme la bdd
+	return $bdd;//retourne true ou false selon si la déconnexion a échoué ou réussi
+}
+?&gt;</code></pre><p id="r-541663" data-claire-element-id="541663">On ferme la connexion enregistrée dans $connect lors de la connexion.</p><h3 id="r-read" data-claire-element-id="541668">Read</h3><p id="r-541665" data-claire-element-id="541665">Cette fonction prend un seul paramètre : l'identifiant de session. Et elle retourne les données.</p><pre id="r-541666" data-claire-element-id="541666"><code data-claire-semantic="html+php">&lt;?php
+function read ($sid)
+{
+	global  $connect;
+        $sid = mysql_real_escape_string($sid,$connect);
+	$sql = &quot;SELECT sess_datas FROM sess_table
+			WHERE sess_id = '$sid' &quot;;
+	$query = mysql_query($sql,$connect) or die (mysql_error());			
+	$data = mysql_fetch_array($query);
+		
+	if(empty($data)) return FALSE;
+	else return $data['sess_datas'];//on retourne la valeur de sess_datas, soit le contenu de la session
+}
+?&gt;</code></pre><p id="r-541667" data-claire-element-id="541667">On sélectionne les données correspondant à l'id de la session et on les retourne.</p><h3 id="r-write" data-claire-element-id="541674">Write</h3><p id="r-541669" data-claire-element-id="541669">Écrit dans la session, elle prend deux paramètres : l'identifiant de session et les données à écrire.</p><pre id="r-541670" data-claire-element-id="541670"><code data-claire-semantic="html+php">&lt;?php
+function write ($sid, $data)
+{
+	global $connect;
+	
+	$expire = intval(time() + 7200);//calcul de l'expiration de la session (ici par exemple, deux heures).
+	$data = mysql_real_escape_string($data,$connect);//si on veut stocker du code SQL 
+		
+	$sql = &quot;SELECT COUNT(sess_id) AS total
+		FROM &quot;.SESS_TABLE.&quot;
+		WHERE sess_id = '$sid' &quot;;
+		
+	$query = mysql_query($sql,$connect) or exit(mysql_error());
+	$return = mysql_fetch_array($query);
+	if($return['total'] == 0)//si la session n'existe pas encore
+	{
+		$sql = &quot;INSERT INTO &quot;.SESS_TABLE.&quot;
+			VALUES('$sid','$data','$expire')&quot;;//alors on la crée
+	}
+	else//sinon
+	{
+		$sql = &quot;UPDATE &quot;.SESS_TABLE.&quot; 
+			SET sess_datas = '$data',
+			sess_expire = '$expire'
+			WHERE sess_id = '$sid' &quot;;//on la modifie
+	}		
+	$query = mysql_query($sql,$connect) or exit(mysql_error());
+		
+	return $query;
+}
+?&gt;</code></pre><p id="r-541671" data-claire-element-id="541671">On fait d'abord une première requête, pour savoir si la session existe déjà. Si c'est le cas, alors on la modifie simplement, sinon bah... on la crée :p .</p><aside id="r-541673" data-claire-element-id="541673" data-claire-semantic="information"><p id="r-541672" data-claire-element-id="541672">Vous remarquerez que l'on protège les données à insérer grâce à mysql_real_escape_string : d'abord, pour éviter les injections SQL, mais surtout pour vous permettre de stocker des requêtes SQL dans vos sessions.</p></aside><h3 id="r-destroy" data-claire-element-id="541677">Destroy</h3><p id="r-541675" data-claire-element-id="541675">Alors, que va faire cette fonction ?<br/> Elle va tout simplement supprimer la session lorsque vous appelez session_destroy(). Elle prend en paramètre l'identifiant de session à détruire.</p><pre id="r-541676" data-claire-element-id="541676"><code data-claire-semantic="html+php">&lt;?php
+function destroy ($sid)//destruction
+{
+	global $connect;
+	$sql = &quot;DELETE FROM &quot;.SESS_TABLE.&quot;
+		WHERE sess_id = '$sid' &quot;;//on supprime la session de la bdd
+	$query = mysql_query($sql,$connect) or exit(mysql_error());
+	return $query;
+}
+?&gt;</code></pre><h3 id="r-gc" data-claire-element-id="541682">Gc</h3><p id="r-541678" data-claire-element-id="541678">Ah Gc ! Mais qu'est-ce donc que cette fonction ?<br/> Il s'agit en fait de la fonction de &quot;nettoyage&quot; : elle va éliminer les sessions trop vieilles et qui ont dépassé leur date d'expiration.</p><pre id="r-541679" data-claire-element-id="541679"><code data-claire-semantic="html+php">&lt;?php
+function gc ()
+{
+	global $connect;
+	$sql = &quot;DELETE FROM &quot;.SESS_TABLE.&quot; 
+			WHERE sess_expire &lt; &quot;.time(); //on supprime les vieilles sessions 			
+	$query = mysql_query($sql,$connect) or exit(mysql_error());
+	return $query;
+}
+?&gt;</code></pre><p id="r-541680" data-claire-element-id="541680">J'ai choisi de supprimer les sessions inférieures au timestamp actuel, car lors de la modification de la session, je rajoute la durée de vie de la session au timestamp actuel.<br/> Cependant vous pouvez faire autrement, comme stocker le timestamp actuel lors de la modification et supprimer les sessions inférieures au timestamp actuel <em>moins</em> la durée de vie des sessions...</p><p id="r-541681" data-claire-element-id="541681">Bon, maintenant je pense que vous avez compris le principe des différentes fonctions que nous devons utiliser pour stocker les sessions dans la base de données.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/stocker-les-sessions-dans-votre-base-de-donnees">Stocker les sessions dans votre base de données</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/stocker-les-sessions-dans-votre-base-de-donnees/les-sessions-et-la-securite">
+Les sessions et la sécurité
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/stocker-les-sessions-dans-votre-base-de-donnees/quand-php-vient-a-notre-secours">
+Quand PHP vient à notre secours...
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/stocker-les-sessions-dans-votre-base-de-donnees/assemblage-final">
+Assemblage final
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/stocker-les-sessions-dans-votre-base-de-donnees/les-sessions-et-la-securite">
+<span class="arrow"></span>
+<span class="next">Les sessions et la sécurité</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/stocker-les-sessions-dans-votre-base-de-donnees/assemblage-final">
+<span class="next">Assemblage final</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Assemblagefinal"></a><h2>Assemblage final</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/stocker-les-sessions-dans-votre-base-de-donnees/quand-php-vient-a-notre-secours">
+<span class="arrow"></span>
+<span class="next">Quand PHP vient à notre secours...</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-541685" data-claire-element-id="541685">Vous venez de faire la découverte de la fonction qui va nous permettre de stocker les sessions dans la base de données, et toutes ces fonctions prises en arguments. Mais maintenant, il faudrait peut-être coder la classe et créer la table.</p><h2 id="r-au-commencement-la-table" data-claire-element-id="541691">Au commencement, la table</h2><p id="r-541686" data-claire-element-id="541686">Eh oui, qui dit stockage dans une base de données dit <em>table</em>.</p><p id="r-541687" data-claire-element-id="541687">Alors, dans notre table il nous faut... heu... un champ pour stocker l'identifiant de session, un autre pour stocker les données, et... un troisième pour stocker la date d'expiration de vos sessions.<br/> Notez que vous pouvez aussi rajouter un champ qui contiendra l'id de votre membre par exemple, mais moi je ne trouve pas cela très utile...</p><p id="r-541688" data-claire-element-id="541688">Bon : c'est parti !</p><pre id="r-541689" data-claire-element-id="541689"><code data-claire-semantic="sql">CREATE TABLE `session` (
+  `sess_id` char(40) NOT NULL,
+  `sess_datas` text NOT NULL,
+  `sess_expire` bigint(20) NOT NULL,
+  UNIQUE KEY `sess_id` (`sess_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;</code></pre><p id="r-541690" data-claire-element-id="541690">Vous remarquerez au passage que le champ de l'identifiant de session est un varchar car l'identifiant contient aussi des caractères...</p><h2 id="r-ensuite-la-classe" data-claire-element-id="541704">Ensuite, la classe</h2><p id="r-541692" data-claire-element-id="541692">Comme je vous l'ai dit au départ, je vous recommande fortement de créer une classe pour vos sessions, même si ce n'est pas une obligation : c'est un des cas où l'utilisation d'une classe peut-être utile.<br/> Bon : allez-y, vous devriez en être capables maintenant que je vous ai expliqué session_set_save_handler...</p><p id="r-541693" data-claire-element-id="541693">Ça y est ? Arrêtez d'écrire, et rendez-moi les copies. :diable:</p><pre id="r-541694" data-claire-element-id="541694"><code data-claire-semantic="html+php">&lt;?php
+/***************************************************************************
+*  description: gestion des sessions par la bdd
+*                            -------------------
+*   copyright        : F_D_V copyright creative commmon cc by-no :
+*                     pas d'utilisation commerciale autorisée, droit de modification, l'auteur doit être cité
+*                     pour plus d'information http://creativecommons.org/licenses/by-nc/2.0/fr/
+****************************************************************************/
+class Session
+{
+	public $session_time = 7200;//2 heures
+	public $session = array();
+	private $db;
+	
+	public function __construct($sql_host, $sql_user, $sql_password, $sql_db)
+	{
+		$this-&gt;host = $sql_host;
+		$this-&gt;user = $sql_user;
+		$this-&gt;password = $sql_password;
+		$this-&gt;dba = $sql_db;
+	}
+	
+	public function open ()//pour l'ouverture
+	{
+		$this-&gt;connect = mysql_connect($this-&gt;host, $this-&gt;user, $this-&gt;password,1);//on se connecte a la bdd
+		$bdd = mysql_select_db($this-&gt;dba,$this-&gt;connect);//on sélectionne la base de données
+		
+		$this-&gt;gc();//on appelle la fonction gc		
+		return $bdd;//true ou false selon la réussite ou non de la connexion à la bdd
+	}
+	
+	public function read ($sid)//lecture
+	{
+                $sid = mysql_real_escape_string($sid,$this-&gt;connect);
+		$sql = &quot;SELECT sess_datas FROM sess_table
+				WHERE sess_id = '$sid' &quot;;
+		
+		$query = mysql_query($sql,$this-&gt;connect) or exit(mysql_error());	
+		$data = mysql_fetch_array($query);
+		
+		if(empty($data)) return FALSE;
+		else return $data['sess_datas'];//on retourne la valeur de sess_datas
+	}
+	
+	public function write ($sid, $data)//écriture
+	{
+		$expire = intval(time() + $this-&gt;session_time);//calcul de l'expiration de la session
+		$data = mysql_real_escape_string($data,$this-&gt;connect);//si on veut stocker du code sql 
+		
+		$sql = &quot;SELECT COUNT(sess_id) AS total
+			FROM &quot;.SESS_TABLE.&quot;
+			WHERE sess_id = '$sid' &quot;;
+		
+		$query = mysql_query($sql,$this-&gt;connect) or exit(mysql_error());
+		$return = mysql_fetch_array($query);
+		if($return['total'] == 0)//si la session n'existe pas encore
+		{
+			$sql = &quot;INSERT INTO &quot;.SESS_TABLE.&quot;
+				VALUES('$sid','$data','$expire')&quot;;//alors on la crée
+			
+		}
+		else//sinon
+		{
+			$sql = &quot;UPDATE &quot;.SESS_TABLE.&quot; 
+				SET sess_datas = '$data',
+				sess_expire = '$expire'
+				WHERE sess_id = '$sid' &quot;;//on la modifie
+		}		
+		$query = mysql_query($sql,$this-&gt;connect) or exit(mysql_error());
+		
+		return $query;
+	}
+	
+	public function close()//fermeture
+	{
+		mysql_close($this-&gt;connect);//on ferme la bdd
+	}
+	
+	public function destroy ($sid)//destruction
+	{
+		$sql = &quot;DELETE FROM &quot;.SESS_TABLE.&quot;
+			WHERE sess_id = '$sid' &quot;;//on supprime la session de la bdd
+		$query = mysql_query($sql,$this-&gt;connect) or exit(mysql_error());
+		return $query;
+	}
+	
+	public function gc ()//nettoyage
+	{
+		$sql = &quot;DELETE FROM &quot;.SESS_TABLE.&quot; 
+				WHERE sess_expire &lt; &quot;.time(); //on supprime les vieilles sessions 
+				
+		$query = mysql_query($sql,$this-&gt;connect) or exit(mysql_error());
+		
+		return $query;
+	}
+	
+}//fin de la classe
+
+ini_set('session.save_handler', 'user');//on définit l'utilisation des sessions en personnel
+
+$session = new Session($sql_host, $sql_user, $sql_password, $sql_db);//on déclare la classe
+
+session_set_save_handler(array($session, 'open'),
+                         array($session, 'close'),
+                         array($session, 'read'),
+                         array($session, 'write'),
+                         array($session, 'destroy'),
+                         array($session, 'gc'));//on précise les méthodes à employer pour les sessions
+
+session_start();//on démarre la session
+
+?&gt;</code></pre><p id="r-541695" data-claire-element-id="541695">Bon, je crois que quelques précisions ne feront pas de mal.</p><ul id="r-541700" data-claire-element-id="541700"><li id="r-541697" data-claire-element-id="541697"><p id="r-541696" data-claire-element-id="541696">L'appel de la fonction gc dans la fonction open est là, car je me suis aperçu que la fonction gc ne s'effectue pas assez souvent. Là, vous êtes sûrs que vos vieilles sessions seront effacées.</p></li><li id="r-541699" data-claire-element-id="541699"><p id="r-541698" data-claire-element-id="541698">Cette ligne ini_set ('session.save_handler', 'user') permet de définir l'utilisation des sessions en utilisateur. Ce qui veut dire que c'est vous qui fournissez les fonctions pour utiliser les sessions.</p></li></ul><p id="r-541701" data-claire-element-id="541701">Ah, encore quelques petites choses : vous vous demandez sûrement pourquoi nous fixons nous-mêmes la durée de vie des sessions ?<br/> La réponse c'est que vous pouvez très bien utiliser la durée de vie inscrite dans php.ini, mais le problème c'est que si vous êtes sous un hébergeur mutualisé, vous n'avez pas accès à php.ini. Définir notre propre variable de durée de vie permet donc de passer outre cet obstacle.</p><p id="r-541702" data-claire-element-id="541702">Bon : j'espère que vous avez tout compris, et que vous savez stocker vos sessions dans votre base de données maintenant. <br/> Les sessions sont des outils très puissants de PHP, alors abusez-en, surtout que maintenant elles sont sécurisées.</p><p id="r-541703" data-claire-element-id="541703">Remerciements à m@gik-orion pour ses précieux conseils, et aux zCorrecteurs pour leur magnifique travail.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/stocker-les-sessions-dans-votre-base-de-donnees">Stocker les sessions dans votre base de données</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/stocker-les-sessions-dans-votre-base-de-donnees/les-sessions-et-la-securite">
+Les sessions et la sécurité
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/stocker-les-sessions-dans-votre-base-de-donnees/quand-php-vient-a-notre-secours">
+Quand PHP vient à notre secours...
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/stocker-les-sessions-dans-votre-base-de-donnees/assemblage-final">
+Assemblage final
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/stocker-les-sessions-dans-votre-base-de-donnees/quand-php-vient-a-notre-secours">
+<span class="arrow"></span>
+<span class="next">Quand PHP vient à notre secours...</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/stocker-les-sessions-dans-votre-base-de-donnees.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 05:39:16 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/stocker-les-sessions-dans-votre-base-de-donnees.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:00:02 GMT -->
+</html>

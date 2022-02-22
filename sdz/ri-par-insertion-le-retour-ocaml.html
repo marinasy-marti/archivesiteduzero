@@ -1,0 +1,451 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/ri-par-insertion-le-retour-ocaml.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 06:36:45 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/ri-par-insertion-le-retour-ocaml.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:10:56 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Tri par insertion : le retour (OCaml)</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/tri-par-insertion-le-retour-ocaml.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Tri par insertion : le retour (OCaml)</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#TriparinsertionleretourOCaml">Tri par insertion : le retour (OCaml)</a><br/><a href="#Leslistes">Les listes</a><br/><a href="#Dcoupagedel039algorithme">Découpage de l&#039;algorithme</a><br/><a href="#Uneamliorationletrignrique">Une amélioration : le tri générique</a><br/><a href="#Profitons-enlepolymorphisme">Profitons-en : le polymorphisme</a><br/><a href="#Coquetteries">Coquetteries</a><br/></div>
+<a name="TriparinsertionleretourOCaml"></a><h2>Tri par insertion : le retour (OCaml)</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/les-listes-22">
+<span class="next">Les listes</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-572872" data-claire-element-id="572872">Ceci est une deuxième version du <a href="http://www.siteduzero.com/tuto-3-4644-1-le-tri-par-insertion.html">tutoriel déjà existant</a> qui présente le tri par insertion.</p><p id="r-572873" data-claire-element-id="572873">Le principe de l'algorithme sera repris, cette fois dans un langage fonctionnel (ici, <a href="http://fr.wikipedia.org/wiki/OCaml">OCaml</a>). Ce tuto se concentrera donc principalement, non pas sur le principe de l'algorithme, qui est supposé connu, mais sur les améliorations non négligeables qu'apporte le style de programmation fonctionnel.</p><p id="r-572874" data-claire-element-id="572874">Le langage choisi est OCaml, mais si vous vous intéressez à la programmation fonctionnelle, il n'est pas nécessaire de le connaître pour lire ce code (même si cela vous paraîtra sûrement un peu étrange la première fois).<br/> Au menu : utilisation des listes, <a href="http://fr.wikipedia.org/wiki/Récursivité">récursivité</a>, filtrages de motifs, tri générique et polymorphisme, et petites particularités de style.</p>
+</div><a name="Leslistes"></a><h2>Les listes</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/decoupage-de-l-algorithme">
+<span class="next">Découpage de l&#039;algorithme</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-572875" data-claire-element-id="572875">Une liste est une structure de données fondamentale en programmation : elle permet de représenter une suite d'éléments, et de les manipuler très naturellement.<br/> Cette structure est très adaptée à certains algorithmes de tri, entre autres le tri par insertion. Cependant, elle n'est pas immédiate d'accès en C (il faut implémenter une liste chaînée soi-même : si cela vous intéresse vous pouvez regarder <a href="http://www.siteduzero.com/tuto-3-9440-1-les-listes-chainees.html">ce tuto</a>) ; c'est pourquoi je n'en ai pas parlé dans mon précédent tuto. Maintenant qu'on a un langage fonctionnel dans lequel ce type de données est accessible directement, on peut en profiter.</p><p id="r-572876" data-claire-element-id="572876">La liste est un type de données très intéressant, car il est récursif par nature. En effet, on définit formellement une liste de la manière suivante : une liste est :</p><ul id="r-572881" data-claire-element-id="572881"><li id="r-572878" data-claire-element-id="572878"><p id="r-572877" data-claire-element-id="572877">soit une liste vide (notée []) ;</p></li><li id="r-572880" data-claire-element-id="572880"><p id="r-572879" data-claire-element-id="572879">soit un élément suivi d'une liste : on note a::b, a étant l'élément et b la liste ; dans certains langages, on note plutôt (cons a b) ; dans le dernier cas, on appellera l'élément la &quot;tête&quot;, et la liste qui le suit la &quot;queue&quot; de la liste.</p></li></ul><p id="r-572882" data-claire-element-id="572882">Cette définition, très élégante (on n'a pas parlé de pointeurs), appelle directement à utiliser la liste avec des algorithmes récursifs.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml">Tri par insertion : le retour (OCaml)</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/les-listes-22">
+Les listes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/decoupage-de-l-algorithme">
+Découpage de l&#039;algorithme
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/une-amelioration-le-tri-generique">
+Une amélioration : le tri générique
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/profitons-en-le-polymorphisme">
+Profitons-en : le polymorphisme
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/coquetteries">
+Coquetteries
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/decoupage-de-l-algorithme">
+<span class="next">Découpage de l&#039;algorithme</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Dcoupagedel039algorithme"></a><h2>Découpage de l&#039;algorithme</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/les-listes-22">
+<span class="arrow"></span>
+<span class="next">Les listes</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/une-amelioration-le-tri-generique">
+<span class="next">Une amélioration : le tri générique</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-572884" data-claire-element-id="572884">L'algorithme du tri par insertion est conservé : on découpe toujours le code en deux fonctions, la fonction &quot;insérer&quot; qui insère un élément à la bonne position dans la liste, et la fonction &quot;tri_insertion&quot;, qui réutilise la fonction insérer pour trier le tableau, en insérant chaque élément successivement à la bonne place.</p><h3 id="r-insertion-4" data-claire-element-id="572898">Insertion</h3><p id="r-572885" data-claire-element-id="572885">Voici le code d'insertion. Il insère un élément dans une liste triée en ordre croissant, de manière à renvoyer une liste toujours triée.</p><pre id="r-572886" data-claire-element-id="572886"><code data-claire-semantic="ocaml">let rec insere elem liste = match liste with
+|  [] -&gt; elem::[]
+|  tete::queue -&gt;
+   if elem &lt; tete then elem :: liste
+   else tete :: insere elem queue</code></pre><p id="r-572887" data-claire-element-id="572887">Le code se lit de lui-même : les deux arguments de la fonction insere sont elem et liste. On &quot;regarde&quot; la liste (la structure match .. with .. est un filtrage de motif) :</p><ul id="r-572897" data-claire-element-id="572897"><li id="r-572889" data-claire-element-id="572889"><p id="r-572888" data-claire-element-id="572888">si c'est la liste vide (premier |, premier cas), on renvoie l'élément suivi de la liste vide ;</p></li><li id="r-572896" data-claire-element-id="572896"><p id="r-572890" data-claire-element-id="572890">si la liste est une tête suivie d'une queue, on compare l'élément et la tête :</p><ul id="r-572895" data-claire-element-id="572895"><li id="r-572892" data-claire-element-id="572892"><p id="r-572891" data-claire-element-id="572891">si l'élément est plus petit, on a trouvé la bonne place pour le mettre : on renvoie donc l'élément, suivi de la liste,</p></li><li id="r-572894" data-claire-element-id="572894"><p id="r-572893" data-claire-element-id="572893">sinon (si l'élément est plus grand), on renvoie la tête, suivie de la queue dans laquelle on a inséré elem.</p></li></ul></li></ul><h3 id="r-tri-2" data-claire-element-id="572907">Tri</h3><p id="r-572899" data-claire-element-id="572899">Maintenant qu'on a fait le gros du boulot, la fonction de tri vient toute seule :</p><pre id="r-572900" data-claire-element-id="572900"><code data-claire-semantic="ocaml">let rec tri_insertion = function
+|  [] -&gt; []
+|  tete::queue -&gt; insere tete (tri_insertion queue)</code></pre><p id="r-572901" data-claire-element-id="572901">&quot;function&quot; est un mot-clé qui prend un argument, et lui applique un filtrage de motif. &quot;let rec tri = function&quot; est équivalent à &quot;let rec tri liste = match liste with&quot;, en plus concis.<br/> Là encore, l'algorithme est clair :</p><ul id="r-572906" data-claire-element-id="572906"><li id="r-572903" data-claire-element-id="572903"><p id="r-572902" data-claire-element-id="572902">si la liste est vide, on la renvoie ;</p></li><li id="r-572905" data-claire-element-id="572905"><p id="r-572904" data-claire-element-id="572904">si la liste est une tête suivie d'une queue, on trie la queue, et on y insère la tête.</p></li></ul>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml">Tri par insertion : le retour (OCaml)</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/les-listes-22">
+Les listes
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/decoupage-de-l-algorithme">
+Découpage de l&#039;algorithme
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/une-amelioration-le-tri-generique">
+Une amélioration : le tri générique
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/profitons-en-le-polymorphisme">
+Profitons-en : le polymorphisme
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/coquetteries">
+Coquetteries
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/les-listes-22">
+<span class="arrow"></span>
+<span class="next">Les listes</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/une-amelioration-le-tri-generique">
+<span class="next">Une amélioration : le tri générique</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Uneamliorationletrignrique"></a><h2>Une amélioration : le tri générique</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/decoupage-de-l-algorithme">
+<span class="arrow"></span>
+<span class="next">Découpage de l&#039;algorithme</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/profitons-en-le-polymorphisme">
+<span class="next">Profitons-en : le polymorphisme</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-572909" data-claire-element-id="572909">Notre fonction trie une liste en ordre croissant. Très bien. Mais si on voulait trier en ordre décroissant, il faudrait la recoder ?</p><p id="r-572910" data-claire-element-id="572910">Une solution serait en effet de recoder la fonction insertion, en remplaçant le test &quot;if elem &lt; tete&quot; par &quot;if elem &gt; tete&quot;. Mais heureusement, les langages fonctionnels permettent, comme leur nom l'indique, de manipuler très simplement et très efficacement les fonctions. Il suffit donc de donner un argument supplémentaire à la fonction, qui soit une fonction de comparaison indiquant de quelle manière on doit trier les éléments :</p><pre id="r-572911" data-claire-element-id="572911"><code data-claire-semantic="ocaml">let rec insere comparaison elem liste = match liste with
+|  [] -&gt; elem::[]
+|  tete::queue -&gt;
+   if comparaison elem tete then elem :: liste
+   else tete :: insere comparaison elem queue
+
+let rec tri_insertion comp = function
+|  [] -&gt; []
+|  tete::queue -&gt; insere comp tete (tri_insertion comp queue)</code></pre><p id="r-572912" data-claire-element-id="572912">J'ai rajouté un argument &quot;comparaison&quot; à la fonction insérer, et le test est maintenant &quot;if comparaison elem tete&quot;. Il faut aussi rajouter l'argument à la fonction tri_insertion, puisqu'elle utilise insere.</p><p id="r-572913" data-claire-element-id="572913">On peut maintenant faire un tri décroissant, ou un tri croissant. Si vous avez installé ocaml, vous pouvez tester. Mettez le code dans un fichier &quot;tri.ml&quot;, et dans le répertoire dans lequel vous avez mis votre fichier, lancez en ligne de commande &quot;ocaml&quot;. Cela lancera l'interpréteur interactif ocaml. Ensuite, entrez &quot;#use &quot;tri.ml&quot;;;&quot;, cela chargera le fichier de code, et vous affichera les fonctions déclarées.<br/> Vous pouvez maintenant essayer les deux lignes suivantes (le code à entrer commence après le # et va jusqu'au ;;) :</p><p id="r-572914" data-claire-element-id="572914"><cite>Citation</cite></p><blockquote id="r-572916" data-claire-element-id="572916"><p id="r-572915" data-claire-element-id="572915"># tri_insertion ( &lt; ) [4; 2; 5; 1];;<br/> - : int list = [1; 2; 4; 5]<br/> # tri_insertion ( &gt; ) [4; 2; 5; 1];;<br/> - : int list = [5; 4; 2; 1]</p></blockquote><p id="r-572917" data-claire-element-id="572917">Le résultat est concluant : la première fois, il a trié en ordre croissant, la deuxième fois (avec la fonction &quot;strictement supérieur à&quot;) en ordre décroissant.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml">Tri par insertion : le retour (OCaml)</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/les-listes-22">
+Les listes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/decoupage-de-l-algorithme">
+Découpage de l&#039;algorithme
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/une-amelioration-le-tri-generique">
+Une amélioration : le tri générique
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/profitons-en-le-polymorphisme">
+Profitons-en : le polymorphisme
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/coquetteries">
+Coquetteries
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/decoupage-de-l-algorithme">
+<span class="arrow"></span>
+<span class="next">Découpage de l&#039;algorithme</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/profitons-en-le-polymorphisme">
+<span class="next">Profitons-en : le polymorphisme</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Profitons-enlepolymorphisme"></a><h2>Profitons-en : le polymorphisme</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/une-amelioration-le-tri-generique">
+<span class="arrow"></span>
+<span class="next">Une amélioration : le tri générique</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/coquetteries">
+<span class="next">Coquetteries</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-572919" data-claire-element-id="572919">Si vous avez essayé le code ocaml, vous avez sûrement vu deux lignes étranges au moment de l'inclusion du fichier source :<br/>val insere : ('a -&gt; 'a -&gt; bool) -&gt; 'a -&gt; 'a list -&gt; 'a list = &lt;fun&gt;<br/> val tri_insertion : ('a -&gt; 'a -&gt; bool) -&gt; 'a list -&gt; 'a list = &lt;fun&gt;</p><p id="r-572920" data-claire-element-id="572920">Ce code indique que vous avez déclaré deux fonctions, et, c'est le plus important, donne leur type. OCaml étant un langage fonctionnel typé, le type est très important, et c'est un outil très très puissant pour programmer. Il permet de vérifier que les fonctions sont utilisées sûrement, et donne un gros indice sur leur signification (d'habitude, le nom d'une fonction et son type suffisent pour comprendre son fonctionnement ; pas besoin de regarder le code ou de lire la doc).</p><p id="r-572921" data-claire-element-id="572921">Le type de la fonction insertion (insere étant une fonction auxiliaire, on la laissera de côté) est ('a -&gt; 'a -&gt; bool) -&gt; 'a list -&gt; 'a list.<br/> Il faut savoir que le type d'une fonction qui prend un argument de type &quot;int&quot; et renvoie un argument de type &quot;char&quot; (par exemple) est &quot;int -&gt; char&quot;. Quand il y a deux arguments (par exemple deux entiers), le type est &quot;int -&gt; int -&gt; char&quot;.<br/> Ici, il y a deux arguments, le premier étant de type ('a -&gt; 'a -&gt; bool), le deuxième de type 'a liste. Le premier est une fonction (c'est comp) qui prend deux arguments de type 'a et renvoie un booléen (vrai ou faux, utilisé dans le if), et le deuxième est une liste d'éléments de type 'a.</p><p id="r-572922" data-claire-element-id="572922">Que signifie le 'a ? Pourquoi pas un type normal comme int, char ou bool ? 'a signifie en fait &quot;n'importe quel type&quot;. Quand un argument est de type 'a, il peut être de n'importe quel type, du moment que tous les 'a d'un type désignent le même type. Par exemple, 'a -&gt; 'a est une fonction qui prend un argument d'un type donné et renvoie un argument du même type. Si le type de retour était n'importe quel type, pas forcément le même, on noterait 'a -&gt; 'b.</p><p id="r-572923" data-claire-element-id="572923">Ainsi, OCaml nous dit que l'on peut utiliser notre tri avec n'importe quel type d'objet. C'est assez magique, quand on pense que le tri précédent (en C) ne permettait de trier que des entiers (et à la rigueur des flottants, ou des char) !<br/> Par exemple, on peut faire un tri sur des couples d'entiers (on prendra le classique tri lexicographique) :</p><pre id="r-572924" data-claire-element-id="572924"><code data-claire-semantic="ocaml">let compare_couples (a, b) (c, d) =
+  if a - c &lt; 0 then true
+  else if a = c then b &lt; d
+  else false
+
+let tri_couples = tri_insertion compare_couples</code></pre><p id="r-572925" data-claire-element-id="572925">La première fonction est une fonction de comparaison de couples assez simple : si la différence des deux premiers éléments est négative, on sait que le premier couple est plus petit que le second. Sinon, si les deux premiers éléments sont égaux, on compare les seconds éléments de chaque couple, et sinon, on sait que le deuxième est plus grand.</p><p id="r-572926" data-claire-element-id="572926">La fonction tri_couples qui est déclarée permet de trier, en réutilisant tri_insertion, des listes de couples :</p><p id="r-572927" data-claire-element-id="572927"><cite>Citation</cite></p><blockquote id="r-572929" data-claire-element-id="572929"><p id="r-572928" data-claire-element-id="572928"># tri_couples [(3, 4); (1, 2); (1, 5)];;<br/> - : (int * int) list = [(1, 2); (1, 5); (3, 4)]</p></blockquote><p id="r-572930" data-claire-element-id="572930">Le polymorphisme nous permet donc, en 10 lignes de code, de faire une fonction permettant de trier n'importe quel type d'objet de manière sûre (le compilateur vérifie que les objets de la liste sont bien du bon type).</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml">Tri par insertion : le retour (OCaml)</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/les-listes-22">
+Les listes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/decoupage-de-l-algorithme">
+Découpage de l&#039;algorithme
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/une-amelioration-le-tri-generique">
+Une amélioration : le tri générique
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/profitons-en-le-polymorphisme">
+Profitons-en : le polymorphisme
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/coquetteries">
+Coquetteries
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/une-amelioration-le-tri-generique">
+<span class="arrow"></span>
+<span class="next">Une amélioration : le tri générique</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/coquetteries">
+<span class="next">Coquetteries</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Coquetteries"></a><h2>Coquetteries</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/profitons-en-le-polymorphisme">
+<span class="arrow"></span>
+<span class="next">Profitons-en : le polymorphisme</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-572932" data-claire-element-id="572932">Le code est déjà bien sympathique, mais il est possible de faire de petites améliorations.</p><p id="r-572933" data-claire-element-id="572933">La première, c'est l'utilisation d'une fonction pour cacher la fonction auxiliaire insere : étant donné qu'on veut juste un tri, on n'a pas besoin que la fonction insere soit disponible au reste du programme. Il est même possible qu'une fonction s'appelant insere existe déjà, et on n'a pas envie d'être obligé de la renommer.</p><p id="r-572934" data-claire-element-id="572934">En OCaml (comme dans tous les langages fonctionnels), on peut déclarer des fonctions à l'intérieur des déclarations (de fonctions ou de variables, c'est la même chose). Leur portée est alors limitée (comme en C où les variables &quot;vont jusqu'à la fin du bloc&quot;) :</p><pre id="r-572935" data-claire-element-id="572935"><code data-claire-semantic="ocaml">let tri_insertion comparaison liste =
+   let rec insere elem liste = match liste with
+   |  [] -&gt; elem::[]
+   |  tete::queue -&gt;
+      if comparaison elem tete then elem :: liste
+      else tete :: insere elem queue
+   in
+
+   let rec tri = function
+   |  [] -&gt; []
+   |  tete::queue -&gt; insere tete (tri queue)
+   in
+   tri liste</code></pre><p id="r-572936" data-claire-element-id="572936">Les deux fonctions insere et tri sont maintenant des fonctions locales (d'où le &quot;in&quot;) à l'intérieur d'une fonction tri_insertion globale. Un autre avantage de cet englobement, c'est que la fonction comp, qui est un paramètre de la fonction globale, est accessible directement aux fonctions insere et tri, sans qu'elles n'aient besoin de le passer en argument. On a donc allégé l'écriture de ces fonctions.</p><p id="r-572937" data-claire-element-id="572937">En fait, on peut même faire mieux, d'une part en supprimant l'argument &quot;liste&quot; qui est redondant (&quot;let fonction argument = autre_fonction argument&quot;, c'est pareil que &quot;let fonction = autre_fonction&quot;), et d'autre part en changeant le nom de &quot;comparaison&quot; en ( &lt; ) : ainsi, on pourra utiliser la fonction de comparaison comme l'opérateur &lt;, à l'intérieur de la fonction tri_insertion (les parenthèses qui englobent &lt; servent à indiquer que c'est un opérateur) :</p><pre id="r-572938" data-claire-element-id="572938"><code data-claire-semantic="ocaml">let tri_insertion ( &lt; ) =
+   let rec insere elem liste = match liste with
+   |  [] -&gt; elem::[]
+   |  tete::queue -&gt;
+      if elem &lt; tete then elem :: liste
+      else tete :: insere elem queue
+   in
+
+   let rec tri = function
+   |  [] -&gt; []
+   |  tete::queue -&gt; insere tete (tri queue)
+   in 
+   tri</code></pre><p id="r-572939" data-claire-element-id="572939">J'espère que ce tutoriel vous a permis de constater une partie des avantages concrets que peuvent apporter les langages fonctionnels, dans la conception et formulation des algorithmes. Les propriétés fortes qu'apportent le style de programmation fonctionnelle permettent aussi de démontrer extrêmement facilement la correction de l'algorithme : on peut prouver en quelques lignes que l'algorithme renverra toujours le bon résultat, autrement dit qu'il ne contient aucun bug. La preuve est beaucoup plus difficile pour une version impérative de l'algorithme (par exemple, ma version C précédente).</p><p id="r-572940" data-claire-element-id="572940">Have fun !</p><p id="r-572941" data-claire-element-id="572942">Ce tutoriel est mis à disposition sous licence <a href="http://creativecommons.org/licenses/by-sa/2.0/fr/">creative commons <img id="r-572942" data-claire-element-id="572941" src="../../licensebuttons.net/l/by-sa/2.0/fr/88x31.png" alt="- Paternité - Partage des conditions à l'identique"/></a>. Ça signifie que vous pouvez librement copier et modifier ce tutoriel, à condition de citer l'auteur original et de conserver cette licence.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml">Tri par insertion : le retour (OCaml)</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/les-listes-22">
+Les listes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/decoupage-de-l-algorithme">
+Découpage de l&#039;algorithme
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/une-amelioration-le-tri-generique">
+Une amélioration : le tri générique
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/profitons-en-le-polymorphisme">
+Profitons-en : le polymorphisme
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/coquetteries">
+Coquetteries
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/tri-par-insertion-le-retour-ocaml/profitons-en-le-polymorphisme">
+<span class="arrow"></span>
+<span class="next">Profitons-en : le polymorphisme</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/ri-par-insertion-le-retour-ocaml.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 06:36:45 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/ri-par-insertion-le-retour-ocaml.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:10:56 GMT -->
+</html>

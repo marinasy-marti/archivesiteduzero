@@ -1,0 +1,664 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/rocedure-stockee.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 03:00:03 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/rocedure-stockee.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:39:13 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Procédure stockée</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/procedure-stockee.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Procédure stockée</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Procdurestocke">Procédure stockée</a><br/><a href="#Procduresstockeslesbases">Procédures stockées : les bases</a><br/><a href="#Lesblocsd039instructions">Les blocs d&#039;instructions</a><br/><a href="#Dclarationvariablegestionnairecurseur">Déclaration : variable, gestionnaire, curseur</a><br/><a href="#Instructionsdecontrle">Instructions de contrôle</a><br/><a href="#Exemples">Exemples</a><br/></div>
+<a name="Procdurestocke"></a><h2>Procédure stockée</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/procedures-stockees-les-bases">
+<span class="next">Procédures stockées : les bases</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-380426" data-claire-element-id="380426">Vous avez vu la première partie : <a href="http://www.siteduzero.com/tuto-3-4404-1-mysql-requete-preparee.html">les requêtes préparées</a> et vous avez adoré : alors vous allez aimer ça. :D</p><p id="r-380427" data-claire-element-id="380427">Les procédures stockées, apparues avec MySQL 5, sont ce que la caféine est au café, on peut boire le café sans, mais ça ne serait pas aussi bon. :)</p><p id="r-380428" data-claire-element-id="380428">Cette partie de MySQL, qui n'est encore que trop peu utilisée, est un bon moyen de mettre en oeuvre des scripts avancés qui, non content de pouvoir faire tout un tas d'actions, permettent une optimisation des scripts, éventuellement une couche d'abstraction supplémentaire pour la programmation et, plus basiquement, des requêtes qui sans cela seraient complexes et lourdes à mettre en oeuvre, voire impossibles.</p><p id="r-380429" data-claire-element-id="380429">C'est donc en partant de ce constat que je vais m'efforcer de vous montrer tous ces points et bien plus ...</p><p id="r-380430" data-claire-element-id="380430">Pré-requis :<br/> - MySQL 5.0 ou Supérieur<br/> - avoir des connaissances de base sur MySQL est recommandé (savoir faire des SELECT, UPDATE, INSERT, DELETE)<br/> - des bases en algorithme pour faire vos propres scripts par la suite<br/> - savoir utiliser MySQL en ligne de commande pour pouvoir effectuer les exercices.</p>
+</div><a name="Procduresstockeslesbases"></a><h2>Procédures stockées : les bases</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/les-blocs-d-instructions">
+<span class="next">Les blocs d&#039;instructions</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-creation-d-une-procedure" data-claire-element-id="380451">Création d'une procédure</h2><p id="r-380431" data-claire-element-id="380431">La syntaxe est relativement simple et se présente sous la forme suivante :</p><pre id="r-380432" data-claire-element-id="380432"><code data-claire-semantic="sql">CREATE PROCEDURE nom_de_la_procedure([parametres])</code></pre><p id="r-380433" data-claire-element-id="380433">Le nommage respecte les règles habituelles, imaginons donc une procédure nommée 'sdz', elle sera créée sous la forme :</p><pre id="r-380434" data-claire-element-id="380434"><code data-claire-semantic="sql">CREATE PROCEDURE sdz() caracteristiques</code></pre><p id="r-380435" data-claire-element-id="380435">Rien de compliqué jusque là, mais le point le plus important concerne les paramètres qui se décomposent en trois parties.<br/>sens_du_parametrenom_parametretype_parametre</p><p id="r-380436" data-claire-element-id="380436">Le sens du parametre peut prendre 3 valeurs :<br/><strong>IN</strong> : le paramètre sera une valeur ou une variable d'entrée. Le paramètre indiqué peut être une valeur ou une variable que vous envoyez lors de l'appel, et qui sera utilisé à l'intérieur de la procédure.<br/><strong>OUT</strong> : le paramètre sera une variable de sortie. Le paramètre indiqué sera une variable (<em>de session</em> ou <em>de procédure</em>) qui prendra une valeur (enfin normalement, sinon ça n'a que peu d'intérêt) lors de la procédure.<br/><strong>INOUT</strong> : le paramètre sera une variable d'entrée-sortie. Cette variable pourra être utilisé ou non dans la procédure, et verra normalement sa valeur modifiée lors de la procédure.</p><p id="r-380437" data-claire-element-id="380437">Le nom_parametre suit les règles de nommage habituel. Ce nom de paramètre représentera par la suite dans la procédure une variable qui aura pour valeur celle qu'on lui aura assigné.<br/> Si vous ne comprenez pas ce que ça veut dire, ce n'est pas grave, les exemples ci-dessous sont là pour ça. ;)</p><p id="r-380438" data-claire-element-id="380438">Le type_parametre prend en valeur le type de la valeur ou de variable attendu.</p><p id="r-380439" data-claire-element-id="380439">Avant de passer à la pratique, rappelons un point important : les procédures stockées sont, comme leur nom l'indique, stockées... J'entends déjà des <em>&quot;on s'en serait douté&quot;</em>. En fait, s'il est vrai qu'elles le sont, ceci entraîne plusieurs choses importantes et qui font toute la puissance des procédures stockées. De par ce statut, elles sont à tout moment utilisables ; ainsi, les déclarer une fois pour une base de données suffit pour pouvoir les utiliser par la suite à tout moment. Contrairement aux requêtes préparées, elles ne dépendent pas d'un thread et ne sont pas détruites automatiquement ; de même, elles restent présentes si le serveur s'arrête.</p><p id="r-380440" data-claire-element-id="380440">Ceux disposant de <a href="http://dev.mysql.com/downloads/query-browser/1.1.html">MySQL Query Browser</a> pourront par la suite vérifier cet état de fait en ouvrant la base qu'ils ont utilisée, et verront apparaître en dessous des tables, de nouvelles icônes qui, sur leur côté, porte le nom de la procédure concernée.</p><p id="r-380441" data-claire-element-id="380441"><strong>Passons maintenant aux exemples</strong>.</p><p id="r-380442" data-claire-element-id="380442">Pour commencer, nous allons changer le délimiteur de fin de requête utilisé, ceci non pas afin de vous perturber mais tous simplement par commodité pour la suite. Pour ce faire, tapez ceci en ligne de commande :</p><pre id="r-380443" data-claire-element-id="380443"><code data-claire-semantic="sql">DELIMITER |</code></pre><p id="r-380444" data-claire-element-id="380444">Désormais, quand vous terminerez une requête, il ne faudra plus faire <strong>;</strong> mais <strong>|</strong>.</p><p id="r-380445" data-claire-element-id="380445"><em><strong>Première procédure</strong></em><br/> Nous allons créer une procédure qui nous renvoie la valeur que nous lui avons passée en paramètre.</p><pre id="r-380446" data-claire-element-id="380446"><code data-claire-semantic="sql">CREATE PROCEDURE sdz(IN valeur VARCHAR(20))
+BEGIN
+SELECT valeur;
+END|</code></pre><p id="r-380447" data-claire-element-id="380447">Ceci est la structure complète d'une procédure : comme vous le voyez, ici apparaissent des choses dont je n'ai pas encore parlé : BEGIN et END, qui permettent de mettre plusieurs instructions à l?intérieur. Et chaque instruction à l?intérieur de ce bloc se termine bien par <strong>;</strong>, qui n'est en rien une erreur car si nous avions laissé notre délimiteur normal, alors ça n'aurait pas marché. Pour ceux qui ne me croient pas, je les invite à remettre le délimiteur <strong>;</strong> normal en faisant :</p><pre id="r-380448" data-claire-element-id="380448"><code data-claire-semantic="sql">DELIMITER ;</code></pre><p id="r-380449" data-claire-element-id="380449">et à réessayer. :) <br/> Dans ce bloc, nous voyons une instruction qui va chercher la valeur que nous avons passée en paramètre d'entrée, et qui a été stockée dans la variable 'valeur'.</p><p id="r-380450" data-claire-element-id="380450">Voilà : vous avez fait votre première procédure, ô combien simpliste.</p><h2 id="r-appel-d-une-procedure" data-claire-element-id="380479">Appel d'une procédure</h2><p id="r-380452" data-claire-element-id="380452">Nous avons vu dans la partie précédente comment créer une procédure, nous allons apprendre désormais à l'appeler.<br/> Pour cela rien de plus simple, tapez :</p><pre id="r-380453" data-claire-element-id="380453"><code data-claire-semantic="sql">CALL sdz(2)|</code></pre><p id="r-380454" data-claire-element-id="380454">Si avez toujours le délimiteur <strong>|</strong>, vous ne devriez pas avoir de problème et en suivant les étapes depuis le début, vous aurez le résultat suivant :</p><figure id="r-380456" data-claire-element-id="380457"><img id="r-380455" data-claire-element-id="380455" src="medias/uploads.siteduzero.com_files_11001_12000_11800.png" alt="Image utilisateur"/></figure><p id="r-380458" data-claire-element-id="380458">Remarquez qu'ici l'appel est relativement simple, on peux complexifier la chose en partant du principe que notre valeur est dans une variable : pour ce faire, on va déclarer une nouvelle variable '@a', à laquelle on affectera une valeur :</p><pre id="r-380459" data-claire-element-id="380459"><code data-claire-semantic="sql">SET @a:=666|</code></pre><p id="r-380460" data-claire-element-id="380460">Notre <a href="http://www.siteduzero.com/tuto-3-6146-1-les-variables-utilisateur.html">variable de session</a> vaut donc désormais <em>666</em>.<br/> Bien ! Appelons notre procédure avec cette variable :</p><pre id="r-380461" data-claire-element-id="380461"><code data-claire-semantic="sql">CALL sdz(@a)|</code></pre><p id="r-380462" data-claire-element-id="380462">et la valeur qui va s'afficher est notre 666.</p><div id="r-380464" data-claire-element-id="380464" data-claire-semantic="question"><p id="r-380463" data-claire-element-id="380463">Tu ne nous avais pas dit qu'il existait autre chose que IN ?</p></div><p id="r-380465" data-claire-element-id="380465">Absolument, et maintenant que vous avez vu le principe de base, nous allons refaire une procédure mais qui elle prendra en plus un paramètre de sortie. Pour l'occasion, on va faire un truc plus utile que précédemment. :-° <br/> Calculons le carré d'un nombre :</p><pre id="r-380466" data-claire-element-id="380466"><code data-claire-semantic="sql">CREATE PROCEDURE carre(IN valeur INT, OUT toto BIGINT)
+BEGIN
+SELECT valeur*valeur INTO toto;
+END|</code></pre><p id="r-380467" data-claire-element-id="380467">En plus, on a un deuxième paramètre qui recevra une variable qui servira pour la sortie, de type BIGINT.<br/> Dans le bloc d'instructions, on a une requête qui prend la valeur d'entrée, la multiplie par elle-même et le <strong>INTO</strong> va permettre de dire <em>&quot;stocke-moi le résultat ici&quot;</em>, qui sera alors mis dans la variable locale '<strong>toto</strong>'. Cette variable n'est pas accessible en dehors.</p><div id="r-380469" data-claire-element-id="380469" data-claire-semantic="question"><p id="r-380468" data-claire-element-id="380468">Ouais : donc le résultat, on le récupère comment ?</p></div><p id="r-380470" data-claire-element-id="380470">Ah vous allez voir, c'est simple. :) <br/> On appelle la procédure que l'on vient de créer comme ceci :</p><pre id="r-380471" data-claire-element-id="380471"><code data-claire-semantic="sql">CALL carre(2,@b)|</code></pre><p id="r-380472" data-claire-element-id="380472">Là, on demande de calculer le <em>carré de 2</em> en passant <strong>2</strong> à la valeur d'entrée, et on indique la variable '<strong>@b</strong>' qui stockera le résultat pour la sortie : remarquez que cette variable est, dans ce cas-ci, globale à la session (ce qui veut dire qu'une autre session peut très bien appeler la même procédure sans que les résultats ne s'écrasent : donc, chaque résultat est lié à la session).</p><div id="r-380474" data-claire-element-id="380474" data-claire-semantic="question"><p id="r-380473" data-claire-element-id="380473">J'ai fait comme toi mais il ne se passe rien... o_O</p></div><p id="r-380475" data-claire-element-id="380475">En fait c'est normal, la vraie magie c'est maintenant :</p><pre id="r-380476" data-claire-element-id="380476"><code data-claire-semantic="sql">SELECT @b|</code></pre><p id="r-380477" data-claire-element-id="380477">La requête retourne le résultat du calcul, c'est-à-dire : <strong>4</strong>.</p><p id="r-380478" data-claire-element-id="380478">Si vous avez tout compris jusque là, alors rendez-vous à la suite.</p><h2 id="r-supprimer-une-procedure" data-claire-element-id="380485">Supprimer une procédure</h2><p id="r-380480" data-claire-element-id="380480">Certainement la partie la plus courte du tutoriel. vous venez de créer deux procédures dans les parties précédentes, bien : nous allons supprimer la première qui ne sert strictement à rien.</p><pre id="r-380481" data-claire-element-id="380481"><code data-claire-semantic="sql">DROP PROCEDURE sdz|</code></pre><p id="r-380482" data-claire-element-id="380482">vous venez de supprimer votre procédure. Eh oui, c'est déjà fini... :lol:</p><aside id="r-380484" data-claire-element-id="380484" data-claire-semantic="warning"><p id="r-380483" data-claire-element-id="380483"><strong>|</strong> vaut <strong>;</strong> si vous avez lancé une autre fenêtre ou relancé la fenêtre des parties précédentes.</p></aside><h2 id="r-voir-les-procedures-existantes" data-claire-element-id="380499">Voir les procédures existantes</h2><p id="r-380486" data-claire-element-id="380486">Vous souhaiterez certainement savoir par la suite comment lister les procédures que vous avez créées : pour cela, rien de plus simple. Si vous voulez voir TOUTES les procédures de toutes les BDDs auxquelles vous avez un accès, alors :</p><pre id="r-380487" data-claire-element-id="380487"><code data-claire-semantic="sql">SHOW PROCEDURE STATUS LIKE '%%'\G</code></pre><p id="r-380488" data-claire-element-id="380488">Remarquez dans ce cas que j'ai utilisé <strong>'%%'</strong> pour indiquer que je veux toutes les procédures (rien ne vous empêche de mettre une expression qui corresponde plus à vos besoins) et <strong>\G </strong>comme délimiteur de fin de requête pour avoir un affichage lisible humainement en ligne de commande.</p><figure id="r-380490" data-claire-element-id="380491"><img id="r-380489" data-claire-element-id="380489" src="medias/uploads.siteduzero.com_files_11001_12000_11801.png" alt="Image utilisateur"/></figure><p id="r-380492" data-claire-element-id="380492">Vous remarquerez certainement le paramètre Security_type dont je n'ai pas encore parlé : sachez qu'il peut être intéressant pour vous de le connaître tout comme la ligne : Definer, mais j'y reviendrai plus tard.</p><p id="r-380493" data-claire-element-id="380493">Avant de passer à la suite, je tiens à signaler que le <strong>LIKE '%%'</strong> n'est pas obligatoire dans ce cas, vous aurez le même affichage sans. ;)</p><h3 id="r-affichage-de-la-structure-des-procedures" data-claire-element-id="380498">Affichage de la structure des procédures</h3><p id="r-380494" data-claire-element-id="380494">Il est possible que vous ayez envie de voir à quoi ressemble votre procédure une fois que vous l'aurez créée : pour cela, faites :</p><pre id="r-380495" data-claire-element-id="380495"><code data-claire-semantic="sql">SHOW CREATE PROCEDURE nom_procedure \G</code></pre><p id="r-380496" data-claire-element-id="380496">Vous devez connaître le nom de la procédure, et celle-ci doit se trouver dans la base de données courante : si vous essayer d'appeler une procédure (que vous auriez vue par exemple grâce à la requête donnée en début de cette partie) qui se trouve dans une autre base, vous aurez une erreur vous signalant que la procédure n'existe pas.<br/> Ceci paraît relativement logique dans la mesure où chaque base de données peut avoir des procédures qui, dans ce cas, auront des noms communs.</p><p id="r-380497" data-claire-element-id="380497">Comme vous le remarquez, le code de la procédure apparaît avec d'autres renseignements. :)</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/procedure-stockee">Procédure stockée</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/procedures-stockees-les-bases">
+Procédures stockées : les bases
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/les-blocs-d-instructions">
+Les blocs d&#039;instructions
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/declaration-variable-gestionnaire-curseur">
+Déclaration : variable, gestionnaire, curseur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/instructions-de-controle-1">
+Instructions de contrôle
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/exemples-19">
+Exemples
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/les-blocs-d-instructions">
+<span class="next">Les blocs d&#039;instructions</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lesblocsd039instructions"></a><h2>Les blocs d&#039;instructions</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/procedures-stockees-les-bases">
+<span class="arrow"></span>
+<span class="next">Procédures stockées : les bases</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/declaration-variable-gestionnaire-curseur">
+<span class="next">Déclaration : variable, gestionnaire, curseur</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-380501" data-claire-element-id="380501">Comme nous l'avons vu dans les parties précédentes, les blocs d'instructions permettent de délimiter une zone d'instructions ; cependant, pour les autres parties du tuto, vous aurez besoin de comprendre son fonctionnement afin de ne pas vous arracher les cheveux. :-°</p><p id="r-380502" data-claire-element-id="380502">La syntaxe que nous avons vue précédemment est la plus simple, à savoir un BEGIN pour signaler le début, un END pour signaler la fin et l'instruction de fin de requête derrière le END pour fermer le bloc.</p><p id="r-380503" data-claire-element-id="380503">Cependant, pour la suite, vous aurez peut-être besoin d'attribuer un nom au bloc à fermer ; pour ce faire, vous devez déclarer un label, ou si vous préférez, un nom pour le bloc.<br/><strong>Exemple</strong> :</p><pre id="r-380504" data-claire-element-id="380504"><code data-claire-semantic="sql">sdz_label: BEGIN
+# ici les instructions
+END sdz_label;</code></pre><p id="r-380505" data-claire-element-id="380505">Remarquez que le label de fin doit être le même que pour celui du début.</p><p id="r-380506" data-claire-element-id="380506">Maintenant voyons le comportement des variables locales dans un bloc. Cette variable locale (déclarée dans une procédure, j'y reviendrai) a une 'durée de vie' et une 'visibilité'. Ces deux notions -à ne pas confondre- sont ce qui est souvent source d'erreur.</p><p id="r-380507" data-claire-element-id="380507"><strong><em>Durée de vie</em></strong> : la variable existe de sa déclaration jusqu'à la fin du bloc la contenant.<br/><strong><em>Visibilité</em></strong> : espace où la variable peut être utilisée. La variable est visible jusqu'à la fin du bloc et passe invisible dès qu'un nouveau bloc commence et ce, jusqu'à ce que le dit bloc se finisse.</p><p id="r-380508" data-claire-element-id="380508">Voici un petit schéma qui rendra les choses plus claires :</p><figure id="r-380510" data-claire-element-id="380511"><img id="r-380509" data-claire-element-id="380509" src="medias/uploads.siteduzero.com_files_11001_12000_11839.png" alt="Image utilisateur"/></figure><p id="r-380512" data-claire-element-id="380512">Enfin, on va faire un exemple qui permettra de lever d'éventuels doutes :</p><pre id="r-380513" data-claire-element-id="380513"><code data-claire-semantic="sql">CREATE PROCEDURE visibilite()
+BEGIN
+    DECLARE var INT DEFAULT 1;
+        SELECT var AS 'Je suis la variable var du bloc 1';
+        
+        BEGIN
+             DECLARE var INT DEFAULT 5;
+                 SELECT var AS 'Je suis la variable du bloc 2';
+                 SET var=10;
+                 SELECT var AS 'Je suis la variable du bloc après modification';
+        END;
+        SELECT var AS 'Je suis toujours la variable du bloc 1';
+END;</code></pre><p id="r-380514" data-claire-element-id="380514">Et on appelle ceci avec :</p><pre id="r-380515" data-claire-element-id="380515"><code data-claire-semantic="sql">call visibilite();</code></pre><p id="r-380516" data-claire-element-id="380516">Ce qui donne le résultat suivant :</p><figure id="r-380518" data-claire-element-id="380519"><img id="r-380517" data-claire-element-id="380517" src="medias/uploads.siteduzero.com_files_11001_12000_11840.png" alt="Image utilisateur"/></figure>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/procedure-stockee">Procédure stockée</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/procedures-stockees-les-bases">
+Procédures stockées : les bases
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/les-blocs-d-instructions">
+Les blocs d&#039;instructions
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/declaration-variable-gestionnaire-curseur">
+Déclaration : variable, gestionnaire, curseur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/instructions-de-controle-1">
+Instructions de contrôle
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/exemples-19">
+Exemples
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/procedures-stockees-les-bases">
+<span class="arrow"></span>
+<span class="next">Procédures stockées : les bases</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/declaration-variable-gestionnaire-curseur">
+<span class="next">Déclaration : variable, gestionnaire, curseur</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Dclarationvariablegestionnairecurseur"></a><h2>Déclaration : variable, gestionnaire, curseur</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/les-blocs-d-instructions">
+<span class="arrow"></span>
+<span class="next">Les blocs d&#039;instructions</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/instructions-de-controle-1">
+<span class="next">Instructions de contrôle</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-variables" data-claire-element-id="380533">Variables</h2><p id="r-380521" data-claire-element-id="380521">Lors d'une procédure, il est possible de déclarer des variables qui seront locales à la procédure, comme nous l'avons dans la partie précédente ; ces variables ont une durée de vie et une visibilité dont le schéma suivant est le récapitulatif :</p><figure id="r-380523" data-claire-element-id="380524"><img id="r-380522" data-claire-element-id="380522" src="medias/uploads.siteduzero.com_files_11001_12000_11839.png" alt="Image utilisateur"/></figure><p id="r-380525" data-claire-element-id="380525">Pour créer une variable il faut utiliser la syntaxe :</p><pre id="r-380526" data-claire-element-id="380526"><code data-claire-semantic="sql">DECLARE nom_variable type_variable;</code></pre><p id="r-380527" data-claire-element-id="380527">Cependant ceci ne suffit pas : la déclaration des variables doit être faite impérativement derrière la déclaration du bloc, donc derrière BEGIN.</p><p id="r-380528" data-claire-element-id="380528"><strong>Exemple</strong> :</p><pre id="r-380529" data-claire-element-id="380529"><code data-claire-semantic="sql">CREATE PROCEDURE calcul1()
+BEGIN
+DECLARE i INT DEFAULT 1;
+DECLARE j FLOAT DEFAULT PI() ;
+ 
+SELECT i + j;
+END|</code></pre><p id="r-380530" data-claire-element-id="380530">Dans les procédures, il est tout à fait possible de mélanger les types de variables différentes, et mêmes de les utiliser dans les requêtes.<br/> De même, les variables ont des espaces de noms différents ; il est donc tout à fait possible d'avoir ceci :</p><pre id="r-380531" data-claire-element-id="380531"><code data-claire-semantic="sql">CREATE procedure toto()
+BEGIN
+declare a int DEFAULT 1;
+SET @a:=2;
+SELECT a,@a;
+END|</code></pre><p id="r-380532" data-claire-element-id="380532">Dans ce cas, les variables ont un nom identique, mais la première est une variable locale à la procédure et l'autre, une variable globale à la session.</p><h2 id="r-gestionnaire" data-claire-element-id="380571">Gestionnaire</h2><p id="r-380534" data-claire-element-id="380534">Lorsque vous écrirez des procédures, vous pourrez être confrontés à des problèmes de la forme suivante : <em>&quot;et là, si je mets une valeur qui est déjà dans la base de données, comment faire pour que la procédure continue sans s?arrêter ?&quot;</em>.<br/> C'est un exemple de problème qui ne peut se gérer qu'avec la déclaration d'un gestionnaire, qui permettra de dire au programme : <em>&quot;continue d'exécuter la procédure et tais-toi&quot;</em>, fort pratique pour éviter le comportement par défaut qui, lors d'une rencontre avec une erreur, sortira (<strong>EXIT</strong>) directement de la procédure.</p><p id="r-380535" data-claire-element-id="380535">Exemple :</p><pre id="r-380536" data-claire-element-id="380536"><code data-claire-semantic="sql">CREATE TABLE t (s1 int,PRIMARY KEY (s1))|
+CREATE PROCEDURE erreur_continue ()
+BEGIN
+DECLARE CONTINUE HANDLER FOR 1062 SELECT 'ERREUR';
+SELECT 'je suis 1';
+INSERT INTO t VALUES (1);
+SELECT 'je suis 2';
+INSERT INTO t VALUES (1);
+SELECT 'je suis 3';
+END;
+|</code></pre><p id="r-380537" data-claire-element-id="380537">Cet exemple, inspiré du manuel mais corrigé, essaie de mettre deux valeurs dans une table <strong>t</strong> ; seulement lors du deuxième appel, une erreur de clé dupliquée sera générée dans ce cas-là si nous n'avions pas la ligne :</p><pre id="r-380538" data-claire-element-id="380538"><code data-claire-semantic="sql">DECLARE CONTINUE HANDLER FOR 1062 SELECT 'ERREUR';</code></pre><p id="r-380539" data-claire-element-id="380539">Le code s'arrêterait là et la ligne :</p><pre id="r-380540" data-claire-element-id="380540"><code data-claire-semantic="sql">SET @x = 3;</code></pre><p id="r-380541" data-claire-element-id="380541">ne serait pas exécutée, ce qui n'est pas très pratique.</p><div id="r-380543" data-claire-element-id="380543" data-claire-semantic="question"><p id="r-380542" data-claire-element-id="380542">Ouais, mais alors, comment on fait ?</p></div><p id="r-380544" data-claire-element-id="380544">Vous allez voir, c'est pas trop compliqué : pour cela, on va suivre la syntaxe suivante :</p><pre id="r-380545" data-claire-element-id="380545"><code data-claire-semantic="sql">DECLARE type_gestionnaire HANDLER FOR condition_valeur requete;</code></pre><p id="r-380546" data-claire-element-id="380546">Il existe deux types de gestionnaires actuellement supportés, qui sont :<br/><strong>EXIT</strong> : lors de la rencontre d'une erreur, la procédure s'arrête (comportement par défaut).<br/><strong>CONTINUE</strong> : lors de la rencontre d'une erreur, la procédure continue.</p><p id="r-380547" data-claire-element-id="380547">Si on avait mis EXIT à la place de CONTINUE dans l'exemple précédent, la phrase 'je suis 3' ne serait pas apparue.</p><p id="r-380548" data-claire-element-id="380548">Vient ensuite condition_valeur qui est subtile dans la mesure où il existe plusieurs conditions possibles, et que parmi elles, certaines reprennent un code d'erreur standard à SQL, les autres provenant du standard de MySQL.<br/> Par exemple : ci-dessus, j'ai mis la valeur 1062 qui correspond au code d'erreur MySQL pour les clés dupliquées, mais j'aurais aussi bien pu utiliser le code d'erreur standard à la place, ce qui donne ceci :</p><pre id="r-380549" data-claire-element-id="380549"><code data-claire-semantic="sql">DECLARE CONTINUE HANDLER FOR SQLSTATE '23000' SELECT 'ERREUR';</code></pre><p id="r-380550" data-claire-element-id="380550">Comme vous pouvez le remarquer, le mot clé SQLSTATE est venu en plus du code, et le numéro de l'erreur est entouré ; si vous ne le faites pas, vous aurez une erreur. De même, si vous utilisez uniquement le code d'erreur sans déclarer SQLSTATE, vous aurez aussi une erreur (l'erreur du manuel MySQL est là).</p><p id="r-380551" data-claire-element-id="380551">Il existe encore d'autres conditions :<br/><strong>SQLWARNING</strong> : raccourci pour tous les codes SQLSTATE qui commencent par 01.<br/><strong>NOT FOUND</strong> : raccourci pour tous les codes SQLSTATE qui commencent par 02.<br/><strong>SQLEXCEPTION</strong> : raccourci pour tous les codes SQLSTATE qui ne sont pas représentés par SQLWARNING ou par NOT FOUND.</p><div id="r-380553" data-claire-element-id="380553" data-claire-semantic="question"><p id="r-380552" data-claire-element-id="380552">Et si on veut plusieurs codes d'erreurs ?</p></div><p id="r-380554" data-claire-element-id="380554">C'est tout à fait possible, par exemple :</p><pre id="r-380555" data-claire-element-id="380555"><code data-claire-semantic="sql">CREATE PROCEDURE erreur_continue ()
+BEGIN
+DECLARE CONTINUE HANDLER FOR SQLSTATE '02000', SQLEXCEPTION SELECT 'ERREUR';
+SELECT 'je suis 1';
+INSERT INTO t VALUES (1);
+SELECT 'je suis 2';
+INSERT INTO t VALUES (1);
+SELECT 'je suis 3';
+END;
+|</code></pre><p id="r-380556" data-claire-element-id="380556">Vous avez donc vu tout ce qu'il est possible de faire avec les gestionnaires ; remarquez que la requête que j'ai mise en fin est un exemple, vous pouvez tout à fait effectuer un autre traitement, voire même mettre des blocs d'instructions.</p><p id="r-380557" data-claire-element-id="380557"><strong>Exemple</strong> :</p><pre id="r-380558" data-claire-element-id="380558"><code data-claire-semantic="sql">CREATE PROCEDURE erreur_continue ()
+BEGIN
+DECLARE CONTINUE HANDLER FOR SQLEXCEPTION
+        BEGIN
+                SELECT 'ERREUR';
+                SELECT 'je suis une instruction du bloc d\'erreur';
+        END;
+ 
+SELECT 'je suis 1';
+INSERT INTO t VALUES (1);
+SELECT 'je suis 2';
+INSERT INTO t VALUES (1);
+SELECT 'je suis 3';
+END;
+|</code></pre><div id="r-380560" data-claire-element-id="380560" data-claire-semantic="question"><p id="r-380559" data-claire-element-id="380559">Est-il possible d'avoir une gestion nominative des erreurs ?</p></div><p id="r-380561" data-claire-element-id="380561">Oui, ce qui permet d'ailleurs une meilleur lisibilité.<br/> Reprenons notre code précédent et rajoutons-y ce qui manque :</p><pre id="r-380562" data-claire-element-id="380562"><code data-claire-semantic="sql">CREATE PROCEDURE condition_propre ()
+BEGIN
+DECLARE condition_cle_duplique CONDITION FOR SQLSTATE '23000';
+DECLARE CONTINUE HANDLER FOR condition_cle_duplique SELECT 'ERREUR';
+SELECT 'je suis 1';
+INSERT INTO t VALUES (1);
+SELECT 'je suis 2';
+INSERT INTO t VALUES (1);
+SELECT 'je suis 3';
+END;
+|</code></pre><p id="r-380563" data-claire-element-id="380563">La nouvelle ligne est la suivante :</p><pre id="r-380564" data-claire-element-id="380564"><code data-claire-semantic="sql">DECLARE condition_cle_duplique CONDITION FOR SQLSTATE '23000';</code></pre><p id="r-380565" data-claire-element-id="380565">Détaillons-la donc selon sa syntaxe.</p><pre id="r-380566" data-claire-element-id="380566"><code data-claire-semantic="sql">DECLARE nom_type_erreur CONDITION FOR type_erreur;</code></pre><p id="r-380567" data-claire-element-id="380567">Nous définissons donc ici un nom qui sera utilisable quand la condition suivante est rencontrée. Dans notre cas, nous avons dit d'associer 'condition_cle_duplique' à l'erreur de clé dupliquée (code d'erreur 23000 en SQL Standard). Il est donc possible par la suite de donner ce nom plutôt qu'un nom peu parlant.<br/> Le nom ainsi créé devra être appelé à la place du type d'erreur attendu dans :</p><pre id="r-380568" data-claire-element-id="380568"><code data-claire-semantic="sql">DECLARE CONTINUE HANDLER FOR condition_cle_duplique SELECT 'ERREUR';</code></pre><p id="r-380569" data-claire-element-id="380569">Tout ceci vous permettra une meilleure conception de vos procédures, et surtout la possibilité de leur apporter une certaine autonomie face aux erreurs.</p><p id="r-380570" data-claire-element-id="380570">Vous pouvez trouvez la <a href="http://dev.mysql.com/doc/refman/4.1/en/error-handling.html">liste des erreurs sur la documentation officielle</a>.</p><h2 id="r-curseur" data-claire-element-id="380593">Curseur</h2><p id="r-380572" data-claire-element-id="380572">Jusqu'à maintenant, ce que vous avez vu vous permet de construire des procédures relativement intéressantes : cependant, vous serez vite confrontés au problème de la lecture des résultats lorsqu'une requête SELECT renvoie plus d'une ligne.</p><p id="r-380573" data-claire-element-id="380573">Pour remédier à cela, il y a les curseurs qui pour le moment sont peu évolués (car ils sont en lecture seule et non navigable) dans MySQL ; mais ils nous suffiront. :)</p><p id="r-380574" data-claire-element-id="380574">Imaginons que nous ayons une table de membres : nous souhaiterions lire l'identifiant et le mot de passe qui y sont contenus, ce qui donne la chose suivante :</p><pre id="r-380575" data-claire-element-id="380575"><code data-claire-semantic="sql">CREATE PROCEDURE liste_membres()
+BEGIN
+        DECLARE var_identifiant VARCHAR(64);
+        DECLARE var_mot_passe VARCHAR(32);
+        DECLARE curseur1 CURSOR FOR SELECT identifiant, mot_passe FROM membres;
+ 
+        OPEN curseur1; # ouverture du curseur1
+ 
+        # première ligne du résultat
+        FETCH curseur1 INTO var_identifiant, var_mot_passe;
+        SELECT var_identifiant, var_mot_passe;
+ 
+        # seconde ligne du résultat
+        FETCH curseur1 INTO var_identifiant, var_mot_passe;
+        SELECT var_identifiant, var_mot_passe;
+ 
+        # troisième ligne du résultat
+        FETCH curseur1 INTO var_identifiant, var_mot_passe;
+        SELECT var_identifiant, var_mot_passe;
+ 
+        CLOSE curseur1; # fermeture du curseur1
+END;</code></pre><p id="r-380576" data-claire-element-id="380576">Première chose à remarquer, cette structure ne récupère que trois des lignes, ce qui n'est pour le moment que peu intéressant pour nous ; dans les parties suivantes, nous verrons comment simplifier ça tout en permettant une lecture totale du jeu de résultats.</p><p id="r-380577" data-claire-element-id="380577">Première chose effectuée dans cet exemple après avoir déclaré deux variables locales qui nous resserviront plus bas :</p><pre id="r-380578" data-claire-element-id="380578"><code data-claire-semantic="sql">DECLARE curseur1 CURSOR FOR SELECT identifiant, mot_passe FROM membres;</code></pre><p id="r-380579" data-claire-element-id="380579">On demande la création d'un curseur nommé 'curseur1' qui va aller chercher le jeu de résultats correspondant à la requête : <br/>SELECT identifiant, mot_passe FROM membres;</p><p id="r-380580" data-claire-element-id="380580">Ensuite, afin de pouvoir utiliser notre jeu de résultats et parcourir ce qui est à l'intérieur, nous l'ouvrons avec ceci :</p><pre id="r-380581" data-claire-element-id="380581"><code data-claire-semantic="sql">OPEN curseur1;</code></pre><p id="r-380582" data-claire-element-id="380582">S'ensuit la partie :</p><pre id="r-380583" data-claire-element-id="380583"><code data-claire-semantic="sql">FETCH curseur1 INTO var_identifiant, var_mot_passe;</code></pre><p id="r-380584" data-claire-element-id="380584">Nous lisons le résultat du curseur1 pour la ligne courante. Chaque appel à FETCH fait avancer d'une ligne dans le jeu de résultats.<br/> Nous affectons le résultat de cette ligne à nos variables.</p><aside id="r-380590" data-claire-element-id="380590" data-claire-semantic="warning"><p id="r-380585" data-claire-element-id="380585">Remarquez bien que les variables doivent être disposées dans le sens dans lequel on souhaite récupérer les valeurs ; si dans le cas présent, nous avions inversé</p><pre id="r-380586" data-claire-element-id="380586"><code data-claire-semantic="sql">FETCH curseur1 INTO var_identifiant, var_mot_passe;</code></pre><p id="r-380587" data-claire-element-id="380587">avec</p><pre id="r-380588" data-claire-element-id="380588"><code data-claire-semantic="sql">FETCH curseur1 INTO var_mot_passe, var_identifiant;</code></pre><p id="r-380589" data-claire-element-id="380589">nous aurions alors eu les mots de passe stockés dans la variable qui étaient pour les identifiants, et inversement.</p></aside><p id="r-380591" data-claire-element-id="380591">Enfin, après avoir récupéré nos lignes, nous fermons le curseur1 à l'aide de :</p><pre id="r-380592" data-claire-element-id="380592"><code data-claire-semantic="sql">CLOSE curseur1;</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/procedure-stockee">Procédure stockée</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/procedures-stockees-les-bases">
+Procédures stockées : les bases
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/les-blocs-d-instructions">
+Les blocs d&#039;instructions
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/declaration-variable-gestionnaire-curseur">
+Déclaration : variable, gestionnaire, curseur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/instructions-de-controle-1">
+Instructions de contrôle
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/exemples-19">
+Exemples
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/les-blocs-d-instructions">
+<span class="arrow"></span>
+<span class="next">Les blocs d&#039;instructions</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/instructions-de-controle-1">
+<span class="next">Instructions de contrôle</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Instructionsdecontrle"></a><h2>Instructions de contrôle</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/declaration-variable-gestionnaire-curseur">
+<span class="arrow"></span>
+<span class="next">Déclaration : variable, gestionnaire, curseur</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/exemples-19">
+<span class="next">Exemples</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-if-4" data-claire-element-id="380609">IF</h2><p id="r-380595" data-claire-element-id="380595">Vous souhaiteriez certainement dans certains cas vérifier des valeurs et effectuer des actions en conséquence : le IF est là pour vous permettre ce genre de choses.</p><p id="r-380596" data-claire-element-id="380596">Imaginons la procédure suivante :</p><pre id="r-380597" data-claire-element-id="380597"><code data-claire-semantic="sql">CREATE PROCEDURE controle_if(IN var INT)
+BEGIN
+        IF var = 1 THEN
+                SELECT 'Il est vrai de dire que 1 = 1 :D';
+        ELSE
+                SELECT 'Fou est celui qui vous dira que 1 est égal à autre chose que 1 :D';
+        END IF;
+END|
+CALL controle_if(1)|
+CALL controle_if(2)|</code></pre><p id="r-380598" data-claire-element-id="380598">Procédure simple qui compare la variable passée en paramètre à la procédure avec 1. Si les deux sont égaux, alors le résultat suivant est exécuté, et si ce n'est pas le cas, la partie contenue après le <strong>ELSE</strong> (sinon) est quant à elle exécutée.<br/> L'appel des deux CALL nous démontre bien le résultat.</p><div id="r-380600" data-claire-element-id="380600" data-claire-semantic="question"><p id="r-380599" data-claire-element-id="380599">Y a pas moyen de mettre plusieurs IF ?</p></div><p id="r-380601" data-claire-element-id="380601">Il est tout à fait possible de mettre plusieurs conditions, ce qui donne la chose suivante :</p><pre id="r-380602" data-claire-element-id="380602"><code data-claire-semantic="sql">CREATE PROCEDURE controle_if(IN var INT)
+BEGIN
+        IF var = 1 THEN
+                SELECT 'Il est vrai de dire que 1 = 1 :D';
+        ELSEIF var = 2 THEN
+                SELECT 'Il est vrai de dire que 2 = 2 :D';
+        ELSE
+                SELECT 'La variable passée en paramètre vaut autre chose que 1 et 2';
+        END IF;
+END|
+CALL controle_if(1)|
+CALL controle_if(2)|
+CALL controle_if(3)|</code></pre><p id="r-380603" data-claire-element-id="380603">Pour chaque condition que vous souhaiterez ajouter, il vous suffira d'ajouter une ligne :</p><pre id="r-380604" data-claire-element-id="380604"><code data-claire-semantic="sql">ELSEIF condition_vrai THEN requetes</code></pre><div id="r-380606" data-claire-element-id="380606" data-claire-semantic="question"><p id="r-380605" data-claire-element-id="380605">On peut mettre plusieurs requêtes ?</p></div><p id="r-380607" data-claire-element-id="380607">Oui, ce qui peut par exemple donner ceci :</p><pre id="r-380608" data-claire-element-id="380608"><code data-claire-semantic="sql">CREATE PROCEDURE controle_if(IN var INT)
+BEGIN
+        IF var = 1 THEN
+                SELECT 'Il est vrai de dire que 1 = 1 :D';
+        ELSEIF var = 2 THEN
+                SELECT 'Il est vrai de dire que 2 = 2 :D';
+                SELECT 'Je suis 2';
+        ELSE
+                SELECT 'La variable passée en paramètre vaut autre chose que 1 et 2';
+                SELECT var;
+        END IF;
+END|
+CALL controle_if(1)|
+CALL controle_if(2)|
+CALL controle_if(3)|</code></pre><h2 id="r-case-3" data-claire-element-id="380621">CASE</h2><p id="r-380610" data-claire-element-id="380610">Cette syntaxe, qui diffère du CASE normal, va vous permettre d'effectuer une action si une condition est vérifiée.</p><p id="r-380611" data-claire-element-id="380611">Il existe deux types de syntaxes : la première se rapprochant de l'utilisation du 'SWITCH' dans les langages de programmation, et l'autre étant équivalente à une succession de 'IF ... ELSEIF ... ELSEIF ... ELSE ...' .</p><p id="r-380612" data-claire-element-id="380612"><strong>Exemple Syntaxe1</strong> :</p><pre id="r-380613" data-claire-element-id="380613"><code data-claire-semantic="sql">CREATE PROCEDURE case1(IN var INT)
+BEGIN
+        CASE var
+    WHEN 1 THEN SELECT 'Je suis 1';
+        WHEN 2 THEN SELECT 'Je suis 2';
+    ELSE SELECT 'Je suis autre chose que 1 et 2';
+        END CASE;
+END|</code></pre><p id="r-380614" data-claire-element-id="380614">Dans ce cas, la variable 'var' est comparée à chaque cas rencontré, et si aucune des valeurs n'est vérifiée dans les <strong>WHEN</strong>, alors l'instruction après <strong>ELSE</strong> sera exécutée.</p><p id="r-380615" data-claire-element-id="380615"><strong>Exemple Syntaxe2</strong> :</p><pre id="r-380616" data-claire-element-id="380616"><code data-claire-semantic="sql">CREATE PROCEDURE case2(IN var INT)
+BEGIN
+        CASE 
+    WHEN var = 1 THEN SELECT 'Je suis 1';
+        WHEN var = 2 THEN SELECT 'Je suis 2';
+    ELSE SELECT 'Je suis autre chose que 1 et 2';
+        END CASE;
+END|</code></pre><p id="r-380617" data-claire-element-id="380617">Dans ce cas, la variable 'var' n'est pas évaluée ; au lieu de cela, nous passons d'un bloc de <strong>WHEN</strong> à l'autre en comparant si une expression est vraie. Si c'est le cas, nous exécutons alors l'instruction qui la suit, sinon, si aucune des expressions n'est vérifiée, alors l'instruction du <strong>ELSE</strong> est effectuée.</p><div id="r-380619" data-claire-element-id="380619" data-claire-semantic="question"><p id="r-380618" data-claire-element-id="380618">Est-il possible de mettre plus d'une instruction dans THEN ?</p></div><p id="r-380620" data-claire-element-id="380620">Oui vous n'êtes pas limités à une instruction.</p><h2 id="r-loop" data-claire-element-id="380636">LOOP</h2><p id="r-380622" data-claire-element-id="380622">C'est une structure de boucle qui répète un bloc d'instructions tant qu'elle ne rencontre pas une instruction LEAVE pour l'arrêter.</p><p id="r-380623" data-claire-element-id="380623"><strong>Exemple</strong> :</p><pre id="r-380624" data-claire-element-id="380624"><code data-claire-semantic="sql">CREATE PROCEDURE loop1()
+BEGIN
+DECLARE i INT DEFAULT 0;
+ 
+        LOOP
+                SET i := i + 1;
+                SELECT i;
+ 
+        END LOOP;
+END|</code></pre><aside id="r-380626" data-claire-element-id="380626" data-claire-semantic="warning"><p id="r-380625" data-claire-element-id="380625">Cette requête est correcte, cependant, ne la testez pas car vous auriez une boucle qui dure très longtemps (<strong>Ctrl</strong> + <strong>C</strong> sous Windows pour arrêter le désastre).</p></aside><p id="r-380627" data-claire-element-id="380627">Aucune condition d'arrêt n'a été rencontrée, et une erreur ne sera rencontrée que lorsque la valeur maximale valide de INT sera rencontrée, soit le chiffre : 2 147 483 647.</p><aside id="r-380630" data-claire-element-id="380630" data-claire-semantic="information"><p id="r-380628" data-claire-element-id="380628">Comme pour toutes les instructions de boucle qui seront présentées, il est possible d'arrêter brusquement la boucle à l'aide d'une instruction du type :</p><pre id="r-380629" data-claire-element-id="380629"><code data-claire-semantic="sql">LEAVE nom_label</code></pre></aside><p id="r-380631" data-claire-element-id="380631">Exemple d'arrêt lorsqu'un label est présent :</p><pre id="r-380632" data-claire-element-id="380632"><code data-claire-semantic="sql">CREATE PROCEDURE loop1()
+BEGIN
+DECLARE i INT DEFAULT 0;
+ 
+        je_suis_un_label: LOOP
+                SET i := i + 1;
+                SELECT i;
+                        
+                        IF i = 10 THEN
+                                LEAVE je_suis_un_label;
+                        END IF;
+ 
+        END LOOP je_suis_un_label;
+END|</code></pre><p id="r-380633" data-claire-element-id="380633">Le code s'exécute, et si i vaut 10, alors la boucle est arrêtée grâce au nom du label.</p><aside id="r-380635" data-claire-element-id="380635" data-claire-semantic="warning"><p id="r-380634" data-claire-element-id="380634">Le label indiqué avant l'instruction de boucle doit être le même que celui qui la termine.</p></aside><h2 id="r-repeat" data-claire-element-id="380643">REPEAT</h2><p id="r-380637" data-claire-element-id="380637">Cette instruction de type boucle permet de répéter un bloc d'instructions jusqu'à ce qu'une condition soit vérifiée.</p><p id="r-380638" data-claire-element-id="380638"><strong>Exemple</strong> :</p><pre id="r-380639" data-claire-element-id="380639"><code data-claire-semantic="sql">CREATE PROCEDURE repeat1()
+BEGIN
+DECLARE i INT DEFAULT 0;
+ 
+                REPEAT
+                        SET i := i + 1;
+                        SELECT i;
+ 
+                UNTIL i = 10 END REPEAT;
+END|</code></pre><p id="r-380640" data-claire-element-id="380640">Une boucle est lancée jusqu'à ce que la valeur de variable locale i soit égale à 10.<br/> Plus court que la version avec LOOP pour un résultat identique. :)</p><aside id="r-380642" data-claire-element-id="380642" data-claire-semantic="information"><p id="r-380641" data-claire-element-id="380641">Les labels sont supportés de la même manière qu'avec LOOP et prennent donc la même syntaxe.</p></aside><h2 id="r-while-6" data-claire-element-id="380650">WHILE</h2><p id="r-380644" data-claire-element-id="380644">C'est une structure de type boucle qui répète un bloc d'instructions tant qu'une condition est vraie.</p><p id="r-380645" data-claire-element-id="380645"><strong>Exemple</strong> :</p><pre id="r-380646" data-claire-element-id="380646"><code data-claire-semantic="sql">CREATE PROCEDURE while1()
+BEGIN
+DECLARE i INT DEFAULT 0;
+ 
+                WHILE i &lt; 10 DO
+                        SET i := i + 1;
+                        SELECT i;
+ 
+                END WHILE;
+END|</code></pre><p id="r-380647" data-claire-element-id="380647">Tant que la variable locale i est inférieure à 10, le bloc d'instructions est exécuté.</p><aside id="r-380649" data-claire-element-id="380649" data-claire-semantic="information"><p id="r-380648" data-claire-element-id="380648">Les label sont supportés de la même manière qu'avec LOOP et prennent donc la même syntaxe.</p></aside><h2 id="r-iterate" data-claire-element-id="380664">ITERATE</h2><p id="r-380651" data-claire-element-id="380651">ITERATE ne peut être utilisée qu'à l'intérieur d'une boucle LOOP, REPEAT ou WHILE et signifie : &quot;exécute encore une fois la boucle&quot;.</p><div id="r-380653" data-claire-element-id="380653" data-claire-semantic="question"><p id="r-380652" data-claire-element-id="380652">Et plus clairement ?</p></div><p id="r-380654" data-claire-element-id="380654">Le mieux sera encore des exemples reprenant nos procédures précédentes.</p><p id="r-380655" data-claire-element-id="380655"><strong>Exemple LOOP</strong> :</p><pre id="r-380656" data-claire-element-id="380656"><code data-claire-semantic="sql">CREATE PROCEDURE loop1()
+BEGIN
+DECLARE i INT DEFAULT 0;
+ 
+        je_suis_un_label: LOOP
+                SET i := i + 1;
+                SELECT i;
+ 
+                        IF i &lt; 10 THEN ITERATE je_suis_un_label; END IF;
+ 
+                        SELECT 'Je suis ', i;
+                        LEAVE je_suis_un_label;
+        END LOOP je_suis_un_label;
+END|</code></pre><p id="r-380657" data-claire-element-id="380657">Concrètement la boucle se lance, fait ses instructions, arrive sur la condition qui vérifie que la variable locale i est inférieure à 10 ; si c'est le cas, la boucle est relancée.<br/> Vous remarquerez en testant la procédure que la phrase n'est affichée que lors de la dernière boucle : ce qui veut dire que lors des premières boucles, dès qu'on lui dit <strong>ITERATE</strong>, elle relance tout de suite la boucle portant le label demandé, sans passer par le code qui est en dessous. Ce comportement est quelque peu déroutant et source d'erreur ; donc, quand vous utilisez ceci, faites bien attention et testez davantage. :)</p><p id="r-380658" data-claire-element-id="380658"><strong>Exemple REPEAT</strong> :</p><pre id="r-380659" data-claire-element-id="380659"><code data-claire-semantic="sql">CREATE PROCEDURE repeat1()
+BEGIN
+DECLARE i INT DEFAULT 0;
+ 
+        je_suis_un_label: REPEAT
+                SET i := i + 1;
+                SELECT i;
+ 
+                        IF i &lt; 10 THEN ITERATE je_suis_un_label; END IF;
+ 
+                        SELECT 'Je suis ', i;
+                UNTIL i &lt; 20 END REPEAT je_suis_un_label;
+END|</code></pre><p id="r-380660" data-claire-element-id="380660">Si nous exécutions la même chose sans le <strong>IF</strong> contenant le <strong>ITERATE</strong>, la boucle s'arrêterait au premier tour ; pourtant, en mettant cette ligne, on s'aperçoit que la valeur est bien incrémentée jusqu'à 10, on retrouve notre résultat du LOOP, ce comportement est déroutant : la vigilance est donc de mise lorsque vous utilisez le ITERATE avec le REPEAT.</p><p id="r-380661" data-claire-element-id="380661"><strong>Exemple WHILE</strong> :</p><pre id="r-380662" data-claire-element-id="380662"><code data-claire-semantic="sql">CREATE PROCEDURE while1()
+BEGIN
+DECLARE i INT DEFAULT 0;
+ 
+        je_suis_un_label: WHILE i &lt; 10 DO
+                SET i := i + 1;
+                SELECT i;
+ 
+                        IF i &lt; 10 THEN ITERATE je_suis_un_label; END IF;
+ 
+                        SELECT 'Je suis ', i;
+                END WHILE je_suis_un_label;
+END|</code></pre><p id="r-380663" data-claire-element-id="380663">Tant que i est inférieur à 10, on exécute le bloc ; remarquez que le message est affiché seulement dans la dernière boucle.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/procedure-stockee">Procédure stockée</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/procedures-stockees-les-bases">
+Procédures stockées : les bases
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/les-blocs-d-instructions">
+Les blocs d&#039;instructions
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/declaration-variable-gestionnaire-curseur">
+Déclaration : variable, gestionnaire, curseur
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/instructions-de-controle-1">
+Instructions de contrôle
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/exemples-19">
+Exemples
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/declaration-variable-gestionnaire-curseur">
+<span class="arrow"></span>
+<span class="next">Déclaration : variable, gestionnaire, curseur</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/exemples-19">
+<span class="next">Exemples</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Exemples"></a><h2>Exemples</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/instructions-de-controle-1">
+<span class="arrow"></span>
+<span class="next">Instructions de contrôle</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-380666" data-claire-element-id="380666">Vous trouverez dans cette partie des exemples de procédures prêtes à l'emploi, ou qui permettent de répondre à des problèmes spécifiques.</p><p id="r-380667" data-claire-element-id="380667"><strong>Puissance d'un nombre</strong> : X exposant n</p><pre id="r-380668" data-claire-element-id="380668"><code data-claire-semantic="sql">DELIMITER |
+#Exemple de procédure calculant X exposant n
+CREATE PROCEDURE Math_Puissance(IN X INT UNSIGNED, IN exposant TINYINT, OUT resultat BIGINT UNSIGNED)
+BEGIN
+DECLARE o BIGINT UNSIGNED DEFAULT 1;
+ 
+        WHILE exposant &gt; 0 DO
+                SET o := o * X;
+                SET exposant := exposant - 1;
+        END WHILE ;
+SELECT o INTO resultat;
+END|
+DELIMITER ;</code></pre><p id="r-380669" data-claire-element-id="380669">La procédure est appelée ainsi :</p><pre id="r-380670" data-claire-element-id="380670"><code data-claire-semantic="sql">CALL Math_Puissance(3,3,@a); #appel de la procédure
+SELECT @a; #affichage du résultat</code></pre><p id="r-380671" data-claire-element-id="380671"><strong>Lister les Membres d'une table</strong> :</p><pre id="r-380672" data-claire-element-id="380672"><code data-claire-semantic="sql">DELIMITER |
+#Exemple de procédure qui liste les membres d'une table
+CREATE PROCEDURE Liste_Membres()
+BEGIN
+        DECLARE done INT DEFAULT 0;
+        DECLARE var_identifiant VARCHAR(64);
+        DECLARE var_mot_passe VARCHAR(32);
+        DECLARE curseur1 CURSOR FOR SELECT identifiant, mot_passe FROM membres;
+        DECLARE CONTINUE HANDLER FOR SQLSTATE '02000' SET done = 1;
+ 
+        OPEN curseur1; # ouverture du curseur1
+ 
+        REPEAT
+                FETCH curseur1 INTO var_identifiant, var_mot_passe;
+                IF done = 0 THEN
+                        SELECT var_identifiant, var_mot_passe;
+                END IF;
+        UNTIL done
+        END REPEAT;
+ 
+        CLOSE curseur1; # fermeture du curseur1
+END|
+DELIMITER ;</code></pre><p id="r-380673" data-claire-element-id="380673">La procédure est appelée par :</p><pre id="r-380674" data-claire-element-id="380674"><code data-claire-semantic="sql">CALL Liste_Membres();</code></pre><p id="r-380675" data-claire-element-id="380675">Au final, les procédures stockées représentent un bon moyen d'optimiser les requêtes redondantes, tout en offrant une structure suffisamment large pour permettre des applications évoluées.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/procedure-stockee">Procédure stockée</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/procedures-stockees-les-bases">
+Procédures stockées : les bases
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/les-blocs-d-instructions">
+Les blocs d&#039;instructions
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/declaration-variable-gestionnaire-curseur">
+Déclaration : variable, gestionnaire, curseur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/instructions-de-controle-1">
+Instructions de contrôle
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/exemples-19">
+Exemples
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/procedure-stockee/instructions-de-controle-1">
+<span class="arrow"></span>
+<span class="next">Instructions de contrôle</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/rocedure-stockee.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 03:00:04 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/rocedure-stockee.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:39:14 GMT -->
+</html>
