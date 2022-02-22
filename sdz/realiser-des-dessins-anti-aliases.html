@@ -1,0 +1,1290 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/realiser-des-dessins-anti-aliases.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 00:25:59 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/realiser-des-dessins-anti-aliases.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:18:11 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Réaliser des dessins anti-aliasés</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/realiser-des-dessins-anti-aliases.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Réaliser des dessins anti-aliasés</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Raliserdesdessinsanti-aliass">Réaliser des dessins anti-aliasés</a><br/><a href="#L039anti-aliasing">L&#039;anti-aliasing</a><br/><a href="#SDLetlespixels">SDL et les pixels</a><br/><a href="#Tracerunedroiteanti-aliase">Tracer une droite anti-aliasée</a><br/><a href="#Traceruncercleanti-alias">Tracer un cercle anti-aliasé</a><br/><a href="#Autresfonctionsampcodecompletbonus">Autres fonctions &amp; code complet (bonus)</a><br/></div>
+<a name="Raliserdesdessinsanti-aliass"></a><h2>Réaliser des dessins anti-aliasés</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/l-anti-aliasing">
+<span class="next">L&#039;anti-aliasing</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-587373" data-claire-element-id="587373">Salut à tous!</p><p id="r-587374" data-claire-element-id="587374">Vous avez remarqué que la SDL par défaut ne propose que des fonctionnalités de bas niveau. Lorsque j'ai codé plusieurs de mes projets, j'ai eu besoin de tracer des lignes, etc. Je me suis retrouvé à coder par moi-même pas mal de <strong>fonctions géométriques de base</strong> car je n'ai pas trouvé de bibliothèque qui permette directement de le faire (mis à part OpenGL, mais c'est un peu violent si on veut juste faire un trait ! :lol: ).</p><p id="r-587375" data-claire-element-id="587375">Alors, vous allez me dire &quot;<em>Pour tracer un trait, 2 secondes suffisent !</em>&quot;, ce qui n'est pas faux (quoique… ^^ ). Mais là, l'intérêt est que le tout est <strong>anti-aliasé / anticrénelé:magicien:</strong>!</p><p id="r-587376" data-claire-element-id="587376">Même si le fait de les coder m'a aidé à progresser, franchement c'est beaucoup de galère ; alors, plutôt que de garder ce travail uniquement pour moi, je vais vous le présenter ici.</p><aside id="r-587378" data-claire-element-id="587378" data-claire-semantic="information"><p id="r-587377" data-claire-element-id="587377">Le code est commenté en anglais (eh oui, c'est le langage de l'informatique… et surtout parce que je l'ai fait pour un projet en anglais). Il va falloir vous y habituer, car tout est en anglais, et entre autres les documentations !</p></aside><div id="r-587380" data-claire-element-id="587380" data-claire-semantic="question"><p id="r-587379" data-claire-element-id="587379">Je n'ai pas réussi à faire quelque chose d'efficace pour tracer des arcs de cercle (pour l'instant), donc si quelqu'un y arrive, je serai plus qu'heureux de l'ajouter ici, afin de compléter la bibliothèque !</p></div>
+</div><a name="L039anti-aliasing"></a><h2>L&#039;anti-aliasing</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/sdl-et-les-pixels">
+<span class="next">SDL et les pixels</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-587381" data-claire-element-id="587381">Dans cette partie d'introduction, nous allons voir le principe de l'anti-aliasing.</p><p id="r-587382" data-claire-element-id="587382"><strong>Avant</strong></p><figure id="r-587384" data-claire-element-id="587385"><img id="r-587383" data-claire-element-id="587383" src="medias/uploads.siteduzero.com_files_225001_226000_225383.jpg" alt="Image utilisateur"/></figure><p id="r-587386" data-claire-element-id="587386">On voit clairement un effet d'escalier sur les traits. Plus on se rapproche de 0° ou de 90°, plus c'est flagrant… Et c'est pas beau ! Voyons comment régler ça :</p><p id="r-587387" data-claire-element-id="587387"><strong>Après</strong></p><figure id="r-587389" data-claire-element-id="587390"><img id="r-587388" data-claire-element-id="587388" src="medias/uploads.siteduzero.com_files_225001_226000_225382.jpg" alt="Image utilisateur"/></figure><p id="r-587391" data-claire-element-id="587391">Là, si vous vous approchez un peu de votre écran, vous voyez qu'au bord des escaliers, il y a une sorte de dégradé… c'est ça l'anti-aliasing (ou anticrénelage) !</p><p id="r-587392" data-claire-element-id="587392">Le problème de crénelage vient du fait qu'un écran d'ordinateur présente les images de manière discrète et non continue, donc quand la ligne ne passe pas exactement sur un pixel mais entre 2, la couleur du trait est appliquée sur 1 des 2 pixels uniquement.</p><p id="r-587393" data-claire-element-id="587393">Pour empêcher cela, pour une droite de 1 px de large, on trace toujours 2 pixels de large et on va répartir la couleur de la droite et du fond entre ces 2 pixels.</p><figure id="r-587395" data-claire-element-id="587396"><img id="r-587394" data-claire-element-id="587394" src="medias/uploads.siteduzero.com_files_225001_226000_225384.gif" alt="Image utilisateur"/></figure><p id="r-587397" data-claire-element-id="587397">Par exemple, si l'on souhaite placer un pixel noir sur un fond blanc dans le repère (x;y) à la position (5;3.48), on va placer :</p><ul id="r-587402" data-claire-element-id="587402"><li id="r-587399" data-claire-element-id="587399"><p id="r-587398" data-claire-element-id="587398">un pixel à la position (5;3) avec 48 % de noir et 52 % (100 % moins 48 %) de blanc =&gt; 100 % de couleur ;</p></li><li id="r-587401" data-claire-element-id="587401"><p id="r-587400" data-claire-element-id="587400">un pixel à la position (5;4) avec 52 % (100 % moins 48 %) de noir et 48 % de blanc =&gt; 100 % de couleur.</p></li></ul><p id="r-587403" data-claire-element-id="587403">On a bien 100 % de noir et 100 % de blanc au total sur les 2 pixels, ainsi que <em>100 % de couleur</em> par pixel. On a bien la même &quot;quantité&quot; de blanc et de noir que celle que l'on aurait si la ligne était passée sur un seul pixel et qu'on avait laissé le pixel d'à côté blanc. On a donc toujours bien l'illusion que la droite fait un pixel de large.</p><aside id="r-587405" data-claire-element-id="587405" data-claire-semantic="warning"><p id="r-587404" data-claire-element-id="587404">On remarque immédiatement que cette méthode est relativement lourde gourmande en ressources, car il y est question de transparence, de mélange de couleurs et de flottants. Néanmoins, sur des ordinateurs plutôt modestes, j'ai utilisé ma bibliothèque pour faire des traits qui étaient attachés à la souris (donc beaucoup de &quot;retraçages&quot;) et cela marchait sans souci…</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases">Réaliser des dessins anti-aliasés</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/l-anti-aliasing">
+L&#039;anti-aliasing
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/sdl-et-les-pixels">
+SDL et les pixels
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/tracer-une-droite-anti-aliasee">
+Tracer une droite anti-aliasée
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/tracer-un-cercle-anti-aliase">
+Tracer un cercle anti-aliasé
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/autres-fonctions-code-complet-bonus">
+Autres fonctions &amp; code complet (bonus)
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/sdl-et-les-pixels">
+<span class="next">SDL et les pixels</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="SDLetlespixels"></a><h2>SDL et les pixels</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/l-anti-aliasing">
+<span class="arrow"></span>
+<span class="next">L&#039;anti-aliasing</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/tracer-une-droite-anti-aliasee">
+<span class="next">Tracer une droite anti-aliasée</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-587407" data-claire-element-id="587407">Nous allons à présent voir comment travailler les pixels de votre fenêtre SDL à la main. Tout se résume dans ce code :</p><pre id="r-587408" data-claire-element-id="587408"><code data-claire-semantic="c">*((Uint32*)(map-&gt;pixels) + x + y * map-&gt;w) = color;</code></pre><p id="r-587409" data-claire-element-id="587409"><em>map</em> étant la surface, x la position en x, et y, bien évidemment, la position en y (voir le cours de M@teo si besoin). En gros, dans le SDL, une surface est un grand tableau de 1 ligne et &quot;largeur*hauteur&quot; colonnes, où pour chaque case on associe une couleur (codée sur 32 bits). Pour récupérer la couleur en x;y, on doit donc aller à la colonne x + y*largeur (car elle n'est pas stockée dans une matrice 2D de dimensions x;y !).</p><p id="r-587410" data-claire-element-id="587410">Le code, que j'ai donné en haut, <strong><em>set</em></strong> la valeur de couleur au pixel concerné. On pourrait faire l'inverse pour récupérer la couleur :</p><pre id="r-587411" data-claire-element-id="587411"><code data-claire-semantic="c">color_ptr = *((Uint32*)(map-&gt;pixels) + x + y * map-&gt;w);
+color = *color_ptr;</code></pre><p id="r-587412" data-claire-element-id="587412">… mais généralement, on souhaite avoir les composantes RGBA de la couleur, on préfèrera donc comme suit :</p><pre id="r-587413" data-claire-element-id="587413"><code data-claire-semantic="c">SDL_GetRGBA(*((Uint32 *)map-&gt;pixels + x + y * map-&gt;w),map-&gt;format,r,g,b,a);</code></pre><p id="r-587414" data-claire-element-id="587414">Au final, on obtient les routines suivantes pour interagir facilement sur les pixels :</p><pre id="r-587415" data-claire-element-id="587415"><code data-claire-semantic="c">// Size of a point
+#define POINT_SIZE 4
+
+// Sets a pixel on x,y position on a color on the map:
+// If the position is out of map, nothing is done
+// Returns: void
+void setPixel(int x, int y, Uint32 color, SDL_Surface *map)
+{
+  if(x&gt;0 &amp;&amp; y&gt;0 &amp;&amp; x&lt;map-&gt;w &amp;&amp; y&lt;map-&gt;h)
+    *((Uint32*)(map-&gt;pixels) + x + y * map-&gt;w) = color;
+}
+
+// Getter for a pixel color on x,y position on the map
+// The r, g, b, a pointer are set to the red, green, blue and alpha value of the pixel
+// If the position is out of map, nothing is done
+// Returns: void
+void getPixelColor(int x, int y, SDL_Surface *map, Uint8 *r, Uint8 *g, Uint8 *b, Uint8 *a)
+{
+  if(x&gt;0 &amp;&amp; y&gt;0 &amp;&amp; x&lt;map-&gt;w &amp;&amp; y&lt;map-&gt;h)
+    SDL_GetRGBA(*((Uint32 *)map-&gt;pixels + x + y * map-&gt;w),map-&gt;format,r,g,b,a);
+}
+
+// Sets a point on x,y position on the map on a color, of the map
+// Point's size if 2*POINT_SIZE
+// If the position is out of map, nothing is done
+// Returns: void
+void setPoint(int x, int y, Uint32 color, SDL_Surface *map)
+{
+  int i,j;
+
+  for(i=-POINT_SIZE;i&lt;=POINT_SIZE;i++)
+      for(j=-POINT_SIZE;j&lt;=POINT_SIZE;j++)
+            setPixel(x+i, y+j, color, map);
+}</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases">Réaliser des dessins anti-aliasés</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/l-anti-aliasing">
+L&#039;anti-aliasing
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/sdl-et-les-pixels">
+SDL et les pixels
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/tracer-une-droite-anti-aliasee">
+Tracer une droite anti-aliasée
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/tracer-un-cercle-anti-aliase">
+Tracer un cercle anti-aliasé
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/autres-fonctions-code-complet-bonus">
+Autres fonctions &amp; code complet (bonus)
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/l-anti-aliasing">
+<span class="arrow"></span>
+<span class="next">L&#039;anti-aliasing</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/tracer-une-droite-anti-aliasee">
+<span class="next">Tracer une droite anti-aliasée</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Tracerunedroiteanti-aliase"></a><h2>Tracer une droite anti-aliasée</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/sdl-et-les-pixels">
+<span class="arrow"></span>
+<span class="next">SDL et les pixels</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/tracer-un-cercle-anti-aliase">
+<span class="next">Tracer un cercle anti-aliasé</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-587417" data-claire-element-id="587417">On va <em>enfin</em> appliquer le principe d'anticrénelage que l'on a vu précédemment pour tracer une droite.</p><p id="r-587418" data-claire-element-id="587418">Le petit point épineux que je vous avais caché jusque-là (eh oui, sinon cela serait bien trop simple…), c'est que la méthode que j'ai présentée en haut (sur 2 pixels), ne marche que pour une pente inférieure à 45° ! :-°</p><p id="r-587419" data-claire-element-id="587419">Pourquoi ? Eh bien regardez avec attention l'image que j'avais présentée (je la remets) :</p><figure id="r-587421" data-claire-element-id="587422"><img id="r-587420" data-claire-element-id="587420" src="medias/uploads.siteduzero.com_files_225001_226000_225384.gif" alt="Image utilisateur"/></figure><p id="r-587423" data-claire-element-id="587423">La droite a une pente &lt; 45° et les 2 pixels sont verticaux…<br/> Si la pente est &gt; 45° (rotation de 90° de mon image), mes 2 pixels devront être horizontaux !</p><aside id="r-587425" data-claire-element-id="587425" data-claire-semantic="warning"><p id="r-587424" data-claire-element-id="587424">Donc, chaque fois que vous voudrez anti-aliaser quelque chose, il faudra toujours faire attention à la pente, ou autrement dit à la <strong>dérivée</strong> : toujours une dérivée <strong>inférieure à 1</strong> (en valeur absolue).</p></aside><p id="r-587426" data-claire-element-id="587426">D'où les 2 cas suivants pour notre droite :</p><pre id="r-587427" data-claire-element-id="587427"><code data-claire-semantic="c">void line_trace(int x1, int y1, int x2, int y2, Uint32 color, SDL_Surface *map)
+{
+  int xd, yd;
+
+  xd = (x2-x1);
+  yd = (y2-y1);
+
+  if (abs(xd) &gt; abs(yd)) // The line angle is smaller than 45°
+  {
+    ...
+  }
+  else
+  {
+    ...
+  }</code></pre><p id="r-587428" data-claire-element-id="587428">Pour anti-aliaser, vous avez vu qu'il faut la partie après la virgule pour en déduire le pourcentage de couleur de chaque pixel… Pour éviter de réécrire plusieurs fois le même code, voici quelques petites fonctions de mise en bouche qui retournent la fraction ou 1 - la fraction (prenez-les comme telles, c'est cadeau, on va voir leur utilité dans un instant - quel suspense tout de même !).</p><pre id="r-587429" data-claire-element-id="587429"><code data-claire-semantic="c">// Switchs the values of the x and y integers
+// Returns: void
+void int_switch(int* x, int* y)
+{
+  int t = *x;
+  *x = *y;
+  *y = t;
+}
+
+// Returns the fractionary part of the x float
+// Returns: the frav value (float) [0,1]
+float frac(float x)
+{
+   return x - (int)x;
+}
+
+// Returns the missing part to 1 from the fract. part of the x float
+// Returns: the invfrac value (float) [0,1]
+float invfrac(float x)
+{
+   return 1 - frac(x);
+}</code></pre><p id="r-587430" data-claire-element-id="587430">Et enfin, la partie à proprement parler d'anti-aliasing, où il va vous falloir :</p><ul id="r-587439" data-claire-element-id="587439"><li id="r-587432" data-claire-element-id="587432"><p id="r-587431" data-claire-element-id="587431">récupérer les composantes de la couleur du trait ;</p></li><li id="r-587434" data-claire-element-id="587434"><p id="r-587433" data-claire-element-id="587433">récupérer les composantes de la couleur du fond actuel (x;y) ;</p></li><li id="r-587436" data-claire-element-id="587436"><p id="r-587435" data-claire-element-id="587435">calculer la couleur en fonction de chacun des pourcentages ;</p></li><li id="r-587438" data-claire-element-id="587438"><p id="r-587437" data-claire-element-id="587437"><em>blitter</em> les 2 pixels.</p></li></ul><aside id="r-587441" data-claire-element-id="587441" data-claire-semantic="information"><p id="r-587440" data-claire-element-id="587440">Alors à partir de maintenant, vous devriez y arriver tout seuls ; comme je suis vraiment trop bon, je vous tiens vraiment la main jusqu'au bout… mais revers de la médaille, cela va peut-être être un peu redondant pour certains !</p></aside><h3 id="r-recuperer-les-composantes-de-la-couleur-du-trait" data-claire-element-id="587445">Récupérer les composantes de la couleur du trait</h3><p id="r-587442" data-claire-element-id="587442">On a vu la fonction dans l'intro, mais pour ceux qui auraient déja oublié, il s'agit de SDL_GetRGBA…</p><div id="r-587444" data-claire-element-id="587444"><pre id="r-587443" data-claire-element-id="587443"><code data-claire-semantic="c">// Getting the r,g,b,a values of the specified color
+SDL_GetRGBA(color,map-&gt;format,&amp;r1,&amp;g1,&amp;b1,&amp;a1);</code></pre></div><h3 id="r-recuperer-les-composantes-de-la-couleur-du-fond-actuel-x-y" data-claire-element-id="587449">Récupérer les composantes de la couleur du fond actuel (x;y)</h3><p id="r-587446" data-claire-element-id="587446">On a créé la fonction juste avant (si, si : pour ceux qui dorment dans le fond, dans l'intro !), donc jusque-là tout va bien !</p><div id="r-587448" data-claire-element-id="587448"><pre id="r-587447" data-claire-element-id="587447"><code data-claire-semantic="c">// Getting the color of current (background) pixel
+getPixelColor(x, (int)yf, map, &amp;r2,&amp;g2,&amp;b2,&amp;a2);</code></pre></div><h3 id="r-calcul-de-la-couleur-en-fonction-de-chacun-des-pourcentages-blittage" data-claire-element-id="587472">Calcul de la couleur en fonction de chacun des pourcentages + &quot;blittage&quot;</h3><p id="r-587450" data-claire-element-id="587450">Comme nous l'avons vu sur le petit dessin, il faut utiliser 2 pixels côte à côte. Prenons un exemple : mon pixel devrait tomber à une position en y de <strong>56.38</strong> (<em>x</em> quelconque), on va donc travailler avec les pixels <strong>56</strong> et <strong>57</strong>.</p><p id="r-587451" data-claire-element-id="587451">Sur mon pixel <strong>56</strong>, je vais appliquer 38 % (soit 0.38 en channel alpha) de couleur du trait et, comme il faut bien compléter à 100 %, 1-0.38 = 0.62 de couleur de fond. Puis on mixe les 2. Pour mixer les 2, on utilise une fonction de la SDL qui à partir des composantes RGBA donne la couleur (l'inverse de SDL_GetRGBA), qui est… tada ! : SDL_MapRGBA (eh oui, même pas SDL_SetRGBA… Comme quoi, même en informatique, y a du suspense !).</p><p id="r-587452" data-claire-element-id="587452">Sur mon pixel <strong>57</strong>, je vais appliquer 1-0.38 soit 0.62 de couleur du trait (comme ça, j'ai toujours 100 % de la couleur du trait) et, comme il faut bien compléter à 100 % la couleur du pixel , 1-0.62 = 0.38 de couleur de fond. Puis on mixe les 2.</p><p id="r-587453" data-claire-element-id="587453">Avec une formule mathématique, on aurait :</p><p id="r-587454" data-claire-element-id="587454"><cite>Citation : Mathématiques</cite></p><blockquote id="r-587458" data-claire-element-id="587458"><p id="r-587455" data-claire-element-id="587455">frac_y = y - E(y)<br/> (partie fractionnaire, avec E() partie entière !).</p><p id="r-587456" data-claire-element-id="587456">couleur(x;E(y)) = couleur1(x;E(y)).frac_y+ couleur2(x;E(y)).(1-frac_y)<br/> (la fraction de la couleur 1 et le complément pour la couleur 2).</p><p id="r-587457" data-claire-element-id="587457">couleur(x;E(y)+1) = couleur1(x;E(y)+1).(1-frac_y)+ couleur2(x;E(y)+1).frac_y<br/> (le complément de la couleur 1 utilisée ci-dessus puis le complément pour la couleur 2).</p></blockquote><p id="r-587459" data-claire-element-id="587459">Et pour finir, on set les 2 pixels (avec la fonction maison codée avant !).</p><p id="r-587460" data-claire-element-id="587460">Bon : cette fois, je ne cache pas le code, car c'est un peu plus compliqué ! ;)</p><pre id="r-587461" data-claire-element-id="587461"><code data-claire-semantic="c">// For the antialising 2 pixels are drawn, one on top (x,y+1), the other below (x,y)
+// The color is a mix of:
+// - the color of background
+// - the color of the line
+// The amount of each color (bg &amp; line color), on the 2 pixels is 100% (e.g. 10% on one, 90% on the other)
+
+r=(Uint8)(frac(yf)*r1+invfrac(yf)*r2);
+g=(Uint8)(frac(yf)*g1+invfrac(yf)*g2);
+b=(Uint8)(frac(yf)*b1+invfrac(yf)*b2);
+a=(Uint8)(frac(yf)*a1+invfrac(yf)*a2);
+colorAA1=SDL_MapRGBA(map-&gt;format,r,g,b,a); // Color for pixel one (x,y+1)
+
+r=(Uint8)(frac(yf)*r2+invfrac(yf)*r1);
+g=(Uint8)(frac(yf)*g2+invfrac(yf)*g1);
+b=(Uint8)(frac(yf)*b2+invfrac(yf)*b1);
+a=(Uint8)(frac(yf)*a2+invfrac(yf)*a1);
+colorAA2=SDL_MapRGBA(map-&gt;format,r,g,b,a); // Color for the 2nd pixel (x,y)
+
+// Blitting
+setPixel(x, (int)yf, colorAA2, map);
+setPixel(x, (int)yf+1, colorAA1, map);</code></pre><p id="r-587462" data-claire-element-id="587462">À présent, reste à trouver la quantité de couleur (le frac(yf) dans le bout de code au-dessus) ; c'est le 0.38 dans l'exemple… En fait, tout simplement, on part de notre condition de départ, à savoir x = x1 et y = y1, et, dans la boucle suivante, on cherche à savoir quelles coordonnées devront avoir ces points…</p><p id="r-587463" data-claire-element-id="587463">Pour x, c'est facile, c'est x+1, mais pour y ? Toujours la dérivée ! y =&gt; y+grad, où grad est la pente.</p><p id="r-587464" data-claire-element-id="587464">Il ne reste plus qu'à coder le tout !</p><p id="r-587465" data-claire-element-id="587465">Vous avez cherché ? Alors voilà, au final, en bouclant, ce qu'on obtient.</p><div id="r-587467" data-claire-element-id="587467"><pre id="r-587466" data-claire-element-id="587466"><code data-claire-semantic="c">// Traces an antialiased line from x1,y1 to x2,y2 on the specified color, on the map, with the dotted method
+// Returns: void
+void line_trace(int x1, int y1, int x2, int y2, Uint32 color, SDL_Surface *map, int dotted)
+{
+  int xd, yd, x, y, to_dot = 0;
+  float grad,xf,yf;
+  Uint8 r1,g1,b1,a1,r2,g2,b2,a2,r,g,b,a;
+  Uint32 colorAA1,colorAA2;
+
+  // Getting the r,g,b,a values of the specified color
+  SDL_GetRGBA(color,map-&gt;format,&amp;r1,&amp;g1,&amp;b1,&amp;a1);
+
+  xd = (x2-x1);
+  yd = (y2-y1);
+
+  if (abs(xd) &gt; abs(yd)) // The line angle is smaller than 45°
+  {
+    if (x1 &gt; x2) // Because of the FOR, going from the smallest to the greatest value
+    {
+      int_switch(&amp;x1, &amp;x2);
+      int_switch(&amp;y1, &amp;y2);
+      xd = (x2-x1);
+      yd = (y2-y1);
+    }
+
+    grad = (float)yd/(float)xd; // Line slope
+    yf = (float)y1+grad;
+
+    // Start and arrival points
+    setPixel(x1, y1, color, map);
+    setPixel(x2, y2, color, map);
+
+    for (x = x1+1; x &lt;= x2; x++)
+    {
+     if((!dotted || (to_dot%dotted)) &amp;&amp; x&gt;0 &amp;&amp; x&lt;map-&gt;w &amp;&amp; yf&gt;0 &amp;&amp; yf&lt;map-&gt;h) // If not outside of the map surface
+     {
+         // Getting the color of current (background) pixel
+         getPixelColor(x, (int)yf, map, &amp;r2,&amp;g2,&amp;b2,&amp;a2);
+
+         // For the antialising 2 pixels are drawn, one one top (x,y+1), the other below (x,y)
+         // The color is a mix of:
+         // - the color of background
+         // - the color of the line
+         // The amount of each color (bg &amp; line color), on the 2 pixels is 100% (e.g. 10% on one, 90% on the other)
+
+         r=(Uint8)(frac(yf)*r1+invfrac(yf)*r2);
+         g=(Uint8)(frac(yf)*g1+invfrac(yf)*g2);
+         b=(Uint8)(frac(yf)*b1+invfrac(yf)*b2);
+         a=(Uint8)(frac(yf)*a1+invfrac(yf)*a2);
+         colorAA1=SDL_MapRGBA(map-&gt;format,r,g,b,a); // Color for pixel one (x,y+1)
+
+         r=(Uint8)(frac(yf)*r2+invfrac(yf)*r1);
+         g=(Uint8)(frac(yf)*g2+invfrac(yf)*g1);
+         b=(Uint8)(frac(yf)*b2+invfrac(yf)*b1);
+         a=(Uint8)(frac(yf)*a2+invfrac(yf)*a1);
+         colorAA2=SDL_MapRGBA(map-&gt;format,r,g,b,a); // Color for the 2nd pixel (x,y)
+
+         // Blitting
+         setPixel(x, (int)yf, colorAA2, map);
+         setPixel(x, (int)yf+1, colorAA1, map);
+     }
+     to_dot++;
+
+     yf += grad; // Go to next point (x =&gt; x+1 / yf =&gt; yf + grad)
+    }
+  }
+
+ else // Same thing if the line angle is greater the 45°
+  {
+    if (y1 &gt; y2)
+    {
+      int_switch(&amp;x1, &amp;x2);
+      int_switch(&amp;y1, &amp;y2);
+      xd = (x2-x1);
+      yd = (y2-y1);
+    }
+
+    grad = (float)xd/(float)yd;
+    xf = (float)x1+grad;
+
+    setPixel(x1, y1, color, map);
+    setPixel(x2, y2, color, map);
+
+    for (y = y1+1; y &lt;= y2; y++)
+    {
+     if((!dotted || (to_dot%dotted)) &amp;&amp; xf&gt;0 &amp;&amp; xf&lt;map-&gt;w &amp;&amp; y&gt;0 &amp;&amp; y&lt;map-&gt;h)
+     {
+         getPixelColor((int)xf, y, map, &amp;r2,&amp;g2,&amp;b2,&amp;a2);
+
+         r=(Uint8)(frac(xf)*r1+invfrac(xf)*r2);
+         g=(Uint8)(frac(xf)*g1+invfrac(xf)*g2);
+         b=(Uint8)(frac(xf)*b1+invfrac(xf)*b2);
+         a=(Uint8)(frac(xf)*a1+invfrac(xf)*a2);
+         colorAA1=SDL_MapRGBA(map-&gt;format,r,g,b,a);
+
+         r=(Uint8)(frac(xf)*r2+invfrac(xf)*r1);
+         g=(Uint8)(frac(xf)*g2+invfrac(xf)*g1);
+         b=(Uint8)(frac(xf)*b2+invfrac(xf)*b1);
+         a=(Uint8)(frac(xf)*a2+invfrac(xf)*a1);
+         colorAA2=SDL_MapRGBA(map-&gt;format,r,g,b,a);
+
+         setPixel((int)xf, y, colorAA2, map);
+         setPixel((int)xf+1, y, colorAA1, map);
+     }
+     to_dot++;
+
+     xf += grad;
+    }
+  }
+}</code></pre></div><p id="r-587468" data-claire-element-id="587468">À noter que j'ai rajouté le <em>dotted</em>, qui permet de faire des pointillés, etc. Pour faire des pointillés, il suffit de ne pas dessiner le trait par moments ! Pour cela, on dessine uniquement lorsque &quot;to_dot%dotted&quot; (logique booléenne).</p><p id="r-587469" data-claire-element-id="587469">J'ai également rajouté une vérification pour ne dessiner que dans la surface et non pas à l'extérieur (pour cela, on utilise map-&gt;w et map-&gt;h qui renvoient la largeur et la hauteur). Il vous faut rajouter ces constantes dans votre .h :</p><pre id="r-587470" data-claire-element-id="587470"><code data-claire-semantic="c">#define FULL   0
+#define DOTTED 2
+#define DASHED 5</code></pre><p id="r-587471" data-claire-element-id="587471">Vous pouvez bien sûr les changer selon vos besoins…</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases">Réaliser des dessins anti-aliasés</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/l-anti-aliasing">
+L&#039;anti-aliasing
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/sdl-et-les-pixels">
+SDL et les pixels
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/tracer-une-droite-anti-aliasee">
+Tracer une droite anti-aliasée
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/tracer-un-cercle-anti-aliase">
+Tracer un cercle anti-aliasé
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/autres-fonctions-code-complet-bonus">
+Autres fonctions &amp; code complet (bonus)
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/sdl-et-les-pixels">
+<span class="arrow"></span>
+<span class="next">SDL et les pixels</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/tracer-un-cercle-anti-aliase">
+<span class="next">Tracer un cercle anti-aliasé</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Traceruncercleanti-alias"></a><h2>Tracer un cercle anti-aliasé</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/tracer-une-droite-anti-aliasee">
+<span class="arrow"></span>
+<span class="next">Tracer une droite anti-aliasée</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/autres-fonctions-code-complet-bonus">
+<span class="next">Autres fonctions &amp; code complet (bonus)</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-587474" data-claire-element-id="587474">Bon : toujours un peu plus dur, le cercle anti-aliasé. Pour l'instant, intéressons-nous uniquement à un demi-cercle. Toujours par rapport à cette histoire de dérivée, on remarque que l'on va devoir tracer uniquement des quarts de cercle, entre 45° et 135° (le &quot;haut&quot; d'un cercle), car au-delà, la dérivée vaut plus de 1 (en valeur absolue, donc entre 1 et -1).</p><figure id="r-587476" data-claire-element-id="587477"><img id="r-587475" data-claire-element-id="587475" src="medias/uploads.siteduzero.com_files_237001_238000_237366.png" alt="Image utilisateur"/></figure><p id="r-587478" data-claire-element-id="587478"><em>On s'intéresse à la partie en couleur, car la pente de la tangente varie entre -1 et 1.</em><br/> Pour un cercle de centre (x;y) et de rayon R, on va chercher à avoir l'équation des points à <em>blitter</em> (intersection des droites en rouge avec le cercle) en fonction de l'angle en rouge (qui va varier de 45° à 135°).</p><figure id="r-587480" data-claire-element-id="587481"><img id="r-587479" data-claire-element-id="587479" src="medias/uploads.siteduzero.com_files_237001_238000_237370.png" alt="Image utilisateur"/></figure><p id="r-587482" data-claire-element-id="587482">On a :</p><pre id="r-587483" data-claire-element-id="587483"><code>x_cercle = x + R*sin(angle-90°);
+y_cercle = y + R*cos(angle-90°);</code></pre><p id="r-587484" data-claire-element-id="587484">On a bien, à <em>angle</em> = 90°, y_cercle = y (verticale) et x_cercle = x + R.</p><p id="r-587485" data-claire-element-id="587485">Mais il y a un problème : x_cercle et y_cercle ne sont pas entiers… Or il faudrait par exemple à chaque boucle incrémenter x_cercle et en déduire y_cercle (comme pour la droite, où l'on avait calculé la pente). On va donc poser R*sin(angle-90°) = r. On va maintenant non plus faire varier l'angle, mais r.</p><figure id="r-587487" data-claire-element-id="587488"><img id="r-587486" data-claire-element-id="587486" src="medias/uploads.siteduzero.com_files_237001_238000_237371.png" alt="Image utilisateur"/></figure><p id="r-587489" data-claire-element-id="587489">On a maintenant <em>r</em> qui varie de R*sin(45°-90°) à R*sin(135°-90°) pour <em>angle</em> variant de 45° à 135° (on remarque tout de suite qu'une boucle for semble particulièrement bien adaptée).</p><p id="r-587490" data-claire-element-id="587490">Comme ça, on en déduit :</p><pre id="r-587491" data-claire-element-id="587491"><code>x_cercle = x + r;
+y_cercle = y + R*cos(angle-90°)/R*sin(angle-90°)*r = r*tan(angle-90°);</code></pre><p id="r-587492" data-claire-element-id="587492">C'est déjà bien mieux, car on peut incrémenter x_cercle (via r) et en déduire y_cercle, mais il faut calculer une tangente à tous les coups ! On va donc ruser.</p><figure id="r-587494" data-claire-element-id="587495"><img id="r-587493" data-claire-element-id="587493" src="medias/uploads.siteduzero.com_files_237001_238000_237375.png" alt="Image utilisateur"/></figure><p id="r-587496" data-claire-element-id="587496">On remarque que r*tan(…) est également égal à sqrt(R²-r²), car c'est le 3e côté d'un triangle (Pythagore). On a donc au final (et on voit que l'on a finalement ni tangente ni autres gros calculs bien lourds !) :</p><pre id="r-587497" data-claire-element-id="587497"><code>x_cercle = x + r;
+y_cercle = y + sqrt(R²-r²)</code></pre><p id="r-587498" data-claire-element-id="587498">À partir de là, on a réussi à revenir à une solution proche de la droite, avec une incrémentation selon une seule variable (ici r, dans la droite y). Après tout, quand on a déjà fait du bon boulot, autant faire un copier-coller ! Et en plus, pas besoin de vous réexpliquer comment faire les points anti-aliasés, c'est pareil… Bon, ben j'ai plus qu'à vous donner le code alors… La seule petite particularité, c'est qu'il faut faire 4 quarts de cercle, je vous laisse chercher (ou regarder - pour les fainéants :p) comment.</p><p id="r-587499" data-claire-element-id="587499"></p><div id="r-587501" data-claire-element-id="587501"><pre id="r-587500" data-claire-element-id="587500"><code data-claire-semantic="c">// Traces an antialiased circle with the specified raduis R on the center x,y on the specified color, on the map, with the dotted method
+// Returns: void
+void circle_trace(int x, int y, int R, Uint32 color, SDL_Surface *map, int dotted)
+{
+    int raduis, to_dot;
+    float real_y;
+    float real_x;
+
+    Uint8 r1,g1,b1,a1,r2,g2,b2,a2,r,g,b,a;
+    Uint32 colorAA1,colorAA2;
+
+    SDL_GetRGBA(color,map-&gt;format,&amp;r1,&amp;g1,&amp;b1,&amp;a1);
+
+    R = abs(R); // To be sure that R&gt;0 (or with the FOR, we'll get some problems!)
+
+    // NB: From -R*0.71 to R*0.71 because we only make 90° of the circle (from -45° to 45°)
+    //     and the sin(45°) = 0.707 (=sqrt(2)/2)
+    //     The same algorithme is used for the 4 quarters of the circle
+
+    // TOP FOR X
+    for(raduis=-(int)(R*0.71); raduis&lt;=(int)(R*0.71); raduis++)
+    {
+        real_y = y+sqrt(R*R-raduis*raduis); // Go to next point
+
+        if((!dotted || (to_dot%dotted)) &amp;&amp; x&gt;0 &amp;&amp; x&lt;map-&gt;w &amp;&amp; y&gt;0 &amp;&amp; y&lt;map-&gt;h) // If not outside of the map surface
+        {
+             // For the antialising 2 pixels are drawn, one one top (x,y+1), the other below (x,y)
+             // The color is a mix of:
+             // - the color of background
+             // - the color of the line
+             // The amount of each color (bg &amp; line color), on the 2 pixels is 100% (e.g. 10% on one, 90% on the other)
+            getPixelColor(x-raduis, (int)real_y, map, &amp;r2,&amp;g2,&amp;b2,&amp;a2);
+
+            r=(Uint8)(frac(real_y)*r1+invfrac(real_y)*r2);
+            g=(Uint8)(frac(real_y)*g1+invfrac(real_y)*g2);
+            b=(Uint8)(frac(real_y)*b1+invfrac(real_y)*b2);
+            a=(Uint8)(frac(real_y)*a1+invfrac(real_y)*a2);
+            colorAA1=SDL_MapRGBA(map-&gt;format,r,g,b,a);
+
+            r=(Uint8)(frac(real_y)*r2+invfrac(real_y)*r1);
+            g=(Uint8)(frac(real_y)*g2+invfrac(real_y)*g1);
+            b=(Uint8)(frac(real_y)*b2+invfrac(real_y)*b1);
+            a=(Uint8)(frac(real_y)*a2+invfrac(real_y)*a1);
+            colorAA2=SDL_MapRGBA(map-&gt;format,r,g,b,a);
+
+            setPixel(x-raduis, (int)real_y, colorAA2, map);
+            setPixel(x-raduis, (int)real_y+1, colorAA1, map);
+        }
+        to_dot++;
+    }
+
+    // BOTTOM FOR X
+    for(raduis=-(int)(R*0.71); raduis&lt;=(int)(R*0.71); raduis++)
+    {
+        real_y = y-sqrt(R*R-raduis*raduis);
+
+        if((!dotted || (to_dot%dotted)) &amp;&amp; x&gt;0 &amp;&amp; x&lt;map-&gt;w &amp;&amp; y&gt;0 &amp;&amp; y&lt;map-&gt;h)
+        {
+            getPixelColor(x-raduis, (int)real_y, map, &amp;r2,&amp;g2,&amp;b2,&amp;a2);
+
+            r=(Uint8)(frac(real_y)*r1+invfrac(real_y)*r2);
+            g=(Uint8)(frac(real_y)*g1+invfrac(real_y)*g2);
+            b=(Uint8)(frac(real_y)*b1+invfrac(real_y)*b2);
+            a=(Uint8)(frac(real_y)*a1+invfrac(real_y)*a2);
+            colorAA1=SDL_MapRGBA(map-&gt;format,r,g,b,a);
+
+            r=(Uint8)(frac(real_y)*r2+invfrac(real_y)*r1);
+            g=(Uint8)(frac(real_y)*g2+invfrac(real_y)*g1);
+            b=(Uint8)(frac(real_y)*b2+invfrac(real_y)*b1);
+            a=(Uint8)(frac(real_y)*a2+invfrac(real_y)*a1);
+            colorAA2=SDL_MapRGBA(map-&gt;format,r,g,b,a);
+
+            setPixel(x-raduis, (int)real_y, colorAA2, map);
+            setPixel(x-raduis, (int)real_y+1, colorAA1, map);
+        }
+        to_dot++;
+    }
+
+    // TOP FOR Y
+    for(raduis=-(int)(R*0.71); raduis&lt;=(int)(R*0.71); raduis++)
+    {
+        real_x = x+sqrt(R*R-raduis*raduis);
+
+        if((!dotted || (to_dot%dotted)) &amp;&amp; x&gt;0 &amp;&amp; x&lt;map-&gt;w &amp;&amp; y&gt;0 &amp;&amp; y&lt;map-&gt;h)
+        {
+            getPixelColor((int)real_x, y-raduis, map, &amp;r2,&amp;g2,&amp;b2,&amp;a2);
+
+            r=(Uint8)(frac(real_x)*r1+invfrac(real_x)*r2);
+            g=(Uint8)(frac(real_x)*g1+invfrac(real_x)*g2);
+            b=(Uint8)(frac(real_x)*b1+invfrac(real_x)*b2);
+            a=(Uint8)(frac(real_x)*a1+invfrac(real_x)*a2);
+            colorAA1=SDL_MapRGBA(map-&gt;format,r,g,b,a);
+
+            r=(Uint8)(frac(real_x)*r2+invfrac(real_x)*r1);
+            g=(Uint8)(frac(real_x)*g2+invfrac(real_x)*g1);
+            b=(Uint8)(frac(real_x)*b2+invfrac(real_x)*b1);
+            a=(Uint8)(frac(real_x)*a2+invfrac(real_x)*a1);
+            colorAA2=SDL_MapRGBA(map-&gt;format,r,g,b,a);
+
+            setPixel((int)real_x, (y-raduis), colorAA2, map);
+            setPixel((int)real_x+1, (y-raduis), colorAA1, map);
+        }
+        to_dot++;
+    }
+
+    // BOTTOM FOR Y
+    for(raduis=-(int)(R*0.71); raduis&lt;=(int)(R*0.71); raduis++)
+    {
+        real_x = x-sqrt(R*R-raduis*raduis);
+
+        if((!dotted || (to_dot%dotted)) &amp;&amp; x&gt;0 &amp;&amp; x&lt;map-&gt;w &amp;&amp; y&gt;0 &amp;&amp; y&lt;map-&gt;h)
+        {
+            getPixelColor((int)real_x, y-raduis, map, &amp;r2,&amp;g2,&amp;b2,&amp;a2);
+
+            r=(Uint8)(frac(real_x)*r1+invfrac(real_x)*r2);
+            g=(Uint8)(frac(real_x)*g1+invfrac(real_x)*g2);
+            b=(Uint8)(frac(real_x)*b1+invfrac(real_x)*b2);
+            a=(Uint8)(frac(real_x)*a1+invfrac(real_x)*a2);
+            colorAA1=SDL_MapRGBA(map-&gt;format,r,g,b,a);
+
+            r=(Uint8)(frac(real_x)*r2+invfrac(real_x)*r1);
+            g=(Uint8)(frac(real_x)*g2+invfrac(real_x)*g1);
+            b=(Uint8)(frac(real_x)*b2+invfrac(real_x)*b1);
+            a=(Uint8)(frac(real_x)*a2+invfrac(real_x)*a1);
+            colorAA2=SDL_MapRGBA(map-&gt;format,r,g,b,a);
+
+            setPixel((int)real_x, (y-raduis), colorAA2, map);
+            setPixel((int)real_x+1, (y-raduis), colorAA1, map);
+        }
+        to_dot++;
+    }
+}</code></pre></div>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases">Réaliser des dessins anti-aliasés</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/l-anti-aliasing">
+L&#039;anti-aliasing
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/sdl-et-les-pixels">
+SDL et les pixels
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/tracer-une-droite-anti-aliasee">
+Tracer une droite anti-aliasée
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/tracer-un-cercle-anti-aliase">
+Tracer un cercle anti-aliasé
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/autres-fonctions-code-complet-bonus">
+Autres fonctions &amp; code complet (bonus)
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/tracer-une-droite-anti-aliasee">
+<span class="arrow"></span>
+<span class="next">Tracer une droite anti-aliasée</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/autres-fonctions-code-complet-bonus">
+<span class="next">Autres fonctions &amp; code complet (bonus)</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Autresfonctionsampcodecompletbonus"></a><h2>Autres fonctions &amp; code complet (bonus)</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/tracer-un-cercle-anti-aliase">
+<span class="arrow"></span>
+<span class="next">Tracer un cercle anti-aliasé</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-587503" data-claire-element-id="587503">Voilà le petit bonus pour avoir bien travaillé :le <strong>code complet de la bibliothèque</strong> (dont d'autres fonctions : droites perpendiculaires, parallèles, ect.</p><p id="r-587504" data-claire-element-id="587504">tracer.h</p><div id="r-587506" data-claire-element-id="587506"><pre id="r-587505" data-claire-element-id="587505"><code data-claire-semantic="c">// Jean-Charles BADOCHE - 2010
+// http://astro.estaca.free.fr
+
+#ifndef __TRACER__
+#define __TRACER__
+
+// Dotted methods
+#define FULL 0
+#define DOTTED 2
+#define DASHED 5
+
+// Size of a point
+#define POINT_SIZE 4
+
+// Sets a pixel on x,y position on a color on the map:
+// If the position is out of map, nothing is done
+// Returns: void
+void setPixel(int, int, Uint32, SDL_Surface*);
+
+// Getter for a pixel color on x,y position on the map
+// The r, g, b, a pointer are set to the red, green, blue and alpha value of the pixel
+// If the position is out of map, nothing is done
+// Returns: void
+void getPixelColor(int, int, SDL_Surface*, Uint8*, Uint8*, Uint8*, Uint8*);
+
+// Sets a pixel on x,y position on a color on the map:
+// y is float, so antialising is done (pixel position x,y &amp; x,y+1)
+// If the position is out of map, nothing is done
+// Returns: void
+void setAAPixel_X_Y(int, float, Uint32, SDL_Surface*);
+
+// Sets a pixel on x,y position on a color on the map:
+// x is float, so antialising is done (pixel position x,y &amp; x+1,y)
+// If the position is out of map, nothing is done
+// Returns: void
+void setAAPixel_Y_X(float, int, Uint32, SDL_Surface*);
+
+// Sets a point on x,y position on the map on a color, of the map
+// If the position is out of map, nothing is done
+// Returns: void
+void setPoint(int, int, Uint32, SDL_Surface*);
+
+// Switchs the values of the x and y integers
+// Returns: void
+void int_switch(int*, int*);
+
+// Returns the fractionary part of the x float
+// Returns: the frav value (float) [0,1]
+float frac(float);
+
+// Returns the missing part to 1 from the fract. part of the x float
+// Returns: the invfrac value (float) [0,1]
+float invfrac(float);
+
+// Traces an antialiased line from x1,y1 to x2,y2 on the specified color, on the map, with the dotted method
+// Returns: void
+void line_trace(int, int, int, int, Uint32, SDL_Surface*, int);
+
+// Traces an antialiased circle with the specified raduis R on the center x,y on the specified color, on the map, with the dotted method
+// Returns: void
+void circle_trace(int, int, int, Uint32, SDL_Surface*, int);
+
+// Traces a line perpendicular to the (x1,y1);(x2;y2) line, on point (x0,y0), on the spedicifed color, on the map surface, with the dotted method
+// If x0 or y0 is UNSET, then the perpendicular line is drawn from point 2
+// Length of the line is d1 in 1 direction (than direction than (x1,y1)-&gt;(x2;y2), d2 in the 2nd direction (opposite direction).
+// If the d1 is UNSET, then the line is drawn on the whole half plan surface
+// Same thing for d2
+// Returns: void
+void perdendicular_trace(int, int, int, int, int, int, int, int, Uint32, SDL_Surface*, int);
+
+// Traces a line parallele to the (x1,y1);(x2;y2) line, on point (x0,y0), on the spedicifed color, on the map surface, with the dotted method
+// If x0 or y0 is UNSET, then the parallele line is drawn from point 2
+// Length of the line is d1 in 1 direction (clockwise), d2 in the 2nd direction (anticlockwise).
+// If the d1 is UNSET, then the line is drawn on the whole half plan surface
+// Same thing for d2
+// Returns: void
+void parallele_trace(int, int, int, int, int, int, int, int, Uint32, SDL_Surface*, int);
+
+// Getter for the distance between 2 points x1,y1 &amp; x2,y2
+// Returns the distance (float)
+float getDistance(int, int, int, int);
+
+#endif // __TRACER__</code></pre></div><p id="r-587507" data-claire-element-id="587507">tracer.c</p><div id="r-587509" data-claire-element-id="587509"><pre id="r-587508" data-claire-element-id="587508"><code data-claire-semantic="c">// Jean-Charles BADOCHE - 2010
+// http://astro.estaca.free.fr
+
+#ifndef __TRACERC__
+#define __TRACERC__
+
+#include &quot;tracer.h&quot;
+
+// Sets a pixel on x,y position on a color on the map:
+// If the position is out of map, nothing is done
+// Returns: void
+void setPixel(int x, int y, Uint32 color, SDL_Surface *map)
+{
+  if(x&gt;0 &amp;&amp; y&gt;0 &amp;&amp; x&lt;map-&gt;w &amp;&amp; y&lt;map-&gt;h)
+    *((Uint32*)(map-&gt;pixels) + x + y * map-&gt;w) = color;
+}
+
+// Getter for a pixel color on x,y position on the map
+// The r, g, b, a pointer are set to the red, green, blue and alpha value of the pixel
+// If the position is out of map, nothing is done
+// Returns: void
+void getPixelColor(int x, int y, SDL_Surface *map, Uint8 *r, Uint8 *g, Uint8 *b, Uint8 *a)
+{
+  if(x&gt;0 &amp;&amp; y&gt;0 &amp;&amp; x&lt;map-&gt;w &amp;&amp; y&lt;map-&gt;h)
+    SDL_GetRGBA(*((Uint32 *)map-&gt;pixels + x + y * map-&gt;w),map-&gt;format,r,g,b,a);
+}
+
+// Sets a pixel on x,y position on a color on the map:
+// y is float, so antialising is done (pixel position x,y &amp; x,y+1)
+// If the position is out of map, nothing is done
+// Returns: void
+void setAAPixel_X_Y(int x, float y, Uint32 color, SDL_Surface *map)
+{
+    Uint8 r1,g1,b1,a1,r2,g2,b2,a2,r,g,b,a;
+    Uint32 colorAA1,colorAA2;
+
+    SDL_GetRGBA(color,map-&gt;format,&amp;r1,&amp;g1,&amp;b1,&amp;a1);
+    // Getting the color of current (background) pixel
+    getPixelColor(x, (int)y, map, &amp;r2,&amp;g2,&amp;b2,&amp;a2);
+
+    // For the antialising 2 pixels are drawn, one one top (x,y+1), the other below (x,y)
+    // The color is a mix of:
+    // - the color of background
+    // - the color of the line
+    // The amount of each color (bg &amp; line color), on the 2 pixels is 100% (e.g. 10% on one, 90% on the other)
+
+    r=(Uint8)(frac(y)*r1+invfrac(y)*r2);
+    g=(Uint8)(frac(y)*g1+invfrac(y)*g2);
+    b=(Uint8)(frac(y)*b1+invfrac(y)*b2);
+    a=(Uint8)(frac(y)*a1+invfrac(y)*a2);
+    colorAA1=SDL_MapRGBA(map-&gt;format,r,g,b,a); // Color for pixel one (x,y+1)
+
+    r=(Uint8)(frac(y)*r2+invfrac(y)*r1);
+    g=(Uint8)(frac(y)*g2+invfrac(y)*g1);
+    b=(Uint8)(frac(y)*b2+invfrac(y)*b1);
+    a=(Uint8)(frac(y)*a2+invfrac(y)*a1);
+    colorAA2=SDL_MapRGBA(map-&gt;format,r,g,b,a); // Color for the 2nd pixel (x,y)
+
+    // Blitting
+    setPixel(x, (int)y, colorAA2, map);
+    setPixel(x, (int)y+1, colorAA1, map);
+}
+
+// Sets a pixel on x,y position on a color on the map:
+// x is float, so antialising is done (pixel position x,y &amp; x+1,y)
+// If the position is out of map, nothing is done
+// Returns: void
+void setAAPixel_Y_X(float x, int y, Uint32 color, SDL_Surface *map)
+{
+    Uint8 r1,g1,b1,a1,r2,g2,b2,a2,r,g,b,a;
+    Uint32 colorAA1,colorAA2;
+
+    SDL_GetRGBA(color,map-&gt;format,&amp;r1,&amp;g1,&amp;b1,&amp;a1);
+    // Getting the color of current (background) pixel
+    getPixelColor((int)x, y, map, &amp;r2,&amp;g2,&amp;b2,&amp;a2);
+
+    // For the antialising 2 pixels are drawn, one one top (x+1,y), the other below (x,y)
+    // The color is a mix of:
+    // - the color of background
+    // - the color of the line
+    // The amount of each color (bg &amp; line color), on the 2 pixels is 100% (e.g. 10% on one, 90% on the other)
+    r=(Uint8)(frac(x)*r1+invfrac(x)*r2);
+    g=(Uint8)(frac(x)*g1+invfrac(x)*g2);
+    b=(Uint8)(frac(x)*b1+invfrac(x)*b2);
+    a=(Uint8)(frac(x)*a1+invfrac(x)*a2);
+    colorAA1=SDL_MapRGBA(map-&gt;format,r,g,b,a); // Color for pixel one (x+1,y)
+
+    r=(Uint8)(frac(x)*r2+invfrac(x)*r1);
+    g=(Uint8)(frac(x)*g2+invfrac(x)*g1);
+    b=(Uint8)(frac(x)*b2+invfrac(x)*b1);
+    a=(Uint8)(frac(x)*a2+invfrac(x)*a1);
+    colorAA2=SDL_MapRGBA(map-&gt;format,r,g,b,a); // Color for pixel one (x,y)
+
+    setPixel((int)x, y, colorAA2, map);
+    setPixel((int)x+1, y, colorAA1, map);
+}
+
+// Sets a point on x,y position on the map on a color, of the map
+// Point's size if 2*POINT_SIZE
+// If the position is out of map, nothing is done
+// Returns: void
+void setPoint(int x, int y, Uint32 color, SDL_Surface *map)
+{
+  int i,j;
+
+  for(i=-POINT_SIZE;i&lt;=POINT_SIZE;i++)
+      for(j=-POINT_SIZE;j&lt;=POINT_SIZE;j++)
+            setPixel(x+i, y+j, color, map);
+}
+
+// Switchs the values of the x and y integers
+// Returns: void
+void int_switch(int* x, int* y)
+{
+  int t = *x;
+  *x = *y;
+  *y = t;
+}
+
+// Returns the fractionary part of the x float
+// Returns: the frav value (float) [0,1]
+float frac(float x)
+{
+   return x - (int)x;
+}
+
+// Returns the missing part to 1 from the fract. part of the x float
+// Returns: the invfrac value (float) [0,1]
+float invfrac(float x)
+{
+   return 1 - frac(x);
+}
+
+// Traces an antialiased line from x1,y1 to x2,y2 on the specified color, on the map, with the dotted method
+// Returns: void
+void line_trace(int x1, int y1, int x2, int y2, Uint32 color, SDL_Surface *map, int dotted)
+{
+  int xd, yd, x, y, to_dot = 0;
+  float grad,xf,yf;
+  Uint8 r1,g1,b1,a1,r2,g2,b2,a2,r,g,b,a;
+  Uint32 colorAA1,colorAA2;
+
+  // Getting the r,g,b,a values of the specified color
+  SDL_GetRGBA(color,map-&gt;format,&amp;r1,&amp;g1,&amp;b1,&amp;a1);
+
+  xd = (x2-x1);
+  yd = (y2-y1);
+
+  if (abs(xd) &gt; abs(yd)) // The line angle is smaller than 45°
+  {
+    if (x1 &gt; x2) // Because of the FOR, going from the smallest to the greatest value
+    {
+      int_switch(&amp;x1, &amp;x2);
+      int_switch(&amp;y1, &amp;y2);
+      xd = (x2-x1);
+      yd = (y2-y1);
+    }
+
+    grad = (float)yd/(float)xd; // Line slope
+    yf = (float)y1+grad;
+
+    // Start and arrival points
+    setPixel(x1, y1, color, map);
+    setPixel(x2, y2, color, map);
+
+    for (x = x1+1; x &lt;= x2; x++)
+    {
+     if((!dotted || (to_dot%dotted)) &amp;&amp; x&gt;0 &amp;&amp; x&lt;map-&gt;w &amp;&amp; yf&gt;0 &amp;&amp; yf&lt;map-&gt;h) // If not outside of the map surface
+     {
+         // Getting the color of current (background) pixel
+         getPixelColor(x, (int)yf, map, &amp;r2,&amp;g2,&amp;b2,&amp;a2);
+
+         // For the antialising 2 pixels are drawn, one one top (x,y+1), the other below (x,y)
+         // The color is a mix of:
+         // - the color of background
+         // - the color of the line
+         // The amount of each color (bg &amp; line color), on the 2 pixels is 100% (e.g. 10% on one, 90% on the other)
+
+         r=(Uint8)(frac(yf)*r1+invfrac(yf)*r2);
+         g=(Uint8)(frac(yf)*g1+invfrac(yf)*g2);
+         b=(Uint8)(frac(yf)*b1+invfrac(yf)*b2);
+         a=(Uint8)(frac(yf)*a1+invfrac(yf)*a2);
+         colorAA1=SDL_MapRGBA(map-&gt;format,r,g,b,a); // Color for pixel one (x,y+1)
+
+         r=(Uint8)(frac(yf)*r2+invfrac(yf)*r1);
+         g=(Uint8)(frac(yf)*g2+invfrac(yf)*g1);
+         b=(Uint8)(frac(yf)*b2+invfrac(yf)*b1);
+         a=(Uint8)(frac(yf)*a2+invfrac(yf)*a1);
+         colorAA2=SDL_MapRGBA(map-&gt;format,r,g,b,a); // Color for the 2nd pixel (x,y)
+
+         // Blitting
+         setPixel(x, (int)yf, colorAA2, map);
+         setPixel(x, (int)yf+1, colorAA1, map);
+     }
+     to_dot++;
+
+     yf += grad; // Go to next point (x =&gt; x+1 / yf =&gt; yf + grad)
+    }
+  }
+
+ else // Same thing if the line angle is greater the 45°
+  {
+    if (y1 &gt; y2)
+    {
+      int_switch(&amp;x1, &amp;x2);
+      int_switch(&amp;y1, &amp;y2);
+      xd = (x2-x1);
+      yd = (y2-y1);
+    }
+
+    grad = (float)xd/(float)yd;
+    xf = (float)x1+grad;
+
+    setPixel(x1, y1, color, map);
+    setPixel(x2, y2, color, map);
+
+    for (y = y1+1; y &lt;= y2; y++)
+    {
+     if((!dotted || (to_dot%dotted)) &amp;&amp; xf&gt;0 &amp;&amp; xf&lt;map-&gt;w &amp;&amp; y&gt;0 &amp;&amp; y&lt;map-&gt;h)
+     {
+         getPixelColor((int)xf, y, map, &amp;r2,&amp;g2,&amp;b2,&amp;a2);
+
+         r=(Uint8)(frac(xf)*r1+invfrac(xf)*r2);
+         g=(Uint8)(frac(xf)*g1+invfrac(xf)*g2);
+         b=(Uint8)(frac(xf)*b1+invfrac(xf)*b2);
+         a=(Uint8)(frac(xf)*a1+invfrac(xf)*a2);
+         colorAA1=SDL_MapRGBA(map-&gt;format,r,g,b,a);
+
+         r=(Uint8)(frac(xf)*r2+invfrac(xf)*r1);
+         g=(Uint8)(frac(xf)*g2+invfrac(xf)*g1);
+         b=(Uint8)(frac(xf)*b2+invfrac(xf)*b1);
+         a=(Uint8)(frac(xf)*a2+invfrac(xf)*a1);
+         colorAA2=SDL_MapRGBA(map-&gt;format,r,g,b,a);
+
+         setPixel((int)xf, y, colorAA2, map);
+         setPixel((int)xf+1, y, colorAA1, map);
+     }
+     to_dot++;
+
+     xf += grad;
+    }
+  }
+}
+
+// Traces an antialiased circle with the specified raduis R on the center x,y on the specified color, on the map, with the dotted method
+// Returns: void
+void circle_trace(int x, int y, int R, Uint32 color, SDL_Surface *map, int dotted)
+{
+    int raduis, to_dot;
+    float real_y;
+    float real_x;
+
+    Uint8 r1,g1,b1,a1,r2,g2,b2,a2,r,g,b,a;
+    Uint32 colorAA1,colorAA2;
+
+    SDL_GetRGBA(color,map-&gt;format,&amp;r1,&amp;g1,&amp;b1,&amp;a1);
+
+    R = abs(R); // To be sure that R&gt;0 (or with the FOR, we'll get some problems!)
+
+    // NB: From -R*0.71 to R*0.71 because we only make 90° of the circle (from -45° to 45°)
+    //     and the sin(45°) = 0.707 (=sqrt(2)/2)
+    //     The same algorithme is used for the 4 quarters of the circle
+
+    // TOP FOR X
+    for(raduis=-(int)(R*0.71); raduis&lt;=(int)(R*0.71); raduis++)
+    {
+        real_y = y+sqrt(R*R-raduis*raduis); // Go to next point
+
+        if((!dotted || (to_dot%dotted)) &amp;&amp; x&gt;0 &amp;&amp; x&lt;map-&gt;w &amp;&amp; y&gt;0 &amp;&amp; y&lt;map-&gt;h) // If not outside of the map surface
+        {
+             // For the antialising 2 pixels are drawn, one one top (x,y+1), the other below (x,y)
+             // The color is a mix of:
+             // - the color of background
+             // - the color of the line
+             // The amount of each color (bg &amp; line color), on the 2 pixels is 100% (e.g. 10% on one, 90% on the other)
+            getPixelColor(x-raduis, (int)real_y, map, &amp;r2,&amp;g2,&amp;b2,&amp;a2);
+
+            r=(Uint8)(frac(real_y)*r1+invfrac(real_y)*r2);
+            g=(Uint8)(frac(real_y)*g1+invfrac(real_y)*g2);
+            b=(Uint8)(frac(real_y)*b1+invfrac(real_y)*b2);
+            a=(Uint8)(frac(real_y)*a1+invfrac(real_y)*a2);
+            colorAA1=SDL_MapRGBA(map-&gt;format,r,g,b,a);
+
+            r=(Uint8)(frac(real_y)*r2+invfrac(real_y)*r1);
+            g=(Uint8)(frac(real_y)*g2+invfrac(real_y)*g1);
+            b=(Uint8)(frac(real_y)*b2+invfrac(real_y)*b1);
+            a=(Uint8)(frac(real_y)*a2+invfrac(real_y)*a1);
+            colorAA2=SDL_MapRGBA(map-&gt;format,r,g,b,a);
+
+            setPixel(x-raduis, (int)real_y, colorAA2, map);
+            setPixel(x-raduis, (int)real_y+1, colorAA1, map);
+        }
+        to_dot++;
+    }
+
+    // BOTTOM FOR X
+    for(raduis=-(int)(R*0.71); raduis&lt;=(int)(R*0.71); raduis++)
+    {
+        real_y = y-sqrt(R*R-raduis*raduis);
+
+        if((!dotted || (to_dot%dotted)) &amp;&amp; x&gt;0 &amp;&amp; x&lt;map-&gt;w &amp;&amp; y&gt;0 &amp;&amp; y&lt;map-&gt;h)
+        {
+            getPixelColor(x-raduis, (int)real_y, map, &amp;r2,&amp;g2,&amp;b2,&amp;a2);
+
+            r=(Uint8)(frac(real_y)*r1+invfrac(real_y)*r2);
+            g=(Uint8)(frac(real_y)*g1+invfrac(real_y)*g2);
+            b=(Uint8)(frac(real_y)*b1+invfrac(real_y)*b2);
+            a=(Uint8)(frac(real_y)*a1+invfrac(real_y)*a2);
+            colorAA1=SDL_MapRGBA(map-&gt;format,r,g,b,a);
+
+            r=(Uint8)(frac(real_y)*r2+invfrac(real_y)*r1);
+            g=(Uint8)(frac(real_y)*g2+invfrac(real_y)*g1);
+            b=(Uint8)(frac(real_y)*b2+invfrac(real_y)*b1);
+            a=(Uint8)(frac(real_y)*a2+invfrac(real_y)*a1);
+            colorAA2=SDL_MapRGBA(map-&gt;format,r,g,b,a);
+
+            setPixel(x-raduis, (int)real_y, colorAA2, map);
+            setPixel(x-raduis, (int)real_y+1, colorAA1, map);
+        }
+        to_dot++;
+    }
+
+    // TOP FOR Y
+    for(raduis=-(int)(R*0.71); raduis&lt;=(int)(R*0.71); raduis++)
+    {
+        real_x = x+sqrt(R*R-raduis*raduis);
+
+        if((!dotted || (to_dot%dotted)) &amp;&amp; x&gt;0 &amp;&amp; x&lt;map-&gt;w &amp;&amp; y&gt;0 &amp;&amp; y&lt;map-&gt;h)
+        {
+            getPixelColor((int)real_x, y-raduis, map, &amp;r2,&amp;g2,&amp;b2,&amp;a2);
+
+            r=(Uint8)(frac(real_x)*r1+invfrac(real_x)*r2);
+            g=(Uint8)(frac(real_x)*g1+invfrac(real_x)*g2);
+            b=(Uint8)(frac(real_x)*b1+invfrac(real_x)*b2);
+            a=(Uint8)(frac(real_x)*a1+invfrac(real_x)*a2);
+            colorAA1=SDL_MapRGBA(map-&gt;format,r,g,b,a);
+
+            r=(Uint8)(frac(real_x)*r2+invfrac(real_x)*r1);
+            g=(Uint8)(frac(real_x)*g2+invfrac(real_x)*g1);
+            b=(Uint8)(frac(real_x)*b2+invfrac(real_x)*b1);
+            a=(Uint8)(frac(real_x)*a2+invfrac(real_x)*a1);
+            colorAA2=SDL_MapRGBA(map-&gt;format,r,g,b,a);
+
+            setPixel((int)real_x, (y-raduis), colorAA2, map);
+            setPixel((int)real_x+1, (y-raduis), colorAA1, map);
+        }
+        to_dot++;
+    }
+
+    // BOTTOM FOR Y
+    for(raduis=-(int)(R*0.71); raduis&lt;=(int)(R*0.71); raduis++)
+    {
+        real_x = x-sqrt(R*R-raduis*raduis);
+
+        if((!dotted || (to_dot%dotted)) &amp;&amp; x&gt;0 &amp;&amp; x&lt;map-&gt;w &amp;&amp; y&gt;0 &amp;&amp; y&lt;map-&gt;h)
+        {
+            getPixelColor((int)real_x, y-raduis, map, &amp;r2,&amp;g2,&amp;b2,&amp;a2);
+
+            r=(Uint8)(frac(real_x)*r1+invfrac(real_x)*r2);
+            g=(Uint8)(frac(real_x)*g1+invfrac(real_x)*g2);
+            b=(Uint8)(frac(real_x)*b1+invfrac(real_x)*b2);
+            a=(Uint8)(frac(real_x)*a1+invfrac(real_x)*a2);
+            colorAA1=SDL_MapRGBA(map-&gt;format,r,g,b,a);
+
+            r=(Uint8)(frac(real_x)*r2+invfrac(real_x)*r1);
+            g=(Uint8)(frac(real_x)*g2+invfrac(real_x)*g1);
+            b=(Uint8)(frac(real_x)*b2+invfrac(real_x)*b1);
+            a=(Uint8)(frac(real_x)*a2+invfrac(real_x)*a1);
+            colorAA2=SDL_MapRGBA(map-&gt;format,r,g,b,a);
+
+            setPixel((int)real_x, (y-raduis), colorAA2, map);
+            setPixel((int)real_x+1, (y-raduis), colorAA1, map);
+        }
+        to_dot++;
+    }
+}
+
+// Traces a line perpendicular to the (x1,y1);(x2;y2) line, on point (x0,y0), on the spedicifed color, on the map surface, with the dotted method
+// If x0 or y0 is UNSET, then the perpendicular line is drawn from point 2
+// Length of the line is d1 in 1 direction (than direction than (x1,y1)-&gt;(x2;y2), d2 in the 2nd direction (opposite direction).
+// If the d1 is UNSET, then the line is drawn on the whole half plan surface
+// Same thing for d2
+// Returns: void
+void perdendicular_trace(int x1, int y1, int x2, int y2, int x0, int y0, int d1, int d2, Uint32 color, SDL_Surface *map, int dotted)
+{
+    int x_1, y_1, x_2, y_2;
+    float distance1, distance2, d;
+
+    if(d1==UNSET &amp;&amp; d2==UNSET)
+    {
+        d1 = getDistance(0, 0, map-&gt;w, map-&gt;h);
+        d2 = d1; // less calculation
+    }
+    else if(d1==UNSET)
+        d1 = getDistance(0, 0, map-&gt;w, map-&gt;h);
+    else if(d2==UNSET)
+        d2 = getDistance(0, 0, map-&gt;w, map-&gt;h);
+
+    d = getDistance(x1, y1, x2, y2);
+    distance1 = (float)d1/d;
+    distance2 = (float)d2/d;
+
+    if(x0==UNSET||y0==UNSET)
+    {
+        x0 = x2;
+        y0 = y2;
+    }
+
+    x_1 = x0 - distance1*(y2 - y1);
+    y_1 = y0 + distance1*(x2 - x1);
+
+    x_2 = x0 + distance2*(y2 - y1);
+    y_2 = y0 - distance2*(x2 - x1);
+
+    line_trace(x_1, y_1, x_2, y_2, color, map, dotted);
+}
+
+// Traces a line parallele to the (x1,y1);(x2;y2) line, on point (x0,y0), on the spedicifed color, on the map surface, with the dotted method
+// If x0 or y0 is UNSET, then the parallele line is drawn from point 2
+// Length of the line is d1 in 1 direction (clockwise), d2 in the 2nd direction (anticlockwise).
+// If the d1 is UNSET, then the line is drawn on the whole half plan surface
+// Same thing for d2
+// Returns: void
+void parallele_trace(int x1, int y1, int x2, int y2, int x0, int y0, int d1, int d2, Uint32 color, SDL_Surface *map, int dotted)
+{
+    int x_1, y_1, x_2, y_2;
+    float distance1, distance2, d;
+
+    if(d1==UNSET &amp;&amp; d2==UNSET)
+    {
+        d1 = getDistance(0, 0, map-&gt;w, map-&gt;h);
+        d2 = d1; // less calculation
+    }
+    else if(d1==UNSET)
+        d1 = getDistance(0, 0, map-&gt;w, map-&gt;h);
+    else if(d2==UNSET)
+        d2 = getDistance(0, 0, map-&gt;w, map-&gt;h);
+
+    d = getDistance(x1, y1, x2, y2);
+    distance1 = (float)d1/d;
+    distance2 = (float)d2/d;
+
+    if(x0==UNSET||y0==UNSET)
+    {
+        x0 = x2;
+        y0 = y2;
+    }
+
+    x_1 = x0 - distance1*(x2 - x1);
+    y_1 = y0 - distance1*(y2 - y1);
+
+    x_2 = x0 + distance2*(x2 - x1);
+    y_2 = y0 + distance2*(y2 - y1);
+
+    line_trace(x_1, y_1, x_2, y_2, color, map, dotted);
+}
+
+// Getter for the distance between 2 points x1,y1 &amp; x2,y2
+// Returns the distance (float)
+float getDistance(int x1, int y1, int x2, int y2)
+{
+    return sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2));
+}
+
+#endif // __TRACERC__</code></pre></div><p id="r-587510" data-claire-element-id="587510">Voilà, j'espère que cela vous aura aidé à comprendre la principe de l'anti-aliasing!</p><p id="r-587511" data-claire-element-id="587511">… Et surtout <strong>donné la vocation à d'autres de créer des bibliothèques</strong>:D !</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases">Réaliser des dessins anti-aliasés</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/l-anti-aliasing">
+L&#039;anti-aliasing
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/sdl-et-les-pixels">
+SDL et les pixels
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/tracer-une-droite-anti-aliasee">
+Tracer une droite anti-aliasée
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/tracer-un-cercle-anti-aliase">
+Tracer un cercle anti-aliasé
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/autres-fonctions-code-complet-bonus">
+Autres fonctions &amp; code complet (bonus)
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/realiser-des-dessins-anti-aliases/tracer-un-cercle-anti-aliase">
+<span class="arrow"></span>
+<span class="next">Tracer un cercle anti-aliasé</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/realiser-des-dessins-anti-aliases.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 00:26:07 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/realiser-des-dessins-anti-aliases.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:18:13 GMT -->
+</html>

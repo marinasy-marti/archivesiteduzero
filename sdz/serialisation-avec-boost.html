@@ -1,0 +1,642 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/serialisation-avec-boost.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 08:32:14 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/serialisation-avec-boost.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:32:03 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Sérialisation avec Boost</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/serialisation-avec-boost.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Sérialisation avec Boost</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#SrialisationavecBoost">Sérialisation avec Boost</a><br/><a href="#InstallationdeBoost">Installation de Boost</a><br/><a href="#Srialisationbasique">Sérialisation basique</a><br/><a href="#Srialisationnonintrusive">Sérialisation non intrusive</a><br/><a href="#Casspcifiques">Cas spécifiques</a><br/></div>
+<a name="SrialisationavecBoost"></a><h2>Sérialisation avec Boost</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/serialisation-avec-boost/installation-de-boost">
+<span class="next">Installation de Boost</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-571418" data-claire-element-id="571418">La <strong>sérialisation</strong>, nommée occasionnellement <em>marshalling</em>, est le procédé informatique de transformation d'un élément complexe vers des éléments plus simples, comme par exemple le rapport entre un fichier texte et sa représentation binaire. Cette simplification rend nombre d'opération <strong>plus facile</strong>. Nous nous y intéresserons plus particulièrement dans le contexte des classe <strong>C++</strong>.</p><p id="r-571419" data-claire-element-id="571419">D'une manière pratique, la sérialisation peut vous aider dans la réalisation de<strong> fichier pour votre application</strong>, dans les transfert sur le <strong>réseau</strong> ... La <strong>simplicité</strong> de mise en oeuvre apportée par Boost est considérable, c'est pourquoi c'est cette librairie que j'ai choisi.</p>
+</div><a name="InstallationdeBoost"></a><h2>Installation de Boost</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/serialisation-avec-boost/serialisation-basique">
+<span class="next">Sérialisation basique</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-quelques-mots-sur-la-serialisation" data-claire-element-id="571424">Quelques mots sur la sérialisation</h2><p id="r-571420" data-claire-element-id="571420">Pour mieux comprendre ce qu'est la sérialisation, prenons un exemple courant : le transfert de données <em>via</em> le réseau. C'est <strong>très simple</strong> à mettre en place en ce qui concerne des <strong>données peu complexes</strong> (texte d'un chat, formulaires…), mais ça devient complexe quand il s'agit de transférer des <strong>classes</strong> : il vous faut transférer les différents membres, donc produire du code sans grand intérêt et très dupliqué pour gérer cela. Boost::serialization permet d'<strong>automatiser</strong> la chose ; et cela pourra également vous servir pour des <strong>sauvegardes</strong>, des <strong>formats de fichiers</strong>…</p><figure id="r-571422" data-claire-element-id="571423"><img id="r-571421" data-claire-element-id="571421" src="medias/uploads.siteduzero.com_files_264001_265000_264310.png" alt="Image utilisateur"/></figure><h2 id="r-installation-sous-windows-13" data-claire-element-id="571450">Installation sous Windows</h2><p id="r-571425" data-claire-element-id="571425">La plupart des librairies Boost sont sous forme de fichiers d'en-tête, ce qui signifie que vous n'avez rien à compiler : il suffit d'inclure les fichiers concernés dans vos programmes. Malheureusement, j'ai dit « la plupart » : nous allons devoir en compiler certaines.</p><p id="r-571426" data-claire-element-id="571426">La compilation de Boost nécessite un compilateur (sans blague). Ma préférence ira à la méthode correspondant à MinGW. Il est nécessaire d'avoir le compilateur et ses outils dans votre variable d'environnement PATH.</p><aside id="r-571428" data-claire-element-id="571428" data-claire-semantic="information"><p id="r-571427" data-claire-element-id="571427">Si vous avez déjà installé le SDK Qt 4, vous pouvez utiliser le Qt command prompt. Il est intéressant car il fournit un environnement contenant make, gcc et les binutil de manière préconfigurée. Dans les autres cas, ouvrez une invite de commande MS-DOS (tapez Win + R, et dans la boîte de dialogue, entrez <code data-claire-semantic="console">cmd</code> puis validez).</p></aside><h3 id="r-verification-2" data-claire-element-id="571433">Vérification</h3><p id="r-571429" data-claire-element-id="571429">Pour vérifier que votre environnement de compilation est correct, entrez <code data-claire-semantic="console">gcc</code> ; vous devriez obtenir un résultat similaire à celui-ci :</p><pre id="r-571430" data-claire-element-id="571430"><code data-claire-semantic="console">C:\Qt\4.5.3&gt;gcc
+gcc: no input files
+
+C:\Qt\4.5.3&gt;</code></pre><p id="r-571431" data-claire-element-id="571431">Cependant, si vous obtenez la sortie suivante, c'est que votre configuration n'est pas saine. Assurez-vous d'avoir les outils MinGW dans votre PATH.</p><pre id="r-571432" data-claire-element-id="571432"><code data-claire-semantic="console">C:\Users\william&gt;gcc
+'gcc' n'est pas reconnu en tant que commande interne
+ou externe, un programme exécutable ou un fichier de commandes.
+
+C:\Users\william&gt;</code></pre><h3 id="r-telechargement-33" data-claire-element-id="571443">Téléchargement</h3><p id="r-571434" data-claire-element-id="571434">Obtenez Boost sur cette page du site officiel. Décompressez l'archive dans un répertoire, mais assurez-vous que le chemin complet ne contienne pas d'espace.</p><table id="r-571441" data-claire-element-id="571441"><tbody id="r-571440" data-claire-element-id="571440"><tr id="r-571439" data-claire-element-id="571439"><td id="r-571436" data-claire-element-id="571436"><p id="r-571435" data-claire-element-id="571435"><strong>C:\boost_1_43_0</strong> est correct.</p></td><td id="r-571438" data-claire-element-id="571438"><p id="r-571437" data-claire-element-id="571437"><strong>C:\Program Files\boost_1_43_0</strong> ne l'est pas.</p></td></tr></tbody></table><p id="r-571442" data-claire-element-id="571442">Vous devez aussi obtenir la dernière version de bjam, l'utilitaire qui va permettre de compiler Boost. Vous le trouverez <a href="http://sourceforge.net/projects/boost/files/boost-jam/">ici</a>. Prenez la version binaire destinée à Windows. Vous trouverez un fichier bjam.exe : placez-le dans le même dossier que Boost.</p><h3 id="r-compilation-15" data-claire-element-id="571449">Compilation</h3><p id="r-571444" data-claire-element-id="571444">Déplacez-vous dans le dossier de Boost. Dans mon cas, il s'agit de C:\boost_1_43_0.</p><p id="r-571445" data-claire-element-id="571445">Exécutez la commande suivante :</p><pre id="r-571446" data-claire-element-id="571446"><code data-claire-semantic="console">bjam --with-serialization toolset=gcc variant=release link=static threading=multi runtime-link=static stage</code></pre><aside id="r-571448" data-claire-element-id="571448" data-claire-semantic="information"><p id="r-571447" data-claire-element-id="571447">Pour de plus amples précisions concernant l'installation sous Windows, ou en cas de problème, voyez <a href="http://www.boost.org/doc/libs/1_43_0/more/getting_started/windows.html">la documentation de Boost à ce sujet</a>.</p></aside><h2 id="r-installation-sous-gnu-linux-3" data-claire-element-id="571453">Installation sous GNU/Linux</h2><p id="r-571451" data-claire-element-id="571451">Il est très probable que votre distribution fournisse des paquets Boost : il s'agira vraisemblablement des paquets boost-dev ou libboost-dev (renseignez-vous sur la documentation officielle de votre distribution). L'avantage de cette méthode est que les librairies seront liées automatiquement si vous ajoutez -lboost à vos options de compilateur.</p><p id="r-571452" data-claire-element-id="571452">Si ce n'est pas le cas, référez-vous à<a href="http://www.boost.org/doc/libs/1_43_0/more/getting_started/unix-variants.html">la documentation pour compiler Boost sous les variantes d'UNIX</a>. La démarche est aussi valable pour Mac OS X.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/serialisation-avec-boost">Sérialisation avec Boost</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/serialisation-avec-boost/installation-de-boost">
+Installation de Boost
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/serialisation-avec-boost/serialisation-basique">
+Sérialisation basique
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/serialisation-avec-boost/serialisation-non-intrusive">
+Sérialisation non intrusive
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/serialisation-avec-boost/cas-specifiques">
+Cas spécifiques
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/serialisation-avec-boost/serialisation-basique">
+<span class="next">Sérialisation basique</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Srialisationbasique"></a><h2>Sérialisation basique</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/serialisation-avec-boost/installation-de-boost">
+<span class="arrow"></span>
+<span class="next">Installation de Boost</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/serialisation-avec-boost/serialisation-non-intrusive">
+<span class="next">Sérialisation non intrusive</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-571455" data-claire-element-id="571455">C'est le procédé de sérialisation le plus simple. Prenons un exemple pour décrire ce procédé : la classe <strong>Note</strong>, qui représente la note d'un devoir. Il existe différents types de notes : note sur 20, note sur 40…</p><h2 id="r-preparatifs-10" data-claire-element-id="571465">Préparatifs</h2><p id="r-571456" data-claire-element-id="571456">Voici la classe Note :</p><pre id="r-571457" data-claire-element-id="571457"><code data-claire-semantic="cpp">class Note
+{
+private:
+        friend class boost::serialization::access;
+        
+        template&lt;class Archive&gt;
+        void serialize(Archive &amp; ar, const unsigned int version) {
+                ar &amp; numerateur;
+                ar &amp; denominateur;
+        }
+        
+        int numerateur;
+        int denominateur;
+public:
+        Note() {};
+        Note(int n, int d) :
+                        numerateur(n), denominateur(d){}
+};</code></pre><p id="r-571458" data-claire-element-id="571458">C'est un code plutôt habituel, sauf les lignes 4 à 10 que je vais expliquer.</p><pre id="r-571459" data-claire-element-id="571459"><code data-claire-semantic="cpp">friend class boost::serialization::access;</code></pre><p id="r-571460" data-claire-element-id="571460">La méthode que nous utilisons ici est dite intrusive : nous modifions la classe pour la préparer à la sérialisation. Nous verrons dans la prochaine partie une méthode non intrusive (pas de modification de la classe). <br/> Nous déclarons donc comme classe amie <code data-claire-semantic="cpp">boost::serialization::access </code> : étant donné qu'il s'agit d'une classe <strong>friend</strong>, Boost pourra récupérer le contenu de la classe pour le sérialiser. Sans cette porte dérobée, l'encapsulation ne nous aurait pas laissé accéder aux variables dont la portée est <code data-claire-semantic="cpp">private </code>.</p><pre id="r-571461" data-claire-element-id="571461"><code data-claire-semantic="cpp">template&lt;class Archive&gt;
+        void serialize(Archive &amp; ar, const unsigned int version) {
+                ar &amp; numerateur;
+                ar &amp; denominateur;
+        }</code></pre><p id="r-571462" data-claire-element-id="571462">La première chose à remarquer est la présence d'un <em>template</em> pour la classe <strong>Archive</strong> : c'est tout à fait normal. En effet, la sérialisation de Boost permet de stocker les objets dans des fichiers texte, des fichiers XML… Nous avons donc besoin de généricité. La méthode <strong>serialize</strong> sera automatiquement appelée lors de l'archivage. Nous devons déclarer toutes les variables de la classe dans cette méthode, ou elles ne seront pas sérialisées.</p><aside id="r-571464" data-claire-element-id="571464" data-claire-semantic="information"><p id="r-571463" data-claire-element-id="571463">Note concernant l'opérateur <strong>&amp;</strong> : c'est une utilisation intéressante de la surcharge qui est utilisée ici. Lors de l'archivage, <strong>&amp;</strong> sera équivalent à <strong>&lt;&lt;</strong>, et lors de la restauration, il sera équivalent à <strong>&gt;&gt;</strong>. Vous comprendrez tout lorsque vous verrez le code source complet.</p></aside><h2 id="r-serialisation-2" data-claire-element-id="571483">Sérialisation</h2><p id="r-571466" data-claire-element-id="571466">Voici le code complet de cet exemple :</p><pre id="r-571467" data-claire-element-id="571467"><code data-claire-semantic="cpp">#include &lt;fstream&gt;
+
+#include &lt;boost/archive/text_oarchive.hpp&gt;
+#include &lt;boost/archive/text_iarchive.hpp&gt;
+
+class Note
+{
+private:
+        friend class boost::serialization::access;
+
+        template&lt;class Archive&gt;
+        void serialize(Archive &amp; ar, const unsigned int version) {
+                ar &amp; numerateur;
+                ar &amp; denominateur;
+        }
+
+        int numerateur;
+        int denominateur;
+public:
+        Note() {};
+        Note(int n, int d) :
+                        numerateur(n), denominateur(d) {}
+};
+
+
+int main()
+{
+        std::ofstream ofs(&quot;fichierDeSerialisation&quot;);
+
+        // Vous avez vu comme je travaille bien ? :)
+        const Note maNoteDePhysisque(20,20);
+
+
+        {
+                boost::archive::text_oarchive oa(ofs);
+                oa &lt;&lt; maNoteDePhysisque;
+        }
+
+        /** Quelque temps plus tard… ***/
+
+        Note monAncienneNote;
+
+        {
+                std::ifstream ifs(&quot;fichierDeSerialisation&quot;);
+                boost::archive::text_iarchive ia(ifs);
+
+                ia &gt;&gt; monAncienneNote;
+        }
+
+        return 0;
+}</code></pre><p id="r-571468" data-claire-element-id="571468">Qu'est-ce qui change ?</p><p id="r-571469" data-claire-element-id="571469">Nous avons inclus des <em>headers</em> spécifiques à la sérialisation aux lignes 3 et 4. Nous avons aussi inclus <strong>fstream</strong>, qui servira lors du stockage dans un fichier.</p><p id="r-571470" data-claire-element-id="571470">Nous avons ajouté un <em>main</em> qui sérialise et désérialise. Observons-le plus en détail :</p><pre id="r-571471" data-claire-element-id="571471"><code data-claire-semantic="cpp">std::ofstream ofs(&quot;fichierDeSerialisation&quot;);
+
+        // Vous avez vu comme je travaille bien ? :)
+        const Note maNoteDePhysisque(20,20);
+
+
+        {
+                boost::archive::text_oarchive oa(ofs);
+                oa &lt;&lt; maNoteDePhysisque;
+        }</code></pre><p id="r-571472" data-claire-element-id="571472">On ouvre d'abord un fichier pour stocker notre objet à la ligne 28. Puis nous créons à la ligne 31 un objet Note. La vraie sérialisation commence dans le bloc des lignes 34 à 37 : on utilise notre fichier comme une <strong>text_archive</strong> (ligne 35), puis on fait simplement appel à l'opérateur <strong>&lt;&lt;</strong> pour stocker <strong>maNoteDePhysisque</strong> dans l'archive. À la fin du bloc, les destructeurs sont automatiquement appelés, et l'archive est refermée (attention cependant, vous ne devez pas détruire le flux de fichier <strong>oa</strong> car l'archive s'en charge !).</p><aside id="r-571474" data-claire-element-id="571474" data-claire-semantic="information"><p id="r-571473" data-claire-element-id="571473">J'ai délimité une portée (j'ai utilisé des accolades ouvrantes et fermantes sans en avoir vraiment besoin) pour appeler les destructeurs le plus rapidement possible, ce qui permet d'être sûr que les données sont bien sauvegardées immédiatement. Vous pouvez tout à fait choisir de ne pas le faire.</p></aside><pre id="r-571475" data-claire-element-id="571475"><code data-claire-semantic="cpp">Note monAncienneNote;
+
+        {
+                std::ifstream ifs(&quot;fichierDeSerialisation&quot;);
+                boost::archive::text_iarchive ia(ifs);
+
+                ia &gt;&gt; monAncienneNote;
+        }</code></pre><p id="r-571476" data-claire-element-id="571476">Nous allons désérialiser. Notez que cette opération n'a pas forcément lieu dans le même programme, ni sur le même ordinateur : vous pouvez très bien envoyer le fichier par le réseau puis l'ouvrir sur une autre machine. Le résultat sera exactement le même.</p><p id="r-571477" data-claire-element-id="571477">Nous créons un objet vide, puis, dans le bloc, nous ouvrons notre fichier de sérialisation comme une <strong>text_archive</strong> et nous extrayons son contenu dans l'objet précédemment créé. À la fin du bloc, les destructeurs sont automatiquement appelés, et les fichiers refermés. :magicien:</p><aside id="r-571479" data-claire-element-id="571479" data-claire-semantic="information"><p id="r-571478" data-claire-element-id="571478">Comme vous le voyez, la syntaxe est très simple : <strong>&lt;&lt;</strong> pour stocker, <strong>&gt;&gt;</strong> pour récupérer.</p></aside><p id="r-571480" data-claire-element-id="571480">Vous pouvez utiliser cette méthode sur des classes plus complexes. Imaginons que vous vouliez créer une classe <strong>Bulletin</strong> :</p><pre id="r-571481" data-claire-element-id="571481"><code data-claire-semantic="cpp">class Bulletin
+{
+        friend class boost::serialization::access;
+        template&lt;class Archive&gt;
+        void serialize(Archive &amp; ar, const unsigned int version) {
+                ar &amp; note1;
+                ar &amp; note2;
+        }
+        Note note1;
+        Note note2;
+protected:
+        Bulletin(const Note &amp; n1_, const Note &amp; n2_) :
+                        note1(n1_), note2(n2_) {}
+public:
+        Bulletin() {}
+        virtual ~Bulletin() {}
+};</code></pre><p id="r-571482" data-claire-element-id="571482">Ce n'est pas un problème d'avoir des classes imbriquées dans la classe à sérialiser (dans le cas présent, Bulletin contient Note) ; cependant, il faut que chaque classe soit elle-même sérialisable.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/serialisation-avec-boost">Sérialisation avec Boost</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/serialisation-avec-boost/installation-de-boost">
+Installation de Boost
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/serialisation-avec-boost/serialisation-basique">
+Sérialisation basique
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/serialisation-avec-boost/serialisation-non-intrusive">
+Sérialisation non intrusive
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/serialisation-avec-boost/cas-specifiques">
+Cas spécifiques
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/serialisation-avec-boost/installation-de-boost">
+<span class="arrow"></span>
+<span class="next">Installation de Boost</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/serialisation-avec-boost/serialisation-non-intrusive">
+<span class="next">Sérialisation non intrusive</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Srialisationnonintrusive"></a><h2>Sérialisation non intrusive</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/serialisation-avec-boost/serialisation-basique">
+<span class="arrow"></span>
+<span class="next">Sérialisation basique</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/serialisation-avec-boost/cas-specifiques">
+<span class="next">Cas spécifiques</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-571485" data-claire-element-id="571485">Il est possible de sérialiser du code venant de boost.serialization. Cela implique cependant de violer le principe d'encapsulation, et ne doit donc être entrepris que lorsque les contraintes techniques l'imposent : en effet, il faut passer toute la classe en visibilité publique.</p><p id="r-571486" data-claire-element-id="571486">Revoyons donc la classe Note :</p><pre id="r-571487" data-claire-element-id="571487"><code data-claire-semantic="cpp">class Note
+{
+public:
+        int numerateur;
+        int denominateur;
+
+        Note() {};
+        Note(int n, int d) :
+                        numerateur(n), denominateur(d) {}
+};</code></pre><p id="r-571488" data-claire-element-id="571488">Nous avons tout passé en visibilité publique. C'est mal. Vos poils se dressent. Vous avez froid dans le dos. :'( Mais vous continuez quand même… Pour sérialiser, il faut une fonction <strong>serialize</strong> sous forme de surcharge recevant en argument une instance de la classe Note :</p><pre id="r-571489" data-claire-element-id="571489"><code data-claire-semantic="cpp">namespace boost
+{
+        namespace serialization {
+
+                template&lt;class Archive&gt;
+                void serialize(Archive &amp; ar, Note &amp; g, const unsigned int version)
+                {
+                        ar &amp; g.numerateur;
+                        ar &amp; g.denominateur;
+                }
+
+        } // namespace serialization
+} // namespace boost</code></pre><p id="r-571490" data-claire-element-id="571490">L'utilisation sera exactement la même que celle d'une sérialisation intrusive !</p><h3 id="r-petite-precision-1" data-claire-element-id="571493">Petite précision</h3><p id="r-571491" data-claire-element-id="571491">Il n'est pas forcément nécessaire de passer complètement le contenu de la classe en public : si les accesseurs et les mutateurs donnent un accès suffisant (c'est-à-dire complet) au contenu de la classe, vous pouvez les utiliser. Il vous faudra cependant séparer la fonction <strong>serialize</strong> en <strong>load</strong> et <strong>save</strong>, et déclarer la séparation <em>via</em> la macro <code data-claire-semantic="cpp">BOOST_SERIALIZATION_SPLIT_MEMBER(NomDeLaClasse) </code>, comme dans l'exemple suivant.</p><pre id="r-571492" data-claire-element-id="571492"><code data-claire-semantic="cpp">//on rajoute
+#include &lt;boost/serialization/split_free.hpp&gt;
+
+class Note
+{
+public:
+        Note() {};
+        Note(int n, int d) :
+                        numerateur(n), denominateur(d) {}
+       int getNumerateur()
+       {return numerateur;}
+
+       int getDenominateur()
+       {return denominateur;}
+
+       void setNumerateur(int n)
+       {numerateur = n;}
+
+       void setDenominateur(int n)
+       {denominateur = n;}
+
+private:
+        int numerateur;
+        int denominateur;
+
+
+};
+
+namespace boost
+{
+        namespace serialization {
+
+    void save(Archive &amp; ar, Note &amp; n, const unsigned int version) const
+    {
+        ar  &amp; n.getNumerateur();
+        ar  &amp; n.getDenominateur();
+    }
+    template&lt;class Archive&gt;
+    void load(Archive &amp; ar, Note &amp; n, const unsigned int version)
+    {
+        int a,b;
+        ar  &amp; a; 
+        n.setNumerateur(a);
+        ar  &amp; b;
+        n.setDenominateur(b);
+    }
+
+
+        } // namespace serialization
+} // namespace boost
+    BOOST_SERIALIZATION_SPLIT_MEMBER(Note)</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/serialisation-avec-boost">Sérialisation avec Boost</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/serialisation-avec-boost/installation-de-boost">
+Installation de Boost
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/serialisation-avec-boost/serialisation-basique">
+Sérialisation basique
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/serialisation-avec-boost/serialisation-non-intrusive">
+Sérialisation non intrusive
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/serialisation-avec-boost/cas-specifiques">
+Cas spécifiques
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/serialisation-avec-boost/serialisation-basique">
+<span class="arrow"></span>
+<span class="next">Sérialisation basique</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/serialisation-avec-boost/cas-specifiques">
+<span class="next">Cas spécifiques</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Casspcifiques"></a><h2>Cas spécifiques</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/serialisation-avec-boost/serialisation-non-intrusive">
+<span class="arrow"></span>
+<span class="next">Sérialisation non intrusive</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-serialisation-de-classes-derivees" data-claire-element-id="571505">Sérialisation de classes dérivées</h2><p id="r-571495" data-claire-element-id="571495">Pour sérialiser une hiérarchie d'objets, il faut inclure un nouvel en-tête dédié.</p><pre id="r-571496" data-claire-element-id="571496"><code data-claire-semantic="cpp">#include &lt;boost/serialization/base_object.hpp&gt;</code></pre><p id="r-571497" data-claire-element-id="571497">De plus, le code de sérialisation sera modifié :</p><pre id="r-571498" data-claire-element-id="571498"><code data-claire-semantic="cpp">friend class boost::serialization::access;
+    template&lt;class Archive&gt;
+    void serialize(Archive &amp; ar, const unsigned int version)
+    {
+        // serialize base class information
+        ar &amp; boost::serialization::base_object&lt;CLASSEdeBASE&gt;(*this);
+        ar &amp; street1;
+        ar &amp; street2;
+    }</code></pre><p id="r-571499" data-claire-element-id="571499">Avec <strong>CLASSEdeBASE</strong> le nom de la classe de base. Aucune modification à l'exception de celle-ci.</p><aside id="r-571501" data-claire-element-id="571501" data-claire-semantic="error"><p id="r-571500" data-claire-element-id="571500">La classe de base doit absolument être sérialisable !</p></aside><p id="r-571502" data-claire-element-id="571502">Pour illustrer le propos, créons un objet qui représentera un devoir composé d'une note (quelle originalité ;) ) et d'un texte de sujet.</p><pre id="r-571503" data-claire-element-id="571503"><code data-claire-semantic="cpp">#include &lt;boost/serialization/base_object.hpp&gt;
+
+class DevoirSurTable : public Note
+{
+    friend class boost::serialization::access;
+    template&lt;class Archive&gt;
+    void serialize(Archive &amp; ar, const unsigned int version)
+    {
+        ar &amp; boost::serialization::base_object&lt;Note&gt;(*this);
+        ar &amp; sujetDevoir;
+    }
+    std::string sujetDevoir;
+public:
+/* Note : le constructeur fournit ses données à la classe mère Note */
+    DevoirSurTable(int note_numerateur, int note_denominateur, string sujet) : Note(note_numerateur, note_denominateur), sujetDevoir(sujet)  {};
+    ~DevoirSurTable(){};
+};</code></pre><p id="r-571504" data-claire-element-id="571504">En conséquence, la classe de base <code data-claire-semantic="cpp">Note </code> sera archivée avec la classe dérivée <code data-claire-semantic="cpp">DevoirSurTable </code>. On peut tout à fait appliquer ce concept à une hiérarchie de plusieurs niveaux de dérivation : chaque classe doit alors sérialiser sa parente.</p><h2 id="r-pointeurs-1" data-claire-element-id="571528">Pointeurs</h2><p id="r-571506" data-claire-element-id="571506">Prenons comme exemple un relevé de notes :</p><pre id="r-571507" data-claire-element-id="571507"><code data-claire-semantic="cpp">class Releve
+{
+        friend class boost::serialization::access;
+        Note * contenu[10];
+        template&lt;class Archive&gt;
+        void serialize(Archive &amp; ar, const unsigned int version) {
+                for (int i = 0; i &lt; 10; ++i)
+                        ar &amp; contenu[i];
+        }
+public:
+        Releve() {}
+};</code></pre><p id="r-571508" data-claire-element-id="571508">Les dix pointeurs seront archivés.</p><div id="r-571510" data-claire-element-id="571510" data-claire-semantic="question"><p id="r-571509" data-claire-element-id="571509">Eh, attends, ce sont des <strong>pointeurs</strong> : lorsqu'on les restaurera, ils ne pointeront plus sur la bonne zone de mémoire !</p></div><p id="r-571511" data-claire-element-id="571511">Mais si ! Boost a tout prévu : lors de la sérialisation, la cible du pointeur est sérialisée, et lors de la restauration, ce contenu sera toujours pointé par le pointeur. Magique ? :magicien:</p><p id="r-571512" data-claire-element-id="571512">Nous pouvons même simplifier encore le code car Boost détecte automatiquement la présence d'un tableau :</p><pre id="r-571513" data-claire-element-id="571513"><code data-claire-semantic="cpp">class Releve
+{
+        friend class boost::serialization::access;
+        Note * contenu[10];
+        template&lt;class Archive&gt;
+        void serialize(Archive &amp; ar, const unsigned int version) {
+                        ar &amp; contenu;
+        }
+public:
+        Releve() {}
+};</code></pre><p id="r-571514" data-claire-element-id="571514">Le même fonctionnement simple (<code data-claire-semantic="cpp">ar &amp; contenu; </code>) est correct pour tous les conteneurs de la STL.</p><p id="r-571515" data-claire-element-id="571515">Cependant, ce mode d'autodétection des pointeurs peut poser un problème lorsque l'on se frotte au polymorphisme. Voici une situation problématique :</p><pre id="r-571516" data-claire-element-id="571516"><code data-claire-semantic="cpp">class Base {
+ /* … */
+};
+class Derived_one : public Base {
+ /* … */
+};
+class Derived_two : public Base {
+ /* … */
+};
+int main(){
+ /* … */
+    Base *b;
+ /* Fonction serialize */
+    ar &amp; b; 
+ /* … */
+}</code></pre><p id="r-571517" data-claire-element-id="571517">Lors de la sérialisation ou restauration (<code data-claire-semantic="cpp">ar &amp; b </code>), comment savoir si l'objet est de type <strong>Derived_one</strong>, <strong>Derived_two</strong>, ou même <strong>Base</strong> ? Lors de la restauration, une exception « <em>unregistered class</em> » sera levée par Boost.</p><p id="r-571518" data-claire-element-id="571518">Pour éviter cela, deux méthodes sont possibles.</p><ul id="r-571526" data-claire-element-id="571526"><li id="r-571521" data-claire-element-id="571521"><p id="r-571519" data-claire-element-id="571519">Vous pouvez sérialiser toutes les classes dérivées. Lorsqu'un objet est sérialisé, sa classe est « apprise » par Boost. Les pointeurs sur cette classe seront archivés sans problème dès lors qu'un objet de cette classe aura été sérialisé :</p><pre id="r-571520" data-claire-element-id="571520"><code data-claire-semantic="cpp">int main(){
+ /* … */
+    Derived_one d1;
+    Derived_two d2;
+    Base *b;
+ /* Fonction serialize */
+    ar &amp; d1;
+    ar &amp; d2;
+    ar &amp; b; 
+ /* … */
+}</code></pre></li><li id="r-571525" data-claire-element-id="571525"><p id="r-571522" data-claire-element-id="571522">Vous pouvez enregistrer manuellement les classes, comme ceci (notez l'ajout d'un <em>header</em>) :</p><pre id="r-571523" data-claire-element-id="571523"><code data-claire-semantic="cpp">#include &lt;boost/serialization/export.hpp&gt;
+class Base {
+ /* … */
+};
+class Derived_one : public base {
+ /* … */
+};
+class Derived_two : public base {
+ /* … */
+};
+BOOST_CLASS_EXPORT_GUID(derived_one, &quot;derived_one&quot;)
+BOOST_CLASS_EXPORT_GUID(derived_two, &quot;derived_two&quot;)</code></pre><p id="r-571524" data-claire-element-id="571524">La sérialisation ne posera alors pas de problème.</p></li></ul><p id="r-571527" data-claire-element-id="571527">Le cas du polymorphisme comporte d'autres subtilités que je n'ai pas présentées ici : les détails à propos de ce type de sérialisation se situent dans <a href="http://www.boost.org/doc/libs/1_43_0/libs/serialization/doc/serialization.html#derivedpointers">la documentation</a>.</p><h2 id="r-versions" data-claire-element-id="571539">Versions</h2><p id="r-571529" data-claire-element-id="571529">Imaginons qu'un jour les notes changent du tout au tout : par exemple, chaque note recevrait un coefficient. Comment s'assurer que les fichiers créés avec une ancienne version de notre programme sont toujours valables ? En ajoutant un simple <em>header</em>, et en vérifiant les versions : chaque classe reçoit un numéro de version — 0 au début — qui permet de l'identifier. Regardons plutôt l'exemple suivant.</p><h3 id="r-ancienne-version-de-la-classe" data-claire-element-id="571531">Ancienne version de la classe</h3><pre id="r-571530" data-claire-element-id="571530"><code data-claire-semantic="cpp">#include &lt;boost/serialization/version.hpp&gt;
+
+class Note
+{
+private:
+        friend class boost::serialization::access;
+        
+        template&lt;class Archive&gt;
+        void serialize(Archive &amp; ar, const unsigned int version) {
+                ar &amp; numerateur;
+                ar &amp; denominateur;
+        }
+        
+        int numerateur;
+        int denominateur;
+public:
+        Note() {};
+        Note(int n, int d) :
+                        numerateur(n), denominateur(d){}
+};
+BOOST_CLASS_VERSION(Note, 0)</code></pre><h3 id="r-nouvelle-version-de-la-classe" data-claire-element-id="571538">Nouvelle version de la classe</h3><pre id="r-571532" data-claire-element-id="571532"><code data-claire-semantic="cpp">#include &lt;boost/serialization/version.hpp&gt;
+
+class Note
+{
+private:
+        friend class boost::serialization::access;
+        
+        template&lt;class Archive&gt;
+        void serialize(Archive &amp; ar, const unsigned int version) {
+                ar &amp; numerateur;
+                ar &amp; denominateur;
+                if(version &gt; 0)
+                     ar &amp; coefficient;
+        }
+        
+        int numerateur;
+        int denominateur;
+        int coefficient;
+public:
+        Note() {};
+        Note(int n, int d) :
+                        numerateur(n), denominateur(d){}
+};
+BOOST_CLASS_VERSION(Note, 1)</code></pre><p id="r-571533" data-claire-element-id="571533">Nous ne sérialisons et ne chargeons le coefficient que si la version est suffisante. Cette version est déclarée par le biais la macro <strong>BOOST_CLASS_VERSION(classe, version)</strong>. Cependant, ce code n'est pas encore optimal : on enregistre toujours dans la dernière version disponible. Nous pourrions donc séparer la fonction <strong>serialize</strong> en <strong>load</strong> et <strong>save</strong> :</p><pre id="r-571534" data-claire-element-id="571534"><code data-claire-semantic="cpp">class Note
+{
+private:
+        friend class boost::serialization::access;
+        template&lt;class Archive&gt;
+        void save(Archive &amp; ar, const unsigned int version) const {
+                ar &amp; numerateur;
+                ar &amp; denominateur;
+                ar &amp; coefficient;
+        }
+        template&lt;class Archive&gt;
+        void load(Archive &amp; ar, const unsigned int version) {
+                ar &amp; numerateur;
+                ar &amp; denominateur;
+                if (version &gt; 0)
+                        ar &amp; coefficient;
+
+        }
+        BOOST_SERIALIZATION_SPLIT_MEMBER()
+
+        int numerateur;
+        int denominateur;
+        int coefficient;
+public:
+        Note() {};
+        Note(int n, int d) :
+                        numerateur(n), denominateur(d) {}
+};
+BOOST_CLASS_VERSION(Note, 1)</code></pre><p id="r-571535" data-claire-element-id="571535">Pour poursuivre votre quête de sérialisation, rendez-vous sur la documentation officielle :</p><p id="r-571536" data-claire-element-id="571536"><a href="http://www.boost.org/doc/libs/1_43_0/libs/serialization/doc/index.html">www.boost.org</a></p><p id="r-571537" data-claire-element-id="571537">Vous serez certainement intéressés par les autres types d'archivage (nous avons vu uniquement les archives texte), notamment les archivages XML et binaire. Il est même possible, si aucun de ceux-là ne vous convient, de créer votre propre format d'archive.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/serialisation-avec-boost">Sérialisation avec Boost</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/serialisation-avec-boost/installation-de-boost">
+Installation de Boost
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/serialisation-avec-boost/serialisation-basique">
+Sérialisation basique
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/serialisation-avec-boost/serialisation-non-intrusive">
+Sérialisation non intrusive
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/serialisation-avec-boost/cas-specifiques">
+Cas spécifiques
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/serialisation-avec-boost/serialisation-non-intrusive">
+<span class="arrow"></span>
+<span class="next">Sérialisation non intrusive</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/serialisation-avec-boost.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 08:32:14 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/serialisation-avec-boost.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:32:03 GMT -->
+</html>

@@ -1,0 +1,283 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/register-globals-et-ecrasement-de-donnees.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 02:19:28 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/register-globals-et-ecrasement-de-donnees.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:33:04 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : register_globals et écrasement de données</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/register-globals-et-ecrasement-de-donnees.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : register_globals et écrasement de données</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#register_globalsetcrasementdedonnes">register_globals et écrasement de données</a><br/><a href="#Lesrisques">Les risques</a><br/><a href="#Dsactiverregister_globals">Désactiver register_globals</a><br/><a href="#Quefairequandonnepeutpasdsactiverregister_globals">Que faire quand on ne peut pas désactiver register_globals ?</a><br/></div>
+<a name="register_globalsetcrasementdedonnes"></a><h2>register_globals et écrasement de données</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/register-globals-et-ecrasement-de-donnees/les-risques">
+<span class="next">Les risques</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-685494" data-claire-element-id="685494">Certains hébergeurs activent la directive register_globals du PHP.INI.<br/> Activée, cette directive permet d'enregistrer les variables super-globales ($_POST, $_GET, $_COOKIE, $_ENV, $_SERVER) dans des variables normales. Dès lors, si cette directive est à on et la variable $_POST['text'] existe, alors la variable $text de même valeur sera automatiquement créée.<br/> Apparemment, cette directive ne pose aucun problème et au contraire, facilite la programmation. Mais en réalité, celle-ci peut être à l'origine de gros soucis de sécurité.</p><aside id="r-685496" data-claire-element-id="685496" data-claire-semantic="information"><p id="r-685495" data-claire-element-id="685495">Si vous ne comprenez pas tout à fait cette introduction, lisez ceci :<br/><a href="http://fr2.php.net/ini.core">PHP.INI</a></p></aside>
+</div><a name="Lesrisques"></a><h2>Les risques</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/register-globals-et-ecrasement-de-donnees/desactiver-register-globals">
+<span class="next">Désactiver register_globals</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-685497" data-claire-element-id="685497">Imaginez maintenant que vous devez gérer une interface administrateur, et que vous avez ce code :</p><pre id="r-685498" data-claire-element-id="685498"><code data-claire-semantic="html+php">&lt;?php
+
+$array_admin=array(&quot;admin&quot;=&gt;&quot;passe&quot;,
+			 	   &quot;test&quot;=&gt;&quot;test&quot;);
+
+foreach($array_admin as $login=&gt;$pwd) {
+	if($login==$_POST['login'] AND $pwd==$_POST['pwd']) {
+		$connected=true;
+		break;
+	}
+}
+
+//La variable $connected contient true si l'utilisateur est administrateur
+if($connected==true) {
+	echo &quot;Information confidentielle : [...]&quot;;
+} else {
+	?&gt;
+	&lt;form action=&quot;index.php&quot; method=&quot;post&quot;&gt;
+    	&lt;p&gt;&lt;input type=&quot;text&quot; name=&quot;login&quot; /&gt; Login&lt;/p&gt;
+        &lt;p&gt;&lt;input type=&quot;password&quot; name=&quot;pwd&quot; /&gt; Password&lt;/p&gt;
+        &lt;p&gt;&lt;input type=&quot;submit&quot; value=&quot;Connexion !&quot; /&gt;&lt;/p&gt;
+    &lt;/form&gt;
+	&lt;?php
+}
+?&gt;</code></pre><p id="r-685499" data-claire-element-id="685499">La variable $connected, qui vaut true si l'utilisateur a rentré le bon login avec le bon mot de passe, peut être simplement écrasée si register_globals est activé ! Comment ? C'est simple. Il suffit d'appeler la page de connexion ainsi :</p><pre id="r-685500" data-claire-element-id="685500"><code data-claire-semantic="html+php">index.php?connected=true</code></pre><p id="r-685501" data-claire-element-id="685501">Dès lors, la variable $_GET['connected'] est copiée dans $connected. Celle-ci aura donc la valeur true avant même que le test de connexion ait été fait.<br/> Le script affiche alors :</p><pre id="r-685502" data-claire-element-id="685502"><code data-claire-semantic="html+php">Information confidentielle : [...]</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/register-globals-et-ecrasement-de-donnees">register_globals et écrasement de données</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/register-globals-et-ecrasement-de-donnees/les-risques">
+Les risques
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/register-globals-et-ecrasement-de-donnees/desactiver-register-globals">
+Désactiver register_globals
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/register-globals-et-ecrasement-de-donnees/que-faire-quand-on-ne-peut-pas-desactiver-register-globals">
+Que faire quand on ne peut pas désactiver register_globals ?
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/register-globals-et-ecrasement-de-donnees/desactiver-register-globals">
+<span class="next">Désactiver register_globals</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Dsactiverregister_globals"></a><h2>Désactiver register_globals</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/register-globals-et-ecrasement-de-donnees/les-risques">
+<span class="arrow"></span>
+<span class="next">Les risques</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/register-globals-et-ecrasement-de-donnees/que-faire-quand-on-ne-peut-pas-desactiver-register-globals">
+<span class="next">Que faire quand on ne peut pas désactiver register_globals ?</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-685504" data-claire-element-id="685504">Pour désactiver register_globals, c'est simple. <br/> Il suffit, dans un premier temps, de vérifier (avec <a href="http://fr.php.net/ini_get">ini_get()</a>) que register_globals est activé. <br/> Si c'est le cas, alors il faut éditer le PHP.INI et changer la ligne</p><pre id="r-685505" data-claire-element-id="685505"><code data-claire-semantic="html+php">register_globals On</code></pre><p id="r-685506" data-claire-element-id="685506">en</p><pre id="r-685507" data-claire-element-id="685507"><code data-claire-semantic="html+php">register_globals Off</code></pre><p id="r-685508" data-claire-element-id="685508">Si l'accès au php.ini vous est restreint, alors vous pouvez utiliser un .htaccess que vous placerez à la racine de votre site avec la ligne suivante :</p><pre id="r-685509" data-claire-element-id="685509"><code data-claire-semantic="apache">php_flag register_globals off</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/register-globals-et-ecrasement-de-donnees">register_globals et écrasement de données</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/register-globals-et-ecrasement-de-donnees/les-risques">
+Les risques
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/register-globals-et-ecrasement-de-donnees/desactiver-register-globals">
+Désactiver register_globals
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/register-globals-et-ecrasement-de-donnees/que-faire-quand-on-ne-peut-pas-desactiver-register-globals">
+Que faire quand on ne peut pas désactiver register_globals ?
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/register-globals-et-ecrasement-de-donnees/les-risques">
+<span class="arrow"></span>
+<span class="next">Les risques</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/register-globals-et-ecrasement-de-donnees/que-faire-quand-on-ne-peut-pas-desactiver-register-globals">
+<span class="next">Que faire quand on ne peut pas désactiver register_globals ?</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Quefairequandonnepeutpasdsactiverregister_globals"></a><h2>Que faire quand on ne peut pas désactiver register_globals ?</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/register-globals-et-ecrasement-de-donnees/desactiver-register-globals">
+<span class="arrow"></span>
+<span class="next">Désactiver register_globals</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-685511" data-claire-element-id="685511">Dès que vous ne pouvez pas désactiver cette directive, 2 possibilités vous sont offertes.</p><h2 id="r-supprimer-les-variables-a-l-aide-de-php" data-claire-element-id="685521">Supprimer les variables à l'aide de PHP</h2><p id="r-685512" data-claire-element-id="685512">Il suffit alors de parcourir les variables super-globales à l'aide de foreach. Puis on utilise unset pour supprimer les variables créées à cause de register_globals.</p><h3 id="r-fichier-unregister-php" data-claire-element-id="685516">Fichier &quot;unregister.php&quot;</h3><pre id="r-685513" data-claire-element-id="685513"><code data-claire-semantic="html+php">&lt;?php
+function register_global_off() {
+	if(!is_array($_SESSION)) {
+		$_SESSION=array();
+	}
+	$_TAB=array_merge($_REQUEST,$_SERVER,$_ENV,$_FILES);
+	foreach($_TAB as $key=&gt;$value) {
+		unset($GLOBALS[$key]);
+	}
+}
+?&gt;</code></pre><p id="r-685514" data-claire-element-id="685514">Puis on rajoute cette entête à tous les autres fichiers :</p><pre id="r-685515" data-claire-element-id="685515"><code data-claire-semantic="html+php">&lt;?php
+include(&quot;unregister.php&quot;);
+register_global_off();
+?&gt;</code></pre><h3 id="r-avantages-10" data-claire-element-id="685518">Avantages</h3><p id="r-685517" data-claire-element-id="685517">Cette méthode permet de travailler dans un environnement de développement plus sûr quand ini_set est désactivé.</p><h3 id="r-inconvenients-9" data-claire-element-id="685520">Inconvénients</h3><p id="r-685519" data-claire-element-id="685519">Cette méthode est lourde pour deux raisons.<br/> 1- Il faut rajouter une entête supplémentaire à chaque fichier : suivant votre application, cela peut ne pas être un gros problème, mais dans le plupart des cas, c'en est un. <br/> 2- Cette fonction utilise pas mal de ressources, bien qu'elle en libère un peu en contrepartie (unset).</p><h2 id="r-programmer-correctement-en-initialisant-ses-variables" data-claire-element-id="685535">Programmer correctement en initialisant ses variables</h2><p id="r-685522" data-claire-element-id="685522">Reprenons l'exemple du point n°1 &quot;Les risques&quot;. Pour éviter que la variable $connected puisse être modifiée par l'utilisateur, il suffit d'initialiser la variable avec la valeur FALSE.<br/> Ainsi, même si $_GET['connected'] existe, la valeur de $connected sera FALSE avant l'authentification :</p><pre id="r-685523" data-claire-element-id="685523"><code data-claire-semantic="html+php">&lt;?php
+//La variable $connected contient false : on ne sait pas si l'utilisateur est administrateur !
+$connected=false;
+
+$array_admin=array(&quot;admin&quot;=&gt;&quot;passe&quot;,
+			 	   &quot;test&quot;=&gt;&quot;test&quot;);
+
+foreach($array_admin as $login=&gt;$pwd) {
+	if($login==$_POST['login'] &amp;amp;&amp;amp; $pwd==$_POST['pwd']) {
+		$connected=true;
+		break;
+	}
+}
+
+//La variable $connected contient true si l'utilisateur est administrateur
+if($connected==true) {
+	echo &quot;Information confidentielle : [...]&quot;;
+} else {
+	?&gt;
+	&lt;form action=&quot;index.php&quot; method=&quot;post&quot;&gt;
+    	&lt;p&gt;&lt;input type=&quot;text&quot; name=&quot;login&quot; /&gt; Login&lt;/p&gt;
+        &lt;p&gt;&lt;input type=&quot;password&quot; name=&quot;pwd&quot; /&gt; Password&lt;/p&gt;
+        &lt;p&gt;&lt;input type=&quot;submit&quot; value=&quot;Connexion !&quot; /&gt;&lt;/p&gt;
+    &lt;/form&gt;
+	&lt;?php
+}
+?&gt;</code></pre><h3 id="r-avantages-11" data-claire-element-id="685525">Avantages</h3><p id="r-685524" data-claire-element-id="685524">Cette méthode est très légère, et incite à programmer correctement.</p><h3 id="r-inconvenients-10" data-claire-element-id="685534">Inconvénients</h3><p id="r-685526" data-claire-element-id="685526">Cette méthode n'est pas la plus sûre.</p><p id="r-685527" data-claire-element-id="685527">Résumons :<br/> register_globals doit être désactivé.<br/> Si ce n'est pas possible, on a deux choix :</p><ul id="r-685532" data-claire-element-id="685532"><li id="r-685529" data-claire-element-id="685529"><p id="r-685528" data-claire-element-id="685528">supprimer dynamiquement les variables créées ;</p></li><li id="r-685531" data-claire-element-id="685531"><p id="r-685530" data-claire-element-id="685530">initialiser ses variables pour éviter un écrasement de données.</p></li></ul><p id="r-685533" data-claire-element-id="685533">J'espère que ce tutoriel vous a plu. Et n'hésitez pas à donner votre avis ! :) .</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/register-globals-et-ecrasement-de-donnees">register_globals et écrasement de données</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/register-globals-et-ecrasement-de-donnees/les-risques">
+Les risques
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/register-globals-et-ecrasement-de-donnees/desactiver-register-globals">
+Désactiver register_globals
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/register-globals-et-ecrasement-de-donnees/que-faire-quand-on-ne-peut-pas-desactiver-register-globals">
+Que faire quand on ne peut pas désactiver register_globals ?
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/register-globals-et-ecrasement-de-donnees/desactiver-register-globals">
+<span class="arrow"></span>
+<span class="next">Désactiver register_globals</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/register-globals-et-ecrasement-de-donnees.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 02:19:28 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/register-globals-et-ecrasement-de-donnees.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:33:04 GMT -->
+</html>

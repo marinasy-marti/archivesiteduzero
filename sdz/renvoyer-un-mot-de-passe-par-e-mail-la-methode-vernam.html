@@ -1,0 +1,1202 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 08:35:15 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:32:29 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Renvoyer un mot de passe par e-mail : la méthode Vernam</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Renvoyer un mot de passe par e-mail : la méthode Vernam</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Renvoyerunmotdepassepare-maillamthodeVernam">Renvoyer un mot de passe par e-mail : la méthode Vernam</a><br/><a href="#Prparerlechantier">Préparer le chantier</a><br/><a href="#Onousensommesactuellement...">Où nous en sommes actuellement...</a><br/><a href="#Amliorationdusystme">Amélioration du système</a><br/><a href="#LecryptageVernamlefonctionnement">Le cryptage Vernam : le fonctionnement</a><br/><a href="#Placeaucodage">Place au codage !</a><br/><a href="#Unesimplefonction">Une simple fonction</a><br/><a href="#Aufinal...">Au final...</a><br/><a href="#Lesannexes">Les annexes</a><br/><a href="#LecryptageVernaminviolable">Le cryptage Vernam, inviolable ?</a><br/><a href="#LesfonctionsPHPutilespourcetuto">Les fonctions PHP utiles pour ce tuto</a><br/><a href="#F.A.Q.">F.A.Q.</a><br/></div>
+<a name="Renvoyerunmotdepassepare-maillamthodeVernam"></a><h2>Renvoyer un mot de passe par e-mail : la méthode Vernam</h2><div class="content" role="article">
+<p id="r-348606" data-claire-element-id="348606">Cher Zéro, bienvenue !</p><p id="r-348607" data-claire-element-id="348607">Peut-être vous êtes-vous déjà demandé comment certains sites faisaient pour renvoyer à leurs membres leur mot de passe... et à raison ! Tout site qui se respecte se doit de hacher les mots de passe de ses membres dans sa BDD, ce qui relève, vous l'admettrez, de la sécurité élémentaire. Ainsi, quand bien même un hacker parviendrait à pénétrer dans la BDD de votre site, il ne pourrait rien faire des mots de passe qu'il y trouvera (puisque ceux-ci sont justement hachés).<br/>Mais c'est alors qu'une question se pose : étant donné que les mots de passe sont hachés, comment le site peut-il prétendre pouvoir les récupérer ? Cela voudrait dire que le système de hachage n'est pas infaillible ou que les mots de passe sont carrément stockés tels quels ?<br/>Rien de tout ça ! Nous allons voir comment un mot de passe peut être extrait d'une base de données alors qu'il est haché en bonne et due forme, ce qui nous offrira la possibilité de le renvoyer à un membre en cas d'oubli. :) <br/>Dans ce tutoriel, tout tournera autour d'une méthode de cryptage appelée le <em>cryptage Vernam</em>.</p><aside id="r-348609" data-claire-element-id="348609" data-claire-semantic="warning"><p id="r-348608" data-claire-element-id="348608"><strong>Mettons les choses au point :</strong> ce tutoriel explique comment font certains sites pour renvoyer les mots de passe, mais il sert avant tout à montrer une application du cryptage Vernam, un outil de cryptage très puissant. <br/> En cas d'oubli, il est préférable d'envoyer un mot de passe généré aléatoirement, valable pendant une courte durée (car des problèmes de sécurité indépendants de la méthode de cryptage entrent en jeu dans ce cas précis).</p></aside>
+</div>
+<div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1358423835269-0" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1358423835269-0');
+        });
+    }
+    </script>
+</div><a name="Prparerlechantier"></a><h2>Préparer le chantier</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/ou-nous-en-sommes-actuellement">
+<span class="next">Où nous en sommes actuellement...</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-348610" data-claire-element-id="348610">Dans ce chapitre, je vais dans un premier temps résumer la situation actuelle, c'est-à-dire ce qui se fait généralement sur la plupart des sites web (dont le vôtre, probablement), afin que les plus zéros d'entre vous ne soient pas largués.</p><p id="r-348611" data-claire-element-id="348611">Ensuite, je vais expliquer de quelle manière on peut améliorer notre système pour pouvoir récupérer les mots de passe de manière totalement sécurisée. :)</p><p id="r-348612" data-claire-element-id="348612">Enfin, je vais expliquer le fonctionnement du cryptage Vernam, qui sera l'outil indispensable pour parvenir à nos fins.</p><p id="r-348613" data-claire-element-id="348613">À noter que ce chapitre est un chapitre théorique : il explique <em>comment</em> on arrive à faire ce qu'on veut et presque aucun code PHP n'y apparaît.<br/>Dernier rappel : je suppose le <a href="http://www.siteduzero.com/tutoriel-3-14668-un-site-dynamique-avec-php.html">tutoriel officiel sur le PHP</a> entièrement maîtrisé jusqu'à la fin du chapitre 3. ;)</p>
+</div><a name="Onousensommesactuellement..."></a><h2>Où nous en sommes actuellement...</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/preparer-le-chantier">
+<span class="arrow"></span>
+<span class="next">Préparer le chantier</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/amelioration-du-systeme">
+<span class="next">Amélioration du système</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h4 id="r-ou-nous-en-sommes-actuellement" data-claire-element-id="348649">Où nous en sommes actuellement...</h4><aside id="r-348615" data-claire-element-id="348615" data-claire-semantic="information"><p id="r-348614" data-claire-element-id="348614">Cette sous-partie reprend les concepts d'inscription et de connexion d'un membre sur un site. Pour ceux qui ont déjà un site web disposant d'un système de connexion et tout le tralala, vous pouvez passer à la <a href="#ss_part_2">sous-partie suivante</a> ! Pour les autres, je tiens à rappeler que maîtriser <a href="http://www.siteduzero.com/tutoriel-3-14668-un-site-dynamique-avec-php.html">le cours PHP de M@teo21</a> est vivement conseillé.</p></aside><h6 id="r-l-inscription" data-claire-element-id="348641">L'inscription</h6><p id="r-348616" data-claire-element-id="348616">Résumons notre situation : pour qu'un membre puisse disposer d'un compte sur votre site, il doit d'abord... s'enregistrer ! Vous créez donc une page d'enregistrement dans laquelle il doit entrer :</p><ul id="r-348623" data-claire-element-id="348623"><li id="r-348618" data-claire-element-id="348618"><p id="r-348617" data-claire-element-id="348617">le pseudonyme qu'il désire avoir ;</p></li><li id="r-348620" data-claire-element-id="348620"><p id="r-348619" data-claire-element-id="348619">un mot de passe ;</p></li><li id="r-348622" data-claire-element-id="348622"><p id="r-348621" data-claire-element-id="348621">et des tas d'autres joyeusetés que je vous laisse le plaisir d'imaginer !</p></li></ul><p id="r-348624" data-claire-element-id="348624">Une fois le formulaire envoyé et après un traitement de ses données, vous enregistrez le tout dans la BDD en prenant bien soin de hacher le mot de passe. Le compte est désormais créé et l'utilisateur dispose d'une identité sur votre site. Jusque-là, rien de bien compliqué. ;)</p><p id="r-348625" data-claire-element-id="348625">Reste à savoir de quelle manière on va hacher les mots de passe... La méthode de hachage la plus couramment utilisée en PHP (et la plus simple) est celle du <em>md5</em>. Pour hacher une chaîne de caractères avec cet algorithme, il suffit simplement d'utiliser la fonction <em>md5</em> et le tour est joué :</p><pre id="r-348626" data-claire-element-id="348626"><code data-claire-semantic="html+php">&lt;?php
+
+$MDP_Crypt = md5('Je suis un Zero');
+
+?&gt;</code></pre><p id="r-348627" data-claire-element-id="348627">La variable $MDP_Crypt contiendra donc 'Je suis un Zero' haché en <em>md5</em> (ce qui donne 577bb7a817ed815f152dcb6bbb62e03a, si vous voulez tout savoir). Une même chaîne de caractères donne toujours le même résultat. Vous pouvez donc vous amuser à hacher à nouveau 'Je suis un Zero' autant de fois que vous voulez avec l'algo md5, vous aurez toujours 577bb7a817ed815f152dcb6bbb62e03a, le résultat ne changera pas.</p><figure id="r-348629" data-claire-element-id="348630"><img id="r-348628" data-claire-element-id="348628" src="medias/uploads.siteduzero.com_files_185001_186000_185817.jpg" alt="Base de données avec mots de passe hachés en md5"/></figure><p id="r-348631" data-claire-element-id="348631"><em>Base de données avec <br/> mots de passe hachés en md5</em></p><aside id="r-348633" data-claire-element-id="348633" data-claire-semantic="error"><p id="r-348632" data-claire-element-id="348632">Certains d'entre vous ont peut-être remarqué l'existence de la fonction <em>crypt</em> en PHP, qui permet également de hacher une chaîne de caractères. Le problème avec cette fonction, c'est que si vous hachez deux fois le même texte, vous allez avoir deux résultats différents ! <em>crypt</em> est donc inutile dans ce cas-ci, car on ne peut pas l'utiliser pour la méthode des comparaisons (que je développerai dans la partie Connexion).</p></aside><p id="r-348634" data-claire-element-id="348634">On va considérer que le hachage <em>md5</em> est totalement infaillible et qu'il n'est pas possible de le casser, bien que ça ne soit pas tout à fait vrai (à cause des collisions ; pour plus d'informations, <a href="http://fr.wikipedia.org/wiki/MD5%23Cryptanalyse">voir ici</a>). Rien ne vous empêche d'utiliser d'autres algorithmes plus sécurisés, comme le <a href="http://us2.php.net/manual/en/function.sha1.php">SHA</a> (j'ai choisi le md5, car c'était le plus connu).</p><p id="r-348635" data-claire-element-id="348635">Pour résumer, voici ce qui se passe sur un site lambda.</p><p id="r-348636" data-claire-element-id="348636"><em>Lorsqu'un membre veut s'inscrire sur le site, il rentre des données dans un formulaire, dont son mot de passe. Ce mot de passe est haché avec la fonction </em>md5<em> et ensuite envoyé dans la base de données (en plus des autres éléments du formulaire, que je limite au pseudo dans le schéma ci-dessous :) ).</em></p><figure id="r-348638" data-claire-element-id="348639"><img id="r-348637" data-claire-element-id="348637" src="medias/uploads.siteduzero.com_files_186001_187000_186067.jpg" alt="Inscription"/></figure><p id="r-348640" data-claire-element-id="348640"><strong>Si le pseudo n'est pas déjà présent dans la base de données, créer un nouveau compte.</strong></p><h6 id="r-la-connexion" data-claire-element-id="348648">La connexion</h6><p id="r-348642" data-claire-element-id="348642">Si un membre désire se connecter sur votre site, il doit entrer son pseudo et son mot de passe dans une page de connexion. Pour pouvoir lui permettre de se connecter, il faut d'abord vérifier si le pseudo qu'il a entré existe et, le cas échéant, vérifier si le mot de passe entré est également correct.<br/> Le « souci », c'est que le mot de passe dans la BDD est haché. Pour savoir si le mot de passe entré dans le formulaire est correct, on ne peut fonctionner que par comparaison. Donc, il va falloir hacher (toujours en <em>md5</em>) le mot de passe donné par l'utilisateur et le comparer avec celui de la base de données. Si les deux éléments sont identiques, alors l'utilisateur peut se connecter. :)</p><p id="r-348643" data-claire-element-id="348643">Le schéma ci-dessous reprend l'idée générale :</p><figure id="r-348645" data-claire-element-id="348646"><img id="r-348644" data-claire-element-id="348644" src="medias/uploads.siteduzero.com_files_186001_187000_186068.jpg" alt="Connexion"/></figure><p id="r-348647" data-claire-element-id="348647">Voilà donc où nous en sommes.</p>
+<aside class="aside-menu">
+<ul class="content-menu" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam">Renvoyer un mot de passe par e-mail : la méthode Vernam</a>
+</li>
+<li class="chapter">
+ 
+<a class="chapterLink" onmouseover="$(this).addClass('box-shadow-summary').next().addClass('box-shadow-summary');" onmouseout="$(this).removeClass('box-shadow-summary').next().removeClass('box-shadow-summary');">
+<span>Partie 1</span>
+Renvoyer un mot de passe par e-mail
+</a>
+<a class="chapterOpen" href="#" onmouseover="$(this).addClass('box-shadow-summary').prev().addClass('box-shadow-summary');" onmouseout="$(this).removeClass('box-shadow-summary').prev().removeClass('box-shadow-summary');">
+<span>+</span>
+</a>
+ 
+<ul class="subchapters">
+<li class="subchapter">
+<div>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/preparer-le-chantier">Préparer le chantier</a>
+<a class="subchapterOpen" href="#">
+<span>+</span>
+</a>
+</div>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/ou-nous-en-sommes-actuellement">
+Où nous en sommes actuellement...
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/amelioration-du-systeme">
+Amélioration du système
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/le-cryptage-vernam-le-fonctionnement">
+Le cryptage Vernam : le fonctionnement
+</a>
+</li>
+</ul> </li> <li class="subchapter">
+<div>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/place-au-codage">Place au codage !</a>
+<a class="subchapterOpen" href="#">
+<span>+</span>
+</a>
+</div>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/une-simple-fonction">
+Une simple fonction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/au-final-2">
+Au final...
+</a>
+</li>
+</ul> </li> <li class="subchapter">
+<div>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/les-annexes-1">Les annexes</a>
+<a class="subchapterOpen" href="#">
+<span>+</span>
+</a>
+</div>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/le-cryptage-vernam-inviolable">
+Le cryptage Vernam, inviolable ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/les-fonctions-php-utiles-pour-ce-tuto">
+Les fonctions PHP utiles pour ce tuto
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/f-a-q">
+F.A.Q.
+</a>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</li>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/preparer-le-chantier">
+<span class="arrow"></span>
+<span class="next">Préparer le chantier</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/amelioration-du-systeme">
+<span class="next">Amélioration du système</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Amliorationdusystme"></a><h2>Amélioration du système</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/ou-nous-en-sommes-actuellement">
+<span class="arrow"></span>
+<span class="next">Où nous en sommes actuellement...</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/le-cryptage-vernam-le-fonctionnement">
+<span class="next">Le cryptage Vernam : le fonctionnement</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h4 id="r-amelioration-du-systeme" data-claire-element-id="348714">Amélioration du système</h4><p id="r-348650" data-claire-element-id="348650">Le principe qu'on vient de voir pour la connexion est simple : il suffit de comparer le MDP fourni par l'utilisateur et celui contenu dans la BDD pour savoir s'ils sont égaux.</p><p id="r-348651" data-claire-element-id="348651">Mais dans le cas d'une récupération de mot de passe, c'est différent : l'utilisateur ne fournit aucun mot de passe ! On ne peut donc rien comparer avec celui qui est dans la base de données. Si on tient à utiliser la méthode des comparaisons, il faut essayer toutes les combinaisons possibles et espérer avoir une chance de tomber sur la bonne, ce qui revient à faire de la force brute... ce qui n'a pas beaucoup de sens. Bref, on ne peut pas récupérer un mot de passe dans la BDD avec les outils qu'on a actuellement à notre disposition (ou du moins, on ne peut pas le récupérer de manière efficace et intelligente).</p><p id="r-348652" data-claire-element-id="348652">Mais n'allez pas pour autant jeter tout ce qu'on vient de voir à la poubelle ! Pour la connexion d'un membre, la technique des comparaisons est excellente ! Je ne vois d'ailleurs pas de quelle autre manière on pourrait procéder...<br/>Ce qu'on va donc faire, c'est améliorer notre système d'inscription en utilisant <em>une méthode de cryptage</em> : le <strong>cryptage Vernam</strong>. <br/> Le cryptage Vernam a besoin de deux choses : un texte à crypter (en l'occurrence le mot de passe) et une clef (un texte quelconque). Le résultat du cryptage dépend de la clef qu'on utilise, ce qui veut dire que si vous cryptez le même texte avec 2 clefs différentes, vous obtiendrez deux résultats différents.</p><div id="r-348654" data-claire-element-id="348654" data-claire-semantic="question"><p id="r-348653" data-claire-element-id="348653">Mais à quoi ça va servir d'utiliser le cryptage Vernam ? Si en plus il faut une clef, ça ne serait pas plus compliqué que le md5 ? Et puis, quelle clef utiliser ?</p></div><p id="r-348655" data-claire-element-id="348655">Que de questions ! Pour répondre à la première, ça serait bien de citer les grands avantages du cryptage Vernam. J'en vois deux :</p><ul id="r-348660" data-claire-element-id="348660"><li id="r-348657" data-claire-element-id="348657"><p id="r-348656" data-claire-element-id="348656">contrairement au hachage md5, il est complètement réversible ! Ça veut dire que si vous cryptez un texte avec une clef, il est possible de le décrypter avec cette même clef ;</p></li><li id="r-348659" data-claire-element-id="348659"><p id="r-348658" data-claire-element-id="348658">il fournit une sécurité absolue si certaines conditions sont remplies.</p></li></ul><figure id="r-348662" data-claire-element-id="348663"><img id="r-348661" data-claire-element-id="348661" src="medias/uploads.siteduzero.com_files_185001_186000_185823.png" alt="Le cryptage Vernam est réversible"/></figure><p id="r-348664" data-claire-element-id="348664">Certes, le deuxième point est important parce que ça veut dire que vous avez une garantie que personne ne peut déchiffrer un mot de passe crypté sans la clef avec laquelle il a été chiffré. Mais ce qui nous intéresse surtout, c'est le premier point : comme le cryptage Vernam est réversible, il est possible de récupérer le mot de passe et donc de le renvoyer à un utilisateur en cas d'oubli ! Que se passe-t-il si on décrypte un mot de passe avec une mauvaise clef ? On obtiendra n'importe quoi, tout simplement. :)</p><p id="r-348665" data-claire-element-id="348665"><em>Pour résumer</em></p><p id="r-348666" data-claire-element-id="348666"><strong>Le cryptage Vernam peut crypter un mot de passe avec une clef. Il est possible de décrypter ce mot de passe crypté si on réutilise cette clef.</strong></p><p id="r-348667" data-claire-element-id="348667">Même si vous ne savez pas encore comment fonctionne le cryptage Vernam, je vous demande de me faire confiance et d'accepter que cette méthode fonctionne (elle n'aura plus de secret pour vous dans la sous-partie suivante. ;) ).</p><div id="r-348669" data-claire-element-id="348669" data-claire-semantic="question"><p id="r-348668" data-claire-element-id="348668">D'accord, mais quelle clef utiliser ? Le nom de mon chat ?</p></div><p id="r-348670" data-claire-element-id="348670">Surtout pas, malheureux ! En fait, en tant que webmaster, vous n'avez pas à vous en soucier ! C'est à ceux qui s'inscrivent de désigner la clef. Vous avez sûrement déjà rencontré dans un formulaire d'inscription des champs comme « Répondez à cette question secrète »... Elle vient de là, la clef ! :D</p><p id="r-348671" data-claire-element-id="348671">À partir de maintenant, vous devriez entrevoir la manière de procéder pour améliorer le système. ^^</p><h6 id="r-lors-de-l-inscription" data-claire-element-id="348680">Lors de l'inscription</h6><p id="r-348672" data-claire-element-id="348672">Lors de son inscription, le membre entre son mot de passe et une réponse à une question secrète. Lors du traitement du formulaire, on ne va pas enregistrer <em>un</em> mot de passe dans la BDD, mais <em>deux</em> : l'un sera haché en <em>md5</em> et l'autre sera chiffré à l'aide d'un cryptage Vernam avec comme clef la réponse à la question secrète. Par rapport à l'ancien système, il faudra donc rajouter un champ dans la base de données afin de stocker les mots de passe Vernam. ;)</p><figure id="r-348674" data-claire-element-id="348675"><img id="r-348673" data-claire-element-id="348673" src="medias/uploads.siteduzero.com_files_186001_187000_186069.jpg" alt="Le traitement du mot de passe lors de l'inscription est modifié"/></figure><p id="r-348676" data-claire-element-id="348676"><strong>En plus de hacher le mot de passe en md5, on le crypte à l'aide de la clef. <br/> Une fois cela fait, on jette la clef à la poubelle et on enregistre le reste dans la BDD.</strong></p><div id="r-348678" data-claire-element-id="348678" data-claire-semantic="question"><p id="r-348677" data-claire-element-id="348677">Hein ? « <em>On jette la clef à la poubelle</em> » ? Pourquoi ne met-on pas la clef dans la base de données ? On en a besoin pour décrypter le mot de passe si jamais le membre nous le redemande, non ?</p></div><p id="r-348679" data-claire-element-id="348679">Hum, monsieur est malin... En fait, ce n'est pas nécessaire ! Le membre doit de toute façon fournir cette clef pour récupérer son mot de passe (en donnant la réponse à sa question secrète). Ce qui me fait une super transition pour passer à...</p><h6 id="r-la-recuperation-du-mot-de-passe" data-claire-element-id="348713">La récupération du mot de passe</h6><p id="r-348681" data-claire-element-id="348681">Maintenant, si un membre un peu tête en l'air oublie son MDP, il suffit de passer par un formulaire de récupération lequel on lui demande sa clef. Si la clef fournie est correcte, alors on peut renvoyer le mot de passe par e-mail, étant donné qu'on peut décrypter le mot de passe Vernam; :)</p><div id="r-348683" data-claire-element-id="348683" data-claire-semantic="question"><p id="r-348682" data-claire-element-id="348682">Objection no 2 ! Comment savoir si la clef fournie par l'utilisateur est correcte ? Comme expliqué plus haut, si on tente de déchiffrer un mot de passe Vernam avec une mauvaise clef, ça donnera n'importe quoi. Il faudrait savoir faire la différence entre un mot de passe correctement décrypté et un mot de passe qui ne l'est pas avant de penser à le renvoyer par e-mail, non ?</p></div><p id="r-348684" data-claire-element-id="348684">Bien vu ! Ça frôle le génie : pour savoir si le mot de passe récupéré avec la clef fournie est correct, il suffit de le comparer avec l'autre mot de passe (qui est haché en <em>md5</em> dans notre exemple) ! Si la comparaison montre que les deux mots de passe hachés sont égaux, c'est que ces deux mots de passe non hachés sont également égaux et donc, que la clef qu'on a utilisé est correcte !</p><p id="r-348685" data-claire-element-id="348685">Mais j'admets qu'on aurait très bien pu créer un nouveau champ contenant toutes les clefs hachées en md5 et appliquer la technique des comparaisons pour vérifier si la clef fournie correspond bien à celle donnée lors de l'inscription du membre sur le site... Mais je préfère la première méthode, car premièrement, c'est plus professionnel (na :p ) ; deuxièmement, on ne s'encombre pas de la clef dans la BDD et on économise de la place (tous les bénéfices sont permis ^^).</p><p id="r-348686" data-claire-element-id="348686">Pour ce qui est de la récup' du mot de passe, le processus se résume donc à ça :</p><figure id="r-348688" data-claire-element-id="348689"><img id="r-348687" data-claire-element-id="348687" src="medias/uploads.siteduzero.com_files_185001_186000_185825.jpg" alt="Récupération de mot de passe"/></figure><p id="r-348690" data-claire-element-id="348690"><strong>À noter que quand je parle du MDP Vernam et du MDP md5, je parle bien sûr de ceux qui sont stockés dans la base de données. ;) <br/> Naturellement, il faut également prévoir un champ pour l'adresse e-mail de l'utilisateur dans la BDD si on désire renvoyer le MDP par mail !</strong></p><aside id="r-348692" data-claire-element-id="348692" data-claire-semantic="warning"><p id="r-348691" data-claire-element-id="348691">N'oubliez pas que, lorsqu'on compare les mots de passe, il faut qu'ils soient du « même genre » ! J'entends par là que si vous ne hachez pas le MDP décrypté avec la clef en md5 avant de la comparer avec le MDP md5 de la BDD, vous allez comparer des pommes et des poires et la comparaison donnera toujours un résultat erroné !</p></aside><h5 id="r-la-recuperation-a-l-aide-d-une-clef-vraiment-efficace" data-claire-element-id="348712">La récupération à l'aide d'une clef, vraiment efficace ?</h5><p id="r-348693" data-claire-element-id="348693">Il se peut que vous vous interrogiez, à juste titre, sur l'efficacité de ce système de récupération. En effet, si cette méthode fonctionne parfaitement, elle impose par contre aux membres de devoir retenir une clef en plus de leur mot de passe. Dans ce cas, on pourrait se demander si un système de renvoi d'un mot de passe purement aléatoire par e-mail ne serait pas meilleur.</p><div id="r-348695" data-claire-element-id="348695" data-claire-semantic="question"><p id="r-348694" data-claire-element-id="348694">Où est le problème ? Si on oublie la clef, il est possible de s'en souvenir à l'aide de la question secrète !</p></div><p id="r-348696" data-claire-element-id="348696">C'est sûr, mais il faut garder à l'esprit qu'une tierce personne peut déduire la réponse à partir de la question. Si la question est « Dans quelle ville êtes-vous né ? », quelqu'un vous connaissant bien n'aura aucune difficulté à trouver la réponse.</p><div id="r-348698" data-claire-element-id="348698" data-claire-semantic="question"><p id="r-348697" data-claire-element-id="348697">Après tout on s'en fout, non ? Même si quelqu'un trouvait la réponse à la question secrète, ça ne lui servirait à rien puisqu'elle est envoyée par mail au membre.</p></div><p id="r-348699" data-claire-element-id="348699">À partir du moment où le membre en question est le seul à pouvoir accéder à son e-mail, je suis plus ou moins d'accord avec vous. Mais si celui qui tente de récupérer le mot de passe a accès à la base de données (par exemple, le webmaster), vous êtes vachement dans la mouise, car il peut appliquer la méthode de décryptage lui-même et ainsi récupérer le mot de passe.</p><div id="r-348701" data-claire-element-id="348701" data-claire-semantic="question"><p id="r-348700" data-claire-element-id="348700">Mais alors, que faire ?</p></div><p id="r-348702" data-claire-element-id="348702">C'est simple : soit vous répondez quelque chose que vous seul pouvez savoir, soit vous répondez quelque chose de totalement différent à la question secrète.</p><p id="r-348703" data-claire-element-id="348703">Tout ça nous ramène au sujet : ça veut dire qu'il faut quand même retenir quelque chose en plus du mot de passe. Personnellement, dans ce cas de figure, je préfère laisser au membre le choix lors de l'inscription. Il suffit d'avoir un choix multiple comme celui-ci ;</p><p id="r-348704" data-claire-element-id="348704"><em><strong>en cas d'oubli de mot de passe</strong></em></p><ul id="r-348709" data-claire-element-id="348709"><li id="r-348706" data-claire-element-id="348706"><p id="r-348705" data-claire-element-id="348705">renvoyer un mot de passe généré aléatoirement,</p></li><li id="r-348708" data-claire-element-id="348708"><p id="r-348707" data-claire-element-id="348707">récupération du mot de passe à l'aide d'une clef.</p></li></ul><p id="r-348710" data-claire-element-id="348710">Et c'est au membre de décider ce qu'il préfère.</p><p id="r-348711" data-claire-element-id="348711">Et voilà, vous savez tout de la méthode à suivre... à une chose près : <em>comment crypte-t-on un mot de passe (ou, plus généralement, du texte) avec une clef ?</em> Ça, cher Zéro, c'est l'affaire de la sous-partie suivante. :)</p>
+<aside class="aside-menu">
+<ul class="content-menu" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam">Renvoyer un mot de passe par e-mail : la méthode Vernam</a>
+</li>
+<li class="chapter">
+ 
+<a class="chapterLink" onmouseover="$(this).addClass('box-shadow-summary').next().addClass('box-shadow-summary');" onmouseout="$(this).removeClass('box-shadow-summary').next().removeClass('box-shadow-summary');">
+<span>Partie 1</span>
+Renvoyer un mot de passe par e-mail
+</a>
+<a class="chapterOpen" href="#" onmouseover="$(this).addClass('box-shadow-summary').prev().addClass('box-shadow-summary');" onmouseout="$(this).removeClass('box-shadow-summary').prev().removeClass('box-shadow-summary');">
+<span>+</span>
+</a>
+ 
+<ul class="subchapters">
+<li class="subchapter">
+<div>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/preparer-le-chantier">Préparer le chantier</a>
+<a class="subchapterOpen" href="#">
+<span>+</span>
+</a>
+</div>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/ou-nous-en-sommes-actuellement">
+Où nous en sommes actuellement...
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/amelioration-du-systeme">
+Amélioration du système
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/le-cryptage-vernam-le-fonctionnement">
+Le cryptage Vernam : le fonctionnement
+</a>
+</li>
+</ul> </li> <li class="subchapter">
+<div>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/place-au-codage">Place au codage !</a>
+<a class="subchapterOpen" href="#">
+<span>+</span>
+</a>
+</div>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/une-simple-fonction">
+Une simple fonction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/au-final-2">
+Au final...
+</a>
+</li>
+</ul> </li> <li class="subchapter">
+<div>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/les-annexes-1">Les annexes</a>
+<a class="subchapterOpen" href="#">
+<span>+</span>
+</a>
+</div>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/le-cryptage-vernam-inviolable">
+Le cryptage Vernam, inviolable ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/les-fonctions-php-utiles-pour-ce-tuto">
+Les fonctions PHP utiles pour ce tuto
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/f-a-q">
+F.A.Q.
+</a>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</li>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/ou-nous-en-sommes-actuellement">
+<span class="arrow"></span>
+<span class="next">Où nous en sommes actuellement...</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/le-cryptage-vernam-le-fonctionnement">
+<span class="next">Le cryptage Vernam : le fonctionnement</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="LecryptageVernamlefonctionnement"></a><h2>Le cryptage Vernam : le fonctionnement</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/amelioration-du-systeme">
+<span class="arrow"></span>
+<span class="next">Amélioration du système</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/place-au-codage">
+<span class="next">Place au codage !</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h4 id="r-le-cryptage-vernam-le-fonctionnement" data-claire-element-id="348871">Le cryptage Vernam : le fonctionnement</h4><p id="r-348715" data-claire-element-id="348715">Entrons enfin dans le vif du sujet : <em>le cryptage Vernam, ça fonctionne comment ?</em></p><p id="r-348716" data-claire-element-id="348716">Pour pouvoir effectuer un cryptage Vernam, vous avez besoin de deux choses : un texte à crypter (en l'occurrence, le mot de passe) et une clef. On va démarrer avec un exemple.</p><p id="r-348717" data-claire-element-id="348717">Imaginons que nous voulons crypter le texte 'Site du Zero' avec la clef 'Mateo'. La technique consiste à placer la clef sous le mot de passe et de la répéter jusqu'à ce qu'on atteigne la longueur du mot de passe. Nous obtenons donc ce résultat :</p><figure id="r-348719" data-claire-element-id="348720"><img id="r-348718" data-claire-element-id="348718" src="medias/uploads.siteduzero.com_files_185001_186000_185826.jpg" alt="Répétition de la clef jusqu'à ce qu'elle atteigne la longueur du mot de passe"/></figure><p id="r-348721" data-claire-element-id="348721"><strong>La clef est répétée jusqu'à ce qu'elle atteigne la longueur du mot de passe.</strong></p><aside id="r-348724" data-claire-element-id="348725" data-claire-semantic="warning"><img id="r-348725" data-claire-element-id="348724" src="medias/uploads.siteduzero.com_files_185001_186000_185827.png" alt="Image utilisateur"/><p id="r-348722" data-claire-element-id="348722">Les espaces comptent également ! Ceci est donc incorrect :</p><p id="r-348723" data-claire-element-id="348723"><strong>À ne pas faire : sauter les espaces lors de la répétition.</strong><br/> On prend <em>chaque</em> caractère en compte lorsqu'on effectue la répétition (le premier 'o' est donc répété sous le premier espace, etc.).</p></aside><p id="r-348726" data-claire-element-id="348726">Bien entendu, la clef que l'utilisateur aura rentrée n'a pas forcément la même longueur que son mot de passe. Il y a donc trois cas à considérer :</p><ul id="r-348733" data-claire-element-id="348733"><li id="r-348728" data-claire-element-id="348728"><p id="r-348727" data-claire-element-id="348727">si la clef est <strong>plus petite</strong> que le texte à crypter, alors on la répète jusqu'à ce qu'elle atteigne la longueur du MDP (ce qu'on fait dans l'exemple) ;</p></li><li id="r-348730" data-claire-element-id="348730"><p id="r-348729" data-claire-element-id="348729">si la clef est <strong>de même longueur</strong> que le MDP, alors on ne fait rien (on la retape simplement sous le MDP) ;</p></li><li id="r-348732" data-claire-element-id="348732"><p id="r-348731" data-claire-element-id="348731">si la clef est <strong>plus grande</strong> que le MDP, on la raccourcit jusqu'à la longueur du MDP.</p></li></ul><div id="r-348735" data-claire-element-id="348735" data-claire-semantic="question"><p id="r-348734" data-claire-element-id="348734">Eh, si la clef est plus grande, ça veut dire on n'utilisera pas tous ses caractères ?</p></div><p id="r-348736" data-claire-element-id="348736">En effet ! Si on désire crypter le texte 'Mateo' avec pour clef 'Nabuchodonosaure', la clef sera raccourcie à 'Nabuc'. Donc, si vous cryptez maintenant 'Mateo' avec 'Nabuchod<strong>i</strong>nosaure' comme clef, le résultat sera le même puisque le raccourcissement ('Nabuc') est le même. On obtient donc le même résultat avec deux clefs différentes. Si ça vous chagrine, c'est le moment d'aller faire un tour dans <a href="http://www.siteduzero.com/tutoriel-3-163145-1-les-annexes.html#ss_part_1"> l'annexe de ce tuto sur l'inviolabilité du cryptage Vernam</a>. ^^</p><p id="r-348737" data-claire-element-id="348737">Maintenant, faites bien attention à ce que je vais expliquer, ce n'est peut-être pas évident à comprendre tout de suite.</p><p id="r-348738" data-claire-element-id="348738">Ce qu'on va maintenant faire, c'est <em>attribuer à chaque caractère une valeur numérique</em>. En d'autres mots, chaque caractère est associé à un nombre.</p><div id="r-348740" data-claire-element-id="348740" data-claire-semantic="question"><p id="r-348739" data-claire-element-id="348739">Aaaah, je sais ! On va numéroter les lettres de 1 à 26, comme dans l'alphabet : a = 1, b = 2, etc. Ça frôle le génie !</p></div><p id="r-348741" data-claire-element-id="348741">Hum, pourquoi pas... Ce n'est pas la meilleure manière de faire (j'expliquerai pourquoi par après), mais c'est sans doute la plus simple pour expliquer comment ça fonctionne. On va donc procéder comme ça dans un premier temps.</p><div id="r-348743" data-claire-element-id="348743" data-claire-semantic="question"><p id="r-348742" data-claire-element-id="348742">QUOI ? Tu es en train de me dire que ce que tu vas nous montrer, ça ne sert à rien ??</p></div><p id="r-348744" data-claire-element-id="348744">Hum, calmons-nous, voyons. :euh: <br/> Il est toujours bon d'utiliser un exemple simple pour commencer, c'est pour éviter que vous soyez largués ! Si je commence avec un truc trop compliqué dès le départ, vous n'allez jamais vous en sortir. Donc, dites-vous bien que je fais ça dans un but strictement pédagogique <em>et donc</em> pour que vous vous sentiez tout puissant à la lecture du cours <em>et donc</em> pour que mon tuto se tape un 20/20 !<br/>Diabolique, non ? Je trouve aussi. :soleil:</p><h5 id="r-numerotation-simple-l-alphabet" data-claire-element-id="348783">Numérotation simple : l'alphabet</h5><p id="r-348745" data-claire-element-id="348745">Si chaque lettre est remplacée par le nombre indiquant sa place dans l'alphabet, on obtient : 'S' = 19, 'i' = 9, etc. Nous avons donc :</p><figure id="r-348747" data-claire-element-id="348748"><img id="r-348746" data-claire-element-id="348746" src="medias/uploads.siteduzero.com_files_185001_186000_185828.jpg" alt="Chaque lettre est remplacée par un nombre"/></figure><p id="r-348749" data-claire-element-id="348749"><strong>Chaque lettre est remplacée par le nombre qui correspond à sa position dans l'alphabet.</strong></p><aside id="r-348751" data-claire-element-id="348751" data-claire-semantic="information"><p id="r-348750" data-claire-element-id="348750">Remarquez que j'ai également donné une valeur à l'espace. N'oublions pas qu'on prend chaque caractère en compte et donc, chacun d'entre eux doit avoir un numéro. Comme l'espace n'est pas référencé dans l'alphabet, je lui donne arbitrairement la valeur 27, qui est juste après le 26, la dernière lettre de l'alphabet.</p></aside><p id="r-348752" data-claire-element-id="348752">Maintenant, nous allons <em>additionner chaque paire de nombres de la même colonne</em> entre eux. Plus précisément, on va additionner chaque nombre avec celui qui se situe en dessous de lui. On obtiendra donc, dans notre exemple : 19 + 13, 9 + 1, etc., ce qui va nous donner une nouvelle suite de nombres :</p><figure id="r-348754" data-claire-element-id="348755"><img id="r-348753" data-claire-element-id="348753" src="medias/uploads.siteduzero.com_files_185001_186000_185829.jpg" alt="Addition de du mot de passe et de la clef"/></figure><p id="r-348756" data-claire-element-id="348756"><strong>Addition du mot de passe et de la clef</strong></p><p id="r-348757" data-claire-element-id="348757">Vous comprenez maintenant pourquoi il a fallu adapter la longueur de la clef à celle du mot de passe : si la clef avait été trop courte, les derniers caractères du texte à crypter n'auraient pas eu de caractère en dessous d'eux, et il n'aurait pas été possible d'effectuer une addition (pareil si la clef avait été trop longue, mais dans le sens opposé).</p><p id="r-348758" data-claire-element-id="348758">Nous y sommes presque ! Il ne reste plus qu'à remplacer chaque nouveau nombre par sa lettre correspondante dans l'alphabet ! On obtient ainsi un nouveau texte totalement bizarroïde... qui n'est autre que le mot de passe crypté !!</p><p id="r-348759" data-claire-element-id="348759">Vous remarquerez que certains nombres sont plus grands que 27, ce qui est assez embêtant car nous n'avons numéroté nos lettres que jusqu'à 27. C'est un autre problème que pose l'utilisation de l'alphabet comme choix de numérotation des caractères, mais on peut facilement contourner la difficulté : si on dépasse 27, on recommence au début. Donc si on a 28, cela équivaut à 1, si on a 29, cela équivaut à 2, etc.<br/> Bref, lorsqu'on obtient un nombre plus grand que 27, il suffit soustraire 27 à ce nombre. :)</p><figure id="r-348761" data-claire-element-id="348762"><img id="r-348760" data-claire-element-id="348760" src="medias/uploads.siteduzero.com_files_185001_186000_185830.jpg" alt="Correction des nombres et transformation vers du texte"/></figure><p id="r-348763" data-claire-element-id="348763"><strong>Si un nombre est plus grand que 27, soustraire 27 à ce nombre.<br/> Ensuite, remplacer chaque chiffre par sa lettre correspondante pour obtenir le texte crypté.</strong></p><p id="r-348764" data-claire-element-id="348764">J'espère que vous avez bien profité du schéma parce que c'est le seul code PHP qui apparaît sur cette page. :diable: <br/>Et voilà, on a notre mot de passe crypté : 'Site du zero' crypté avec la clef 'Mateo' donne 'ejmjoqvtdtdp', ce qui est bien un texte complètement incompréhensible (sauf si vous pratiquez couramment le Bluxjtroblwyxnd oriental). Notez que si on avait numéroté nos caractères d'une manière totalement différente, on aurait eu un résultat totalement différent ! Le résultat du cryptage Vernam dépend donc du texte, de la clef et de la méthode ! Mais dites-vous bien que la numérotation utilisée n'influence en rien la sécurité : c'est juste une question de convention.<br/>Et pour retourner au mot de passe d'origine, c'est très facile : il suffit de faire <em>la même opération sur le texte crypté avec la même clef</em> et, au lieu d'additionner les nombres entre eux, on les soustrait. Le résultat donnera le mot de passe d'origine ! Que se passe-t-il si on ne réutilise pas la même clef ? On obtient n'importe quoi, comme vu dans la théorie.</p><h6 id="r-resumons-nous" data-claire-element-id="348782">Résumons-nous</h6><p id="r-348765" data-claire-element-id="348765">On souhaite crypter un mot de passe à l'aide d'une clef.</p><ul id="r-348774" data-claire-element-id="348774"><li id="r-348767" data-claire-element-id="348767"><p id="r-348766" data-claire-element-id="348766">Répéter ou raccourcir la clef jusqu'à ce qu'elle atteigne la longueur du mot de passe.</p></li><li id="r-348769" data-claire-element-id="348769"><p id="r-348768" data-claire-element-id="348768">Remplacer chaque lettre par un nombre qu'on lui a attribué.</p></li><li id="r-348771" data-claire-element-id="348771"><p id="r-348770" data-claire-element-id="348770">Additionner les nombres du mot de passe et de la clef entre eux.</p></li><li id="r-348773" data-claire-element-id="348773"><p id="r-348772" data-claire-element-id="348772">Revenir en arrière en remplaçant chaque nouveau nombre par le caractère qui lui correspond.</p></li></ul><p id="r-348775" data-claire-element-id="348775"><strong>Points importants</strong></p><ul id="r-348780" data-claire-element-id="348780"><li id="r-348777" data-claire-element-id="348777"><p id="r-348776" data-claire-element-id="348776">La manière dont on numérote les caractères, c'est nous qui la choisissons ! On peut choisir ce qu'on veut (du moment qu'on n'a pas le même nombre pour deux caractères différents). Il y a toutefois des choix plus malins que d'autres, comme on le verra juste après. ;)</p></li><li id="r-348779" data-claire-element-id="348779"><p id="r-348778" data-claire-element-id="348778">L'opération est totalement réversible pour autant qu'on réutilise la même clef !</p></li></ul><p id="r-348781" data-claire-element-id="348781">Voilà ! Une fois qu'on a compris le concept, ce n'est pas bien compliqué, il faut juste bien avoir en tête ce qu'on va faire. Mais avant de passer au codage, il nous reste à voir une technique de numérotation infaillible des caractères (j'vais vous désalphabetiser moi, z'allez voir !).</p><h5 id="r-passons-a-un-systeme-plus-performant" data-claire-element-id="348870">Passons à un système plus performant</h5><p id="r-348784" data-claire-element-id="348784">Nous venons de voir comment réaliser le cryptage Vernam avec une technique de numérotation <em>« simple »</em>. Je mets « simple » entre guillemets parce qu'elle l'est et ne l'est pas à la fois : d'une part, elle est en quelque sorte pratique, car on n'a pas de difficulté à visualiser comment on numérote les caractères, mais d'autre part, cette numérotation ne couvre absolument pas tous les caractères possibles !</p><p id="r-348785" data-claire-element-id="348785">En effet, quand je dis <em>caractère</em>, je mentionne tous les caractères de votre clavier : aussi bien les lettres que les chiffres en passant par les espaces et les caractères spéciaux. Bref, <em>chaque</em> caractère est remplacé par un nombre. Et je ne parle pas des majuscules et des minuscules dont il faut aussi faire la distinction ('U' ne sera pas associé au même nombre que 'u', par exemple). Bref, tout ça pour dire que le système de numérotation selon l'ordre alphabétique n'est pas assez élaboré pour couvrir tout ce qu'un parfait littéraire taperait. ;)</p><p id="r-348786" data-claire-element-id="348786">Mais à part ce petit « inconvénient », la technique reste strictement la même : on ajuste la clef, on remplace chaque caractère par un nombre, on additionne et on revient en arrière.</p><div id="r-348788" data-claire-element-id="348788" data-claire-semantic="question"><p id="r-348787" data-claire-element-id="348787">Allez, crache le morceau : on utilise quoi comme numérotation ?</p></div><p id="r-348789" data-claire-element-id="348789">Le code <em>ASCII</em>, mon précieux ! Celui-ci transforme chaque caractère alphanumérique en code binaire (une série de 1 et de 0) de 8 chiffres ! On va donc se servir d'une transformation identifiable au tableau ci-dessous :</p><table id="r-348812" data-claire-element-id="348812"><thead id="r-348795" data-claire-element-id="348795"><tr id="r-348794" data-claire-element-id="348794"><th id="r-348791" data-claire-element-id="348791"><p id="r-348790" data-claire-element-id="348790">caractère</p></th><th id="r-348793" data-claire-element-id="348793"><p id="r-348792" data-claire-element-id="348792">code binaire</p></th></tr></thead><tbody id="r-348811" data-claire-element-id="348811"><tr id="r-348800" data-claire-element-id="348800"><td id="r-348797" data-claire-element-id="348797"><p id="r-348796" data-claire-element-id="348796">'a'</p></td><td id="r-348799" data-claire-element-id="348799"><p id="r-348798" data-claire-element-id="348798">01100001</p></td></tr><tr id="r-348805" data-claire-element-id="348805"><td id="r-348802" data-claire-element-id="348802"><p id="r-348801" data-claire-element-id="348801">'b'</p></td><td id="r-348804" data-claire-element-id="348804"><p id="r-348803" data-claire-element-id="348803">01100010</p></td></tr><tr id="r-348810" data-claire-element-id="348810"><td id="r-348807" data-claire-element-id="348807"><p id="r-348806" data-claire-element-id="348806">...</p></td><td id="r-348809" data-claire-element-id="348809"><p id="r-348808" data-claire-element-id="348808">...</p></td></tr></tbody></table><p id="r-348813" data-claire-element-id="348813"><strong>Chaque caractère est associé à un code binaire.</strong></p><p id="r-348814" data-claire-element-id="348814">Oooh, je vous vois venir...</p><div id="r-348816" data-claire-element-id="348816" data-claire-semantic="question"><p id="r-348815" data-claire-element-id="348815">Waaah, du binaire ! J'y arriverai jamais, c'est trop dur, je dois nourrir le chien, etc.</p></div><p id="r-348817" data-claire-element-id="348817">Paf, je le savais. ^^ Mais ne nous affolons pas : PHP a déjà une fonction implémentée qui permet d'effectuer cette transformation ! On peut donc transformer <strong>chaque caractère</strong> possible et imaginable en un code binaire de 8 chiffres avec des fonctions qui existent déjà ! PHP fait donc tout tout seul. Heureux ?</p><p id="r-348818" data-claire-element-id="348818">Alors, on a fini ? Pas tout à fait : lors de l'étape de l'addition, les nombres binaires ne fonctionnent pas tout à fait de la même manière que les nombres 'standards'. En effet, l'addition de deux nombres binaires doit donner un autre nombre binaire. Imaginons que l'on veuille additionner le nombre binaire 10 au nombre binaire 11. Si on se contente de faire une simple addition, on obtient 10+11 = 21. Or, 21 n'est pas un nombre binaire (puisque les seuls chiffres qui composent de tels nombres sont des 1 et des 0, et nous avons un 2 dans le résultat).</p><p id="r-348819" data-claire-element-id="348819">La dernière subtilité de notre modèle consiste à utiliser l'opérateur XOR à la place de l'addition standard. Cet opérateur est défini dans le tableau suivant :</p><table id="r-348847" data-claire-element-id="348847"><thead id="r-348825" data-claire-element-id="348825"><tr id="r-348824" data-claire-element-id="348824"><th id="r-348821" data-claire-element-id="348821"><p id="r-348820" data-claire-element-id="348820">Addition</p></th><th id="r-348823" data-claire-element-id="348823"><p id="r-348822" data-claire-element-id="348822">Résultat</p></th></tr></thead><tbody id="r-348846" data-claire-element-id="348846"><tr id="r-348830" data-claire-element-id="348830"><td id="r-348827" data-claire-element-id="348827"><p id="r-348826" data-claire-element-id="348826">0 + 0</p></td><td id="r-348829" data-claire-element-id="348829"><p id="r-348828" data-claire-element-id="348828">0</p></td></tr><tr id="r-348835" data-claire-element-id="348835"><td id="r-348832" data-claire-element-id="348832"><p id="r-348831" data-claire-element-id="348831">1 + 0</p></td><td id="r-348834" data-claire-element-id="348834"><p id="r-348833" data-claire-element-id="348833">1</p></td></tr><tr id="r-348840" data-claire-element-id="348840"><td id="r-348837" data-claire-element-id="348837"><p id="r-348836" data-claire-element-id="348836">0 + 1</p></td><td id="r-348839" data-claire-element-id="348839"><p id="r-348838" data-claire-element-id="348838">1</p></td></tr><tr id="r-348845" data-claire-element-id="348845"><td id="r-348842" data-claire-element-id="348842"><p id="r-348841" data-claire-element-id="348841">1 + 1</p></td><td id="r-348844" data-claire-element-id="348844"><p id="r-348843" data-claire-element-id="348843">0</p></td></tr></tbody></table><p id="r-348848" data-claire-element-id="348848"><strong>En binaire, 1 + 1 = 0.</strong></p><aside id="r-348850" data-claire-element-id="348850" data-claire-semantic="information"><p id="r-348849" data-claire-element-id="348849">Il y a plusieurs manières de combiner des nombres binaires. Dans ce cas-ci, on utilise <a href="http://fr.wikipedia.org/wiki/OU_exclusif">l'opérateur XOR</a> mais sachez qu'il en existe d'autres (comme le NAND, OR, NOR, ...). ;)</p></aside><p id="r-348851" data-claire-element-id="348851">Les plus astucieux d'entre vous auront peut-être remarqué que la soustraction n'a pas lieu d'être avec les opérateurs logiques (= opérateurs entre deux nombres binaires). On ne fait qu'additionner ! Exemple : si on considère un binaire qui vaut 10 et un binaire clef qui vaut 11 :</p><ul id="r-348856" data-claire-element-id="348856"><li id="r-348853" data-claire-element-id="348853"><p id="r-348852" data-claire-element-id="348852">10 + 11 = 01 (première addition) ;</p></li><li id="r-348855" data-claire-element-id="348855"><p id="r-348854" data-claire-element-id="348854">01 + 11 = 10 (en additionnant le binaire « crypté » avec le binaire clef, on retombe sur le binaire d'origine).</p></li></ul><p id="r-348857" data-claire-element-id="348857">La morale de l'histoire, c'est qu'avec le modèle binaire, vous ne devez pas vous casser le poum à faire une fonction qui crypte (qui additionne) et une fonction qui décrypte (qui soustrait) ! Personnellement, je suis fan. :soleil:</p><p id="r-348858" data-claire-element-id="348858">Et voilà, vous savez maintenant tout ! En reprenant notre exemple,</p><figure id="r-348860" data-claire-element-id="348861"><img id="r-348859" data-claire-element-id="348859" src="medias/uploads.siteduzero.com_files_185001_186000_185826.jpg" alt="Mot de passe et clef répétée"/></figure><p id="r-348862" data-claire-element-id="348862"><strong>Reprise de l'exemple précédent</strong></p><figure id="r-348864" data-claire-element-id="348865"><img id="r-348863" data-claire-element-id="348863" src="medias/uploads.siteduzero.com_files_185001_186000_185831.png" alt="Addition binaire de deux caractères"/></figure><p id="r-348866" data-claire-element-id="348866">... chaque caractère du mot 'Site du Zero' est additionné avec le caractère juste en dessous de lui. Par exemple, si on considère la première lettre de chaque élément ('S' pour le texte et 'M' pour la clef), on va additionner le code binaire correspondant à S (01010011) avec le code binaire correspondant à M (01001101). On obtient alors un nouveau code binaire de 8 chiffres, qui correspond au premier caractère du message crypté (voir image ci-contre) ! Vous remarquerez que le caractère associé au code binaire obtenu n'est pas lisible par le navigateur, un rectangle est donc affiché par défaut.<br/> N'oublions pas : les espaces sont également de la partie, car les espaces <em>sont</em> des caractères ! Mais vous n'aurez pas à vous en soucier, car, comme je l'ai dit plus haut, PHP dispose de fonctions permettant de transformer n'importe quelle chaîne en langage binaire, et il fera ça très bien à notre place. :)</p><p id="r-348867" data-claire-element-id="348867">Dans un cours, le plus barbant pour les élèves, c'est la partie théorique. Eh bien je vous rassure : le meilleur est à venir ! Vous avez toutes les armes en main pour attaquer le codage de la fonction Vernam. Et pour ça, direction partie suivante !</p><p id="r-348868" data-claire-element-id="348868">Ouf ! C'est enfin terminé :p <br/> J'espère que vous n'avez pas trouvé ce chapitre trop lourd et, surtout, qu'il vous a bien éclairé sur la structure du code à réaliser (car Dieu sait que sans plan, on s'emmêle vite les pinceaux lorsque le code à taper devient conséquent ^^ ).</p><p id="r-348869" data-claire-element-id="348869">À partir de maintenant, c'est que du fun : place au codage !</p>
+<aside class="aside-menu">
+<ul class="content-menu" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam">Renvoyer un mot de passe par e-mail : la méthode Vernam</a>
+</li>
+<li class="chapter">
+ 
+<a class="chapterLink" onmouseover="$(this).addClass('box-shadow-summary').next().addClass('box-shadow-summary');" onmouseout="$(this).removeClass('box-shadow-summary').next().removeClass('box-shadow-summary');">
+<span>Partie 1</span>
+Renvoyer un mot de passe par e-mail
+</a>
+<a class="chapterOpen" href="#" onmouseover="$(this).addClass('box-shadow-summary').prev().addClass('box-shadow-summary');" onmouseout="$(this).removeClass('box-shadow-summary').prev().removeClass('box-shadow-summary');">
+<span>+</span>
+</a>
+ 
+<ul class="subchapters">
+<li class="subchapter">
+<div>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/preparer-le-chantier">Préparer le chantier</a>
+<a class="subchapterOpen" href="#">
+<span>+</span>
+</a>
+</div>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/ou-nous-en-sommes-actuellement">
+Où nous en sommes actuellement...
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/amelioration-du-systeme">
+Amélioration du système
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/le-cryptage-vernam-le-fonctionnement">
+Le cryptage Vernam : le fonctionnement
+</a>
+</li>
+</ul> </li> <li class="subchapter">
+<div>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/place-au-codage">Place au codage !</a>
+<a class="subchapterOpen" href="#">
+<span>+</span>
+</a>
+</div>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/une-simple-fonction">
+Une simple fonction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/au-final-2">
+Au final...
+</a>
+</li>
+</ul> </li> <li class="subchapter">
+<div>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/les-annexes-1">Les annexes</a>
+<a class="subchapterOpen" href="#">
+<span>+</span>
+</a>
+</div>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/le-cryptage-vernam-inviolable">
+Le cryptage Vernam, inviolable ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/les-fonctions-php-utiles-pour-ce-tuto">
+Les fonctions PHP utiles pour ce tuto
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/f-a-q">
+F.A.Q.
+</a>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</li>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/amelioration-du-systeme">
+<span class="arrow"></span>
+<span class="next">Amélioration du système</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/place-au-codage">
+<span class="next">Place au codage !</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Placeaucodage"></a><h2>Place au codage !</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/le-cryptage-vernam-le-fonctionnement">
+<span class="arrow"></span>
+<span class="next">Le cryptage Vernam : le fonctionnement</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/une-simple-fonction">
+<span class="next">Une simple fonction</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-348873" data-claire-element-id="348873">Dans cette partie, nous allons créer la fonction qui va s'occuper du cryptage Vernam. Petit exemple dans un code PHP :</p><pre id="r-348874" data-claire-element-id="348874"><code data-claire-semantic="html+php">&lt;?php
+
+/* 
+ * Exemple d'utilisation de la fonction Cryptage
+ */ 
+
+$MDP = &quot;Site du Zero&quot;;
+$Clef = &quot;Mateo&quot;;
+$Crypt = Cryptage($MDP, $Clef); // Crypte &quot;Site du Zero&quot; avec la clef &quot;Mateo&quot; et le stocke dans $Crypt
+$Decrypt = Cryptage($Crypt, $Clef); // $Decrypt contient &quot;Site du Zero&quot;
+
+?&gt;</code></pre><p id="r-348875" data-claire-element-id="348875">Comme prévu, l'utilisation est simple de chez simple ! Une fois la fonction Cryptage créée, une seule instruction permet de crypter le mot de passe. Mieux : c'est l'utilisation de cette même fonction qui permet de décrypter le mot de passe, étant donné qu'on utilise l'opérateur XOR ! Bien entendu, pour que le décryptage soit correct, il faut qu'on décrypte avec la même clef que celle utilisée lors du cryptage, mais ça, vous le savez déjà; :)</p><p id="r-348876" data-claire-element-id="348876">Alors, qu'est-ce qu'on attend ? <em>Let's go !</em></p>
+</div><a name="Unesimplefonction"></a><h2>Une simple fonction</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/place-au-codage">
+<span class="arrow"></span>
+<span class="next">Place au codage !</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/au-final-2">
+<span class="next">Au final...</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h4 id="r-une-simple-fonction" data-claire-element-id="348943">Une simple fonction</h4><p id="r-348877" data-claire-element-id="348877">Rappelons le plan du cryptage Vernam :</p><ul id="r-348886" data-claire-element-id="348886"><li id="r-348879" data-claire-element-id="348879"><p id="r-348878" data-claire-element-id="348878">allonger ou raccourcir la clef pour qu'elle atteigne la longueur du mot de passe ;</p></li><li id="r-348881" data-claire-element-id="348881"><p id="r-348880" data-claire-element-id="348880">transformer chaque caractère en code binaire à 8 chiffres (<a href="http://www.roubaixinteractive.com/PlayGround/Binary_Conversion/The_Characters.asp">rappel</a>) ;</p></li><li id="r-348883" data-claire-element-id="348883"><p id="r-348882" data-claire-element-id="348882">additionner le MDP et la clef (tous deux binaires) en se servant de l'opérateur XOR ;</p></li><li id="r-348885" data-claire-element-id="348885"><p id="r-348884" data-claire-element-id="348884">récupérer le résultat de l'addition et remplacer chaque paquet de 8 bits par son caractère correspondant.</p></li></ul><p id="r-348887" data-claire-element-id="348887">Cela dit, les développeurs qui sont derrière PHP sont malins : ils ont réuni les trois dernières opérations en un seul opérateur : le ^ ! En d'autres mots, tout ce dont nous avons à nous soucier, c'est de rallonger / raccourcir la clef pour l'adapter à la longueur du mot de passe, car il s'agit d'utiliser ce fameux opérateur pour effectuer le cryptage Vernam proprement dit ! Ainsi, notre plan se réduit à :</p><ul id="r-348892" data-claire-element-id="348892"><li id="r-348889" data-claire-element-id="348889"><p id="r-348888" data-claire-element-id="348888">allonger ou raccourcir la clef pour qu'elle atteigne la longueur du mot de passe ;</p></li><li id="r-348891" data-claire-element-id="348891"><p id="r-348890" data-claire-element-id="348890">effectuer le cryptage via l'instruction $MDP^$Clef.</p></li></ul><p id="r-348893" data-claire-element-id="348893">Chers amis, sachant cela, le codage va être une véritable promenade de santé !</p><h5 id="r-les-conditionnelles-de-depart" data-claire-element-id="348942">Les conditionnelles de départ</h5><p id="r-348894" data-claire-element-id="348894">Ces conditionnelles se chargeront d'adapter la taille de la clef. Vous remarquerez qu'il y a trois cas de figure :</p><figure id="r-348896" data-claire-element-id="348897"><img id="r-348895" data-claire-element-id="348895" src="medias/uploads.siteduzero.com_files_185001_186000_185832.png" alt="Image utilisateur"/></figure><p id="r-348898" data-claire-element-id="348898"><strong>La clef est soit plus grande, soit plus petite, soit de même taille que le mot de passe.</strong></p><p id="r-348899" data-claire-element-id="348899">Je sais, ce n'était pas nécessaire de faire un schéma, mais comme je n'ai pas grand-chose à mettre dans cette partie, il faut bien remplir. :p</p><pre id="r-348900" data-claire-element-id="348900"><code data-claire-semantic="html+php">&lt;?php 
+
+function Cryptage($MDP, $Clef){
+
+	$LClef = strlen($Clef);
+	$LMDP = strlen($MDP);
+						
+	if ($LClef &lt; $LMDP){
+				
+		// Code qui rallonge la clef
+	
+	}
+				
+	elseif ($LClef &gt; $LMDP){
+
+		// Code qui raccourcit la clef
+				
+	}
+			
+	return $MDP ^ $Clef; // La fonction envoie le texte crypté
+			
+}
+
+?&gt;</code></pre><p id="r-348901" data-claire-element-id="348901">La fonction strlen($variable) renvoie la longueur d'une chaîne de caractères. Comme on va se servir plusieurs fois des longueurs du mot de passe et de la clef, on stocke ces deux valeurs dans des variables au début de la fonction. ;) <br/> La première condition indique donc bien '<em>Si la longueur de la clef est plus petite que celle du mot de passe, alors rallonger la clef</em>' (et vice-versa pour la seconde condition).</p><div id="r-348903" data-claire-element-id="348903" data-claire-semantic="question"><p id="r-348902" data-claire-element-id="348902">Une minute ! Tu as oublié la condition == !</p></div><p id="r-348904" data-claire-element-id="348904">C'est juste, mais elle n'a pas beaucoup d'intérêt : qu'est-ce qu'on y mettrait ? Si la taille de la clef est égale à celle du mot de passe, ne rien faire ? Autant ne rien mettre, dans ce cas !<br/> Les conditionnelles sont donc au nombre de deux.</p><p id="r-348905" data-claire-element-id="348905">Reste maintenant à écrire les instructions à effectuer si les conditions sont respectées. Pour cela, on va se servir de deux fonctions prédéfinies : <strong>str_pad</strong> (qui servira à rallonger la clef) et <strong>substr</strong> (qui servira à la raccourcir).</p><h6 id="r-la-fonction-str-pad" data-claire-element-id="348923">La fonction str_pad</h6><p id="r-348906" data-claire-element-id="348906">La fonction str_pad s'écrit : str_pad($variable, longueur, 'rallongement', position), où :</p><ul id="r-348915" data-claire-element-id="348915"><li id="r-348908" data-claire-element-id="348908"><p id="r-348907" data-claire-element-id="348907">$variable désigne la chaîne de caractères sur laquelle on va effectuer le rallongement ;</p></li><li id="r-348910" data-claire-element-id="348910"><p id="r-348909" data-claire-element-id="348909">longueur désigne jusqu'où l'on désire effectuer la répétition (= la taille désirée du texte) ;</p></li><li id="r-348912" data-claire-element-id="348912"><p id="r-348911" data-claire-element-id="348911">'rallongement' est la chaîne de caractères avec laquelle on va rallonger $variable ;</p></li><li id="r-348914" data-claire-element-id="348914"><p id="r-348913" data-claire-element-id="348913">position détermine de quel côté on désire effectuer le rallongement. Si on veut rallonger à gauche, on utilise STR_PAD_LEFT. Si on veut rallonger à droite, on utilise STR_PAD_RIGHT. Pour rallonger des deux côtés on utilise STR_PAD_BOTH.</p></li></ul><p id="r-348916" data-claire-element-id="348916">Dans notre cas, ce qu'on désire rallonger, c'est la clef, et ce, avec elle-même jusqu'à la longueur du mot de passe. Comme on lit de gauche à droite, le rallongement se fait à droite. La ligne de code qu'on utilisera sera donc :</p><pre id="r-348917" data-claire-element-id="348917"><code data-claire-semantic="html+php">&lt;?php $Clef = str_pad($Clef, $LMDP, $Clef, STR_PAD_RIGHT); ?&gt;</code></pre><p id="r-348918" data-claire-element-id="348918">... et c'est tout ! Vous remarquerez que j'ai écrasé l'ancienne valeur de la clef par celle répétée plutôt que de stocker cette dernière dans une nouvelle variable. J'ai fait ça parce qu'on n'a plus besoin de la clef d'origine pour travailler. Le cryptage ne tourne qu'autour de la clef modifiée. ;)</p><div id="r-348920" data-claire-element-id="348920" data-claire-semantic="question"><p id="r-348919" data-claire-element-id="348919">Ah oui ? Pourtant, dans l'introduction, on réutilise $Clef pour le décryptage : on en a quand même besoin, donc !</p></div><p id="r-348921" data-claire-element-id="348921">Certes, mais le résultat sera bon quand même ! Simplement, on ne rallonge pas la clef lors du décryptage puisque ça a été fait dans le premier appel de la fonction Cryptage. L'exemple dans l'intro est donc correct.</p><p id="r-348922" data-claire-element-id="348922">Pour plus d'infos sur la fonction str_pad, c'est <a href="http://be2.php.net/str_pad">par ici</a>. :)</p><h6 id="r-la-fonction-substr" data-claire-element-id="348941">La fonction substr</h6><p id="r-348924" data-claire-element-id="348924">La fonction substr peut avoir deux ou trois arguments. On va se servir de celle disposant de 3 arguments.<br/> Celle-ci se note substr($variable, gauche, droite), où :</p><ul id="r-348931" data-claire-element-id="348931"><li id="r-348926" data-claire-element-id="348926"><p id="r-348925" data-claire-element-id="348925">$variable représente la chaîne de caractères à raccourcir ;</p></li><li id="r-348928" data-claire-element-id="348928"><p id="r-348927" data-claire-element-id="348927">gauche indique le nombre de caractères à supprimer en partant de la gauche (nombre positif) ;</p></li><li id="r-348930" data-claire-element-id="348930"><p id="r-348929" data-claire-element-id="348929">droite indique le nombre de caractères à supprimer en partant de la droite (nombre négatif).</p></li></ul><p id="r-348932" data-claire-element-id="348932">Dans notre cas, on désire <em>raccourcir la clef de la différence de taille entre la clef et le mot de passe</em>. On utilisera donc la ligne de code suivante :</p><pre id="r-348933" data-claire-element-id="348933"><code data-claire-semantic="html+php">&lt;?php $_Clef = substr($Clef, 0,  $LMDP - $LClef); ?&gt;</code></pre><p id="r-348934" data-claire-element-id="348934">Notez que, comme on est dans la condition où le mot de passe est plus petit que la clef, droite sera toujours un nombre négatif.</p><p id="r-348935" data-claire-element-id="348935">Si vous voulez en savoir plus sur la fonction substr, c'est <a href="http://be2.php.net/str_pad">ici</a> que ça se passe. :)</p><p id="r-348936" data-claire-element-id="348936">En intégrant ces deux fonctions dans notre code, on a fièrement :</p><pre id="r-348937" data-claire-element-id="348937"><code data-claire-semantic="html+php">&lt;?php 
+
+function Cryptage($MDP, $Clef){
+						
+	$LClef = strlen($Clef);
+	$LMDP = strlen($MDP);
+						
+	if ($LClef &lt; $LMDP){
+				
+		$Clef = str_pad($Clef, $LMDP, $Clef, STR_PAD_RIGHT);
+	
+	}
+				
+	elseif ($LClef &gt; $LMDP){
+
+		$diff = $LClef - $LMDP;
+		$_Clef = substr($Clef, 0, -$diff);
+
+	}
+			
+	return $MDP ^ $Clef; // La fonction envoie le texte crypté
+			
+}
+
+?&gt;</code></pre><div id="r-348939" data-claire-element-id="348939" data-claire-semantic="question"><p id="r-348938" data-claire-element-id="348938">C'est tout ??</p></div><p id="r-348940" data-claire-element-id="348940">C'est tout ! Avouez que ce n'est pas la mer à boire !</p>
+<aside class="aside-menu">
+<ul class="content-menu" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam">Renvoyer un mot de passe par e-mail : la méthode Vernam</a>
+</li>
+<li class="chapter">
+ 
+<a class="chapterLink" onmouseover="$(this).addClass('box-shadow-summary').next().addClass('box-shadow-summary');" onmouseout="$(this).removeClass('box-shadow-summary').next().removeClass('box-shadow-summary');">
+<span>Partie 1</span>
+Renvoyer un mot de passe par e-mail
+</a>
+<a class="chapterOpen" href="#" onmouseover="$(this).addClass('box-shadow-summary').prev().addClass('box-shadow-summary');" onmouseout="$(this).removeClass('box-shadow-summary').prev().removeClass('box-shadow-summary');">
+<span>+</span>
+</a>
+ 
+<ul class="subchapters">
+<li class="subchapter">
+<div>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/preparer-le-chantier">Préparer le chantier</a>
+<a class="subchapterOpen" href="#">
+<span>+</span>
+</a>
+</div>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/ou-nous-en-sommes-actuellement">
+Où nous en sommes actuellement...
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/amelioration-du-systeme">
+Amélioration du système
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/le-cryptage-vernam-le-fonctionnement">
+Le cryptage Vernam : le fonctionnement
+</a>
+</li>
+</ul> </li> <li class="subchapter">
+<div>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/place-au-codage">Place au codage !</a>
+<a class="subchapterOpen" href="#">
+<span>+</span>
+</a>
+</div>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/une-simple-fonction">
+Une simple fonction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/au-final-2">
+Au final...
+</a>
+</li>
+</ul> </li> <li class="subchapter">
+<div>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/les-annexes-1">Les annexes</a>
+<a class="subchapterOpen" href="#">
+<span>+</span>
+</a>
+</div>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/le-cryptage-vernam-inviolable">
+Le cryptage Vernam, inviolable ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/les-fonctions-php-utiles-pour-ce-tuto">
+Les fonctions PHP utiles pour ce tuto
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/f-a-q">
+F.A.Q.
+</a>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</li>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/place-au-codage">
+<span class="arrow"></span>
+<span class="next">Place au codage !</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/au-final-2">
+<span class="next">Au final...</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Aufinal..."></a><h2>Au final...</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/une-simple-fonction">
+<span class="arrow"></span>
+<span class="next">Une simple fonction</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/les-annexes-1">
+<span class="next">Les annexes</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h4 id="r-au-final-2" data-claire-element-id="348949">Au final...</h4><p id="r-348944" data-claire-element-id="348944">Je vous conseille d'insérer tout ce qu'on vient de créer dans un fichier PHP séparé (que nous nommerons, disons, 'include_cryptage.php'). Ainsi, dès qu'on aura besoin du cryptage Vernam, il suffira d'utiliser une include pour importer les fonctions implémentées :</p><pre id="r-348945" data-claire-element-id="348945"><code data-claire-semantic="html+php">&lt;?php include(&quot;include_cryptage.php&quot;); ?&gt;
+
+&lt;?php 
+
+    // ... 
+    Cryptage($MDP,$Clef);
+?&gt;</code></pre><p id="r-348946" data-claire-element-id="348946">En procédant de la sorte, on évite de s'encombrer de nombreuses lignes de code, ce qui est plutôt pas mal.</p><p id="r-348947" data-claire-element-id="348947">Sinon, je ne sais pas si vous êtes au courant, mais PHP a un peu tendance à faire du zèle et à supprimer les backslashes automatiquement lors de l'introduction des mots de passe cryptés dans la BDD. Si ça ne vous dit rien, je vous donne rendez-vous <a href="http://www.siteduzero.com/tutoriel-3-163145-1-les-annexes.html#ss_part_3">en annexe</a> pour plus de précisions. ;)</p><p id="r-348948" data-claire-element-id="348948">Ceci met un terme au tutoriel ! J'espère que ça vous servira et que tout était clair !<br/> Certaines questions peuvent survenir (par exemple, lorsque vous manipulez le texte crypté à travers la BDD). Pour ça, je vous invite à consulter la <a href="http://www.siteduzero.com/tutoriel-3-162635-1-annexes.html#ss_part_3">F.A.Q. de l'annexe</a> et, si votre question n'y est pas répertoriée, n'hésitez pas à en parler sur le forum. :)</p>
+<aside class="aside-menu">
+<ul class="content-menu" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam">Renvoyer un mot de passe par e-mail : la méthode Vernam</a>
+</li>
+<li class="chapter">
+ 
+<a class="chapterLink" onmouseover="$(this).addClass('box-shadow-summary').next().addClass('box-shadow-summary');" onmouseout="$(this).removeClass('box-shadow-summary').next().removeClass('box-shadow-summary');">
+<span>Partie 1</span>
+Renvoyer un mot de passe par e-mail
+</a>
+<a class="chapterOpen" href="#" onmouseover="$(this).addClass('box-shadow-summary').prev().addClass('box-shadow-summary');" onmouseout="$(this).removeClass('box-shadow-summary').prev().removeClass('box-shadow-summary');">
+<span>+</span>
+</a>
+ 
+<ul class="subchapters">
+<li class="subchapter">
+<div>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/preparer-le-chantier">Préparer le chantier</a>
+<a class="subchapterOpen" href="#">
+<span>+</span>
+</a>
+</div>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/ou-nous-en-sommes-actuellement">
+Où nous en sommes actuellement...
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/amelioration-du-systeme">
+Amélioration du système
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/le-cryptage-vernam-le-fonctionnement">
+Le cryptage Vernam : le fonctionnement
+</a>
+</li>
+</ul> </li> <li class="subchapter">
+<div>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/place-au-codage">Place au codage !</a>
+<a class="subchapterOpen" href="#">
+<span>+</span>
+</a>
+</div>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/une-simple-fonction">
+Une simple fonction
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/au-final-2">
+Au final...
+</a>
+</li>
+</ul> </li> <li class="subchapter">
+<div>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/les-annexes-1">Les annexes</a>
+<a class="subchapterOpen" href="#">
+<span>+</span>
+</a>
+</div>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/le-cryptage-vernam-inviolable">
+Le cryptage Vernam, inviolable ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/les-fonctions-php-utiles-pour-ce-tuto">
+Les fonctions PHP utiles pour ce tuto
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/f-a-q">
+F.A.Q.
+</a>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</li>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/une-simple-fonction">
+<span class="arrow"></span>
+<span class="next">Une simple fonction</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/les-annexes-1">
+<span class="next">Les annexes</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lesannexes"></a><h2>Les annexes</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/au-final-2">
+<span class="arrow"></span>
+<span class="next">Au final...</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/le-cryptage-vernam-inviolable">
+<span class="next">Le cryptage Vernam, inviolable ?</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-348951" data-claire-element-id="348951">Le recueil de la connaissance ultime et absolue (ou « tous les trucs bon à savoir pour ce tuto », c'est bon aussi ^^ ).<br/> Jetez-y un coup d'œil dès que vous avez un doute quelque part !</p>
+</div><a name="LecryptageVernaminviolable"></a><h2>Le cryptage Vernam, inviolable ?</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/les-annexes-1">
+<span class="arrow"></span>
+<span class="next">Les annexes</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/les-fonctions-php-utiles-pour-ce-tuto">
+<span class="next">Les fonctions PHP utiles pour ce tuto</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h4 id="r-le-cryptage-vernam-inviolable" data-claire-element-id="349023">Le cryptage Vernam, inviolable ?</h4><p id="r-348952" data-claire-element-id="348952">Il est légitime de se demander si l'algorithme du cryptage Vernam est sans faille (il en va de la sécurité de votre site, après tout ! :p ).</p><p id="r-348953" data-claire-element-id="348953">Le cryptage Vernam est totalement sûr si trois conditions sont remplies (que je développerai une à une) :</p><ul id="r-348960" data-claire-element-id="348960"><li id="r-348955" data-claire-element-id="348955"><p id="r-348954" data-claire-element-id="348954">la clef est aussi longue que le mot de passe ;</p></li><li id="r-348957" data-claire-element-id="348957"><p id="r-348956" data-claire-element-id="348956">la clef est générée aléatoirement ;</p></li><li id="r-348959" data-claire-element-id="348959"><p id="r-348958" data-claire-element-id="348958">la clef n'est utilisée qu'une seule fois.</p></li></ul><div id="r-348962" data-claire-element-id="348962" data-claire-semantic="question"><p id="r-348961" data-claire-element-id="348961">Wak ! Mais c'est quand même vachement exigeant, comme conditions !</p></div><p id="r-348963" data-claire-element-id="348963">J'admets que ça peut paraître choquant au premier abord (surtout les deux derniers points). Explications. :)</p><h5 id="r-la-clef-est-aussi-longue-que-le-mot-de-passe" data-claire-element-id="348997">La clef est aussi longue que le mot de passe</h5><p id="r-348964" data-claire-element-id="348964">Cette affirmation se démontre en montrant les failles des deux autres cas.</p><aside id="r-348966" data-claire-element-id="348966" data-claire-semantic="information"><p id="r-348965" data-claire-element-id="348965">Pour que les failles soient plus visibles, je vais utiliser le système de numérotation des caractères par des chiffres, et non pas par leur code ASCII comme on a fini par le faire.</p></aside><h6 id="r-si-la-clef-est-plus-petite-que-le-mot-de-passe" data-claire-element-id="348991">Si la clef est plus petite que le mot de passe</h6><p id="r-348967" data-claire-element-id="348967">Si la clef est plus petite que le mot de passe, alors il est possible que le résultat de votre cryptage soit vulnérable à un algorithme qui analyserait une éventuelle répétition de la clef. Par exemple, imaginons que nous cryptions le texte « Je mange des pommes » avec la clef « Mateoo » (j'ai ajouté le deuxième o pour les besoins de la cause :p ). Le résultat du cryptage va donner :</p><figure id="r-348969" data-claire-element-id="348970"><img id="r-348968" data-claire-element-id="348968" src="medias/uploads.siteduzero.com_files_185001_186000_185833.png" alt="Image utilisateur"/></figure><p id="r-348971" data-claire-element-id="348971"><strong>Répétition de la clef sous le texte</strong></p><figure id="r-348973" data-claire-element-id="348974"><img id="r-348972" data-claire-element-id="348972" src="medias/uploads.siteduzero.com_files_185001_186000_185834.png" alt="Image utilisateur"/></figure><p id="r-348975" data-claire-element-id="348975"><strong>Remplacement de chaque caractère par sa lettre correspondante, <br/> puis addition et décryptage.</strong></p><p id="r-348976" data-claire-element-id="348976">Si vous avez été attentif au résultat, vous avez sûrement remarqué que « fu » apparaît deux fois : « w<strong>fu</strong>rpct<strong>fu</strong>ith... ».</p><div id="r-348978" data-claire-element-id="348978" data-claire-semantic="question"><p id="r-348977" data-claire-element-id="348977">Oui, et alors ?</p></div><p id="r-348979" data-claire-element-id="348979">Eh bien quelqu'un regardant ce résultat pourrait se dire « Si ce n'est pas une coïncidence, la même clef a été répétée, car 'fu' apparaît deux fois !&quot;. Il peut donc déjà établir la longueur de la clef : sachant qu'elle commence au début, il sait que la clef s'arrête probablement au caractère 'c', et qu'elle fait donc 6 caractères ! Pour quelqu'un qui ne sait rien de votre clef à la base, il a déjà déduit quelque chose de pas mal !</p><div id="r-348981" data-claire-element-id="348981" data-claire-semantic="question"><p id="r-348980" data-claire-element-id="348980">Tu as dit « Sachant qu'elle commence au début »... On pourrait procéder différemment, non ? Par exemple, effectuer le cryptage en décalant la clef...</p></div><p id="r-348982" data-claire-element-id="348982">Si vous vous êtes dit ça (et même si vous ne vous l'êtes pas dit :p ), je vous invite à réfléchir là-dessus :</p><p id="r-348983" data-claire-element-id="348983"><strong>Une bonne méthode de cryptage est une méthode qui, même lorsqu'on la montre telle quelle, est impossible à casser.</strong></p><p id="r-348984" data-claire-element-id="348984">Dans notre cas, si quelqu'un a accès au code PHP du cryptage Vernam, il n'aurait pas la moindre information qui lui permettrait de déchiffrer plus facilement un texte crypté ! La connaissance du code n'aide en rien à casser plus facilement le cryptage, c'est ce qui fait la force du système !</p><p id="r-348985" data-claire-element-id="348985">Par contre, si vous vous amusez à faire un décalage de clef par exemple, ça sera visible dans votre code et donc, ça ne peut pas vraiment être considéré comme quelque chose d'efficace, car il suffit de quelques tests pour retomber sur ce décalage.<br/> Bref, en cas de doute sur vos méthodes pour améliorer un système de cryptage, relisez la phrase que je viens de mettre en gras plus haut. ^^</p><p id="r-348986" data-claire-element-id="348986">Bien sûr, ce que je viens d'énoncer ne se base que sur des suppositions : l'apparition double du « fu » peut totalement être due au hasard, mais ce n'est pas le cas dans notre exemple. Cette idée pour tenter d'identifier la taille de la clef n'est donc pas si mauvaise. :) <br/> Maintenant, ne devenez pas parano : il faut que le texte soit vraiment long par rapport à la clef pour qu'on puisse correctement exploiter cette faille ! Dans notre cas, si le mot de passe a une taille de 12 caractères et la clef une taille de 9, on ne va vraiment pas chicaner !</p><div id="r-348988" data-claire-element-id="348988" data-claire-semantic="question"><p id="r-348987" data-claire-element-id="348987">Alors, pourquoi nous mettre en garde si on n'a pas à s'inquiéter ?</p></div><p id="r-348989" data-claire-element-id="348989">Parce qu'il faut que vous sachiez à quoi vous avez affaire quand même et que je préfère être honnête avec vous.</p><p id="r-348990" data-claire-element-id="348990">Pour un système comme le nôtre, respecter scrupuleusement les trois règles énoncées au début n'est pas archi-important, ça reste du domaine théorique, ne l'oublions pas !</p><h6 id="r-si-la-clef-est-plus-grande-que-le-mot-de-passe" data-claire-element-id="348994">Si la clef est plus grande que le mot de passe</h6><p id="r-348992" data-claire-element-id="348992">Je l'ai déjà dit dans le cours, ça (vous ne m'en voudrez pas si je fais un copier-coller :p ).</p><p id="r-348993" data-claire-element-id="348993">Si on désire crypter le texte 'Mateo' avec pour clef 'Nabuchodonosaure', la clef sera raccourcie à 'Nabuc'. Donc, si vous cryptez maintenant 'Mateo' avec 'Nabuchod<strong>i</strong>nosaure' comme clef, le résultat sera le même puisque le raccourcissement ('Nabuc') est le même. On obtient donc le même résultat avec deux clefs différentes. Le résultat du cryptage n'est donc pas unique et ça réduit fortement les possibilités si la différence de longueur entre la clef et le mot de passe est grande !</p><h6 id="r-conclusion-34" data-claire-element-id="348996">Conclusion</h6><p id="r-348995" data-claire-element-id="348995">Donc, NON, ce n'est pas grave si votre clef est un peu plus longue ou un peu plus courte que votre mot de passe ! C'est juste que, si on veut être rigoureux à 100 %, il y a des risques qu'on ait <em>légèrement</em> plus de facilité à déterminer la clef pour les raisons évoquées ci-dessus, mais ça ne devrait pas vous empêcher de dormir. Vous ne protégez pas les données du gouvernement non plus !</p><h5 id="r-la-clef-est-generee-aleatoirement" data-claire-element-id="349001">La clef est générée aléatoirement</h5><div id="r-348999" data-claire-element-id="348999" data-claire-semantic="question"><p id="r-348998" data-claire-element-id="348998">Oui, mais si ça revient à générer une clef aléatoire, autant imposer un mot de passe généré aléatoirement !</p></div><p id="r-349000" data-claire-element-id="349000">C'est clair que si on désire imposer une clef aléatoire, l'utilisateur ne s'en souviendra pas plus facilement que son mot de passe, qui est a priori plus facile à retenir qu'un texte totalement bizarroïde. Dans ces conditions, il semblerait plus intelligent de proposer un mot de passe aléatoire plutôt que de créer un système qui renvoie le MDP par e-mail à l'aide d'une clef.<br/>Je comprends totalement ce point de vue, mais là encore, il faut savoir faire la part des choses : ce n'est pas parce que votre clef n'est pas générée aléatoirement qu'on va à coup sûr pouvoir déchiffrer votre mot de passe ! Simplement, il ne faut pas suggérer de mettre le nom de son chien, car ça restreint beaucoup trop les possibilités.<br/>N'oubliez pas non plus qu'à la base, nous ne cherchons pas plus à renforcer la sécurité du site ! On cherche simplement à offrir une fonctionnalité qui agit pas trop mal si on respecte assez bien les conditions. Tout est une question de dosage, on n'atteindra jamais la sécurité absolue ! Gardez également à l'esprit que les tentatives réalisées afin de trouver votre clef sont essentiellement basées sur la force brute.<br/>Je conclus en mettant en avant l'avantage du renvoi par e-mail : quand bien même quelqu'un parviendrait à trouver votre clef, ça ne lui servirait à rien puisqu'on ne lui donnera pas le mot de passe tel quel ! Il est renvoyé par e-mail et ça, celui qui a tenté d'obtenir le MDP n'y a pas accès ! BAM, dans les dents. :-°</p><h5 id="r-la-clef-n-est-utilisee-qu-une-seule-fois" data-claire-element-id="349022">La clef n'est utilisée qu'une seule fois</h5><p id="r-349002" data-claire-element-id="349002">Évidemment, on ne va pas dire au membre : « La clef que tu proposes est déjà utilisée, prends-en une autre ! ». Déjà, ça génèrera des heures supplémentaires dans votre service après-vente pour calmer les clients mécontents et en plus, il ne faut surtout pas que ça se sache ! Si ça se savait, on pourrait justement exploiter la « faille de la clef utilisée plus d'une fois », sans compter le fait que le membre en question peut s'amuser à obtenir le mot de passe de quelqu'un d'autre en utilisant cette clef (quoique comme indiqué plus haut, ça ne lui servira à rien puisque le mot de passe est renvoyé par e-mail et le membre n'y a pas accès).</p><div id="r-349004" data-claire-element-id="349004" data-claire-semantic="question"><p id="r-349003" data-claire-element-id="349003">D'accord, mais pourquoi c'est essentiel d'avoir une clef unique ?</p></div><p id="r-349005" data-claire-element-id="349005">Parce que si quelqu'un crypte un message avec la même clef que quelqu'un d'autre, il peut facilement déduire le message de ce dernier (plus d'infos à ce sujet sur <a href="http://fr.wikipedia.org/wiki/Masque_jetable%23Probl.C3.A8me_de_l.27utilisation_unique_de_chaque_cl.C3.A9">Wikipedia</a>). Alors bon, c'est embêtant quand-même... Que faire pour éviter ça ?</p><p id="r-349006" data-claire-element-id="349006"><a href="http://www.siteduzero.com/membres-294-149921.html">lp177</a> a suggéré quelque chose de pas mal pour contourner la difficulté : comme le pseudo de chaque membre est unique, il suffit de le concaténer avec la clef avant chaque cryptage-décryptage. On aurait donc le schéma suivant :</p><p id="r-349007" data-claire-element-id="349007"><strong>pseudo :</strong>M@teo21<br/><strong>clef :</strong>Le PHP, c'est pas pour les mauviettes !</p><p id="r-349008" data-claire-element-id="349008"><strong>clef utilisée pour le (dé)cryptage :</strong>M@teo21Le PHP, c'est pas pour les mauviettes !</p><p id="r-349009" data-claire-element-id="349009">Lorsqu'on désire effectuer un cryptage ou un décryptage, on dispose toujours de ces deux informations (pseudo et clef). On a donc bien une clef unique pour chaque membre à chaque fois qu'on désire effectuer l'une de ces deux opérations.</p><div id="r-349011" data-claire-element-id="349011" data-claire-semantic="question"><p id="r-349010" data-claire-element-id="349010">Oui mais bon, c'est quand même un peu nul... Si quelqu'un ayant un pseudo de même longueur que le mien utilise la même clef, il y aura une partie de mon mot de passe qu'il parviendra quand même à déchiffrer !</p></div><p id="r-349012" data-claire-element-id="349012">C'est sûr que si quelqu'un utilise la même clef que vous, il nous reste une partie commune dans la nouvelle clef (dans notre exemple : « Le PHP, c'est pas pour les mauviettes ! ») ! Tous les caractères cryptés par cette partie commune sont en danger. <br/> Une solution pour éviter ça serait de hacher la nouvelle clef : le pseudo fait alors office de grain de sable, et dans ce cas, on a bien une clef unique pour chaque usage ! Avouez que c'est la classe, non ?</p><p id="r-349013" data-claire-element-id="349013"><strong><em>En résumé</em></strong></p><ul id="r-349020" data-claire-element-id="349020"><li id="r-349015" data-claire-element-id="349015"><p id="r-349014" data-claire-element-id="349014">Joindre le pseudo à la clef</p></li><li id="r-349017" data-claire-element-id="349017"><p id="r-349016" data-claire-element-id="349016">Hacher le tout</p></li><li id="r-349019" data-claire-element-id="349019"><p id="r-349018" data-claire-element-id="349018">Crypter ou décrypter avec le résultat du hachage</p></li></ul><p id="r-349021" data-claire-element-id="349021">Simple et efficace, <em>yes sir !</em> :soleil:</p>
+<aside class="aside-menu">
+<ul class="content-menu" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam">Renvoyer un mot de passe par e-mail : la méthode Vernam</a>
+</li>
+<li class="chapter">
+ 
+<a class="chapterLink" onmouseover="$(this).addClass('box-shadow-summary').next().addClass('box-shadow-summary');" onmouseout="$(this).removeClass('box-shadow-summary').next().removeClass('box-shadow-summary');">
+<span>Partie 1</span>
+Renvoyer un mot de passe par e-mail
+</a>
+<a class="chapterOpen" href="#" onmouseover="$(this).addClass('box-shadow-summary').prev().addClass('box-shadow-summary');" onmouseout="$(this).removeClass('box-shadow-summary').prev().removeClass('box-shadow-summary');">
+<span>+</span>
+</a>
+ 
+<ul class="subchapters">
+<li class="subchapter">
+<div>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/preparer-le-chantier">Préparer le chantier</a>
+<a class="subchapterOpen" href="#">
+<span>+</span>
+</a>
+</div>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/ou-nous-en-sommes-actuellement">
+Où nous en sommes actuellement...
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/amelioration-du-systeme">
+Amélioration du système
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/le-cryptage-vernam-le-fonctionnement">
+Le cryptage Vernam : le fonctionnement
+</a>
+</li>
+</ul> </li> <li class="subchapter">
+<div>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/place-au-codage">Place au codage !</a>
+<a class="subchapterOpen" href="#">
+<span>+</span>
+</a>
+</div>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/une-simple-fonction">
+Une simple fonction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/au-final-2">
+Au final...
+</a>
+</li>
+</ul> </li> <li class="subchapter">
+<div>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/les-annexes-1">Les annexes</a>
+<a class="subchapterOpen" href="#">
+<span>+</span>
+</a>
+</div>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/le-cryptage-vernam-inviolable">
+Le cryptage Vernam, inviolable ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/les-fonctions-php-utiles-pour-ce-tuto">
+Les fonctions PHP utiles pour ce tuto
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/f-a-q">
+F.A.Q.
+</a>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</li>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/les-annexes-1">
+<span class="arrow"></span>
+<span class="next">Les annexes</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/les-fonctions-php-utiles-pour-ce-tuto">
+<span class="next">Les fonctions PHP utiles pour ce tuto</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="LesfonctionsPHPutilespourcetuto"></a><h2>Les fonctions PHP utiles pour ce tuto</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/le-cryptage-vernam-inviolable">
+<span class="arrow"></span>
+<span class="next">Le cryptage Vernam, inviolable ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/f-a-q">
+<span class="next">F.A.Q.</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h4 id="r-les-fonctions-php-utiles-pour-ce-tuto" data-claire-element-id="349080">Les fonctions PHP utiles pour ce tuto</h4><h5 id="r-fonctions-php-predefinies" data-claire-element-id="349079">Fonctions PHP prédéfinies</h5><p id="r-349024" data-claire-element-id="349024">Vous trouverez ci-dessous un tableau contenant toutes les fonctions prédéfinies utilisées dans notre code. Dans « Explication », vous trouverez à quoi elles servent et dans quel contexte on les utilise dans ce tuto.</p><h6 id="r-manipulation-de-la-clef" data-claire-element-id="349078">Manipulation de la Clef</h6><table id="r-349076" data-claire-element-id="349076"><thead id="r-349032" data-claire-element-id="349032"><tr id="r-349031" data-claire-element-id="349031"><th id="r-349026" data-claire-element-id="349026"><p id="r-349025" data-claire-element-id="349025">Fonction</p></th><th id="r-349028" data-claire-element-id="349028"><p id="r-349027" data-claire-element-id="349027">Explication</p></th><th id="r-349030" data-claire-element-id="349030"><p id="r-349029" data-claire-element-id="349029">lien PHP.net</p></th></tr></thead><tbody id="r-349075" data-claire-element-id="349075"><tr id="r-349044" data-claire-element-id="349044"><td id="r-349034" data-claire-element-id="349034"><p id="r-349033" data-claire-element-id="349033">strlen($variable)</p></td><td id="r-349041" data-claire-element-id="349041"><p id="r-349035" data-claire-element-id="349035">Fonction qui renvoie le nombre de caractères que contient $variable (espaces compris). On l'utilise pour :</p><ul id="r-349040" data-claire-element-id="349040"><li id="r-349037" data-claire-element-id="349037"><p id="r-349036" data-claire-element-id="349036">rallonger / raccourcir la clef jusqu'à la taille du mot de passe ;</p></li><li id="r-349039" data-claire-element-id="349039"><p id="r-349038" data-claire-element-id="349038">vérifier la taille des nombres binaires (pour étendre les nombres 7 bits à 8 bits).</p></li></ul></td><td id="r-349043" data-claire-element-id="349043"><p id="r-349042" data-claire-element-id="349042"><a href="http://be2.php.net/strlen">strlen sur PHP.net</a></p></td></tr><tr id="r-349059" data-claire-element-id="349059"><td id="r-349046" data-claire-element-id="349046"><p id="r-349045" data-claire-element-id="349045">str_pad($variable, longueur, carractère, position)</p></td><td id="r-349056" data-claire-element-id="349056"><p id="r-349047" data-claire-element-id="349047">Fonction qui rallonge la chaîne de caractères, où :</p><ul id="r-349054" data-claire-element-id="349054"><li id="r-349049" data-claire-element-id="349049"><p id="r-349048" data-claire-element-id="349048">longueur détermine la longueur jusqu'à laquelle on désire rallonger $variable ;</p></li><li id="r-349051" data-claire-element-id="349051"><p id="r-349050" data-claire-element-id="349050">carractère détermine avec quelle chaîne de caractères on va rallonger $variable ;</p></li><li id="r-349053" data-claire-element-id="349053"><p id="r-349052" data-claire-element-id="349052">position détermine de quel côté se fait le rallongement : STR_PAD_LEFT pour un rallongement à gauche, STR_PAD_RIGHT pour un rallongement à droite et STR_PAD_BOTH pour un rallongement des deux côtés.</p></li></ul><p id="r-349055" data-claire-element-id="349055">On utilise cette fonction pour rallonger un nombre binaire 7 bits à un nombre binaire 8 bits (en rajoutant un 0 à gauche) ou pour rallonger la clef jusqu'à la taille du mot de passe. <strong>On n'utilise pas cette fonction pour raccourcir$variable</strong> !</p></td><td id="r-349058" data-claire-element-id="349058"><p id="r-349057" data-claire-element-id="349057"><a href="http://be.php.net/strpad">str_pad sur PHP.net</a></p></td></tr><tr id="r-349074" data-claire-element-id="349074"><td id="r-349061" data-claire-element-id="349061"><p id="r-349060" data-claire-element-id="349060">substr($variable, gauche, droite)</p></td><td id="r-349071" data-claire-element-id="349071"><p id="r-349062" data-claire-element-id="349062">substr sert à raccourcir une chaîne de caractères selon les critères suivants :</p><ul id="r-349069" data-claire-element-id="349069"><li id="r-349064" data-claire-element-id="349064"><p id="r-349063" data-claire-element-id="349063">$variable est la variable contenant la chaîne de caractères qu'on désire raccourcir ;</p></li><li id="r-349066" data-claire-element-id="349066"><p id="r-349065" data-claire-element-id="349065">gauche détermine combien de caractères on enlève à gauche. Ce terme est toujours <strong>positif</strong> ;</p></li><li id="r-349068" data-claire-element-id="349068"><p id="r-349067" data-claire-element-id="349067">droite détermine combien de caractères on enlève à droite. Ce terme est toujours <strong>négatif</strong>.</p></li></ul><p id="r-349070" data-claire-element-id="349070">Dans notre cas, on utilise cette fonction pour raccourcir la clef si elle est plus grande que le mot de passe. À noter que dans ce contexte, gauche vaut toujours 0.</p></td><td id="r-349073" data-claire-element-id="349073"><p id="r-349072" data-claire-element-id="349072"><a href="http://fr.php.net/substr">substr sur PHP.net</a></p></td></tr></tbody></table><p id="r-349077" data-claire-element-id="349077">Et bien sûr, on a l'opérateur ^ pour le cryptage Vernam !</p>
+<aside class="aside-menu">
+<ul class="content-menu" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam">Renvoyer un mot de passe par e-mail : la méthode Vernam</a>
+</li>
+<li class="chapter">
+ 
+<a class="chapterLink" onmouseover="$(this).addClass('box-shadow-summary').next().addClass('box-shadow-summary');" onmouseout="$(this).removeClass('box-shadow-summary').next().removeClass('box-shadow-summary');">
+<span>Partie 1</span>
+Renvoyer un mot de passe par e-mail
+</a>
+<a class="chapterOpen" href="#" onmouseover="$(this).addClass('box-shadow-summary').prev().addClass('box-shadow-summary');" onmouseout="$(this).removeClass('box-shadow-summary').prev().removeClass('box-shadow-summary');">
+<span>+</span>
+</a>
+ 
+<ul class="subchapters">
+<li class="subchapter">
+<div>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/preparer-le-chantier">Préparer le chantier</a>
+<a class="subchapterOpen" href="#">
+<span>+</span>
+</a>
+</div>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/ou-nous-en-sommes-actuellement">
+Où nous en sommes actuellement...
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/amelioration-du-systeme">
+Amélioration du système
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/le-cryptage-vernam-le-fonctionnement">
+Le cryptage Vernam : le fonctionnement
+</a>
+</li>
+</ul> </li> <li class="subchapter">
+<div>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/place-au-codage">Place au codage !</a>
+<a class="subchapterOpen" href="#">
+<span>+</span>
+</a>
+</div>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/une-simple-fonction">
+Une simple fonction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/au-final-2">
+Au final...
+</a>
+</li>
+</ul> </li> <li class="subchapter">
+<div>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/les-annexes-1">Les annexes</a>
+<a class="subchapterOpen" href="#">
+<span>+</span>
+</a>
+</div>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/le-cryptage-vernam-inviolable">
+Le cryptage Vernam, inviolable ?
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/les-fonctions-php-utiles-pour-ce-tuto">
+Les fonctions PHP utiles pour ce tuto
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/f-a-q">
+F.A.Q.
+</a>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</li>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/le-cryptage-vernam-inviolable">
+<span class="arrow"></span>
+<span class="next">Le cryptage Vernam, inviolable ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/f-a-q">
+<span class="next">F.A.Q.</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="F.A.Q."></a><h2>F.A.Q.</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/les-fonctions-php-utiles-pour-ce-tuto">
+<span class="arrow"></span>
+<span class="next">Les fonctions PHP utiles pour ce tuto</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h4 id="r-f-a-q" data-claire-element-id="349106">F.A.Q.</h4><p id="r-349081" data-claire-element-id="349081">On a un souci ? J'espère qu'il aura disparu après la lecture de la F.A.Q. !<br/> Une question pour le moment, mais elle est de taille !</p><ul id="r-349084" data-claire-element-id="349084"><li id="r-349083" data-claire-element-id="349083"><p id="r-349082" data-claire-element-id="349082">Le décryptage ne fonctionne pas.</p></li></ul><p id="r-349085" data-claire-element-id="349085">________________________________________</p><h5 id="r-le-decryptage-ne-fonctionne-pas" data-claire-element-id="349105">Le décryptage ne fonctionne pas</h5><p id="r-349086" data-claire-element-id="349086">Techniquement, le décryptage ne peut que fonctionner si vous l'appelez directement après avoir établi le cryptage. Autrement dit, le code suivant DOIT fonctionner :</p><pre id="r-349087" data-claire-element-id="349087"><code data-claire-semantic="html+php">&lt;?php
+
+    $MDP = &quot;Site du Zero&quot;;
+    $Clef = &quot;Mateo&quot;;
+    $Crypt = Cryptage($MDP, $Clef); // Crypte « Site du Zero » avec la clef « Mateo » et le stocke dans $Crypt
+    $Decrypt = Cryptage($Crypt, $Clef); // $Decrypt contient « Site du Zero »
+
+    echo $Decrypt; // Affiche &quot;Site du Zero&quot;
+
+?&gt;</code></pre><p id="r-349088" data-claire-element-id="349088">Si ce n'est pas le cas, c'est que vous avez fait une erreur dans l'implémentation de la fonction Cryptage, et je vous invite à parcourir à nouveau la partie 2 pour savoir où se trouve la faille.</p><p id="r-349089" data-claire-element-id="349089">Si le bout de code ci-dessus fonctionne, mais que le décryptage ne fonctionne pas, c'est le passage dans la base de données qui pose problème. Dans ce cas, c'est soit une histoire de caractères d'échappements, soit une histoire d'encodage. :)</p><h6 id="r-caracteres-d-echappement" data-claire-element-id="349094">Caractères d'échappement</h6><p id="r-349090" data-claire-element-id="349090">&lt;position valeur=&quot;justifie&quot;&gt;Le cryptage Vernam peut donner tout et n'importe quoi comme chaîne de caractères... Il se peut même qu'un backslash (un \) s'y glisse. Le problème, c'est que les backslashes sont reconnus pour désigner des caractères d'échappement, et sont donc automatiquement supprimés, que ce soit lors de l'introduction d'une chaîne de caractères dans la base de données (dans tous les cas) ou dans la manipulation d'une chaîne tout court (dans les cas où ils précèdent un caractère d'échappement). Par conséquent, si votre mot de passe crypté est 'kd\l', et si vous le stockez dans la BDD, il sera réduit à 'kdl' (sans le backslash). Lorsque vous le récupérerez, le texte à décrypter sera donc 'kdl' au lieu de 'kd\l', et le résultat sera incorrect.</p><p id="r-349091" data-claire-element-id="349091">Pour éviter ça, vous devez utiliser la fonction addslashes, qui ajoute tout simplement des backslashes là où cela s'avère nécessaire (si vous avez suivi le tutoriel PHP de M@teo21, vous devriez connaître le principe). Pour reprendre notre exemple :</p><pre id="r-349092" data-claire-element-id="349092"><code data-claire-semantic="html+php">&lt;?php
+   
+    $MDP_Crypt = &quot;kd\l&quot;; // Supposons que le résultat du cryptage vaut &quot;kd\l&quot;
+    $MDP_Crypt1 = addslashes($MDP_Crypt); // $MDP_Crypt1 vaut &quot;kd\\l&quot;
+
+    // On introduit $MDP_Crypt1 dans la BDD (les \ d'échappement seront enlevés, ce qui donne &quot;kd\l&quot;)
+    // ...
+    // Lorsqu'on récupérera $MDP_Crypt1 dans la BDD, il vaudra &quot;kd\l&quot;, ce qui est bien le mot de passe crypté d'origine
+
+?&gt;</code></pre><p id="r-349093" data-claire-element-id="349093"><strong>Conclusion :</strong> appliquer addslashes avant l'introduction d'une chaîne de caractères dans la BDD, ça aide. :)</p><h6 id="r-un-probleme-d-encodage" data-claire-element-id="349104">Un problème d'encodage</h6><p id="r-349095" data-claire-element-id="349095">Il se peut que, même si vous utilisez l'encodage UTF-8 aussi bien dans votre page que dans votre base de données, la transition entre les deux ne se déroule pas correctement. Pour éviter ce souci, veillez donc à utiliser utf8_encode() avant l'introduction du MDP crypté dans la BDD. Lorsque vous le ressortez, utilisez la fonction utf8_decode().</p><p id="r-349096" data-claire-element-id="349096">Remerciements :</p><ul id="r-349103" data-claire-element-id="349103"><li id="r-349098" data-claire-element-id="349098"><p id="r-349097" data-claire-element-id="349097"><a href="http://www.siteduzero.com/membres-294-1398.html">ThunderSeb</a> qui a fait un travail monstre en corrigeant la première version du tuto et ses multiples fautes d'orthographe ;</p></li><li id="r-349100" data-claire-element-id="349100"><p id="r-349099" data-claire-element-id="349099"><a href="http://www.siteduzero.com/membres-294-149921.html">lp177</a> qui a proposé une bonne méthode afin d'obtenir une clef unique ;</p></li><li id="r-349102" data-claire-element-id="349102"><p id="r-349101" data-claire-element-id="349101"><em>Last but not least</em> : <a href="http://www.siteduzero.com/membres-294-116261.html">berdes1</a> qui m'a judicieusement fait remarquer que je pouvais réduire plus de 50 lignes de code en une seule instruction (le fameux ^).</p></li></ul>
+<aside class="aside-menu">
+<ul class="content-menu" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam">Renvoyer un mot de passe par e-mail : la méthode Vernam</a>
+</li>
+<li class="chapter">
+ 
+<a class="chapterLink" onmouseover="$(this).addClass('box-shadow-summary').next().addClass('box-shadow-summary');" onmouseout="$(this).removeClass('box-shadow-summary').next().removeClass('box-shadow-summary');">
+<span>Partie 1</span>
+Renvoyer un mot de passe par e-mail
+</a>
+<a class="chapterOpen" href="#" onmouseover="$(this).addClass('box-shadow-summary').prev().addClass('box-shadow-summary');" onmouseout="$(this).removeClass('box-shadow-summary').prev().removeClass('box-shadow-summary');">
+<span>+</span>
+</a>
+ 
+<ul class="subchapters">
+<li class="subchapter">
+<div>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/preparer-le-chantier">Préparer le chantier</a>
+<a class="subchapterOpen" href="#">
+<span>+</span>
+</a>
+</div>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/ou-nous-en-sommes-actuellement">
+Où nous en sommes actuellement...
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/amelioration-du-systeme">
+Amélioration du système
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/le-cryptage-vernam-le-fonctionnement">
+Le cryptage Vernam : le fonctionnement
+</a>
+</li>
+</ul> </li> <li class="subchapter">
+<div>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/place-au-codage">Place au codage !</a>
+<a class="subchapterOpen" href="#">
+<span>+</span>
+</a>
+</div>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/une-simple-fonction">
+Une simple fonction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/au-final-2">
+Au final...
+</a>
+</li>
+</ul> </li> <li class="subchapter">
+<div>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/les-annexes-1">Les annexes</a>
+<a class="subchapterOpen" href="#">
+<span>+</span>
+</a>
+</div>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/le-cryptage-vernam-inviolable">
+Le cryptage Vernam, inviolable ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/les-fonctions-php-utiles-pour-ce-tuto">
+Les fonctions PHP utiles pour ce tuto
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/f-a-q">
+F.A.Q.
+</a>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</li>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam/les-fonctions-php-utiles-pour-ce-tuto">
+<span class="arrow"></span>
+<span class="next">Les fonctions PHP utiles pour ce tuto</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 08:35:43 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/renvoyer-un-mot-de-passe-par-e-mail-la-methode-vernam.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:32:32 GMT -->
+</html>

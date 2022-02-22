@@ -1,0 +1,364 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/realiser-un-moteur-de-recherche-pour-son-site.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 08:09:05 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/realiser-un-moteur-de-recherche-pour-son-site.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:27:09 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Réaliser un moteur de recherche pour son site</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/realiser-un-moteur-de-recherche-pour-son-site.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Réaliser un moteur de recherche pour son site</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Raliserunmoteurderecherchepoursonsite">Réaliser un moteur de recherche pour son site</a><br/><a href="#Ofairelarecherche">Où faire la recherche ?</a><br/><a href="#LecritredeslectionLIKE">Le critère de sélection LIKE</a><br/><a href="#Ralisationduscript">Réalisation du script</a><br/><a href="#D039autresmaniresd039exploiterLIKE">D&#039;autres manières d&#039;exploiter LIKE</a><br/></div>
+<a name="Raliserunmoteurderecherchepoursonsite"></a><h2>Réaliser un moteur de recherche pour son site</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/realiser-un-moteur-de-recherche-pour-son-site/ou-faire-la-recherche">
+<span class="next">Où faire la recherche ?</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-436778" data-claire-element-id="436778">Bien le bonjour ! Dans ce court tutoriel, nous verrons comment créer un petit moteur de recherche pour son site internet, avec des tables MySQL et un critère spécial, ainsi qu'une autre fonction qui pourrait vous être utile.</p><p id="r-436779" data-claire-element-id="436779">Vous verrez, créer un moteur de recherche pour son site n'est guère difficile, et utiliser une requête spéciale de MySQL suffira. Nous verrons également comment vérifier le nombre de requêtes avec une fonction PHP, lisez donc la suite !</p><aside id="r-436781" data-claire-element-id="436781" data-claire-semantic="warning"><p id="r-436780" data-claire-element-id="436780">Avant que je ne reçoive d'autres critiques de codeurs élitistes ( :-° ) et que vous vous lanciez dans ce tutoriel, comme le précise bien le titre, notre but est de créer quelque chose de SIMPLE. Si vous souhaitez faire quelque chose de plus poussé, tournez vous vers le critère FULLTEXT, qui lui n'est pas abordé ici. Merci de votre compréhension...</p></aside>
+</div><a name="Ofairelarecherche"></a><h2>Où faire la recherche ?</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/realiser-un-moteur-de-recherche-pour-son-site/le-critere-de-selection-like">
+<span class="next">Le critère de sélection LIKE</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-436782" data-claire-element-id="436782">C'est la première question que vous devez vous poser. Où réaliser la recherche ? Dans quelles tables ?</p><p id="r-436783" data-claire-element-id="436783">C'est très simple. Il suffit de faire la recherche dans la table où se trouvent les articles susceptibles d'être recherchés. Vous pouvez utiliser plusieurs tables, bien sûr.</p><p id="r-436784" data-claire-element-id="436784">Dans mon cas, je vais créer un mini-moteur de recherche pour un site comme le Site du Zér0, qui propose des tutos mais aussi des tables contenant des informations sur les fonctions en PHP, ici nommée <strong>fonctions</strong> :p . C'est ici que je vais lancer la recherche.</p><p id="r-436785" data-claire-element-id="436785">Voici les champs de ma table : <strong><br/>id nom_fonction texte </strong>C'est tout !<br/> Le <strong>premier</strong> champ, vous comprendrez sûrement à quoi il sert : il permet d'identifier chaque entrée de la table avec un numéro qui s'incrémente automatiquement (<a href="http://www.siteduzero.com/tuto-3-134-1-phpmyadmin.html#ss_part_1">voir le cours de M@teo21</a> pour les trous de mémoire), pour pouvoir les sélectionner et les classer sans difficulté ;) . Le <strong>deuxième</strong>, c'est le nom de la fonction (par exemple, mysql_query). Et le <strong>troisième</strong>, c'est le texte qui présente la fonction, qui décrit son fonctionnement...</p><ul id="r-436792" data-claire-element-id="436792"><li id="r-436787" data-claire-element-id="436787"><p id="r-436786" data-claire-element-id="436786">id</p></li><li id="r-436789" data-claire-element-id="436789"><p id="r-436788" data-claire-element-id="436788">nom_fonction</p></li><li id="r-436791" data-claire-element-id="436791"><p id="r-436790" data-claire-element-id="436790">texte</p></li></ul><aside id="r-436794" data-claire-element-id="436794" data-claire-semantic="information"><p id="r-436793" data-claire-element-id="436793">Ce n'est qu'un exemple. Vous pouvez très bien faire un moteur de recherche pour des fiches de jeux vidéo ou tout autre sorte d'article.</p></aside><p id="r-436795" data-claire-element-id="436795">La page qui affichera le contenu de la fonction se nommera <em>fonction.php</em> et contiendra dans l'URL l'id de l'entrée concernée enregistrée sous MySQL (qui correspond donc à la fonction actuellement affichée). S'il n'y a pas d'id, un message d'erreur apparaîtra. Mais ce n'est pas ça que nous réaliserons au cours de ce tuto, mais le moteur qui permettra de faire des recherches dans cette table... Vous imaginez, si le site répertorie toutes les fonctions PHP qui existent et encore d'autres venant de diverses bibliothèques :o ? L'interessé sera vite découragé à la vue du nombre de fonctions. <br/> Heureusement, on peut lui simplifier la vie avec le système de recherche.</p><p id="r-436796" data-claire-element-id="436796">Je vais maintenant vous présenter la requête SQL qui permet d'effectuer une recherche ;) .</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-un-moteur-de-recherche-pour-son-site">Réaliser un moteur de recherche pour son site</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-un-moteur-de-recherche-pour-son-site/ou-faire-la-recherche">
+Où faire la recherche ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-un-moteur-de-recherche-pour-son-site/le-critere-de-selection-like">
+Le critère de sélection LIKE
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-un-moteur-de-recherche-pour-son-site/realisation-du-script-2">
+Réalisation du script
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-un-moteur-de-recherche-pour-son-site/d-autres-manieres-d-exploiter-like">
+D&#039;autres manières d&#039;exploiter LIKE
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/realiser-un-moteur-de-recherche-pour-son-site/le-critere-de-selection-like">
+<span class="next">Le critère de sélection LIKE</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="LecritredeslectionLIKE"></a><h2>Le critère de sélection LIKE</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/realiser-un-moteur-de-recherche-pour-son-site/ou-faire-la-recherche">
+<span class="arrow"></span>
+<span class="next">Où faire la recherche ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/realiser-un-moteur-de-recherche-pour-son-site/realisation-du-script-2">
+<span class="next">Réalisation du script</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-436798" data-claire-element-id="436798">Nous allons voir maintenant ce qu'est le critère <strong>LIKE</strong> et comment l'utiliser dans notre cas, mais aussi comment il fonctionne.</p><p id="r-436799" data-claire-element-id="436799">Tout d'abord, il faut savoir que le critère LIKE est un &quot;<em>argument</em>&quot; SQL, un peu comme les WHERE et autres ORDER BY. LIKE signifie &quot;comme&quot; (anglais inside :p ). On l'utilise toujours aux côtés d'un WHERE. En gros, si on tape <code data-claire-semantic="html+php">WHERE nom_fonction LIKE 'mysql' </code>, cela signifie &quot;dont le nom de la fonction est comme &quot;mysql&quot;. Il est utilisé pour les barres de recherche que beaucoup de sites possèdent, c'est pourquoi je vous le présente ;) .</p><p id="r-436800" data-claire-element-id="436800">Pour tirer parti de ce critère (dans notre situation), il faut l'utiliser dans une requête de sélection. Voici ce que cela donnera au final :</p><pre id="r-436801" data-claire-element-id="436801"><code data-claire-semantic="sql">SELECT * FROM fonctions WHERE nom_fonction LIKE '%mysql%' ORDER BY nom_fonction</code></pre><p id="r-436802" data-claire-element-id="436802">Tout d'abord, on sélectionne la table, puis on met un WHERE pour dire à quel champ doit correspondre la recherche et enfin le fameux LIKE, suivi de '%mysql%' qui détermine le mot clé recherché. Je vais d'ailleurs détailler ce dernier. Les symboles <strong>%</strong> signifient qu'il peut y avoir n'importe quoi avant et après le mot clé &quot;mysql&quot;. Par exemple, on peut très bien obtenir des résultats de ce style pour une recherche &quot;mysql&quot; :</p><ol id="r-436809" data-claire-element-id="436809"><li id="r-436804" data-claire-element-id="436804"><p id="r-436803" data-claire-element-id="436803"><strong>mysql</strong>_query</p></li><li id="r-436806" data-claire-element-id="436806"><p id="r-436805" data-claire-element-id="436805"><strong>mysql</strong>_fetch_array</p></li><li id="r-436808" data-claire-element-id="436808"><p id="r-436807" data-claire-element-id="436807">select_<strong>mysql</strong>_db (j'invente, ce n'est que pour vous montrer que quelque chose peut se trouver devant la requête donnée)</p></li></ol><p id="r-436810" data-claire-element-id="436810">En gros, les % sont un peu comme les X en mathématiques, cela peut prendre n'importe quelle valeur. On peut en placer devant ou derrière la requête, pour dire s'il peut y avoir des valeurs devant et / ou derrière. Par contre, si vous ne mettez qu'un seul % (devant ou derrière), il n'y aura de valeurs supplémentaires possibles que de ce côté-là.</p><p id="r-436811" data-claire-element-id="436811">Enfin, le &quot;mysql&quot; entre '%%' , c'est notre mot clé. La requête SQL sélectionnera donc toutes les entrées de la table fonction dont le champ nom_fonction contient le mot clé mysql et classera les résultat par ordre alphabétique grâce au critère <strong>ORDER BY</strong>.</p><p id="r-436812" data-claire-element-id="436812">Ce critère est donc très, très simple à utiliser.</p><aside id="r-436814" data-claire-element-id="436814" data-claire-semantic="warning"><p id="r-436813" data-claire-element-id="436813">Attention ! Si vous ne mettez pas les symboles %, la requête SQL sélectionnera les champs qui contiennent juste &quot;mysql&quot;, sans rien devant ni derrière, à la manière d'un WHERE classique ! Faites donc attention !</p></aside><p id="r-436815" data-claire-element-id="436815">Voilà, passons à la suite, la réalisation du script :) .</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-un-moteur-de-recherche-pour-son-site">Réaliser un moteur de recherche pour son site</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-un-moteur-de-recherche-pour-son-site/ou-faire-la-recherche">
+Où faire la recherche ?
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-un-moteur-de-recherche-pour-son-site/le-critere-de-selection-like">
+Le critère de sélection LIKE
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-un-moteur-de-recherche-pour-son-site/realisation-du-script-2">
+Réalisation du script
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-un-moteur-de-recherche-pour-son-site/d-autres-manieres-d-exploiter-like">
+D&#039;autres manières d&#039;exploiter LIKE
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/realiser-un-moteur-de-recherche-pour-son-site/ou-faire-la-recherche">
+<span class="arrow"></span>
+<span class="next">Où faire la recherche ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/realiser-un-moteur-de-recherche-pour-son-site/realisation-du-script-2">
+<span class="next">Réalisation du script</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Ralisationduscript"></a><h2>Réalisation du script</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/realiser-un-moteur-de-recherche-pour-son-site/le-critere-de-selection-like">
+<span class="arrow"></span>
+<span class="next">Le critère de sélection LIKE</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/realiser-un-moteur-de-recherche-pour-son-site/d-autres-manieres-d-exploiter-like">
+<span class="next">D&#039;autres manières d&#039;exploiter LIKE</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-436817" data-claire-element-id="436817">Voilà, nous arrivons déjà à la dernière partie de ce tuto. Nous allons réaliser le script pour faire les recherches ! Tout d'abord, voici le schéma du script :</p><ul id="r-436833" data-claire-element-id="436833"><li id="r-436819" data-claire-element-id="436819"><p id="r-436818" data-claire-element-id="436818"><strong>si</strong> le post existe et n'est pas nul, connexion à mysql et recherche avec LIKE :</p></li><ul id="r-436827" data-claire-element-id="436827"><li id="r-436821" data-claire-element-id="436821"><p id="r-436820" data-claire-element-id="436820"><strong>si</strong> on obtient au moins un résultat, on affiche le ou les résultats :</p></li><ul id="r-436826" data-claire-element-id="436826"><li id="r-436823" data-claire-element-id="436823"><p id="r-436822" data-claire-element-id="436822"><strong>si</strong> le résultat est égal à un, on utilise le terme &quot;résultat&quot; , puisqu'il n'y qu'un seul résultat,</p></li><li id="r-436825" data-claire-element-id="436825"><p id="r-436824" data-claire-element-id="436824"><strong>sinon</strong>, on utilise le terme &quot;résultats&quot;, vu que il y a plus d'un résultats ;</p></li></ul></ul><ul id="r-436830" data-claire-element-id="436830"><li id="r-436829" data-claire-element-id="436829"><p id="r-436828" data-claire-element-id="436828"><strong>sinon</strong>, on affiche un message stipulant qu'il n'y pas eu de résultats ;</p></li></ul><li id="r-436832" data-claire-element-id="436832"><p id="r-436831" data-claire-element-id="436831"><strong>sinon</strong>, on affiche le formulaire.</p></li></ul><p id="r-436834" data-claire-element-id="436834">C'est tout simple ! Néanmoins, il faut que je précise un petit point avant que vous ne vous lanciez dans votre script. En effet, pour vérifier le nombre de résultats, il faut utiliser une fonction spéciale, mysql_num_rows, qui va compter le nombre de résultats. Voilà ce que ça donnera :</p><pre id="r-436835" data-claire-element-id="436835"><code data-claire-semantic="html+php">// ...
+$query = mysql_query(&quot;SELECT * FROM fonctions WHERE fonction LIKE '%$recherche%' ORDER BY fonction&quot;) or die (mysql_error()); // On exécute la requête. Je précise qu'ici, la variable &quot;$recherche&quot; contient la recherche obtenue lors du POST. Nous verrons ça un peu plus bas en détails.
+$verif = mysql_num_rows($query); // On crée la variable &quot;$verif&quot; qui servira à vérifier si on a des résultats ou non
+if($verif != 0) // On fait tout simplement une condition pour savoir &quot;si le résultat est différent de 0...&quot;. Si c'est le cas, il y a bien des résultats.
+{
+//...</code></pre><p id="r-436836" data-claire-element-id="436836">Cette fonction est très simple à utiliser. Plus bas, notamment, pour vérifier si le résultat est égal ou supérieur à 1, pour déterminer s'il faut employer le pluriel ou le singulier lorsque le script emploie une phrase telle que &quot;<em>vous avez 10 résultats</em>&quot;, puisqu'il peut aussi bien y en avoir 1 ou 10 :-° ...</p><p id="r-436837" data-claire-element-id="436837">Voilà : maintenant, j'estime que je peux vous laisser faire tout ça tout seuls, comme dans un TP ! Mais je vais quand même vous afficher un script qui sert de moteur de recherche !</p><aside id="r-436839" data-claire-element-id="436839" data-claire-semantic="information"><p id="r-436838" data-claire-element-id="436838">Pour cet exemple, j'utilise la table imaginaire que j'ai inventée en début de ce tutoriel, la table <strong>fonctions</strong>.</p></aside><pre id="r-436840" data-claire-element-id="436840"><code data-claire-semantic="html+php">&lt;?
+if(isset($_POST['requete']) &amp;&amp; $_POST['requete'] != NULL) // on vérifie d'abord l'existence du POST et aussi si la requete n'est pas vide.
+{
+mysql_connect('localhost','root','');
+mysql_select_db('bdd'); // on se connecte à MySQL. Je vous laisse remplacer les différentes informations pour adapter ce code à votre site.
+$requete = htmlspecialchars($_POST['requete']); // on crée une variable $requete pour faciliter l'écriture de la requête SQL, mais aussi pour empêcher les éventuels malins qui utiliseraient du PHP ou du JS, avec la fonction htmlspecialchars().
+$query = mysql_query(&quot;SELECT * FROM fonctions WHERE nom_fonction LIKE '%$requete%' ORDER BY id DESC&quot;) or die (mysql_error()); // la requête, que vous devez maintenant comprendre ;)
+$nb_resultats = mysql_num_rows($query); // on utilise la fonction mysql_num_rows pour compter les résultats pour vérifier par après
+if($nb_resultats != 0) // si le nombre de résultats est supérieur à 0, on continue
+{
+// maintenant, on va afficher les résultats et la page qui les donne ainsi que leur nombre, avec un peu de code HTML pour faciliter la tâche.
+?&gt;
+&lt;h3&gt;Résultats de votre recherche.&lt;/h3&gt;
+&lt;p&gt;Nous avons trouvé &lt;? echo $nb_resultats; // on affiche le nombre de résultats 
+if($nb_resultats &gt; 1) { echo 'résultats'; } else { echo 'résultat'; } // on vérifie le nombre de résultats pour orthographier correctement. 
+?&gt;
+dans notre base de données. Voici les fonctions que nous avons trouvées :&lt;br/&gt;
+&lt;br/&gt;
+&lt;?
+while($donnees = mysql_fetch_array($query)) // on fait un while pour afficher la liste des fonctions trouvées, ainsi que l'id qui permettra de faire le lien vers la page de la fonction
+{
+?&gt;
+&lt;a href=&quot;fonction.php?id=&lt;? echo $donnees['id']; ?&gt;&quot;&gt;&lt;? echo $donnees['nom_fonction']; ?&gt;&lt;/a&gt;&lt;br/&gt;
+&lt;?
+} // fin de la boucle
+?&gt;&lt;br/&gt;
+&lt;br/&gt;
+&lt;a href=&quot;rechercher.php&quot;&gt;Faire une nouvelle recherche&lt;/a&gt;&lt;/p&gt;
+&lt;?
+} // Fini d'afficher les résultats ! Maintenant, nous allons afficher l'éventuelle erreur en cas d'échec de recherche et le formulaire.
+else
+{ // de nouveau, un peu de HTML
+?&gt;
+&lt;h3&gt;Pas de résultats&lt;/h3&gt;
+&lt;p&gt;Nous n'avons trouvé aucun résultat pour votre requête &quot;&lt;? echo $_POST['requete']; ?&gt;&quot;. &lt;a href=&quot;rechercher.php&quot;&gt;Réessayez&lt;/a&gt; avec autre chose.&lt;/p&gt;
+&lt;?
+}// Fini d'afficher l'erreur ^^
+mysql_close(); // on ferme mysql, on n'en a plus besoin
+}
+else
+{ // et voilà le formulaire, en HTML de nouveau !
+?&gt;
+&lt;p&gt;Vous allez faire une recherche dans notre base de données concernant les fonctions PHP. Tapez une requête pour réaliser une recherche.&lt;/p&gt;
+ &lt;form action=&quot;rechercher.php&quot; method=&quot;Post&quot;&gt;
+&lt;input type=&quot;text&quot; name=&quot;requete&quot; size=&quot;10&quot;&gt;
+&lt;input type=&quot;submit&quot; value=&quot;Ok&quot;&gt;
+&lt;/form&gt;
+&lt;?
+}
+// et voilà, c'est fini !
+?&gt;</code></pre><p id="r-436841" data-claire-element-id="436841">Il reste un dernier petit point à aborder : les différentes façons d'utiliser <strong>LIKE</strong>.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-un-moteur-de-recherche-pour-son-site">Réaliser un moteur de recherche pour son site</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-un-moteur-de-recherche-pour-son-site/ou-faire-la-recherche">
+Où faire la recherche ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-un-moteur-de-recherche-pour-son-site/le-critere-de-selection-like">
+Le critère de sélection LIKE
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-un-moteur-de-recherche-pour-son-site/realisation-du-script-2">
+Réalisation du script
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-un-moteur-de-recherche-pour-son-site/d-autres-manieres-d-exploiter-like">
+D&#039;autres manières d&#039;exploiter LIKE
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/realiser-un-moteur-de-recherche-pour-son-site/le-critere-de-selection-like">
+<span class="arrow"></span>
+<span class="next">Le critère de sélection LIKE</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/realiser-un-moteur-de-recherche-pour-son-site/d-autres-manieres-d-exploiter-like">
+<span class="next">D&#039;autres manières d&#039;exploiter LIKE</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="D039autresmaniresd039exploiterLIKE"></a><h2>D&#039;autres manières d&#039;exploiter LIKE</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/realiser-un-moteur-de-recherche-pour-son-site/realisation-du-script-2">
+<span class="arrow"></span>
+<span class="next">Réalisation du script</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-436843" data-claire-element-id="436843">Dans le script que je vous ai donné, en exemple, nous utilisions LIKE de cette façon :</p><pre id="r-436844" data-claire-element-id="436844"><code data-claire-semantic="sql">... LIKE '%$requete%' ...</code></pre><p id="r-436845" data-claire-element-id="436845">De façon à faire une recherche dans une table avec un mot-clé. Mais nous avons aussi vu qu'on pouvait exploiter LIKE de deux autres manières :</p><ul id="r-436850" data-claire-element-id="436850"><li id="r-436847" data-claire-element-id="436847"><p id="r-436846" data-claire-element-id="436846"><code data-claire-semantic="html+php">... LIKE '%$requete'</code></p></li><li id="r-436849" data-claire-element-id="436849"><p id="r-436848" data-claire-element-id="436848"><code data-claire-semantic="html+php">... LIKE '$requete%'</code></p></li></ul><p id="r-436851" data-claire-element-id="436851">Eh bien il y a moyen d'utiliser ces deux façons. Vous savez maintenant que le <strong>%</strong> représente une valeur quelconque (un peu comme un X en mathématiques). Si on place le <strong>%</strong> après la variable, on trouvera des résultats avec le mot-clé puis éventuellement des caractères supplémentaires à côté. Dans le script réalisé précédemment, nous avions mis les % de part et d'autre de la variable pour obtenir tout un tas de résultats.</p><p id="r-436852" data-claire-element-id="436852">Eh bien sachez que vous pouvez utilisez les deux autres manières citées plus haut. Comment ? Je vous donne des exemples ! ;)</p><h3 id="r-like-requete" data-claire-element-id="436854">LIKE '$requete%'</h3><p id="r-436853" data-claire-element-id="436853">En sachant que la variable <strong>$requete</strong> représente une lettre de l'alphabet... oui, oui, c'est bien ça : avec cette façon d'exploiter LIKE, vous pourrez faire des recherches en fonction des lettres de l'alphabet. ;) Vous n'avez qu'à faire une liste avec les lettres, et, après envoi de la requête, MySQL ira chercher des entrées où le mot commence par la lettre choisie. Ce n'est pas plus compliqué que ça ! ;) Pensez tout de même, si vous réalisez ce type de script et que votre &quot;dictionnaire&quot; ou autre contient des mots commençant par des chiffres, à mettre une dernière option qui ira chercher tous les résultats commençant par un chiffre. Je pense que vous êtes assez grands pour vous débrouiller pour ça ! ^^</p><h3 id="r-like-requete-1" data-claire-element-id="436865">LIKE '%$requete'</h3><p id="r-436855" data-claire-element-id="436855">À vrai dire, j'ai mis un peu de temps pour trouver une manière de l'utiliser... ^^ Disons que vous réalisez une sorte de <em>Bescherelle</em> on-line (le net en a bien besoin, n'empêche :-° ). Un de vos visiteurs veut voir toute la liste des verbes qui se terminent par <em>-ER</em>. Eh bien on fera cette requête toute simple :</p><pre id="r-436856" data-claire-element-id="436856"><code data-claire-semantic="sql">SELECT * FROM liste_verbes WHERE verbe LIKE '%er' ORDER BY verbe</code></pre><p id="r-436857" data-claire-element-id="436857">Et le visiteur aura sa liste des verbes en <em>-ER</em>.</p><p id="r-436858" data-claire-element-id="436858"><cite>Citation : Moteur de recherche (Bescherelle)</cite></p><blockquote id="r-436860" data-claire-element-id="436860"><p id="r-436859" data-claire-element-id="436859">Aimer<br/> Chanter<br/> Danser<br/> Manger<br/> ...</p></blockquote><p id="r-436861" data-claire-element-id="436861">Voilà, nous avons fait le tour des possibilités du critère de sélection LIKE. J'espère que vous en ferez bon usage ! ^^</p><p id="r-436862" data-claire-element-id="436862">J'ai mis en ligne un petit QCM qui permettra de vous tester : savez-vous ou non utiliser le critère LIKE, de différentes manières ? Mais je suis sûr que vous réussirez les doigts dans le nez ! :D</p><p id="r-436863" data-claire-element-id="436863">Eh bien voilà, ce n'était pas bien compliqué.</p><p id="r-436864" data-claire-element-id="436864">En lisant ce tuto, vous avez appris à utiliser le critère de sélection LIKE, comment vérifier le nombre de résultats ainsi que les différentes manières d'utiliser LIKE. J'espère que vous aurez pris autant de plaisir à lire ce tutoriel que j'en ai eu à l'écrire, et que vous aurez appris des choses utiles et qui vous serviront pour votre site ;) !</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-un-moteur-de-recherche-pour-son-site">Réaliser un moteur de recherche pour son site</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-un-moteur-de-recherche-pour-son-site/ou-faire-la-recherche">
+Où faire la recherche ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-un-moteur-de-recherche-pour-son-site/le-critere-de-selection-like">
+Le critère de sélection LIKE
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-un-moteur-de-recherche-pour-son-site/realisation-du-script-2">
+Réalisation du script
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/realiser-un-moteur-de-recherche-pour-son-site/d-autres-manieres-d-exploiter-like">
+D&#039;autres manières d&#039;exploiter LIKE
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/realiser-un-moteur-de-recherche-pour-son-site/realisation-du-script-2">
+<span class="arrow"></span>
+<span class="next">Réalisation du script</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/realiser-un-moteur-de-recherche-pour-son-site.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 08:09:05 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/realiser-un-moteur-de-recherche-pour-son-site.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:27:09 GMT -->
+</html>

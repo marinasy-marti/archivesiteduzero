@@ -1,0 +1,274 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/ocaml-les-flots-de-donnees.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 11:17:21 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/ocaml-les-flots-de-donnees.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:49:13 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : [OCaml] Les flots de données</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/ocaml-les-flots-de-donnees.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : [OCaml] Les flots de données</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#OCamlLesflotsdedonnes">[OCaml] Les flots de données</a><br/><a href="#Prsentationdesstream">Présentation des stream</a><br/><a href="#Manipulerlesstreams">Manipuler les streams</a><br/><a href="#Parsonsduprfix">Parsons du préfixé !</a><br/></div>
+<a name="OCamlLesflotsdedonnes"></a><h2>[OCaml] Les flots de données</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/ocaml-les-flots-de-donnees/presentation-des-stream">
+<span class="next">Présentation des stream</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-572945" data-claire-element-id="572945">Les flots de données (les <em>stream</em> d'OCaml) sont des outils très puissants et assez particuliers permettant, entre-autres, d'implémenter facilement des analyseurs syntaxiques descendants. Dans ce tutoriel, nous allons découvrir de quoi il retourne exactement avec une première sous-partie consacrée aux explications théoriques, une deuxième touchant plus le côté pratique et une troisième, plus dense, où l'on étudiera un exemple concret de programme réalisé à l'aide des <em>stream</em>.</p>
+</div><a name="Prsentationdesstream"></a><h2>Présentation des stream</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/ocaml-les-flots-de-donnees/manipuler-les-streams">
+<span class="next">Manipuler les streams</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h3 id="r-presentation-generale-6" data-claire-element-id="572956">Présentation générale</h3><p id="r-572946" data-claire-element-id="572946">Le flot de données, dit stream dans le langage fonctionnel OCaml, est une structure de données d'un genre peut-être assez nouveau pour certains : c'est une structure abstraite. En gros, cela signifie que l'on ne connait pas son implémentation. Ceci est signalé par OCaml à l'aide de &quot;&lt;abstr&gt;&quot; que l'on reverra plus tard. Il peut y avoir plusieurs raisons à garder une implémentation &quot;abstraite&quot; :</p><ul id="r-572951" data-claire-element-id="572951"><li id="r-572948" data-claire-element-id="572948"><p id="r-572947" data-claire-element-id="572947">Soit le type n'est pas représentable avec les moyens mis à disposition par OCaml pour le construire ;</p></li><li id="r-572950" data-claire-element-id="572950"><p id="r-572949" data-claire-element-id="572949">Soit l'implémentation est volontairement cachée pour limiter le programmeur aux fonctions de manipulation du type déjà toutes faites.</p></li></ul><p id="r-572952" data-claire-element-id="572952">Comme nous l'avons vu, les stream sont ce que l'on appelle des flots de données. Concrètement, un flot de données est en réalité une suite d'éléments du même type. Attention à ne pas confondre stream, list (liste chaînée) et array (tableau). Il peut être impossible d'arriver à la fin de cette suite, elle peut donc être infinie. En effet, les stream ont quelque chose de particulier : leur caractère paresseux. Cela signifie que chaque élément d'un stream n'est calculé que lorsqu'on le demande. Cette technique possède ses avantages et ses défauts et l'un des grands avantages, que n'ont pas les listes ou les tableaux par exemple, c'est qu'il est possible de créer des stream infinis. Autre caractère notable chez les stream : leur caractère destructif. Ici, cela veut simplement dire qu'une fois qu'un élément d'un stream a été reconnu, il est automatiquement supprimé du flot de données. Cela possède ses avantages et ses défauts aussi. Le regroupement du caractère paresseux et du caractère destructif dans le type stream a une importante conséquence :</p><ul id="r-572955" data-claire-element-id="572955"><li id="r-572954" data-claire-element-id="572954"><p id="r-572953" data-claire-element-id="572953">Quand un élément vient d'être calculé, c'est qu'on a cherché à le reconnaitre et si on l'a reconnu, la définition veut qu'il soit immédiatement retiré du stream. Finalement, on constate que le stream en soi ne contient jamais rien, il retient juste comment il doit calculer le prochain élément ;</p></li></ul><h3 id="r-stream-et-analyse-syntaxique-descendante" data-claire-element-id="572965">Stream et analyse syntaxique descendante</h3><p id="r-572957" data-claire-element-id="572957">Les stream sont particulièrement utilisés dans les implémentations en OCaml d'analyseurs syntaxiques descendants. En effet, leurs caractéristiques et les fonctionnalités des extensions de camlp4 qui vont avec en font un outil de premier choix. En réalité, certains développeurs de compilateurs n'utilisent OCaml que pour cette structure de données. Nous allons d'ailleurs étudier un &quot;bout&quot; de mini-compilateur dans la troisième et dernière sous-partie.</p><p id="r-572958" data-claire-element-id="572958">OCaml met en réalité deux outils particulièrement puissants à disposition pour la construction d'analyseurs syntaxiques :</p><ul id="r-572963" data-claire-element-id="572963"><li id="r-572960" data-claire-element-id="572960"><p id="r-572959" data-claire-element-id="572959">ocamlyacc qui n'est autre qu'une implémentation OCaml du célèbre générateur d'analyseurs syntaxiques Yacc (ou Bison, l'équivalent libre de Yacc). ocamlyacc produit un analyseur syntaxique ascendant, qui part des unités lexicales du programme pour retrouver l'axiome de la grammaire décrivant le langage. Pour plus d'informations, les bons sites ne manquent pas ;</p></li><li id="r-572962" data-claire-element-id="572962"><p id="r-572961" data-claire-element-id="572961">Bien entendu, les stream. Comme nous l'avons déjà évoqué, on utilise les stream pour les analyses syntaxiques descendantes, plus simples à implémenter mais généralement moins efficaces que les analyses syntaxiques ascendantes. Dans une telle analyse, on part de l'axiome de la grammaire décrivant le langage pour arriver aux unités lexicales du programme.</p></li></ul><p id="r-572964" data-claire-element-id="572964">Naturellement, ce qui vous intéresse, c'est de savoir comment s'y prendre pour créer et manipuler les stream. C'est au programme de la deuxième sous-partie.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/ocaml-les-flots-de-donnees">[OCaml] Les flots de données</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/ocaml-les-flots-de-donnees/presentation-des-stream">
+Présentation des stream
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/ocaml-les-flots-de-donnees/manipuler-les-streams">
+Manipuler les streams
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/ocaml-les-flots-de-donnees/parsons-du-prefixe">
+Parsons du préfixé !
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/ocaml-les-flots-de-donnees/manipuler-les-streams">
+<span class="next">Manipuler les streams</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Manipulerlesstreams"></a><h2>Manipuler les streams</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/ocaml-les-flots-de-donnees/presentation-des-stream">
+<span class="arrow"></span>
+<span class="next">Présentation des stream</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/ocaml-les-flots-de-donnees/parsons-du-prefixe">
+<span class="next">Parsons du préfixé !</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-572967" data-claire-element-id="572967">Tout au long du cours, je vais m'appuyer sur l'interpréteur interactif d'OCaml, c'est-à-dire le programme ocaml. Pour compiler avec ocamlc (qui produit du bytecode qui peut être interprété avec ocamlrun), la commande est &quot;ocamlc -pp &quot;camlp4o&quot; source.ml&quot;. Pour le compilateur natif ocamlopt, c'est exactement la même chose.</p><h3 id="r-stream-et-camlp4" data-claire-element-id="572990">Stream et camlp4</h3><p id="r-572968" data-claire-element-id="572968">Quand on parle de stream en OCaml, on pense souvent à l'extension du langage camlp4. Mais en réalité, le type abstrait du stream est déjà présent dans le noyau stable d'OCaml et est manipulable grâce aux fonctions fournies par le module Stream. Ce n'est cependant pas très pratique et c'est très limité. Voici un exemple de code créant un stream vide sans utiliser l'extension camlp4 :</p><pre id="r-572969" data-claire-element-id="572969"><code data-claire-semantic="ocaml"># let stm = Stream.of_list [] ;;
+val stm : '_a Stream.t = &lt;abstr&gt;</code></pre><p id="r-572970" data-claire-element-id="572970">Comme on peut le voir, le type du stream en OCaml est en réalité le type Stream.t. Remarquez la signalisation de l'abstraction par &lt;abstr&gt;. Manipuler les stream uniquement avec le module Stream est une tâche très lourde et lassante (nous allons cependant revenir sur ce module à la fin de cette sous-partie). C'est l'une des raisons pour lesquelles les développeurs d'OCaml mettent à disposition l'extension camlp4. &quot;camlp4&quot; signifie &quot;Caml Preprocessor and Pretty-Printer&quot;. camlp4 fournit entre-autres une extension de la syntaxe d'OCaml pour faciliter la création et la manipulation des stream, extension qui va nous intéresser ici et dont on va se servir pour le reste du cours.</p><p id="r-572971" data-claire-element-id="572971">Ce qui vous intéresse maintenant, c'est de savoir comment utiliser l'extension de la syntaxe pour les stream. Pour la dernière version d'OCaml, il va vous falloir charger deux choses : dynlink.cma puis camlp4o.cma, dans cet ordre précisément.</p><pre id="r-572972" data-claire-element-id="572972"><code data-claire-semantic="ocaml"># #load &quot;dynlink.cma&quot; ;;
+# #load &quot;camlp4o.cma&quot; ;;</code></pre><p id="r-572973" data-claire-element-id="572973">Si tout se passe comme prévu, vous devriez vous retrouver avec un message &quot;Camlp4 Parsing version 3.11.0&quot; (avec votre version d'OCaml si elle est différente de la mienne). Maintenant que cela est fait, camlp4 vous met à disposition une syntaxe de manipulation des stream très proche des array et des list. Pour rappel, la syntaxe pour les tableaux est &quot;[| |]&quot; et pour les listes, il s'agit de &quot;[ ]&quot;, et pour les deux (les trois en fait, pour les stream il en sera de même comme nous allons le voir), on sépare chaque élément avec un point-virgule ';'. La syntaxe pour les stream est &quot;[&lt; &gt;]&quot; :</p><pre id="r-572974" data-claire-element-id="572974"><code data-claire-semantic="ocaml"># [&lt; &gt;] ;;
+- : 'a Stream.t = &lt;abstr&gt;</code></pre><p id="r-572975" data-claire-element-id="572975">Le flot de données vide s'écrit &quot;[&lt; &gt;]&quot;. La manipulation des stream en utilisant cette syntaxe très légère est cependant assez différente de celle des array ou des list sur deux principaux points :</p><ul id="r-572980" data-claire-element-id="572980"><li id="r-572977" data-claire-element-id="572977"><p id="r-572976" data-claire-element-id="572976">Chaque élément d'un stream doit être précédé d'une apostrophe ''', justement pour signaler qu'il s'agit bien d'un élément ;</p></li><li id="r-572979" data-claire-element-id="572979"><p id="r-572978" data-claire-element-id="572978">On introduit la notion de sous-flot. Quand on décrit un stream avec la syntaxe &quot;[&lt; &gt;]&quot;, le sous-flot est signalé par l'absence de l'apostrophe.</p></li></ul><p id="r-572981" data-claire-element-id="572981">En gros, en écrivant &quot;[&lt; 'a &gt;]&quot;, a est un élément du flot, mais en écrivant [&lt; a &gt;], a est considéré comme un sous-flot. Les sous-flots ne sont en aucun cas à considérer comme des &quot;entités&quot; d'un flot plus grand, ils ne représentent que des parties du flot principal (le terme &quot;sous-flot&quot; peut donc porter à confusion). Le cas du flot vide &quot;[&lt; &gt;]&quot; est particulier. Dans n'importe quel stream, on peut considérer [&lt; &gt;] comme un sous-flot omniprésent. Ainsi, &quot;[&lt; [&lt;&gt;]; 'a; [&lt;&gt;] &gt;]&quot; est <em>strictement</em> équivalant à &quot;[&lt; 'a &gt;]&quot;. Petit essai :</p><pre id="r-572982" data-claire-element-id="572982"><code data-claire-semantic="ocaml"># let stm = [&lt; '4 &gt;] ;;
+val stm : int Stream.t = &lt;abstr&gt;
+# let stm2 = [&lt; stm; '5 &gt;] ;;
+val stm2 : int Stream.t = &lt;abstr&gt;
+# let stm3 = [&lt; stm; 'true &gt;] ;;
+Characters 19-24:
+  let stm3 = [&lt; stm; 'true &gt;] ;;
+                     ^^^^^
+Error: This expression has type bool Stream.t but is here used with type
+         int Stream.t</code></pre><p id="r-572983" data-claire-element-id="572983">Au terme de ce code, stm est un stream d'entier contenant 4 et stm2 est un stream d'entier contenant 4 et 5, dans cet ordre. Remarquez qu'il est donc extrêmement simple de profiter du concept du sous-flot dans la concaténation de flot. Dans le précédent code, &quot;[&lt; stm; '5 &gt;]&quot; est donc strictement égal à &quot;[&lt; '4; '5 &gt;]&quot;. Dans cet exemple, on retrouve aussi le typage fort d'OCaml : impossible de concaténer un stream d'int et un stream de bool et ce type d'erreur est signalé bien avant l'exécution du code.</p><p id="r-572984" data-claire-element-id="572984">Il faut également souligner une autre particularité dans la manipulation des stream avec camlp4, qui se trouve dans le filtrage de motif (pattern matching). Il faudra être plus vigilant que pour le filtrage de listes par exemple. Premièrement, il faut savoir que camlp4 introduit un nouveau mot-clef pour le filtrage de motif de stream : &quot;parser&quot;. En effet, on écrit plus &quot;match stm with&quot; suivi des différents cas possibles mais &quot;match stm with parser&quot;. Le raccourci bien connu du &quot;function&quot; est géré en utilisant &quot;parser&quot; tout seul et en omettant le dernier paramètre (le principe est en fait le même que &quot;function&quot; : on génère une fonction à un paramètre et on le &quot;match&quot; directement ; dans le cas de &quot;parser&quot;, ce paramètre est forcément un stream). Deuxièmement, il faut savoir que chaque élément reconnu est retiré du flot, même si le reste du <em>match case</em> concerné peut potentiellement ne plus coller. Voici un petit exemple de filtrage :</p><pre id="r-572985" data-claire-element-id="572985"><code data-claire-semantic="ocaml">let test stm = match stm with parser
+| [&lt; '1; '2 &gt;] -&gt; &quot;un deux&quot;
+| [&lt; &gt;] -&gt; &quot;autre&quot;</code></pre><p id="r-572986" data-claire-element-id="572986">Ce qui est strictement la même chose que :</p><pre id="r-572987" data-claire-element-id="572987"><code data-claire-semantic="ocaml">let test = parser
+| [&lt; '1; '2 &gt;] -&gt; &quot;un deux&quot;
+| [&lt; &gt;] -&gt; &quot;autre&quot;</code></pre><p id="r-572988" data-claire-element-id="572988">Il faut également savoir que dans un tel pattern matching, un flot peut être reconnu par un flot plus petit si ce dernier correspond à une partie gauche du flot d'entrée. Par exemple, le flot &quot;[&lt; '1; '2; '3 &gt;]&quot; sera reconnu par le <em>match case</em> &quot;[&lt; '1; '2 &gt;]&quot; si ce dernier est évalué.</p><p id="r-572989" data-claire-element-id="572989">Encore une fois, le flot de données vide &quot;[&lt; &gt;]&quot; est à utiliser avec des pincettes. En effet, il ne faut pas le confondre avec la liste vide &quot;[]&quot; par exemple car il filtre <em>tous</em> les stream. En effet, n'importe quel stream &quot;[&lt; s &gt;]&quot; est équivalent à &quot;[&lt; [&lt; &gt;]; s &gt;]&quot;, et par conséquent &quot;[&lt; &gt;]&quot; est une partie gauche de tous les stream. Il représente en réalité le cas &quot;autre&quot; (&quot;_&quot; n'est pas adapté pour les stream). Il doit ainsi se retrouver en dernier <em>match case</em> du filtrage. En l'omettant, vous n'aurez cependant aucun warning à la compilation comme on en retrouve dans d'autres cas analogues.</p><h3 id="r-gerer-les-erreurs-4" data-claire-element-id="572994">Gérer les erreurs</h3><p id="r-572991" data-claire-element-id="572991">Bien gérer les erreurs, c'est primordial. Que se passe-t-il si aucun des match case du filtrage n'a été reconnu, et n'a ni même entamé en reconnaissance ? Ce genre de cas est géré à l'aide des exceptions et il y a en a précisément deux qui vont nous intéresser : Stream.Failure et Stream.Error. Stream.Failure est lancée quand aucun match case n'est un possible candidat pour le stream filtré, c'est-à-dire quand aucun premier élément du filtrage ne lui correspond. Stream.Error est beaucoup plus subtil : une telle exception est lancée quand un match case a partiellement reconnu l'entrée, mais que la suite ne colle plus. Cette dernière exception est intéressante dans les cas où l'on doit signaler précisément au programmeur ce qui ne va pas dans un stream donné. En effet, elle possède un attribut de type string, qui si rien n'est précisé est la chaîne vide &quot;&quot;. En revanche, là où ça devient bénéfique, c'est quand on précise soi-même un message d'erreur. C'est possible avec l'opérateur &quot;??&quot; et ça se fond totalement dans la syntaxe du stream.</p><p id="r-572992" data-claire-element-id="572992">La syntaxe est simple : on sépare l'élément du message d'erreur associé à l'aide de &quot;??&quot;. Exemple : la fonction suivante prend en entrée un stream, le filtre avec le motif [&lt; '1; '2 &gt;] est nous indique qu'il manque &quot;2&quot; si &quot;1&quot; a effectivement été reconnu.</p><pre id="r-572993" data-claire-element-id="572993"><code data-claire-semantic="ocaml">let test = parser
+| [&lt; '1; '2 ?? &quot;Il manque 2 !&quot; &gt;] -&gt; &quot;un deux&quot;
+| [&lt; &gt;] -&gt; &quot;autre&quot;</code></pre><h3 id="r-algorithmes-sur-les-stream" data-claire-element-id="573007">Algorithmes sur les stream</h3><p id="r-572995" data-claire-element-id="572995">Le pattern matching de stream va encore beaucoup plus loin et vous allez encore découvrir certaines nouveautés dans cette section. Cette dernière est consacrée à la présentation d'algorithmes couramment utilisés lors de la manipulation de flot de données. Certains algorithmes seront déjà présents dans le module Stream mais il faut bien comprendre que le but ici est purement pédagogique, le but final étant de vous rendre à l'aise avec les stream. De plus, vous aurez ici un petit avant-goût de la puissance des stream.</p><p id="r-572996" data-claire-element-id="572996">Nous allons commencer par l'exemple classique : récupérer et retirer le premier élément d'un flot. Comme vous vous en doutez, ces deux actions n'en sont en réalité qu'une. Le nom traditionnel pour cette fonction est &quot;next&quot;. Nous allons procéder simplement en considérant un seul cas possible qui sera &quot;[&lt; 'e &gt;]&quot; pour e représentant donc l'élément de tête. Le seul cas où ça ne passera pas est le flot vide, auquel cas une exception est lancée. On obtient donc le simple code suivant :</p><pre id="r-572997" data-claire-element-id="572997"><code data-claire-semantic="ocaml">let next = parser [&lt; 'e &gt;] -&gt; e</code></pre><p id="r-572998" data-claire-element-id="572998">Un autre exemple classique est l'implémentation d'une fonction &quot;map&quot; adapté aux stream. Pour rappel, le principe de &quot;map&quot; (que l'on retrouve aussi dans le module List par exemple) est d'appliquer une fonction à chaque élément du conteneur d'entrée et de renvoyer un conteneur semblable mais contenant le retour des différents appels. Dans notre cas, nous allons donc utiliser une fonction récursive qui prend en argument le flot d'entrée et une fonction et qui construira le flot de sortie attendu. La définition fonctionnelle de cette fonction sera donc la suivante : &quot;si le flot est un élément suivi d'un reste, le résultat <em>est</em> le flot contenant le retour de la fonction qui prend l'élément en paramètre suivi du (sous-) flot de sortie de l'appel récursif à &quot;map&quot; sur le reste; si le flot est vide, le résultat <em>est</em> le flot vide&quot;. L'idée peut donc très simplement se traduire en OCaml :</p><pre id="r-572999" data-claire-element-id="572999"><code data-claire-semantic="ocaml">let rec map_stream f = parser
+| [&lt; 'e; r &gt;] -&gt; [&lt; 'f e; map_stream f r &gt;]
+| [&lt; &gt;] -&gt; [&lt; &gt;]</code></pre><p id="r-573000" data-claire-element-id="573000">À présent, nous allons nous intéresser à une autre fonction qui prend en paramètre un stream et qui renvoie son inverse, c'est à dire, en termes plus simples, la même suite d'éléments mais dans l'autre sens. En utilisant le concept du sous-flot, l'idée de l'algorithme est très simple : &quot;l'inverse d'un flot contenant un élément suivi un reste <em>est</em> le flot contenant l'inverse du reste suivi de l'élément; l'inverse du flot vide est le flot vide&quot;. En OCaml, on a donc :</p><pre id="r-573001" data-claire-element-id="573001"><code data-claire-semantic="ocaml">let rec reverse = parser
+| [&lt; 'e; r &gt;] -&gt; [&lt; reverse r; 'e &gt;]
+| [&lt; &gt;] -&gt; [&lt; &gt;]</code></pre><p id="r-573002" data-claire-element-id="573002">Tout à l'heure, j'ai parlé de nouveautés. Effectivement, un concept très puissant peut-être utilisé pour réécrire la précédente fonction reverse. En effet, on peut appeler une fonction et récupérer son retour au sein même d'un <em>match case</em> (retour qui n'est pas forcément de type Stream.t mais dans notre cas si). En résumé, le plus gros du travail peut-être effectué avant &quot;-&gt;&quot;. Je crois qu'un exemple est plus compréhensible :</p><pre id="r-573003" data-claire-element-id="573003"><code data-claire-semantic="ocaml">let rec reverse = parser
+| [&lt; 'e; a = reverse &gt;] -&gt; [&lt; a; 'e &gt;]
+| [&lt; &gt;] -&gt; [&lt; &gt;]</code></pre><p id="r-573004" data-claire-element-id="573004">La variable a contient le retour de la fonction reverse qui prend en paramètre le fameux reste qu'on a laissé implicite. En gros, ici on met aussi l'accent sur la définition suivante : &quot;l'inverse d'un stream non vide est l'élément de tête précédé de l'inverse du reste&quot;, sauf qu'on définit cet inverse avant l'expression de retour. Nous réutiliserons cette technique assez pratique dans la troisième sous-partie.</p><p id="r-573005" data-claire-element-id="573005">Enfin, pour finir cette section, intéressons-nous à un dernier algorithme quasiment aussi simple à implémenter que next : l'algorithme de concaténation. Comme vous vous en doutez, le résultat de la concaténation d'un stream stm1 avec un stream stm2 peut être considéré comme un stream dont stm1 et stm2 sont deux sous-flots qui se succèdent. Encore une fois, en OCaml, c'est très simple :</p><pre id="r-573006" data-claire-element-id="573006"><code data-claire-semantic="ocaml">let concat stm1 stm2 = [&lt; stm1; stm2 &gt;]</code></pre><h3 id="r-module-stream" data-claire-element-id="573009">Module Stream</h3><p id="r-573008" data-claire-element-id="573008">Le module Stream contient plusieurs fonctions assez pratiques et toujours bon à savoir utiliser. L'utilité des fonctions de la bibliothèque standard est justement de ne pas être ré-implémentées dans chaque code, il faut les utiliser ! Je ne vais pas détailler le nom, le type et la raison d'être de chaque fonction de ce module ici, un tutoriel n'est pas une doc, c'est à vous de vous renseigner <a href="http://caml.inria.fr/pub/docs/manual-ocaml/libref/Stream.html">ici</a> en cas de besoin.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/ocaml-les-flots-de-donnees">[OCaml] Les flots de données</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/ocaml-les-flots-de-donnees/presentation-des-stream">
+Présentation des stream
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/ocaml-les-flots-de-donnees/manipuler-les-streams">
+Manipuler les streams
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/ocaml-les-flots-de-donnees/parsons-du-prefixe">
+Parsons du préfixé !
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/ocaml-les-flots-de-donnees/presentation-des-stream">
+<span class="arrow"></span>
+<span class="next">Présentation des stream</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/ocaml-les-flots-de-donnees/parsons-du-prefixe">
+<span class="next">Parsons du préfixé !</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Parsonsduprfix"></a><h2>Parsons du préfixé !</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/ocaml-les-flots-de-donnees/manipuler-les-streams">
+<span class="arrow"></span>
+<span class="next">Manipuler les streams</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h3 id="r-avant-propos-13" data-claire-element-id="573024">Avant-propos</h3><p id="r-573011" data-claire-element-id="573011">L'objectif de cette dernière sous-partie est de vous donner un petit exemple concret de cas où l'on peut être amené à utiliser les stream pour l'analyse syntaxique par descente récursive (ou analyse descendante). Elle fait donc office d'illustration. Ainsi, nous allons réaliser ici un petit début de compilateur. Le thème n'est pas la compilation, sachez simplement qu'une partie frontale de compilateur comporte au moins les phases suivantes : analyse lexicale, analyse syntaxique, analyse sémantique et production de code intermédiaire. Dans le cas présent, nous retrouverons l'analyse lexicale, que nous allons voir très rapidement et bien sûr l'analyse syntaxique qui est au centre de la sous-partie. Au lieu de produire du code, nous allons évaluer l'arbre produit par l'analyse syntaxique.</p><p id="r-573012" data-claire-element-id="573012">Notre objectif est simple : nous allons chercher à élaborer un programme en trois étapes qui devra prendre en entrée une string contenant un calcul suivant la notation d'expressions mathématiques préfixées. Pour en savoir plus : <a href="http://fr.wikipedia.org/wiki/Notation_polonaise">ici</a>. Retenez que dans cette notation, les opérateurs se trouvent avant leurs opérandes. Ainsi, &quot;* + 4 5 6&quot; est équivalent à &quot;(4 + 5) * 6&quot; en notation infixée. Cette notation a l'avantage de pouvoir être plus facilement analysée avec une analyse syntaxique descendante. En effet, on ne se heurte pas au problème de la <a href="http://www.linguist.univ-paris-diderot.fr/~amsili/Ens06/poly-li324-1.pdf">récursivité à gauche</a> que l'on retrouve avec la notation infixée et postfixée et on peut donc pleinement se pencher sur les stream.</p><p id="r-573013" data-claire-element-id="573013">Les trois étapes mentionnées précédemment seront les suivantes :</p><ul id="r-573020" data-claire-element-id="573020"><li id="r-573015" data-claire-element-id="573015"><p id="r-573014" data-claire-element-id="573014">L'analyse lexicale : on découpe la chaîne d'entrée en unités lexicales, c'est-à-dire en entités lexicales qui ont un sens dans le langage. Le &quot;langage&quot; (dans la mesure où l'on peut définir son lexique, sa syntaxe et son sens) qui nous intéresse ici est la notation mathématique préfixée. On doit donc identifier les nombres et les opérateurs ;</p></li><li id="r-573017" data-claire-element-id="573017"><p id="r-573016" data-claire-element-id="573016">L'analyse syntaxique : on vérifie que la syntaxe du langage est respectée dans le flot d'unités lexicales provenant de l'analyse lexicale. Cette analyse retourne un arbre syntaxique abstrait symbolisant la structure syntaxique du &quot;programme&quot; avec les éléments utiles pour la suite. On utilisera un cas particulier d'analyse descendante : une analyse syntaxique par descente récursive et on va se servir pour cela des stream ;</p></li><li id="r-573019" data-claire-element-id="573019"><p id="r-573018" data-claire-element-id="573018">Le calcul du résultat : dans notre cas, ce qui nous intéresse est d'obtenir le résultat du calcul. Nous allons faire cela récursivement à partir de l'arbre abstrait renvoyé par l'analyse syntaxique.</p></li></ul><p id="r-573021" data-claire-element-id="573021">L'analyse lexicale et le calcul du résultat ne sont pas au centre de cette section, nous mettons l'accent sur l'analyse syntaxique comme le but est de montrer l'intérêt des stream dans une telle situation. Nous allons donc rapidement coder un petit analyseur lexical. Sans se prendre la tête, nous allons utiliser le module <a href="http://caml.inria.fr/pub/docs/manual-ocaml/libref/Genlex.html">Genlex</a> et plus précisément la fonction make_lexer qui prend en paramètre une string list contenant les mots-clef et un char Stream.t contenant le flot de caractère entrant. Pour nous simplifier la tâche, pour ce code et pour les codes suivants, nous allons utiliser une instruction &quot;open&quot; pour Genlex. On obtient :</p><pre id="r-573022" data-claire-element-id="573022"><code data-claire-semantic="ocaml">open Genlex
+
+let lexer str =
+  let kwd = [&quot;+&quot;; &quot;-&quot;; &quot;*&quot;; &quot;/&quot;; &quot;^&quot;]
+  in make_lexer kwd (Stream.of_string str)</code></pre><p id="r-573023" data-claire-element-id="573023">Cette fonction renvoie la suite d'unités lexicales correspondante à la chaîne d'entrée, qui seront de type Genlex.token.</p><h3 id="r-stream-l-analyse-syntaxique" data-claire-element-id="573042">Stream : l'analyse syntaxique</h3><p id="r-573025" data-claire-element-id="573025">La notation préfixée des expressions est un langage. Comme tout langage, on peut définir sa syntaxe de manière pertinente et non-contextuelle à l'aide des BNF, ou grammaires non-contextuelles. Nous allons définir des règles qui décrivent comment un programme, à partir d'une règle principale appelée axiome, peut être structuré. Pour les expressions préfixées, il faut se poser la question : quelle forme peut prendre une expression ? &quot;6&quot;, &quot;+ 34.15 3&quot;, &quot;* - 4 2.1 27&quot;. On remarque qu'une expression est soit un nombre (int ou float), soit un opérateur suivi de deux expressions. Très simplement, on peut décrire cela à l'aide de deux règles :</p><p id="r-573026" data-claire-element-id="573026"><cite>Citation</cite></p><blockquote id="r-573029" data-claire-element-id="573029"><p id="r-573027" data-claire-element-id="573027"><em>expr</em> -&gt; <strong>op</strong><em>expr</em><em>expr</em> | <em>val</em></p><p id="r-573028" data-claire-element-id="573028"><em>val</em> -&gt; <strong>int</strong> | <strong>float</strong></p></blockquote><p id="r-573030" data-claire-element-id="573030">&quot;<em>expr</em>&quot; et &quot;<em>val</em>&quot; sont des règles syntaxiques et le tout forme une (très) petite grammaire dont &quot;<em>expr</em>&quot; est l'axiome.</p><p id="r-573031" data-claire-element-id="573031">La barre verticale exprime un &quot;ou&quot;. &quot;<em>expr</em>&quot; est donc une variable pour désigner les expressions d'une manière générale, tandis que &quot;val&quot; définit la forme que peut prendre une unique valeur. Dans la grammaire ci-dessus, j'utilise une norme assez répandue : les non-terminaux sont écrits en italique et les terminaux en gras. Dans notre cas, il y a trois types de terminaux : les nombres entiers, les nombres flottants et les opérateurs, ce qui est clairement visible. Maintenant pour en venir au principal, les stream, il faut savoir qu'à l'aide de ces derniers, l'implémentation de l'analyseur syntaxique reflètera de manière extrêmement transparente la grammaire que nous venons de voir. Les stream sont conçus pour écrire de manière intuitive un analyseur syntaxique à partir de BNF. On trouve donc un lien fort en théorie (les BNF) et pratique (les stream) qui est tout à notre avantage.</p><p id="r-573032" data-claire-element-id="573032">Il reste un dernier point à éclaircir avant de nous ruer sur l'implémentation : les arbres syntaxiques abstraits. Ces arbres (AST) sont ceux produits par l'analyseur syntaxique. Ils représentent la structure syntaxique du programme, dans lequel chaque opérateur (le terme doit être pris au sens large ici) est un nœud et chaque opérande l'un de ses fils. Les feuilles représentent donc les terminaux. Dans un tel arbre, on ne garde que les parties &quot;nécessaires&quot; pour la suite. En gros, quand on construit un AST à partir d'une production &quot;<em>instr</em> -&gt; <strong>if (</strong><em>expr</em><strong>)</strong><em>instr</em><strong>else</strong><em>instr</em>&quot; par exemple, les parties intéressantes du nœud créé seront expr et les deux instr. On peut laisser le if, les parenthèses et le else de côté, on peut les deviner à l'aide du nom du nœud et de toute façon, ils ne nous intéresseront plus.</p><p id="r-573033" data-claire-element-id="573033">Dans notre exemple, nous voulez en outre mélanger &quot;float&quot; et &quot;int&quot; au sein d'une même expression sans conversion explicite. On peut facilement convertir un &quot;int&quot; en &quot;float&quot; sans perdre d'information, du coup ce qui se passe après l'analyse syntaxique traitant uniquement des &quot;float&quot;, cette dernière prendra soin de convertir les &quot;int&quot; s'il y en a.<br/> L'arbre abstrait que nous allons devoir construire devra donc gérer deux cas : le nœud à construire est un &quot;float&quot; <em>ou</em> le noeud à construire est un opérateur arithmétique et deux AST. Nous allons directement utiliser le type des opérateurs arithmétiques sur &quot;float&quot; d'OCaml, à savoir (float -&gt; float -&gt; float), pour représenter l'opérateur et non une string, pour ne plus avoir à s'en préoccuper lors du calcul du résultat. En OCaml, on a donc simplement :</p><pre id="r-573034" data-claire-element-id="573034"><code data-claire-semantic="ocaml">type tree =
+| Lf of float
+| Nd of (float -&gt; float -&gt; float) * tree * tree</code></pre><p id="r-573035" data-claire-element-id="573035">Les opérateurs que nous avons définis en mots-clef seront renvoyés par l'analyse lexicale sous le &quot;sous-type&quot; Kwd of string. Au mieux, on récupère donc une string lors de l'analyse syntaxique. Pour obtenir le bon opérateur en fonction de cette string, nous allons juste construire une petite fonction toute simple :</p><pre id="r-573036" data-claire-element-id="573036"><code data-claire-semantic="ocaml">let to_op op = match op with
+| &quot;+&quot; -&gt; ( +. ) | &quot;-&quot; -&gt; ( -. )
+| &quot;*&quot; -&gt; ( *. ) | &quot;/&quot; -&gt; ( /. )
+| &quot;^&quot; -&gt; ( ** )
+| _ -&gt; failwith (op ^ &quot; : non connu&quot;)</code></pre><p id="r-573037" data-claire-element-id="573037">À présent, nous pouvons nous pencher sur l'implémentation de l'analyseur syntaxique. Je rappelle avant que nous aurons affaire à une analyse syntaxique par descente récursive. Ici, on n'aura pas de problème car notre grammaire n'est pas récursive à gauche et en plus de cela, elle est prédictive LL(1) (ce qui signifie qu'il nous suffit d'observer le premier élément pour choisir la bonne production).</p><p id="r-573038" data-claire-element-id="573038">Au niveau de la conception, c'est très simple : on crée typiquement une fonction par règle syntaxique, chacune des ces fonctions prenant un stream en paramètre et renvoyant un AST. Nous allons ainsi créer deux fonctions : &quot;expr&quot; et &quot;val_&quot;. On applique ensuite un pattern matching sur le stream d'entrée. Si l'on retrouve la production &quot;<em>expr</em> -&gt; <strong>op</strong><em>expr expr</em>&quot;, on renvoie un Nd (pour &quot;node&quot;) contenant l'opérateur OCaml associé à l'opérateur représenté par une string suivi des deux AST correspondant aux retours des deux appels récursifs à &quot;expr&quot; nécessaires (on va bien sûr faire cela directement dans le match case). Si l'on retrouve la production &quot;<em>val</em> -&gt; <strong>int</strong>&quot;, on renvoie simplement un Lf (pour &quot;leaf&quot;) stockant l'entier qu'on aura pris soin de convertir en &quot;float&quot;. Si l'on retrouve &quot;<em>val</em> -&gt; <strong>float</strong>&quot;, on fait la même chose, mais sans convertir.</p><p id="r-573039" data-claire-element-id="573039">Les opérateurs stockés dans le stream seront de sous-type Kwd (voir module <a href="http://caml.inria.fr/pub/docs/manual-ocaml/libref/Genlex.html">Genlex</a>), les &quot;float&quot; de sous-type Float et les &quot;int&quot; de sous-type Int. Nous n'allons pas implémenter le cas &quot;autre&quot;, qui serait bien sûr une erreur de syntaxe ici. Une exception Stream.Failure sera lancée si au aucun match case n'est reconnu. Au terme de cette analyse, un AST complet est renvoyé. Voici l'implémentation, qui suit la précédente description :</p><pre id="r-573040" data-claire-element-id="573040"><code data-claire-semantic="ocaml">let rec expr = parser
+| [&lt; 'Kwd k; e1 = expr; e2 = expr &gt;] -&gt; Nd (to_op k, e1, e2)
+| [&lt; v = val_ &gt;] -&gt; v
+
+    and val_ = parser
+| [&lt; 'Int i &gt;] -&gt; Lf (float_of_int i)
+| [&lt; 'Float f &gt;] -&gt; Lf f</code></pre><p id="r-573041" data-claire-element-id="573041">Vous remarquez donc que c'est vraiment très concis. Il ne fait aucun doute qu'il est évidemment impossible d'être aussi concis et clair à la fois en C++ ou en Java par exemple. Comme implémentation, on ne peut plus simple, c'est ce qui fait toute la puissance d'OCaml et des stream pour l'analyse syntaxique.<br/> Un dernier point : il faut prendre garde à une chose un peu subtile. Je vais prendre un exemple : et si j'écris &quot;45. +&quot;, ce qui est visiblement syntaxiquement faux, l'analyse lexicale nous renverra le stream &quot;[&lt; 'Float 45.; 'Kwd &quot;+&quot; &gt;]&quot;. Ce dernier sera reconnu par &quot;val_&quot;, puis &quot;expr&quot;. &quot;expr&quot; renverra un AST contenant juste la valeur 45, l'analyse syntaxique est terminée et le stream n'est pas vide et... aucune erreur ! Il faut y remédier et l'idée classique est de vérifier après l'analyse syntaxique s'il reste des éléments dans le stream. À vous de jouer ;).</p><h3 id="r-et-on-teste" data-claire-element-id="573047">Et on teste</h3><p id="r-573043" data-claire-element-id="573043">On peut facilement construire une fonction qui par récursions calcule le résultat à partir de l'AST provenant de l'analyse syntaxique. Il nous suffit de choisir la bonne action en fonction du sous-type. Si nous avons affaire à Lf, on renvoie le &quot;float&quot; stocké lui-même. Si nous avons Nd, on applique l'opérateur stocké entre le retour de result sur le premier sous-arbre et le retour de result sur le second sous-arbre. Au final, on obtient le résultat du calcul de départ.</p><pre id="r-573044" data-claire-element-id="573044"><code data-claire-semantic="ocaml">let rec result = function
+| Lf f -&gt; f
+| Nd (op, e1, e2) -&gt;
+  op (result e1) (result e2)</code></pre><p id="r-573045" data-claire-element-id="573045">Voici un petit exemple qui montre que notre objectif a été atteint :</p><pre id="r-573046" data-claire-element-id="573046"><code data-claire-semantic="ocaml"># result (expr (lexer &quot;* + 22.1 5 - 10 3.2&quot;)) ;;
+- : float = 184.28</code></pre><h3 id="r-mieux-gerer-les-erreurs" data-claire-element-id="573057">Mieux gérer les erreurs</h3><p id="r-573048" data-claire-element-id="573048">D'une manière générale en compilation, la gestion des erreurs est fondamentale. En cas d'erreur, on doit pouvoir obtenir un maximum d'informations sur cette dernière : la ligne (voire la (les) colonne(s)) concernée, la nature de l'erreur et pourquoi pas, des suggestions pour la corriger. Encore une fois, les stream s'y prêtent très bien : on peut le faire avec la spécification de message d'erreur à l'aide de &quot;??&quot; comme nous l'avons déjà vu. Par exemple : quand on a reconnu un opérateur quelconque dans &quot;expr&quot;, mais qu'il n'y a pas d'opérande ou peut-être qu'un. On peut donc préciser &quot;operandes de op manquants&quot; ou &quot;second operande de op manquant&quot;, ou &quot;op&quot; sera remplacé par ledit opérateur. On est donc en mesure de produire un message plus clair que Stream.Error &quot;&quot;, qui dit non seulement ce qui est faux, mais aussi pour quel opérateur.</p><p id="r-573049" data-claire-element-id="573049">On peut par exemple imaginer ceci :</p><pre id="r-573050" data-claire-element-id="573050"><code data-claire-semantic="ocaml">let rec expr = parser
+| [&lt; 'Kwd op
+   ; e1 = expr ?? &quot;operandes de &quot; ^ op ^ &quot; manquants&quot;
+   ; e2 = expr ?? &quot;second operande de &quot; ^ op ^ &quot; manquant&quot; &gt;] -&gt; Nd (to_op op, e1, e2)
+| [&lt; v = val_ &gt;] -&gt; v
+
+    and val_ = parser
+| [&lt; 'Int i &gt;] -&gt; Lf (float_of_int i)
+| [&lt; 'Float f &gt;] -&gt; Lf f</code></pre><p id="r-573051" data-claire-element-id="573051">Les stream sont des outils très pratiques. Avec le petit exemple des expressions préfixées, cela ne s'est peut-être pas assez fait sentir. Essayez de construire des analyseurs plus gros, plus complets et bien sûr pour un langage source dont la syntaxe est plus complexe, car c'est bien là que les stream deviennent très intéressants. Les problèmes de la récursivité à gauche de certaines grammaires n'empêchent pas l'utilisation des stream, comme vous pouvez le constater en lisant <a href="http://www.siteduzero.com/tutoriel-3-83576-calcul-d-une-expression-mathematique.html">ce tutoriel</a> de <a href="http://www.siteduzero.com/membres-294-12885.html">robocop</a>. Dans tous les cas, il y a toujours ce théorème :</p><p id="r-573052" data-claire-element-id="573052">&quot;<em>Tout langage algébrique peut être généré par une grammaire algébrique non récursive gauche</em>&quot;</p><p id="r-573053" data-claire-element-id="573053">Voici en bonus le stream des entiers naturels, qui a la particularité d'être <strong>infini</strong> :</p><pre id="r-573054" data-claire-element-id="573054"><code data-claire-semantic="ocaml">let n =
+  let rec n_ i = [&lt; 'i; n_ (i+1) &gt;]
+  in n_ 0</code></pre><p id="r-573055" data-claire-element-id="573055">Je remercie <a href="http://www.siteduzero.com/membres-294-51570.html">Xavinou</a> et <a href="http://www.siteduzero.com/membres-294-12885.html">robocop</a> pour leur relecture.</p><p id="r-573056" data-claire-element-id="573056">shareman</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/ocaml-les-flots-de-donnees">[OCaml] Les flots de données</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/ocaml-les-flots-de-donnees/presentation-des-stream">
+Présentation des stream
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/ocaml-les-flots-de-donnees/manipuler-les-streams">
+Manipuler les streams
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/ocaml-les-flots-de-donnees/parsons-du-prefixe">
+Parsons du préfixé !
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/ocaml-les-flots-de-donnees/manipuler-les-streams">
+<span class="arrow"></span>
+<span class="next">Manipuler les streams</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/ocaml-les-flots-de-donnees.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 11:17:21 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/ocaml-les-flots-de-donnees.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:49:13 GMT -->
+</html>

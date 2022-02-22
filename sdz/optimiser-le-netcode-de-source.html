@@ -1,0 +1,523 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/optimiser-le-netcode-de-source.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 22:43:30 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/optimiser-le-netcode-de-source.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 03:59:36 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Optimiser le netcode de Source</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/optimiser-le-netcode-de-source.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Optimiser le netcode de Source</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#OptimiserlenetcodedeSource">Optimiser le netcode de Source</a><br/><a href="#LaconsoledeSourceetlesCVARs">La console de Source et les CVARs</a><br/><a href="#Latencechokelossetfidlitdelasimulation">Latence, choke, loss et fidélité de la simulation</a><br/><a href="#Lenetgraph">Le netgraph</a><br/><a href="#LaCVARquotratequot">La CVAR &quot;rate&quot;</a><br/><a href="#LaCVARquotcl_interpquot">La CVAR &quot;cl_interp&quot;</a><br/><a href="#LesCVARsquotcl_updateratequotetquotcl_cmdratequot">Les CVARs &quot;cl_updaterate&quot; et &quot;cl_cmdrate&quot;</a><br/></div>
+<a name="OptimiserlenetcodedeSource"></a><h2>Optimiser le netcode de Source</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/la-console-de-source-et-les-cvars">
+<span class="next">La console de Source et les CVARs</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-591020" data-claire-element-id="591020">Le sujet pour le moins houleux du Netcode des FPS fourmille d'idées reçues et autres affirmations gratuites. Ainsi, on trouve souvent sur les forums des recommandations de ce style : &quot;Règle ton cl_updaterate / cl_cmdrate à XX et tu <em>lagueras</em> 10 fois moins / ton <em>ping</em> descendra de 10 ms / tu seras intouchable&quot;, alors que leurs auteurs n'ont en réalité effectué que des tests très subjectifs, souvent dénués de toute méthodologie, alors qu'eux-mêmes n'ont souvent aucune idée de ce dont ils parlent.</p><p id="r-591021" data-claire-element-id="591021">Dans le but de changer cet état des choses, j'ai réalisé une étude poussée et méthodique du comportement de la partie réseau de Source. Je livre dans ce tutoriel le fruit de mon travail, c'est-à-dire la réponse à la question &quot;Quelle est la configuration optimale ?&quot; que se posent beaucoup de joueurs.</p><aside id="r-591023" data-claire-element-id="591023" data-claire-semantic="information"><p id="r-591022" data-claire-element-id="591022">Ce tutoriel est très orienté pratique : il vous expliquera uniquement comment obtenir la meilleure configuration possible pour votre jeu. Si vous souhaitez plus d'informations théoriques (si vous avez envie de comprendre comment tout ce shmilblick fonctionne) je vous invite à vous reporter à <a href="http://www.e-t172.net/articles/srcnetcode/">mon document original</a>.</p></aside>
+</div><a name="LaconsoledeSourceetlesCVARs"></a><h2>La console de Source et les CVARs</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/latence-choke-loss-et-fidelite-de-la-simulation">
+<span class="next">Latence, choke, loss et fidélité de la simulation</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-la-console-3" data-claire-element-id="591045">La console</h2><p id="r-591024" data-claire-element-id="591024">Le moteur Source, comme la plupart des FPS, permet d'utiliser une interface pour envoyer des commandes, ou modifier les paramètres du moteur de jeu. Cette interface est appelée <strong>console</strong>. Pour faire simple, il s'agit d'un bloc dans lequel défile du texte vous donnant des indications sur l'état actuel du moteur. En dessous de ce bloc se trouve un champ de texte permettant d'entrer des commandes. Ceux qui ont déjà vu une invite de commandes sous Windows ou un terminal Linux sauront de quoi je parle ; pour les autres, vous comprendrez quand vous la verrez. ;)</p><div id="r-591026" data-claire-element-id="591026" data-claire-semantic="question"><p id="r-591025" data-claire-element-id="591025">Comment accède-t-on à cette console ?</p></div><p id="r-591027" data-claire-element-id="591027">Il existe plusieurs moyens de l'afficher : je vais ici vous présenter celui que j'utilise ; bien évidemment, si vous utilisez un autre moyen, ne changez pas vos habitudes pour moi. ^^</p><ul id="r-591038" data-claire-element-id="591038"><li id="r-591029" data-claire-element-id="591029"><p id="r-591028" data-claire-element-id="591028">Allez dans la section &quot;Jeux&quot; de Steam.</p></li><li id="r-591031" data-claire-element-id="591031"><p id="r-591030" data-claire-element-id="591030">Faites un clic droit sur le jeu concerné (par exemple, Counter-Strike Source).</p></li><li id="r-591033" data-claire-element-id="591033"><p id="r-591032" data-claire-element-id="591032">Cliquez sur &quot;Propriétés&quot;.</p></li><li id="r-591035" data-claire-element-id="591035"><p id="r-591034" data-claire-element-id="591034">Cliquez sur &quot;Définir les options de lancement...&quot;</p></li><li id="r-591037" data-claire-element-id="591037"><p id="r-591036" data-claire-element-id="591036">Entrez &quot;-console -dev&quot; (sans les guillemets bien entendu), puis validez.</p></li></ul><figure id="r-591040" data-claire-element-id="591041"><img id="r-591039" data-claire-element-id="591039" src="medias/uploads.siteduzero.com_files_8001_9000_8009.png" alt="Image utilisateur"/></figure><p id="r-591042" data-claire-element-id="591042">Ensuite, pour accéder à la console, il vous suffira d'appuyer sur la touche &quot;echap&quot; lorsque vous jouez, et vous aurez alors la console sous les yeux.</p><aside id="r-591044" data-claire-element-id="591044" data-claire-semantic="information"><p id="r-591043" data-claire-element-id="591043">Le paramètre &quot;-dev&quot; n'est pas obligatoire pour obtenir la console. Il demande juste à cette dernière de donner plus d'informations. En réalité, on n'en a pas besoin pour la suite de ce tuto ; si vous n'en voyez pas d'utilité, vous pouvez le retirer.</p></aside><h2 id="r-les-fichiers-de-demarrage" data-claire-element-id="591062">Les fichiers de démarrage</h2><p id="r-591046" data-claire-element-id="591046">Lorsque vous démarrez votre jeu, celui-ci doit définir un certain nombre d'options, telles que votre nom dans le jeu, votre configuration des touches, la sensibilité de votre souris, etc. Ces options sont en réalité des commandes console, qui sont stockées dans des fichiers spécifiques, lesquels sont exécutés au démarrage du jeu.</p><aside id="r-591048" data-claire-element-id="591048" data-claire-semantic="information"><p id="r-591047" data-claire-element-id="591047">&quot;Au démarrage du jeu&quot; signifie que ces fichiers sont exécutés au moment où les menus du jeu sont affichés, et non lorsque vous lancez ou rejoignez une partie.</p></aside><p id="r-591049" data-claire-element-id="591049">Tous ces fichiers de démarrage sont situés dans le sous-répertoire &quot;cfg&quot; du répertoire où est stocké le jeu (par exemple : C:\program Files\Steam\steamapps\e-t172\counter-strike source\cstrike\cfg). Il y a 4 fichiers lancés au démarrage, les voici dans l'ordre dans lequel ils sont exécutés :</p><ul id="r-591058" data-claire-element-id="591058"><li id="r-591051" data-claire-element-id="591051"><p id="r-591050" data-claire-element-id="591050">userconfig.cfg</p></li><li id="r-591053" data-claire-element-id="591053"><p id="r-591052" data-claire-element-id="591052">config.cfg : on ne modifiera jamais ce fichier, car il est effacé et réécrit par le moteur à chaque fois que vous modifiez les paramètres du jeu via le menu Options.</p></li><li id="r-591055" data-claire-element-id="591055"><p id="r-591054" data-claire-element-id="591054">valve.rc</p></li><li id="r-591057" data-claire-element-id="591057"><p id="r-591056" data-claire-element-id="591056">autoexec.cfg (lancé par le précédent : en effet, le fichier valve.rc contient la ligne &quot;exec autoexec.cfg&quot;)</p></li></ul><aside id="r-591060" data-claire-element-id="591060" data-claire-semantic="warning"><p id="r-591059" data-claire-element-id="591059">Cet ordre est important, car si une directive de configuration est présente dans deux fichiers de démarrage, c'est celui qui a été exécuté en dernier qui l'emporte sur l'autre.</p></aside><p id="r-591061" data-claire-element-id="591061">Ainsi, placer des commandes dans le fichier userconfig.cfg doit être fait avec précaution, car ces commandes risquent d'être écrasées par le fichier config.cfg généré par le moteur. Par conséquent, <strong>je vous recommande de placer toutes les commandes que vous souhaitez exécuter au démarrage dans le fichier autoexec.cfg</strong>, qui, de cette manière, ne risque pas d'être &quot;écrasé&quot;.</p><h2 id="r-commandes-et-cvars" data-claire-element-id="591080">Commandes et CVARs</h2><p id="r-591063" data-claire-element-id="591063">Il y a deux types d'instructions que vous pouvez donner à la console (que ce soit en jeu, ou dans un fichier de démarrage) : les <strong>commandes</strong> et les <strong>CVARs</strong>.</p><h3 id="r-les-commandes-9" data-claire-element-id="591067">Les commandes</h3><p id="r-591064" data-claire-element-id="591064">Une commande est un simple mot qui demande au moteur d'effectuer une action précise. Elle prend parfois des paramètres. Nous n'utiliserons aucune commande dans ce tuto. Exemple : &quot;echo Texte à afficher dans la console&quot; ou &quot;connect 193.27.10.33:27015&quot; ou encore &quot;retry&quot;.</p><aside id="r-591066" data-claire-element-id="591066" data-claire-semantic="information"><p id="r-591065" data-claire-element-id="591065">Vous pouvez obtenir une liste complète des commandes disponibles en utilisant la commande cmdlist.</p></aside><h3 id="r-les-cvars" data-claire-element-id="591079">Les CVARs</h3><p id="r-591068" data-claire-element-id="591068">Une CVAR, pour <strong>C</strong>onfiguration <strong>VAR</strong>iable, est comme son nom l'indique, un paramètre que l'on peut modifier.</p><p id="r-591069" data-claire-element-id="591069">En entrant simplement le nom de la CVAR dans la console, par exemple : &quot;cl_interp&quot; (que l'on étudiera plus loin dans ce tuto), on obtient des informations intéressantes sur son contenu et son fonctionnement :</p><pre id="r-591070" data-claire-element-id="591070"><code data-claire-semantic="console">] cl_interp
+
+&quot;cl_interp&quot; = &quot;0.010000&quot; ( def. &quot;0.1&quot; ) min. 0.010000 max. 1.000000
+
+ client
+
+ - Interpolate object positions starting this many seconds in past</code></pre><p id="r-591071" data-claire-element-id="591071">Comme vous pouvez le voir, le moteur nous indique plusieurs informations au sujet de cette CVAR, notamment sa valeur actuelle (0.01), sa valeur par défaut (0.1), sa valeur minimale (0.01) et sa valeur maximale (1.0), ainsi qu'une brève description.</p><aside id="r-591073" data-claire-element-id="591073" data-claire-semantic="warning"><p id="r-591072" data-claire-element-id="591072">Les CVARs décrites dans ce tuto sont toutes assez bien documentées par le moteur, mais si vous vous aventurez en dehors des sentiers battus, vous risquez d'obtenir moins d'explications.</p></aside><p id="r-591074" data-claire-element-id="591074">Pour définir une CVAR à une certaine valeur, il suffit d'écrire le nom de la CVAR suivi de la valeur qu'on souhaite lui faire prendre, exemple :</p><pre id="r-591075" data-claire-element-id="591075"><code data-claire-semantic="console">] cl_interp 0.1</code></pre><p id="r-591076" data-claire-element-id="591076">Cette fois-ci, la console ne vous répondra rien - ceci est normal.</p><aside id="r-591078" data-claire-element-id="591078" data-claire-semantic="information"><p id="r-591077" data-claire-element-id="591077">Vous pouvez obtenir une liste complète des CVARs disponibles en utilisant la commande cvarlist.</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source">Optimiser le netcode de Source</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/la-console-de-source-et-les-cvars">
+La console de Source et les CVARs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/latence-choke-loss-et-fidelite-de-la-simulation">
+Latence, choke, loss et fidélité de la simulation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/le-netgraph">
+Le netgraph
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/la-cvar-rate">
+La CVAR &quot;rate&quot;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/la-cvar-cl-interp">
+La CVAR &quot;cl_interp&quot;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/les-cvars-cl-updaterate-et-cl-cmdrate">
+Les CVARs &quot;cl_updaterate&quot; et &quot;cl_cmdrate&quot;
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/latence-choke-loss-et-fidelite-de-la-simulation">
+<span class="next">Latence, choke, loss et fidélité de la simulation</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Latencechokelossetfidlitdelasimulation"></a><h2>Latence, choke, loss et fidélité de la simulation</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/la-console-de-source-et-les-cvars">
+<span class="arrow"></span>
+<span class="next">La console de Source et les CVARs</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/le-netgraph">
+<span class="next">Le netgraph</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-591082" data-claire-element-id="591082">Lorsque vous jouez en multijoueur sur un FPS, trois types de problèmes peuvent survenir : les problèmes de <em>latence</em>, de <em>choke</em> et de <em>loss</em>. Il faut également veiller à obtenir une simulation (c'est-à-dire un jeu) la plus fidèle possible à celle du serveur.</p><h2 id="r-la-latence" data-claire-element-id="591090">La latence</h2><p id="r-591083" data-claire-element-id="591083">La latence, aussi appelée <em>ping</em>, désigne le temps que prend un paquet de données pour passer d'un ordinateur à un autre : dans notre cas, de votre jeu au serveur.</p><aside id="r-591085" data-claire-element-id="591085" data-claire-semantic="error"><p id="r-591084" data-claire-element-id="591084">La latence affichée dans le tableau des scores ou dans le <em>netgraph</em> (que nous verrons plus loin) est un chiffre peu fiable, qui représente plus un indice de la qualité du jeu que la latence proprement dite. Qui plus est, ce chiffre peut se révéler totalement faux avec certaines configurations. Pour obtenir le &quot;vrai&quot; ping réseau, vous devez utiliser la commande <em>ping</em> de Windows.</p></aside><p id="r-591086" data-claire-element-id="591086">Contrairement à une idée répandue, lorsque vous avez un ping de 200 par exemple et que vous tirez, le tir ne sera pas pris en compte 200 millisecondes plus tard. En effet, le serveur dispose d'algorithmes lui permettant de déterminer à quel moment vous avez réellement tiré, et de &quot;remonter le temps&quot; jusqu'à cet instant, pour revenir à une image de jeu plus proche de celle que vous aviez lorsque vous avez tiré. Ce procédé est appelé <em>lag compensation</em>.</p><aside id="r-591088" data-claire-element-id="591088" data-claire-semantic="warning"><p id="r-591087" data-claire-element-id="591087">Malgré ce procédé, le ping a une influence importante sur la qualité du jeu. De plus, le <em>lag compensation</em>, de par sa nature même, induit des effets secondaires nuisant à la crédibilité de la simulation (par exemple, lorsque vous vous faites tuer alors que vous veniez de vous mettre à couvert).</p></aside><p id="r-591089" data-claire-element-id="591089"><strong>La modification de la configuration du netcode ne peut en aucun cas vous aider à obtenir un meilleur ping, qui ne dépend que de la qualité de votre connexion au serveur.</strong></p><h2 id="r-le-choke" data-claire-element-id="591101">Le choke</h2><p id="r-591091" data-claire-element-id="591091">Le choke est un autre problème pouvant survenir au cours du jeu. <em>Avoir du choke</em> signifie que le jeu n'a pas assez de bande passante disponible pour échanger les paquets de données à la fréquence voulue (soit parce que le jeu dispose de trop peu de bande passante, soit parce que les paquets à transmettre sont de taille<strong>s</strong> trop importante<strong>s</strong>). En pratique, cela signifie que les paquets arrivent en retard. De plus, si le problème persiste, cela peut provoquer une réaction en chaîne qui allonge encore plus les temps de transmission.</p><p id="r-591092" data-claire-element-id="591092">Le choke est en général un phénomène de courte durée (2-3 secondes). Si vous avez du choke en continu, alors vous avez un gros problème, et ce tuto va vous aider à le résoudre.</p><p id="r-591093" data-claire-element-id="591093">Le choke peut avoir pour causes :</p><ul id="r-591100" data-claire-element-id="591100"><li id="r-591095" data-claire-element-id="591095"><p id="r-591094" data-claire-element-id="591094">Une mauvaise connexion avec le serveur</p></li><li id="r-591097" data-claire-element-id="591097"><p id="r-591096" data-claire-element-id="591096">Une mauvaise configuration du Netcode du jeu</p></li><li id="r-591099" data-claire-element-id="591099"><p id="r-591098" data-claire-element-id="591098">Les limites du moteur</p></li></ul><h2 id="r-le-loss" data-claire-element-id="591105">Le loss</h2><p id="r-591102" data-claire-element-id="591102">Le <em>loss</em> est probablement le phénomène le plus simple à comprendre, mais paradoxalement le plus difficile à résoudre : avoir du loss signifie tout simplement que tous les paquets n'arrivent pas à destination ; autrement dit, qu'ils se perdent en chemin ou deviennent corrompus.</p><aside id="r-591104" data-claire-element-id="591104" data-claire-semantic="information"><p id="r-591103" data-claire-element-id="591103">Seule la mauvaise qualité de votre connexion au serveur peut causer des problèmes de loss. Si vous avez du loss sur tous les serveurs sur lesquels vous jouez, contactez votre FAI.</p></aside><h2 id="r-fidelite-de-la-simulation" data-claire-element-id="591113">Fidélité de la simulation</h2><p id="r-591106" data-claire-element-id="591106">Le serveur de jeu a le plein contrôle sur ce qui se passe dans la partie ; c'est lui seul qui possède la version la plus fidèle du jeu - on dit qu'il <em>a autorité</em> sur le jeu.</p><p id="r-591107" data-claire-element-id="591107">Le client (c'est-à-dire votre jeu) reçoit une &quot;mise à jour&quot; de l'état actuel du jeu à une certaine fréquence, appelée <em>updaterate réel</em>. Plus votre jeu reçoit de mises à jour, plus sa représentation sera fidèle à celle du serveur, donc plus le jeu sera précis.</p><aside id="r-591109" data-claire-element-id="591109" data-claire-semantic="information"><p id="r-591108" data-claire-element-id="591108">Si vous avez un <em>framerate</em> de 85 images par seconde, et que votre updaterate réel est de 20, vous n'aurez qu'une mise à jour toutes les 4,25 images. Pour éviter les saccades, le jeu dispose d'un procédé appelé <em>interpolation</em>, qui &quot;invente&quot; les positions des entités (joueurs, objets) entre deux mises à jour. Néanmoins, ces points sont &quot;inventés&quot; et nuisent donc à la fidélité de la simulation.</p></aside><p id="r-591110" data-claire-element-id="591110">De la même manière, votre <em>cmdrate réel</em> constitue la fréquence à laquelle vous envoyez les informations sur ce que vous faites au serveur. Là encore, plus cette fréquence est élevée, plus le serveur aura une représentation précise de ce que vous faites.</p><aside id="r-591112" data-claire-element-id="591112" data-claire-semantic="information"><p id="r-591111" data-claire-element-id="591111">La fidélité (ou précision) de la simulation est aussi appelée &quot;touchabilité&quot; par beaucoup de joueurs (par exemple, &quot;je touche que dalle aujourd'hui&quot;).</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source">Optimiser le netcode de Source</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/la-console-de-source-et-les-cvars">
+La console de Source et les CVARs
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/latence-choke-loss-et-fidelite-de-la-simulation">
+Latence, choke, loss et fidélité de la simulation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/le-netgraph">
+Le netgraph
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/la-cvar-rate">
+La CVAR &quot;rate&quot;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/la-cvar-cl-interp">
+La CVAR &quot;cl_interp&quot;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/les-cvars-cl-updaterate-et-cl-cmdrate">
+Les CVARs &quot;cl_updaterate&quot; et &quot;cl_cmdrate&quot;
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/la-console-de-source-et-les-cvars">
+<span class="arrow"></span>
+<span class="next">La console de Source et les CVARs</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/le-netgraph">
+<span class="next">Le netgraph</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lenetgraph"></a><h2>Le netgraph</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/latence-choke-loss-et-fidelite-de-la-simulation">
+<span class="arrow"></span>
+<span class="next">Latence, choke, loss et fidélité de la simulation</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/la-cvar-rate">
+<span class="next">La CVAR &quot;rate&quot;</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-591115" data-claire-element-id="591115">Pour illustrer ces notions de choke, loss et fidélité, nous allons utiliser un outil très pratique fourni par le moteur Source : le <em>netgraph</em>.</p><p id="r-591116" data-claire-element-id="591116">Pour l'activer, il suffit de régler la valeur de la CVAR net_graph à 3 (net_graph 3).</p><aside id="r-591118" data-claire-element-id="591118" data-claire-semantic="information"><p id="r-591117" data-claire-element-id="591117">Le netgraph comporte 3 modes : 1, 2 et 3. Cependant, seul le 3 nous sera utile.</p></aside><p id="r-591119" data-claire-element-id="591119">Cela fait apparaître un tas d'informations en bas de votre écran :</p><figure id="r-591121" data-claire-element-id="591122"><img id="r-591120" data-claire-element-id="591120" src="medias/uploads.siteduzero.com_files_8001_9000_8041.png" alt="Image utilisateur"/></figure><p id="r-591123" data-claire-element-id="591123">Voici comment les interpréter, de gauche à droite, et de haut en bas :</p><ul id="r-591144" data-claire-element-id="591144"><li id="r-591125" data-claire-element-id="591125"><p id="r-591124" data-claire-element-id="591124">votre framerate actuel (en images par seconde)</p></li><li id="r-591127" data-claire-element-id="591127"><p id="r-591126" data-claire-element-id="591126">votre ping (rappel : peu fiable)</p></li><li id="r-591129" data-claire-element-id="591129"><p id="r-591128" data-claire-element-id="591128">la taille du dernier paquet reçu</p></li><li id="r-591131" data-claire-element-id="591131"><p id="r-591130" data-claire-element-id="591130">la bande passante consommée en réception (en Ko/s)</p></li><li id="r-591133" data-claire-element-id="591133"><p id="r-591132" data-claire-element-id="591132">l'updaterate réel (fidélité de la simulation)</p></li><li id="r-591135" data-claire-element-id="591135"><p id="r-591134" data-claire-element-id="591134">la taille du dernier paquet envoyé</p></li><li id="r-591137" data-claire-element-id="591137"><p id="r-591136" data-claire-element-id="591136">la bande passante consommée en émission (en Ko/s)</p></li><li id="r-591139" data-claire-element-id="591139"><p id="r-591138" data-claire-element-id="591138">le cmdrate réel (fidélité de la simulation)</p></li><li id="r-591141" data-claire-element-id="591141"><p id="r-591140" data-claire-element-id="591140">le loss</p></li><li id="r-591143" data-claire-element-id="591143"><p id="r-591142" data-claire-element-id="591142">le choke.</p></li></ul><p id="r-591145" data-claire-element-id="591145">Ces informations vous seront très utiles pour diagnostiquer vos problèmes, et pour configurer au mieux le Netcode.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source">Optimiser le netcode de Source</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/la-console-de-source-et-les-cvars">
+La console de Source et les CVARs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/latence-choke-loss-et-fidelite-de-la-simulation">
+Latence, choke, loss et fidélité de la simulation
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/le-netgraph">
+Le netgraph
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/la-cvar-rate">
+La CVAR &quot;rate&quot;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/la-cvar-cl-interp">
+La CVAR &quot;cl_interp&quot;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/les-cvars-cl-updaterate-et-cl-cmdrate">
+Les CVARs &quot;cl_updaterate&quot; et &quot;cl_cmdrate&quot;
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/latence-choke-loss-et-fidelite-de-la-simulation">
+<span class="arrow"></span>
+<span class="next">Latence, choke, loss et fidélité de la simulation</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/la-cvar-rate">
+<span class="next">La CVAR &quot;rate&quot;</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="LaCVARquotratequot"></a><h2>La CVAR &quot;rate&quot;</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/le-netgraph">
+<span class="arrow"></span>
+<span class="next">Le netgraph</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/la-cvar-cl-interp">
+<span class="next">La CVAR &quot;cl_interp&quot;</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-591147" data-claire-element-id="591147">La première CVAR que nous allons étudier, qui est probablement la plus connue des CVARs de contrôle du netcode de Source, est la CVAR &quot;rate&quot;. Il s'agit probablement aussi de la CVAR la plus controversée. En effet, beaucoup de personnes se font de fausses idées à son propos.</p><p id="r-591148" data-claire-element-id="591148">Pour commencer, voyons la définition qu'en donne le moteur :</p><p id="r-591149" data-claire-element-id="591149"><cite>Citation : Moteur Source</cite></p><blockquote id="r-591151" data-claire-element-id="591151"><p id="r-591150" data-claire-element-id="591150">Max bytes/sec the host can receive data</p></blockquote><p id="r-591152" data-claire-element-id="591152">Traduction : &quot;Débit maximum en octets/seconde auquel le moteur peut recevoir des données&quot;.</p><p id="r-591153" data-claire-element-id="591153">Beaucoup de gens pensent bien faire en réglant cette CVAR en fonction de la vitesse de leur connexion (56K, ADSL 512, ADSL 8096...). <strong>Eh bien NON !</strong></p><aside id="r-591155" data-claire-element-id="591155" data-claire-semantic="error"><p id="r-591154" data-claire-element-id="591154">La CVAR rate <strong>n'optimise pas</strong> le netcode, elle le <strong>limite</strong>.</p></aside><p id="r-591156" data-claire-element-id="591156">En effet, le seul rôle de cette CVAR est de limiter la bande passante consommée par le jeu ; en aucun cas elle n'optimise le jeu pour une certaine quantité de bande passante disponible.</p><p id="r-591157" data-claire-element-id="591157">Forts de cette information, et sachant que nous ne voulons pas limiter la bande passante consommée par le moteur (bien au contraire), <strong>il faut donc placer la valeur de la CVAR rate à 1048576</strong>, soit la valeur maximale autorisée par le moteur, et correspondant à un débit maximal de 1 Mo/s.</p><aside id="r-591159" data-claire-element-id="591159" data-claire-semantic="information"><p id="r-591158" data-claire-element-id="591158">Pendant longtemps, la valeur maximale du rate était de 81920, soit 80 ko/s, ce qui pouvait provoquer du choke sur les serveurs avec un grand nombre de joueurs ; la mise à jour du moteur Source du 12 juin 2007 a relevé cette limite et élimine ainsi ce problème.</p></aside><aside id="r-591161" data-claire-element-id="591161" data-claire-semantic="warning"><p id="r-591160" data-claire-element-id="591160">Plus la valeur de cette CVAR sera basse, plus les risques de choke seront élevés.</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source">Optimiser le netcode de Source</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/la-console-de-source-et-les-cvars">
+La console de Source et les CVARs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/latence-choke-loss-et-fidelite-de-la-simulation">
+Latence, choke, loss et fidélité de la simulation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/le-netgraph">
+Le netgraph
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/la-cvar-rate">
+La CVAR &quot;rate&quot;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/la-cvar-cl-interp">
+La CVAR &quot;cl_interp&quot;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/les-cvars-cl-updaterate-et-cl-cmdrate">
+Les CVARs &quot;cl_updaterate&quot; et &quot;cl_cmdrate&quot;
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/le-netgraph">
+<span class="arrow"></span>
+<span class="next">Le netgraph</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/la-cvar-cl-interp">
+<span class="next">La CVAR &quot;cl_interp&quot;</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="LaCVARquotcl_interpquot"></a><h2>La CVAR &quot;cl_interp&quot;</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/la-cvar-rate">
+<span class="arrow"></span>
+<span class="next">La CVAR &quot;rate&quot;</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/les-cvars-cl-updaterate-et-cl-cmdrate">
+<span class="next">Les CVARs &quot;cl_updaterate&quot; et &quot;cl_cmdrate&quot;</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-591163" data-claire-element-id="591163">Cette CVAR contrôle l'interpolation, ou plus précisément, la durée pendant laquelle se fera l'interpolation entre deux positions d'une entité.</p><p id="r-591164" data-claire-element-id="591164"><strong>Pour faire simple, disons que plus la durée d'interpolation est élevée, plus votre décalage avec le serveur sera grand (ce qui, en pratique, équivaut à augmenter son ping), mais moins les déplacements des entités seront saccadés, et vice-versa.</strong></p><aside id="r-591166" data-claire-element-id="591166" data-claire-semantic="information"><p id="r-591165" data-claire-element-id="591165">Le bon réglage de l'interpolation dépend de la qualité du serveur sur lequel vous jouez, et de la qualité de la configuration du Netcode des autres joueurs présents.</p></aside><p id="r-591167" data-claire-element-id="591167">Cependant, dans la plupart des cas, vous devriez pouvoir définir une interpolation de 0,01 s (cl_interp 0.01, le minimum) sans problèmes.</p><aside id="r-591169" data-claire-element-id="591169" data-claire-semantic="error"><p id="r-591168" data-claire-element-id="591168">Désactiver entièrement l'interpolation (cl_interpolate 0) est une mauvaise idée, car le jeu devient alors très sensible aux fluctuations du réseau, ce qui provoque dans beaucoup de cas des saccades permanentes et un jeu inconfortable.</p></aside><aside id="r-591171" data-claire-element-id="591171" data-claire-semantic="warning"><p id="r-591170" data-claire-element-id="591170">Plus l'interpolation est élevée, plus l'intensité du lag compensation est élevée, d'où des effets secondaires plus marqués dans le jeu.</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source">Optimiser le netcode de Source</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/la-console-de-source-et-les-cvars">
+La console de Source et les CVARs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/latence-choke-loss-et-fidelite-de-la-simulation">
+Latence, choke, loss et fidélité de la simulation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/le-netgraph">
+Le netgraph
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/la-cvar-rate">
+La CVAR &quot;rate&quot;
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/la-cvar-cl-interp">
+La CVAR &quot;cl_interp&quot;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/les-cvars-cl-updaterate-et-cl-cmdrate">
+Les CVARs &quot;cl_updaterate&quot; et &quot;cl_cmdrate&quot;
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/la-cvar-rate">
+<span class="arrow"></span>
+<span class="next">La CVAR &quot;rate&quot;</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/les-cvars-cl-updaterate-et-cl-cmdrate">
+<span class="next">Les CVARs &quot;cl_updaterate&quot; et &quot;cl_cmdrate&quot;</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="LesCVARsquotcl_updateratequotetquotcl_cmdratequot"></a><h2>Les CVARs &quot;cl_updaterate&quot; et &quot;cl_cmdrate&quot;</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/la-cvar-cl-interp">
+<span class="arrow"></span>
+<span class="next">La CVAR &quot;cl_interp&quot;</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-591173" data-claire-element-id="591173">Ces deux CVARs sont, comme leurs noms l'indiquent, directement liées à l'<em>updaterate réel</em> et au <em>cmdrate réel</em>.</p><aside id="r-591175" data-claire-element-id="591175" data-claire-semantic="warning"><p id="r-591174" data-claire-element-id="591174">Ces CVARs ne contrôlent pas, comme beaucoup le pensent, l'updaterate ou le cmdrate réel. Elles ne font que poser des limites maximales à ces deux valeurs. L'updaterate réel et le cmdrate réel dépendent également d'autres facteurs.</p></aside><p id="r-591176" data-claire-element-id="591176">En effet, un cl_updaterate de 50 par exemple voudra dire : &quot;ne reçois pas les mises à jour à une fréquence plus élevée que 50&quot;.</p><aside id="r-591178" data-claire-element-id="591178" data-claire-semantic="warning"><p id="r-591177" data-claire-element-id="591177">Plus les valeurs de ces CVARs sont élevées, plus la bande passante consommée est élevée, ce qui augmente les risques de choke.</p></aside><p id="r-591179" data-claire-element-id="591179">Cependant, cela augmente également la fidélité de la simulation. Pour trouver les valeurs optimales, il faut donc procéder par tâtonnement : d'abord commencer avec un updaterate et cmdrate de 100, puis les baisser progressivement, jusqu'à obtenir un choke de 0 (souvent, vous pouvez les garder à 100 sans choke).</p><aside id="r-591181" data-claire-element-id="591181" data-claire-semantic="information"><p id="r-591180" data-claire-element-id="591180">Les valeurs optimales varient selon les serveurs, voire selon le nombre de joueurs présents sur le serveur. D'une manière générale, être obligé de baisser son updaterate/cmdrate à cause de choke provoqué par le serveur, alors que votre connexion peut supporter plus, témoigne d'un serveur de mauvaise qualité, ou mal configuré.</p></aside><p id="r-591182" data-claire-element-id="591182">En conclusion, j'ose espérer que ce tutoriel vous aura permis de mieux configurer votre jeu, et par là même d'exploiter au mieux votre matériel. :)</p><p id="r-591183" data-claire-element-id="591183">Ce tutoriel est une version épurée et plus accessible (conçue pour les Zéros ;) ) de mon document théorique. Si vous vous posez des questions, que vous souhaitez en savoir plus, ou que vous cherchez à optimiser un serveur de jeu, je ne peux que vous conseiller la lecture du <a href="http://www.e-t172.net/articles/srcnetcode/">document original</a>.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source">Optimiser le netcode de Source</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/la-console-de-source-et-les-cvars">
+La console de Source et les CVARs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/latence-choke-loss-et-fidelite-de-la-simulation">
+Latence, choke, loss et fidélité de la simulation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/le-netgraph">
+Le netgraph
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/la-cvar-rate">
+La CVAR &quot;rate&quot;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/la-cvar-cl-interp">
+La CVAR &quot;cl_interp&quot;
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/les-cvars-cl-updaterate-et-cl-cmdrate">
+Les CVARs &quot;cl_updaterate&quot; et &quot;cl_cmdrate&quot;
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/optimiser-le-netcode-de-source/la-cvar-cl-interp">
+<span class="arrow"></span>
+<span class="next">La CVAR &quot;cl_interp&quot;</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/optimiser-le-netcode-de-source.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 22:43:33 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/optimiser-le-netcode-de-source.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 03:59:37 GMT -->
+</html>

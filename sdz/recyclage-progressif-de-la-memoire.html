@@ -1,0 +1,309 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/recyclage-progressif-de-la-memoire.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 22:43:10 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/recyclage-progressif-de-la-memoire.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 03:59:33 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Recyclage progressif de la mémoire</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/recyclage-progressif-de-la-memoire.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Recyclage progressif de la mémoire</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Recyclageprogressifdelammoire">Recyclage progressif de la mémoire</a><br/><a href="#Prsentation">Présentation</a><br/><a href="#Modificationsprliminaires">Modifications préliminaires</a><br/><a href="#Unmarkampsweepprogressif">Un mark&amp;sweep progressif</a><br/><a href="#Discussions">Discussions</a><br/></div>
+<a name="Recyclageprogressifdelammoire"></a><h2>Recyclage progressif de la mémoire</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/recyclage-progressif-de-la-memoire/presentation">
+<span class="next">Présentation</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-80" data-claire-element-id="80">Dans ce second article, je vous propose de découvrir quelques techniques permettant de collecter la mémoire de manière progressive <em>(incrémentale)</em>. L'application directe de celles-ci consiste à réduire les délais induits par la collecte. Cet article se veut, comme son prédécesseur, une introduction au sujet, et ne seront abordés que les aspects principaux, sans entrer dans les considérations plus fines.</p><p id="r-81" data-claire-element-id="81">Je tiens à remercier Dark-Side (désolé de ne pouvoir faire une référence correctement, celle-ci refuse de se laisser inscrire dans le code du tuto) pour l'adaptation du code LaTeX d'origine en zCode.</p>
+</div><a name="Prsentation"></a><h2>Présentation</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/recyclage-progressif-de-la-memoire/modifications-preliminaires">
+<span class="next">Modifications préliminaires</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-82" data-claire-element-id="82">Dans notre premier article, nous avons étudié un collecteur basique appelé <em>mark&amp;sweep</em>. Celui-ci avait pour propriété d'effectuer l'intégralité du travail en un seul passage ininterrompu. Durant son exécution, le programme est en arrêt, incapable de poursuivre, et si la quantité de mémoire à traverser est large, le temps nécessaire à l'opération peut devenir considérable. Pour certaines applications telles que l'exécution de scripts, cette restriction ne constitue pas un réel problème. Dans des environnements plus sérieux, il peut être nécessaire de mitiger cet impact ponctuel sur les performances des programmes.</p><p id="r-83" data-claire-element-id="83">Un internaute acceptera plus facilement d'attendre une seconde de plus durant le chargement d'une page, pourvu que ce phénomène soit ponctuel, qu'un joueur, au moment décisif, durant une partie de jeu en ligne, même si cela ne devait arriver qu'une fois toutes les dix minutes.</p><aside id="r-85" data-claire-element-id="85" data-claire-semantic="information"><p id="r-84" data-claire-element-id="84">En vérité, ces chiffres sont totalement inventés et je ne saurais énoncer la limite tolérable pour un véritable joueur, n'en étant pas un moi-même.</p></aside><p id="r-86" data-claire-element-id="86">Cet article vous propose de découvrir des techniques permettant un traitement progressif, fragmenté dans le temps, de la mémoire. Une autre approche, très prisée des systèmes généralistes, est la collecte partielle que j'espère pouvoir aborder dans un article à venir.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/recyclage-progressif-de-la-memoire">Recyclage progressif de la mémoire</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/recyclage-progressif-de-la-memoire/presentation">
+Présentation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/recyclage-progressif-de-la-memoire/modifications-preliminaires">
+Modifications préliminaires
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/recyclage-progressif-de-la-memoire/un-mark-sweep-progressif">
+Un mark&amp;sweep progressif
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/recyclage-progressif-de-la-memoire/discussions">
+Discussions
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/recyclage-progressif-de-la-memoire/modifications-preliminaires">
+<span class="next">Modifications préliminaires</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Modificationsprliminaires"></a><h2>Modifications préliminaires</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/recyclage-progressif-de-la-memoire/presentation">
+<span class="arrow"></span>
+<span class="next">Présentation</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/recyclage-progressif-de-la-memoire/un-mark-sweep-progressif">
+<span class="next">Un mark&amp;sweep progressif</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-un-algorithme-iteratif" data-claire-element-id="94">Un algorithme itératif</h2><p id="r-88" data-claire-element-id="88">L'algorithme du premier article se présentait naturellement de manière récursive. Les appels récursifs ayant recours à la pile automatique (que la mémoire soit ou non réellement gérée sous la forme d'une pile, le mécanisme des appels et des retours peut être assimilé à une pile), il n'est pas aisé d'interrompre l'opération de recyclage et donc de la fragmenter. La première étape dans l'obtention d'un <em>mark&amp;sweep</em> progressif consiste donc à rendre notre algorithme itératif.</p><p id="r-89" data-claire-element-id="89">L'approche directe consiste à coder une pile manuellement, de sorte à imiter la récurrence. Ainsi, à chaque interruption, la position précise où nous nous arrêtons, dans le processus de recyclage, est inscrite au-dessus de notre pile. Si nous analysons des paires de valeurs, comme il est courant en Lisp, pour chaque objet analysé, il y a deux positions possibles : au niveau du premier ou du second champ (une fois que le premier a été traité). La situation se complique pour des objets plus larges ou hétérogènes.</p><aside id="r-91" data-claire-element-id="91" data-claire-semantic="information"><p id="r-90" data-claire-element-id="90">Cette approche correspond à un <em>parcours en profondeur</em> du graphe des objets.</p></aside><p id="r-92" data-claire-element-id="92">Une alternative est de conserver, à la place de la liste des objets déjà traversés (et par lesquels il faut repasser pour compléter le processus), celle des objets <em>à traverser</em> (le lecteur averti comprendra sans mal qu'il s'agit d'un parcours en surface). Ainsi, chaque objet est analysé en une unique opération, à l'issue de laquelle la liste est augmentée des références contenues dans celui-ci.</p><p id="r-93" data-claire-element-id="93">Dans cette situation, il est possible de remplacer la pile par une file. Les avantages de ce changement sont imperceptibles à ce stade et peuvent paraître subtils, même après lecture de l'article. De ce fait, nous n'aborderons pas le sujet. Toutefois, par la suite, nous ne considèrerons que cette stratégie et ne ferons référence qu'à une file d'objets à traverser. Les informations sont toutefois transposables sans trop de difficultés aux autres modèles.</p><h2 id="r-representation-des-ensembles-d-objets" data-claire-element-id="104">Représentation des ensembles d'objets</h2><p id="r-95" data-claire-element-id="95">À ce stade, notre algorithme de réclamation de la mémoire nécessite lui-même une structure de données potentiellement conséquente pour effectuer correctement son travail. Au maximum, nous avons besoin d'autant de places dans la file qu'il y a d'objets dans le système.</p><p id="r-96" data-claire-element-id="96">Une première solution consiste à inclure, dans chaque objet, les champs nécessaires. Cette configuration est avantageuse si la représentation des ensembles d'objets libres et occupés prend déjà la forme d'une liste double (voyez à ce propos le <a href="http://www.siteduzero.com/tuto-3-20657-1-problematique-et-principes-fondamentaux-du-recyclage-automatique-de-la-memoire.html">premier article</a>). Les mêmes champs pourraient alors être réutilisés sans coût ajouté.</p><p id="r-97" data-claire-element-id="97">D'autres organisations existent, par exemple : une table de bits <em>(bitmap)</em> indiquant le statut, <em>occupé</em> ou <em>libre</em>, de chaque bloc.</p><h3 id="r-division-de-la-memoire" data-claire-element-id="103">Division de la mémoire</h3><p id="r-98" data-claire-element-id="98">Dans le cas général, supposons que l'espace disponible pour la file est borné. Selon la taille choisie, cette limite pourrait n'être jamais atteinte, en pratique. Cependant, nous ne pouvons négliger le cas malheureux où notre liste deviendrait insuffisante.</p><p id="r-99" data-claire-element-id="99">Il s'agit de sacrifier du temps pour épargner de la place en mémoire. Pour ce faire, nous employons une <em>approximation</em> de notre file d'attente. Il faut garder à l'esprit que celle-ci n'opère que dans le pire des cas : lorsque la pile est pleine.</p><p id="r-100" data-claire-element-id="100">L'approximation la plus simple consiste à parcourir alors toute la mémoire linéairement à la recherche d'objets <em>à traiter</em>. Avec cette approche, il est important de pouvoir distinguer l'état d'un objet (<em>vierge</em>, <em>à traiter</em> ou <em>marqué</em>). Le troisième état devient ainsi apparent, tandis que l'algorithme originellement étudié déguisait celui-ci derrière la pile de récurrence. L'inconvénient évident de ce premier essai est qu'il est inefficace ; il requiert une traversée intégrale de l'ensemble des objets parmi lesquels seuls quelques-uns sont réellement utilisés.</p><p id="r-101" data-claire-element-id="101">Il est possible, sur le même modèle, d'affiner notre approximation en scindant la mémoire dont nous avons la responsabilité en régions de tailles raisonnables, appelées <em>cartes</em>. La contrepartie est que chaque sous-ensemble doit pouvoir être marqué pour traitement, à la façon des objets individuels. Cela implique un coût supplémentaire d'un bit par carte. Dans la situation où la file est pleine, il s'agirait alors de marquer l'objet <strong>et</strong> la carte lui correspondant pour traitement ultérieur. Nous pourrions penser que nous n'avons en rien avancé par rapport aux algorithmes de la section précédente. En effet, à nouveau, nous sommes confrontés à un besoin de mémoire supplémentaire pour mener à bien notre mission. L'astuce consiste à allouer celle-ci par avance : pour chaque carte en notre possession, nous réservons un bit de mémoire à cet usage exclusif. Il s'agit alors de choisir la taille des cartes adroitement, afin d'obtenir le meilleur compromis, pour notre usage.</p><p id="r-102" data-claire-element-id="102"><strong>Considérations techniques <em>(supplément)</em> :</strong> dans le cas général, sans avoir recours à des techniques plus proches de la machine visée, il n'est pas aisé d'identifier la carte associée à un objet (donc, à une adresse). Le principe de base de cette association réside dans un calcul d'adresse : en divisant la mémoire en cartes contigües, adjacentes, de tailles régulières, il est possible, avec un peu d'arithmétique sur les adresses, d'obtenir directement la carte à partir du pointeur.<br/> Malheureusement, les opérations requises ne sont pas toutes disponibles en ANSI-C. Seules les additions sont possibles, ce qui est insuffisant pour notre usage. Néanmoins, il est possible, quoique pénible, en utilisant des informations additionnelles (donc, davantage de mémoire), d'obtenir des résultats équivalents. Le programmeur C averti remarquera tout de suite que si la mémoire à notre disposition est constituée d'un seul bloc contigu, nous pouvons utiliser le décalage entre l'adresse analysée et la base du bloc afin d'effectuer nos calculs.<br/> La situation se complique dès lors que l'on a plusieurs régions séparées à gérer. Je laisse au lecteur l'initiative d'élaborer d'autres solutions, s'il le désire.</p><h2 id="r-un-mark-sweep-ameliore" data-claire-element-id="108">Un <em>mark&amp;sweep</em> amélioré</h2><p id="r-105" data-claire-element-id="105">Dans cette section, nous avons opéré des modifications nécessaires à l'introduction de l'aspect progressif dans notre algorithme initial. Bien qu'il ne soit en rien plus progressif, notre méthode n'en est pas moins devenue un <em>mark&amp;sweep</em> tout à fait correct. Un tel algorithme est acceptable pour les environnements pouvant tolérer les interruptions engendrées.</p><p id="r-106" data-claire-element-id="106">Contrairement à ce qui pourrait être suggéré par la direction de cet article, de tels cas de figure ne sont pas rares : une tâche de fond n'ayant aucune interaction avec l'utilisateur, n'importe quel programme pouvant intégrer le recyclage dans une de ses phases d'attente préexistante (chargement, <em>etc.</em>), ou lorsque une réactivité occasionnellement diminuée ne constitue pas un souci majeur. L'éditeur Emacs, avec lequel j'écris ces lignes, utilise un procédé similaire à celui que nous avons mis en place, afin de récupérer la mémoire utilisée en interne par son propre langage de script : Emacs Lisp.</p><p id="r-107" data-claire-element-id="107"><strong>Pointeurs inversés <em>(supplément)</em> :</strong> en réalité, un véritable <em>mark&amp;sweep</em> utilisé tel quel se préoccupe rarement de gérer une pile ou une file d'objets à traiter. L'exécution continue permet de détourner temporairement la mémoire en cours d'analyse. Une pile est alors directement construite sur les emplacements des pointeurs d'origines : durant l'analyse, chaque objet atteint est modifié pour contenir, à la place d'une référence vers un objet <em>à traiter</em>, une <em>référence de retour</em> vers le dernier objet <em>marqué</em>. Ainsi, le passage dans un sens crée la pile, dans l'autre, la défait et restaure l'organisation initiale.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/recyclage-progressif-de-la-memoire">Recyclage progressif de la mémoire</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/recyclage-progressif-de-la-memoire/presentation">
+Présentation
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/recyclage-progressif-de-la-memoire/modifications-preliminaires">
+Modifications préliminaires
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/recyclage-progressif-de-la-memoire/un-mark-sweep-progressif">
+Un mark&amp;sweep progressif
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/recyclage-progressif-de-la-memoire/discussions">
+Discussions
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/recyclage-progressif-de-la-memoire/presentation">
+<span class="arrow"></span>
+<span class="next">Présentation</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/recyclage-progressif-de-la-memoire/un-mark-sweep-progressif">
+<span class="next">Un mark&amp;sweep progressif</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Unmarkampsweepprogressif"></a><h2>Un mark&amp;sweep progressif</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/recyclage-progressif-de-la-memoire/modifications-preliminaires">
+<span class="arrow"></span>
+<span class="next">Modifications préliminaires</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/recyclage-progressif-de-la-memoire/discussions">
+<span class="next">Discussions</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-une-tentative-naive" data-claire-element-id="123">Une tentative naïve</h2><p id="r-110" data-claire-element-id="110">À partir de l'algorithme précédent, il paraît simple d'imaginer un <em>fragment</em> du processus de recyclage : en rendant les structures utilisées (file, marqueurs de cartes) permanentes, il nous est possible de reprendre le travail exactement là où nous l'avions interrompu. On appelle <em>cycle</em> la séquence de fragments correspondant à une exécution du mécanisme non progressif correspondant, ici, le <em>mark&amp;sweep</em> de la section précédente. Un cycle correspond donc, dans notre cas, à un <em>mark&amp;sweep</em> complet. Ceci serait suffisant si le programme demeurait dans le même état entre deux incréments. Or, il est probable que, durant cet intervalle, des objets soient créés et d'autres modifiés.</p><p id="r-111" data-claire-element-id="111">Le cas des objets nouvellement créés peut être aisément résolu en effectuant une approximation conservatrice : il suffit de les considérer <em>marqués</em>. Ils seront ainsi analysés par le cycle suivant.</p><p id="r-112" data-claire-element-id="112">Celui des objets modifiés est autrement plus délicat. Trois situations se présentent.</p><ul id="r-121" data-claire-element-id="121"><li id="r-114" data-claire-element-id="114"><p id="r-113" data-claire-element-id="113">Si l'objet modifié est <em>vierge</em> de toute marque, il n'a pas encore été atteint par le collecteur, durant le cycle actuel. Le changement est donc absolument invisible pour celui-ci.</p></li><li id="r-116" data-claire-element-id="116"><p id="r-115" data-claire-element-id="115">Si l'objet modifié est <em>à traiter</em>, le collecteur n'en a pas encore analysé le contenu. Ce dernier peut donc être altéré sans problème.</p></li><li id="r-120" data-claire-element-id="120"><p id="r-117" data-claire-element-id="117">Le problème provient de la dernière éventualité, lorsque l'objet a déjà été traité et <em>marqué</em> durant le cycle en cours. La modification, si elle inscrit une nouvelle référence différente de la précédente, peut perturber l'analyse.</p><aside id="r-119" data-claire-element-id="119" data-claire-semantic="information"><p id="r-118" data-claire-element-id="118">Durant la phase de nettoyage, il est évident que les objets manipulés par le système de réclamation ne peuvent plus être modifiés par le programme, n'étant plus accessibles.</p></aside></li></ul><p id="r-122" data-claire-element-id="122">Plaçons-nous dans le cas non trivial. L'ancienne référence a été supprimée et pourrait donc, si aucun autre objet accessible ne la contient, devenir inaccessible. Cela est toutefois acceptable, car une telle erreur n'affecte pas la préservation des données utiles. La nouvelle référence est davantage problématique : elle introduit un nouvel objet à analyser. Il est possible, en effet, qu'elle devienne, d'ici la fin de la collecte, la seule référence à l'objet qui lui est associé, si toutes les autres références au même objet, accessibles, sont supprimées. Avec notre algorithme naïf, nous serions incapables de déterminer son existence et la phase de nettoyage <em>supprimerait par erreur un objet susceptible d'être encore utilisé par le programme</em>.</p><h2 id="r-une-solution-la-barriere-a-l-ecriture" data-claire-element-id="132">Une solution : la barrière à l'écriture</h2><p id="r-124" data-claire-element-id="124">Une solution au problème évoqué ci-dessus est d'intercepter tous les accès en écriture aux objets de la troisième catégorie. Une telle technique porte le nom de <em>barrière à l'écriture</em> : c'est un mécanisme qui se glisse entre le programme qui souhaite agir sur la mémoire et le composant responsable de celle-ci, au cours d'un accès en écriture.</p><aside id="r-126" data-claire-element-id="126" data-claire-semantic="information"><p id="r-125" data-claire-element-id="125">Il existe d'autres types de barrières, mais la barrière à l'écriture est généralement la plus efficace pour des systèmes ne bénéficiant pas de dispositions spéciales offertes par le matériel ou le système.</p></aside><p id="r-127" data-claire-element-id="127">Le rôle de la barrière est de signaler au collecteur la nécessité d'analyser à nouveau certains objets. Il existe plusieurs stratégies pour organiser cette information.</p><p id="r-128" data-claire-element-id="128">Si nous optons pour une représentation sous forme de listes, il suffit à la barrière d'ajouter l'objet à réexaminer dans la liste appropriée.</p><p id="r-129" data-claire-element-id="129">Si la séparation en cartes est effective, celle-ci suggère naturellement une approche basée sur les mêmes cartes. Si la barrière marque la carte associée (ainsi que l'objet en question), l'algorithme finira par examiner la carte, à un moment ou un autre, lorsque sa file sera vide ; nous aurons alors l'effet attendu : une seconde analyse de l'objet.</p><aside id="r-131" data-claire-element-id="131" data-claire-semantic="information"><p id="r-130" data-claire-element-id="130">Une autre possibilité consisterait à remplir la file, comme s'il s'agissait d'un incrément durant la phase d'analyse normale. La différence n'étant pas de première importance, je laisse au lecteur le loisir de comparer les méthodes.</p></aside><h2 id="r-un-algorithme-final" data-claire-element-id="146">Un algorithme final</h2><p id="r-133" data-claire-element-id="133">Nous pouvons maintenant rassembler les divers éléments requis et élaborer un algorithme final basé, par exemple, sur l'organisation en cartes. L'algorithme est constitué des deux phases d'analyse et de nettoyage décrites dans l'article précédent, auxquelles s'ajoutent une file, un ensemble de marqueurs de cartes et une barrière à l'écriture.</p><p id="r-134" data-claire-element-id="134">Durant la phase d'analyse :</p><ul id="r-143" data-claire-element-id="143"><li id="r-136" data-claire-element-id="136"><p id="r-135" data-claire-element-id="135">chaque fragment de cycle traite un nombre défini d'objets de la file, ces traitements sont susceptibles d'allonger celle-ci ;</p></li><li id="r-138" data-claire-element-id="138"><p id="r-137" data-claire-element-id="137">si la file se remplit, la carte appropriée est marquée ;</p></li><li id="r-140" data-claire-element-id="140"><p id="r-139" data-claire-element-id="139">si la file se vide, une carte est lue et le résultat du parcours des éléments de la carte est placé dans la file ;</p></li><li id="r-142" data-claire-element-id="142"><p id="r-141" data-claire-element-id="141">si la file est vide et qu'aucune carte n'est marquée, l'analyse est terminée.</p></li></ul><p id="r-144" data-claire-element-id="144">Durant la phase de nettoyage, chaque fragment libère un nombre défini d'objets. Le fonctionnement exact dépend de la représentation des ensembles d'objets (libres, occupés, etc.).</p><p id="r-145" data-claire-element-id="145">À chaque opération d'écriture, la barrière est activée et marque la carte correspondante, si nécessaire (iI est également possible de marquer tout le temps la carte).</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/recyclage-progressif-de-la-memoire">Recyclage progressif de la mémoire</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/recyclage-progressif-de-la-memoire/presentation">
+Présentation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/recyclage-progressif-de-la-memoire/modifications-preliminaires">
+Modifications préliminaires
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/recyclage-progressif-de-la-memoire/un-mark-sweep-progressif">
+Un mark&amp;sweep progressif
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/recyclage-progressif-de-la-memoire/discussions">
+Discussions
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/recyclage-progressif-de-la-memoire/modifications-preliminaires">
+<span class="arrow"></span>
+<span class="next">Modifications préliminaires</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/recyclage-progressif-de-la-memoire/discussions">
+<span class="next">Discussions</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Discussions"></a><h2>Discussions</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/recyclage-progressif-de-la-memoire/un-mark-sweep-progressif">
+<span class="arrow"></span>
+<span class="next">Un mark&amp;sweep progressif</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-performances" data-claire-element-id="151">Performances</h2><p id="r-148" data-claire-element-id="148">Il existe maintes variations sur le thème d'un <em>mark&amp;sweep</em> progressif. Selon les choix d'implantation effectués, tels que la représentation des ensembles d'objets, la taille de la pile, ou encore la taille des cartes, les coûts et les performances seront différents. Tous ces paramètres dépendent largement des programmes supportés et de leur usage de la mémoire. Un programme écrit en style fonctionnel aura moins de chance d'activer la barrière d'écriture fréquemment, mais sera très demandant sur les routines d'allocation et produira une grande quantité d'objets, dont une partie de déchets non négligeable.</p><p id="r-149" data-claire-element-id="149">Il existe de même plusieurs manières d'écrire la barrière, privilégiant certaines opérations et pénalisant d'autres. Il s'agit d'adapter le système à l'usage.</p><p id="r-150" data-claire-element-id="150">Pour clore le sujet des performances, il est à noter que l'ordre et la fréquence des collectes ont leur importance. Analyser des objets sujets à des changements fréquents est un très mauvais calcul, causant à la fois un usage plus intensif de la barrière, et un nouvel examen systématique. De manière similaire, des collectes trop fréquentes peuvent s'avérer infructueuses (aucun recyclage possible) et des collectes trop espacées peuvent entraîner une plus grande fragmentation, mais surtout un remplissage accéléré de la mémoire disponible. Le contrôle de ces critères relève toutefois d'une optimisation heuristique dynamique et dépasse de loin le cadre de cette série d'articles d'introduction.</p><h2 id="r-efficacite" data-claire-element-id="156">Efficacité</h2><p id="r-152" data-claire-element-id="152">Un souci majeur du recyclage progressif est l'efficacité : il s'agit de collecter suffisamment de mémoire en un temps raisonnable, afin de ne pas trop l'encombrer. Concrètement, cela signifie qu'un cycle doit être achevé avant que la mémoire restante ne soit épuisée. Si notre système contrôle l'intégralité de la mémoire, une estimation peut être faite à partir de la quantité de mémoire libre au début du cycle. Dans le cas contraire, nous devons nous contenter d'un paramètre arbitraire ou d'une approximation.</p><p id="r-153" data-claire-element-id="153">Il est également possible de coupler le collecteur progressif avec un collecteur classique, pouvant être invoqué par décision du programme (par exemple, en cas de nécessité, lorsque la mémoire vient à manquer ou simplement par souci d'optimisation, à des instants choisis).</p><p id="r-154" data-claire-element-id="154">Les techniques présentées au long de cet article permettent de concevoir un système de gestion automatique de la mémoire capable de supporter certaines contraintes de temps d'interruption. Le domaine d'application d'un tel composant est vaste ; les programmes qui requièrent une bonne réactivité ne sont pas rares. Les logiciels multimédias, tels que les jeux, constituent de bons exemples.</p><p id="r-155" data-claire-element-id="155">Seul un collecteur progressif est capable d'offrir des garanties intéressantes, contribuant à la fluidité des programmes. Couplé à un collecteur continu, il peut satisfaire les besoins d'environnements hétérogènes ou plus exigeants.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/recyclage-progressif-de-la-memoire">Recyclage progressif de la mémoire</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/recyclage-progressif-de-la-memoire/presentation">
+Présentation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/recyclage-progressif-de-la-memoire/modifications-preliminaires">
+Modifications préliminaires
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/recyclage-progressif-de-la-memoire/un-mark-sweep-progressif">
+Un mark&amp;sweep progressif
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/recyclage-progressif-de-la-memoire/discussions">
+Discussions
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/recyclage-progressif-de-la-memoire/un-mark-sweep-progressif">
+<span class="arrow"></span>
+<span class="next">Un mark&amp;sweep progressif</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/recyclage-progressif-de-la-memoire.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 22:43:10 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/recyclage-progressif-de-la-memoire.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 03:59:33 GMT -->
+</html>

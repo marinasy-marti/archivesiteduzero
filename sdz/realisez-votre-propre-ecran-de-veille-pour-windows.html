@@ -1,0 +1,1521 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/realisez-votre-propre-ecran-de-veille-pour-windows.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 06:50:53 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/realisez-votre-propre-ecran-de-veille-pour-windows.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:14:38 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Réalisez votre propre écran de veille pour Windows</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Réalisez votre propre écran de veille pour Windows</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#RalisezvotreproprecrandeveillepourWindows">Réalisez votre propre écran de veille pour Windows</a><br/><a href="#Thoriedebaseetprrequis">Théorie de base et prérequis</a><br/><a href="#Miseenplaceduprojetetsquelettedebase">Mise en place du projet et squelette de base</a><br/><a href="#Comportementspardfautetbasedelafonctionquotrunquot">Comportements par défaut et base de la fonction &quot;run&quot;</a><br/><a href="#Initialisationdebase">Initialisation de base</a><br/><a href="#Laboucleprincipale">La boucle principale</a><br/><a href="#Exemple">Exemple</a><br/><a href="#Thoriesystmeetrsolutionduproblme">Théorie système et résolution du problème</a><br/><a href="#Annexecrationdelalibrairiestatique">Annexe : création de la librairie statique</a><br/></div>
+<a name="RalisezvotreproprecrandeveillepourWindows"></a><h2>Réalisez votre propre écran de veille pour Windows</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/theorie-de-base-et-prerequis">
+<span class="next">Théorie de base et prérequis</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-546186" data-claire-element-id="546186">Bonjour à tous les Zér0s, et bienvenue dans ce tutoriel sur la réalisation d'un écran de veille.</p><p id="r-546187" data-claire-element-id="546187">Certains d'entre vous ont déjà du voir l'ancienne version du tutoriel. Cette dernière a fait l'objet de remarques selon lesquelles il était bien trop lourd et indigeste. Je vous présente donc ce tutoriel entièrement reformulé pour essayer de le faire plus court et plus clair. J'espère qu'il vous plaira à tous.</p><p id="r-546188" data-claire-element-id="546188">Pour les nouveaux, eh bien bienvenue aussi. J'espère également que ce tutoriel vous conviendra.</p><p id="r-546189" data-claire-element-id="546189">Je vais donc vous apprendre à réaliser un écran de veille en C++, ou plutôt à réaliser un &quot;point d'entrée pour écran de veille&quot;.</p><div id="r-546191" data-claire-element-id="546191" data-claire-semantic="question"><p id="r-546190" data-claire-element-id="546190">Gné ? Un point d'entrée pour un écran de veille ? :euh:</p></div><p id="r-546192" data-claire-element-id="546192">Oui. Disons que je vais vous expliquer comment réaliser une classe qui permettra de mettre en route une application de type écran de veille. En gros, il vous suffira par la suite de créer une instance de cette classe pour créer vos propres écrans de veille à partir de celle-ci sans avoir à vous soucier du technique qu'il y a derrière. Pendant le développement de cette classe, nous allons créer un écran de veille d'exemple, pour avoir quelque chose comme ceci :</p><figure id="r-546194" data-claire-element-id="546195"><img id="r-546193" data-claire-element-id="546193" src="medias/uploads.siteduzero.com_files_256001_257000_256914.png" alt="Exemple d'écran de veille"/></figure><p id="r-546196" data-claire-element-id="546196">En raison de certaines parties du code assez pointues, ce tutoriel est classé en difficulté intermédiaire. Pour la plupart d'entre vous, vous y découvrirez des concepts non appris dans les cours de base du C. Je vous rappelle cependant que le but est d'écrire ce code une fois pour toutes, et qu'il ne sera pas nécessaire d'utiliser ces notions pour créer vos écrans de veille sur cette base par la suite. Si vous ne comprenez pas à 100% les concepts futurs, l'important est que vous réussissiez à les implémenter. Je m'efforcerai de faire du mieux possible pour que ça passe.</p><aside id="r-546198" data-claire-element-id="546198" data-claire-semantic="warning"><p id="r-546197" data-claire-element-id="546197">Avant de commencer ce tutoriel, il est plus que fortement recommandé de comprendre et de savoir utiliser les langages de programmation C et C++. Si ce n'est pas le cas, je vous rappelle qu'il existe un cours sur chacun de ces langages sur le Site du Zéro. Il vous suffit de choisir le cours que vous désirez dans la partie gauche du site. Il est également conseillé d'avoir vu et compris le tutoriel annexe sur le C++ situé <a href="http://www.siteduzero.com/tutoriel-3-8965-c-notions-avancees.html">ici (tutoriel avancé sur le C++)</a>, car nous allons utiliser une technique décrite dans ce cours. Enfin, ce tuto explique comment réaliser un écran de veille sous Windows <strong>uniquement</strong>. En effet, certains concepts de programmation système vont être utilisés. N'essayez donc pas de compiler sous Linux, cela ne passera pas.</p></aside><p id="r-546199" data-claire-element-id="546199">(au passage si quelqu'un sait comment réaliser le même genre de chose sous Linux, je suis preneur bien entendu :-° )</p><p id="r-546200" data-claire-element-id="546200">Ah, petit détail avant de commencer encore : le tuto est marqué en &quot;copie non autorisée&quot;, mais bien évidemment vous pouvez utiliser le code fourni comme bon vous semble. Je souhaite simplement que le contenu textuel de ce tutoriel ne soit pas recopié quelle qu'en soit la fin. Je vous remercie par avance.</p><p id="r-546201" data-claire-element-id="546201">Allez c'est parti ! Ta-taa yo-yooooooooooooooo :pirate:</p>
+</div><a name="Thoriedebaseetprrequis"></a><h2>Théorie de base et prérequis</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/mise-en-place-du-projet-et-squelette-de-base">
+<span class="next">Mise en place du projet et squelette de base</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-546202" data-claire-element-id="546202">Avant de foncer dans le code, nous allons d'abord voir ensemble ce qu'est un écran de veille, et donc ce qui nous attend par la suite. Ensuite nous mettrons tout en place et nous pourrons attaquer le code à proprement parler :magicien:</p><h2 id="r-un-ecran-de-veille-c-est-quoi" data-claire-element-id="546225">Un écran de veille... c'est quoi?</h2><p id="r-546203" data-claire-element-id="546203">C'est une bonne question ; mais la réponse est tout aussi simpliste vous allez voir ^^ <br/> En fait, un écran de veille est un fichier au format .scr, qui se trouve dans le dossier System32 de Windows (ou SysWOW64 si vous possédez une version 64 bits de votre système)<br/> En allant y faire un tour, on peut y voir des fichiers comme celui-ci (pêché dans Windows 7)</p><figure id="r-546205" data-claire-element-id="546206"><img id="r-546204" data-claire-element-id="546204" src="medias/uploads.siteduzero.com_files_256001_257000_256915.png" alt="l'écran de veille 'bubbles'"/></figure><aside id="r-546208" data-claire-element-id="546208" data-claire-semantic="warning"><p id="r-546207" data-claire-element-id="546207">Le dossier System32 (ou SysWOW64) est un dossier <strong>extrêmement important</strong> de votre système d'exploitation. Il ne faut <strong>jamais, au grand jamais</strong> toucher aux fichiers qui s'y trouvent ! Nous allons dans ce tuto toucher uniquement au fichier .scr sur lequel nous allons travailler.</p></aside><p id="r-546209" data-claire-element-id="546209">C'est le système qui s'occupe de lancer le .scr correspondant à l'écran de veille choisi lorsque l'utilisateur n'est pas actif pendant une certain laps de temps (celui que l'on choisit dans l'écran de configuration des écrans de veille). Mais un .scr peut également être lancé directement, essayez donc. Quand vous lancez le .scr, vous avez l'écran de veille correspondant qui se met en route, et qui disparaît quand vous bougez la souris par exemple. Vous noterez que en lançant l'écran de veille de cette façon, même en mode protection le système ne vous demandera pas votre mot de passe pour le fermer.</p><div id="r-546211" data-claire-element-id="546211" data-claire-semantic="question"><p id="r-546210" data-claire-element-id="546210">Donc, c'est un fichier .scr. C'est bien, mais en programmation C++ on ne peut faire que des .exe et des librairies statiques et dynamiques, mais un .scr, on fait comment ?</p></div><p id="r-546212" data-claire-element-id="546212">J'y viens : vous allez être surpris, mais c'est parfaitement faisable. Vous allez à présent découvrir la plus grande révélation du monde entier, préparez vous au choc ^^ <br/> Un .scr, eh bien... c'est un .exe que l'on aura renommé en .scr :ninja:</p><div id="r-546214" data-claire-element-id="546214" data-claire-semantic="question"><p id="r-546213" data-claire-element-id="546213">:waw: :waw: Donc un .scr c'est un .exe ; mais dans ce cas, qu'y a t-il à nous apprendre ? si on sait faire un .exe on sait faire un .scr non ?</p></div><p id="r-546215" data-claire-element-id="546215">Eh bien, pas tout à fait, et pour une raison très simple : un écran de veille, ce n'est pas seulement une application que l'on lance et qui affiche une jolie animation (tant qu'à faire :lol: ) à l'écran. En effet, c'est une application qui doit avoir différents comportements selon ce qu'on lui demande :</p><ul id="r-546222" data-claire-element-id="546222"><li id="r-546217" data-claire-element-id="546217"><p id="r-546216" data-claire-element-id="546216">Afficher l'écran de veille en plein écran ;</p></li><li id="r-546219" data-claire-element-id="546219"><p id="r-546218" data-claire-element-id="546218">Afficher un aperçu dans la fenêtre de sélection des écrans de veille (voir la première image du tuto) ;</p></li><li id="r-546221" data-claire-element-id="546221"><p id="r-546220" data-claire-element-id="546220">Lancer le mode configuration pour pouvoir régler les paramètres.</p></li></ul><p id="r-546223" data-claire-element-id="546223">Ce que nous allons développer ici, c'est donc une classe C++ qui aura la charge de distinguer toutes ces différentes demandes et initialiser le programme en fonction de ces dernières. Il ne restera plus pour le programmeur qu'à développer la partie configuration et la partie affichage - voire 2 parties différentes si l'aperçu n'est pas identique à l'écran de veille en lui-même, ce qui est parfois le cas.</p><p id="r-546224" data-claire-element-id="546224">Nous allons à présent voir quels outils et quelles librairies nous allons utiliser pour cela.</p><h2 id="r-prerequis-25" data-claire-element-id="546262">Prérequis</h2><p id="r-546226" data-claire-element-id="546226">Alors pour travailler tranquille, nous allons avoir besoin d'une petite ribambelle d'outils. Pour commencer, il faut un IDE. Je vais utiliser pour cet exemple Visual Studio 2008 de Microsoft, que je vous conseille fortement. Mais vous êtes bien entendu libres d'utiliser l'IDE qui vous plaît. Je n'ai pas testé la compilation des fichiers sources avec d'autres IDE et je ne sais pas ce que ça peut donner, donc il est probable que la compilation puisse être plus délicate.<br/> À noter que certains IDE comme Code::Blocks proposent d'utiliser le compilateur de Visual Studio. Vous pouvez donc installer VS et utiliser son compilateur fourni avec votre IDE préféré.</p><aside id="r-546228" data-claire-element-id="546228" data-claire-semantic="warning"><p id="r-546227" data-claire-element-id="546227">Si vous compilez une librairie avec le compilateur de VS, cette dernière ne sera utilisable <strong>que</strong> par VS (même version obligatoire). Les autres IDE utilisent généralement tous le même compilateur sous Windows, à savoir celui fourni avec minGw (équivalent Windows de GCC).</p></aside><p id="r-546229" data-claire-element-id="546229">Si vous souhaitez installer VS, il suffit de procéder comme suit :</p><ul id="r-546236" data-claire-element-id="546236"><li id="r-546231" data-claire-element-id="546231"><p id="r-546230" data-claire-element-id="546230">Allez sur cette page : <a href="http://www.microsoft.com/express/Downloads/#2008-Visual-CPP">Télécharger Visual C++ 2008 Express Edition</a></p></li><li id="r-546233" data-claire-element-id="546233"><p id="r-546232" data-claire-element-id="546232">Cliquez sur &quot;Visual Studio 2008 express&quot; en dessous de &quot;Downloads&quot;, ensuite sélectionnez &quot;Visual C++ 2008 express edition&quot;, &quot;French&quot; et enfin &quot;Free download&quot;.</p></li><li id="r-546235" data-claire-element-id="546235"><p id="r-546234" data-claire-element-id="546234">Lancez l'exéctuable que vous venez de télécharger et installez VS.</p></li></ul><p id="r-546237" data-claire-element-id="546237">A l'heure où j'écris ces lignes, Visual Studio 2010 existe déjà, cependant les librairies tierce-partie que nous allons utiliser pour notre projet ne sont pas encore disponibles pour cette version. Si vous l'utilisez, il vous faudra télécharger les sources de ces librairies et les recompiler avec VS 2010 pour pouvoir les utiliser - expérience faite par un ami qui s'est bien amusé semblerait t-il ^^.</p><p id="r-546238" data-claire-element-id="546238">Ensuite, nous allons utiliser une autre bibliothèque : nous aurons besoin de créer une application graphique avec des fenêtres. De plus une bibliothèque qui nous fournit un support pour développer avec une librairie 3D comme OpenGL nous donnerait un avantage supplémentaire. Nous allons donc utiliser...</p><div id="r-546240" data-claire-element-id="546240" data-claire-semantic="question"><p id="r-546239" data-claire-element-id="546239">SDL ?</p></div><p id="r-546241" data-claire-element-id="546241">Non. :lol: C'était bien tenté, mais nous n'allons pas utiliser SDL, pour une raison plus que valable, que je ne peux pas vous expliquer ici (c'est un peu technique), mais sur laquelle nous allons revenir plus tard. A la place, nous allons utiliser SFML. SFML est une bibliothèque qui a le même but et les mêmes fonctionnalités que la SDL, mais qui est plus complète et qui est basée sur l'objet (SDL fonctionne en procédural). Je remercie au passage Sylphcius pour cette petite précision concernant SFML dans son commentaire sur l'ancien tutoriel.</p><p id="r-546242" data-claire-element-id="546242">Je viens de me rendre compte qu'un tuto sur SFML est désormais disponible sur le site du zér0. Si vous voulez vous pencher sur cette bibliothèque intéressante, je vous propose de lire <a href="http://www.siteduzero.com/tutoriel-3-321243-creez-des-applications-2d-avec-sfml.html">ce big-tuto</a>.</p><p id="r-546243" data-claire-element-id="546243">Pour télécharger SFML, il suffit de se rendre ici : <a href="http://www.sfml-dev.org/download-fr.php">Télécharger SFML</a><br/> Choisissez simplement la version de SFML correspondant au compilateur que vous utilisez, avec ou sans la doc et les exemples selon votre humeur du jour. Ensuite lancez l'exécutable et suivez les instructions.</p><p id="r-546244" data-claire-element-id="546244">Vous trouverez sur le site des tutoriels pour vous expliquer comment configurer votre IDE pour accuillir SFML.</p><p id="r-546245" data-claire-element-id="546245">Maintenant que nous avons tout le nécessaire, nous allons pouvoir attaquer la mise en place du projet et du squelette de base de l'application.</p><div id="r-546247" data-claire-element-id="546247" data-claire-semantic="question"><p id="r-546246" data-claire-element-id="546246">Stooooooop ! o_O Ca me paraît un peu gros de devoir utiliser tout ça ! J'ai entendu parler d'une librairie fournie par Windows qui s'appelle &quot;scrnsave&quot; et qui permet de faire des écrans de veille justement. Ce n'est pas plus simple de faire avec ça plutôt que de réinventer la roue ?</p></div><p id="r-546248" data-claire-element-id="546248">Bonne question ^^ Je voulais éviter le sujet, mais vu qu'elle est posée je réponds franchement : à la question &quot;est-ce que je réinvente la roue ?&quot;, je répondrais ceci :</p><p id="r-546249" data-claire-element-id="546249"><cite>Citation</cite></p><blockquote id="r-546251" data-claire-element-id="546251"><p id="r-546250" data-claire-element-id="546250">Ptêt' ben qu'oui, ptêt' ben qu'non !</p></blockquote><p id="r-546252" data-claire-element-id="546252">En effet, cette librairie existe, mais pour deux raisons particulières je ne tiens pas à l'utiliser et à vous l'apprendre :</p><ol id="r-546257" data-claire-element-id="546257"><li id="r-546254" data-claire-element-id="546254"><p id="r-546253" data-claire-element-id="546253">Cette librairie utilise à peu près les mêmes concepts que je veux vous apprendre, mais les appels sont faits à un niveau plus bas (programmation système au lieu d'une classe claire et facile à utiliser). De plus, elle fonctionne en utilisant un timer (un évènement est reçu tous les x temps) et qu'il faut pouvoir traiter de manière très intelligente afin de tirer profit au maximum de la machine (entre 2 timers, on fait quoi?).</p></li><li id="r-546256" data-claire-element-id="546256"><p id="r-546255" data-claire-element-id="546255">Je ne rentrerai pas dans les détails, sinon le tutoriel risquerait d'être très très long ( :-° ), mais pour faire simple je dirais que cette librairie peut être utile pour faire des écrans de veilles très basiques, et si vous avez envie de vous mettre à la programmation système. Je n'ai rien contre, je le précise, et vous pouvez bien entendu si vous le souhaitez rechercher toutes les infos que vous voulez la-dessus sur le web, c'est juste une technique que je n'utiliserai pas ici.</p></li></ol><p id="r-546258" data-claire-element-id="546258">Ok, est-ce qu'il y a d'autres questions avant de commencer ?</p><div id="r-546260" data-claire-element-id="546260" data-claire-semantic="question"><p id="r-546259" data-claire-element-id="546259">Oui, moi ! Quand c'est qu'on mange ?</p></div><p id="r-546261" data-claire-element-id="546261">*soupir*<br/> Allez c'est parti ^^</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows">Réalisez votre propre écran de veille pour Windows</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/theorie-de-base-et-prerequis">
+Théorie de base et prérequis
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/mise-en-place-du-projet-et-squelette-de-base">
+Mise en place du projet et squelette de base
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/comportements-par-defaut-et-base-de-la-fonction-run">
+Comportements par défaut et base de la fonction &quot;run&quot;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/initialisation-de-base">
+Initialisation de base
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/la-boucle-principale-7">
+La boucle principale
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/exemple-165">
+Exemple
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/theorie-systeme-et-resolution-du-probleme">
+Théorie système et résolution du problème
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/annexe-creation-de-la-librairie-statique">
+Annexe : création de la librairie statique
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/mise-en-place-du-projet-et-squelette-de-base">
+<span class="next">Mise en place du projet et squelette de base</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Miseenplaceduprojetetsquelettedebase"></a><h2>Mise en place du projet et squelette de base</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/theorie-de-base-et-prerequis">
+<span class="arrow"></span>
+<span class="next">Théorie de base et prérequis</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/comportements-par-defaut-et-base-de-la-fonction-run">
+<span class="next">Comportements par défaut et base de la fonction &quot;run&quot;</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-squelette-de-base" data-claire-element-id="546340">Squelette de base</h2><p id="r-546264" data-claire-element-id="546264">Nous allons avant de faire une librairie commencer par faire un projet d'application Win32 tout simple. Créez donc un projet vide de type application Win32 (pas en console, nous n'en avons pas besoin). Pour ceux qui utilisent VS, il n'est pas la peine d'utiliser l'en-tête précompilé, car nous n'aurons qu'un seul header et une seule classe à faire. Décochez également l'option ATL.</p><p id="r-546265" data-claire-element-id="546265">Avant de commencer, il va falloir configurer le projet. En effet, nous souhaitons avoir un fichier .scr en sortie, et non pas un fichier .exe !</p><p id="r-546266" data-claire-element-id="546266">Pour les utilisateurs de VS, cette option de configuration se trouve dans la page de configuration du projet, outil &quot;éditeur de liens&quot;, onglet &quot;général&quot; et champ &quot;sortie&quot;. Remplacez seulement &quot;.exe&quot; par &quot;.scr&quot;. Pensez à appliquer cette modification aux deux configurations debug et release du projet.</p><p id="r-546267" data-claire-element-id="546267">Maintenant que notre projet est créé et configuré, nous allons écrire la classe qui constituera le coeur de notre application. Cette classe servira de base à chacun des projets d'écran de veille que vous réaliserez, et sera celle qui sera placée dans la bibliothèque statique que nous créerons à la fin du tutoriel. Nous allons ainsi utiliser le même principe qui est utilisé dans Qt pour la création d'une application, et qui est appliqué encore dans bien d'autres bibliothèques. Je m'explique :</p><p id="r-546268" data-claire-element-id="546268">La classe de base est une classe qui contient la structure basique permettant la mise en route de l'application visée (ici notre écran de veille). Elle contient un certain nombre de fonctions virtuelles que l'utilisateur va pouvoir dériver pour ajouter le code nécessaire à la réalisation précise de son application, sans avoir à se soucier de la base, déjà construite. Je vous fais un petit schéma (comme demandé) pour que vous y voyiez plus clair :</p><figure id="r-546270" data-claire-element-id="546271"><img id="r-546269" data-claire-element-id="546269" src="medias/uploads.siteduzero.com_files_256001_257000_256916.png" alt="Structure d'un écran de veille"/></figure><p id="r-546272" data-claire-element-id="546272">Comme on peut le voir sur ce schéma, chaque application d'écran de veille utilisera deux classes. Celle d'en haut, &quot;ScreenSaver&quot;, la classe que nous allons écrire ici servira de base à tous les écrans de veille que vous écrirez. Une fois cette classe écrite, vous n'y toucherez plus jamais. Cette classe aura pour rôle définitif de déterminer ce que l'on demande à l'écran de veille (aperçu, configuration, ou plein écran ?), et d'appeler certaines méthodes en fonction afin de faire l'écran de veille souhaité par héritage.</p><p id="r-546273" data-claire-element-id="546273">Celle d'en bas, par contre, sera spécifique à chacun de vos écrans de veille. Elle redéfinit les fonctions déclarées virtuelles dans la classe parente et possède un corps qui permet d'avoir le comportement voulu pour l'écran de veille en question. Par exemple, elle peut redéfinir une fonction de rendu (voir un peu plus loin) à chaque passage dans la boucle principale de la classe mère.</p><p id="r-546274" data-claire-element-id="546274">Créez donc un fichier &quot;ScreenSaver.h&quot; qui contiendra le code suivant :</p><pre id="r-546275" data-claire-element-id="546275"><code data-claire-semantic="cpp">#ifndef _SCREEN_SAVER_H_
+#define _SCREEN_SAVER_H_
+
+#include &lt;SFML/Window.hpp&gt;
+#include &lt;Windows.h&gt;
+
+#ifdef _DEBUG
+#pragma comment (lib, &quot;sfml-window-s-d.lib&quot;)
+#pragma comment (lib, &quot;sfml-system-s-d.lib&quot;)
+#else
+#pragma comment (lib, &quot;sfml-window-s.lib&quot;)
+#pragma comment (lib, &quot;sfml-system-s.lib&quot;)
+#endif
+
+// notre classe point d'entrée
+class ScreenSaver
+{
+public:
+	// CONSTRUCTEUR /!\ DESTRUCTEUR
+	// toujours écrire les 2, sans aucune exception, même si les corps sont vides
+	// cela permet de rappeller que faire une allocation dynamique implique la libération mémoire dans le destructeur
+	ScreenSaver();
+	~ScreenSaver();
+
+	// La fonction run. Cette fonction est lancée par le main de l'application
+	// retourne le code de retour que le main doit rendre
+	// si debug est à true, alors on lance l'écran de veille en mode fenêtré, pour permettre le déboguage
+	// si debug est à true, il empêche également la fenêtre de se détruire sur un évènement de mouvement de souris
+	int run(HINSTANCE hInstance, LPSTR lpCmdLine, const sf::VideoMode &amp; videoMode, const bool debug);
+
+protected:
+	// La fonction config est appelée depuis la fonction run, et permet de configurer l'écran de veille
+	// son comportement par défaut est d'afficher une boîte de dialogue indiquant que rien n'est configurable
+	// elle retourne 0 si tout s'est bien passé, sinon un code d'erreur (qui sera retourné par run)
+	virtual int config();
+
+	// La fonction init permet l'initialisation du rendu, et est appelée par le main avant le premier rendu (aperçu ou plein écran)
+	// retourne true si l'appel à réussi, false sinon. Dans ce cas, la fonction run se termine et renvoie le code d'erreur EXIT_FAILURE
+	// le handle passé est celui de la fenêtre de dessin
+	virtual bool init();
+	// La fonction shutDown est appelée par la fonction run à la fin de l'application et a l'effet inverse de init
+	// retourne true si l'appel à réussi, false sinon. Dans ce cas, la fonction run se termine et renvoie le code d'erreur EXIT_FAILURE
+	virtual bool shutDown();
+
+	// Les fonctions suivantes sont appelées à chaque boucle et ont pour fonction d'effectuer le rendu à l'écran
+	// celle-ci permet de faire un rendu en mode plein écran
+	// elle retourne true si on doit continuer le rendu, false sinon
+	virtual bool render() = 0;
+	// celle-là permet de faire un rendu en mode aperçu
+	// si cette fonction n'est pas surchargée, son comportement par défaut sera d'appeler la fonction render à sa place
+	// elle retourne true si on doit continuer le rendu, false sinon
+	virtual bool renderPreview();
+
+	// pointeur vers une fenêtre SFML, que nous allons instancier si nécessaire et qui servira pour le rendu
+	sf::Window * m_RenderWindow;
+	// handle de fenêtre windows, désignant la fenêtre de dessin, la même que la fenêtre SFML ci-dessus
+	HWND m_HandleFenetre;
+	// mode vidéo utilise (résolution d'écran actuelle)
+	sf::VideoMode m_VideoMode;
+	// booléen indiquant si on est en mode plein écran ou non
+	bool m_FullScreen;
+private:
+	// ce type définit les 3 types de comportements que l'on peut attendre de la part d'un écran de veille
+	enum RequestType
+	{
+		CONFIG,
+		PREVIEW,
+		SCREEN_SAVER
+	};
+};
+
+#endif // _SCREEN_SAVER_H_</code></pre><p id="r-546276" data-claire-element-id="546276">Voilà donc notre fameuse classe. On a besoin pour la créer du header SFML Window.hpp, qui nous permet d'utiliser les fenêtres SFML. Le header &lt;Windows.h&gt; est ici car notre fonction principale (la fonction run) prend en paramètre formel une variable d'un type spécifique à Windows. Le type du membre protégé &quot;m_HandleFenetre&quot; l'est également. Les #pragma que vous voyez au début sont une alternative pour indiquer à VS que les librairies citées doivent être ajoutées à la compilation (les librairies de SFML). L'autre solution consiste à les indiquer dans la configuration du projet (outil &quot;édition des liens&quot;, onglet &quot;entrée&quot; et champ &quot;dépendances supplémentaires&quot;).</p><p id="r-546277" data-claire-element-id="546277">SFML possède plusieurs types de librairies que l'on peut distinguer grâce à leur nom. Le &quot;-d&quot; à la fin indique qu'il s'agit d'une librairie compilée en mode debug, et qu'il faut donc utiliser comme librairie lors de la compilation de notre projet en mode debug, et le &quot;-s&quot; signifie static. En effet on peut soit utiliser les librairies statiques, soit les libraries non statiques qui font le lien avec des DLL fournies par SFML. Ici on utilise les librairies statiques pour ne pas avoir à se trimballer les DLL partout. C'est un choix personnel, et vous pouvez bien entendu faire avec les dynamiques si vous le souhaitez.</p><aside id="r-546279" data-claire-element-id="546279" data-claire-semantic="information"><p id="r-546278" data-claire-element-id="546278">La directive préprocesseur pragma ne reconnaît pas toujours les mêmes mots-clefs en fonction du compilateur. Ici, on utilise le mot-clef &quot;comment&quot; pour indiquer une librairie au compilateur de VC++, et il n'est donc pas certain que le compilateur que vous utilisez le connaisse. Dans ce cas en fonction de votre compilo indiquez-lui de la manière qu'il faut quelles librairies utiliser.</p></aside><p id="r-546280" data-claire-element-id="546280">Comme vous le voyez, notre classe comporte une seule fonction en public. C'est la fonction qui sera appelée par le main de l'application finale. Elle aura la charge de distinguer ce qu'on nous demande de faire, et d'appeler les fonctions protégées en fonction de ce que l'application doit faire (aperçu, configuration, etc.). Cette fonction prend quatre arguments :</p><ul id="r-546289" data-claire-element-id="546289"><li id="r-546282" data-claire-element-id="546282"><p id="r-546281" data-claire-element-id="546281">Le premier argument de notre fonction run nous permet de savoir quel est l'instance de l'application en cours : lors du lancement d'une application, Windows lui octroie un numéro unique qui permet de la distinguer dans le système. Ce numéro nous sera utile dans la fonction run. Cet argument est reçu lors de l'entrée dans le programme (WinMain).</p></li><li id="r-546284" data-claire-element-id="546284"><p id="r-546283" data-claire-element-id="546283">Le deuxième argument est la ligne de commande passée lors du lancement de l'application : c'est par l'intermédiaire de cette ligne de commande que le système va nous donner les instructions quant à quoi faire. Nous la passons à la fonction run pour qu'elle puisse la lire et la traiter pour distinguer la demande du système. Cet argument est également reçu lors de l'entrée dans le programme.</p></li><li id="r-546286" data-claire-element-id="546286"><p id="r-546285" data-claire-element-id="546285">Le troisième argument est une structure spécifique à SFML contenant la résolution d'écran à utiliser dans le cas du mode plein écran.</p></li><li id="r-546288" data-claire-element-id="546288"><p id="r-546287" data-claire-element-id="546287">Le quatrième et dernier argument est un booléen indiquant si l'on souhaite lancer l'écran de veille en mode debug ou non. Le mode debug affecte certaines propriétés de l'écran de veille afin d'en faciliter le déboguage : l'écran de veille apparaît en mode fenêtré afin d'avoir accès à l'IDE pour la manipulation des points d'arrêts et du déboguage pas à pas, et il ne réagit plus aux mouvements de souris (difficile de déboguer sans bouger la souris !)</p></li></ul><p id="r-546290" data-claire-element-id="546290">La fonction run va donc devoir définir le travail qu'on lui demande, et appeler les fonctions protégées selon le schéma suivant :</p><ul id="r-546322" data-claire-element-id="546322"><li id="r-546292" data-claire-element-id="546292"><p id="r-546291" data-claire-element-id="546291">Lors d'une demande de configuration :</p></li><ul id="r-546295" data-claire-element-id="546295"><li id="r-546294" data-claire-element-id="546294"><p id="r-546293" data-claire-element-id="546293">Appel de la fonction &quot;config&quot;, puis renvoi de son retour</p></li></ul><li id="r-546297" data-claire-element-id="546297"><p id="r-546296" data-claire-element-id="546296">Lors d'une demande d'aperçu (dans le petit écran de l'écran de sélection des écrans de veille) :</p></li><ul id="r-546307" data-claire-element-id="546307"><li id="r-546299" data-claire-element-id="546299"><p id="r-546298" data-claire-element-id="546298">Appel de la fonction &quot;init&quot;</p></li><li id="r-546301" data-claire-element-id="546301"><p id="r-546300" data-claire-element-id="546300">Boucle infinie</p></li><ul id="r-546304" data-claire-element-id="546304"><li id="r-546303" data-claire-element-id="546303"><p id="r-546302" data-claire-element-id="546302">Appel de la fonction &quot;renderPreview&quot;, une fois par boucle</p></li></ul><li id="r-546306" data-claire-element-id="546306"><p id="r-546305" data-claire-element-id="546305">Appel de la fonction &quot;shutDown&quot;</p></li></ul><li id="r-546309" data-claire-element-id="546309"><p id="r-546308" data-claire-element-id="546308">Lors d'une demande de rendu plein écran :</p></li><ul id="r-546321" data-claire-element-id="546321"><li id="r-546311" data-claire-element-id="546311"><p id="r-546310" data-claire-element-id="546310">Appel de la fonction &quot;init&quot;</p></li><li id="r-546313" data-claire-element-id="546313"><p id="r-546312" data-claire-element-id="546312">Boucle infinie</p></li><ul id="r-546318" data-claire-element-id="546318"><li id="r-546315" data-claire-element-id="546315"><p id="r-546314" data-claire-element-id="546314">Traitement des évènements : on quitte sur un clic souris, sur un mouvement souris ou sur une touche clavier</p></li><li id="r-546317" data-claire-element-id="546317"><p id="r-546316" data-claire-element-id="546316">Appel de la fonction &quot;render&quot;, une fois par boucle</p></li></ul><li id="r-546320" data-claire-element-id="546320"><p id="r-546319" data-claire-element-id="546319">Appel de la fonction &quot;shutDown&quot;</p></li></ul></ul><p id="r-546323" data-claire-element-id="546323">Sous une autre forme, on peut dire que les fonctions protégées ont chacune le rôle suivant :</p><ul id="r-546334" data-claire-element-id="546334"><li id="r-546325" data-claire-element-id="546325"><p id="r-546324" data-claire-element-id="546324">La fonction &quot;config&quot; a pour but de lancer la configuration de l'écran de veille, et de retourner une valeur en fonction de sa réussite ou non.</p></li><li id="r-546327" data-claire-element-id="546327"><p id="r-546326" data-claire-element-id="546326">La fonction &quot;init&quot; permet d'initiliser le rendu en mode aperçu ou plein écran. Si l'initialisation foire, elle renvoie false, et la fonction run se termine aussitôt.</p></li><li id="r-546329" data-claire-element-id="546329"><p id="r-546328" data-claire-element-id="546328">La fonction &quot;shutDown&quot; permet de nettoyer ce qu'il est nécessaire de nettoyer avant de quitter l'application. Cette fonction renvoie également false si elle foire.</p></li><li id="r-546331" data-claire-element-id="546331"><p id="r-546330" data-claire-element-id="546330">La fonction &quot;render&quot; permet de faire le rendu en mode plein écran. Cette fonction renvoie true si on doit continuer à dessiner, false si on veut arrêter.</p></li><li id="r-546333" data-claire-element-id="546333"><p id="r-546332" data-claire-element-id="546332">La fonction &quot;renderPreview&quot;, permet de faire également le rendu, mais pour le mode fenêtré. Elle fait le même type de retour que son homologue &quot;render&quot;.</p></li></ul><p id="r-546335" data-claire-element-id="546335">Notez que la fonction &quot;render&quot; est déclarée virtuelle pure. Les applications développées qui utilisent cette classes seront au minimum obligées de redéfinir cette fonction dans leur dérivation de la classe ScreenSaver.</p><p id="r-546336" data-claire-element-id="546336">Ce qu'on appelle le rendu en programmation graphique est la technique qui constitue a construire le dessin à l'écran. Vous trouverez plus d'infos <a href="http://fr.wikipedia.org/wiki/Rendu">sur cet article sur wikipedia</a> si vous le souhaitez. Bien entendu, la version anglaise de l'article est bien plus complète, comme toujours ^^</p><p id="r-546337" data-claire-element-id="546337">La classe contient également quelques variables membres en protégé. Elles sont dans cette partie car elles peuvent être utiles dans les classes qui la dérivent (par exemple, le handle fenêtre peut être utile pour la fonction dérivée &quot;init&quot; si on utilise directX pour le dessin). Les commentaires en disent assez sur leur fonction.</p><p id="r-546338" data-claire-element-id="546338">Enfin, l'enum déclaré en privé nous servira à distinguer la tâche a effectuer dans la fonction &quot;run&quot;. Il est déclaré en privé, car ce type n'est pas utile à l'extérieur de la classe.</p><p id="r-546339" data-claire-element-id="546339">Maintenant que nous avons la structure de base de notre classe, nous allons écrire les comportements par défaut de chacune des méthodes protégées.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows">Réalisez votre propre écran de veille pour Windows</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/theorie-de-base-et-prerequis">
+Théorie de base et prérequis
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/mise-en-place-du-projet-et-squelette-de-base">
+Mise en place du projet et squelette de base
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/comportements-par-defaut-et-base-de-la-fonction-run">
+Comportements par défaut et base de la fonction &quot;run&quot;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/initialisation-de-base">
+Initialisation de base
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/la-boucle-principale-7">
+La boucle principale
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/exemple-165">
+Exemple
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/theorie-systeme-et-resolution-du-probleme">
+Théorie système et résolution du problème
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/annexe-creation-de-la-librairie-statique">
+Annexe : création de la librairie statique
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/theorie-de-base-et-prerequis">
+<span class="arrow"></span>
+<span class="next">Théorie de base et prérequis</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/comportements-par-defaut-et-base-de-la-fonction-run">
+<span class="next">Comportements par défaut et base de la fonction &quot;run&quot;</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Comportementspardfautetbasedelafonctionquotrunquot"></a><h2>Comportements par défaut et base de la fonction &quot;run&quot;</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/mise-en-place-du-projet-et-squelette-de-base">
+<span class="arrow"></span>
+<span class="next">Mise en place du projet et squelette de base</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/initialisation-de-base">
+<span class="next">Initialisation de base</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-comportements-par-defaut" data-claire-element-id="546352">Comportements par défaut</h2><p id="r-546342" data-claire-element-id="546342">Nous allons en premier lieu définir les comportements par défaut, c'est à dire ce que nos fonctions vont faire si elles ne sont pas redéfinies. Ceci nous permet d'avoir une application correcte, même si nous ne réécrivons pas certaines fonctions. Par exemple, le comportement par défaut de la fonction &quot;config&quot; peut être d'afficher un message indiquant que rien n'est configurable. Ceci nous évite ainsi d'avoir à le faire pour chaque écran de veille dont nous ne souhaitons pas faire de configuration.</p><p id="r-546343" data-claire-element-id="546343">Dans le jargon informatique, on parle d'écrire des &quot;bouchons&quot;.</p><p id="r-546344" data-claire-element-id="546344">Créez donc le fichier &quot;ScreenSaver.cpp&quot; qui contiendra les corps de fonctions de la classe fraîchement écrite, et remplissez-le avec ce code :</p><pre id="r-546345" data-claire-element-id="546345"><code data-claire-semantic="cpp">#include &quot;ScreenSaver.h&quot;
+
+#pragma warning (disable : 4996)
+
+/************************************************************************/
+/* Fonctions publiques                                                  */
+/************************************************************************/
+// construction et destructions
+ScreenSaver::ScreenSaver() : m_RenderWindow(NULL)
+{}
+
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+
+ScreenSaver::~ScreenSaver()
+{
+	// destruction de m_RenderWindow si celui-ci a été construit
+	if (m_RenderWindow) delete m_RenderWindow;
+}
+
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+
+/************************************************************************/
+/* Fonction protégées                                                   */
+/************************************************************************/
+int ScreenSaver::config()
+{
+	MessageBox(m_HandleFenetre, L&quot;Il n'y a rien à configurer&quot;, L&quot;Information&quot;, MB_OK | MB_ICONASTERISK);
+	return EXIT_SUCCESS;
+}
+
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+
+bool ScreenSaver::init()
+{
+	return true;
+}
+
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+
+bool ScreenSaver::shutDown()
+{
+	return true;
+}
+
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+
+bool ScreenSaver::renderPreview()
+{
+	return render();
+}</code></pre><p id="r-546346" data-claire-element-id="546346">Bon ben ici rien de bien compliqué, le constructeur initialise notre membre privé pointeur à NULL, et notre destructeur le détruit si il y a lieu, rien de plus classique ^^</p><p id="r-546347" data-claire-element-id="546347">La fonction &quot;config&quot; utilise l'appel système messageBox pour afficher une boite de dialogue indiquant que rien n'est configurable pour cet écran de veille (si vous voulez configurer, redéfinissez &quot;config&quot; dans votre implémentation de la classe). À noter que par défaut, les fonctions systèmes prenant une chaîne de caractères en argument prennent une chaine de caractères en Unicode, le &quot;L&quot; précédant la chaîne est donc obligatoire ici. Cela permet la bonne gestion des accents. Vous pouvez même mettre des caractères chinois (ou japonais ^^) si le cœur vous en dit !</p><p id="r-546348" data-claire-element-id="546348">Les fonctions &quot;init&quot; et &quot;shutDown&quot; renvoient par défaut true, pour indiquer que tout s'est bien passé.</p><p id="r-546349" data-claire-element-id="546349">La fonction &quot;renderPreview&quot; retourne l'appel de la fonction &quot;render&quot; par défaut. Ceci permet, lors de la création d'un écran de veille, de n'avoir à écrire que la fonction &quot;render&quot; quand on souhaite faire le même rendu en mode aperçu et en mode plein écran. Inutile d'écrire la fonction &quot;renderPreview&quot; pour lui dire d'appeler &quot;render&quot;, ce sera le comportement par défaut.</p><p id="r-546350" data-claire-element-id="546350">La fonction &quot;render&quot; est déclarée virtuelle pure, elle n'est donc pas ici.</p><p id="r-546351" data-claire-element-id="546351">Quant à la fonction &quot;run&quot;, elle est un peu compliquée, car c'est elle qui a le rôle de point d'entrée et qui donne tout l'intérêt que mérite cette classe. Nous allons d'ailleurs commencer à la détailler.</p><h2 id="r-la-fonction-run-premiere-partie" data-claire-element-id="546369">La fonction run - première partie</h2><p id="r-546353" data-claire-element-id="546353">Bon, nous allons maintenant attaquer la partie violente du code : la fonction run. Sa responsabilité est lourde, elle doit faire tout le travail d'initialisation et d'appel des fonctions protégées.</p><p id="r-546354" data-claire-element-id="546354">La première chose à faire est la séparation des tâches. Pour cela nous alons devoir savoir comment les ordres sont passées par Windows.<br/> En fonction de ce que le système demande, la ligne de commande peut se présenter sous l'une des trois formes suivantes :</p><ul id="r-546361" data-claire-element-id="546361"><li id="r-546356" data-claire-element-id="546356"><p id="r-546355" data-claire-element-id="546355">Pour la configuration (Config) : ligne de commande = &quot;/c:xxxxx&quot; : xxxxx représente un nombre (nous verrons quoi plus tard) ;</p></li><li id="r-546358" data-claire-element-id="546358"><p id="r-546357" data-claire-element-id="546357">Pour le mode aperçu (Preview) : ligne de commande = &quot;/p xxxxx&quot; ; xxxxx représente un nombre (idem, plus tard) ;</p></li><li id="r-546360" data-claire-element-id="546360"><p id="r-546359" data-claire-element-id="546359">Pour le mode plein écran (Screen saver) : ligne de commande = &quot;/s&quot; ; nous considèrerons que si on a ni &quot;/c:xxxxx&quot; ni &quot;/p xxxxx&quot; c'est qu'on est en mode plein écran, on peut donc oublier le &quot;/s&quot;.</p></li></ul><p id="r-546362" data-claire-element-id="546362">Pourquoi le &quot;/c&quot; est séparé du nombre par un &quot;:&quot; et pourquoi le &quot;/p&quot; par un espace, cela reste un mystère complet.</p><p id="r-546363" data-claire-element-id="546363">Pour traiter cette ligne de commande nous alons donc commencer par écrire le code suvant :</p><pre id="r-546364" data-claire-element-id="546364"><code data-claire-semantic="cpp">int ScreenSaver::run(HINSTANCE hInstance, LPSTR lpCmdLine, const sf::VideoMode &amp; videoMode, const bool debug)
+{
+	RequestType request; // la requête du système
+	char * jeton; // ce qui sera retourné par strtok
+	sf::Event toProcess; // évènement à traiter
+	int mouseX = -1; int mouseY = -1;
+	WNDCLASS childClass; // la classe utilisée pour créer une fenêtre
+	HWND childWindow = NULL; // la fenêtre fille utilisée pour le mode aperçu
+
+	// on fait un strtok sur lpCmdLine pour récupérer la requête
+	jeton = strtok(lpCmdLine, &quot; :&quot;);
+
+	// si jeton est différent de null on teste
+	if (NULL != jeton)
+	{
+		// on fait ensuite un if, pour savoir où l'on est
+		if (strncmp(jeton, &quot;/c&quot;, 2) == 0) // si on a /c
+		{
+			request = CONFIG;
+		}
+		else if (strncmp(jeton, &quot;/p&quot;, 2) == 0) // si on a /p
+		{
+			request = PREVIEW;
+		}
+		else
+		{
+			request = SCREEN_SAVER; // si on /s ou rien ou n'importe quoi d'autre
+		}
+	}
+	else
+		request = SCREEN_SAVER;
+
+	// fin de la fonction
+	return EXIT_SUCCESS;
+}</code></pre><p id="r-546365" data-claire-element-id="546365">Il y a ici toutes les variables déjà déclarées, cela nous évitera à revenir dessus plus tard. Pour l'instant seules les variables request et jeton seront utilisées. La variable request est de type RequestType, l'enum que nous avons déclaré en privé.</p><p id="r-546366" data-claire-element-id="546366">Ici, on utilise la puissance de la fonction strtok pour récupérer la première partie de la ligne de commande. Elle est séparée de la suite soit par un &quot;:&quot;, soit par un espace, d'où le deuxième argument du strtok (oui oui, il y a bien un espace entre le premier guillemet et le caractère &quot;:&quot; en argument, ce n'est pas une erreur). Il nous renvoie donc une chaine correspondant à la première partie de notre ligne de commande, celle qui nous intéresse ici. Il ne faut pas oublier que ce jeton peut être nul, dans le cas où la ligne de commande est vide (on lance directement le .scr)</p><p id="r-546367" data-claire-element-id="546367">Ensuite, eh bien en fonction de ce que notre jeton contient, on définit la valeur de request. Nous pourrons ainsi par la suite faire un switch sur cette valeur pour déterminer ce que nous allons faire.</p><p id="r-546368" data-claire-element-id="546368">Le return EXIT_SUCCESS est ici afin que vous puissiez compiler votre code sans générer d'erreur. Il restera bien entendu à la fin de la fonction ; ce que nous allons rajouter par la suite se placera directement au dessus de ce dernier. Dans la prochaine partie, nous allons commencer à effectuer le travail de base en fonction de la requête.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows">Réalisez votre propre écran de veille pour Windows</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/theorie-de-base-et-prerequis">
+Théorie de base et prérequis
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/mise-en-place-du-projet-et-squelette-de-base">
+Mise en place du projet et squelette de base
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/comportements-par-defaut-et-base-de-la-fonction-run">
+Comportements par défaut et base de la fonction &quot;run&quot;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/initialisation-de-base">
+Initialisation de base
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/la-boucle-principale-7">
+La boucle principale
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/exemple-165">
+Exemple
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/theorie-systeme-et-resolution-du-probleme">
+Théorie système et résolution du problème
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/annexe-creation-de-la-librairie-statique">
+Annexe : création de la librairie statique
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/mise-en-place-du-projet-et-squelette-de-base">
+<span class="arrow"></span>
+<span class="next">Mise en place du projet et squelette de base</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/initialisation-de-base">
+<span class="next">Initialisation de base</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Initialisationdebase"></a><h2>Initialisation de base</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/comportements-par-defaut-et-base-de-la-fonction-run">
+<span class="arrow"></span>
+<span class="next">Comportements par défaut et base de la fonction &quot;run&quot;</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/la-boucle-principale-7">
+<span class="next">La boucle principale</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-546371" data-claire-element-id="546371">Ici nous allons donc passer à la V2 de notre fonction &quot;run&quot;, et y rajouter un travail d'initialisation pour chaque requête.</p><p id="r-546372" data-claire-element-id="546372">Nous allons donc rajouter le code suivant à la fin de la fonction (avant le return quand même hein ^^) :</p><pre id="r-546373" data-claire-element-id="546373"><code data-claire-semantic="cpp">// en fonction du type de requête, on fait différentes initialisations
+	switch(request)
+	{
+	case CONFIG:
+		// dans le cas d'une config, on quitte direct la fonction run après l'appel de config
+		// tout ce qui suit ne sera ainsi jamais appelé dans le cas d'une configuration
+		m_HandleFenetre = (HWND)(atoi(strtok(NULL, &quot;&quot;)));
+		return config();
+
+		break;
+	case SCREEN_SAVER:
+		// création de la fenêtre en plein écran, et remplissage des variables
+		if (debug)
+		{
+			m_VideoMode = sf::VideoMode(800, 600, 32);
+			m_FullScreen = false;
+			m_RenderWindow = new sf::Window(m_VideoMode, &quot;SiteDuZero&quot;);
+		}
+		else
+		{
+			m_VideoMode = videoMode;
+			m_FullScreen = true;
+			m_RenderWindow = new sf::Window(m_VideoMode, &quot;SiteDuZero&quot; , sf::Style::Fullscreen);
+		}
+		// on récupère le handle de la fenêtre SFML
+		m_HandleFenetre = GetActiveWindow();
+		// on cache le curseur de la souris
+		m_RenderWindow-&gt;ShowMouseCursor(false);
+
+		break;
+	case PREVIEW:
+		// création de la fenêtre depuis le handle récupéré
+		m_HandleFenetre = (HWND)(atoi(strtok(NULL, &quot;&quot;)));
+		m_RenderWindow = new sf::Window(m_HandleFenetre);
+		// enfin on définit les membres
+		m_VideoMode = sf::VideoMode(m_RenderWindow-&gt;GetWidth(), m_RenderWindow-&gt;GetHeight());
+		m_FullScreen = false;
+
+		break;
+	default:
+		break;
+	}</code></pre><p id="r-546374" data-claire-element-id="546374">On en vient donc à expliquer ces fameux xxxxxx dans les linges de commande pour le mode config et le mode aperçu. En fait, ce nombre est un identifiant de fenêtre, ou Handle WiNDow (HWND). Il permet au système d'identifier une fenêtre dans celles existantes de toutes les applications.</p><p id="r-546375" data-claire-element-id="546375">Ainsi, le xxxxx après config renseigne sur le handle de la fenêtre de sélection des écrans de veille, ainsi la configuration peut se faire en définissant la fenêtre de configuration comme modale à la fenêtre de sélection. En d'autres termes, tant que la configuration de l'écran de veille est en cours, la fenêtre dont le handle est passé en paramètre ne peut plus être accédée par l'utilisateur.</p><p id="r-546376" data-claire-element-id="546376">Pour le mode aperçu, le xxxxx est le handle de la fenêtre dans laquelle on doit dessiner notre aperçu. C'est quand même mieux de savoir où dessiner !</p><p id="r-546377" data-claire-element-id="546377">C'est d'ailleurs à ce niveau que SDL ne peut plus suivre, et c'est pourquoi nous avons pris SFML. En effet, la SDL permet de créer une fenêtre facilement, mais il est impossible de créer une fenêtre en utilisant un handle existant. SFML permet cette opération. Nous allons voir ça un peu plus bas.</p><p id="r-546378" data-claire-element-id="546378">Dans le cas où notre requête est CONFIG, eh bien on récupère le handle de la fenêtre de sélection et on appelle la fonction &quot;config&quot;. Vous remarquerez que le comportement par défaut de la fonction &quot;config&quot; affiche une boite de dialogue avec ce handle en paramètre. Quand vous essaierez, vous verrez que quand la boite de dialogue est affichée, l'écran de sélection n'est plus accessible.</p><p id="r-546379" data-claire-element-id="546379">Quand on est en mode plein écran (requête SCREEN_SAVER), le comportement dépend du drapeau debug. Rappelez-vous, il est préférable d'être en mode fenêtré pour faciliter le débogage. Ce qu'on fait dans ce mode est donc simplement de créer une fenêtre SFML qui servira pour le rendu, et de définir les variables de la classe. Vous remarquerez que j'ai choisi ici de forcer le dessin dans une fenêtre en 800x600 en mode debug, mais vous pouvez mettre la résolution que vous voulez ou appliquer simplement ce qui arrive en paramètre dans la fonction main (videoMode). Une fois la fenêtre SFML créée, on pense bien à définir la variable &quot;m_HandleFenetre&quot; pour qu'elle soit associée à la même fenêtre. On utilise pour cela la fonction &quot;GetActiveWindow()&quot; de l'API Windows, qui nous renvoie la fenêtre active courante, donc ici celle que l'on vient juste de créer.</p><p id="r-546380" data-claire-element-id="546380">Enfin, quand on est en mode aperçu (requête PREVIEW), on récupère le handle de la fenêtre dans laquelle dessiner et on fait une fenêtre SFML en l'utilisant. On définit ensuite les variables de classe. Pour définir le champ m_VideoMode, on récupère les informations dans la fenêtre nouvellement créée (merci SFML !). Ce que nous faisons ici n'est absolument pas suffisant pour ce mode, mais nous verrons plus tard ce qui manque : c'est assez subtil, vous verrez !</p><p id="r-546381" data-claire-element-id="546381">Nous allons enfin pouvoir passer à la boucle principale. Comme dit en commentaire dans le code, tout ce qui suit n'est accédé que si on est en mode aperçu ou plein écran. En mode config, on quitte l'application immédiatement après le retour de la fonction config.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows">Réalisez votre propre écran de veille pour Windows</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/theorie-de-base-et-prerequis">
+Théorie de base et prérequis
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/mise-en-place-du-projet-et-squelette-de-base">
+Mise en place du projet et squelette de base
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/comportements-par-defaut-et-base-de-la-fonction-run">
+Comportements par défaut et base de la fonction &quot;run&quot;
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/initialisation-de-base">
+Initialisation de base
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/la-boucle-principale-7">
+La boucle principale
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/exemple-165">
+Exemple
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/theorie-systeme-et-resolution-du-probleme">
+Théorie système et résolution du problème
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/annexe-creation-de-la-librairie-statique">
+Annexe : création de la librairie statique
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/comportements-par-defaut-et-base-de-la-fonction-run">
+<span class="arrow"></span>
+<span class="next">Comportements par défaut et base de la fonction &quot;run&quot;</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/la-boucle-principale-7">
+<span class="next">La boucle principale</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Laboucleprincipale"></a><h2>La boucle principale</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/initialisation-de-base">
+<span class="arrow"></span>
+<span class="next">Initialisation de base</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/exemple-165">
+<span class="next">Exemple</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-546383" data-claire-element-id="546383">La boucle principale de notre fonction &quot;run&quot; va comporter trois parties.</p><ul id="r-546390" data-claire-element-id="546390"><li id="r-546385" data-claire-element-id="546385"><p id="r-546384" data-claire-element-id="546384">La première partie est la partie initialisation, durant laquelle nous allons faire l'appel à la fonction &quot;init&quot;.</p></li><li id="r-546387" data-claire-element-id="546387"><p id="r-546386" data-claire-element-id="546386">La deuxième est la boucle en elle-même.</p></li><li id="r-546389" data-claire-element-id="546389"><p id="r-546388" data-claire-element-id="546388">La troisième quant à elle est la partie durant laquelle nous allons faire l'appel à la fonction &quot;shutDown&quot;.</p></li></ul><p id="r-546391" data-claire-element-id="546391">Après cette troisième partie, la fonction &quot;run&quot; se termine.</p><p id="r-546392" data-claire-element-id="546392">La boucle principale a deux fonctions :</p><ul id="r-546397" data-claire-element-id="546397"><li id="r-546394" data-claire-element-id="546394"><p id="r-546393" data-claire-element-id="546393">Gérer les évènements clavier/souris</p></li><li id="r-546396" data-claire-element-id="546396"><p id="r-546395" data-claire-element-id="546395">Appeler la fonction de rendu</p></li></ul><p id="r-546398" data-claire-element-id="546398">À noter qu'on ne gère que les évènements en mode plein écran. Arrêter l'aperçu en bougeant la souris n'aurait aucun intérêt et serait absurde.</p><p id="r-546399" data-claire-element-id="546399">Nous avons donc le code suivant, à rajouter toujours au même endroit avant le &quot;return EXIT_SUCCESS;&quot; à la fin de la fonction :</p><pre id="r-546400" data-claire-element-id="546400"><code data-claire-semantic="cpp">// boucle de rendu
+	// d'abord on initialise
+	if (!init()) return EXIT_FAILURE;
+
+	// on rentre dans la boucle
+	while (m_RenderWindow-&gt;IsOpened())
+	{
+		// traitement des évènements
+		while (m_RenderWindow-&gt;GetEvent(toProcess))
+		{
+			// demande de fermeture de l'application
+			if (sf::Event::Closed == toProcess.Type)
+			{
+				m_RenderWindow-&gt;Close();
+				continue;
+			}
+			if (SCREEN_SAVER == request)
+			{
+				// évènements clavier et souris, sauf mouse moved
+				if (sf::Event::KeyPressed == toProcess.Type ||
+					sf::Event::KeyReleased == toProcess.Type ||
+					sf::Event::MouseButtonPressed == toProcess.Type ||
+					sf::Event::MouseButtonReleased == toProcess.Type)
+				{
+					m_RenderWindow-&gt;Close();
+					continue;
+				}
+				if (sf::Event::MouseMoved == toProcess.Type &amp;&amp; !debug)
+				{
+					if (mouseX &lt; 0 || mouseY &lt; 0)
+					{
+						mouseX = toProcess.MouseMove.X;
+						mouseY = toProcess.MouseMove.Y;
+					}
+					else if (mouseX != toProcess.MouseMove.X || mouseY != toProcess.MouseMove.Y)
+					{
+						m_RenderWindow-&gt;Close();
+						continue;
+					}
+				}
+			}
+		}
+		// appel de render ou de renderPreview
+		if (SCREEN_SAVER == request)
+		{
+			if (!(render()))  m_RenderWindow-&gt;Close();
+		}
+		else
+		{
+			if (!(renderPreview()))  m_RenderWindow-&gt;Close();
+		}
+	}
+	// on finit par l'appel de shutDown, pour tout terminer correctement
+	if (!shutDown()) return EXIT_FAILURE;</code></pre><p id="r-546401" data-claire-element-id="546401">Alors ici c'est un peu technique dans la partie gestion des évènements, car nous devons tenir compte du drapeau debug et du type de requête. De plus la détection du mouvement souris est un peu tordue : cet évènement est systématiquement appelé une fois lors de l'entrée de la souris dans la fenêtre, et donc quand la fenêtre est créée. Il faut pouvoir neutraliser ce premier appel pour éviter que l'écran de veille ne se ferme immédiatement dès son lancement.</p><p id="r-546402" data-claire-element-id="546402">La gestion des évènements avec SFML est similaire à celle de la SDL. On prend un évènement, puis on le traite. Et ainsi de suite, jusqu'à ce qu'il y en aie plus.</p><p id="r-546403" data-claire-element-id="546403">Si on reçoit l'event close, on ne se pose pas de question et on ferme la fenêtre SFML. Cet évènement peut avoir plusieurs origines : le clic sur le bouton croix en mode fenêtré (debug), ou le système qui demande l'arrêt de l'application pour une raison X ou Y. Fermer la fenêtre aura pour effet de terminer la boucle principale, car la condition de la boucle while se base sur le fait que la fenêtre SFML est ouverte ou non. Dès qu'on demande la fermeture de la fenêtre on fait un continue, pour abréger la boucle et revenir à la condition, ce qui nous la fera quitter.</p><p id="r-546404" data-claire-element-id="546404">Les autres évènements ne sont traités que si la requête vaut &quot;SCREEN_SAVER&quot;, c'est à dire en mode plein écran.</p><p id="r-546405" data-claire-element-id="546405">Parmi ceux-ci, l'appui sur une touche clavier et/ou le clic souris. Ces deux types d'évènements ont pour conséquence immédiate la fermeture de la fenêtre.</p><p id="r-546406" data-claire-element-id="546406">Il reste le mouvement de la souris. Il nous faut traiter plusieurs informations : Si la souris a bougé et qu'on est pas en mode debug, on vérifie que ce n'est pas la première fois. Pour cela, on utilise deux variables déclarées au début de la fonction qui sont mouseX et mouseY. Ces variables sont initialisées à -1 lors de leur déclaration. Une position souris ne pouvant pas être négative, il est facile de vérifier si c'est notre premier évènement de souris ou non. Si une des deux valeurs est négative, on leur donne à toutes les deux les valeurs reçues avec l'évènement. Si ce n'est pas le cas, on est pas à notre première entrée, et dans ce cas on ferme la fenêtre SFML.</p><p id="r-546407" data-claire-element-id="546407">Pour le reste, on vérifie le retour de la fonction &quot;init&quot; au début, et pareil pour &quot;shutDown&quot; à la fin. Après le traitement des évènements dans chaque boucle, on appelle la fonction de rendu en fonction du type de requête. Si la fonction retourne false, on arrête le dessin et on ferme la fenêtre SFML.</p><p id="r-546408" data-claire-element-id="546408">Bien. À ce stade-ci nous avons une classe ScreenSaver fonctionnelle. Nous allons pouvoir créer notre premier exemple :soleil:</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows">Réalisez votre propre écran de veille pour Windows</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/theorie-de-base-et-prerequis">
+Théorie de base et prérequis
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/mise-en-place-du-projet-et-squelette-de-base">
+Mise en place du projet et squelette de base
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/comportements-par-defaut-et-base-de-la-fonction-run">
+Comportements par défaut et base de la fonction &quot;run&quot;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/initialisation-de-base">
+Initialisation de base
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/la-boucle-principale-7">
+La boucle principale
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/exemple-165">
+Exemple
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/theorie-systeme-et-resolution-du-probleme">
+Théorie système et résolution du problème
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/annexe-creation-de-la-librairie-statique">
+Annexe : création de la librairie statique
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/initialisation-de-base">
+<span class="arrow"></span>
+<span class="next">Initialisation de base</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/exemple-165">
+<span class="next">Exemple</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Exemple"></a><h2>Exemple</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/la-boucle-principale-7">
+<span class="arrow"></span>
+<span class="next">La boucle principale</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/theorie-systeme-et-resolution-du-probleme">
+<span class="next">Théorie système et résolution du problème</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-546410" data-claire-element-id="546410">Pour cet exemple, nous allons reprendre le code proposé par Laurent GOMILA dans l'un de ses exemples fournis avec SFML : le rendu de base avec openGL.</p><p id="r-546411" data-claire-element-id="546411">Créez donc un fichier main.cpp, qui contiendra le code suivant :</p><pre id="r-546412" data-claire-element-id="546412"><code data-claire-semantic="cpp">#include &quot;ScreenSaver.h&quot;
+
+#ifdef _DEBUG
+#pragma comment (lib, &quot;sfml-system-s-d.lib&quot;)
+#else
+#pragma comment (lib, &quot;sfml-system-s.lib&quot;)
+#endif
+#pragma comment (lib, &quot;opengl32.lib&quot;)
+#pragma comment (lib, &quot;glu32.lib&quot;)
+
+class SiteDuZero : public ScreenSaver
+{
+protected:
+	virtual bool init()
+	{
+		// initialisation d'openGL
+		// définition de la profondeur par défaut et de la couleur par défaut lors d'un clear
+		glClearDepth(1.0f);
+		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+		// activation du Z_BUFFER
+		glEnable(GL_DEPTH_TEST);
+		glDepthMask(GL_TRUE);
+		// définition du projection en perspective
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		gluPerspective(90.0f, (float)m_VideoMode.Width/(float)m_VideoMode.Height, 1.0f, 500.0f);
+
+		// on retourne vrai
+		return true;
+	}
+
+	virtual bool render()
+	{
+		// premièrement, on réinitialise les buffers
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		// on applique les transformations sur le modèle que l'on va dessiner
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+		glTranslatef(0.f, 0.0f, -200.0f); // la caméra est en identité
+		glRotatef(m_Clock.GetElapsedTime() * 50.0f, 1.0f, 0.0f, 0.0f);
+		glRotatef(m_Clock.GetElapsedTime() * 50.0f, 0.0f, 1.0f, 0.0f);
+		glRotatef(m_Clock.GetElapsedTime() * 50.0f, 0.0f, 0.0f, 1.0f);
+
+		// on dessine notre cube en mode immédiat
+		glBegin(GL_QUADS);
+
+		glColor3f(1.f, 0.f, 0.f);
+		glVertex3f(-50.f, -50.f, -50.f);
+		glVertex3f(-50.f,  50.f, -50.f);
+		glVertex3f( 50.f,  50.f, -50.f);
+		glVertex3f( 50.f, -50.f, -50.f);
+
+		glColor3f(1.f, 0.f, 0.f);
+		glVertex3f(-50.f, -50.f, 50.f);
+		glVertex3f(-50.f,  50.f, 50.f);
+		glVertex3f( 50.f,  50.f, 50.f);
+		glVertex3f( 50.f, -50.f, 50.f);
+
+		glColor3f(0.f, 1.f, 0.f);
+		glVertex3f(-50.f, -50.f, -50.f);
+		glVertex3f(-50.f,  50.f, -50.f);
+		glVertex3f(-50.f,  50.f,  50.f);
+		glVertex3f(-50.f, -50.f,  50.f);
+
+		glColor3f(0.f, 1.f, 0.f);
+		glVertex3f(50.f, -50.f, -50.f);
+		glVertex3f(50.f,  50.f, -50.f);
+		glVertex3f(50.f,  50.f,  50.f);
+		glVertex3f(50.f, -50.f,  50.f);
+
+		glColor3f(0.f, 0.f, 1.f);
+		glVertex3f(-50.f, -50.f,  50.f);
+		glVertex3f(-50.f, -50.f, -50.f);
+		glVertex3f( 50.f, -50.f, -50.f);
+		glVertex3f( 50.f, -50.f,  50.f);
+
+		glColor3f(0.f, 0.f, 1.f);
+		glVertex3f(-50.f, 50.f,  50.f);
+		glVertex3f(-50.f, 50.f, -50.f);
+		glVertex3f( 50.f, 50.f, -50.f);
+		glVertex3f( 50.f, 50.f,  50.f);
+
+		glEnd();
+
+		// finalement, on fait le rendy
+		m_RenderWindow-&gt;Display();
+
+		// on retourne true
+		return true;
+	}
+private:
+	sf::Clock m_Clock;
+};
+
+
+int _stdcall WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
+{
+	SiteDuZero app;
+#ifdef _DEBUG
+	return app.run(hInstance, lpCmdLine, sf::VideoMode(GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 32), true);
+#else
+	return app.run(hInstance, lpCmdLine, sf::VideoMode(GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 32), false);
+#endif
+}</code></pre><p id="r-546413" data-claire-element-id="546413">Ce fichier contient l'implémentation de la classe que nous venons d'écrire par héritage, et la fonction main de notre programme. Remarquez comme la fonction main est courte ! Nous utilisons la macro _DEBUG, qui est définie uniquement quand on est en mode debug, pour déterminer si on doit passer le flag debug à true ou à false lors de l'appel de &quot;run&quot;. Astucieux, n'est-ce pas ?</p><aside id="r-546415" data-claire-element-id="546415" data-claire-semantic="information"><p id="r-546414" data-claire-element-id="546414">Petite parenthèse : le mot clef &quot;_stdcall&quot; devant la fonction WinMain permet de définir la convention d'appel de la fonction. Il existe trois conventions différentes, qui sont fastcall, stdcall et cdecl, la dernière étant celle par défaut dans VS. La convention d'appel modifie très légèrement la manière dont sont empilés les paramètres lors de l'appel de la fonction. Windows exige que le point d'entrée des applications Win32 soit déclarés avec la convention _stdcall, d'où ce modificateur. Si ce modificateur n'est pas mis, le programme compilera mais génèrera un warning. Vous trouverez plus d'infos sur <a href="http://fr.wikibooks.org/wiki/Programmation_C++/Conventions_d%27appel">cette page</a>. Il est d'ailleurs expliqué à la fin la raison pour laquelle une librairie compilée par un compilateur X est impossible à utiliser avec un autre compilateur Y (il est marqué très difficile mais en pratique c'est très rarement le cas (je ne me souviens jamais avoir vécu ce cas en réalité)).</p></aside><p id="r-546416" data-claire-element-id="546416">La classe instanciée dans le main est la classe déclarée au dessus, et il s'agit donc d'une classe fille de celle que nous avons créé. Dans cette dernière, seules les fonctions &quot;init&quot; et &quot;render&quot; sont redéfinies, la redéfinition n'étant pas jugée nécessaire pour les autres (rendu identique en mode aperçu et en mode plein écran, pas de config disponible, et pas de travail à faire pendant le &quot;shutDown&quot;). La fonction init effectue quelques initialisations pour openGL, et la fonction &quot;render&quot; affiche notre cube qui tourne.</p><p id="r-546417" data-claire-element-id="546417">Nous voilà donc avec un écran de veille <em>à priori</em> fonctionnel. <em>À priori</em>, car le mode plein écran et le mode configuration fonctionnent, mais un problème de taille s'est glissé très discrètement (trop) dans le mode aperçu.</p><p id="r-546418" data-claire-element-id="546418">Pour les plus courageux d'entre vous, vous pouvez tenter de copier le fichier .scr dans system32 (ou sysWOW64), le renommer avec le nom que vous voudriez voir dans la fenêtre de sélection, puis ouvrir cette dernière. Choisissez ensuite votre écran de veille. Vous devriez voir le cube tourner dans la petite fenêtre d'aperçu. Cliquez maintenant sur &quot;configurer&quot;. Une boite de message vous avertit que il n'y a rien à configurer, cliquez donc sur ok.</p><div id="r-546420" data-claire-element-id="546420" data-claire-semantic="question"><p id="r-546419" data-claire-element-id="546419">Eh, mais... attend ! Y'a un problème là ! Quand je ferme ma boîte de dialogue, j'ai mon aperçu qui revient, mais j'ai l'image qui saute : c'est grave docteur ?</p></div><p id="r-546421" data-claire-element-id="546421">Eh oui, il s'agit du problème que je viens de mentionner, et plutôt grave en effet. Explications : quand le système lance en mode aperçu, c'est lui qui détient la fenêtre de rendu. Notre programme ne fait que créer une fenêtre SFML avec le handle de la fenêtre de rendu, mais ne possède pas cette dernière. Du coup, il ne reçoit jamais l'évènement close, et l'application ne se termine jamais, ce qui implique la suite d'évènements dont la résultante est ce bug visuel :</p><ul id="r-546432" data-claire-element-id="546432"><li id="r-546423" data-claire-element-id="546423"><p id="r-546422" data-claire-element-id="546422">Quand vous choisissez votre écran de veille dans la fenêtre de sélection, celui-ci se lance en mode aperçu.</p></li><li id="r-546425" data-claire-element-id="546425"><p id="r-546424" data-claire-element-id="546424">Quand vous cliquez sur &quot;configurer&quot;, le signal &quot;close&quot; est envoyé par Windows à la fenêtre, mais l'application ne le voit pas. Elle continue comme si de rien n'était.</p></li><li id="r-546427" data-claire-element-id="546427"><p id="r-546426" data-claire-element-id="546426">Pendant ce temps, une autre instance de l'application est lancée en mode configuration, et affiche la bien connue boîte de dialogue.</p></li><li id="r-546429" data-claire-element-id="546429"><p id="r-546428" data-claire-element-id="546428">Quand vous cliquez sur OK, la fonction config se termine et donc l'application également.</p></li><li id="r-546431" data-claire-element-id="546431"><p id="r-546430" data-claire-element-id="546430">Windows relance l'application en mode aperçu.</p></li></ul><p id="r-546433" data-claire-element-id="546433">À ce stade-là, il y a deux instances de l'application en mode aperçu qui font toutes les deux le rendu dans la même fenêtre ! Et cet effet d'image qui saute apparaît.</p><p id="r-546434" data-claire-element-id="546434">Le problème le plus grave ici est donc que le programme tourne maintenant deux fois, et ça ne va pas s'arranger en quittant la fenêtre de sélection des écrans de veille. Ces programmes continuent à bouffer des ressources système inutilement, et ceci est inacceptable. Nous allons remédier à ce problème, mais avant tout il faut fermer ces deux programmes renégats.</p><p id="r-546435" data-claire-element-id="546435">Ouvrez donc le gestionnaire de tâches de Windows (soit en faisant un clic droit sur votre barre de tâches puis en cliquant sur &quot;gestionnaire de tâches&quot;, soit en faisant &quot;démarrer&quot; -&gt; &quot;exécuter&quot;, puis en tapant &quot;taskmgr&quot; et entrée).</p><aside id="r-546437" data-claire-element-id="546437" data-claire-semantic="warning"><p id="r-546436" data-claire-element-id="546436">Attention : il faut savoir ce que l'on fait dans le gestionnaire de tâches, car certains processus sont <strong>importants</strong> et peuvent <strong>rendre votre ordinateur instable si vous les terminez</strong>. Ne faites que ce qui est écrit plus loin, rien d'autre !</p></aside><p id="r-546438" data-claire-element-id="546438">Allez dans l'onglet processus donc, et trouvez vos programmes rebelles dans la liste. Terminez-les tous l'un après l'autre en les sélectionnant puis en cliquant sur &quot;Arrêter le processus&quot; et en validant par &quot;Oui&quot; après avoir vérifié une nouvelle fois qu'il s'agissait bien du processus que vous voulez tuer.</p><p id="r-546439" data-claire-element-id="546439">Nous allons maintenant pouvoir régler le problème dans le code, mais avant tout, un peu de théorie système ! (ça fait jamais de mal, allez...)</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows">Réalisez votre propre écran de veille pour Windows</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/theorie-de-base-et-prerequis">
+Théorie de base et prérequis
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/mise-en-place-du-projet-et-squelette-de-base">
+Mise en place du projet et squelette de base
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/comportements-par-defaut-et-base-de-la-fonction-run">
+Comportements par défaut et base de la fonction &quot;run&quot;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/initialisation-de-base">
+Initialisation de base
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/la-boucle-principale-7">
+La boucle principale
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/exemple-165">
+Exemple
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/theorie-systeme-et-resolution-du-probleme">
+Théorie système et résolution du problème
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/annexe-creation-de-la-librairie-statique">
+Annexe : création de la librairie statique
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/la-boucle-principale-7">
+<span class="arrow"></span>
+<span class="next">La boucle principale</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/theorie-systeme-et-resolution-du-probleme">
+<span class="next">Théorie système et résolution du problème</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Thoriesystmeetrsolutionduproblme"></a><h2>Théorie système et résolution du problème</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/exemple-165">
+<span class="arrow"></span>
+<span class="next">Exemple</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/annexe-creation-de-la-librairie-statique">
+<span class="next">Annexe : création de la librairie statique</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-546441" data-claire-element-id="546441">Nous allons donc voir un peu de théorie système pour mieux comprendre le problème, puis le résoudre.</p><h2 id="r-un-peu-de-theorie-ca-fait-jamais-de-mal" data-claire-element-id="546468">Un peu de théorie (ça fait jamais de mal)</h2><p id="r-546442" data-claire-element-id="546442">Bon allez, après tout la théorie on s'en fout ça n'a aucun intérêt ! Faux, archi faux, triplement faux :diable: Ce sous-titre va vous paraître rébarbatif, mais sans théorie vous n'arriverez à rien. Allons accrochez vos ceintures, vous verrez ça ne sera pas long ^^.</p><aside id="r-546444" data-claire-element-id="546444" data-claire-semantic="information"><p id="r-546443" data-claire-element-id="546443">Ce sous-titre est purement théorique, et si vous le sautez cela n'affectera pas le fonctionnement du programme. Vous pouvez donc passer direcement au sous-titre suivant (&quot;Les mains dans le cambouis&quot;) - ce que je ne vous conseille pas, mais comme on dit vous êtes maîtres de votre &quot;deasthaing&quot; ^^.</p></aside><p id="r-546445" data-claire-element-id="546445">Pour commencer, une question idiote mais toutefois pertinente : Qu'est-ce que la programmation système?</p><p id="r-546446" data-claire-element-id="546446">Il s'agit de programmation, dans une application, qui nécessite et utilise explicitement des composants systèmes, ici de Windows. Par exemple, la création d'une fenêtre passe par le système d'exploitation, et de ce fait n'est donc pas portable. SFML l'est, certes, mais SFML possède dans son moi profond une méthode qui en fonction du système sur lequel elle est utilisée utilise des fonctions différentes : des fonctions système. Nous avons déjà fait un appel système plus tôt, rappelez-vous la fonction &quot;MessageBox&quot; dans le comportement par défaut de la fonction &quot;config&quot;.</p><p id="r-546447" data-claire-element-id="546447">La programmation système de Windows suit un principe assez particulier, que nous allons détailler ici. Mais avant tout, nous allons expliquer ce qu'est une fonction dite &quot;callback&quot;, car cette notion est nécessaire pour comprendre la suite.</p><h3 id="r-la-fonction-callback-2" data-claire-element-id="546458">La fonction callback</h3><p id="r-546448" data-claire-element-id="546448">D'après ma propre définition, je dirais que : <br/> Une fonction callback est une fonction dont le but est d'être appelée par une autre fonction qui ne la connait pas au moment de la compilation.</p><p id="r-546449" data-claire-element-id="546449">Ouais bon, je regarde sur Wikipedia, je suis sûr que ce sera plus clair :</p><p id="r-546450" data-claire-element-id="546450"><cite>Citation : Wikipedia</cite></p><blockquote id="r-546452" data-claire-element-id="546452"><p id="r-546451" data-claire-element-id="546451">En informatique, une fonction de rappel (callback en anglais) est une fonction qui est passée en argument à une autre fonction. Cette dernière peut alors faire usage de cette fonction de rappel comme de n'importe quelle autre fonction, alors qu'elle ne la connaît pas par avance (NDLA : à la compilation).</p></blockquote><p id="r-546453" data-claire-element-id="546453">Ah, je n'étais pas loin (et sans tricher ^^). Enfin bref, comme Wikipedia le définit si bien, c'est une fonction de rappel. Cela viendrait, d'après les mêmes sources, de Hollywood, où les gens ont pour coutume de laisser leurs coordonnées afin d'être recontactés plus tard quand cela était nécessaire. En effet, une fonction callback suit ce même principe :</p><p id="r-546454" data-claire-element-id="546454">Supposons que nous créons un analyseur syntaxique, c'est à dire un programme qui analyse un texte et traite chacun des mots rencontrés. On souhaite que l'utilisateur de cette fonction (récupération des mots et traitement) puisse choisir lui-même quel traitement effectuer pour chacun des mots (compter le nombre d'occurrences, etc), sans pour autant qu'il aie accès à cette fonction d'analyse (fournie dans une librairie par un tiers par exemple). C'est une mission parfaite pour <em>Super Callback !!!</em></p><p id="r-546455" data-claire-element-id="546455">Ainsi, l'utilisateur peut créer sa propre fonction qui reçoit un mot, et qui y effectue le traitement voulu. Il s'agira de la fonction de rappel de notre analyseur. Ensuite, l'utilisateur appelle l'analyseur, en lui donnant sa fonction (par un pointeur de fonction). L'analyseur n'a plus qu'à lire le texte, et appeler la fonction qui lui a été donnée pour chacun des mots rencontrés : le tour est joué !</p><p id="r-546456" data-claire-element-id="546456">Nous avons rempli notre objectif : la fonction d'analyse ne connait pas la fonction de traitement lors de sa compilation (à l'avance, comme cité par Wikipedia), mais elle est capable d'appeler une fonction personnalisée par l'utilisateur, qui donc est bien une fonction de rappel. Comme cité également par Wikipedia, une fonction de rappel s'écrit exactement comme une fonction normale (pour Windows, on peut rajouter le mot CALLBACK devant la fonction, mais cela marche également sans. On se permettra de le faire quand même lors de l'écriture de nos programmes systèmes, dans un souci de clarté).</p><p id="r-546457" data-claire-element-id="546457">Si vous voulez un exemple, je vous invite à lire l'article correspondant sur Wikipedia. En anglais, vous y trouverez un petit schéma. Pour les plus courageux, l'article est plus complet en japonais ^^</p><h3 id="r-revenons-a-nos-moutons-1" data-claire-element-id="546467">Revenons à nos moutons</h3><p id="r-546459" data-claire-element-id="546459">Maintenant que vous savez ce qu'est une fonction de rappel (callback), je peux vous expliquer la suite :</p><p id="r-546460" data-claire-element-id="546460">Toute application Windows (qu'elle soit en mode console ou en mode fenêtrée ou même sans fenêtre du tout) est reliée au système, qui communique avec elle grâce à des messages. L'application a le devoir de traiter tous ces messages, et même si au final elle en ignorera certains, elle se doit de tout recevoir et de tout lire. Une application revient donc a créer un programme qui initialise certaines choses, puis qui passe sa vie à déballer des messages et à les traiter.</p><p id="r-546461" data-claire-element-id="546461">Elle contient donc une boucle qui ne fait que ça, et que l'on appelle la pompe a message : Cette boucle reçoit un message, le traduit, puis le dispatche à sa fonction de callback de destination, appelée aussi window procedure (pour Windows, window ne représente pas seulement qu'une fenêtre dans laquelle on affiche, mais n'importe quel élément système d'un programme : par exemple, un bouton ou une barre de progression sont représentés par une &quot;window&quot;).</p><p id="r-546462" data-claire-element-id="546462">Cette fonction reçoit les messages traduits, puis les traite. C'est ici que l'on reçoit par exemple les messages de clic de souris sur un bouton, de saisie de texte dans un champ, etc. et que l'on peut traiter pour par exemple ouvrir une nouvelle fenêtre, ou lancer automatiquement une correction d'orthographe, etc. C'est également cette fonction qui reçoit les messages de fermeture de fenêtre. Le système ne connaît pas cette fonction à l'avance, d'où l'intérêt d'utiliser une callback.</p><p id="r-546463" data-claire-element-id="546463">Quand vous programmez en mode console, c'est l'exécutable cmd.exe qui exécute toutes ces tâches de traitement, et dans notre cas il s'agit de SFML. C'est d'ailleurs ces messages qui permettent à SFML de remplir sa liste d'évènements que nous lisons dans la boucle de notre programme. Nous avons donc a priori pas à nous en soucier, car nous travaillons toujours à un niveau d'abstraction supérieur.</p><p id="r-546464" data-claire-element-id="546464">Ici, nous aurons besoin de passer par là pour pouvoir contourner le problème posé. En programmation système Windows, chaque fenêtre (au sens large du terme) possède sa propre callback, et une fenêtre reçoit toujours dans sa callback les messages de ses fenêtres parentes : il est possible en effet de définir une hiérarchie au niveau des fenêtres (un peu comme le principe d'héritage en C++), et c'est cette possibilité que nous allons exploiter.</p><aside id="r-546466" data-claire-element-id="546466" data-claire-semantic="information"><p id="r-546465" data-claire-element-id="546465">À noter au passage, quand Windows nous dit qu'un &quot;programme ne répond pas&quot;, il veut dire par là que les messages envoyés ne sont pas reçus ni traités par l'application cible, et s'empilent. Windows n'a donc pas de &quot;réponse&quot; (car la window procedure retourne une valeur). Cela est parfois du à une boucle infinie lors du traitement d'un message, ce qui paralyse l'application. Il peut y avoir d'autres raisons comme un &quot;dead lock&quot; dans le thread principal d'une application programmée en parallèle, etc. (enfin bref on s'éloigne du sujet là, cependant pour les intéressés, vous pouvez jeter un oeil <a href="http://fr.wikipedia.org/wiki/Interblocage">ici</a>, c'est très intéressant !).</p></aside><h2 id="r-les-mains-dans-le-cambouis-1" data-claire-element-id="546496">Les mains dans le cambouis</h2><p id="r-546469" data-claire-element-id="546469">Le problème que nous avons constaté est donc que le message de destruction de la fenêtre (qui entraîne la terminaison de l'application) n'est pas reçu par notre programme en mode aperçu, car la fenêtre qui sert au dessin ne lui appartient pas. Nous allons pouvoir contourner le problème, en utilisant le fait cité plus haut qu'une fenêtre fille reçoit les messages de ses parents.</p><p id="r-546470" data-claire-element-id="546470">Il nous suffit donc de créer une fenêtre fille invisible (on la cache) à celle utilisée pour le rendu, et nous pourrons ainsi espionner sa mère. Cependant, nous sortons également des capacités de la SFML, et nous allons devoir écrire du code système Windows pour résoudre le problème.</p><p id="r-546471" data-claire-element-id="546471">Nous allons procéder comme suit :</p><ul id="r-546476" data-claire-element-id="546476"><li id="r-546473" data-claire-element-id="546473"><p id="r-546472" data-claire-element-id="546472">Créer une fonction callback qui aura pour but de capturer ce fameux message de destruction</p></li><li id="r-546475" data-claire-element-id="546475"><p id="r-546474" data-claire-element-id="546474">Créer une fenêtre fille à la fenêtre de rendu et l'associer au callback</p></li></ul><p id="r-546477" data-claire-element-id="546477">Pour cela, nous allons rajouter les deux déclarations suivantes en haut de notre fichier ScreenSaver.cpp :</p><pre id="r-546478" data-claire-element-id="546478"><code data-claire-semantic="cpp">// déclaration de notre propre callback, pour le mode aperçu
+static long CALLBACK childWndProc(HWND, UINT, WPARAM, LPARAM);
+static bool DestroyReceived = false;</code></pre><p id="r-546479" data-claire-element-id="546479">le bool sera mis à true lors de la réception du message, ce qui permettra à la boucle principale de la fonction &quot;run&quot; de s'en rendre compte.</p><p id="r-546480" data-claire-element-id="546480">Ensuite, on rajoute quelques lignes de code dans la partie initialisation des tâches de notre fonction &quot;run&quot;, qui devient ainsi :</p><pre id="r-546481" data-claire-element-id="546481"><code data-claire-semantic="cpp">// en fonction du type de requête, on fait différentes initialisations
+	switch(request)
+	{
+	case CONFIG:
+		// dans le cas d'une config, on quitte direct la fonction run après l'appel de config
+		// tout ce qui suit ne sera ainsi jamais appelé dans le cas d'une configuration
+		m_HandleFenetre = (HWND)(atoi(strtok(NULL, &quot;&quot;)));
+		return config();
+
+		break;
+	case SCREEN_SAVER:
+		// création de la fenêtre en plein écran, et remplissage des variables
+		if (debug)
+		{
+			m_VideoMode = sf::VideoMode(800, 600, 32);
+			m_FullScreen = false;
+			m_RenderWindow = new sf::Window(m_VideoMode, &quot;SiteDuZero&quot;);
+		}
+		else
+		{
+			m_VideoMode = videoMode;
+			m_FullScreen = true;
+			m_RenderWindow = new sf::Window(m_VideoMode, &quot;SiteDuZero&quot; , sf::Style::Fullscreen);
+		}
+		// on récupère le handle de la fenêtre SFML
+		m_HandleFenetre = GetActiveWindow();
+		// on cache le curseur de la souris
+		m_RenderWindow-&gt;ShowMouseCursor(false);
+
+		break;
+	case PREVIEW:
+		// création de la fenêtre depuis le handle récupéré
+		m_HandleFenetre = (HWND)(atoi(strtok(NULL, &quot;&quot;)));
+		m_RenderWindow = new sf::Window(m_HandleFenetre);
+//## Y'A DU CODE EN PLUS ICI ! ##//
+		// on remplit les champs de notre classe windows pour créer une autre fenêtre
+		childClass.style = 0;
+		childClass.lpfnWndProc = childWndProc;
+		childClass.cbClsExtra = 0;
+		childClass.cbWndExtra = 0;
+		childClass.hInstance = hInstance;
+		childClass.hIcon = NULL;
+		childClass.hCursor = NULL;
+		childClass.hbrBackground = NULL;
+		childClass.lpszMenuName = NULL;
+		childClass.lpszClassName = L&quot;childWindowClass&quot;;
+		// on l'enregistre dans le système
+		RegisterClass(&amp;childClass);
+		// et enfin, on créée la fenêtre
+		childWindow = CreateWindow(L&quot;childWindowClass&quot;, L&quot;SiteDuZero&quot;, WS_CHILD, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, m_HandleFenetre, NULL, hInstance, NULL);
+		// si la fenêtre n'a pas été créée, on quitte immédiatement.
+		if (!childWindow) return EXIT_FAILURE;
+//## ET CA SE TERMINE LA ##//
+		// enfin on définit les membres
+		m_VideoMode = sf::VideoMode(m_RenderWindow-&gt;GetWidth(), m_RenderWindow-&gt;GetHeight());
+		m_FullScreen = false;
+
+		break;
+	default:
+		break;
+	}</code></pre><p id="r-546482" data-claire-element-id="546482">La création d'une fenêtre dans Windows se fait en plusieurs étapes. Premièrement, on doit créer une &quot;classe&quot;. Ce que Windows appelle une classe, c'est une structure contenant des paramètres nécessaires à la création d'une fenêtre. Ensuite, on enregistre cette classe dans le système (registerClass). Et enfin, on créée la fenêtre (en prenant bien soir de lui indiquer qui est sa mère !), en précisant la classe utilisée. Vous pouvez rechercher les fonctions utilisées ici dans la documentation MSDN si vous souhaitez avoir plus de détail (les détailler ici prendrait beaucoup de place, de temps et prendrait la tête à beaucoup d'entre vous, je vous ai déjà assez embêté avec la théorie système ^^)</p><p id="r-546483" data-claire-element-id="546483">Notez au passage que si la création de la fenêtre fille échoue on demande à arrêter immédiatement l'application, car dans ce cas on retrouve le problème posé ce qui comme dit précédemment n'est pas acceptable.</p><p id="r-546484" data-claire-element-id="546484">Ensuite, on modifie la boucle de rendu pour tenir compte de notre fameux booléen, comme suit :</p><pre id="r-546485" data-claire-element-id="546485"><code data-claire-semantic="cpp">// boucle de rendu
+	// d'abord on initialise
+	if (!init()) return EXIT_FAILURE;
+
+	// on rentre dans la boucle
+	while (m_RenderWindow-&gt;IsOpened())
+	{
+//## LE CODE EN PLUS EST ICI ##//
+		// si notre booléen est à true, on ferme la fenêtre
+		if (DestroyReceived)
+		{
+			m_RenderWindow-&gt;Close();
+			continue; // on applique immédiatement en terminant cette boucle
+		}
+//## ET VOILÀ ##//
+		// traitement des évènements
+		while (m_RenderWindow-&gt;GetEvent(toProcess))
+		{
+			// demande de fermeture de l'application
+			if (sf::Event::Closed == toProcess.Type)
+			{
+				m_RenderWindow-&gt;Close();
+				continue;
+			}
+			if (SCREEN_SAVER == request)
+			{
+				// évènements clavier et souris, sauf mouse moved
+				if (sf::Event::KeyPressed == toProcess.Type ||
+					sf::Event::KeyReleased == toProcess.Type ||
+					sf::Event::MouseButtonPressed == toProcess.Type ||
+					sf::Event::MouseButtonReleased == toProcess.Type)
+				{
+					m_RenderWindow-&gt;Close();
+					continue;
+				}
+				if (sf::Event::MouseMoved == toProcess.Type &amp;&amp; !debug)
+				{
+					if (mouseX &lt; 0 || mouseY &lt; 0)
+					{
+						mouseX = toProcess.MouseMove.X;
+						mouseY = toProcess.MouseMove.Y;
+					}
+					else if (mouseX != toProcess.MouseMove.X || mouseY != toProcess.MouseMove.Y)
+					{
+						m_RenderWindow-&gt;Close();
+						continue;
+					}
+				}
+			}
+		}
+		// appel de render ou de renderPreview
+		if (SCREEN_SAVER == request)
+		{
+			if (!(render()))  m_RenderWindow-&gt;Close();
+		}
+		else
+		{
+			if (!(renderPreview()))  m_RenderWindow-&gt;Close();
+		}
+	}
+	// on finit par l'appel de shutDown, pour tout terminer correctement
+	if (!shutDown()) return EXIT_FAILURE;</code></pre><p id="r-546486" data-claire-element-id="546486">Voilà, pas bien délicat, si notre booléen est à true on s'arrête.</p><p id="r-546487" data-claire-element-id="546487">Enfin, il faut écrire le corps de la window procedure, ce qui est relativement court à faire :</p><pre id="r-546488" data-claire-element-id="546488"><code data-claire-semantic="cpp">long CALLBACK childWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	if (uMsg == WM_DESTROY) DestroyReceived = true;
+	return DefWindowProc(hWnd, uMsg, wParam, lParam);
+}</code></pre><p id="r-546489" data-claire-element-id="546489">Si on reçoit le message WM_DESTROY (Window Message DESTROY), on met le booléen à true, puis on appelle la window procedure par défaut pour ne pas s'embêter avec le reste.</p><p id="r-546490" data-claire-element-id="546490">Si je récapépète, le code de &quot;ScreenSaver.cpp&quot; devrait ressembler à ça au final :</p><p id="r-546491" data-claire-element-id="546491"></p><div id="r-546493" data-claire-element-id="546493"><pre id="r-546492" data-claire-element-id="546492"><code data-claire-semantic="cpp">#include &quot;include/ScreenSaver.h&quot;
+
+#pragma warning (disable : 4996)
+
+// déclaration de notre propre callback, pour le mode aperçu
+static long CALLBACK childWndProc(HWND, UINT, WPARAM, LPARAM);
+static bool DestroyReceived = false;
+
+/************************************************************************/
+/* Fonctions publiques                                                  */
+/************************************************************************/
+// construction et destructions
+ScreenSaver::ScreenSaver() : m_RenderWindow(NULL)
+{}
+
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+
+ScreenSaver::~ScreenSaver()
+{
+	// destruction de m_RenderWindow si celui-ci a été construit
+	if (m_RenderWindow) delete m_RenderWindow;
+}
+
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+
+int ScreenSaver::run(HINSTANCE hInstance, LPSTR lpCmdLine, const sf::VideoMode &amp; videoMode, const bool debug)
+{
+	RequestType request; // la requête du système
+	char * jeton; // ce qui sera retourné par strtok
+	sf::Event toProcess; // évènement à traiter
+	int mouseX = -1; int mouseY = -1;
+	WNDCLASS childClass; // la classe utilisée pour créer une fenêtre
+	HWND childWindow = NULL; // la fenêtre fille utilisée pour le mode aperçu
+
+	// on fait un strtok sur lpCmdLine pour récupérer la requête
+	jeton = strtok(lpCmdLine, &quot; :&quot;);
+
+	// si jeton est différent de null on teste
+	if (NULL != jeton)
+	{
+		// on fait ensuite un if, pour savoir où l'on est
+		if (strncmp(jeton, &quot;/c&quot;, 2) == 0) // si on a /c
+		{
+			request = CONFIG;
+		}
+		else if (strncmp(jeton, &quot;/p&quot;, 2) == 0) // si on a /p
+		{
+			request = PREVIEW;
+		}
+		else
+		{
+			request = SCREEN_SAVER; // si on /s ou rien ou n'importe quoi d'autre
+		}
+	}
+	else
+		request = SCREEN_SAVER;
+
+	// en fonction du type de requête, on fait différentes initialisations
+	switch(request)
+	{
+	case CONFIG:
+		// dans le cas d'une config, on quitte direct la fonction run après l'appel de config
+		// tout ce qui suit ne sera ainsi jamais appelé dans le cas d'une configuration
+		m_HandleFenetre = (HWND)(atoi(strtok(NULL, &quot;&quot;)));
+		return config();
+
+		break;
+	case SCREEN_SAVER:
+		// création de la fenêtre en plein écran, et remplissage des variables
+		if (debug)
+		{
+			m_VideoMode = sf::VideoMode(800, 600, 32);
+			m_FullScreen = false;
+			m_RenderWindow = new sf::Window(m_VideoMode, &quot;SiteDuZero&quot;);
+		}
+		else
+		{
+			m_VideoMode = videoMode;
+			m_FullScreen = true;
+			m_RenderWindow = new sf::Window(m_VideoMode, &quot;SiteDuZero&quot; , sf::Style::Fullscreen);
+		}
+		// on récupère le handle de la fenêtre SFML
+		m_HandleFenetre = GetActiveWindow();
+		// on cache le curseur de la souris
+		m_RenderWindow-&gt;ShowMouseCursor(false);
+
+		break;
+	case PREVIEW:
+		// création de la fenêtre depuis le handle récupéré
+		m_HandleFenetre = (HWND)(atoi(strtok(NULL, &quot;&quot;)));
+		m_RenderWindow = new sf::Window(m_HandleFenetre);
+		// on remplit les champs de notre classe windows pour créer une autre fenêtre
+		childClass.style = 0;
+		childClass.lpfnWndProc = childWndProc;
+		childClass.cbClsExtra = 0;
+		childClass.cbWndExtra = 0;
+		childClass.hInstance = hInstance;
+		childClass.hIcon = NULL;
+		childClass.hCursor = NULL;
+		childClass.hbrBackground = NULL;
+		childClass.lpszMenuName = NULL;
+		childClass.lpszClassName = L&quot;childWindowClass&quot;;
+		// on l'enregistre dans le système
+		RegisterClass(&amp;childClass);
+		// et enfin, on créée la fenêtre
+		childWindow = CreateWindow(L&quot;childWindowClass&quot;, L&quot;SiteDuZero&quot;, WS_CHILD, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, m_HandleFenetre, NULL, hInstance, NULL);
+		// si la fenêtre n'a pas été créée, on quitte immédiatement.
+		if (!childWindow) return EXIT_FAILURE;
+		// enfin on définit les membres
+		m_VideoMode = sf::VideoMode(m_RenderWindow-&gt;GetWidth(), m_RenderWindow-&gt;GetHeight());
+		m_FullScreen = false;
+
+		break;
+	default:
+		break;
+	}
+
+	// boucle de rendu
+	// d'abord on initialise
+	if (!init()) return EXIT_FAILURE;
+
+	// on rentre dans la boucle
+	while (m_RenderWindow-&gt;IsOpened())
+	{
+		// si notre booléen est à true, on ferme la fenêtre
+		if (DestroyReceived)
+		{
+			m_RenderWindow-&gt;Close();
+			continue; // on applique immédiatement en terminant cette boucle
+		}
+		// traitement des évènements
+		while (m_RenderWindow-&gt;GetEvent(toProcess))
+		{
+			// demande de fermeture de l'application
+			if (sf::Event::Closed == toProcess.Type)
+			{
+				m_RenderWindow-&gt;Close();
+				continue;
+			}
+			if (SCREEN_SAVER == request)
+			{
+				// évènements clavier et souris, sauf mouse moved
+				if (sf::Event::KeyPressed == toProcess.Type ||
+					sf::Event::KeyReleased == toProcess.Type ||
+					sf::Event::MouseButtonPressed == toProcess.Type ||
+					sf::Event::MouseButtonReleased == toProcess.Type)
+				{
+					m_RenderWindow-&gt;Close();
+					continue;
+				}
+				if (sf::Event::MouseMoved == toProcess.Type &amp;&amp; !debug)
+				{
+					if (mouseX &lt; 0 || mouseY &lt; 0)
+					{
+						mouseX = toProcess.MouseMove.X;
+						mouseY = toProcess.MouseMove.Y;
+					}
+					else if (mouseX != toProcess.MouseMove.X || mouseY != toProcess.MouseMove.Y)
+					{
+						m_RenderWindow-&gt;Close();
+						continue;
+					}
+				}
+			}
+		}
+		// appel de render ou de renderPreview
+		if (SCREEN_SAVER == request)
+		{
+			if (!(render()))  m_RenderWindow-&gt;Close();
+		}
+		else
+		{
+			if (!(renderPreview()))  m_RenderWindow-&gt;Close();
+		}
+	}
+	// on finit par l'appel de shutDown, pour tout terminer correctement
+	if (!shutDown()) return EXIT_FAILURE;
+
+	// fin de la fonction
+	return EXIT_SUCCESS;
+}
+
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+
+/************************************************************************/
+/* Fonction protégées                                                   */
+/************************************************************************/
+int ScreenSaver::config()
+{
+	MessageBox(m_HandleFenetre, L&quot;Il n'y a rien à configurer&quot;, L&quot;Information&quot;, MB_OK | MB_ICONASTERISK);
+	return EXIT_SUCCESS;
+}
+
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+
+bool ScreenSaver::init()
+{
+	return true;
+}
+
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+
+bool ScreenSaver::shutDown()
+{
+	return true;
+}
+
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+
+bool ScreenSaver::renderPreview()
+{
+	return render();
+}
+
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+
+long CALLBACK childWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	if (uMsg == WM_DESTROY) DestroyReceived = true;
+	return DefWindowProc(hWnd, uMsg, wParam, lParam);
+}</code></pre></div><p id="r-546494" data-claire-element-id="546494">Et voilà, notre classe ScreenSaver est maintenant complète et fonctionnelle à 100%. Enjoy !</p><p id="r-546495" data-claire-element-id="546495">Nous allons maintenant finir en beauté et créer la librairie que vous pourrez utiliser dans tous vos projets d'écran de veille.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows">Réalisez votre propre écran de veille pour Windows</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/theorie-de-base-et-prerequis">
+Théorie de base et prérequis
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/mise-en-place-du-projet-et-squelette-de-base">
+Mise en place du projet et squelette de base
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/comportements-par-defaut-et-base-de-la-fonction-run">
+Comportements par défaut et base de la fonction &quot;run&quot;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/initialisation-de-base">
+Initialisation de base
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/la-boucle-principale-7">
+La boucle principale
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/exemple-165">
+Exemple
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/theorie-systeme-et-resolution-du-probleme">
+Théorie système et résolution du problème
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/annexe-creation-de-la-librairie-statique">
+Annexe : création de la librairie statique
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/exemple-165">
+<span class="arrow"></span>
+<span class="next">Exemple</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/annexe-creation-de-la-librairie-statique">
+<span class="next">Annexe : création de la librairie statique</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Annexecrationdelalibrairiestatique"></a><h2>Annexe : création de la librairie statique</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/theorie-systeme-et-resolution-du-probleme">
+<span class="arrow"></span>
+<span class="next">Théorie système et résolution du problème</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-546498" data-claire-element-id="546498">Nous y voilà. Vous verrez que créer la librairie ne relève pas du très grand défi.</p><h2 id="r-creation-et-configuration-du-projet" data-claire-element-id="546524">Création et configuration du projet</h2><p id="r-546499" data-claire-element-id="546499">La première chose à faire consiste à créer un projet de librairie statique. Ici aussi, pas de PCH ni d'ATL. Dans le répertoire de votre projet, créez un dossier &quot;include&quot; et un dossier &quot;lib&quot;. Nous mettrons le header dans le dossier include, et la librairie dans le dossier lib.</p><p id="r-546500" data-claire-element-id="546500">Ensuite, configurez le projet comme suit :</p><p id="r-546501" data-claire-element-id="546501">Les librairies s'appellent &quot;SSLIb.lib&quot; et &quot;SSLib-d.lib&quot; en fonction de la configuration, et sont dans le répertoire &quot;lib&quot; du projet (pour VS, outil &quot;générateur de librairie&quot;, &quot;général&quot; et &quot;sortie&quot;, la valeur prend &quot;$(ProjectDir)lib/SSLib.lib&quot; en release et &quot;$(ProjectDir)lib/SSLib-d.lib&quot; en debug).</p><p id="r-546502" data-claire-element-id="546502">Copiez ensuite &quot;ScreenSaver.h&quot; dans le dossier include, et &quot;ScreenSaver.cpp&quot; dans le dossier de base du projet.</p><p id="r-546503" data-claire-element-id="546503">N'oubliez pas de modifier l'include dans le cpp en :</p><pre id="r-546504" data-claire-element-id="546504"><code data-claire-semantic="cpp">#include &quot;include/ScreenSaver.h&quot;</code></pre><p id="r-546505" data-claire-element-id="546505">Car le header est dans un autre répertoire maintenant.</p><p id="r-546506" data-claire-element-id="546506">Générez votre projet, et le tour est joué.</p><p id="r-546507" data-claire-element-id="546507">Il vous reste maintenant à configurer votre IDE afin de prendre en compte le dossier &quot;include&quot; dans la liste de recherche des headers, et le dossier &quot;lib&quot; pour les librairies (de la même manière que vous avez configuré SFML).</p><p id="r-546508" data-claire-element-id="546508">A présent, pour créer un écran de veille il suffit de faire un projet Win32, et d'utiliser le code minimal suivant (il s'agit du code simplifié de l'écran de veille que j'ai créé pour mettre en ligne très bientôt) :</p><pre id="r-546509" data-claire-element-id="546509"><code data-claire-semantic="cpp">// pour faire un écran de veille
+#include &lt;ScreenSaver.h&gt;
+
+// ajout de la librairie
+#ifdef _DEBUG
+#pragma comment (lib, &quot;SSLib-d.lib&quot;)
+#else
+#pragma comment (lib, &quot;SSLib.lib&quot;)
+#endif
+
+// classe dérivant de ScreenSaver
+class BoundingBox : public ScreenSaver
+{
+public:
+protected:
+	virtual bool render()
+	{
+		// faire du rendu ici !
+	}
+
+private:
+};
+
+int _stdcall WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR lpCmdLine, int /*nShowCmd*/)
+{
+	BoundingBox app; // on instancie notre classe fille !
+
+#ifdef _DEBUG
+	return app.run(hInstance, lpCmdLine, sf::VideoMode(GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 32), true);
+#else
+	return app.run(hInstance, lpCmdLine, sf::VideoMode(GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 32), false);
+#endif
+
+}</code></pre><p id="r-546510" data-claire-element-id="546510">Et voilà, il ne reste plus qu'à faire jouer votre imagination ^^</p><p id="r-546511" data-claire-element-id="546511">Bon ben voilà, notre petit tutoriel est terminé. J'espère que tout ceci vous a plu. J'espère également que vous avez appris beaucoup de choses intéressantes que vous y aurez pris du plaisir. N'hésitez pas à me laisser des commentaires sur ce tutoriel. J'ouvrirai très bientôt un sujet sur les forums, dans lequel vous pourrez si vous le souhaitez nous proposer vos créations qui je n'en doute pas seront aussi intéressantes les unes que les autres.</p><p id="r-546512" data-claire-element-id="546512">EDIT &gt; Et voilà le sujet ouvert ! Il est à cette adresse : <br/><a href="http://www.siteduzero.com/forum-83-563536-p1-vos-realisations-d-ecrans-de-veille.html">http://www.siteduzero.com/forum-83-563 [...] e-veille.html</a></p><p id="r-546513" data-claire-element-id="546513">Vous y trouverez la lib déjà compilée, le code source, ainsi qu'un nouvel exemple avec le source et le scr.</p><p id="r-546514" data-claire-element-id="546514">Vous pouvez également directement télécharger la lib pour Visual Studio 2008 ainsi que le source depuis les liens suivants :</p><ul id="r-546519" data-claire-element-id="546519"><li id="r-546516" data-claire-element-id="546516"><p id="r-546515" data-claire-element-id="546515"><a href="http://y-boss.pagesperso-orange.fr/SSLib.zip">La lib</a></p></li><li id="r-546518" data-claire-element-id="546518"><p id="r-546517" data-claire-element-id="546517"><a href="http://y-boss.pagesperso-orange.fr/SSLibsrc.zip">Le source</a></p></li></ul><p id="r-546520" data-claire-element-id="546520">Merci beaucoup aux quelques courageux qui ont lu ma première version du tutoriel (ils en seraient encore à la première partie là ^^) et qui m'ont laissé les commentaires m'encourageant à revoir ce dernier, en espérant que j'ai répondu à leurs attentes. Merci également aux nombreux lecteurs de cette version qui m'ont également proposé certaines modifications.</p><p id="r-546521" data-claire-element-id="546521">Mesdames et messieurs les Zéros, à vos claviers, la chasse est ouverte !</p><p id="r-546522" data-claire-element-id="546522">Et à une prochaine fois, pour de nouvelles aventures, promis !</p><p id="r-546523" data-claire-element-id="546523">Bientôt un nouveau tutoriel en ligne pour vous... :)</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows">Réalisez votre propre écran de veille pour Windows</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/theorie-de-base-et-prerequis">
+Théorie de base et prérequis
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/mise-en-place-du-projet-et-squelette-de-base">
+Mise en place du projet et squelette de base
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/comportements-par-defaut-et-base-de-la-fonction-run">
+Comportements par défaut et base de la fonction &quot;run&quot;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/initialisation-de-base">
+Initialisation de base
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/la-boucle-principale-7">
+La boucle principale
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/exemple-165">
+Exemple
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/theorie-systeme-et-resolution-du-probleme">
+Théorie système et résolution du problème
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/annexe-creation-de-la-librairie-statique">
+Annexe : création de la librairie statique
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/realisez-votre-propre-ecran-de-veille-pour-windows/theorie-systeme-et-resolution-du-probleme">
+<span class="arrow"></span>
+<span class="next">Théorie système et résolution du problème</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/realisez-votre-propre-ecran-de-veille-pour-windows.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 06:50:54 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/realisez-votre-propre-ecran-de-veille-pour-windows.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:14:39 GMT -->
+</html>
