@@ -3,6 +3,6 @@ C'est un archive de vieux cours du siteduzero. Cela fait un bail mais comme on d
 
 Pour obtenir le contenu: 
 
-  git clone https://github.com/marinasy-marti/archivesiteduzero/
+  `git clone https://github.com/marinasy-marti/archivesiteduzero/`
 
 Et il suffit d'ouvrir le fichier index.html
