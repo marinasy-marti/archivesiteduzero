@@ -1,0 +1,1227 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/simplifier-les-events-avec-sdl.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 00:01:11 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/simplifier-les-events-avec-sdl.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:15:34 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Simplifier les events avec SDL</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/simplifier-les-events-avec-sdl.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Simplifier les events avec SDL</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#SimplifierleseventsavecSDL">Simplifier les events avec SDL</a><br/><a href="#Problmatique">Problématique</a><br/><a href="#Isolerlesevents">Isoler les events</a><br/><a href="#Lasouris">La souris</a><br/><a href="#UnexempleenC">Un exemple en C</a><br/><a href="#LemmeexempleenC">Le même exemple en C++</a><br/><a href="#volution">Évolution</a><br/></div>
+<a name="SimplifierleseventsavecSDL"></a><h2>Simplifier les events avec SDL</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/problematique-4">
+<span class="next">Problématique</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<aside id="r-531139" data-claire-element-id="531139" data-claire-semantic="information"><p id="r-531138" data-claire-element-id="531138">Ce tutoriel nécessite de connaître la librairie SDL.</p></aside><p id="r-531140" data-claire-element-id="531140">Les events SDL posent des soucis à beaucoup de personnes. La gestion de SDL_PollEvent, SDL_WaitEvent et des switchs qui vont avec apporte parfois de la confusion.<br/> Ce tutoriel propose une solution alternative pour gérer tout cela.</p>
+</div><a name="Problmatique"></a><h2>Problématique</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/isoler-les-events">
+<span class="next">Isoler les events</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-531141" data-claire-element-id="531141">SDL gère les events comme une file d'attente. C'est un peu comme si vous aviez la situation ci-dessous :</p><figure id="r-531143" data-claire-element-id="531144"><img id="r-531142" data-claire-element-id="531142" src="medias/uploads.siteduzero.com_files_177001_178000_177430.png" alt="Image utilisateur"/></figure><p id="r-531145" data-claire-element-id="531145">On y voit une file d'attente d'events. Un event, c'est comme une personne dans une file de cinéma qui fait la queue, attend son tour. Et cette personne n'est là que pour dire un message, par exemple : &quot;On a appuyé sur G !!&quot;.<br/> Elle le dit : &quot;Event type = KEYDOWN&quot;, &quot;Event keysym = G&quot;.</p><p id="r-531146" data-claire-element-id="531146">Il faut donc considérer les events dans l'ordre, un par un, comme une file d'attente. Pour cela, vous avez toutes les fonctions pour gérer le guichet.<br/> Vous avez principalement la fonction <strong>SDL_PollEvent</strong>.</p><p id="r-531147" data-claire-element-id="531147">Cette fonction dit au premier qui attend : &quot;Alors, vous êtes qui ? Ok, vous voulez quoi ? Dire qu'on appuie sur la touche G, ok, je le note&quot;.<br/> SDL_PollEvent note tout ça dans une structure SDL_Event, puis libère le bonhomme : sur mon croquis ci-dessous, le premier bonhomme mauve peut partir.<br/> Le suivant sera le bleu.</p><p id="r-531148" data-claire-element-id="531148">Mais avant, on analysera ce qu'on a noté.<br/> Notez que SDL_PollEvent renverra 0 si il n'y avait pas de personne en attente, et 1 s'il y avait quelqu'un.</p><p id="r-531149" data-claire-element-id="531149">En C, cela donne ce code :</p><pre id="r-531150" data-claire-element-id="531150"><code data-claire-semantic="c">SDL_Event event;  // endroit où on prendra nos notes sur l'event qui arrive
+SDL_PollEvent(&amp;event);
+       switch(event.type)
+       {
+          case SDL_QUIT:
+               continuer = 0;
+          break;
+          case SDL_KEYDOWN:
+            switch(event.key.keysym.sym)
+            {
+                case SDLK_ESCAPE:
+                     // ....
+                     break
+                case SDLK_UP:
+                     // ....
+                     break;
+
+                // ....
+                break;
+            }
+        case SDL_KEYUP:
+            switch(event.key.keysym.sym)
+            {
+                // même bazar.
+                // break
+            }
+          break;
+    }</code></pre><p id="r-531151" data-claire-element-id="531151">Ce qui est gênant dans ce code, c'est avant tout la lourdeur du switch. Que dis-je ! DES switchs ! <br/> Des switchs imbriqués. Cela n'est pas simple à comprendre, c'est lourd à maintenir, cafouilleux....<br/> Le pire, c'est que dans les exemples que je vois, bien souvent ces switchs sont directement dans le main, et apparaissent parfois à plusieurs endroits du programme : si par exemple à un moment le personnage marche, on fait un gros switch avec les touches haut, bas, gauche, droite. Et s'il saute, on en fait un autre avec moins de touches, car on peut faire moins de choses en l'air, n'est-ce pas ! ;)</p><p id="r-531152" data-claire-element-id="531152">Autre soucis avec cette gestion, la question récurrente suivante :</p><div id="r-531154" data-claire-element-id="531154" data-claire-semantic="question"><p id="r-531153" data-claire-element-id="531153">Comment gère-t-on deux touches en même temps ?</p></div><p id="r-531155" data-claire-element-id="531155">En effet, si on regarde bien, on <em>poll</em> un event au départ et on regarde lequel c'est. Tel que c'est fait, on ne traitera qu'un event par frame (vous allez me dire, pour éviter cela, on peut enfermer le tout dans un while), mais peut-on pour autant gérer deux events &quot;en même temps&quot; ?<br/> Non, car soit je passe dans un <em>case</em>, soit dans un autre. Je peux donc gérer deux actions en même temps, mais si j'ai envie qu'il se passe quelque chose si et seulement si j'appuie sur deux touches en même temps, et qu'il ne se passe rien si je n'appuie que sur une seule, je ne peux pas (ou alors il faut ruser et <strong>alourdir</strong> encore ce gros switch).</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl">Simplifier les events avec SDL</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/problematique-4">
+Problématique
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/isoler-les-events">
+Isoler les events
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/la-souris-7">
+La souris
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/un-exemple-en-c">
+Un exemple en C
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/le-meme-exemple-en-c">
+Le même exemple en C++
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/evolution-2">
+Évolution
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/isoler-les-events">
+<span class="next">Isoler les events</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Isolerlesevents"></a><h2>Isoler les events</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/problematique-4">
+<span class="arrow"></span>
+<span class="next">Problématique</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/la-souris-7">
+<span class="next">La souris</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-531157" data-claire-element-id="531157">Voici la solution que je propose (qui n'est pas forcément la meilleure du monde, mais qui apporte des avantages).</p><figure id="r-531159" data-claire-element-id="531160"><img id="r-531158" data-claire-element-id="531158" src="medias/uploads.siteduzero.com_files_177001_178000_177432.png" alt="Image utilisateur"/></figure><p id="r-531161" data-claire-element-id="531161">Nous voyons la file d'events sur la droite du dessin, que j'ai volontairement coupée. Pourquoi ? Parce que notre but va être de l'oublier.<br/> Pour cela, j'ai embauché un bonhomme rouge que je vais appeler <strong>UpdateEvents</strong>. Ce bonhomme, comme tout employé, a besoin de matériel pour travailler !<br/> Qu'à cela ne tienne, je lui achète un grand tableau et bien sûr une craie et un chiffon pour effacer !</p><p id="r-531162" data-claire-element-id="531162">Ce que je vais lui demander, c'est de gérer la file des events tout seul. Moi je ne veux plus m'en occuper. Je veux qu'il prenne des notes sur un tableau, qu'il soit à jour. Je veux pouvoir, quand je veux, jeter un oeil sur le tableau, et constater comme sur le dessin que les touches D et U du clavier sont enfoncées, que les autres sont relâchées, que le deuxième bouton de la souris est enfoncé, que les autres sont relâchés, et que la souris est à la coordonnée 219;129.</p><p id="r-531163" data-claire-element-id="531163">Dans quel ordre sont arrivés D et U, ça ne m'intéresse pas. Ce que je veux savoir, c'est qu'au moment où je regarde, les touches D et U sont en bas.</p><p id="r-531164" data-claire-element-id="531164">Ainsi arrive donc ce cher employé <strong>UpdateEvents</strong>.</p><p id="r-531165" data-claire-element-id="531165">Maintenant, un peu de code :</p><pre id="r-531166" data-claire-element-id="531166"><code data-claire-semantic="c">typedef struct
+{
+	char key[SDLK_LAST];
+} Input;
+
+void UpdateEvents(Input* in)
+{
+   // ...
+}
+
+int main()
+{
+	Input in;
+	// init SDL, chargement, tout ce que vous faites avant la boucle.
+	memset(&amp;in,0,sizeof(in));
+	while(!in.key[SDLK_ESCAPE])
+	{
+		UpdateEvents(&amp;in);
+		if (in.key[SDLK_UP])
+		{
+		   // si on appuie sur la touche pour monter
+		}
+		
+	}
+	return 0;
+}</code></pre><p id="r-531167" data-claire-element-id="531167">Voici un premier code. Pour l'instant, je cache volontairement le code de la fonction UpdateEvents.</p><h3 id="r-la-structure-input" data-claire-element-id="531172">La structure Input</h3><p id="r-531168" data-claire-element-id="531168">Nous avons une structure Input. Dans mon dessin ci-dessus, cette structure n'est autre que mon tableau noir sur lequel mon employé va écrire.</p><p id="r-531169" data-claire-element-id="531169">Cette structure contient un tableau de char. J'utilise char, car c'est compact en mémoire, mais j'y stockerai des nombres, et ce n'est pas gênant si vous prenez ça comme un tableau de int.<br/><strong>L'idée est de stocker 0 si la touche est relâchée, 1 si elle est enfoncée.</strong></p><p id="r-531170" data-claire-element-id="531170">SDLK_LAST est une constante SDL qui contient la valeur de la plus haute valeur de touche de SDL, +1. <br/> Concrètement, ce tableau a comme taille une taille suffisante pour stocker toutes les touches possibles (une centaine à peu près).</p><p id="r-531171" data-claire-element-id="531171">Cette structure Input contient donc l'état de mon clavier ; son tableau me renseigne à tout moment sur l'état de chaque touche : c'est le tableau qui contient l'alphabet dans mon tableau noir ci-dessus, et toutes les cases associées à chaque touche. Si la case est cochée, la touche est en bas, sinon, elle est en haut.</p><h3 id="r-le-main" data-claire-element-id="531179">Le main</h3><p id="r-531173" data-claire-element-id="531173">Regardons dans le main maintenant.<br/> Je crée une variable de type Input, que j'appelle &quot;in&quot;. Je fais ensuite un <em>memset</em> : cette fonction met toute la structure à zéro. Concrètement, elle remplit le tableau de 0 : elle efface toutes les cases sur le tableau noir : rien n'est coché.</p><p id="r-531174" data-claire-element-id="531174">Maintenant, au lieu du while (continuer) habituel, je dis :</p><pre id="r-531175" data-claire-element-id="531175"><code data-claire-semantic="c">while(!in.key[SDLK_ESCAPE])</code></pre><p id="r-531176" data-claire-element-id="531176">Comme je le disais plus haut, je veux que le tableau contienne des 0 (touche relâchée) ou des 1 (touche enfoncée).<br/> Donc in.key[SDLK_ESCAPE] va me renvoyer 0 si je n'appuie pas sur ESC, et 1 si j'appuie.<br/> Avec le !, mon while veut dire :</p><p id="r-531177" data-claire-element-id="531177">&quot;tant qu'on n'appuie pas sur ESC&quot;. Autrement dit, je quitte le while si j'appuie sur ESC.</p><p id="r-531178" data-claire-element-id="531178">Dans le while, j'appelle une fonction UpdateEvents dont j'ai pour le moment caché le code.<br/> Et puis, je fais un if. Je dis &quot;si on appuie sur UP&quot;... sans switch, sans rien : juste un if simple comme cela.</p><h3 id="r-la-fonction-updateevents" data-claire-element-id="531191">La fonction UpdateEvents</h3><p id="r-531180" data-claire-element-id="531180">Il est temps de vous montrer la première version de cette fonction :</p><pre id="r-531181" data-claire-element-id="531181"><code data-claire-semantic="c">void UpdateEvents(Input* in)
+{
+	SDL_Event event;
+	while(SDL_PollEvent(&amp;event))
+	{
+		switch (event.type)
+		{
+		case SDL_KEYDOWN:
+			in-&gt;key[event.key.keysym.sym]=1;
+			break;
+		case SDL_KEYUP:
+			in-&gt;key[event.key.keysym.sym]=0;
+			break;
+		default:
+			break;
+		}
+	}
+}</code></pre><p id="r-531182" data-claire-element-id="531182">Et là, vous reconnaissez les events, avec le switch qui va avec, celui qui vous embêtait tant ! Eh bien ce qui est ennuyeux, on l'enferme.</p><aside id="r-531184" data-claire-element-id="531184" data-claire-semantic="information"><p id="r-531183" data-claire-element-id="531183">J'isole SDL_Event, SDL_PollEvent et son satané switch dans cette fonction, je les enferme, et je ne m'en servirai plus jamais ailleurs !</p></aside><p id="r-531185" data-claire-element-id="531185">Toute la gestion des events est localisée ici, faite une fois pour toutes, toute la difficulté est là et ne sortira plus.</p><p id="r-531186" data-claire-element-id="531186">Dans mon exemple ci-dessus, cette fonction, c'est le travail de mon bonhomme rouge. Lui, il gère la file d'attente, et il prend des notes sur le tableau. Son travail, c'est juste ça.</p><p id="r-531187" data-claire-element-id="531187">Analysons ce code : je crée une variable event. Et ensuite je rentre dans un while. Je dis :<br/> &quot;Tant qu'il y a des events en attente, tu les traites.&quot;</p><p id="r-531188" data-claire-element-id="531188">Et là, je traite deux types : KEYDOWN et KEYUP.<br/> Que fais-je ? Un autre switch ? Naaaaa !!<br/> Je prends la valeur de event.key.keysym.sym, qui est le code de la touche appuyée, et je mets key[ce_code] à 1 si j'appuie, 0 si je relâche.</p><p id="r-531189" data-claire-element-id="531189">Mon bonhomme rouge, quand il voit un KEYDOWN, il prend sa craie et coche la bonne case, et quand il voit KEYUP, il prend son chiffon, et il efface la bonne case.</p><p id="r-531190" data-claire-element-id="531190">Ainsi, rien qu'avec ce code, la structure Input est mise à jour : le tableau noir qui me dit si une touche est enfoncée ou non est à jour !</p><h3 id="r-deux-touches-a-la-fois" data-claire-element-id="531202">Deux touches à la fois</h3><div id="r-531193" data-claire-element-id="531193" data-claire-semantic="question"><p id="r-531192" data-claire-element-id="531192">Vous voulez tester si vous appuyez sur deux touches à la fois ?</p></div><p id="r-531194" data-claire-element-id="531194">Il suffit de lire mon tableau noir : je regarde si les deux cases sont cochées !</p><pre id="r-531195" data-claire-element-id="531195"><code data-claire-semantic="c">if (in.key[SDLK_UP] &amp;&amp; in.key[SDLK_j])
+{
+   // se passera QUE si vous appuyez sur Up et j 
+}</code></pre><div id="r-531197" data-claire-element-id="531197" data-claire-semantic="question"><p id="r-531196" data-claire-element-id="531196">Vous voulez tester si vous appuyez sur une touche, mais pas sur une autre ?</p></div><p id="r-531198" data-claire-element-id="531198">Pareil, je regarde mon tableau noir et je vois qu'une case est cochée et que l'autre ne l'est pas :</p><pre id="r-531199" data-claire-element-id="531199"><code data-claire-semantic="c">if (in.key[SDLK_UP] &amp;&amp; !in.key[SDLK_j])
+{
+   // se passera QUE si vous appuyez sur Up sans appuyer sur j.
+}</code></pre><aside id="r-531201" data-claire-element-id="531201" data-claire-semantic="information"><p id="r-531200" data-claire-element-id="531200">Les puristes diront que SDL_GetKeyState fait pareil. Mais à partir d'ici, allons plus loin.</p></aside><h3 id="r-appuyer-une-fois" data-claire-element-id="531215">Appuyer une fois</h3><p id="r-531203" data-claire-element-id="531203">Si vous faites par exemple un jeu de tir, vous souhaitez qu'un appui de touche lance UNE bombe, et pas plusieurs.<br/> Vous souhaitez que pour lancer dix bombes, il faut appuyer (et relâcher) dix fois la touche &quot;j&quot;.</p><div id="r-531205" data-claire-element-id="531205" data-claire-semantic="question"><p id="r-531204" data-claire-element-id="531204">Comment gérer un tel évènement ?</p></div><pre id="r-531206" data-claire-element-id="531206"><code data-claire-semantic="c">if (in.key[SDLK_j])
+{
+   in.key[SDLK_j] = 0;   // ici, je remets le tableau j à 0 : donc je &quot;fais croire&quot; que la touche a été relâchée.
+   // lance une bombe.
+}</code></pre><p id="r-531207" data-claire-element-id="531207">Ce que je fais, c'est que je décide, juste après avoir regardé le tableau noir, de prendre mon chiffon et d'effacer moi-même la case ! UpdateEvents ne bronchera pas, c'est mon employé, je fais ce que je veux ! Et si je veux venir effacer une case de son tableau, je peux !</p><p id="r-531208" data-claire-element-id="531208">Grâce à ce concept simple, vous devrez taper plusieurs fois sur la touche j pour lancer vos bombes. Que se passe-t-il dans ce cas ?</p><p id="r-531209" data-claire-element-id="531209"><strong>Pour les curieux</strong> :<br/> Lorsque vous appuyez sur la touche j, un event SDL_KEYDOWN avec un paramètre j est généré. La fonction UpdateEvents met donc in.key[SDLK_j] à 1.<br/> Vous testez &quot;if (in.key[SDLK_j])&quot; : c'est le cas, donc on rentre dans le if. Là on remet artificiellement la touche à 0, puis on lance la bombe. À la prochaine itération, SDLK_j est à 0, donc vous ne relancerez pas de bombe. Pour en relancer une, vous devrez régénérer un event SDL_KEYDOWN avec un paramètre j. Pour cela, il faut d'abord relâcher. Le KEYUP mettra à 0 une valeur qui l'est déjà -&gt; il n'aura aucun effet dans ce cas.</p><p id="r-531210" data-claire-element-id="531210">Si vous n'aviez pas mis in.key[SDLK_j] = 0; alors à chaque itération, tant que votre doigt est sur la touche, vous seriez passé dedans. Idéal pour un déplacement de personnage.</p><p id="r-531211" data-claire-element-id="531211"><strong>Note :</strong> n'utilisez pas SDL_KeyRepeat.<br/> SDL_KeyRepeat met du monde dans la file d'attente. Concrètement, sans SDL_KeyRepeat, si vous appuyez une fois sur &quot;f&quot;, un mec &quot;KEYDOWN F&quot; vient dans la file. Un seul, tant que vous ne relâchez pas la touche. Et quand vous relâchez, un mec &quot;KEYUP F&quot; s'amène.</p><p id="r-531212" data-claire-element-id="531212">Si vous mettez en route SDL_KeyRepeat, alors tant que vous avez le doigt sur F, des centaines de mecs &quot;KEYDOWN F&quot; viennent pourrir votre file d'attente, plein, plein !! Un toutes les x millisecondes ! Un rush !! :D</p><aside id="r-531214" data-claire-element-id="531214" data-claire-semantic="information"><p id="r-531213" data-claire-element-id="531213">Cette astuce n'est pas utilisable avec SDL_GetKeyState.</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl">Simplifier les events avec SDL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/problematique-4">
+Problématique
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/isoler-les-events">
+Isoler les events
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/la-souris-7">
+La souris
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/un-exemple-en-c">
+Un exemple en C
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/le-meme-exemple-en-c">
+Le même exemple en C++
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/evolution-2">
+Évolution
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/problematique-4">
+<span class="arrow"></span>
+<span class="next">Problématique</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/la-souris-7">
+<span class="next">La souris</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lasouris"></a><h2>La souris</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/isoler-les-events">
+<span class="arrow"></span>
+<span class="next">Isoler les events</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/un-exemple-en-c">
+<span class="next">Un exemple en C</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-la-souris-6" data-claire-element-id="531240">La souris</h2><figure id="r-531218" data-claire-element-id="531219"><img id="r-531217" data-claire-element-id="531217" src="medias/uploads.siteduzero.com_files_177001_178000_177440.png" alt="Image utilisateur"/></figure><p id="r-531220" data-claire-element-id="531220">Revenons à notre cher employé rouge. Pour l'instant, sur son tableau noir, nous n'avions considéré que le tableau d'en haut, avec les touches du clavier.<br/> Cela marchera de la même manière avec la souris, car après tout, il n'y a pas que des events KEYDOWN et KEYUP qui viendront dans la file d'attente.<br/> Il y aura aussi des MOUSEBUTTONDOWN et MOUSEBUTTONUP (les boutons de la souris) et des MOUSEMOTION (déplacements de la souris) qui viendront le voir. <br/> Il y aura aussi l'event QUIT qui pourra arriver, si jamais l'utilisateur appuie sur la croix.</p><p id="r-531221" data-claire-element-id="531221">Nous allons apprendre à notre cher employé rouge à bien gérer cela !</p><pre id="r-531222" data-claire-element-id="531222"><code data-claire-semantic="c">typedef struct
+{
+	char key[SDLK_LAST];
+	int mousex,mousey;
+	int mousexrel,mouseyrel;
+	char mousebuttons[8];
+        char quit;
+} Input;
+
+
+void UpdateEvents(Input* in)
+{
+	SDL_Event event;
+	while(SDL_PollEvent(&amp;event))
+	{
+		switch (event.type)
+		{
+		case SDL_KEYDOWN:
+			in-&gt;key[event.key.keysym.sym]=1;
+			break;
+		case SDL_KEYUP:
+			in-&gt;key[event.key.keysym.sym]=0;
+			break;
+		case SDL_MOUSEMOTION:
+			in-&gt;mousex=event.motion.x;
+			in-&gt;mousey=event.motion.y;
+			in-&gt;mousexrel=event.motion.xrel;
+			in-&gt;mouseyrel=event.motion.yrel;
+			break;
+		case SDL_MOUSEBUTTONDOWN:
+			in-&gt;mousebuttons[event.button.button]=1;
+			break;
+		case SDL_MOUSEBUTTONUP:
+			in-&gt;mousebuttons[event.button.button]=0;
+			break;
+		case SDL_QUIT:
+			in-&gt;quit = 1;
+			break;
+		default:
+			break;
+		}
+	}
+}
+
+int main()
+{
+	Input in;
+	// init SDL, chargement, tout ce que vous faites avant la boucle.
+	memset(&amp;in,0,sizeof(in));
+	while(!in.key[SDLK_ESCAPE] &amp;&amp; !in.quit)
+	{
+		UpdateEvents(&amp;in);
+		if (in.mousebuttons[SDL_BUTTON_LEFT])
+		{
+			in.mousebuttons[SDL_BUTTON_LEFT] = 0;
+			// fait une seule fois.
+		}		
+
+		if (in.key[SDLK_UP] &amp;&amp; in.key[SDLK_LEFT])
+                {
+                     // simplification de la gestion des touches
+                }
+		
+	}
+	return 0;
+}</code></pre><p id="r-531223" data-claire-element-id="531223">Voici un exemple un peu plus gros. Vous constaterez que la structure Input a grossie, ainsi que la fonction UpdateEvents. Le main, lui, est toujours aussi simple à comprendre : il a juste davantage d'options.</p><h3 id="r-la-structure-input-1" data-claire-element-id="531226">La structure Input</h3><p id="r-531224" data-claire-element-id="531224">Au tableau des touches, j'ai rajouté un champ &quot;quit&quot;. Simple, il est à 1 si un event de type quit a été généré (si vous avez appuyé sur la croix par exemple). Vous remarquez dans le while du main que je dis &quot;tant que, ni la touche echap, ni l'event quit est à 1, on continue&quot;. On pourra donc quitter grâce à ce while en cliquant sur la croix.</p><p id="r-531225" data-claire-element-id="531225">La structure contient plusieurs champs pour la souris.</p><h3 id="r-coordonnees-de-souris-absolues" data-claire-element-id="531228">Coordonnées de souris absolues</h3><p id="r-531227" data-claire-element-id="531227">Si vous avez une flèche sur l'écran, les variables mousex,mousey contiennent les coordonnées de cette flèche : vous pouvez les lire à tout moment. Sitôt la fonction UpdateEvents appelée, la position de votre souris est à jour.</p><h3 id="r-coordonnees-de-souris-relatives" data-claire-element-id="531230">Coordonnées de souris relatives</h3><p id="r-531229" data-claire-element-id="531229">Peut-être un peu moins connue mais utile, les coordonnées relatives de la souris, que j'ai appelées mousexrel,mouseyrel sont en fait le vecteur de déplacement depuis la dernière frame, ces nombres peuvent être négatifs.<br/> Imaginez que vous fassiez un Quake. Vous pouvez tourner avec la souris. Plus vous bougez vite, puis le personnage tourne vite. Et vous pouvez faire 500 tours sur vous-même si vous le souhaitez, donc bouger la souris dans un sens longuement, sans qu'un &quot;coin d'écran&quot; bloque. C'est ça les coordonnées relatives. C'est bien utile dans certains cas.</p><h3 id="r-boutons-de-la-souris" data-claire-element-id="531237">Boutons de la souris</h3><p id="r-531231" data-claire-element-id="531231">SDL peut gérer 7 boutons, et que le premier sera d'indice 1, d'où la taille de mon tableau. Tout comme les touches, je définis 1 si le bouton est enfoncé, 0 s'il est relâché.</p><p id="r-531232" data-claire-element-id="531232">Voici la liste des boutons supportés :<br/> SDL_BUTTON_LEFT<br/> SDL_BUTTON_MIDDLE<br/> SDL_BUTTON_RIGHT<br/> SDL_BUTTON_WHEELUP<br/> SDL_BUTTON_WHEELDOWN<br/> SDL_BUTTON_X1<br/> SDL_BUTTON_X2</p><p id="r-531233" data-claire-element-id="531233">Nous avons le bouton gauche, le bouton droit, et le bouton milieu (qui est l'appui sur la molette).<br/> Nous avons également 2 boutons optionnels appelés X1 et X2, que SDL se réserve le droit d'assigner à des boutons en plus dans certaines configurations. Chez moi, ces boutons n'existent pas.</p><p id="r-531234" data-claire-element-id="531234">En ce qui concerne les deux derniers boutons, SDL_BUTTON_WHEELUP et SDL_BUTTON_WHEELDOWN, il s'agit de la molette que vous montez ou descendez. Elle se gère comme un bouton.<br/> Quand vous montez la molette d'un cran, tout se passe comme si vous aviez appuyé et relâché rapidement le bouton SDL_BUTTON_WHEELUP. Un coup d'index sur la molette vers le haut qui fait &quot;tak_tak_tak_tak&quot;, c'est en réalité quatre boutons qui ont été enfoncés puis relâchés.</p><p id="r-531235" data-claire-element-id="531235">La molette posera un problème particulier dont nous parlerons à la fin de ce paragraphe.</p><p id="r-531236" data-claire-element-id="531236"><strong>Note :</strong> l'astuce « appuyer une fois » utilisée pour le clavier peut également très bien marcher avec les boutons de la souris !</p><h3 id="r-updateevents" data-claire-element-id="531239">UpdateEvents</h3><p id="r-531238" data-claire-element-id="531238">Les nouveaux case de UpdateEvents gèrent tout ça. Je pense que le code se comprend de lui-même. Si vous ne le comprenez pas, vous pouvez l'utiliser, dites-vous que c'est magique !</p><h2 id="r-probleme-de-molette" data-claire-element-id="531251">Problème de molette</h2><p id="r-531241" data-claire-element-id="531241">Ici, je parlerai de la molette qu'on fait monter ou descendre. Je ne parle pas de l'appui sur la molette, qui est aussi appelé &quot;bouton milieu&quot;, qui lui, ne pose aucun problème.</p><p id="r-531242" data-claire-element-id="531242">La molette pose un problème particulier : elle génère très rapidement un évènement &quot;bouton appuyé&quot; puis un évènement &quot;bouton relâché&quot;. Dans l'état actuel de la fonction UpdateEvents, il y a un risque de ne pas détecter un coup de molette.</p><p id="r-531243" data-claire-element-id="531243">En effet, imaginons que vous soyez en train d'afficher vos images. Pendant ce temps, vous montez la molette d'un cran. Deux évènements sont générés : &quot;bouton appuyé&quot; et &quot;bouton relâché&quot; pour le bouton SDL_BUTTON_WHEELUP.</p><p id="r-531244" data-claire-element-id="531244">Lors du passage dans UpdateEvents, ces deux évènement sont traités, et on sort donc de la fonction avec la valeur mousebuttons[SDL_BUTTON_WHEELUP]. On ne peut donc pas détecter que la molette a été poussée.</p><p id="r-531245" data-claire-element-id="531245">Pour palier à ce problème, voici une fonction UpdateEvents modifiée qui va prendre en compte ce problème :</p><pre id="r-531246" data-claire-element-id="531246"><code data-claire-semantic="c">void UpdateEvents(Input* in)
+{
+	SDL_Event event;
+        in-&gt;mousebuttons[SDL_BUTTON_WHEELUP] = 0;
+        in-&gt;mousebuttons[SDL_BUTTON_WHEELDOWN] = 0;
+	while(SDL_PollEvent(&amp;event))
+	{
+		switch (event.type)
+		{
+		case SDL_KEYDOWN:
+			in-&gt;key[event.key.keysym.sym]=1;
+			break;
+		case SDL_KEYUP:
+			in-&gt;key[event.key.keysym.sym]=0;
+			break;
+		case SDL_MOUSEMOTION:
+			in-&gt;mousex=event.motion.x;
+			in-&gt;mousey=event.motion.y;
+			in-&gt;mousexrel=event.motion.xrel;
+			in-&gt;mouseyrel=event.motion.yrel;
+			break;
+		case SDL_MOUSEBUTTONDOWN:
+			in-&gt;mousebuttons[event.button.button]=1;
+			break;
+		case SDL_MOUSEBUTTONUP:
+                        if (event.button.button!=SDL_BUTTON_WHEELUP &amp;&amp; event.button.button!=SDL_BUTTON_WHEELDOWN)
+			   in-&gt;mousebuttons[event.button.button]=0;
+			break;
+		case SDL_QUIT:
+			in-&gt;quit = 1;
+			break;
+		default:
+			break;
+		}
+	}
+}</code></pre><p id="r-531247" data-claire-element-id="531247">Nous voyons un traitement particulier pour la molette :<br/> Tout d'abord, dans le case SDL_MOUSEBUTTONUP, je teste que je n'ai pas affaire à la molette. Pour faire simple, j'ignore les évènement de relâchement, de montée ou descente de la molette.<br/> Par contre, au début de la fonction, je remets systématiquement à 0 les évènements liés à la molette. En effet, je pars du principe qu'on ne peut pas maintenir une montée ou descente de molette. Et ça ne pose pas de restrictions.</p><p id="r-531248" data-claire-element-id="531248">Avec cette fonction, si je monte la molette d'un cran, 2 évènements sont générés : &quot;bouton appuyé&quot; et &quot;bouton relâché&quot; pour le bouton SDL_BUTTON_WHEELUP.<br/> On rentre dans UpdateEvents, il y a remise à 0 de in-&gt;mousebuttons[SDL_BUTTON_WHEELUP]. Puis l'évènement &quot;bouton appuyé&quot; pour SDL_BUTTON_WHEELUP est lu, mettant in-&gt;mousebuttons[SDL_BUTTON_WHEELUP] = 1.<br/> Ensuite, l'évènement &quot;bouton relâché&quot; est traité, mais ignoré, ce qui ne remet pas à 0 ma valeur.</p><p id="r-531249" data-claire-element-id="531249">Je ressors donc de la fonction UpdateEvents avec in-&gt;mousebuttons[SDL_BUTTON_WHEELUP] = 1 que je peux lire.<br/> Ensuite, au prochain passage, cette valeur est remise à zéro.</p><p id="r-531250" data-claire-element-id="531250">Si l'utilisateur monte la molette de plusieurs crans, les mêmes évènements seront générés dans les frames suivantes, ce qui ne posera pas de souci.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl">Simplifier les events avec SDL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/problematique-4">
+Problématique
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/isoler-les-events">
+Isoler les events
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/la-souris-7">
+La souris
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/un-exemple-en-c">
+Un exemple en C
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/le-meme-exemple-en-c">
+Le même exemple en C++
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/evolution-2">
+Évolution
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/isoler-les-events">
+<span class="arrow"></span>
+<span class="next">Isoler les events</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/un-exemple-en-c">
+<span class="next">Un exemple en C</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="UnexempleenC"></a><h2>Un exemple en C</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/la-souris-7">
+<span class="arrow"></span>
+<span class="next">La souris</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/le-meme-exemple-en-c">
+<span class="next">Le même exemple en C++</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-531253" data-claire-element-id="531253">Voici un exemple : les balles qui rebondissent.</p><p id="r-531254" data-claire-element-id="531254">Je fais cet exemple pour vous proposer un code SDL d'une petite application où des balles rebondissent, et où vous pouvez contrôler trois balles en même temps.</p><ul id="r-531261" data-claire-element-id="531261"><li id="r-531256" data-claire-element-id="531256"><p id="r-531255" data-claire-element-id="531255">Pour la balle 1 : utiliser haut, bas, gauche droite.</p></li><li id="r-531258" data-claire-element-id="531258"><p id="r-531257" data-claire-element-id="531257">Pour la balle 2 : utiliser t,f,g,h.</p></li><li id="r-531260" data-claire-element-id="531260"><p id="r-531259" data-claire-element-id="531259">Pour la balle 3 : utiliser la souris.</p></li></ul><p id="r-531262" data-claire-element-id="531262">Outre la gestion simplifiée des events, cet exemple :</p><ul id="r-531279" data-claire-element-id="531279"><li id="r-531264" data-claire-element-id="531264"><p id="r-531263" data-claire-element-id="531263">répond aux nombreux topics qui demandent comment faire bouger plusieurs objets en même temps ;</p></li><li id="r-531266" data-claire-element-id="531266"><p id="r-531265" data-claire-element-id="531265">illustre ce que je dis quand je dis d'éviter le copier / coller, ainsi que les fonctions longues ;</p></li><li id="r-531268" data-claire-element-id="531268"><p id="r-531267" data-claire-element-id="531267">propose de charger plusieurs fichiers aux noms différents sans répéter les fonctions de Load ;</p></li><li id="r-531270" data-claire-element-id="531270"><p id="r-531269" data-claire-element-id="531269">propose une fonction de Load qui charge l'image en VRAM de préférence, mais en RAM s'il échoue, et affiche clairement le fichier non trouvé avant de quitter sauvagement (pas de plantage dû à cela par la suite) ;</p></li><li id="r-531272" data-claire-element-id="531272"><p id="r-531271" data-claire-element-id="531271">propose une fonction de Blit simplifiée ;</p></li><li id="r-531274" data-claire-element-id="531274"><p id="r-531273" data-claire-element-id="531273">propose une gestion des sprites avec une structure simple, qui permet de tout afficher avec une fonction de quatre lignes à peine ;</p></li><li id="r-531276" data-claire-element-id="531276"><p id="r-531275" data-claire-element-id="531275">gère la synchronisation de balayage vertical (en testant le retour de SDL_Flip) ;</p></li><li id="r-531278" data-claire-element-id="531278"><p id="r-531277" data-claire-element-id="531277">fixe le framerate à 50 FPS (arbitrairement).</p></li></ul><p id="r-531280" data-claire-element-id="531280">Voilà, en fait, il est vrai que quand je lis des programmes SDL, parfois je dis « fais des fonctions petites », « isole tes events du reste ».<br/> Aujourd'hui, je vous montre ce que je voulais dire par là.</p><p id="r-531281" data-claire-element-id="531281">Pour lancer le programme, vous avez besoin de quatre fichiers BMP. Je vous propose de les télécharger ici (avec les sources) :</p><p id="r-531282" data-claire-element-id="531282"><a href="http://perso.numericable.fr/fvirtman/sdz/eventsballes.zip">Source + images</a></p><p id="r-531283" data-claire-element-id="531283">Pour lire le programme (pour bien le comprendre), je l'ai commenté. Je vous conseille de commencer à le lire depuis le Main (en fin de programme), de voir que ce Main est petit et découpe le problème en plusieurs morceaux. Vous irez ensuite voir les morceaux qui vous intéressent, qui eux-même peuvent être sous-divisés en plusieurs morceaux.<br/> Car rappelez-vous : un gros problème peut être découpé en plusieurs petits problèmes, eux-mêmes découpés encore en plusieurs sous-problèmes, etc.</p><p id="r-531284" data-claire-element-id="531284">Voici le code :</p><pre id="r-531285" data-claire-element-id="531285"><code data-claire-semantic="c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;time.h&gt;
+#ifdef WIN32
+#include &lt;windows.h&gt;
+#endif
+#include &lt;sdl/sdl.h&gt;
+
+#define NBPLAYERS 3    // assurez-vous que NBPLAYERS est au moins égal au nombre de balles passé dans Init()
+
+typedef struct Sprite  // Un sprite, c'est un objet (ici une balle).
+{
+	int im;  // elle a une image (un index dans le tableau de surfaces)
+	int x,y;  // une position x,y
+	int vx,vy;  // un vecteur de déplacement vx,vy (pour les balles contrôlées automatiquement, dans quel sens bougent-elles !)
+} Sprite;
+
+typedef struct Context  // Le contexte : c'est le contexte du jeu : tout ce qui définit le jeu.
+{
+	SDL_Surface* screen;    // la surface screen.
+	SDL_Surface** images;   // tableau d'images
+	int nbimg;              // nombre d'images (taille du tableau ci-dessus)
+	Sprite* sprites;   // tableau de sprites
+	int nbsp;         // nombre de sprites (taille du tableau ci-dessus)
+	int XRES,YRES;   // résolution de la fenêtre
+} Context;
+
+/**/
+
+typedef struct
+{
+	char key[SDLK_LAST];
+	int mousex,mousey;
+	int mousexrel,mouseyrel;
+	char mousebuttons[8];
+	char quit;
+} Input;
+
+void UpdateEvents(Input* in)
+{
+	SDL_Event event;
+        in-&gt;mousebuttons[SDL_BUTTON_WHEELUP] = 0;
+        in-&gt;mousebuttons[SDL_BUTTON_WHEELDOWN] = 0;
+	while(SDL_PollEvent(&amp;event))
+	{
+		switch (event.type)
+		{
+		case SDL_KEYDOWN:
+			in-&gt;key[event.key.keysym.sym]=1;
+			break;
+		case SDL_KEYUP:
+			in-&gt;key[event.key.keysym.sym]=0;
+			break;
+		case SDL_MOUSEMOTION:
+			in-&gt;mousex=event.motion.x;
+			in-&gt;mousey=event.motion.y;
+			in-&gt;mousexrel=event.motion.xrel;
+			in-&gt;mouseyrel=event.motion.yrel;
+			break;
+		case SDL_MOUSEBUTTONDOWN:
+			in-&gt;mousebuttons[event.button.button]=1;
+			break;
+		case SDL_MOUSEBUTTONUP:
+                        if (event.button.button!=SDL_BUTTON_WHEELUP &amp;&amp; event.button.button!=SDL_BUTTON_WHEELDOWN)
+			   in-&gt;mousebuttons[event.button.button]=0;
+			break;
+		case SDL_QUIT:
+			in-&gt;quit = 1;
+			break;
+		default:
+			break;
+		}
+	}
+}
+
+int Blit(SDL_Surface* src,SDL_Surface* dst,int x,int y)
+{
+	SDL_Rect R;
+	R.x = x;
+	R.y = y;
+	R.w = R.h = 0;
+	return SDL_BlitSurface(src,NULL,dst,&amp;R);
+}
+
+SDL_Surface* LoadImageSDL(char* fichier,int vram)
+{
+	SDL_Surface* f = SDL_LoadBMP(fichier);
+	SDL_Surface* r = NULL;
+	if (!f)
+	{
+#ifdef WIN32
+		MessageBoxA(0,fichier,&quot;Fichier Introuvable : Quit.&quot;,0);  // si vous êtes sous Linux, remplacez par un printf.
+#else
+		printf(&quot;Fichier introuvable : %s . Quit.\n&quot;,fichier);
+#endif
+		exit(-1);  // termine.
+	}
+	if (vram)
+		r=SDL_CreateRGBSurface(SDL_HWSURFACE, f-&gt;w, f-&gt;h, 32, 0, 0, 0, 0);
+	if (r==NULL) 
+		vram=0;
+	if (!vram)
+		r=SDL_CreateRGBSurface(SDL_SWSURFACE, f-&gt;w, f-&gt;h, 32, 0, 0, 0, 0);
+	Blit(f,r,0,0);
+	SDL_FreeSurface(f);
+	return r;
+}
+
+int LoadAll(Context* C)
+{  // charge toutes les images
+	int i;
+	char* all[] = {&quot;rouge.bmp&quot;,&quot;vert.bmp&quot;,&quot;bleu.bmp&quot;,&quot;jaune.bmp&quot;};
+	C-&gt;nbimg = sizeof(all)/sizeof(char*);
+	C-&gt;images = malloc(C-&gt;nbimg*sizeof(SDL_Surface*));  // si vous avez ici l'erreur &quot;cannot convert from void* ...&quot; c'est que vous compilez en C++. Il faut compiler en C.
+	for(i=0;i&lt;C-&gt;nbimg;i++)
+	{
+		C-&gt;images[i] = LoadImageSDL(all[i],1);  // charge de images et les passe en 32 bits
+		SDL_SetColorKey(C-&gt;images[i],SDL_SRCCOLORKEY ,SDL_MapRGBA(C-&gt;images[i]-&gt;format,255,255,255,0));  // je définis que ma couleur de fond est le blanc
+	}
+	return 0;
+}
+
+int InitSprites(Context* C)
+{
+	int i;
+	C-&gt;sprites = malloc(C-&gt;nbsp*sizeof(Sprite));
+	for(i=0;i&lt;C-&gt;nbsp;i++)
+	{
+		C-&gt;sprites[i].im = rand()%(C-&gt;nbimg);  // choisit une balle au hasard parmi les images existantes
+		C-&gt;sprites[i].vx = rand()%21 - 10;     // définit au hasard le vecteur vx entre -10 et +10
+		C-&gt;sprites[i].vy = rand()%21 - 10;     // définit au hasard le vecteur vy entre -10 et +10
+		C-&gt;sprites[i].x = rand()%(C-&gt;XRES);    // position X au hasard dans l'écran
+		C-&gt;sprites[i].y = rand()%(C-&gt;YRES);    // position Y au hasard dans l'écran
+	}
+	return 0;
+}
+
+int Init(Context* C,int x,int y,int nbsp)
+{ // cette fonction initialise le jeu : initialise le mode graphique, ainsi que les sprites : place tout le monde au départ.
+	if (C==NULL)
+		return -1;
+	if (SDL_Init(SDL_INIT_VIDEO)!=0)  // initialise SDL
+		return -1;
+	C-&gt;XRES = x;
+	C-&gt;YRES = y;
+	C-&gt;screen = SDL_SetVideoMode(C-&gt;XRES,C-&gt;YRES,32,SDL_HWSURFACE|SDL_DOUBLEBUF);    // initialise le mode vidéo
+	SDL_ShowCursor(0);  // vire le curseur souris (car ce sera une balle !!)
+	if (C-&gt;screen==NULL)
+		return -1;
+	if (LoadAll(C)!=0)       // charge les images
+		return -1;
+	C-&gt;nbsp = nbsp;
+	if (InitSprites(C)!=0)     // initialise les sprites
+		return -1;
+	return 0;
+}
+
+int Release(Context* C)
+{  // libere tout.
+	int i;
+	for(i=0;i&lt;C-&gt;nbimg;i++)
+		SDL_FreeSurface(C-&gt;images[i]);
+	free(C-&gt;images);
+	free(C-&gt;sprites);
+	SDL_Quit();
+	return 0;
+}
+
+void Evolue(Context* C,Input* in)
+{
+	SDLKey tabkey[NBPLAYERS][4] = {{SDLK_UP,SDLK_DOWN,SDLK_LEFT,SDLK_RIGHT},
+	{SDLK_t,SDLK_g,SDLK_f,SDLK_h}};
+ // ici, un tableau de correspondance, qui contient les touches des 2 premiers joueurs.
+	int i;
+	for(i=0;i&lt;NBPLAYERS;i++)  // gestion des balles manuelle (2 joueurs)
+	{
+		if (in-&gt;key[tabkey[i][0]])  // haut
+			C-&gt;sprites[i].y-=3;
+		if (in-&gt;key[tabkey[i][1]])  // bas
+			C-&gt;sprites[i].y+=3;
+		if (in-&gt;key[tabkey[i][2]])  // gauche
+			C-&gt;sprites[i].x-=3;
+		if (in-&gt;key[tabkey[i][3]])  // droite
+			C-&gt;sprites[i].x+=3;
+	}
+	C-&gt;sprites[2].x = in-&gt;mousex;  // pour le joueur 3 : très simple.
+	C-&gt;sprites[2].y = in-&gt;mousey;
+	for(i=NBPLAYERS;i&lt;C-&gt;nbsp;i++)  // rebond des balles automatique
+	{
+		C-&gt;sprites[i].x+=C-&gt;sprites[i].vx;  // déplacement.
+		C-&gt;sprites[i].y+=C-&gt;sprites[i].vy;
+		if (C-&gt;sprites[i].x&lt;0 &amp;&amp; C-&gt;sprites[i].vx&lt;0)  // rebond gauche
+			C-&gt;sprites[i].vx = - C-&gt;sprites[i].vx;
+		if (C-&gt;sprites[i].x&gt;C-&gt;XRES-1 &amp;&amp; C-&gt;sprites[i].vx&gt;0)  // rebond droit
+			C-&gt;sprites[i].vx = - C-&gt;sprites[i].vx;
+		if (C-&gt;sprites[i].y&lt;0 &amp;&amp; C-&gt;sprites[i].vy&lt;0)  // rebond haut
+			C-&gt;sprites[i].vy = - C-&gt;sprites[i].vy;
+		if (C-&gt;sprites[i].y&gt;C-&gt;YRES-1 &amp;&amp; C-&gt;sprites[i].vy&gt;0)  // rebond bas
+			C-&gt;sprites[i].vy = - C-&gt;sprites[i].vy;
+	}
+}
+
+void Affiche(Context* C)
+{
+	int i;
+	SDL_FillRect(C-&gt;screen,NULL,0);  // repeint en noir (mettez un fond si vous préférez).
+	for(i=0;i&lt;C-&gt;nbsp;i++)	// affiche tous les sprites : illustre la structure.
+		Blit(C-&gt;images[C-&gt;sprites[i].im],C-&gt;screen,C-&gt;sprites[i].x,C-&gt;sprites[i].y);
+}
+
+int main(int argc,char** argv)
+{
+	Context C;
+	Input in;
+	memset(&amp;in,0,sizeof(in));  // Instanciation d'une structure Input, et initialisation : tous les champs à 0.
+	srand((unsigned int)time(NULL));
+	if (Init(&amp;C,400,300,10)!=0)   // init en 800*600 avec 10 sprites
+		return -1;
+	while(!in.key[SDLK_ESCAPE] &amp;&amp; !in.quit)
+	{
+		unsigned int elapsed;
+		unsigned int lasttime = SDL_GetTicks();
+		UpdateEvents(&amp;in);
+		Evolue(&amp;C,&amp;in);
+		Affiche(&amp;C);
+		while(SDL_Flip(C.screen)!=0)  // si la carte graphique n'est pas prête à blitter...
+			SDL_Delay(1);			   // on attend un peu avant de réessayer : on reste ainsi synchro avec le balayage vertical
+		elapsed = SDL_GetTicks()-lasttime;  // ici, je calcule le temps écoulé depuis la derniere frame
+		if (elapsed&lt;20)							// s'il ne s'est pas encore passsé 20 millisecondes, j'attends.
+			SDL_Delay(20-elapsed);			   // ainsi, je synchronise mon application à 50 FPS.  (20*50 = 1000)
+	}
+	Release(&amp;C);
+	return 0;
+}</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl">Simplifier les events avec SDL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/problematique-4">
+Problématique
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/isoler-les-events">
+Isoler les events
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/la-souris-7">
+La souris
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/un-exemple-en-c">
+Un exemple en C
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/le-meme-exemple-en-c">
+Le même exemple en C++
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/evolution-2">
+Évolution
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/la-souris-7">
+<span class="arrow"></span>
+<span class="next">La souris</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/le-meme-exemple-en-c">
+<span class="next">Le même exemple en C++</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="LemmeexempleenC"></a><h2>Le même exemple en C++</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/un-exemple-en-c">
+<span class="arrow"></span>
+<span class="next">Un exemple en C</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/evolution-2">
+<span class="next">Évolution</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-531287" data-claire-element-id="531287">Ayant vu dans les commentaires des demandes sur une approche C++ de la chose, je vous propose l'exemple suivant.</p><p id="r-531288" data-claire-element-id="531288">Si on se concentre sur la gestion des events, j'ai simplement encapsulé la structure et la fonction UpdateEvents dans une classe.<br/> J'ai également ajouté quelques accesseurs.<br/> Le constructeur unique (par défaut) initialise la classe à 0.</p><p id="r-531289" data-claire-element-id="531289">Les images nécessaires sont les mêmes que pour l'exemple C ci-dessus.</p><pre id="r-531290" data-claire-element-id="531290"><code data-claire-semantic="cpp">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;time.h&gt;
+#ifdef WIN32
+#include &lt;windows.h&gt;
+#endif
+#include &lt;sdl/sdl.h&gt;
+
+#define NBPLAYERS 3    // assurez-vous que NBPLAYERS est au moins égal au nombre de balles passées dans Init().
+
+
+// -------------- FONCTIONS DE BASE
+
+int Blit(SDL_Surface* src,SDL_Surface* dst,int x,int y)
+{
+	SDL_Rect R;
+	R.x = x;
+	R.y = y;
+	R.w = R.h = 0;
+	return SDL_BlitSurface(src,NULL,dst,&amp;R);
+}
+
+SDL_Surface* LoadImageSDL(char* fichier,int vram)
+{
+	SDL_Surface* f = SDL_LoadBMP(fichier);
+	SDL_Surface* r = NULL;
+	if (!f)
+	{
+#ifdef WIN32
+		MessageBoxA(0,fichier,&quot;Fichier Introuvable : Quit.&quot;,0);  // si vous êtes sous Linux, remplacez par un printf.
+#else
+		printf(&quot;Fichier introuvable : %s . Quit.\n&quot;,fichier);
+#endif
+		exit(-1);  // termine.
+	}
+	if (vram)
+		r=SDL_CreateRGBSurface(SDL_HWSURFACE, f-&gt;w, f-&gt;h, 32, 0, 0, 0, 0);
+	if (r==NULL) 
+		vram=0;
+	if (!vram)
+		r=SDL_CreateRGBSurface(SDL_SWSURFACE, f-&gt;w, f-&gt;h, 32, 0, 0, 0, 0);
+	Blit(f,r,0,0);
+	SDL_FreeSurface(f);
+	return r;
+}
+
+// -------------- CLASS INPUT
+
+class Input
+{
+protected:
+	char key[SDLK_LAST];
+	int mousex,mousey;
+	int mousexrel,mouseyrel;
+	char mousebuttons[8];
+	char quit;
+public:
+	Input();
+	~Input(){}
+	void Update();
+	inline char&amp; Key(int i){return key[i];}
+	inline int MouseX(){return mousex;}
+	inline int MouseY(){return mousey;}
+	inline int MouseXrel(){return mousexrel;}
+	inline int MouseYrel(){return mouseyrel;}
+	inline int MouseButton(int i){return mousebuttons[i];}
+	inline int Quit(){return quit;}
+};
+
+Input::Input()
+{
+	memset(this,0,sizeof(*this));
+}
+
+void Input::Update()
+{
+	SDL_Event event;
+        mousebuttons[SDL_BUTTON_WHEELUP] = 0;
+        mousebuttons[SDL_BUTTON_WHEELDOWN] = 0;
+	while(SDL_PollEvent(&amp;event))
+	{
+		switch (event.type)
+		{
+		case SDL_KEYDOWN:
+			key[event.key.keysym.sym]=1;
+			break;
+		case SDL_KEYUP:
+			key[event.key.keysym.sym]=0;
+			break;
+		case SDL_MOUSEMOTION:
+			mousex=event.motion.x;
+			mousey=event.motion.y;
+			mousexrel=event.motion.xrel;
+			mouseyrel=event.motion.yrel;
+			break;
+		case SDL_MOUSEBUTTONDOWN:
+			mousebuttons[event.button.button]=1;
+			break;
+		case SDL_MOUSEBUTTONUP:
+                        if (event.button.button!=SDL_BUTTON_WHEELUP &amp;&amp; event.button.button!=SDL_BUTTON_WHEELDOWN)
+  			   mousebuttons[event.button.button]=0;
+			break;
+		case SDL_QUIT:
+			quit = 1;
+			break;
+		default:
+			break;
+		}
+	}
+}
+
+// -------------- CLASS SPRITE
+
+class Sprite  // Un sprite, c'est un objet (ici une balle).
+{
+protected:
+	int im;  // elle a une image (un index dans le tableau de surfaces)
+	int x,y;  // une position x,y
+	int vx,vy;  // un vecteur de déplacement vx,vy (pour les balles contrôlées automatiquement, dans quel sens bougent-elles !)
+public:
+	Sprite(){}
+	Sprite(int inim,int inx,int iny,int invx,int invy);
+	inline void MoveX(int mv){x+=mv;}
+	inline void MoveY(int my){y+=my;}
+	inline void SetPosition(int inx,int iny){x=inx;y=iny;}
+	inline void EvolueFromVector(){x+=vx;y+=vy;}
+	inline int GetX(){return x;}
+	inline int GetY(){return y;}
+	inline int&amp; Vx(){return vx;}
+	inline int&amp; Vy(){return vy;}
+	void Render(SDL_Surface** images,SDL_Surface* screen);
+};
+
+Sprite::Sprite(int inim,int inx,int iny,int invx,int invy)
+{
+	im=inim;
+	x=inx;
+	y=iny;
+	vx=invx;
+	vy=invy;
+}
+
+void Sprite::Render(SDL_Surface** images,SDL_Surface* screen)
+{
+	Blit(images[im],screen,x,y);
+}
+
+// -------------- CLASS CONTEXT
+
+class Context  // Le contexte : c'est le contexte du jeu : tout ce qui définit le jeu.
+{
+protected:
+	SDL_Surface* screen;    // la surface screen.
+	SDL_Surface** images;   // tableau d'images
+	int nbimg;              // nombre d'images (taille du tableau ci-dessus)
+	Sprite* sprites;   // tableau de sprites
+	int nbsp;         // nombre de sprites (taille du tableau ci-dessus)
+	int XRES,YRES;   // résolution de la fenêtre
+private:
+	int LoadAll();
+	int InitSprites();
+
+public:
+	Context(int inxres,int inyres,int innbsp,int&amp; outerr);
+	~Context();
+	void Evolue(Input&amp;);
+	void Render();
+	void Flip();
+};
+
+Context::Context(int inxres,int inyres,int innbsp,int&amp; outerr)
+{
+	outerr = -1;
+	if (SDL_Init(SDL_INIT_VIDEO)!=0)  // initialise SDL
+		return;
+	XRES = inxres;
+	YRES = inyres;
+	screen = SDL_SetVideoMode(XRES,YRES,32,SDL_HWSURFACE|SDL_DOUBLEBUF);    // initialise le mode vidéo
+	SDL_ShowCursor(0);  // vire le curseur souris (car ce sera une balle !)
+	if (screen==NULL)
+		return;
+	if (LoadAll()!=0)       // charge les images
+		return;
+	nbsp = innbsp;
+	if (InitSprites()!=0)     // initialise les sprites
+		return;
+	outerr = 0;
+}
+
+int Context::LoadAll()
+{
+	int i;
+	char* all[] = {&quot;rouge.bmp&quot;,&quot;vert.bmp&quot;,&quot;bleu.bmp&quot;,&quot;jaune.bmp&quot;};
+	nbimg = sizeof(all)/sizeof(char*);
+	images = new SDL_Surface*[nbimg];  // si vous avez ici l'erreur &quot;cannot convert from void* ...&quot; c'est que vous compilez en C++. Il faut compiler en C.
+	for(i=0;i&lt;nbimg;i++)
+	{
+		images[i] = LoadImageSDL(all[i],1);  // charge les images et les passe en 32 bits
+		SDL_SetColorKey(images[i],SDL_SRCCOLORKEY ,SDL_MapRGBA(images[i]-&gt;format,255,255,255,0));  // je définis le blanc comme couleur de fond
+	}
+	return 0;
+}
+
+int Context::InitSprites()
+{
+	int i;
+	sprites = new Sprite[nbsp];
+	for(i=0;i&lt;nbsp;i++)
+	{
+		sprites[i] = Sprite(rand()%(nbimg),rand()%(XRES),rand()%(YRES),rand()%21 - 10,rand()%21 - 10);
+		// choisit une balle au hasard parmi les images existantes
+		// définit au hasard le vecteur vx entre -10 et +10
+		// définit au hasard le vecteur vy entre -10 et +10
+		// position X au hasard dans l'écran
+		// position Y au hasard dans l'écran
+	}
+	return 0;
+}
+
+void Context::Evolue(Input&amp; in)
+{
+	SDLKey tabkey[NBPLAYERS][4] = {{SDLK_UP,SDLK_DOWN,SDLK_LEFT,SDLK_RIGHT},
+	{SDLK_t,SDLK_g,SDLK_f,SDLK_h}};
+	// ici, un tableau de correspondance, qui contient les touches des 2 premiers joueurs.
+	int i;
+	for(i=0;i&lt;NBPLAYERS;i++)  // gestion des balles manuelle (2 players)
+	{
+		if (in.Key(tabkey[i][0]))  // haut
+			sprites[i].MoveY(-3);
+		if (in.Key(tabkey[i][1]))  // bas
+			sprites[i].MoveY(3);
+		if (in.Key(tabkey[i][2]))  // gauche
+			sprites[i].MoveX(-3);
+		if (in.Key(tabkey[i][3]))  // droite
+			sprites[i].MoveX(3);
+	}
+	sprites[2].SetPosition(in.MouseX(),in.MouseY());  // pour le joueur 3 : très simple.
+	for(i=NBPLAYERS;i&lt;nbsp;i++)  // rebond des balles automatique
+	{
+		sprites[i].EvolueFromVector(); // déplacement.
+		if (sprites[i].GetX()&lt;0 &amp;&amp; sprites[i].Vx()&lt;0)  // rebond gauche
+			sprites[i].Vx() = - sprites[i].Vx();
+		if (sprites[i].GetX()&gt;XRES-1 &amp;&amp; sprites[i].Vx()&gt;0)  // rebond droit
+			sprites[i].Vx() = - sprites[i].Vx();
+		if (sprites[i].GetY()&lt;0 &amp;&amp; sprites[i].Vy()&lt;0)  // rebond haut
+			sprites[i].Vy() = - sprites[i].Vy();
+		if (sprites[i].GetY()&gt;YRES-1 &amp;&amp; sprites[i].Vy()&gt;0)  // rebond bas
+			sprites[i].Vy() = - sprites[i].Vy();
+	}
+}
+
+void Context::Render()
+{
+	int i;
+	SDL_FillRect(screen,NULL,0);  // repeint en noir (mettez un fond si vous préférez)
+	for(i=0;i&lt;nbsp;i++)	// affiche tous les sprites : illustre la structure.
+		sprites[i].Render(images,screen);
+}
+
+void Context::Flip()
+{
+	while(SDL_Flip(screen)!=0)  // si la catre graphique n'est pas prête à blitter...
+		SDL_Delay(1);			   // on attend un peu avant de réessayer : on reste ainsi synchro avec le balayage vertical
+}
+
+Context::~Context()
+{
+	int i;
+	for(i=0;i&lt;nbimg;i++)
+		SDL_FreeSurface(images[i]);
+	delete [] images;
+	delete [] sprites;
+	SDL_Quit();
+}
+
+// -------------- MAIN
+
+int main(int argc,char** argv)
+{
+	int err;
+	Context C(400,300,10,err);
+	if (err!=0)
+		return -1;
+	Input in; 	  // Instanciation d'une class Input, et initialisation : tous les champs à 0.
+	srand((unsigned int)time(NULL));
+	while(!in.Key(SDLK_ESCAPE) &amp;&amp; !in.Quit())
+	{
+		unsigned int elapsed;
+		unsigned int lasttime = SDL_GetTicks();
+		in.Update();
+		C.Evolue(in);
+		C.Render();
+		C.Flip();
+		elapsed = SDL_GetTicks()-lasttime;  // ici, je calcule le temps écoulé depuis la dernière frame
+		if (elapsed&lt;20)							// s'il ne s'est pas encore passé 20 millisecondes, j'attends.
+			SDL_Delay(20-elapsed);			   // ainsi, je synchronise mon application à 50 FPS (20*50 = 1000).
+	}
+	return 0;
+}</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl">Simplifier les events avec SDL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/problematique-4">
+Problématique
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/isoler-les-events">
+Isoler les events
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/la-souris-7">
+La souris
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/un-exemple-en-c">
+Un exemple en C
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/le-meme-exemple-en-c">
+Le même exemple en C++
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/evolution-2">
+Évolution
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/un-exemple-en-c">
+<span class="arrow"></span>
+<span class="next">Un exemple en C</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/evolution-2">
+<span class="next">Évolution</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="volution"></a><h2>Évolution</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/le-meme-exemple-en-c">
+<span class="arrow"></span>
+<span class="next">Le même exemple en C++</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-531292" data-claire-element-id="531292">On pourra rajouter dans la structure, ainsi que dans la fonction UpdateEvents, les autres events de la SDL, pour gérer les joysticks par exemple. Je n'ai pas eu le temps de le faire, car je joue rarement au joystick, mais c'est la même chose. Si vous avez compris le concept, vous devriez pouvoir rajouter tout ça !</p><p id="r-531293" data-claire-element-id="531293">Ce qu'il faut bien comprendre, c'est qu'on crée une structure, et qu'on copie / colle une fois pour toutes la fonction UpdateEvents.<br/> Ensuite, dans chaque boucle de notre jeu, il faut juste appeler UpdateEvents, et ensuite, on lit le clavier, la souris comme un vulgaire tableau, avec éventuellement des &amp;&amp;, des ||, très logiquement.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl">Simplifier les events avec SDL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/problematique-4">
+Problématique
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/isoler-les-events">
+Isoler les events
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/la-souris-7">
+La souris
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/un-exemple-en-c">
+Un exemple en C
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/le-meme-exemple-en-c">
+Le même exemple en C++
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/evolution-2">
+Évolution
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/simplifier-les-events-avec-sdl/le-meme-exemple-en-c">
+<span class="arrow"></span>
+<span class="next">Le même exemple en C++</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/simplifier-les-events-avec-sdl.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 00:01:12 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/simplifier-les-events-avec-sdl.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:15:35 GMT -->
+</html>
