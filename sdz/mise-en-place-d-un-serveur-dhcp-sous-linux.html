@@ -1,0 +1,231 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/mise-en-place-d-un-serveur-dhcp-sous-linux.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 02:56:38 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/mise-en-place-d-un-serveur-dhcp-sous-linux.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:38:41 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Mise en place d&#039;un Serveur DHCP sous Linux</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/mise-en-place-d-un-serveur-dhcp-sous-linux.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Mise en place d&#039;un Serveur DHCP sous Linux</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Miseenplaced039unServeurDHCPsousLinux">Mise en place d&#039;un Serveur DHCP sous Linux</a><br/><a href="#Rappelsurlaconfigurationstatiqued039uneadresseIP">Rappel sur la configuration statique d&#039;une adresse IP</a><br/><a href="#Configurationdynamiquemiseenplaced039unserveurDHCP">Configuration dynamique: mise en place d&#039;un serveur DHCP</a><br/><a href="#Encoreplusloin">Encore plus loin !</a><br/></div>
+<a name="Miseenplaced039unServeurDHCPsousLinux"></a><h2>Mise en place d&#039;un Serveur DHCP sous Linux</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-serveur-dhcp-sous-linux/rappel-sur-la-configuration-statique-d-une-adresse-ip">
+<span class="next">Rappel sur la configuration statique d&#039;une adresse IP</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-454643" data-claire-element-id="454643">L'objectif de ce tutoriel est d'apprendre à mettre en place un serveur DHCP sous Linux.</p><p id="r-454644" data-claire-element-id="454644">Un serveur DHCP (Dynamic Host Configuration Protocol) a pour rôle de distribuer de façon automatique, des adresses IP à des clients pour une durée déterminée.</p><p id="r-454645" data-claire-element-id="454645">Au lieu d'affecter manuellement à chaque hôte une adresse statique, ainsi que tous les paramètres tels que (serveur de noms, passerelle par défaut, nom du réseau), un serveur DHCP alloue à un client, un bail d'accès au réseau, pour une durée déterminée (durée du bail). Le serveur passe en paramètres au client toutes les informations dont il a besoin.</p><div id="r-454647" data-claire-element-id="454647" data-claire-semantic="question"><p id="r-454646" data-claire-element-id="454646">C'est quoi un bail ? Il s'agit d'un &quot;contrat&quot; passé entre le serveur et le client qui inclue notamment la durée de vie de l'adresse Ip qu'attribue le serveur au client.</p></div><p id="r-454648" data-claire-element-id="454648">Une fois le serveur démarré, un client voulant se connecter, diffuse un message dhcp-discover pour &quot;trouver&quot; un serveur DHCP. Lorsque le client trouve le serveur DHCP, ce dernier lui attribue automatiquement une adresse IP.</p><aside id="r-454650" data-claire-element-id="454650" data-claire-semantic="information"><p id="r-454649" data-claire-element-id="454649">Les manipulations de ce tutoriel ont été réalisées sous la distribution Debian. Il est à noté que les commandes utilisées peuvent différées quelques peut selon la distribution utilisée.</p></aside><aside id="r-454652" data-claire-element-id="454652" data-claire-semantic="information"><p id="r-454651" data-claire-element-id="454651">Avant de démarrer la configuration DHCP, assurez-vous que le &quot;network manager&quot;, un outil simplifié pour la configuration d'un réseau sous Linux, soit désactivé. Par défaut, c'est bien le cas ! ;)</p></aside>
+</div><a name="Rappelsurlaconfigurationstatiqued039uneadresseIP"></a><h2>Rappel sur la configuration statique d&#039;une adresse IP</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-serveur-dhcp-sous-linux/configuration-dynamique-mise-en-place-d-un-serveur-dhcp">
+<span class="next">Configuration dynamique: mise en place d&#039;un serveur DHCP</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-454653" data-claire-element-id="454653">:o Oula, pas trop vite ! Ca veut dire quoi statique?</p><p id="r-454654" data-claire-element-id="454654">Le mot clé statique indique que c'est l'utilisateur qui va lui même choisir quelle adresse attribuer à sa machine. En réalité, on attribue une adresse IP à une interface réseau d'une machine. C'est à dire, que si votre machine dispose d'un seule carte réseau, nous pouvons attribuer une seule adresse IP, si elle en possède deux, on peut attribuer deux adresses IP, etc ..</p><aside id="r-454656" data-claire-element-id="454656" data-claire-semantic="information"><p id="r-454655" data-claire-element-id="454655">En réalité, nous ne sommes pas contraints au niveau des interfaces physiques. Il est possible de créer des interfaces virtuelles (vlans par exemple). Au passage, si vous ne le savez pas encore, votre ordinateur dispose déjà d'une interface virtuelle: la boucle locale ou &quot;loopback&quot; identifié par l'adresse IP 127.0.0.1</p></aside><p id="r-454657" data-claire-element-id="454657">Voici la commande pour lister les interfaces présentes sur votre ordinateur:</p><pre id="r-454658" data-claire-element-id="454658"><code data-claire-semantic="console">ifconfig</code></pre><p id="r-454659" data-claire-element-id="454659">Vous obtenez ce résultat :</p><figure id="r-454661" data-claire-element-id="454662"><img id="r-454660" data-claire-element-id="454660" src="medias/erfsonar-ps.googlecode.com_svn_wiki_NPToolkit_NPK_30_ifconfig.png" alt="Image utilisateur"/></figure><p id="r-454663" data-claire-element-id="454663">Vous ne comprenez pas grand chose à ce que vous voyez ! Pas de panique, ces quelques explications vont pouvoir vous aider:</p><p id="r-454664" data-claire-element-id="454664">En fait, la commande indique que votre ordinateur possède deux interfaces: eth0 et lo. Cette dernière est en fait la boucle locale, une interface virtuelle présente sur tous les ordinateurs. Celle qui va nous intéresser est l'interface eth0. Voici les informations que l'on peut extraire pour cette interface:</p><p id="r-454665" data-claire-element-id="454665">&quot;Le lien de l'interface est de type Ethernet et son adresse MAC est 00:0c:29:f3:89:0e. Son adresse IP est 192.168.69.139&quot;</p><aside id="r-454667" data-claire-element-id="454667" data-claire-semantic="information"><p id="r-454666" data-claire-element-id="454666">Évidemment, il y a beaucoup plus d'informations disponibles dans cette capture, mais les informations précédentes suffisent à la compréhension du tutoriel.</p></aside><p id="r-454668" data-claire-element-id="454668">Étudions maintenant comment attribuer une adresse IP statique;</p><p id="r-454669" data-claire-element-id="454669">Il existe deux façons de le faire:</p><p id="r-454670" data-claire-element-id="454670"><em><strong>A l'aide de la commande &quot;ifconfig&quot; :</strong></em></p><h3 id="r-a-l-aide-de-la-commande-ifconfig" data-claire-element-id="454671">A l'aide de la commande &quot;ifconfig&quot; :</h3><p id="r-454672" data-claire-element-id="454672">Cette méthode est rapide mais présente le désavantage que votre configuration sera effacée à chaque redémarrage de votre machine. Cependant elle reste un bon compromis si vous souhaitez faire une configuration rapide.<br/> Voici la commande a utiliser:</p><pre id="r-454673" data-claire-element-id="454673"><code data-claire-semantic="console">ifconfig eth0 192.168.21.2 netmask 255.255.255.0</code></pre><p id="r-454674" data-claire-element-id="454674"><strong>Vérification de l'adresse:</strong></p><p id="r-454675" data-claire-element-id="454675">Constatez par vous même que votre adresse IP a bien été prise en compte:</p><pre id="r-454676" data-claire-element-id="454676"><code data-claire-semantic="console">ifconfig eth0</code></pre><p id="r-454677" data-claire-element-id="454677"><strong>Explications:</strong></p><p id="r-454678" data-claire-element-id="454678">- <strong>eth0</strong>: il s'agit de l'interface que l'on veut configurer.<br/> - <strong>192.168.21.2</strong>: il s'agit de l'adresse IP que l'on souhaite attribuer à cette interface. Ici, il s'agit d'une adresse de classe C.<br/> - <strong>netmask</strong>: il s'agit d'un mot clé qui précise que l'adresse suivante sera le masque de sous réseau utilisé avec cette adresse.<br/> - <strong>255.255.255.0</strong>: il s'agit du masque de sous-réseau par défaut d'une adresse IP de classe C.</p><p id="r-454679" data-claire-element-id="454679">Si vous ne connaissez pas les types de classes d'adresses IP, voici un schéma vous permettant de les identifier:</p><figure id="r-454681" data-claire-element-id="454682"><img id="r-454680" data-claire-element-id="454680" src="medias/www.linux-france.org_prj_edu_archinet_systeme_images_adrIP_002.png" alt="Image utilisateur"/></figure><p id="r-454683" data-claire-element-id="454683">:soleil: C'est fait ! Votre interface possède désormais une adresse IP. Voyons maintenant comment faire pour que cette adressage deviennent persistant, c'est à dire qu'il soit le même après redémarrage de votre ordinateur.</p><p id="r-454684" data-claire-element-id="454684"><em><strong>A l'aide du fichier &quot;interfaces&quot; :</strong></em></p><h3 id="r-a-l-aide-du-fichier-interfaces" data-claire-element-id="454685">A l'aide du fichier &quot;interfaces&quot; :</h3><p id="r-454686" data-claire-element-id="454686">Ce fichier &quot;interfaces&quot; contient la configuration réseau de chaque interface de votre ordinateur. Pour l'ouvrir, tapez simplement cette ligne:</p><pre id="r-454687" data-claire-element-id="454687"><code data-claire-semantic="console">vi /etc/network/interfaces</code></pre><div id="r-454689" data-claire-element-id="454689" data-claire-semantic="question"><p id="r-454688" data-claire-element-id="454688">C'est quoi &quot;vi&quot;: il s'agit d'un éditeur de texte présent sous Linux, qui va nous permettre d'ouvrir notre fichier.</p></div><p id="r-454690" data-claire-element-id="454690">Une fois le fichier ouvert, remplacez simplement les quelques lignes présentes à l'intérieur, par celles-ci:</p><pre id="r-454691" data-claire-element-id="454691"><code data-claire-semantic="console">iface eth0 inet static
+address 192.168.21.2
+netmask 255.255.255.0
+broadcast 192.168.21.255</code></pre><p id="r-454692" data-claire-element-id="454692"><strong>Explications:</strong></p><p id="r-454693" data-claire-element-id="454693">- <strong>iface eth0 inet static</strong>: pensez à bien préciser le nom de l'interface que vous souhaitez configurer (ici eth0). Remarquez également le mot clé static, celui-ci nous sera utile par la suite :) <br/> - <strong>address 192.168.21.2</strong>: il s'agit de l'adresse que l'on souhaite attribuer.<br/> - <strong>netmask 255.255.255.0</strong>: il s'agit du masque de sous réseau.<br/> - <strong>broadcast 192.168.21.255</strong>: il s'agit de l'adresse de broadcast de notre réseau. Voyez comment on constitue l'adresse de broadcast: On prend les 3 premiers octets de l'adresse IP de classe C et on rajoute le 4 octet comme étant à 255. Si nous avions choisi d'utiliser une adresse de classe B, l'adresse de broadcast aurait été X.X.255.255 ! Facile non? :magicien:</p><aside id="r-454695" data-claire-element-id="454695" data-claire-semantic="warning"><p id="r-454694" data-claire-element-id="454694">Si vous vérifier maintenant l'adressage grâce à la commande &quot;ifconfig&quot;, vous vous rendrez compte que l'adressage n'a pas changé!</p></aside><aside id="r-454697" data-claire-element-id="454697" data-claire-semantic="information"><p id="r-454696" data-claire-element-id="454696">En fait, lorsque l'on effectue un changement dans le fichier de configuration interfaces, il est nécessaire de redémarrer l'interface réseau afin qu'elle s'initialise avec les nouveaux paramètres IP.</p></aside><p id="r-454698" data-claire-element-id="454698">Voici la commande a utiliser sous Linux Debian:</p><pre id="r-454699" data-claire-element-id="454699"><code data-claire-semantic="console">/etc/init.d/networking restart</code></pre><p id="r-454700" data-claire-element-id="454700">Constatez par vous même que votre adresse IP a bien été prise en compte:</p><pre id="r-454701" data-claire-element-id="454701"><code data-claire-semantic="console">ifconfig eth0</code></pre><p id="r-454702" data-claire-element-id="454702">Voilà, vous savez désormais attribuer une adresse IP de manière statique! Passons maintenant à la partie plus intéressante, sur l'adressage dynamique et la mise en œuvre d'un serveur DHCP.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-serveur-dhcp-sous-linux">Mise en place d&#039;un Serveur DHCP sous Linux</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-serveur-dhcp-sous-linux/rappel-sur-la-configuration-statique-d-une-adresse-ip">
+Rappel sur la configuration statique d&#039;une adresse IP
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-serveur-dhcp-sous-linux/configuration-dynamique-mise-en-place-d-un-serveur-dhcp">
+Configuration dynamique: mise en place d&#039;un serveur DHCP
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-serveur-dhcp-sous-linux/encore-plus-loin-1">
+Encore plus loin !
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-serveur-dhcp-sous-linux/configuration-dynamique-mise-en-place-d-un-serveur-dhcp">
+<span class="next">Configuration dynamique: mise en place d&#039;un serveur DHCP</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Configurationdynamiquemiseenplaced039unserveurDHCP"></a><h2>Configuration dynamique: mise en place d&#039;un serveur DHCP</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-serveur-dhcp-sous-linux/rappel-sur-la-configuration-statique-d-une-adresse-ip">
+<span class="arrow"></span>
+<span class="next">Rappel sur la configuration statique d&#039;une adresse IP</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-serveur-dhcp-sous-linux/encore-plus-loin-1">
+<span class="next">Encore plus loin !</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h3 id="r-installation-du-serveur-sous-linux-debian" data-claire-element-id="454711">Installation du serveur sous Linux Debian :</h3><p id="r-454704" data-claire-element-id="454704">Il suffit simplement de taper cette commande en mode root:</p><pre id="r-454705" data-claire-element-id="454705"><code data-claire-semantic="console">sudo apt-get install server-dhcp3</code></pre><p id="r-454706" data-claire-element-id="454706">Prenons un exemple concret pour expliquer l'intérêt de la mise en place d'un serveur DHCP.</p><p id="r-454707" data-claire-element-id="454707"><cite>Citation : Exemple</cite></p><blockquote id="r-454709" data-claire-element-id="454709"><p id="r-454708" data-claire-element-id="454708">Vous avez êtes connectés à Internet à l'aide d'un câble ethernet car votre fournisseur d'accès à Internet ne vous a pas vous fournit de routeur wifi. Et c'est embêtant car si un ami vient chez vous, pour lui donner la connexion internet, soit votre routeur dispose suffisamment de prise ethernet, soit il faut faire des sacrifices.<br/> Vous avez plus d'un tour dans votre sac, vous décidez de transformer votre pc en un routeur wifi.<br/> Dans ce tuto nous ne parlerons pas de comment faire ceci, mais supposons que vous avez réussi à le faire.<br/> Sans serveur DHCP, votre ami doit choisir judicieusement une adresse IP, qui d'un doit correspondre au bon réseau, et de deux ne doit pas être déjà utilisée par une autre machine.<br/> Grâce au serveur DHCP, votre ami se voit attribuer une adresse IP automatiquement pour pouvoir surfer sur le net, sans se poser de questions sur le choix de l'IP.</p></blockquote><p id="r-454710" data-claire-element-id="454710">1, 2, 2 ... c'est parti ! :p</p><h3 id="r-du-cote-client" data-claire-element-id="454720">Du côté client :</h3><div id="r-454713" data-claire-element-id="454713" data-claire-semantic="question"><p id="r-454712" data-claire-element-id="454712">Vous vous souvenez du fichier &quot;interfaces&quot; ?</p></div><p id="r-454714" data-claire-element-id="454714">Il va être nécessaire d'ouvrir le fichier sur chaque ordinateur client; c'est à dire sur chaque ordinateur qui veut se voir attribuer une adresse IP:</p><pre id="r-454715" data-claire-element-id="454715"><code data-claire-semantic="console">vi /etc/network/interfaces</code></pre><p id="r-454716" data-claire-element-id="454716">A l'intérieur, copiez simplement cette ligne (en l'adaptant suivant l'interface de chaque ordinateur):</p><pre id="r-454717" data-claire-element-id="454717"><code data-claire-semantic="console">iface eth0 inet dhcp</code></pre><p id="r-454718" data-claire-element-id="454718"><strong>Explications:</strong></p><p id="r-454719" data-claire-element-id="454719">- <strong>iface eth0 inet dhcp</strong>: Vous voyez ce qui change par rapport à l'attribution statique? C'est uniquement le mot clé &quot;dhcp&quot; qui indique que l'interface va se voir attribuée une adresse IP automatiquement! Facile non? :-°</p><h3 id="r-du-cote-serveur" data-claire-element-id="454737">Du côté Serveur :</h3><p id="r-454721" data-claire-element-id="454721">C'est le serveur que l'on va configurer pour qu'il attribue automatiquement une adresse IP à chaque client. Nous avons choisi de le configurer de la manière suivante:</p><p id="r-454722" data-claire-element-id="454722"><cite>Citation : Notre configuration !</cite></p><blockquote id="r-454724" data-claire-element-id="454724"><p id="r-454723" data-claire-element-id="454723">Configuration du serveur dhcp pour qu’il attribue un bail par défaut de 220s, d’une durée maximale de 360s, pour le nom de domaine sdz.net, avec une plage d’adresses IP allant de 192.168.21.30 à 192.168.21.70.</p></blockquote><p id="r-454725" data-claire-element-id="454725">La configuration du serveur se fait dans un fichier où l'on va renseigner tous les paramètres nécessaires. Ce fichier est accessible en tapant cette ligne de commande:</p><pre id="r-454726" data-claire-element-id="454726"><code data-claire-semantic="console">vi /etc/dhcp3/dhcpd.conf</code></pre><p id="r-454727" data-claire-element-id="454727">Une fois le fichier ouvert, il suffit d'y ajouter les informations suivantes:</p><pre id="r-454728" data-claire-element-id="454728"><code data-claire-semantic="console">Option domain-name « sdz.net » ;
+Default-lease-time 220 ;
+Max-lease-time 360 ;
+Subnet 192.168.21.0 netmask 255.255.255.0 {
+Range 192.168.21.30 192.168.21.70
+}</code></pre><aside id="r-454730" data-claire-element-id="454730" data-claire-semantic="warning"><p id="r-454729" data-claire-element-id="454729">Remarquez bien les &quot;;&quot; il ne faut surtout pas les oublier ! :pirate:</p></aside><p id="r-454731" data-claire-element-id="454731"><strong>Explications:</strong></p><p id="r-454732" data-claire-element-id="454732">- <strong>Option domain-name « sdz.net » ;</strong>: Indiquez ici le nom de domaine que vous utiliserez.<br/> - <strong>Default-lease-time 220 ;</strong>: Indiquez ici la durée du bail par défaut. Il s'agit du temps de vie d'une adresse IP. Il s'exprime en secondes.<br/> - <strong>Max-lease-time 360 ;</strong>: Il s'agit du temps de vie maximum d'une adresse IP. Il s'exprime en secondes.<br/> - <strong>Subnet 192.168.21.0 netmask 255.255.255.0 {</strong>: Indiquez sur cette ligne l'adresse réseau que vous souhaitez utiliser et son masque associé.<br/> - <strong>Range 192.168.21.30 192.168.21.70 }</strong>: Il s'agit de la plage d'adresses IP que vous souhaitez utiliser dans le réseau 192.168.21.0. Euhh, c'est quoi une plage ? En français, ça veut dire: &quot;Mon serveur attribue des adresses IP <strong>à partir de</strong> cette adresse là, <strong>jusqu'à</strong> cette adresse ci&quot;. Ainsi un client peut, par exemple, se voir attribuer l'adresse 192.168.21.41</p><p id="r-454733" data-claire-element-id="454733">Vous suivez jusqu'ici? Très bien, il ne nous reste plus qu'a configurer manuellement l'adresse IP de notre serveur:</p><pre id="r-454734" data-claire-element-id="454734"><code data-claire-semantic="console">ifconfig eth0 192.168.21.2 netmask 255.255.255.0</code></pre><p id="r-454735" data-claire-element-id="454735">Voilà, toute la configuration est prête, tant du côté serveur que du côté client! :)</p><p id="r-454736" data-claire-element-id="454736">La dernière étape, est la mise en service de notre serveur DHCP:</p><h3 id="r-du-cote-serveur-1" data-claire-element-id="454740">Du côté Serveur :</h3><p id="r-454738" data-claire-element-id="454738">Il est nécessaire de démarrer notre serveur DHCP:</p><pre id="r-454739" data-claire-element-id="454739"><code data-claire-semantic="console">/etc/init.d/dhcp3-server start</code></pre><h3 id="r-du-cote-client-1" data-claire-element-id="454752">Du côté client :</h3><p id="r-454741" data-claire-element-id="454741">Il est nécessaire de redémarrer les interfaces réseaux de chaque ordinateur client afin qu'elles se voient attribuer une adresse IP. Vous pouvez le faire de cette façon, que vous devez connaître maintenant :) :</p><pre id="r-454742" data-claire-element-id="454742"><code data-claire-semantic="console">/etc/init.d/networking restart</code></pre><p id="r-454743" data-claire-element-id="454743">ou bien de cette façon: (trou trou, ce sera toi que je vais utiliser ..) :p</p><pre id="r-454744" data-claire-element-id="454744"><code data-claire-semantic="console">dhclient eth0</code></pre><aside id="r-454746" data-claire-element-id="454746" data-claire-semantic="information"><p id="r-454745" data-claire-element-id="454745">Toujours du côté client, pensez à vérifier que des processus DHCP ne tournent pas. Sous Linux Debian, ceux-ci sont &quot;tuer&quot; automatiquement, mais sous Fedora par exemple, il est nécessaire de vérifier.</p></aside><aside id="r-454748" data-claire-element-id="454748" data-claire-semantic="information"><p id="r-454747" data-claire-element-id="454747">Il ne vous reste plus qu'à vérifier !</p></aside><p id="r-454749" data-claire-element-id="454749"><strong>Vérification de l'adresse:</strong></p><p id="r-454750" data-claire-element-id="454750">Constatez par vous même que votre adresse IP a bien été prise en compte sur chaque client :</p><pre id="r-454751" data-claire-element-id="454751"><code data-claire-semantic="console">ifconfig eth0</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-serveur-dhcp-sous-linux">Mise en place d&#039;un Serveur DHCP sous Linux</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-serveur-dhcp-sous-linux/rappel-sur-la-configuration-statique-d-une-adresse-ip">
+Rappel sur la configuration statique d&#039;une adresse IP
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-serveur-dhcp-sous-linux/configuration-dynamique-mise-en-place-d-un-serveur-dhcp">
+Configuration dynamique: mise en place d&#039;un serveur DHCP
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-serveur-dhcp-sous-linux/encore-plus-loin-1">
+Encore plus loin !
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-serveur-dhcp-sous-linux/rappel-sur-la-configuration-statique-d-une-adresse-ip">
+<span class="arrow"></span>
+<span class="next">Rappel sur la configuration statique d&#039;une adresse IP</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-serveur-dhcp-sous-linux/encore-plus-loin-1">
+<span class="next">Encore plus loin !</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Encoreplusloin"></a><h2>Encore plus loin !</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-serveur-dhcp-sous-linux/configuration-dynamique-mise-en-place-d-un-serveur-dhcp">
+<span class="arrow"></span>
+<span class="next">Configuration dynamique: mise en place d&#039;un serveur DHCP</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<aside id="r-454755" data-claire-element-id="454755" data-claire-semantic="information"><p id="r-454754" data-claire-element-id="454754">Si l'on veut allez plus loin dans la configuration, il est possible d'attribuer de façon automatique une adresse IP à un ordinateur donné ! Oui, oui c'est possible, je vous assure !</p></aside><p id="r-454756" data-claire-element-id="454756">En fait, l'interface de votre ordinateur, à laquelle on attribue une adresse IP, n'est autre que l'interface de votre carte réseau. Votre carte réseau possède un identifiant unique, appellé adresse MAC.</p><p id="r-454757" data-claire-element-id="454757">L'objectif est de dire au serveur: &quot;Quand ce messieurs, avec cette adresse MAC là, demande à se voir attribué une adresse IP automatiquement, tu lui attribues l'adresse IP configuré en fonction de cette adresse MAC&quot;.</p><h3 id="r-du-cote-serveur-2" data-claire-element-id="454771">Du côté Serveur :</h3><p id="r-454758" data-claire-element-id="454758">La configuration de fait toujours au niveau du fichier dhcpd.conf:</p><pre id="r-454759" data-claire-element-id="454759"><code data-claire-semantic="console">vi /etc/dhcp3/dhcpd.conf</code></pre><p id="r-454760" data-claire-element-id="454760">Il suffit simplement d'ajouter ce bloc de lignes pour chaque attribution automatique d'adresse IP en fonction de l'adresse MAC:</p><pre id="r-454761" data-claire-element-id="454761"><code data-claire-semantic="console">Host salon{
+Hardware ethernet 00 :19 :d1 :72 :d8 :72 ;
+Fixed address 192.168.21.40 ;
+}</code></pre><div id="r-454763" data-claire-element-id="454763" data-claire-semantic="question"><p id="r-454762" data-claire-element-id="454762">Comment trouver l'adresse Mac de mon interface ? Il suffit simplement d'exécuter la commande ifconfig, vous la connaissez maintenant ;). Celle-ci listera les interfaces disponibles et leurs adresses MAC associées.</p></div><aside id="r-454765" data-claire-element-id="454765" data-claire-semantic="warning"><p id="r-454764" data-claire-element-id="454764">Vous allez dire que je radote mais encore une fois, n'oubliez pas de redémarrer le serveur après avoir fait des modifications dans le fichier dhcpd.conf</p></aside><pre id="r-454766" data-claire-element-id="454766"><code data-claire-semantic="console">/etc/init.d/dhcp3-server restart</code></pre><p id="r-454767" data-claire-element-id="454767"><strong>Explications:</strong></p><p id="r-454768" data-claire-element-id="454768">- <strong>Host salon{</strong>: Le nom de la machine<br/> - <strong>Hardware ethernet 00 :19 :d1 :72 :d8 :72 ;</strong>: L'adresse MAC de l'interface<br/> - <strong>Fixed address 192.168.21.40 ;}</strong>: On fixe l'adresse 192.168.21.40 pour cette interface donnée.</p><p id="r-454769" data-claire-element-id="454769">Voilà ! Vous savez maintenant tout sur la mise en place d'un serveur DHCP sous Linux. J'espère que mon mini-tuto vous aura permis de constater la puissance d'un tel serveur !</p><p id="r-454770" data-claire-element-id="454770">@wawanopoulos</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-serveur-dhcp-sous-linux">Mise en place d&#039;un Serveur DHCP sous Linux</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-serveur-dhcp-sous-linux/rappel-sur-la-configuration-statique-d-une-adresse-ip">
+Rappel sur la configuration statique d&#039;une adresse IP
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-serveur-dhcp-sous-linux/configuration-dynamique-mise-en-place-d-un-serveur-dhcp">
+Configuration dynamique: mise en place d&#039;un serveur DHCP
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-serveur-dhcp-sous-linux/encore-plus-loin-1">
+Encore plus loin !
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-serveur-dhcp-sous-linux/configuration-dynamique-mise-en-place-d-un-serveur-dhcp">
+<span class="arrow"></span>
+<span class="next">Configuration dynamique: mise en place d&#039;un serveur DHCP</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/mise-en-place-d-un-serveur-dhcp-sous-linux.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 02:56:40 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/mise-en-place-d-un-serveur-dhcp-sous-linux.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:38:41 GMT -->
+</html>

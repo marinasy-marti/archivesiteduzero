@@ -1,0 +1,228 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/mise-en-place-d-un-tunnel-tcp-ip-via-ssh.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 02:13:08 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/mise-en-place-d-un-tunnel-tcp-ip-via-ssh.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:31:37 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Mise en place d&#039;un tunnel TCP/IP via SSH</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/mise-en-place-d-un-tunnel-tcp-ip-via-ssh.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Mise en place d&#039;un tunnel TCP/IP via SSH</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Miseenplaced039untunnelTCP_IPviaSSH">Mise en place d&#039;un tunnel TCP/IP via SSH</a><br/><a href="#Prambule">Préambule</a><br/><a href="#Miseenplace">Mise en place</a><br/><a href="#Introductionauxtunnelsdynamiques">Introduction aux tunnels dynamiques</a><br/></div>
+<a name="Miseenplaced039untunnelTCP_IPviaSSH"></a><h2>Mise en place d&#039;un tunnel TCP/IP via SSH</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-tunnel-tcp-ip-via-ssh/preambule-8">
+<span class="next">Préambule</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-529897" data-claire-element-id="529897">Bonjour à tous !</p><p id="r-529898" data-claire-element-id="529898">Aujourd'hui, nous allons voir un procédé très puissant qui permet d'encrypter toutes les communications transitant par des ports TCP au moyen du protocole bien connu, le SSH.</p><p id="r-529899" data-claire-element-id="529899">On pourra également se servir de ce tunnel pour passer outre certains filtres tels que des firewalls ou des serveurs proxy.</p><p id="r-529900" data-claire-element-id="529900">Le fonctionnement du SSH en lui-même ne sera pas explicité dans ce cours, seule la mise en place du tunnel le sera.</p>
+</div><a name="Prambule"></a><h2>Préambule</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-tunnel-tcp-ip-via-ssh/mise-en-place-26">
+<span class="next">Mise en place</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-529901" data-claire-element-id="529901">Avant de passer à la mise en place et à la configuration de notre tunnel, nous allons d'abord voir ce que c'est, pourquoi vous pourriez en avoir besoin et comment installer les outils indispensables. Nous ferons également une brève explication de ce que sont les ports, notion fondamentale pour la suite.</p><h2 id="r-le-principe-25" data-claire-element-id="529927">Le principe</h2><p id="r-529902" data-claire-element-id="529902">Nous allons d'abord expliquer ce qu'est le protocole SSH, pourquoi nous l'utiliserons et ensuite, rapidement ce qu'est un tunnel et surtout pourquoi vous en auriez besoin.</p><h3 id="r-le-ssh" data-claire-element-id="529908">Le SSH</h3><p id="r-529903" data-claire-element-id="529903">Le SSH, acronyme de l'anglais secure shell, désigne un ensemble de programmes et de protocoles qui permettent de se connecter sur une machine distante de façon sécurisée, en encryptant les communications.<br/> Tout au long de ce cours, nous utiliserons <a href="http://www.openssh.com/fr/">OpenSSH</a>, une implémentation libre du protocole SSH. C'est un ensemble d'outils qui contient, entre autres, ssh (un remplaçant pour rlogin et telnet); scp (un remplaçant pour rcp); sftp (un remplaçant pour ftp) et sshd, le démon SSH.</p><p id="r-529904" data-claire-element-id="529904">Nous utiliserons le protocole SSH car les outils tels que telnet, rlogin et ftp transmettent les communications de façon parfaitement claire (en ce compris les mots de passe) à travers l'Internet. Une simple écoute de réseau permet alors à quiconque de s'approprier les données qui transitent. OpenSSH permet de chiffrer les communications et d'encrypter solidement les données, rendant toute écoute réseau caduque.</p><p id="r-529905" data-claire-element-id="529905">L'échange des clés de chiffrement au début de la transaction permet de s'assurer que les trames seront chiffrées pendant la connexion. L'utilisation de SSH permet ainsi d'éviter la libre circulation des mots de passe et impose une authentification renforcée de la machine distante, plus seulement basée sur l'adresse IP ou le nom.</p><p id="r-529906" data-claire-element-id="529906">Lorsqu'on décortique l'acronyme SSH, on y retrouve les deux notions essentielles : secure, shell. Le SSH fournit donc un shell à distance sécurisé. Un shell est un logiciel fournissant une interface pour utilisateur, le plus souvent en ligne de commande. Il est donc un interpréteur de commandes et offre la possibilité d'interagir avec le serveur à distance.</p><p id="r-529907" data-claire-element-id="529907">En conclusion, SSH nous permet d'exécuter des commandes à distance en toute sécurité; d'échanger des fichiers et même de lancer une session graphique. Toutes ces raisons font que SSH est aujourd'hui très utilisé par beaucoup de monde.</p><h3 id="r-le-tunnel" data-claire-element-id="529926">Le tunnel</h3><p id="r-529909" data-claire-element-id="529909">Le principe des tunnels SSH, également appelés ports forwarding, pour redirection de ports en français, est de permettre d'atteindre des machines auxquelles vous n'avez normalement pas accès. On encapsule donc des données d'un protocole réseau au sein d'un autre, situé dans la même couche du <a href="http://fr.wikipedia.org/wiki/Modèle_OSI">modèle en couches,</a> ou dans une couche du niveau supérieur.</p><p id="r-529910" data-claire-element-id="529910">Une application directe de ce concept est les firewalls qui bloquent bien souvent certains ports dont vous pourriez avoir besoin.</p><ul id="r-529917" data-claire-element-id="529917"><li id="r-529912" data-claire-element-id="529912"><p id="r-529911" data-claire-element-id="529911">Vous voudriez utiliser votre client de messagerie libre, mais les ports POP et IMAP sont bloqués.</p></li><li id="r-529914" data-claire-element-id="529914"><p id="r-529913" data-claire-element-id="529913">Vous voudriez peut-être télécharger l'image .iso de la dernière release de votre distribution préférée par FTP.</p></li><li id="r-529916" data-claire-element-id="529916"><p id="r-529915" data-claire-element-id="529915">Vous voudriez enfin discuter avec vos amis via un logiciel de messagerie instantanée.</p></li></ul><p id="r-529918" data-claire-element-id="529918">Toutes ces opérations sont rendues <em>a priori</em> impossibles à cause d'un éventuel firewall mis en place.</p><p id="r-529919" data-claire-element-id="529919">Le principe sera donc de faire transiter toutes ces données au travers d'un port <em>autorisé</em>. Le tunnel encapsulera ces informations et les fera transiter sans soucis vers le serveur distant. Vous allez donc pouvoir utiliser votre tunnel comme porte de sortie du firewall et y faire circuler tout ce qui relève du protocole <a href="http://fr.wikipedia.org/wiki/Transmission_Control_Protocol">TCP</a>.</p><p id="r-529920" data-claire-element-id="529920">Voila un petit schéma qui illustre ces notions</p><figure id="r-529922" data-claire-element-id="529923"><img id="r-529921" data-claire-element-id="529921" src="medias/uploads.siteduzero.com_files_253001_254000_253848.png" alt="Image utilisateur"/></figure><p id="r-529924" data-claire-element-id="529925"><em>Un tunnel utilisant le SSH (réutilisé sous license <img id="r-529925" data-claire-element-id="529924" src="medias/www.siteduzero.com_Templates_images_licences_7.png" alt="Image utilisateur"/>) - Attribution ©Wikipedia</em></p><h2 id="r-notion-de-ports" data-claire-element-id="529936">Notion de ports</h2><p id="r-529928" data-claire-element-id="529928">On parle de ports depuis tout à l'heure, mais il est probablement utile de clarifier immédiatement ce qu'on entend par là. Voici ce que dit Wikipedia au sujet de cette notion.</p><p id="r-529929" data-claire-element-id="529929"><cite>Citation : Wikipedia</cite></p><blockquote id="r-529931" data-claire-element-id="529931"><p id="r-529930" data-claire-element-id="529930">Correspondant à la couche de transport du modèle OSI, la notion de port logiciel permet, sur un ordinateur donné, de distinguer différents interlocuteurs. Ces interlocuteurs sont des programmes informatiques qui, selon les cas, écoutent ou émettent des informations sur ces ports. Un port est distingué par son numéro.</p></blockquote><p id="r-529932" data-claire-element-id="529932">En clair, un port est l'adresse d'une application sur une machine. Si vous décidez par exemple d'uploader des fichiers sur votre serveur web, pour mettre votre site à jour, au moyen d'un client FTP, ce dernier va interroger le port FTP du serveur distant, le port 21, qui constitue l'adresse de l'application FTP.</p><p id="r-529933" data-claire-element-id="529933">Une analogie qui vaut ce qu'elle vaut est de considérer les ports comme des portes d'entrée vers une machine. Comme toute porte d'entrée, un port peut être ouvert ou fermé. Un des principes d'un firewall est justement de fermer certains ports, jugés inutiles d'être laissés ouverts.</p><p id="r-529934" data-claire-element-id="529934">Il y a cependant des conventions à respecter. Ainsi, si on s'adresse à une machine via le port 80, elle renverra la demande vers le serveur web. Si on fait une requête via le port 110, la machine comprendra qu'il s'agit d'une requête du type POP3. <a href="http://www.iana.org/assignments/port-numbers">Voici</a> la liste des adresses/numéros attribués conventionnellement aux différents ports.</p><p id="r-529935" data-claire-element-id="529935">Notre tunnel nous permettra d'emprunter d'autres ports qui auront été laissés ouverts. Vous comprenez à présent pourquoi on appelle cette technique de la &quot;redirection de ports&quot;.</p><h2 id="r-des-approches-differentes" data-claire-element-id="529954">Des approches différentes</h2><p id="r-529937" data-claire-element-id="529937">Il existe différentes façons de faire fonctionner ce procédé de ports forwarding. Bien que le concept soit le même, il est utile de différencier ces approches.</p><h3 id="r-approche-locale" data-claire-element-id="529945">Approche locale</h3><p id="r-529938" data-claire-element-id="529938">Dans ce cas-ci, nous allons rediriger un port distant vers une destination locale. Ce type de redirection permet donc joindre des hôtes derriere un firewall, sur un réseau privé en encapsulant des informations dans une connexion SSH vers un serveur (ce dernier doit avoir la possibilité de joindre l'hôte final).</p><figure id="r-529940" data-claire-element-id="529941"><img id="r-529939" data-claire-element-id="529939" src="medias/uploads.siteduzero.com_files_253001_254000_253842.png" alt="Image utilisateur"/></figure><p id="r-529942" data-claire-element-id="529943"><em>Approche locale (réutilisé sous license <img id="r-529943" data-claire-element-id="529942" src="medias/www.siteduzero.com_Templates_images_licences_7.png" alt="Image utilisateur"/>) - Attribution ©think-underground</em></p><p id="r-529944" data-claire-element-id="529944">Le SSH local permet de transmettre les demandes locales (sur le port &quot;port-local&quot; de localhost) vers le serveur-ssh qui les envoie sur le port &quot;port&quot; de l'adresse &quot;adresse&quot; (l'adresse &quot;adresse&quot; doit donc être accessible par serveur-ssh).</p><h3 id="r-approche-distante" data-claire-element-id="529953">Approche distante</h3><p id="r-529946" data-claire-element-id="529946">Nous allons rediriger un port local vers une machine distante. Imaginons que vous souhaitiez montrer à un de vos amis votre nouveau site web qui est hébergé sur votre serveur de test qui fait partie de votre réseau local.<br/> Tout ce que vous avez à faire est d'ouvrir un tunnel d'une machine qui peut joindre votre serveur ainsi que le serveur public vers lequel votre ami va se connecter.</p><figure id="r-529948" data-claire-element-id="529949"><img id="r-529947" data-claire-element-id="529947" src="medias/uploads.siteduzero.com_files_253001_254000_253845.png" alt="Image utilisateur"/></figure><p id="r-529950" data-claire-element-id="529951"><em>Approche distante (réutilisé sous license <img id="r-529951" data-claire-element-id="529950" src="medias/www.siteduzero.com_Templates_images_licences_7.png" alt="Image utilisateur"/>) - Attribution ©think-underground</em></p><p id="r-529952" data-claire-element-id="529952">Le SSH distant permet de transmettre les demandes distantes (sur le port &quot;port-distant&quot; de serveur-ssh) vers localhost qui les envoie sur le port &quot;port&quot; de l'adresse &quot;adresse&quot; (l'adresse &quot;adresse&quot; doit donc être accessible par localhost).</p><h2 id="r-installation-82" data-claire-element-id="529966">Installation</h2><p id="r-529955" data-claire-element-id="529955">On va maintenant détailler l'installation des outils indispensables, aussi bien du côté du serveur que du côté du client.</p><h3 id="r-cote-serveur-1" data-claire-element-id="529961">Côté serveur</h3><p id="r-529956" data-claire-element-id="529956">On suppose que vous disposez d'un serveur dédié. Installez donc le paquet openssh-server sur votre serveur, au moyen de votre gestionnaire de paquets préféré. On lancera par exemple, sous Debian</p><pre id="r-529957" data-claire-element-id="529957"><code data-claire-semantic="console"># aptitude install openssh-server</code></pre><p id="r-529958" data-claire-element-id="529958">Assurez-vous ensuite qu'il sera lancé à chaque boot de votre machine (même si vous ne devriez pas avoir à booter votre serveur très souvent, étant donné que par définition, il doit être allumé en permanence).</p><p id="r-529959" data-claire-element-id="529959">Si on veut démarre le démon SSH, sshd, on fera</p><pre id="r-529960" data-claire-element-id="529960"><code data-claire-semantic="console"># /etc/init.d/sshd start</code></pre><h3 id="r-cote-client-1" data-claire-element-id="529965">Côté client</h3><p id="r-529962" data-claire-element-id="529962">En principe, le client SSH est installé par défaut sur toutes les systèmes GNU/Linux. Il n'y a donc rien à faire.<br/> Si pour une raison ou une autre, ce n'était pas le cas, installez donc le paquet openssh. Ainsi, sous Debian, on fera</p><pre id="r-529963" data-claire-element-id="529963"><code data-claire-semantic="console"># aptitude install openssh</code></pre><p id="r-529964" data-claire-element-id="529964">Vous êtes maintenant prêts à passer à la pratique.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-tunnel-tcp-ip-via-ssh">Mise en place d&#039;un tunnel TCP/IP via SSH</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-tunnel-tcp-ip-via-ssh/preambule-8">
+Préambule
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-tunnel-tcp-ip-via-ssh/mise-en-place-26">
+Mise en place
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-tunnel-tcp-ip-via-ssh/introduction-aux-tunnels-dynamiques">
+Introduction aux tunnels dynamiques
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-tunnel-tcp-ip-via-ssh/mise-en-place-26">
+<span class="next">Mise en place</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Miseenplace"></a><h2>Mise en place</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-tunnel-tcp-ip-via-ssh/preambule-8">
+<span class="arrow"></span>
+<span class="next">Préambule</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-tunnel-tcp-ip-via-ssh/introduction-aux-tunnels-dynamiques">
+<span class="next">Introduction aux tunnels dynamiques</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-529968" data-claire-element-id="529968">Gardons à l'esprit que notre but est de contourner un pare-feu. Dans cette optique, nous allons exploiter l'approche locale. Nous voulons donc rediriger des requêtes transitant via des ports <em>a priori</em> fermés vers un port qui ne le serait pas.</p><p id="r-529969" data-claire-element-id="529969">Notre but pourrait se schématiser comme suit</p><figure id="r-529971" data-claire-element-id="529972"><img id="r-529970" data-claire-element-id="529970" src="medias/uploads.siteduzero.com_files_253001_254000_253853.png" alt="Image utilisateur"/></figure><p id="r-529973" data-claire-element-id="529974"><em>Notre objectif (réutilisé sous license <img id="r-529974" data-claire-element-id="529973" src="medias/www.siteduzero.com_Templates_images_licences_7.png" alt="Image utilisateur"/>) - Attribution ©feedelite</em><br/> On va donc faire passer le tunnel par notre serveur, qui ira collecter les informations demandées. Ces dernières prendront notre tunnel dans le sens inverse.</p><h3 id="r-changement-de-port-ssh-du-serveur-distant" data-claire-element-id="529979">Changement de port SSH du serveur distant</h3><p id="r-529975" data-claire-element-id="529975">Si vous avez lu le fichier détaillant la convention des adresses des ports, vous avez du remarqué que le port 22 est attribué au protocole SSH. Il y a beaucoup de chances pour que le pare-feu bloque ce port, rendant dès lors la création de notre tunnel impossible.</p><p id="r-529976" data-claire-element-id="529976">Sommes-nous pour autant dans l'impossibilité de réagir ? Non !</p><p id="r-529977" data-claire-element-id="529977">Nous allons tout simplement modifier l'adresse du port SSH. Pour ce faire, ouvrez donc le fichier de configuration du démon ssh. Son emplacement est le suivant : /etc/ssh/sshd_config<br/> Repérez la ligne port 22, ajoutez une ligne port 443 à la suite. Redémarrez ensuite le démon SSH.</p><p id="r-529978" data-claire-element-id="529978">Si vous lisez la convention d'adressage des ports, vous remarquerez que le port 443 est réservé par défaut au HTTPs, ce port sera forcément ouvert. De plus, HTTPs et SSH présentent des similitudes (la couche SSL) et donc utiliser le port 443 a l’avantage d’être discret.<br/> Si votre firewall le tolère, vous pouvez aussi faire une redirection du port 443 vers le 22 en ne laissant que la ligne « Port 22 » dans sshd_config.</p><h3 id="r-ouverture-du-port-approprie-au-niveau-de-votre-firewall" data-claire-element-id="530003">Ouverture du port approprié au niveau de votre firewall</h3><p id="r-529980" data-claire-element-id="529980">N'oubliez pas d'ouvrir le port que vous souhaitez utiliser au niveau de votre firewall, soit le port 22 ou 443.</p><p id="r-529981" data-claire-element-id="529981">Dans le cas où votre IP est dynamique, soit vous la récupérez et vous priez pour que le serveur DHCP ne soit pas relancé, ou bien vous associez votre IP à un nom de domaine.</p><h2 id="r-on-y-va" data-claire-element-id="529997">On y va</h2><p id="r-529982" data-claire-element-id="529982">On va donc supposer que vous avez installé tout ce qu'il faut, que vous disposez d'un compte sur votre serveur et qu'il est prêt à vous recevoir. On va donc s'y connecter et initialiser le tunnel TCP/IP, ce qui se fait au moyen de la commande suivante</p><pre id="r-529983" data-claire-element-id="529983"><code data-claire-semantic="console">ssh -L port-local:HOSTNAME:port-distant nomutilisateur@nomhôte</code></pre><h3 id="r-exemple-navigation-sur-l-internet" data-claire-element-id="529996">Exemple : navigation sur l'Internet</h3><p id="r-529984" data-claire-element-id="529984">Supposons qu'on veuille se connecter à un site web (requête HTTP) mais qu'il soit bloqué. On va simple transiter via le tunnel pour atteindre notre serveur qui ira chercher l'information et nous la renverra, comme illustré sur ce schéma</p><figure id="r-529986" data-claire-element-id="529987"><img id="r-529985" data-claire-element-id="529985" src="medias/uploads.siteduzero.com_files_253001_254000_253864.png" alt="Image utilisateur"/></figure><p id="r-529988" data-claire-element-id="529989"><em>Requête HTTP transitant par notre tunnel (réutilisé sous license <img id="r-529989" data-claire-element-id="529988" src="medias/www.siteduzero.com_Templates_images_licences_7.png" alt="Image utilisateur"/>) - Attribution ©korben</em></p><p id="r-529990" data-claire-element-id="529990">Nous utiliserons dès lors la commande ssh de cette façon</p><pre id="r-529991" data-claire-element-id="529991"><code data-claire-semantic="console">ssh -L 2080:localhost:80 <a class="__cf_email__" href="http://www.cloudflare.com/email-protection" data-cfemail="f18485989d98829085948483b182948387948483869493df9e8396">[email&nbsp;protected]</a><script type="text/javascript">
+/* <![CDATA[ */
+(function(){try{var s,a,i,j,r,c,l,b=document.getElementsByTagName("script");l=b[b.length-1].previousSibling;a=l.getAttribute('data-cfemail');if(a){s='';r=parseInt(a.substr(0,2),16);for(j=2;a.length-j;j+=2){c=parseInt(a.substr(j,2),16)^r;s+=String.fromCharCode(c);}s=document.createTextNode(s);l.parentNode.replaceChild(s,l);}}catch(e){}})();
+/* ]]> */
+</script></code></pre><p id="r-529992" data-claire-element-id="529992">Maintenant que notre tunnel HTTP utilisant SSH est initialisé, on va voir comment indiquer à notre navigateur de l'emprunter. Dans la barre de navigation, entrez l'adresse http://localhost:2080 qui vous conduira à travers le tunnel vers le port 80 de serveurweb.org, ce qui affichera la page désservie par la requête http://localhost cette fois sur serveurweb.org.</p><p id="r-529993" data-claire-element-id="529993">Votre navigation est dès lors sécurisée et cryptée.<br/> N'oubliez pas, lorsque vous avez terminé votre navigation, de fermer votre tunnel en tapant simplement exit.</p><p id="r-529994" data-claire-element-id="529994">Cet exemple, pour simple qu'il soit, permet de montrer la simplicité de la création d'un tunnel. Une fois que le tunnel TCP/IP est créé, il suffit de rediriger les clients utilisés pour qu'ils utilisent le port local redirigé et non plus le port distant avec une transmission en clair.</p><p id="r-529995" data-claire-element-id="529995">Notons que pour chaque type de transaction différent (exemple : navigation internet, connexion à un serveur de messagerie, envoi de fichier par FTP, etc.) il faudra ouvrir un nouveau tunnel. Cela se comprend facilement car les ports utilisés sur la machine hôte sont différents.</p><h2 id="r-automatisation-des-taches-2" data-claire-element-id="530002">Automatisation des tâches</h2><p id="r-529998" data-claire-element-id="529998">Remarquons que la saisie des commandes ci-dessus peut devenir réellement fastidieuse et contraignante à la longue. Je vous propose donc de créer des aliases et de les inscrire dans votre .bashrc pour ne pas devoir retenir ces commandes.</p><p id="r-529999" data-claire-element-id="529999">Voici un exemple pour la commande de création du tunnel HTTP utilisé ci-dessus.</p><pre id="r-530000" data-claire-element-id="530000"><code data-claire-semantic="console">alias tunnelhttp='ssh -L 2080:localhost:80 <a class="__cf_email__" href="http://www.cloudflare.com/email-protection" data-cfemail="2257564b4e4b51435647575062514750544757505547400c4d5045">[email&nbsp;protected]</a><script type="text/javascript">
+/* <![CDATA[ */
+(function(){try{var s,a,i,j,r,c,l,b=document.getElementsByTagName("script");l=b[b.length-1].previousSibling;a=l.getAttribute('data-cfemail');if(a){s='';r=parseInt(a.substr(0,2),16);for(j=2;a.length-j;j+=2){c=parseInt(a.substr(j,2),16)^r;s+=String.fromCharCode(c);}s=document.createTextNode(s);l.parentNode.replaceChild(s,l);}}catch(e){}})();
+/* ]]> */
+</script>'</code></pre><p id="r-530001" data-claire-element-id="530001">Rajoutez donc les aliases que vous avez créés dans la section appropriée du fichier .bashrc, afin de ne pas devoir retenir ces commandes.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-tunnel-tcp-ip-via-ssh">Mise en place d&#039;un tunnel TCP/IP via SSH</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-tunnel-tcp-ip-via-ssh/preambule-8">
+Préambule
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-tunnel-tcp-ip-via-ssh/mise-en-place-26">
+Mise en place
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-tunnel-tcp-ip-via-ssh/introduction-aux-tunnels-dynamiques">
+Introduction aux tunnels dynamiques
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-tunnel-tcp-ip-via-ssh/preambule-8">
+<span class="arrow"></span>
+<span class="next">Préambule</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-tunnel-tcp-ip-via-ssh/introduction-aux-tunnels-dynamiques">
+<span class="next">Introduction aux tunnels dynamiques</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Introductionauxtunnelsdynamiques"></a><h2>Introduction aux tunnels dynamiques</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-tunnel-tcp-ip-via-ssh/mise-en-place-26">
+<span class="arrow"></span>
+<span class="next">Mise en place</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-limitations-de-la-redirection-de-ports" data-claire-element-id="530015">Limitations de la redirection de ports</h2><p id="r-530005" data-claire-element-id="530005">Le procédé que nous venons de voir, bien qu'il soit très utile et très puissant, montre cependant rapidement quelles sont ses limites.</p><p id="r-530006" data-claire-element-id="530006">Le problème de cette technique est qu'il faut définir absolument toutes les connexions dont vous avez besoin, ce qui peut s'avérer extrêmement lourd si vous en avez beaucoup. Certains services, tels ICQ, rendent cette technique impossible. Pour cause, les ports y sont alloués de façon dynamique, vous ne sauriez donc pas utiliser ce service dans ces conditions, vu que votre tunnel est statique.</p><p id="r-530007" data-claire-element-id="530007">La solution qui a été trouvée pour palier à ces problèmes est la redirection dynamique des ports.</p><p id="r-530008" data-claire-element-id="530008">Vous créez un port d'écoute qui se charge de prendre toute trame réseau qui rentre &quot;telle quelle&quot; et de la faire exécuter depuis l'autre bout du tunnel.</p><p id="r-530009" data-claire-element-id="530009">Voila un petit schéma qui illustre bien cela</p><figure id="r-530011" data-claire-element-id="530012"><img id="r-530010" data-claire-element-id="530010" src="medias/uploads.siteduzero.com_files_253001_254000_253887.png" alt="Image utilisateur"/></figure><p id="r-530013" data-claire-element-id="530014"><em>Tunnel dynamique (réutilisé sous license <img id="r-530014" data-claire-element-id="530013" src="medias/www.siteduzero.com_Templates_images_licences_7.png" alt="Image utilisateur"/>) - Attribution ©michauko</em><br/> On va maintenant voir comment réaliser cela.</p><h2 id="r-mise-en-place-27" data-claire-element-id="530028">Mise en place</h2><p id="r-530016" data-claire-element-id="530016">La syntaxe de la commande à utiliser est essentiellement la même. On va commencer par initialiser notre tunnel</p><pre id="r-530017" data-claire-element-id="530017"><code data-claire-semantic="console">ssh -D port-local nomutilisateur@nomhôte</code></pre><p id="r-530018" data-claire-element-id="530018">Maintenant que votre tunnel est ouvert, nous allons demander à vos applications de l'emprunter.</p><h3 id="r-exemple-navigation-sur-l-internet-1" data-claire-element-id="530027">Exemple : navigation sur l'Internet</h3><p id="r-530019" data-claire-element-id="530019">Ouvrez donc votre navigateur. Allez dans éditions -&gt; préférences -&gt; avancé -&gt; réseau -&gt; paramètres de connexion.<br/> Vous arrivez devant un écran tel que celui-ci</p><figure id="r-530021" data-claire-element-id="530022"><img id="r-530020" data-claire-element-id="530020" src="medias/uploads.siteduzero.com_files_253001_254000_253888.png" alt="Image utilisateur"/></figure><p id="r-530023" data-claire-element-id="530023"><em>Configuration de votre navigateur</em><br/> Ensuite, votre navigateur devrait correctement emprunter votre tunnel et tout devrait se dérouler correctement.</p><p id="r-530024" data-claire-element-id="530024">Le cours est désormais terminé !</p><p id="r-530025" data-claire-element-id="530025">Vous êtes désormais en mesure de mettre en place un tunnel TCP/IP sécurisé au moyen du SSH.</p><p id="r-530026" data-claire-element-id="530026">Pour toute remarque/question, vous pouvez m'envoyer un <a href="http://www.siteduzero.com/mp-273-158415.html">MP</a>.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-tunnel-tcp-ip-via-ssh">Mise en place d&#039;un tunnel TCP/IP via SSH</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-tunnel-tcp-ip-via-ssh/preambule-8">
+Préambule
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-tunnel-tcp-ip-via-ssh/mise-en-place-26">
+Mise en place
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-tunnel-tcp-ip-via-ssh/introduction-aux-tunnels-dynamiques">
+Introduction aux tunnels dynamiques
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/mise-en-place-d-un-tunnel-tcp-ip-via-ssh/mise-en-place-26">
+<span class="arrow"></span>
+<span class="next">Mise en place</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/mise-en-place-d-un-tunnel-tcp-ip-via-ssh.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 02:13:26 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/mise-en-place-d-un-tunnel-tcp-ip-via-ssh.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:31:39 GMT -->
+</html>

@@ -1,0 +1,418 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/mise-en-place-des-serveurs-apache-et-dns.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 07:11:49 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/mise-en-place-des-serveurs-apache-et-dns.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:17:20 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Mise en place des serveurs Apache et DNS</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/mise-en-place-des-serveurs-apache-et-dns.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Mise en place des serveurs Apache et DNS</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#MiseenplacedesserveursApacheetDNS">Mise en place des serveurs Apache et DNS</a><br/><a href="#ConfigurationIPduserveur">Configuration IP du serveur</a><br/><a href="#ConfigurationduserveurDNS">Configuration du serveur DNS</a><br/><a href="#MiseenplaceduserveurApache">Mise en place du serveur Apache</a><br/><a href="#Hbergementvirtuel">Hébergement virtuel</a><br/></div>
+<a name="MiseenplacedesserveursApacheetDNS"></a><h2>Mise en place des serveurs Apache et DNS</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/mise-en-place-des-serveurs-apache-et-dns/configuration-ip-du-serveur">
+<span class="next">Configuration IP du serveur</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-444046" data-claire-element-id="444046">Apache est un serveur web permettant de partager des pages web stockées localement à des utilisateurs connectés : des clients. La configuration d'un tel serveur peut paraître fastidieuse puisqu'elle demande quelques connaissances de base de Linux, mais ce tutoriel a pour but de vous prouver que cette configuration peut être très simple.</p><p id="r-444047" data-claire-element-id="444047">Pour vous mettre l'eau à la bouche, voici ce que vous devriez obtenir !</p><p id="r-444048" data-claire-element-id="444049"><a href="medias/uploads.siteduzero.com_files_245001_246000_245434.jpg"><img id="r-444049" data-claire-element-id="444048" src="medias/uploads.siteduzero.com_thb_245001_246000_245434.jpg" alt="Image utilisateur"/></a></p>
+</div><a name="ConfigurationIPduserveur"></a><h2>Configuration IP du serveur</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/mise-en-place-des-serveurs-apache-et-dns/configuration-du-serveur-dns">
+<span class="next">Configuration du serveur DNS</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h3 id="r-introduction-63" data-claire-element-id="444057">Introduction</h3><p id="r-444050" data-claire-element-id="444050">Avant de mettre en place notre serveur apache, il est nécessaire d'attribuer des paramètres réseaux pour notre machine. Je veux bien sur parler d'une adresse IP et d'un nom de machine grâce au serveur DNS.</p><div id="r-444052" data-claire-element-id="444052" data-claire-semantic="question"><p id="r-444051" data-claire-element-id="444051">Ohh non, je suis déjà perdu, je ne sais pas faire ça !</p></div><p id="r-444053" data-claire-element-id="444053">Pas de panique, voici dans les parties suivantes, un petit rappel sur la configuration d'une adresse IP et d'un serveur DNS.</p><p id="r-444054" data-claire-element-id="444054">La configuration d'une adresse IP peut se faire de différentes manières. Dans notre cas, il s'agit d'attribuer à notre serveur, une adresse IP qui soit persistante, c'est à dire qu'elle soit toujours la même après un redémarrage de l'ordinateur.</p><aside id="r-444056" data-claire-element-id="444056" data-claire-semantic="information"><p id="r-444055" data-claire-element-id="444055">Vous comprenez pourquoi ? Parce que lorsque nous allons mettre en place le serveur DNS, celui-ci se chargera de faire la correspondance entre une adresse IP et un nom de machine. Il ne faut donc pas que l'adresse IP change.</p></aside><h3 id="r-attribution-d-une-adresse-ip-a-notre-machine" data-claire-element-id="444069">Attribution d'une adresse IP à notre machine</h3><p id="r-444058" data-claire-element-id="444058">Pour attribuer une adresse IP à votre machine, il est nécessaire d'ouvrir un fichier de configuration : le fichier <strong>interfaces</strong>.</p><pre id="r-444059" data-claire-element-id="444059"><code data-claire-semantic="console">vi /etc/network/interfaces</code></pre><div id="r-444061" data-claire-element-id="444061" data-claire-semantic="question"><p id="r-444060" data-claire-element-id="444060">C'est quoi &quot;vi&quot; ?</p></div><p id="r-444062" data-claire-element-id="444062">Il s'agit d'un éditeur de texte présent sous Linux, qui va nous permettre d'ouvrir notre fichier. Vous pouvez en utiliser un autre comme gedit par exemple.</p><p id="r-444063" data-claire-element-id="444063">Une fois le fichier ouvert, remplacez simplement les quelques lignes présentes à l'intérieur, par celles-ci :</p><pre id="r-444064" data-claire-element-id="444064"><code data-claire-semantic="console">iface eth0 inet static
+address 192.168.21.6
+netmask 255.255.255.0
+broadcast 192.168.21.255</code></pre><p id="r-444065" data-claire-element-id="444065">Pour prendre en compte les modifications, enregistrez votre travail sous vi (en tapant &quot;:wq&quot;), et redémarrez votre interface en tapant ceci :</p><pre id="r-444066" data-claire-element-id="444066"><code data-claire-semantic="console">/etc/init.d/networking restart</code></pre><p id="r-444067" data-claire-element-id="444067">Félicitations, vous venez d'attribuer une adresse IP fixe à votre machine !</p><p id="r-444068" data-claire-element-id="444068">Passons désormais à la mise en place du serveur DNS !</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-des-serveurs-apache-et-dns">Mise en place des serveurs Apache et DNS</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-des-serveurs-apache-et-dns/configuration-ip-du-serveur">
+Configuration IP du serveur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-des-serveurs-apache-et-dns/configuration-du-serveur-dns">
+Configuration du serveur DNS
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-des-serveurs-apache-et-dns/mise-en-place-du-serveur-apache">
+Mise en place du serveur Apache
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-des-serveurs-apache-et-dns/hebergement-virtuel">
+Hébergement virtuel
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/mise-en-place-des-serveurs-apache-et-dns/configuration-du-serveur-dns">
+<span class="next">Configuration du serveur DNS</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="ConfigurationduserveurDNS"></a><h2>Configuration du serveur DNS</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/mise-en-place-des-serveurs-apache-et-dns/configuration-ip-du-serveur">
+<span class="arrow"></span>
+<span class="next">Configuration IP du serveur</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/mise-en-place-des-serveurs-apache-et-dns/mise-en-place-du-serveur-apache">
+<span class="next">Mise en place du serveur Apache</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-444071" data-claire-element-id="444071">Le réseau est un réseau local en 192.168.21.0/24. Il n’y a aucune passerelle. L’ordinateur salon.sdz.tp (192.168.21.1) est le serveur DNS. Cela indique que chaque client doit renseigner sa configuration sur cette machine. Quand je parle de configuration, il s'agit de renseigner l'adresse IP du client et un nom de machine associé. Chaque poste est connecté au réseau en utilisant l’interface eth0.</p><p id="r-444072" data-claire-element-id="444072">Comme vous le voyez, nous avons choisi un nom de domaine: <strong>sdz.tp</strong>.<br/> Cela veut dire que chaque ordinateur client possédant un nom pourra être accessible via l'adresse suivante : <strong>nomduclient.sdz.tp</strong>.</p><p id="r-444073" data-claire-element-id="444073">Pour créer ce nom de domaine, il faut se rendre dans le fichier named.conf :</p><pre id="r-444074" data-claire-element-id="444074"><code data-claire-semantic="console">vi /etc/named.conf</code></pre><p id="r-444075" data-claire-element-id="444075">Dans ce fichier se trouve la configuration de notre nom de domaine:</p><pre id="r-444076" data-claire-element-id="444076"><code data-claire-semantic="console">Zone « sdz.tp » {                //Il s'agit de la zone direct. Voir explications ci-dessous
+Type master;                        //Cette ligne indique que le type est maître c'est à dire qu'il s'agit du nom de domaine principal
+File « /var/cache/bind/sdz.tp.hosts » ;    //Il s'agit du chemin pour accéder au fichier de zone direct
+};
+
+Zone “21.168.192.in-addr.arpa”{    //Il s'agit de la zone inverse. Voir explications ci-dessous
+Type master;                       //Cette ligne indique que le type est maître c'est à dire qu'il s'agit du nom de domaine principal
+File “ /var/cache/bind/sdz.tp.rev”;      //Il s'agit du chemin pour accéder au fichier de zone inverse
+};</code></pre><p id="r-444077" data-claire-element-id="444077">Le fichier de zone directe permet à partir de n'importe quel nom du type *.sdz.tp de fournir l'adresse IP de la machine.<br/> On dit que la machine serveur DNS a autorité sur la zone <strong>sdz.tp</strong>.</p><p id="r-444078" data-claire-element-id="444078">Le fichier de zone inverse permet à partir de n'importe quelle adresse IP du type 21.168.192.* de fournir l'adresse de la machine.<br/> On dit que la machine serveur DNS a autorité sur la zone 110.50.210.IN-ADDR-ARPA.</p><p id="r-444079" data-claire-element-id="444079"><strong>Notre serveur DNS a donc autorisé sur 2 zones : sdz.tp et 21.168.192.in-addr.arpa</strong></p><p id="r-444080" data-claire-element-id="444080">Maintenant que notre nom de domaine est créé, il faut déclarer chaque machine cliente avec un nom associé. Cette déclaration se fait dans les fichiers de zone directe et inverse associé à notre nom de domaine : <strong>sdz.tp.hosts</strong> et <strong>sdz.tp.rev</strong>.</p><pre id="r-444081" data-claire-element-id="444081"><code data-claire-semantic="console">vi /var/cache/bind/sdz.tp.rev</code></pre><p id="r-444082" data-claire-element-id="444082">Et ajoutez la ligne suivante :</p><pre id="r-444083" data-claire-element-id="444083"><code data-claire-semantic="console">4 IN PTR sdz.sdz.tp.</code></pre><div id="r-444085" data-claire-element-id="444085" data-claire-semantic="question"><p id="r-444084" data-claire-element-id="444084">Qu'est-ce que ça veut dire ?</p></div><p id="r-444086" data-claire-element-id="444086">PTR associe une adresse IP à un enregistrement de nom de domaine, aussi dit « reverse » puisqu'il fait exactement le contraire du A (ci-dessous).</p><p id="r-444087" data-claire-element-id="444087">Ajoutons maintenant l'enregistrement dans le fichier de zone direct :</p><pre id="r-444088" data-claire-element-id="444088"><code data-claire-semantic="console">vi /var/cache/bind/sdz.tp.hosts</code></pre><pre id="r-444089" data-claire-element-id="444089"><code data-claire-semantic="console">sdz IN A 192.168.21.6</code></pre><div id="r-444091" data-claire-element-id="444091" data-claire-semantic="question"><p id="r-444090" data-claire-element-id="444090">Qu'est-ce que ça veut dire ?</p></div><p id="r-444092" data-claire-element-id="444092">À faire correspondre un nom d'hôte à une adresse IPv4 de 32 bits distribués sur quatre octets (exemple : 192.168.21.2).</p><p id="r-444093" data-claire-element-id="444093">Il ne reste qu'à configurer les clients pour leur indiquer l'adresse du serveur DNS.</p><p id="r-444094" data-claire-element-id="444094">Sur chaque client, ouvrez le fichier resolv.conf :</p><pre id="r-444095" data-claire-element-id="444095"><code data-claire-semantic="console">Vi etc/resolv.conf</code></pre><p id="r-444096" data-claire-element-id="444096">Et complétez le avec ces lignes :</p><pre id="r-444097" data-claire-element-id="444097"><code data-claire-semantic="console">Search sdz.tp.                                //Le client cherchera le nom de domaine sdz.tp
+Nameserver 192.168.21.1                        //L'adresse IP du serveur DNS (la machine &quot;salon&quot;)</code></pre><p id="r-444098" data-claire-element-id="444098">Pas mal, non ? ^^</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-des-serveurs-apache-et-dns">Mise en place des serveurs Apache et DNS</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-des-serveurs-apache-et-dns/configuration-ip-du-serveur">
+Configuration IP du serveur
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-des-serveurs-apache-et-dns/configuration-du-serveur-dns">
+Configuration du serveur DNS
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-des-serveurs-apache-et-dns/mise-en-place-du-serveur-apache">
+Mise en place du serveur Apache
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-des-serveurs-apache-et-dns/hebergement-virtuel">
+Hébergement virtuel
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/mise-en-place-des-serveurs-apache-et-dns/configuration-ip-du-serveur">
+<span class="arrow"></span>
+<span class="next">Configuration IP du serveur</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/mise-en-place-des-serveurs-apache-et-dns/mise-en-place-du-serveur-apache">
+<span class="next">Mise en place du serveur Apache</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="MiseenplaceduserveurApache"></a><h2>Mise en place du serveur Apache</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/mise-en-place-des-serveurs-apache-et-dns/configuration-du-serveur-dns">
+<span class="arrow"></span>
+<span class="next">Configuration du serveur DNS</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/mise-en-place-des-serveurs-apache-et-dns/hebergement-virtuel">
+<span class="next">Hébergement virtuel</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-444100" data-claire-element-id="444100">Voilà, nous y sommes ! :lol:</p><p id="r-444101" data-claire-element-id="444101">C'est dans cette partie que vous allez mettre en place notre serveur HTTP apache et le tester !</p><p id="r-444102" data-claire-element-id="444102">Au travail !</p><h3 id="r-installation-du-paquet-apache2-sous-linux" data-claire-element-id="444121">Installation du paquet apache2 sous Linux</h3><p id="r-444103" data-claire-element-id="444103">La première étape est l'installation du paquet apache2. Le paquet ? :euh: Oui, sous Linux, pour ajouter un composant supplémentaire, il faut installer &quot;son paquet&quot; correspondant, et dans notre cas le paquet à installer s'appelle &quot;apache2&quot;.</p><p id="r-444104" data-claire-element-id="444104">Pour ce faire, ouvrez une console et tapez ceci :</p><pre id="r-444105" data-claire-element-id="444105"><code data-claire-semantic="console">sudo apt-get install apache2</code></pre><p id="r-444106" data-claire-element-id="444106">Quelques explications :</p><ul id="r-444113" data-claire-element-id="444113"><li id="r-444108" data-claire-element-id="444108"><p id="r-444107" data-claire-element-id="444107"><strong>sudo</strong> est un mot-clé qui permet de faire des manipulations en mode root c'est à dire en mode &quot;administrateur&quot; ;</p></li><li id="r-444110" data-claire-element-id="444110"><p id="r-444109" data-claire-element-id="444109"><strong>apt-get install</strong> est la commande par défaut pour installer un paquet ;</p></li><li id="r-444112" data-claire-element-id="444112"><p id="r-444111" data-claire-element-id="444111"><strong>apache2</strong> est le nom du paquet que je souhaite installer.</p></li></ul><aside id="r-444115" data-claire-element-id="444115" data-claire-semantic="information"><p id="r-444114" data-claire-element-id="444114">Note : Si le système vous pose des questions, répondez &quot;yes&quot; pour passer à l'étape suivante.</p></aside><aside id="r-444117" data-claire-element-id="444117" data-claire-semantic="error"><p id="r-444116" data-claire-element-id="444116">Si vous obtenez une erreur, tapez cette commande : <code data-claire-semantic="console">sudo apt-get update</code>. Celle-ci aura pour but de mettre à jour la liste des paquets logiciels disponibles pour votre environnement Linux.</p></aside><aside id="r-444119" data-claire-element-id="444119" data-claire-semantic="information"><p id="r-444118" data-claire-element-id="444118">Vous pouvez également installer le paquet <strong>apache2</strong> en passant par l'interface graphique. Si vous utilisez Ubuntu, rendez-vous dans le menu <strong>Système</strong> puis <strong>Gestionnaire de paquet Synaptic</strong> et recherchez le paquet désiré.</p></aside><p id="r-444120" data-claire-element-id="444120">Vous venez maintenant d'installer le paquet <strong>apache2</strong> qui contient tous les fichiers de configuration du serveur. Il ne reste plus qu'à le configurer ! Enfin, plus que... façon de parler quoi. ;)</p><h3 id="r-creation-d-une-page-html-de-test" data-claire-element-id="444136">Création d'une page HTML de test</h3><p id="r-444122" data-claire-element-id="444122">Avant de passer à la configuration du serveur apache, nous allons créer une mini page web en HTML qui sera la page d'accueil de notre serveur Apache.</p><p id="r-444123" data-claire-element-id="444123">Créons tous d'abord le dossier qui contiendra cette page :</p><pre id="r-444124" data-claire-element-id="444124"><code data-claire-semantic="console">mkdir /var/www/sdz</code></pre><aside id="r-444126" data-claire-element-id="444126" data-claire-semantic="information"><p id="r-444125" data-claire-element-id="444125">La commande mkdir permet de créer un dossier sous Linux.</p></aside><p id="r-444127" data-claire-element-id="444127">On se déplace dans ce dossier :</p><pre id="r-444128" data-claire-element-id="444128"><code data-claire-semantic="console">cd /var/www/sdz</code></pre><aside id="r-444130" data-claire-element-id="444130" data-claire-semantic="information"><p id="r-444129" data-claire-element-id="444129">La commande cd permet de se déplacer dans un dossier sous Linux.</p></aside><p id="r-444131" data-claire-element-id="444131">À l’intérieur de ce dossier, on crée une page HTML nommée index.html :</p><pre id="r-444132" data-claire-element-id="444132"><code data-claire-semantic="console">vi index.html</code></pre><p id="r-444133" data-claire-element-id="444133">Cette commande crée le fichier index.html, et nous ouvre le fichier vide. Ajoutons maintenant ces quelques lignes:</p><pre id="r-444134" data-claire-element-id="444134"><code data-claire-semantic="html">&lt;html&gt;
+&lt;head&gt; &lt;title&gt; Notre serveur Apache &lt;/title&gt; &lt;/head&gt;
+&lt;body&gt; &lt;p&gt; Voici la page d'accueil de votre serveur Apache ! &lt;/p&gt; &lt;/body&gt;
+&lt;/html&gt;</code></pre><p id="r-444135" data-claire-element-id="444135">Enregistrez votre travail, et voilà, nous possédons maintenant une page web pour notre serveur apache. Passons désormais à la configuration du serveur. Enfin !</p><h3 id="r-configuration-du-serveur-apache" data-claire-element-id="444172">Configuration du serveur Apache</h3><p id="r-444137" data-claire-element-id="444137">Nous allons aborder deux exemples de configuration du serveur.</p><p id="r-444138" data-claire-element-id="444138">1er exemple : Configuration du serveur apache sans restrictions d’accès c'est à dire sans mot de passe. Dans ce cas, tout le monde peut accéder à notre serveur.<br/> 2ème exemple : Configuration du serveur apache avec authentification basique des utilisateurs en respectant simultanément les règles suivantes : accès permis seulement à partir de la machine salon identifiée par son adresse IP ou son nom et accès par mot de passe pour les utilisateurs admin et master.</p><p id="r-444139" data-claire-element-id="444139"><strong>1er exemple :</strong></p><p id="r-444140" data-claire-element-id="444140">Déplaçons-nous dans le dossier apache2 :</p><pre id="r-444141" data-claire-element-id="444141"><code data-claire-semantic="console">cd /etc/apache2/sites-available</code></pre><p id="r-444142" data-claire-element-id="444142">Créons dans ce dossier le fichier <strong>sdz</strong>. Ce fichier contiendra la configuration du serveur apache pour le nom de domaine <strong>sdz</strong>.</p><pre id="r-444143" data-claire-element-id="444143"><code data-claire-semantic="console">vi sdz</code></pre><p id="r-444144" data-claire-element-id="444144">Et insérez à l'intérieur les quelques lignes suivantes :</p><pre id="r-444145" data-claire-element-id="444145"><code data-claire-semantic="console">NameVirtualHost 192.168.21.6:80          //Indiquez ici l'adresse IP de la machine serveur, suivie du port 80 qui est le port http
+        &lt;VirtualHost 192.168.21.6 :80&gt;  //Indiquez également ici l'adresse IP de la machine serveur&lt;/couleur&gt;
+        ServerName sdz.truc.tp         //Cette ligne est optionnelle. Vous pouvez indiquez le nom de domaine de la machine si elle en possède un
+        DocumentRoot /var/www/sdz      //Indiquez ici le chemin de l'accès au fichier index.html
+        &lt;Directory /var/www/sdz&gt;       //Indiquez ici le chemin du répertoire apache par défaut
+                Order allow,deny       //Cette ligne représente les différentes options pour un utilisateur. Soit permettre, soit inetrdire l'accès
+                Allow from all       //Cette ligne permet l'accès au serveur à tous les utilisateurs
+        &lt;/Directory&gt;
+&lt;/VirtualHost&gt;</code></pre><p id="r-444146" data-claire-element-id="444146">Maintenant que vous avez créé le fichier de configuration dans le dossier <strong>sites-available</strong>, il est nécessaire &quot;d'activer&quot; ce domaine en créant un lien symbolique dans le dossier <strong>sites-enabled</strong> (qui est le dossier contenant les sites dits &quot;actifs&quot;) :</p><pre id="r-444147" data-claire-element-id="444147"><code data-claire-semantic="console">sudo ln -s /etc/apache2/sites-available/sdz /etc/apache2/sites-enabled/sdz</code></pre><p id="r-444148" data-claire-element-id="444148">Afin de prendre en compte votre configuration, redémarrez le serveur apache.</p><pre id="r-444149" data-claire-element-id="444149"><code data-claire-semantic="console">/etc/init.d/apache2 restart</code></pre><p id="r-444150" data-claire-element-id="444150">Vous pouvez désormais tester l'accès à votre serveur apache en tapant dans un navigateur web (Internet Explorer ou Mozilla Firefox) :<br/><a href="http://192.168.21.6/"><strong><br/>http://192.168.21.6</strong></a><br/> ou (si vous avez configurez un serveur DNS)<br/><a href="http://sdz.truc.tp/"><strong>http://sdz.truc.tp</strong></a></p><aside id="r-444152" data-claire-element-id="444152" data-claire-semantic="information"><p id="r-444151" data-claire-element-id="444151">Afin de suivre les connexions au serveur apache et avoir des renseignements sur les erreurs liées à son utilisation, on peut<br/> utiliser les commandes suivantes.</p></aside><pre id="r-444153" data-claire-element-id="444153"><code data-claire-semantic="console">tail -f /var/log/apache2/access.log</code></pre><p id="r-444154" data-claire-element-id="444154">ou encore</p><pre id="r-444155" data-claire-element-id="444155"><code data-claire-semantic="console">tail -f /var/log/apache2/error.log</code></pre><p id="r-444156" data-claire-element-id="444156">Ceci termine notre premier exemple. Comme vous le voyez, dans ce cas tout le monde peut accéder à notre page.</p><p id="r-444157" data-claire-element-id="444157"><strong>2ème exemple :</strong></p><p id="r-444158" data-claire-element-id="444158">Intéressons-nous maintenant au deuxième exemple, un peu plus intéressant en configurant l'accès au serveur apache qu'à partir d'une seule machine (salon) et en protégeant l'accès par mot de passe pour les utilisateurs admin et superadmin.</p><p id="r-444159" data-claire-element-id="444159">Les modifications se font au niveau du même fichier :</p><pre id="r-444160" data-claire-element-id="444160"><code data-claire-semantic="console">vi /etc/apache2/sites-available/sdz</code></pre><p id="r-444161" data-claire-element-id="444161">Remplacez maintenant les lignes du fichier par celles-ci :</p><pre id="r-444162" data-claire-element-id="444162"><code data-claire-semantic="console">NameVirtualHost 192.168.21.6:80
+&lt;VirtualHost 192.168.21.6:80&gt;
+        ServerName sdz.sdz.tp
+        DocumentRoot /var/www/sdz
+        &lt;Directory /var/www/sdz&gt;
+        Order allow,deny
+        Allow from 192.168.21.1   //Cette ligne définit l'accès au serveur uniquement à partir de la machine possedant l'adresse IP 192.168.21.1
+        Authname “salon”          //Indiquez sur cette ligne le nom de la machine qui pourra se connecter.
+        Authtype basic            //Cette ligne indique que le système utilisera le fichier .htpasswd pour gérer les utilisateurs
+        AuthUserFile /var/www/sdz/.htpasswd   //Il s'agit du fichier qui sera utilisé pour gérer les connexions.
+        Require valid-user        //Cette ligne indique que pour que la connexion s'effectue, il est necessaire que l'utilisateur existe.
+        Satisfy all
+&lt;/Directory&gt;
+&lt;/VirtualHost&gt;</code></pre><p id="r-444163" data-claire-element-id="444163">Enregistrez et quittez le fichier. Passons maintenant à la configuration du fichier <strong>.htaccess</strong>.</p><pre id="r-444164" data-claire-element-id="444164"><code data-claire-semantic="console">Authname « Accès protégé » //Cette ligne permettra d'afficher Accès protégé lors de l'accès au serveur
+AuthType Basic
+AuthUserFile /var/www/sdz/htpasswd    //Cette ligne indique le chemin du fichier qui contiendra les mots de passe de connexion des utilisateurs.
+Require valid-user</code></pre><p id="r-444165" data-claire-element-id="444165">Pour finir, créons l'accès pour les deux utilisateurs admin et superaddmin. Tapez simplement dans une terminal les lignes suivantes :</p><pre id="r-444166" data-claire-element-id="444166"><code data-claire-semantic="console">htpasswd -c -m htpasswd admin
+htpasswd -m htpasswd superadmin</code></pre><p id="r-444167" data-claire-element-id="444167">Enfin, afin de prendre en compte votre configuration, redémarrez le serveur apache.</p><pre id="r-444168" data-claire-element-id="444168"><code data-claire-semantic="console">/etc/init.d/apache2 restart</code></pre><p id="r-444169" data-claire-element-id="444169">Voilà, vous pouvez tester l'accès à votre serveur apache. Normalement, vous ne devriez pouvoir y accéder qu'à partir de la machine &quot;salon&quot; identifiée par l'adresse IP 192.168.21.1 et en utilisant un des deux utilisateurs admin ou superadmin.</p><p id="r-444170" data-claire-element-id="444170">Ceci termine la partie concernant la configuration d'un serveur HTTP apache.</p><p id="r-444171" data-claire-element-id="444171">Passons maintenant aux différents types d'hébergements possibles pour un serveur apache.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-des-serveurs-apache-et-dns">Mise en place des serveurs Apache et DNS</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-des-serveurs-apache-et-dns/configuration-ip-du-serveur">
+Configuration IP du serveur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-des-serveurs-apache-et-dns/configuration-du-serveur-dns">
+Configuration du serveur DNS
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-des-serveurs-apache-et-dns/mise-en-place-du-serveur-apache">
+Mise en place du serveur Apache
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-des-serveurs-apache-et-dns/hebergement-virtuel">
+Hébergement virtuel
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/mise-en-place-des-serveurs-apache-et-dns/configuration-du-serveur-dns">
+<span class="arrow"></span>
+<span class="next">Configuration du serveur DNS</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/mise-en-place-des-serveurs-apache-et-dns/hebergement-virtuel">
+<span class="next">Hébergement virtuel</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Hbergementvirtuel"></a><h2>Hébergement virtuel</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/mise-en-place-des-serveurs-apache-et-dns/mise-en-place-du-serveur-apache">
+<span class="arrow"></span>
+<span class="next">Mise en place du serveur Apache</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h3 id="r-hebergement-virtuel-par-nom-de-domaine" data-claire-element-id="444206">Hébergement virtuel par nom de domaine</h3><p id="r-444174" data-claire-element-id="444174"><strong>Ce type d'hébergement est utilisé pour accueillir plus d'un nom de domaine sur le même ordinateur sur la même adresse IP.</strong></p><p id="r-444175" data-claire-element-id="444175">Afin de tester ce type d’hébergement virtuel, chaque machine doit être recensée sous plusieurs noms différents sur le DNS en utilisant les enregistrements de type A et CNAME.</p><p id="r-444176" data-claire-element-id="444176">Maintenant que la configuration DNS n'a plus de secret pour vous, rajouter dans le fichier hosts du domaine (/var/cache/bind/sdz.truc.hosts), les informations suivantes :</p><pre id="r-444177" data-claire-element-id="444177"><code data-claire-semantic="console">sdzVH1 IN CNAME sdz
+sdzVH2 IN CNAME sdz</code></pre><p id="r-444178" data-claire-element-id="444178">Créons les trois fichiers index.html contenant comme informations le nom de domaine du serveur virtuel et plaçons-les dans les répertoires correspondant :</p><pre id="r-444179" data-claire-element-id="444179"><code data-claire-semantic="console">mkdir /var/www/sdzVH1
+mkdir /var/www/sdzVH2</code></pre><p id="r-444180" data-claire-element-id="444180">À l’intérieur de chaque dossier, on crée une page HTML nommée index.html :</p><pre id="r-444181" data-claire-element-id="444181"><code data-claire-semantic="html">&lt;html&gt;
+&lt;head&gt; &lt;title&gt; Notre serveur Apache &lt;/title&gt; &lt;/head&gt;
+&lt;body&gt; &lt;p&gt; Voici la page d'accueil de votre serveur Apache sdzVH1 ! &lt;/p&gt; &lt;/body&gt;
+&lt;/html&gt;</code></pre><pre id="r-444182" data-claire-element-id="444182"><code data-claire-semantic="html">&lt;html&gt;
+&lt;head&gt; &lt;title&gt; Notre serveur Apache &lt;/title&gt; &lt;/head&gt;
+&lt;body&gt; &lt;p&gt; Voici la page d'accueil de votre serveur Apache sdzVH2 ! &lt;/p&gt; &lt;/body&gt;
+&lt;/html&gt;</code></pre><p id="r-444183" data-claire-element-id="444183">On crée deux fichiers de configuration pour nos deux nouveaux domaines dans le dossier /etc/apache2/sites-available afin de créer ces deux serveurs virtuels pointant sur deux répertoires différents.</p><pre id="r-444184" data-claire-element-id="444184"><code data-claire-semantic="console">vi /etc/apache2/sites-available/sdzVH1</code></pre><p id="r-444185" data-claire-element-id="444185">On ajoute dans ce fichier les lignes suivantes :</p><pre id="r-444186" data-claire-element-id="444186"><code data-claire-semantic="console">NameVirtualHost 192.168.21.6:80
+&lt;VirtualHost 192.168.21.6:80&gt;
+        ServerName sdzVH1.truc.tp
+        ServerAlias sdzVH1
+        DocumentRoot /var/www/sdzVH1
+        &lt;Directory /var/www/sdzVH1&gt;
+                Order allow,deny
+                Allow from all
+        &lt;/Directory&gt;
+&lt;/VirtualHost&gt;</code></pre><p id="r-444187" data-claire-element-id="444187">De même pour l'autre domaine :</p><pre id="r-444188" data-claire-element-id="444188"><code data-claire-semantic="console">vi /etc/apache2/sites-available/sdzVH2</code></pre><p id="r-444189" data-claire-element-id="444189">On ajoute dans ce fichier les lignes suivantes :</p><pre id="r-444190" data-claire-element-id="444190"><code data-claire-semantic="console">NameVirtualHost 192.168.21.6:80
+&lt;VirtualHost 192.168.21.6:80&gt;
+        ServerName sdzVH2.truc.tp
+        ServerAlias sdzVH2
+        DocumentRoot /var/www/sdzVH2
+        &lt;Directory /var/www/sdzVH2&gt;
+                Order allow,deny
+                Allow from all
+        &lt;/Directory&gt;
+&lt;/VirtualHost&gt;</code></pre><p id="r-444191" data-claire-element-id="444191">C'est l'heure d'activer nos deux hébergements virtuels. Pour ce faire, il faut créer des liens symboliques dans le dossier /etc/apache2/sites-enabled (qui recensent les sites actifs) pour que la configuration soit lue lors du démarrage d'apache.</p><pre id="r-444192" data-claire-element-id="444192"><code data-claire-semantic="console">sudo ln -s /etc/apache2/sites-available/sdzVH1 /etc/apache2/sites-enabled/sdzVH1
+sudo ln -s /etc/apache2/sites-available/sdzVH2 /etc/apache2/sites-enabled/sdzVH2</code></pre><aside id="r-444194" data-claire-element-id="444194" data-claire-semantic="warning"><p id="r-444193" data-claire-element-id="444193">Redémarrez maintenant le serveur apache !</p></aside><pre id="r-444195" data-claire-element-id="444195"><code data-claire-semantic="console">/etc/init.d/apache2 restart</code></pre><p id="r-444196" data-claire-element-id="444196">Il ne vous reste plus qu'à tester. Vous devriez pouvoir accéder à chaque page web correspondante à chaque nom de domaine.</p><ul id="r-444203" data-claire-element-id="444203"><li id="r-444198" data-claire-element-id="444198"><p id="r-444197" data-claire-element-id="444197"><a href="http://sdz.truc.tp/">http://sdz.truc.tp</a></p></li><li id="r-444200" data-claire-element-id="444200"><p id="r-444199" data-claire-element-id="444199"><a href="http://sdzvh1.truc.tp/">http://sdzVH1.truc.tp</a></p></li><li id="r-444202" data-claire-element-id="444202"><p id="r-444201" data-claire-element-id="444201"><a href="http://sdzvh2.truc.tp/">http://sdzVH2.truc.tp</a></p></li></ul><aside id="r-444205" data-claire-element-id="444205" data-claire-semantic="information"><p id="r-444204" data-claire-element-id="444204">Voilà, vous voyez l'intérêt de ce type d'hébergement. C'est que tout en ne possédant qu'une seule adresse IP, il est possible de définir plusieurs sous-domaines pour gérer différentes pages web. C'est ti pas beau tout ça ? :)</p></aside><h3 id="r-hebergement-virtuel-par-port" data-claire-element-id="444228">Hébergement virtuel par port</h3><p id="r-444207" data-claire-element-id="444207">Ce type d'hébergement permet d'utiliser un serveur web en précisant le port qu'il utilise. Si le port n'est pas précisé, la connexion ne s'effectuera pas ! ;)</p><p id="r-444208" data-claire-element-id="444208">Dans ce cas, chaque serveur sera adressé par une requête HTTP à l’aide d’un numéro de port différent. Par exemple pour la machine &quot;salon&quot; :</p><p id="r-444209" data-claire-element-id="444209"><a href="http://sdz.truc.tp/">http://sdz.truc.tp:80</a><br/><a href="http://sdzvh1.truc.tp:40001/">http://sdzVH1.truc.tp:40001</a><br/><a href="http://sdzvh2.truc.tp:40002/">http://sdzVH2.truc.tp:40002</a></p><p id="r-444210" data-claire-element-id="444210">Afin que apache écoute sur les ports correspondants, on les ajoute dans le fichier ports.conf :</p><pre id="r-444211" data-claire-element-id="444211"><code data-claire-semantic="console">/etc/apache2/ports.conf</code></pre><pre id="r-444212" data-claire-element-id="444212"><code data-claire-semantic="console">Listen 80
+Listen 40001
+Listen 40002</code></pre><p id="r-444213" data-claire-element-id="444213">Effectuons maintenant les modifications dans chaque fichier de configuration pour nos différents domaine (que vous connaissez maintenant par cœur) :</p><pre id="r-444214" data-claire-element-id="444214"><code data-claire-semantic="console">vi /etc/apache2/sites-available/sdz</code></pre><pre id="r-444215" data-claire-element-id="444215"><code data-claire-semantic="console">NameVirtualHost 192.168.21.6:80
+&lt;VirtualHost 192.168.21.6:80&gt;
+        ServerName sdz.truc.tp
+        ServerAlias sdz
+        DocumentRoot /var/www/sdz
+        &lt;Directory /var/www/sdz&gt;
+                Order allow,deny
+                Allow from all
+        &lt;/Directory&gt;
+&lt;/VirtualHost&gt;</code></pre><p id="r-444216" data-claire-element-id="444216">Puis dans le fichier de configuration du domaine sdzVH1 :</p><pre id="r-444217" data-claire-element-id="444217"><code data-claire-semantic="console">NameVirtualHost 192.168.21.6:80
+&lt;VirtualHost 192.168.21.6:40001&gt;
+        ServerName sdzVH1.truc.tp
+        ServerAlias sdzVH1
+        DocumentRoot /var/www/sdzVH1
+        &lt;Directory /var/www/sdzVH1&gt;
+                Order allow,deny
+                Allow from all
+        &lt;/Directory&gt;
+&lt;/VirtualHost&gt;</code></pre><p id="r-444218" data-claire-element-id="444218">Puis dans le fichier de configuration du domaine sdzVH2 :</p><pre id="r-444219" data-claire-element-id="444219"><code data-claire-semantic="console">NameVirtualHost 192.168.21.6:80
+&lt;VirtualHost 192.168.21.6:40002&gt;
+        ServerName sdzVH2.truc.tp
+        ServerAlias sdzVH2
+        DocumentRoot /var/www/sdzVH2
+        &lt;Directory /var/www/sdzVH2&gt;
+                Order allow,deny
+                Allow from all
+        &lt;/Directory&gt;
+&lt;/VirtualHost&gt;</code></pre><p id="r-444220" data-claire-element-id="444220">C'est fini ! Il ne vous reste plus qu'à tester :</p><ul id="r-444227" data-claire-element-id="444227"><li id="r-444222" data-claire-element-id="444222"><p id="r-444221" data-claire-element-id="444221"><a href="http://sdz.truc.tp/">http://sdz.truc.tp:80</a></p></li><li id="r-444224" data-claire-element-id="444224"><p id="r-444223" data-claire-element-id="444223"><a href="http://sdzvh1.truc.tp:40001/">http://sdzVH1.truc.tp:40001</a></p></li><li id="r-444226" data-claire-element-id="444226"><p id="r-444225" data-claire-element-id="444225"><a href="http://sdzvh2.truc.tp:40002/">http://sdzVH2.truc.tp:40002</a></p></li></ul><h3 id="r-hebergement-virtuel-par-adresse-ip" data-claire-element-id="444245">Hébergement virtuel par adresse IP</h3><p id="r-444229" data-claire-element-id="444229">Ce type d'hébergement permet, tout en associant deux adresses IP à une interface, de se connecter aux pages associées à chaque adresse IP.</p><p id="r-444230" data-claire-element-id="444230">Pour démarrer, on doit créer un alias eth0 :1 sur l’interface eth0 afin d'associer 2 adresses ip à une seule interface. On ajoute pour cela les lignes suivantes dans le fichier /etc/network/interfaces :</p><pre id="r-444231" data-claire-element-id="444231"><code data-claire-semantic="console">Auto eth0 :1
+Iface eth0 :1 inet static
+Address 192.168.21.106
+Netmask 255.255.255.0
+Broadcast 192.168.21.255</code></pre><p id="r-444232" data-claire-element-id="444232">On modifie notre fichier adoré ! ;) <br/> Pour le domaine sdz :</p><pre id="r-444233" data-claire-element-id="444233"><code data-claire-semantic="console">vi /etc/apache2/sites-available/sdz</code></pre><pre id="r-444234" data-claire-element-id="444234"><code data-claire-semantic="console">NameVirtualHost 192.168.21.6:80
+&lt;VirtualHost 192.168.21.106:80&gt; //On indique simplement que pour accéder au domaine sdz.truc.tp, il faudra utiliser l'adresse IP 192.168.21.106
+        ServerName sdz.truc.tp
+        ServerAlias sdz
+        DocumentRoot /var/www/sdz
+        &lt;Directory /var/www/sdz&gt;
+                Order allow,deny
+                Allow from all
+        &lt;/Directory&gt;
+&lt;/VirtualHost&gt;</code></pre><p id="r-444235" data-claire-element-id="444235">Vous pouvez faire la même chose pour les domaines sdzVH1 et sdzVH2 si vous le souhaitez. :-°</p><p id="r-444236" data-claire-element-id="444236">:D Il ne reste qu'à apprécier votre travail, à vous lancer des roses, des fleurs, et à dérouler le tapis rouge à vos pieds ! :D</p><ul id="r-444241" data-claire-element-id="444241"><li id="r-444238" data-claire-element-id="444238"><p id="r-444237" data-claire-element-id="444237"><a href="http://192.168.21.6/">http://192.168.21.6:80</a></p></li><li id="r-444240" data-claire-element-id="444240"><p id="r-444239" data-claire-element-id="444239"><a href="http://192.168.21.106/">http://192.168.21.106:80</a></p></li></ul><p id="r-444242" data-claire-element-id="444242">Eh bien voilà ! Je crois que vous avez fait le tour de ce qu'il faut savoir sur les serveurs Apache et DNS.</p><p id="r-444243" data-claire-element-id="444243">N'hésitez pas à partager vos expériences !</p><p id="r-444244" data-claire-element-id="444244">@wawanopoulos</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-des-serveurs-apache-et-dns">Mise en place des serveurs Apache et DNS</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-des-serveurs-apache-et-dns/configuration-ip-du-serveur">
+Configuration IP du serveur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-des-serveurs-apache-et-dns/configuration-du-serveur-dns">
+Configuration du serveur DNS
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-des-serveurs-apache-et-dns/mise-en-place-du-serveur-apache">
+Mise en place du serveur Apache
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/mise-en-place-des-serveurs-apache-et-dns/hebergement-virtuel">
+Hébergement virtuel
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/mise-en-place-des-serveurs-apache-et-dns/mise-en-place-du-serveur-apache">
+<span class="arrow"></span>
+<span class="next">Mise en place du serveur Apache</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/mise-en-place-des-serveurs-apache-et-dns.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 07:11:58 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/mise-en-place-des-serveurs-apache-et-dns.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:17:21 GMT -->
+</html>
