@@ -1,0 +1,638 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/les-filtres-en-php-pour-valider-les-donnees-utilisateur.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 05:39:28 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/les-filtres-en-php-pour-valider-les-donnees-utilisateur.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:00:06 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Les filtres en PHP pour valider les données utilisateur</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Les filtres en PHP pour valider les données utilisateur</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#LesfiltresenPHPpourvaliderlesdonnesutilisateur">Les filtres en PHP pour valider les données utilisateur</a><br/><a href="#proposdesfiltres">À propos des filtres</a><br/><a href="#Validerunevariable">Valider une variable</a><br/><a href="#Nettoyerunevariable">Nettoyer une variable</a><br/><a href="#Filtrerplusieursvariables">Filtrer plusieurs variables</a><br/><a href="#Etsilefiltrequejeveuxn039estpasl">Et si le filtre que je veux n&#039;est pas là ?</a><br/></div>
+<a name="LesfiltresenPHPpourvaliderlesdonnesutilisateur"></a><h2>Les filtres en PHP pour valider les données utilisateur</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/a-propos-des-filtres">
+<span class="next">À propos des filtres</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-335976" data-claire-element-id="335976">Bonjour à tous !</p><ul id="r-335983" data-claire-element-id="335983"><li id="r-335978" data-claire-element-id="335978"><p id="r-335977" data-claire-element-id="335977">Vous trouvez que valider toutes les données provenant de l'utilisateur est lourd ?</p></li><li id="r-335980" data-claire-element-id="335980"><p id="r-335979" data-claire-element-id="335979">Vous ne savez pas toujours comment les valider ?</p></li><li id="r-335982" data-claire-element-id="335982"><p id="r-335981" data-claire-element-id="335981">Vous pensez qu'il faut absolument utiliser une expression régulière pour valider une adresse de messagerie ?</p></li></ul><p id="r-335984" data-claire-element-id="335984">Si vous avez répondu « oui » à une de ces questions, alors ce tutoriel est fait pour vous !</p><aside id="r-335987" data-claire-element-id="335987" data-claire-semantic="warning"><p id="r-335985" data-claire-element-id="335985">Avant de continuer la lecture de ce tutoriel, assurez-vous de posséder des bases en PHP.<br/> La lecture <a href="http://www.siteduzero.com/tutoriel-3-14668-concevez-votre-site-web-avec-php-et-mysql.html">du tutoriel sur PHP/MySQL</a> est le minimum requis pour comprendre ce tutoriel.</p><p id="r-335986" data-claire-element-id="335986">En outre, assurez-vous que vous disposez au moins de la version 5.2.0 de PHP.</p></aside><p id="r-335988" data-claire-element-id="335988">Les filtres en PHP nous permettront de nous assurer que les données reçues sont du bon type (entier, réel, ...) et éventuellement de la bonne forme (URL, adresse de messagerie, ...).<br/> En effet, le PHP est un langage faiblement typé, de sorte qu'il est préférable de vérifier le type des données que l'utilisateur envoie pour ne pas avoir de surprise.</p>
+</div><a name="proposdesfiltres"></a><h2>À propos des filtres</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/valider-une-variable">
+<span class="next">Valider une variable</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-335989" data-claire-element-id="335989">Comme dit précédemment, les <strong>filtres</strong> permettent de vérifier que les données reçues sont bien du type et de la forme requis.<br/> Par exemple, si je demande l'âge du visiteur, je souhaite obtenir un nombre (exemple : 42) et non une chaîne de caractères (« quarante-deux »).</p><div id="r-335991" data-claire-element-id="335991" data-claire-semantic="question"><p id="r-335990" data-claire-element-id="335990">Nous pourrions transtyper la variable pour nous assurer que c'est un nombre, non ?</p></div><p id="r-335992" data-claire-element-id="335992">Oui, mais de cette façon, quelqu'un qui entre « quarante-deux » aura... 0 an.</p><div id="r-335994" data-claire-element-id="335994" data-claire-semantic="question"><p id="r-335993" data-claire-element-id="335993">Et si on utilise la fonction is_int() alors ?</p></div><p id="r-335995" data-claire-element-id="335995">C'est déjà mieux. ;) <br/> De cette façon, on vérifie que la donnée reçue est un entier et, si ce n'est pas le cas, on lui redemande son âge.</p><p id="r-335996" data-claire-element-id="335996">Cependant, l'utilisateur pourrait entrer un nombre négatif.<br/> Par conséquent, il faudrait utiliser une condition pour vérifier si c'est le cas ou non.</p><p id="r-335997" data-claire-element-id="335997">Et lorsqu'il y a plusieurs données à vérifier, le code devient vite très lourd.</p><p id="r-335998" data-claire-element-id="335998">Avec les filtres, c'est très simple : il suffit de renseigner la valeur minimale (par exemple 1) et le tour est joué. :D</p><p id="r-335999" data-claire-element-id="335999">Il est possible de valider plusieurs types de données grâce aux filtres :</p><ul id="r-336006" data-claire-element-id="336006"><li id="r-336001" data-claire-element-id="336001"><p id="r-336000" data-claire-element-id="336000">les entiers ;</p></li><li id="r-336003" data-claire-element-id="336003"><p id="r-336002" data-claire-element-id="336002">les booléens ;</p></li><li id="r-336005" data-claire-element-id="336005"><p id="r-336004" data-claire-element-id="336004">les nombres réels.</p></li></ul><p id="r-336007" data-claire-element-id="336007">De plus, il est aussi possible de valider :</p><ul id="r-336014" data-claire-element-id="336014"><li id="r-336009" data-claire-element-id="336009"><p id="r-336008" data-claire-element-id="336008">les adresses de messagerie ;</p></li><li id="r-336011" data-claire-element-id="336011"><p id="r-336010" data-claire-element-id="336010">les URL ;</p></li><li id="r-336013" data-claire-element-id="336013"><p id="r-336012" data-claire-element-id="336012">les adresses IP.</p></li></ul><p id="r-336015" data-claire-element-id="336015">Il n'est donc plus nécessaire d'utiliser des expressions régulières pour cela. :-°</p><p id="r-336016" data-claire-element-id="336016">Mais les filtres ne servent pas seulement à la validation de données, ils servent aussi au nettoyage de données.</p><div id="r-336018" data-claire-element-id="336018" data-claire-semantic="question"><p id="r-336017" data-claire-element-id="336017">Quel genre de nettoyage ?</p></div><p id="r-336019" data-claire-element-id="336019">Il existe des filtres pour nettoyer une chaîne de caractères (ça enlève les balises (x)HTML), pour nettoyer une adresse de messagerie, une URL et même un nombre.<br/> En effet, certains caractères ne sont pas acceptés dans les adresses de messagerie ; le nettoyage les enlève à notre place. (Nous sommes chanceux, nous n'avons plus besoin de faire nos propres fonctions pour cela. ^^ )</p><aside id="r-336022" data-claire-element-id="336022" data-claire-semantic="error"><p id="r-336020" data-claire-element-id="336020">Le nettoyage ne valide pas les données. Il ne fait qu'enlever les caractères non permis même si la variable n'est pas valide.</p><p id="r-336021" data-claire-element-id="336021">Par exemple, il est possible de nettoyer la variable <code data-claire-semantic="html+php">'allô toi'</code> comme si c'était un lien.<br/> Dans un tel cas, la valeur retournée serait <code data-claire-semantic="html+php">'alltoi'</code>, car les caractères accentués et les espaces ne sont pas permis dans les liens.</p></aside><p id="r-336023" data-claire-element-id="336023">Passons à la pratique.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur">Les filtres en PHP pour valider les données utilisateur</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/a-propos-des-filtres">
+À propos des filtres
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/valider-une-variable">
+Valider une variable
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/nettoyer-une-variable">
+Nettoyer une variable
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/filtrer-plusieurs-variables">
+Filtrer plusieurs variables
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/et-si-le-filtre-que-je-veux-n-est-pas-la">
+Et si le filtre que je veux n&#039;est pas là ?
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/valider-une-variable">
+<span class="next">Valider une variable</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Validerunevariable"></a><h2>Valider une variable</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/a-propos-des-filtres">
+<span class="arrow"></span>
+<span class="next">À propos des filtres</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/nettoyer-une-variable">
+<span class="next">Nettoyer une variable</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-336025" data-claire-element-id="336025">Nous allons commencer par vérifier le type de variable, puis la forme.<br/> Ensuite, nous verrons comment ajouter des options et comment valider les données provenant de l'utilisateur.</p><h2 id="r-verifier-le-type-de-la-variable" data-claire-element-id="336070">Vérifier le type de la variable</h2><p id="r-336026" data-claire-element-id="336026">Il est très important de s'assurer que le type de la donnée reçue est bien celui voulu pour éviter d'avoir des problèmes à ce niveau.</p><p id="r-336027" data-claire-element-id="336027">Pour valider une variable, il faut utiliser la fonction <code data-claire-semantic="html+php">filter_var()</code>.<br/> La plupart du temps, nous appellerons cette fonction avec 2 paramètres : la variable à valider et le type de filtre.<br/> Il est possible d'envoyer un troisième paramètre : un tableau d'options.<br/> Nous verrons comment utiliser ces options un peu plus tard.</p><h3 id="r-les-entiers" data-claire-element-id="336065">Les entiers</h3><p id="r-336028" data-claire-element-id="336028">Voyons tout de suite un exemple :</p><pre id="r-336029" data-claire-element-id="336029"><code data-claire-semantic="html+php">&lt;?php
+
+$a = 123;
+
+if(filter_var($a, FILTER_VALIDATE_INT) !== false) { //Si la variable est bien un entier.
+    echo 'La variable est un entier valide !';
+}</code></pre><p id="r-336030" data-claire-element-id="336030">Si vous testez ce code, vous pouvez constater que le texte s'affiche.</p><p id="r-336031" data-claire-element-id="336031">Donnez une autre valeur à la variable pour voir :</p><pre id="r-336032" data-claire-element-id="336032"><code data-claire-semantic="html+php">&lt;?php
+
+$a = '123';</code></pre><p id="r-336033" data-claire-element-id="336033">Ça fonctionne aussi !</p><p id="r-336034" data-claire-element-id="336034">Maintenant, essayons des valeurs qui ne fonctionnent pas :</p><pre id="r-336035" data-claire-element-id="336035"><code data-claire-semantic="html+php">&lt;?php
+
+$a = 'allo';</code></pre><p id="r-336036" data-claire-element-id="336036">Le texte ne s'affiche plus ; c'est parfait !</p><p id="r-336037" data-claire-element-id="336037">Allez, un autre test :</p><pre id="r-336038" data-claire-element-id="336038"><code data-claire-semantic="html+php">&lt;?php
+
+$a = '123abc';</code></pre><p id="r-336039" data-claire-element-id="336039">Là non plus le texte ne s'affiche pas.<br/> C'est tout à fait normal, car cette chaîne de caractères ne contient pas que des chiffres, mais aussi des lettres.</p><p id="r-336040" data-claire-element-id="336040">Faisons un dernier test pour nous assurer que tout fonctionne :</p><pre id="r-336041" data-claire-element-id="336041"><code data-claire-semantic="html+php">&lt;?php
+
+$a = 12.4;</code></pre><p id="r-336042" data-claire-element-id="336042">Le texte ne s'affiche toujours pas : la validation fonctionne !</p><p id="r-336043" data-claire-element-id="336043">Revenons à la ligne qui nous intéresse dans le code :</p><pre id="r-336044" data-claire-element-id="336044"><code data-claire-semantic="html+php">&lt;?php
+
+if(filter_var($a, FILTER_VALIDATE_INT) !== false) {</code></pre><div id="r-336046" data-claire-element-id="336046" data-claire-semantic="question"><p id="r-336045" data-claire-element-id="336045">Que renvoie la fonction <code data-claire-semantic="html+php">filter_var()</code> ?</p></div><p id="r-336047" data-claire-element-id="336047">Elle renvoie la donnée filtrée (dans ce cas, c'est la valeur de la variable) ou <code data-claire-semantic="html+php">false</code> si elle n'est pas valide.</p><div id="r-336049" data-claire-element-id="336049" data-claire-semantic="question"><p id="r-336048" data-claire-element-id="336048">Pourquoi ne pas faire tout simplement ceci :<br/><code data-claire-semantic="html+php">if(filter_var($a, FILTER_VALIDATE_INT)) {</code> ?<br/> Si le nombre est valide, la condition est vraie, non ?</p></div><p id="r-336050" data-claire-element-id="336050">Pas toujours. :p</p><p id="r-336051" data-claire-element-id="336051">Voici un exemple où il ne fonctionne pas :</p><pre id="r-336052" data-claire-element-id="336052"><code data-claire-semantic="html+php">&lt;?php
+
+$a = 0;
+
+if(filter_var($a, FILTER_VALIDATE_INT)) { //Ne jamais valider comme ceci !
+    echo 'La variable est un entier valide !';
+}</code></pre><p id="r-336053" data-claire-element-id="336053">En effet, le texte ne s'affichera pas, car la valeur testée est 0.</p><p id="r-336054" data-claire-element-id="336054">Donc, utilisez toujours cette condition :</p><pre id="r-336055" data-claire-element-id="336055"><code data-claire-semantic="html+php">&lt;?php
+
+if(filter_var($a, FILTER_VALIDATE_INT) !== false) {</code></pre><aside id="r-336057" data-claire-element-id="336057" data-claire-semantic="error"><p id="r-336056" data-claire-element-id="336056">Il y a bien deux signes égal (==) après le point d'exclamation parce que nous voulons vérifier le type de variable en plus.<br/> Essayez avec un seul signe égal et vous verrez que ça ne fonctionne pas. :(</p></aside><p id="r-336058" data-claire-element-id="336058">Il a été dit que la fonction <code data-claire-semantic="html+php">filter_var()</code> retourne la valeur si elle est valide.</p><div id="r-336060" data-claire-element-id="336060" data-claire-semantic="question"><p id="r-336059" data-claire-element-id="336059">À quoi ça sert, puisque nous avons déjà cette valeur ?</p></div><p id="r-336061" data-claire-element-id="336061">En fait, ça retourne la valeur <em>transtypée</em> si elle n'est pas du bon type.</p><p id="r-336062" data-claire-element-id="336062">Voici un exemple :</p><pre id="r-336063" data-claire-element-id="336063"><code data-claire-semantic="html+php">&lt;?php
+
+$b = '24';
+
+if($b = filter_var($b, FILTER_VALIDATE_INT)) {
+    var_dump($b); //Affiche int(24).
+}</code></pre><p id="r-336064" data-claire-element-id="336064">Passons aux autres types de données ; ça ira plus vite maintenant que nous avons vu un exemple. :)</p><h3 id="r-les-nombres-reels" data-claire-element-id="336069">Les nombres réels</h3><p id="r-336066" data-claire-element-id="336066">Pour un nombre réel, il faut utiliser la constante FILTER_VALIDATE_FLOAT :</p><pre id="r-336067" data-claire-element-id="336067"><code data-claire-semantic="html+php">&lt;?php
+
+$a = 12.4;
+
+if(filter_var($a, FILTER_VALIDATE_FLOAT) !== false) { //Validation d'un nombre réel.
+    echo 'La variable est un nombre réel valide !';
+}</code></pre><p id="r-336068" data-claire-element-id="336068">C'est simple, non ? ;)</p><h2 id="r-verifier-la-forme-de-la-variable" data-claire-element-id="336088">Vérifier la forme de la variable</h2><p id="r-336071" data-claire-element-id="336071">Il est possible de valider les adresses de messagerie, les liens et les adresses IP grâce aux filtres, et ce, sans utiliser d'expressions régulières ! :D</p><h3 id="r-les-adresses-de-messagerie" data-claire-element-id="336077">Les adresses de messagerie</h3><p id="r-336072" data-claire-element-id="336072">Encore une fois, il suffit de modifier la constante utilisée :</p><pre id="r-336073" data-claire-element-id="336073"><code data-claire-semantic="html+php">&lt;?php
+
+$a = '<a class="__cf_email__" href="http://www.cloudflare.com/email-protection" data-cfemail="58283d2c312c223d2a37182b312c3d3c2d223d2a37763b3735">[email&nbsp;protected]</a><script type="text/javascript">
+/* <![CDATA[ */
+(function(){try{var s,a,i,j,r,c,l,b=document.getElementsByTagName("script");l=b[b.length-1].previousSibling;a=l.getAttribute('data-cfemail');if(a){s='';r=parseInt(a.substr(0,2),16);for(j=2;a.length-j;j+=2){c=parseInt(a.substr(j,2),16)^r;s+=String.fromCharCode(c);}s=document.createTextNode(s);l.parentNode.replaceChild(s,l);}}catch(e){}})();
+/* ]]> */
+</script>';
+
+if(filter_var($a, FILTER_VALIDATE_EMAIL) !== false) { //Validation d'une adresse de messagerie.
+    echo 'La variable est une adresse de messagerie valide !';
+}</code></pre><p id="r-336074" data-claire-element-id="336074">Essayez d'enlever le point (.) ou le @ et vous verrez que le message ne s'affiche plus.</p><aside id="r-336076" data-claire-element-id="336076" data-claire-semantic="error"><p id="r-336075" data-claire-element-id="336075">Ce n'est pas parce que l'adresse de messagerie est valide qu'elle existe.<br/> En effet, ici, on ne fait que vérifier la forme de l'adresse.</p></aside><h3 id="r-les-liens-3" data-claire-element-id="336082">Les liens</h3><p id="r-336078" data-claire-element-id="336078">Encore une fois, on ne fait que modifier la constante :</p><pre id="r-336079" data-claire-element-id="336079"><code data-claire-semantic="html+php">&lt;?php
+
+$a = 'http://www.siteduzero.com/';
+
+if(filter_var($a, FILTER_VALIDATE_URL) !== false) { //Validation d'un lien.
+    echo 'La variable est un lien valide !';
+}</code></pre><aside id="r-336081" data-claire-element-id="336081" data-claire-semantic="warning"><p id="r-336080" data-claire-element-id="336080">Pour valider, il faut que la variable à tester contienne bien le protocole de communication (exemple : http, ftp, ...).<br/> Le « www » est, bien entendu, facultatif.</p></aside><h3 id="r-les-adresses-ip-1" data-claire-element-id="336087">Les adresses IP</h3><p id="r-336083" data-claire-element-id="336083">Cette fois, la constante est FILTER_VALIDATE_IP :</p><pre id="r-336084" data-claire-element-id="336084"><code data-claire-semantic="html+php">&lt;?php
+
+$a = '127.0.0.1';
+
+if(filter_var($a, FILTER_VALIDATE_IP) !== false) { //Validation d'une adresse IP.
+    echo 'La variable est une adresse IP valide !';
+}</code></pre><p id="r-336085" data-claire-element-id="336085">Les adresses IPv6 valident aussi. Vous pouvez essayer avec cette valeur :</p><pre id="r-336086" data-claire-element-id="336086"><code data-claire-semantic="html+php">&lt;?php
+
+$a = '2001:0db8:0000:85a3:0000:0000:ac1f:8001';</code></pre><h2 id="r-validation-avec-options" data-claire-element-id="336117">Validation avec options</h2><p id="r-336089" data-claire-element-id="336089">Passons maintenant à quelque chose de plus intéressant : les options.</p><p id="r-336090" data-claire-element-id="336090">Avec les options, il est possible d'ajouter des contraintes supplémentaires.</p><h3 id="r-options-a-utiliser-avec-les-entiers" data-claire-element-id="336103">Options à utiliser avec les entiers</h3><p id="r-336091" data-claire-element-id="336091">Il existe deux options pour les entiers :</p><ul id="r-336096" data-claire-element-id="336096"><li id="r-336093" data-claire-element-id="336093"><p id="r-336092" data-claire-element-id="336092">min_range ;</p></li><li id="r-336095" data-claire-element-id="336095"><p id="r-336094" data-claire-element-id="336094">max_range.</p></li></ul><p id="r-336097" data-claire-element-id="336097">Ces options permettent de préciser une limite minimale et maximale.<br/> Par exemple, si min_range vaut 0, le nombre -5 sera invalide.</p><p id="r-336098" data-claire-element-id="336098">C'est maintenant que nous allons nous servir du troisième paramètre de la fonction <code data-claire-semantic="html+php">filter_var()</code>.<br/> Ce paramètre est un tableau ayant l'index <code data-claire-semantic="html+php">'options'</code> qui contient, lui aussi, un tableau.<br/> C'est dans ce dernier que nous mettrons les index min_range et/ou max_range.</p><p id="r-336099" data-claire-element-id="336099">Voici un exemple où nous voulons un entier de 0 à 100 :</p><pre id="r-336100" data-claire-element-id="336100"><code data-claire-semantic="html+php">&lt;?php
+
+$a = '64';
+
+$options = array(
+    'options' =&gt; array(
+        'min_range' =&gt; 0,
+        'max_range' =&gt; 100
+    )
+);
+
+if(filter_var($a, FILTER_VALIDATE_INT, $options) !== false) { //Validation d'un entier.
+    echo 'La variable est un nombre entier valide (compris entre 0 et 100) !';
+}</code></pre><p id="r-336101" data-claire-element-id="336101">Nous créons un tableau avec les index voulus, puis nous passons ce tableau à la fonction <code data-claire-semantic="html+php">filter_var()</code>.<br/> Rien de bien difficile.</p><p id="r-336102" data-claire-element-id="336102">Les options des autres types sont moins utilisées.</p><h3 id="r-les-drapeaux-1" data-claire-element-id="336116">Les drapeaux</h3><p id="r-336104" data-claire-element-id="336104">Ce sont des options (ne prenant aucun paramètre) que nous pouvons ajouter.</p><p id="r-336105" data-claire-element-id="336105">Par exemple, si je veux que les nombres octaux et hexadécimaux soient valides, je dois ajouter les drapeaux correspondants :</p><pre id="r-336106" data-claire-element-id="336106"><code data-claire-semantic="html+php">&lt;?php
+
+$a = '0x64';
+
+$options = array(
+    'flags' =&gt; FILTER_FLAG_ALLOW_HEX | FILTER_FLAG_ALLOW_OCTAL
+);
+
+if(filter_var($a, FILTER_VALIDATE_INT, $options)) {
+    echo 'L\'entier est valide.';
+}</code></pre><p id="r-336107" data-claire-element-id="336107">Dans le tableau options, nous n'utilisons plus l'index 'options', mais plutôt l'index 'flags' (drapeaux, en anglais).</p><aside id="r-336109" data-claire-element-id="336109" data-claire-semantic="warning"><p id="r-336108" data-claire-element-id="336108">Pour combiner des drapeaux, il faut les séparer à l'aide d'un |.</p></aside><p id="r-336110" data-claire-element-id="336110">Vous pouvez également essayer avec une valeur en base 8 :</p><pre id="r-336111" data-claire-element-id="336111"><code data-claire-semantic="html+php">&lt;?php
+
+$a = '064';</code></pre><aside id="r-336113" data-claire-element-id="336113" data-claire-semantic="information"><p id="r-336112" data-claire-element-id="336112">Les nombres sont entre apostrophes, car sinon, ils seraient « convertis » en base 10 de telle sorte que l'ajout de ces drapeaux serait inutile.</p></aside><aside id="r-336115" data-claire-element-id="336115" data-claire-semantic="information"><p id="r-336114" data-claire-element-id="336114">En PHP, comme dans d'autres langages de programmation, le préfixe à écrire pour préciser qu'un nombre est écrit en hexadécimal est '0x' (un zéro, suivi d'un x) ; pour écrire un nombre octal (en base 8), c'est '0' (un zéro).</p></aside><h2 id="r-les-cas-des-donnees-utilisateur" data-claire-element-id="336151">Les cas des données utilisateur</h2><p id="r-336118" data-claire-element-id="336118">(Après tout, c'est l'objet de ce tutoriel. :lol: )</p><p id="r-336119" data-claire-element-id="336119">Nous allons maintenant utiliser une nouvelle fonction. Eh oui, il était temps, non ? :p</p><p id="r-336120" data-claire-element-id="336120">Il s'agit de <code data-claire-semantic="html+php">filter_input()</code> : elle fonctionne comme <code data-claire-semantic="html+php">filter_var()</code>, mais est adaptée aux données envoyées par l'utilisateur.</p><p id="r-336121" data-claire-element-id="336121">Elle prend quatre paramètres, dont les deux premiers sont obligatoires :</p><ul id="r-336130" data-claire-element-id="336130"><li id="r-336123" data-claire-element-id="336123"><p id="r-336122" data-claire-element-id="336122">le type (INPUT_GET, INPUT_POST, INPUT_COOKIE, INPUT_SERVER ou INPUT_ENV) ;</p></li><li id="r-336125" data-claire-element-id="336125"><p id="r-336124" data-claire-element-id="336124">l'index du tableau du prédécent paramètre ;</p></li><li id="r-336127" data-claire-element-id="336127"><p id="r-336126" data-claire-element-id="336126">le filtre à appliquer (exemple : FILTER_VALIDATE_INT) ;</p></li><li id="r-336129" data-claire-element-id="336129"><p id="r-336128" data-claire-element-id="336128">le tableau d'options.</p></li></ul><p id="r-336131" data-claire-element-id="336131">Cette fois, la valeur de retour est différente.<br/> La fonction retourne :</p><ul id="r-336138" data-claire-element-id="336138"><li id="r-336133" data-claire-element-id="336133"><p id="r-336132" data-claire-element-id="336132">la valeur si la donnée est valide ;</p></li><li id="r-336135" data-claire-element-id="336135"><p id="r-336134" data-claire-element-id="336134"><code data-claire-semantic="html+php">false</code> si elle n'est pas valide ;</p></li><li id="r-336137" data-claire-element-id="336137"><p id="r-336136" data-claire-element-id="336136"><code data-claire-semantic="html+php">null</code> si elle n'existe pas.</p></li></ul><div id="r-336140" data-claire-element-id="336140" data-claire-semantic="question"><p id="r-336139" data-claire-element-id="336139">Pourquoi ne pas utiliser simplement <code data-claire-semantic="html+php">filter_var()</code> comme ceci :<br/><code data-claire-semantic="html+php">filter_var($_GET['variable'], FILTER_VALIDATE_INT)</code> ?</p></div><p id="r-336141" data-claire-element-id="336141">Parce que si <code data-claire-semantic="html+php">$_GET['variable']</code> n'existe pas, il s'affichera une erreur.</p><p id="r-336142" data-claire-element-id="336142">Regardons ensemble un exemple :</p><pre id="r-336143" data-claire-element-id="336143"><code data-claire-semantic="html+php">&lt;?php
+
+$resultat = filter_input(INPUT_GET, 'age', FILTER_VALIDATE_INT);
+
+if($resultat === null) { //Si la variable $_GET['age'] n'existe pas.
+    echo 'La variable $_GET[\'age\'] n\'existe pas.';
+}
+elseif($resultat !== false) { //Si elle est valide.
+    echo 'La variable $_GET[\'age\'] est un entier valide !';
+}
+else {
+    echo 'La variable $_GET[\'age\'] n\'est pas valide.';
+}</code></pre><p id="r-336144" data-claire-element-id="336144">Premièrement, nous stockons la valeur de retour de la fonction <code data-claire-semantic="html+php">filter_input()</code> dans une variable.</p><p id="r-336145" data-claire-element-id="336145">Ici, nous nous attendons à obtenir un paramètre dans l'URL nommé « age » et nous vérifions qu'il s'agit bien d'un entier.</p><p id="r-336146" data-claire-element-id="336146">La première condition sert à vérifier l'existence de la variable : si elle n'existe pas, <code data-claire-semantic="html+php">$resultat</code> vaudra <code data-claire-semantic="html+php">null</code>.</p><aside id="r-336148" data-claire-element-id="336148" data-claire-semantic="error"><p id="r-336147" data-claire-element-id="336147">Encore une fois, il faut aussi vérifier le type ; c'est pourquoi nous utilisons les opérateurs <code data-claire-semantic="html+php">===</code> et <code data-claire-semantic="html+php">!==</code>.</p></aside><p id="r-336149" data-claire-element-id="336149">La deuxième condition vérifie la validité de la donnée. Si <code data-claire-semantic="html+php">$resultat</code> est différent de <code data-claire-semantic="html+php">null</code> et de <code data-claire-semantic="html+php">false</code>, elle est nécessairement un nombre entier.</p><p id="r-336150" data-claire-element-id="336150">Le else (équivalent de <code data-claire-semantic="html+php">$resultat === false</code>) affiche un message pour dire que la variable n'est pas valide (par exemple, si l'utilisateur a entré « abc »).</p><h2 id="r-verifier-l-existence-d-une-donnee-utilisateur" data-claire-element-id="336171">Vérifier l'existence d'une donnée utilisateur</h2><p id="r-336152" data-claire-element-id="336152">Si nous ne voulons vérifier l'existence d'une donnée utilisateur, nous pouvons utiliser la fonction <code data-claire-semantic="html+php">filter_has_var()</code>.</p><p id="r-336153" data-claire-element-id="336153">Elle prend deux paramètres :</p><ul id="r-336158" data-claire-element-id="336158"><li id="r-336155" data-claire-element-id="336155"><p id="r-336154" data-claire-element-id="336154">le type (INPUT_GET, INPUT_POST, ?) ;</p></li><li id="r-336157" data-claire-element-id="336157"><p id="r-336156" data-claire-element-id="336156">l'index.</p></li></ul><p id="r-336159" data-claire-element-id="336159">Cette fonction retourne <code data-claire-semantic="html+php">true</code> si l'index est dans le tableau, <code data-claire-semantic="html+php">false</code> sinon.</p><p id="r-336160" data-claire-element-id="336160">Voici un exemple simple :</p><pre id="r-336161" data-claire-element-id="336161"><code data-claire-semantic="html+php">&lt;?php
+
+if(filter_has_var(INPUT_GET, 'age')) {
+    echo '$_GET[\'age\'] existe';
+}</code></pre><div id="r-336163" data-claire-element-id="336163" data-claire-semantic="question"><p id="r-336162" data-claire-element-id="336162">Pourquoi utiliser cette fonction si on peut faire la même chose avec filter_input() ?</p></div><p id="r-336164" data-claire-element-id="336164">Parce qu'elle fait moins de tests.<br/> En effet, elle ne vérifie que l'existence d'un index, elle ne valide pas sa valeur.</p><p id="r-336165" data-claire-element-id="336165">C'est donc utile dans les cas où nous n'avons pas à vérifier la valeur.<br/> En voyez-vous un ?</p><p id="r-336166" data-claire-element-id="336166">Il y en a bien un :</p><div id="r-336168" data-claire-element-id="336168"><p id="r-336167" data-claire-element-id="336167">... pour les cases à cocher !</p></div><p id="r-336169" data-claire-element-id="336169">En effet, il n'est pas nécessaire de vérifier ce type de valeur, car il suffit de savoir si l'index existe ou non pour effectuer les traitements adéquats.</p><p id="r-336170" data-claire-element-id="336170">Nous avons vu bien des notions sur la validation des données, passons maintenant au grand nettoyage. :euh: <br/> Quoi ? Ne partez pas ! :-°</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur">Les filtres en PHP pour valider les données utilisateur</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/a-propos-des-filtres">
+À propos des filtres
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/valider-une-variable">
+Valider une variable
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/nettoyer-une-variable">
+Nettoyer une variable
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/filtrer-plusieurs-variables">
+Filtrer plusieurs variables
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/et-si-le-filtre-que-je-veux-n-est-pas-la">
+Et si le filtre que je veux n&#039;est pas là ?
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/a-propos-des-filtres">
+<span class="arrow"></span>
+<span class="next">À propos des filtres</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/nettoyer-une-variable">
+<span class="next">Nettoyer une variable</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Nettoyerunevariable"></a><h2>Nettoyer une variable</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/valider-une-variable">
+<span class="arrow"></span>
+<span class="next">Valider une variable</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/filtrer-plusieurs-variables">
+<span class="next">Filtrer plusieurs variables</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-336173" data-claire-element-id="336173">Le nettoyage d'une variable consiste à enlever des caractères interdits, tels les espaces dans un lien.</p><h2 id="r-les-chaines-de-caracteres-14" data-claire-element-id="336202">Les chaînes de caractères</h2><p id="r-336174" data-claire-element-id="336174">Nous devons toujours nettoyer les chaînes de caractères provenant de l'utilisateur que nous afficherons à l'écran.<br/> Un exemple : un message dans un forum.</p><div id="r-336176" data-claire-element-id="336176" data-claire-semantic="question"><p id="r-336175" data-claire-element-id="336175">En quoi consiste ce nettoyage ? Et pourquoi faut-il les nettoyer ?</p></div><p id="r-336177" data-claire-element-id="336177">Il consiste en la suppression des balises (x)HTML et en l'encodage de certains caractères spéciaux (par exemple, l'apostrophe devient <code data-claire-semantic="html">&amp;#39;</code>).<br/> Il importe de nettoyer les chaînes de caractères envoyées par l'utilisateur, car certaines personnes sont très méchantes. :colere2:</p><p id="r-336178" data-claire-element-id="336178">Si vous ne nettoyez pas les données utilisateur et que vous les affichez, elles pourront contenir des balises (x)HTML et, pire encore, du JavaScript (et là, c'est le drame :'( ).</p><div id="r-336180" data-claire-element-id="336180" data-claire-semantic="question"><p id="r-336179" data-claire-element-id="336179">Si je nettoie une chaîne de caractères, puis-je l'insérer sans risque dans une base de données ?</p></div><p id="r-336181" data-claire-element-id="336181">Comme les apostrophes et les guillemets sont encodés, cela réduit les risques d'<a href="http://fr.wikipedia.org/wiki/Injection_SQL">injections SQL</a>.<br/> Par contre, si l'utilisateur entre certains caractères spéciaux comme un \, une erreur sera causée si la chaîne n'est pas protégée pour la base de données.</p><p id="r-336182" data-claire-element-id="336182">Donc, ce nettoyage ne concerne que l'affichage à l'écran.</p><aside id="r-336184" data-claire-element-id="336184" data-claire-semantic="information"><p id="r-336183" data-claire-element-id="336183">Nettoyez toutes les chaînes de caractères postées par l'utilisateur et qui seront affichées à l'écran.<br/> C'est une protection efficace contre la <a href="http://fr.wikipedia.org/wiki/Cross-site_scripting">faille XSS</a>.</p></aside><p id="r-336185" data-claire-element-id="336185">Pour valider une donnée, nous utilisions un filtre du genre FILTER_VALIDATE_*.<br/> Maintenant, nous en utiliserons un du genre FILTER_SANITIZE_*.</p><p id="r-336186" data-claire-element-id="336186">Voici un exemple très simple :</p><pre id="r-336187" data-claire-element-id="336187"><code data-claire-semantic="html+php">&lt;?php
+
+$valeur = '&lt;strong&gt;Texte en gras&lt;/strong&gt;';
+
+$valeurNettoyee = filter_var($valeur, FILTER_SANITIZE_STRING); //Supprimer les balises.
+
+echo $valeurNettoyee;</code></pre><p id="r-336188" data-claire-element-id="336188">La variable, au départ, contient une balise <code data-claire-semantic="html">&lt;strong&gt;</code>.</p><p id="r-336189" data-claire-element-id="336189">Par contre, quand nous affichons la variable nettoyée, le texte n'est pas en gras (contrairement à ce qui est écrit :p ).</p><p id="r-336190" data-claire-element-id="336190">Cette fois, nous avons utilisé <code data-claire-semantic="html+php">filter_var()</code>, mais sachez que nous pouvons toujours utiliser <code data-claire-semantic="html+php">filter_input()</code> :</p><pre id="r-336191" data-claire-element-id="336191"><code data-claire-semantic="html+php">&lt;?php
+
+echo filter_input(INPUT_GET, 'texte', FILTER_SANITIZE_STRING);</code></pre><p id="r-336192" data-claire-element-id="336192">Il existe une variante de FILTER_SANITIZE_STRING qui affiche les balises telles quelles (c'est-à-dire qu'elle remplace les &lt;, &gt; et &amp; en leur entité XML correspondante).</p><p id="r-336193" data-claire-element-id="336193">Voici un exemple :</p><pre id="r-336194" data-claire-element-id="336194"><code data-claire-semantic="html+php">&lt;?php
+
+echo filter_input(INPUT_GET, 'texte', FILTER_SANITIZE_SPECIAL_CHARS);</code></pre><p id="r-336195" data-claire-element-id="336195">Cette fois, si le texte est '&lt;strong&gt;gras&lt;/strong&gt;', alors c'est ce qui sera affiché.</p><p id="r-336196" data-claire-element-id="336196">Si on regarde le code source (x)HTML, nous voyons ceci :</p><pre id="r-336197" data-claire-element-id="336197"><code data-claire-semantic="html">&amp;#60;strong&amp;#62;gras&amp;#60;/strong&amp;#62;</code></pre><p id="r-336198" data-claire-element-id="336198">Nous pouvons constater que le (x)HTML ne nous fera plus de mal. ^^</p><aside id="r-336201" data-claire-element-id="336201" data-claire-semantic="information"><p id="r-336199" data-claire-element-id="336199">Veuillez noter qu'il est possible de nettoyer des données en tant que lien ou adresse de messagerie, mais c'est moins utile.<br/> Ces filtres enlèvent les caractères non autorisés comme les espaces et les caractères accentués.</p><p id="r-336200" data-claire-element-id="336200">Pour ce faire, vous devez utiliser les filtres FILTER_SANITIZE_EMAIL ou FILTER_SANITIZE_URL.</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur">Les filtres en PHP pour valider les données utilisateur</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/a-propos-des-filtres">
+À propos des filtres
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/valider-une-variable">
+Valider une variable
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/nettoyer-une-variable">
+Nettoyer une variable
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/filtrer-plusieurs-variables">
+Filtrer plusieurs variables
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/et-si-le-filtre-que-je-veux-n-est-pas-la">
+Et si le filtre que je veux n&#039;est pas là ?
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/valider-une-variable">
+<span class="arrow"></span>
+<span class="next">Valider une variable</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/filtrer-plusieurs-variables">
+<span class="next">Filtrer plusieurs variables</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Filtrerplusieursvariables"></a><h2>Filtrer plusieurs variables</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/nettoyer-une-variable">
+<span class="arrow"></span>
+<span class="next">Nettoyer une variable</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/et-si-le-filtre-que-je-veux-n-est-pas-la">
+<span class="next">Et si le filtre que je veux n&#039;est pas là ?</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-336204" data-claire-element-id="336204">Avec ce que vous avez vu jusqu'à présent, vous vous dites peut-être que c'est tout de même lourd de valider plusieurs variables à la fois.<br/> Vous vous dites peut-être qu'il faut utiliser une boucle pour valider toutes les variables reçues.<br/> Eh bien détrompez-vous. :)</p><p id="r-336205" data-claire-element-id="336205">Ici, nous allons voir comment filtrer plusieurs variables à l'aide d'un tableau et d'une nouvelle fonction.</p><p id="r-336206" data-claire-element-id="336206">Maintenant, nous pouvons nous amuser (après le travail, la récompense ^^ ).</p><p id="r-336207" data-claire-element-id="336207">Nous allons travailler avec le formulaire suivant :</p><pre id="r-336208" data-claire-element-id="336208"><code data-claire-semantic="html">&lt;form action=&quot;cible.php&quot; method=&quot;post&quot;&gt;
+    Prénom : &lt;input type=&quot;text&quot; name=&quot;prenom&quot;/&gt;&lt;br/&gt;
+    Adresse de messagerie : &lt;input type=&quot;text&quot; name=&quot;email&quot;/&gt;&lt;br/&gt;
+    Âge : &lt;input type=&quot;text&quot; name=&quot;age&quot;/&gt;&lt;br/&gt;
+    &lt;input type=&quot;submit&quot; value=&quot;Envoyer&quot;/&gt;
+&lt;/form&gt;</code></pre><p id="r-336209" data-claire-element-id="336209">Pour simplifier le problème, nous allons insérer le formulaire et la validation sur des pages différentes, bien que ce ne soit pas obligatoire.</p><p id="r-336210" data-claire-element-id="336210">En outre, nous allons seulement afficher les données postées à l'écran (si elles sont valides, bien sûr).</p><p id="r-336211" data-claire-element-id="336211">Pour valider plusieurs variables à la fois, nous allons utiliser une nouvelle fonction : <code data-claire-semantic="html+php">filter_input_array()</code>.</p><p id="r-336212" data-claire-element-id="336212">Ce qui nous aide un peu, ici, c'est que <code data-claire-semantic="html+php">$_POST</code> est un tableau !</p><p id="r-336213" data-claire-element-id="336213">Cette fonction prend deux paramètres :</p><ul id="r-336218" data-claire-element-id="336218"><li id="r-336215" data-claire-element-id="336215"><p id="r-336214" data-claire-element-id="336214">le type (INPUT_POST, INPUT_GET, ?) ;</p></li><li id="r-336217" data-claire-element-id="336217"><p id="r-336216" data-claire-element-id="336216">un tableau établissant la correspondance entre le nom des champs et leurs options.</p></li></ul><p id="r-336219" data-claire-element-id="336219">Donc, la seule chose à faire est de construire ce tableau.</p><p id="r-336220" data-claire-element-id="336220">Allons-y de ce pas !</p><p id="r-336221" data-claire-element-id="336221">Premièrement, construisons le tableau sans les options.<br/> Ça nous donne :</p><pre id="r-336222" data-claire-element-id="336222"><code data-claire-semantic="html+php">&lt;?php
+
+$options = array(
+    'prenom' =&gt; (?),
+    'email' =&gt; (?),
+    'age' =&gt; (?)
+);</code></pre><div id="r-336224" data-claire-element-id="336224" data-claire-semantic="question"><p id="r-336223" data-claire-element-id="336223">Que faut-il mettre comme valeur à la place des (?) ?</p></div><p id="r-336225" data-claire-element-id="336225">Nous pouvons mettre une constante comme FILTER_SANITIZE_STRING ou FILTER_VALIDATE_EMAIL, ce qui nous donne ceci :</p><pre id="r-336226" data-claire-element-id="336226"><code data-claire-semantic="html+php">&lt;?php
+
+$options = array(
+    'prenom' =&gt; FILTER_SANITIZE_STRING,
+    'email' =&gt; FILTER_VALIDATE_EMAIL,
+    'age' =&gt; (?)
+);</code></pre><p id="r-336227" data-claire-element-id="336227">Nous pouvons également mettre un tableau avec les clés 'options' comme nous avons vu plus haut.<br/> Dans ce tableau, nous pouvons insérer une nouvelle clé : 'filter'. C'est également une constante du type FILTER_*_*.</p><p id="r-336228" data-claire-element-id="336228">Voici donc comment valider plusieurs données :</p><pre id="r-336229" data-claire-element-id="336229"><code data-claire-semantic="html+php">&lt;?php
+
+$options = array(
+    'prenom' =&gt; FILTER_SANITIZE_STRING, //Enlever les balises.
+    'email' =&gt; FILTER_VALIDATE_EMAIL, //Valider l'adresse de messagerie.
+    'age' =&gt; array(
+        'filter' =&gt; FILTER_VALIDATE_INT, //Valider l'entier.
+        'options' =&gt; array(
+            'min_range' =&gt; 0 //Minimum 0.
+        )
+    )
+);
+
+$resultat = filter_input_array(INPUT_POST, $options);</code></pre><p id="r-336230" data-claire-element-id="336230">Avant de connaître les filtres, vous auriez fait un truc du genre :</p><pre id="r-336231" data-claire-element-id="336231"><code data-claire-semantic="html+php">&lt;?php
+
+$prenom = htmlspecialchars($_POST['prenom']);
+$email = htmlspecialchars($_POST['email']);
+
+if(!preg_match('`#^[a-z0-9._-]+@[a-z0-9._-]{2,}\.[a-z]{2,4}$#`', $email)) {
+    [?]
+}
+
+if(!is_int($_POST['age'])) {
+    [?]
+}
+else {
+    if($age &lt; 0) {
+        [?]
+    }
+}</code></pre><p id="r-336232" data-claire-element-id="336232">Je trouve cela beaucoup plus lourd.<br/> Ce code utilise beaucoup de conditions tandis que l'autre n'en a aucune.<br/> Et imaginez avec un plus gros formulaire (nous n'avons que trois champs présentement o_O ).</p><p id="r-336233" data-claire-element-id="336233">Revenons à notre code.<br/> La dernière ligne est celle-ci :</p><pre id="r-336234" data-claire-element-id="336234"><code data-claire-semantic="html+php">&lt;?php
+
+$resultat = filter_input_array(INPUT_POST, $options);</code></pre><div id="r-336236" data-claire-element-id="336236" data-claire-semantic="question"><p id="r-336235" data-claire-element-id="336235">Qu'est-ce qui est envoyé à la variable $resultat ?</p></div><p id="r-336237" data-claire-element-id="336237">Un tableau contenant au maximum trois types de données :</p><ul id="r-336244" data-claire-element-id="336244"><li id="r-336239" data-claire-element-id="336239"><p id="r-336238" data-claire-element-id="336238">la valeur validée ;</p></li><li id="r-336241" data-claire-element-id="336241"><p id="r-336240" data-claire-element-id="336240"><code data-claire-semantic="html+php">false</code> si la valeur n'est pas valide ;</p></li><li id="r-336243" data-claire-element-id="336243"><p id="r-336242" data-claire-element-id="336242"><code data-claire-semantic="html+php">null</code> si la valeur n'existe pas.</p></li></ul><p id="r-336245" data-claire-element-id="336245">Par conséquent, nous pourrions tester les données comme ceci :</p><pre id="r-336246" data-claire-element-id="336246"><code data-claire-semantic="html+php">&lt;?php
+
+if($resultat != null) { //Si le formulaire a bien été posté.
+    //Enregistrer des messages d'erreur perso.
+    $messageErreur = array(
+        'email' =&gt; 'L\'adresse de messagerie n\'est pas valide.',
+        'age' =&gt; 'Veuillez entrer un nombre entier positif pour votre âge.'
+    );
+    
+    $nbrErreurs = 0;
+
+    foreach($options as $cle =&gt; $valeur) { //Parcourir tous les champs voulus.
+        if(empty($_POST[$cle])) { //Si le champ est vide.
+            echo 'Veuillez remplir le champ ' . $cle . '.&lt;br/&gt;';
+            $nbrErreurs++;
+        }
+        elseif($resultat[$cle] === false) { //S'il n'est pas valide.
+            echo $messageErreur[$cle] . '&lt;br/&gt;';
+            $nbrErreurs++;
+        }
+    }
+
+    if($nbrErreurs == 0) {
+        echo 'Bonjour ' . $resultat['prenom'] . ' !&lt;br/&gt;Ton adresse de messagerie est bien ' . $resultat['email'] . ' ?&lt;br/&gt;';
+        echo 'Tu as ' . $resultat['age'] . ' ans ? Tu as bien grandi !';
+    }
+}
+else {
+    echo 'Vous n\'avez rien posté.';
+}</code></pre><p id="r-336247" data-claire-element-id="336247">Premièrement, il faut savoir que la valeur retournée par <code data-claire-semantic="html+php">filter_input_array()</code> est <code data-claire-semantic="html+php">null</code> si aucune des données voulues (du tableau d'options) n'est présente.<br/> Si c'est le cas, ce ne sera donc pas un tableau contenant que des valeurs <code data-claire-semantic="html+php">null</code>.</p><p id="r-336248" data-claire-element-id="336248">C'est cela que nous vérifions en premier.</p><p id="r-336249" data-claire-element-id="336249">Ensuite, nous créons un tableau de messages d'erreur et une variable qui contiendra le nombre d'erreurs.</p><p id="r-336250" data-claire-element-id="336250">Puis nous parcourons tous les champs et vérifions qu'ils sont valides et non vides.</p><p id="r-336251" data-claire-element-id="336251">Enfin, s'il n'y a pas d'erreurs, nous affichons les données postées par l'utilisateur.</p><p id="r-336252" data-claire-element-id="336252">Voilà : nous avons un système dans lequel il est très facile d'ajouter et d'enlever de nouveaux champs.</p><p id="r-336253" data-claire-element-id="336253">Nous aurions pu faire plus court sans boucle, mais, dans ce cas, nous devrions ajouter une condition à chaque nouveau champ, de telle sorte que ça deviendrait très lourd de valider un gros formulaire.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur">Les filtres en PHP pour valider les données utilisateur</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/a-propos-des-filtres">
+À propos des filtres
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/valider-une-variable">
+Valider une variable
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/nettoyer-une-variable">
+Nettoyer une variable
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/filtrer-plusieurs-variables">
+Filtrer plusieurs variables
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/et-si-le-filtre-que-je-veux-n-est-pas-la">
+Et si le filtre que je veux n&#039;est pas là ?
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/nettoyer-une-variable">
+<span class="arrow"></span>
+<span class="next">Nettoyer une variable</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/et-si-le-filtre-que-je-veux-n-est-pas-la">
+<span class="next">Et si le filtre que je veux n&#039;est pas là ?</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Etsilefiltrequejeveuxn039estpasl"></a><h2>Et si le filtre que je veux n&#039;est pas là ?</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/filtrer-plusieurs-variables">
+<span class="arrow"></span>
+<span class="next">Filtrer plusieurs variables</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-336255" data-claire-element-id="336255">Vous n'avez qu'à le créer ! :lol: <br/> Et c'est ce que nous allons voir ici.</p><p id="r-336256" data-claire-element-id="336256">Nous allons reprendre l'<a href="http://www.siteduzero.com/tutoriel-3-14618-les-expressions-regulieres-partie-2-2.html#ss_part_3">exemple du numéro de téléphone du tutoriel PHP/MySQL</a>.</p><p id="r-336257" data-claire-element-id="336257">Nous allons créer deux filtres : un pour valider le numéro, l'autre pour le nettoyer.</p><h2 id="r-creation-d-un-filtre-de-validation" data-claire-element-id="336278">Création d'un filtre de validation</h2><p id="r-336258" data-claire-element-id="336258">Pour créer un filtre, nous devons créer une fonction qui renverra la même chose que <code data-claire-semantic="html+php">filter_var()</code> (la chaîne ou <code data-claire-semantic="html+php">false</code>).<br/> Ensuite, nous devrons appeler <code data-claire-semantic="html+php">filter_var()</code> avec la constante FILTER_CALLBACK et lui indiquer le nom de la fonction :</p><pre id="r-336259" data-claire-element-id="336259"><code data-claire-semantic="html+php">&lt;?php
+
+filter_var($variable, FILTER_CALLBACK, array('options' =&gt; 'nomFonction'));</code></pre><p id="r-336260" data-claire-element-id="336260">Pour valider le numéro, nous allons utiliser cette expression régulière :</p><pre id="r-336261" data-claire-element-id="336261"><code>`^0[1-9]([-. ]?[0-9]{2}){4}$`</code></pre><p id="r-336262" data-claire-element-id="336262">Donc, notre fonction pour valider le numéro est très simple :</p><pre id="r-336263" data-claire-element-id="336263"><code data-claire-semantic="html+php">&lt;?php
+
+function validerNumero($telATester) {
+    //Retourne le numéro s'il est valide, sinon false.
+    return preg_match('`^0[1-9]([-. ]?[0-9]{2}){4}$`', $telATester) ? $telATester : false;
+}</code></pre><aside id="r-336265" data-claire-element-id="336265" data-claire-semantic="warning"><p id="r-336264" data-claire-element-id="336264">J'ai utilisé une condition ternaire.<br/> Si vous ne vous souvenez plus comment les utiliser, allez relire <a href="http://www.siteduzero.com/tutoriel-3-14463-les-conditions.html#ss_part_3">le tutoriel PHP/MySQL</a>.</p></aside><p id="r-336266" data-claire-element-id="336266">Vérifions que ça fonctionne bien :</p><pre id="r-336267" data-claire-element-id="336267"><code data-claire-semantic="html+php">&lt;?php
+
+$numero = '0153789999';
+var_dump(filter_var($numero, FILTER_CALLBACK, array('options' =&gt; 'validerNumero')));</code></pre><p id="r-336268" data-claire-element-id="336268">C'est super, nous voyons le numéro s'afficher !</p><p id="r-336269" data-claire-element-id="336269">Vérifions une donnée invalide :</p><pre id="r-336270" data-claire-element-id="336270"><code data-claire-semantic="html+php">&lt;?php
+
+$numero = '153789999'; //Il manque le zéro au début.
+var_dump(filter_var($numero, FILTER_CALLBACK, array('options' =&gt; 'validerNumero')));</code></pre><p id="r-336271" data-claire-element-id="336271">Nous voyons « bool(false) », ce qui signifie que le numéro n'est pas valide.<br/> Et c'est bien le cas.</p><p id="r-336272" data-claire-element-id="336272">Le filtre de validation fonctionne bien.</p><div id="r-336274" data-claire-element-id="336274" data-claire-semantic="question"><p id="r-336273" data-claire-element-id="336273">Mais à quoi ça sert de faire un filtre puisque nous créons déjà la fonction qui valide le numéro ?<br/> Pourquoi ne pas utiliser seulement cette fonction ?</p></div><p id="r-336275" data-claire-element-id="336275">Créer un filtre personnalisé, comme nous venons de faire, est utile lorsque nous voulons valider plusieurs données venant de l'utilisateur (voir la sous-partie précédente).<br/> Ainsi, nous pouvons utiliser notre filtre dans le tableau d'options :</p><pre id="r-336276" data-claire-element-id="336276"><code data-claire-semantic="html+php">&lt;?php
+
+$filtres = array(
+    'numero' =&gt; array(
+        'filter' =&gt; FILTER_CALLBACK,
+        'options' =&gt; 'validerNumero'
+    )
+);
+
+$resultats = filter_input_array(INPUT_GET, $filtres);
+
+if($resultats['numero'] !== false) {
+    echo 'Le numéro est valide.';
+}</code></pre><p id="r-336277" data-claire-element-id="336277">Passons aux filtres de nettoyage.</p><h2 id="r-creation-d-un-filtre-de-nettoyage" data-claire-element-id="336301">Création d'un filtre de nettoyage</h2><p id="r-336279" data-claire-element-id="336279">Nous allons créer un filtre pour nettoyer le numéro de téléphone.</p><p id="r-336280" data-claire-element-id="336280">Il enlèvera tous les caractères non numériques et ajoutera autant de zéros que nécessaire au début de la chaîne pour qu'elle contienne dix caractères.</p><p id="r-336281" data-claire-element-id="336281">La fonction que nous devons créer doit effectuer ces traitements et renvoyer la chaîne nettoyée.</p><p id="r-336282" data-claire-element-id="336282">Je vous propose cette fonction :</p><pre id="r-336283" data-claire-element-id="336283"><code data-claire-semantic="html+php">&lt;?php
+
+function nettoyerNumero($telANettoyer) {
+    //Enlever tous les caractères non numériques.
+    $telANettoyer = preg_replace('`[^0-9]`', '', $telANettoyer);
+    
+    //Ajout de zéros si besoin.
+    $telANettoyer = str_pad($telANettoyer, 10, '0', STR_PAD_LEFT);
+    
+    return $telANettoyer;
+}</code></pre><p id="r-336284" data-claire-element-id="336284">Premièrement, nous utilisons une expression régulière pour enlever tous les caractères autres que les chiffres de 0 à 9.</p><p id="r-336285" data-claire-element-id="336285">Ensuite, si la chaîne contient moins de 10 caractères, nous ajoutons le nombre de zéros requis avec <code data-claire-semantic="html+php"><a href="http://ca3.php.net/manual/fr/function.str-pad.php">str_pad()</a></code>.</p><p id="r-336286" data-claire-element-id="336286">Nous pouvons maintenant nettoyer les numéros de téléphone.</p><p id="r-336287" data-claire-element-id="336287">Procédons à quelques essais :</p><pre id="r-336288" data-claire-element-id="336288"><code data-claire-semantic="html+php">&lt;?php
+
+$numero = '01 53 78 99 99';
+var_dump(filter_var($numero, FILTER_CALLBACK, array('options' =&gt; 'nettoyerNumero')));</code></pre><p id="r-336289" data-claire-element-id="336289">À l'écran, nous voyons :</p><pre id="r-336290" data-claire-element-id="336290"><code>string(10) &quot;0153789999&quot;</code></pre><p id="r-336291" data-claire-element-id="336291">Les espaces ont bien été enlevés.</p><p id="r-336292" data-claire-element-id="336292">Un autre essai :</p><pre id="r-336293" data-claire-element-id="336293"><code data-claire-semantic="html+php">&lt;?php
+
+$numero = '153789999';
+var_dump(filter_var($numero, FILTER_CALLBACK, array('options' =&gt; 'nettoyerNumero')));</code></pre><p id="r-336294" data-claire-element-id="336294">Résultat :</p><pre id="r-336295" data-claire-element-id="336295"><code>string(10) &quot;0153789999&quot;</code></pre><p id="r-336296" data-claire-element-id="336296">Le zéro a bien été ajouté.</p><p id="r-336297" data-claire-element-id="336297">Nos deux filtres fonctionnent !</p><p id="r-336298" data-claire-element-id="336298">Voilà : maintenant, vous savez tout sur les filtres (ou presque :-° ).</p><p id="r-336299" data-claire-element-id="336299">Donc, les <strong>filtres</strong> servent à valider et à nettoyer les données provenant de l'utilisateur.<br/> Ils vous permettent non seulement d'éviter de mauvaises surprises si ce dernier entre une chaîne de caractères avec des balises (x)HTML, mais aussi lorsqu'il n'entre pas le bon type de données.</p><p id="r-336300" data-claire-element-id="336300">Pour avoir plus d'informations sur les filtres, vous pouvez consulter <a href="http://fr.php.net/manual/fr/book.filter.php">la documentation de PHP sur les filtres</a>.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur">Les filtres en PHP pour valider les données utilisateur</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/a-propos-des-filtres">
+À propos des filtres
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/valider-une-variable">
+Valider une variable
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/nettoyer-une-variable">
+Nettoyer une variable
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/filtrer-plusieurs-variables">
+Filtrer plusieurs variables
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/et-si-le-filtre-que-je-veux-n-est-pas-la">
+Et si le filtre que je veux n&#039;est pas là ?
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-filtres-en-php-pour-valider-les-donnees-utilisateur/filtrer-plusieurs-variables">
+<span class="arrow"></span>
+<span class="next">Filtrer plusieurs variables</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/les-filtres-en-php-pour-valider-les-donnees-utilisateur.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 05:39:28 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/les-filtres-en-php-pour-valider-les-donnees-utilisateur.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:00:07 GMT -->
+</html>

@@ -1,0 +1,723 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/les-sauts-2d-en-c.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 05:47:08 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/les-sauts-2d-en-c.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:01:58 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Les sauts 2D en C</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/les-sauts-2d-en-c.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Les sauts 2D en C</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Lessauts2DenC">Les sauts 2D en C</a><br/><a href="#Prparerleterrain">Préparer le terrain</a><br/><a href="#Mthode1paraboles">Méthode 1 : paraboles</a><br/><a href="#Mthode2loisdeNewtonampCie">Méthode 2 : lois de Newton &amp; Cie</a><br/><a href="#Mthode3approcheintuitive">Méthode 3 : approche intuitive</a><br/></div>
+<a name="Lessauts2DenC"></a><h2>Les sauts 2D en C</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-sauts-2d-en-c/preparer-le-terrain-3">
+<span class="next">Préparer le terrain</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-369654" data-claire-element-id="369654">Hello les zér0s.</p><p id="r-369655" data-claire-element-id="369655">Que peuvent donc bien être les sauts en C avec la bibliothèque SDL ?</p><p id="r-369656" data-claire-element-id="369656">Des GoTo, des Lbl ? o_O</p><p id="r-369657" data-claire-element-id="369657">Nan, nan, rien de tout cela. :p Dans le forum, il y a souvent eu des questions du genre : « <strong>Comment je fais pour faire sauter mon perso ?</strong> », et très peu de réponses...</p><figure id="r-369659" data-claire-element-id="369660"><img id="r-369658" data-claire-element-id="369658" src="medias/uploads.siteduzero.com_files_104001_105000_104420.png" alt="Image utilisateur"/></figure><p id="r-369661" data-claire-element-id="369661">Aujourd'hui, on va donc apprendre à faire sauter vos personnages, en 3 méthodes !</p><p id="r-369662" data-claire-element-id="369662">Après un débat long et sanglant, bluestorm et d'autres personnes du Site du Zéro recommandent d'utiliser la troisième méthode. Je ne vous cache pas cependant que je tends plutôt vers les deux premières, ayant créé ce cours pour vous montrer les méthodes les plus rigoureuses possibles. La dernière méthode semble cependant plus acceptée dans l'idée générale, peut-être parce qu'elle est plus intuitive et que les autres méthodes <em>paraissent</em> plus fastidieuses. Tout ce que je peux vous conseiller est de lire les trois méthodes, et de les utiliser au cas par cas. Au fur et à mesure du tutorial, je vous expliquerai leur utilité spécifique.</p><aside id="r-369664" data-claire-element-id="369664" data-claire-semantic="warning"><p id="r-369663" data-claire-element-id="369663">Il faut quelques mises en garde et des pré-requis.<br/> Ce tutoriel va utiliser des maths de niveau première S pour la méthode 1 et une partie du programme de sciences physiques de terminale. Je vais vous expliquer mais il faudra savoir ce que sont, en maths, une fonction, une parabole, une équation de courbe, la constante gravitationnelle, les fonctions paramétriques... Bref, soyez <strong>au moins</strong> en troisième pour la méthode 1, et... en terminale pour la méthode 2. De plus, il faut avoir lu <strong>et compris</strong> le tuto de M@téo21 disponible sur votre gauche (tuto C / SDL), ceci <strong>en entier</strong>. Ça, c'était les pré-requis.</p></aside><p id="r-369665" data-claire-element-id="369665">Venez donc faire un saut dans mon tuto (c'est le cas de le dire) ! :D</p>
+</div><a name="Prparerleterrain"></a><h2>Préparer le terrain</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-sauts-2d-en-c/methode-1-paraboles">
+<span class="next">Méthode 1 : paraboles</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-369666" data-claire-element-id="369666">Donc, je disais qu'il y a besoin de connaître le tuto de M@teo21 sur le langage C ; ainsi vous savez, en C, initialiser une fenêtre SDL. Notre but est, sur cette fenêtre, d'afficher un personnage qui fait un saut. Commencez par ouvrir une fenêtre :</p><pre id="r-369667" data-claire-element-id="369667"><code data-claire-semantic="c">#include &lt;stdlib.h&gt;
+#include &lt;SDL/SDL.h&gt;
+#include &lt;SDL/SDL_image.h&gt;
+
+int main ( int argc, char** argv )
+{
+    //Init de la SDL
+    SDL_Init( SDL_INIT_VIDEO );
+
+    // On crée une fenêtre
+    SDL_Surface* ecran = SDL_SetVideoMode(640, 480, 16,SDL_HWSURFACE|SDL_DOUBLEBUF);
+
+    // La boucle principale
+    int fin = 0;
+    while (!fin)
+    {
+        SDL_Event event;
+        while (SDL_PollEvent(&amp;event))
+        {
+            switch (event.type)
+            {
+            case SDL_QUIT:
+                fin = 1;
+                break;
+
+            case SDL_KEYDOWN:
+                {
+                    if (event.key.keysym.sym == SDLK_ESCAPE)
+                        fin = 1;
+                    break;
+                }
+            }
+        }
+
+        // Affichage
+
+        //On vide l'écran
+        SDL_FillRect(ecran, 0, SDL_MapRGB(ecran-&gt;format, 0, 0, 0));
+
+        // Fin de l'affichage
+
+        SDL_Flip(ecran);
+    }
+
+    SDL_Quit();
+
+    return 0;
+}</code></pre><p id="r-369668" data-claire-element-id="369668">Voilà : ça, c'est le plus facile. :p Qu'est-ce qu'on obtient ? Un écran noir, pas trop grand, prenant bien sûr tout l'UC à cause de la fonction SDL_PollEvent();.</p><p id="r-369669" data-claire-element-id="369669">Notre but sera d'afficher un personnage qui saute du sol, pour revenir jusqu'au sol. Dites bonjour à... Mario !</p><figure id="r-369671" data-claire-element-id="369672"><img id="r-369670" data-claire-element-id="369670" src="medias/uploads.siteduzero.com_files_104001_105000_104395.png" alt="Image utilisateur"/></figure><p id="r-369673" data-claire-element-id="369673">Téléchargez mon Mario ; il est en PNG donc il va nous falloir ajouter la bibliothèque SDL_Image. Je vous rappelle comment faire. On met un include en haut de la page :</p><pre id="r-369674" data-claire-element-id="369674"><code data-claire-semantic="c">#include &lt;SDL/SDL_image.h&gt;</code></pre><p id="r-369675" data-claire-element-id="369675">Et pour charger notre image, il faut ajouter une fonction au début de notre code :</p><pre id="r-369676" data-claire-element-id="369676"><code data-claire-semantic="c">SDL_Surface* mario = IMG_Load(&quot;mario.png&quot;);</code></pre><p id="r-369677" data-claire-element-id="369677">Maintenant qu'on a notre cher Mario, il faudrait peut-être qu'on ait un sol sur lequel il saute. Ne vous tuez pas à ça, faites simplement comme moi :</p><figure id="r-369679" data-claire-element-id="369680"><img id="r-369678" data-claire-element-id="369678" src="medias/uploads.siteduzero.com_files_104001_105000_104397.png" alt="Image utilisateur"/></figure><p id="r-369681" data-claire-element-id="369681">La ligne, c'est le sol, hein ! :p</p><p id="r-369682" data-claire-element-id="369682">Nous avons maintenant tout pour commencer !</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-sauts-2d-en-c">Les sauts 2D en C</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-sauts-2d-en-c/preparer-le-terrain-3">
+Préparer le terrain
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-sauts-2d-en-c/methode-1-paraboles">
+Méthode 1 : paraboles
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-sauts-2d-en-c/methode-2-lois-de-newton-cie">
+Méthode 2 : lois de Newton &amp; Cie
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-sauts-2d-en-c/methode-3-approche-intuitive">
+Méthode 3 : approche intuitive
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-sauts-2d-en-c/methode-1-paraboles">
+<span class="next">Méthode 1 : paraboles</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Mthode1paraboles"></a><h2>Méthode 1 : paraboles</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-sauts-2d-en-c/preparer-le-terrain-3">
+<span class="arrow"></span>
+<span class="next">Préparer le terrain</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-sauts-2d-en-c/methode-2-lois-de-newton-cie">
+<span class="next">Méthode 2 : lois de Newton &amp; Cie</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-369684" data-claire-element-id="369684">Là, c'est la partie difficile qui commence... En effet, on va faire des maths et de la physique !</p><p id="r-369685" data-claire-element-id="369685">Commençons avec la première méthode.</p><h2 id="r-les-sauts-une-question-de-paraboles" data-claire-element-id="369691">Les sauts, une question de paraboles</h2><p id="r-369686" data-claire-element-id="369686">Tout est dans le titre. En effet, d'après les lois physiques, un objet est en chute libre si uniquement son poids travaille. Par conséquent, ayant une vitesse initiale plus ou moins grande, sa vitesse horizontale est constante, mais la vitesse verticale devient rapidement négative (dès que l'objet a atteint le plus haut point de son saut)... Ne faites pas attention à ce que je viens de vous dire si vous n'y comprenez rien. :p</p><p id="r-369687" data-claire-element-id="369687">En gros, un saut, c'est le mouvement d'un objet en chute libre, ce qui aura pour conséquence que la courbe de sa trajectoire est... une parabole ! Non pas un texte qui cache un enseignement moral ou religieux ( :p ), mais une courbe arrondie au-dessus qui imite les vrais sauts.</p><p id="r-369688" data-claire-element-id="369688">L'objet monte vite, ralentit, puis redescend lentement en accélérant. C'est donc bien une <strong>parabole</strong>.</p><aside id="r-369690" data-claire-element-id="369690" data-claire-semantic="information"><p id="r-369689" data-claire-element-id="369689">La méthode des paraboles fonctionne tout à fait correctement, on peut même dire que c'est la plus facile et la plus rapide des deux méthodes que je vous propose, et aussi la plus intuitive (vous verrez pourquoi après). Toutefois, comme les équations de paraboles sont diverses et nombreuses, il y a un certain risque de ne pas faire de sauts « réalistes », car, si les lois physiques donnent des paraboles, seule une certaine quantité de paraboles suit ces mêmes lois. Néanmoins, vous pouvez faire de très beaux sauts avec les paraboles ( :p ), et elles sont très facilement ré-adaptables. Sinon, quel intérêt de proposer cette méthode ? :D</p></aside><h2 id="r-trouver-l-equation-d-une-parabole" data-claire-element-id="369756">Trouver l'équation d'une parabole</h2><p id="r-369692" data-claire-element-id="369692">Pour définir la trajectoire du saut de l'image, il faut définir l'équation de la parabole correspondante.</p><div id="r-369694" data-claire-element-id="369694" data-claire-semantic="question"><p id="r-369693" data-claire-element-id="369693">Qui connaît les équations des paraboles ?</p></div><p id="r-369695" data-claire-element-id="369695">Bon, je vais vous le dire ( :) ) : une parabole a pour équation <strong>y = ax²+bx+c</strong>.</p><p id="r-369696" data-claire-element-id="369696">C'est là la partie fondamentale de notre saut : on connaît l'altitude de notre personnage (y) en fonction de son déplacement horizontal (x) !</p><p id="r-369697" data-claire-element-id="369697">Je vous montre à quoi ressemblerait cette parabole :</p><figure id="r-369699" data-claire-element-id="369700"><img id="r-369698" data-claire-element-id="369698" src="medias/uploads.siteduzero.com_files_104001_105000_104399.png" alt="Image utilisateur"/></figure><p id="r-369701" data-claire-element-id="369701">On va donc dessiner un repère fictif dans notre programme. o_O Je vous expliquerai ça plus en détail après. :p</p><p id="r-369702" data-claire-element-id="369702">On va maintenant s'occuper de trouver les <em>coefficients a, b et c </em>dans cette équation. En effet, si on connaît l'équation de notre parabole, on pourra donner le <strong>déplacement horizontal</strong> à notre programme pour qu'il calcule le <strong>déplacement vertical</strong>. :D Très pratique parce que cela s'appelle un saut ! :p</p><h3 id="r-trouver-b" data-claire-element-id="369705">Trouver b</h3><p id="r-369703" data-claire-element-id="369703">Eh oui je commence bien dans l'ordre ! :p b est le plus facile. En effet, comme on le voit sur mon schéma terrible de la mort qui tue, <em>la courbe est symétrique par rapport à l'axe des ordonnées</em>. Ce qui veut dire que le déplacement horizontal est nul, tout comme b.</p><p id="r-369704" data-claire-element-id="369704"><strong>Donc</strong> : b = 0.</p><h3 id="r-trouver-c" data-claire-element-id="369711">Trouver c</h3><p id="r-369706" data-claire-element-id="369706">Qui connaît la méthode pour trouver c ? C'est ce qu'on pourrait appeler l'ordonnée à l'origine. C'est en gros <em>l'ordonnée du sommet de la parabole</em>.</p><p id="r-369707" data-claire-element-id="369707">Par quoi cette ordonnée est-elle définie ?</p><p id="r-369708" data-claire-element-id="369708">Par la <em>hauteur du saut</em>, bien sûr !</p><p id="r-369709" data-claire-element-id="369709">Allez : de combien on fait sauter notre Mario ? 50 pixels ? 100 pixels ? Je choisirai 100 pour cet exemple, mais vous pouvez choisir plus, bien entendu.</p><p id="r-369710" data-claire-element-id="369710"><strong>Donc</strong> : c = 100.</p><h3 id="r-trouver-a" data-claire-element-id="369755">Trouver a</h3><p id="r-369712" data-claire-element-id="369712">Aïe, les choses se corsent encore. :p Où en sommes-nous, d'ailleurs ? L'équation qu'on a pour le moment est :</p><p id="r-369713" data-claire-element-id="369713">y = a*x²+100 (car b = 0).</p><p id="r-369714" data-claire-element-id="369714">De quoi peut bien dépendre a ? Je vous donne deux pistes :</p><ul id="r-369719" data-claire-element-id="369719"><li id="r-369716" data-claire-element-id="369716"><p id="r-369715" data-claire-element-id="369715">si a est positif, la parabole est tournée vers le haut, et inversement ;</p></li><li id="r-369718" data-claire-element-id="369718"><p id="r-369717" data-claire-element-id="369717">la parabole devient de plus en plus large quand a devient de plus en plus petit.</p></li></ul><p id="r-369720" data-claire-element-id="369720">Pour la première info, a doit bien sûr être négatif. En effet, on ne veut pas que notre personnage tombe et remonte, mais qu'il saute et qu'il redescende.</p><p id="r-369721" data-claire-element-id="369721">Exemple de parabole tournée vers le haut, où a est par conséquent positif :</p><figure id="r-369723" data-claire-element-id="369724"><img id="r-369722" data-claire-element-id="369722" src="medias/uploads.siteduzero.com_files_104001_105000_104401.png" alt="Image utilisateur"/></figure><p id="r-369725" data-claire-element-id="369725">Et une tournée vers le bas, où a est négatif :</p><figure id="r-369727" data-claire-element-id="369728"><img id="r-369726" data-claire-element-id="369726" src="medias/uploads.siteduzero.com_files_104001_105000_104402.png" alt="Image utilisateur"/></figure><p id="r-369729" data-claire-element-id="369729">J'ai surligné avec mes grands talents artistiques ( :p ) la partie qui va nous intéresser. Les coordonnées négatives, c'est pas pour tout de suite. On prend donc un a négatif !</p><p id="r-369730" data-claire-element-id="369730">La seconde information est capitale. <strong>Une parabole devient de plus en plus large quand a se rapproche de 0...</strong> Il faudrait donc peut-être choisir un point de départ et d'arrivée. Le point de départ est le moment du saut, et le point d'arrivée, le moment de l'atterrissage.</p><p id="r-369731" data-claire-element-id="369731">Je choisis comme point de départ 200 px, et 301 px comme moment d'atterrissage. Pourquoi 301 ? Si j'avais choisi un nombre pair, il serait plus difficile de placer notre repère fictif. Les demi-pixels n'existent malheureusement pas... :p</p><div id="r-369733" data-claire-element-id="369733" data-claire-semantic="question"><p id="r-369732" data-claire-element-id="369732">Où sera donc placé notre repère fictif ?</p></div><p id="r-369734" data-claire-element-id="369734">Au point 251, bien sûr ! C'est le milieu entre 200 et 301.</p><p id="r-369735" data-claire-element-id="369735">Maintenant, on veut connaître les coordonnées de ces points, que j'appelle A, le point de départ, et B, le point d'arrivée. Le personnage est au sol pendant ces deux moments, non ? Dans ce cas :</p><p id="r-369736" data-claire-element-id="369736">A(200;300)<br/> B(301;300)</p><p id="r-369737" data-claire-element-id="369737">Je vous rappelle que le sol, le trait que j'ai tracé, est à 300 px du bord inférieur de notre fenêtre. :) D'où le schéma suivant, avec les coordonnées absolues :</p><figure id="r-369739" data-claire-element-id="369740"><img id="r-369738" data-claire-element-id="369738" src="medias/uploads.siteduzero.com_files_106001_107000_106700.png" alt="Image utilisateur"/></figure><p id="r-369741" data-claire-element-id="369741">Malheureusement, on ne peut utiliser ça pour notre parabole, car cette dernière a un autre repère que notre fenêtre (<strong>l'origine est (251;300)</strong>). Réfléchissons donc : A et B sont distants de 101 px ; l'origine est au milieu de cette distance ; par conséquent, <strong>on peut dire que B est distant de 50 px de l'origine, et A aussi</strong>. Mais A est à gauche de l'axe des ordonnées. Donc, les abscisses de A sont <em>négatives</em>.</p><p id="r-369742" data-claire-element-id="369742">Ce qui nous donne ces points relatifs :</p><p id="r-369743" data-claire-element-id="369743">A(-50;0)<br/> B(50;0)</p><p id="r-369744" data-claire-element-id="369744">D'où le second schéma, avec les coordonnées dans le repère fictif :</p><figure id="r-369746" data-claire-element-id="369747"><img id="r-369745" data-claire-element-id="369745" src="medias/uploads.siteduzero.com_files_106001_107000_106924.png" alt="Image utilisateur"/></figure><p id="r-369748" data-claire-element-id="369748">On met 0 en ordonnées car les ordonnées de l'origine sont identiques à celles de nos points. Il est capital d'avoir compris cette partie, n'hésitez pas à relire. ;)</p><p id="r-369749" data-claire-element-id="369749">Maintenant qu'on a ces nouveaux points (dont vous pouvez personnaliser les abscisses, d'ailleurs), on reconsidère notre équation :</p><p id="r-369750" data-claire-element-id="369750">y = a*x²+100.</p><p id="r-369751" data-claire-element-id="369751">On peut remplacer x et y par les coordonnées de l'un de ces points. Je choisis A ; par conséquent,</p><p id="r-369752" data-claire-element-id="369752">0 = a*(-50)² + 100 ; on résout l'équation :<br/>2500a = -100.</p><p id="r-369753" data-claire-element-id="369753"><strong>Donc</strong> : a = -0,04.</p><p id="r-369754" data-claire-element-id="369754">a est-il bien négatif ? Oui, donc nous pouvons continuer !</p><h2 id="r-pourquoi-faire-tout-ca" data-claire-element-id="369770">Pourquoi faire tout ça</h2><p id="r-369757" data-claire-element-id="369757">Eh bien, parce que nous allons l'utiliser dans notre programme. Le repère choisi sera fictif, non dessiné, et ce qui sera surtout intéressant, c'est que nous allons positionner Mario selon un intervalle régulier du temps, pour créer un mouvement fluide.</p><p id="r-369758" data-claire-element-id="369758">Argh ( :pirate: ) pourquoi on était là, déjà ? Ah oui, pour programmer !</p><p id="r-369759" data-claire-element-id="369759">Mario, il est présent dans 2 repères : un fictif, et le repère de notre fenêtre. L'ennui avec le repère de notre fenêtre, c'est qu'il est inversé ; le 0 est tout en haut. On ne va pas s'embêter, on verra ça plus tard. :)</p><p id="r-369760" data-claire-element-id="369760">2 repères, ça veut dire... 2 positions ! Eh oui ! J'ai nommé...</p><pre id="r-369761" data-claire-element-id="369761"><code data-claire-semantic="c">SDL_Rect posMarioAbs;
+posMarioAbs.x = 200;
+posMarioAbs.y = 300;
+ 
+SDL_Rect posMarioRel;
+posMarioRel.x = -50;
+posMarioRel.y = 0;</code></pre><div id="r-369763" data-claire-element-id="369763" data-claire-semantic="question"><p id="r-369762" data-claire-element-id="369762">Hein ? <strong>Abs</strong> et <strong>Rel</strong> ?</p></div><p id="r-369764" data-claire-element-id="369764">Eh oui, il y a une position que j'appelle absolue : c'est la position de Mario dans la fenêtre. La seconde position est relative : c'est la position de Mario dans notre nouveau repère.</p><p id="r-369765" data-claire-element-id="369765">J'ai pris les coordonnées du point A pour la première position de notre Mario ; cf. ci-dessus.</p><p id="r-369766" data-claire-element-id="369766">Pourquoi en faire 2 ? Eh bien, parce que la SDL ne comprend rien aux repères relatifs : lui, y a que la fenêtre ! Et nous, on ne peut pas travailler dans le repère de la fenêtre ; conséquence, on travaille autre part, et ça nous fait deux positions. :p</p><p id="r-369767" data-claire-element-id="369767">Ne vous inquiétez pas, elles sont liées, c'est ça le plus grand intérêt. :)</p><p id="r-369768" data-claire-element-id="369768">Ne nous reposons pas sur nos lauriers tout de suite ; notre Mario est toujours immobile. :p</p><p id="r-369769" data-claire-element-id="369769">Nous allons donc nous intéresser au code, et plus particulièrement à la partie qui suit la gestion d'évènements, la partie que j'appelle <strong>« l'évolution »</strong>.</p><h2 id="r-l-evolution" data-claire-element-id="369805">L'évolution</h2><p id="r-369771" data-claire-element-id="369771">Ici, on va travailler sur les coordonnées de notre Mario.</p><p id="r-369772" data-claire-element-id="369772">L'évolution se situe ici :</p><pre id="r-369773" data-claire-element-id="369773"><code data-claire-semantic="c">main()
+{
+    initialisation();
+    while
+    {
+        gestion_évènements();
+        EVOLUTION();
+        affichage();
+    }
+    quitter();
+}</code></pre><p id="r-369774" data-claire-element-id="369774">Je vous ai fait un schéma bien sympathique de là où on va travailler. On va d'abord s'intéresser au temps.</p><h3 id="r-le-temps-2" data-claire-element-id="369779">Le temps</h3><p id="r-369775" data-claire-element-id="369775">Comme vous travaillez tous avec des ordis 4.0 GHz, le code va s'exécuter super vite. :p Vous n'aurez même pas le temps de voir votre pauvre Mario sauter... On va donc mettre un <strong>intervalle de temps régulier</strong> entre chaque affichage :</p><pre id="r-369776" data-claire-element-id="369776"><code data-claire-semantic="c">SDL_Delay(10);</code></pre><p id="r-369777" data-claire-element-id="369777">SDL_Delay interrompt le programme pendant un temps exprimé en ms. L'intervalle est de 10 ms, assez petit pour qu'on voie un mouvement bien fluide. On place cette fonction à la fin du code de l'évolution.</p><p id="r-369778" data-claire-element-id="369778">Maintenant, on veut qu'à chaque fois que la boucle passe, Mario avance. On va d'abord s'intéresser à sa vitesse horizontale.</p><h3 id="r-la-vitesse-horizontale" data-claire-element-id="369790">La vitesse horizontale</h3><p id="r-369780" data-claire-element-id="369780">Dans une chute libre, la vitesse horizontale ne varie pas. Si vous ne savez pas ce qu'est la vitesse horizontale, sachez que tout objet a une vitesse que l'on peut décomposer en vitesse horizontale et une vitesse verticale. Sous forme de vecteurs, on obtient ça :</p><figure id="r-369782" data-claire-element-id="369783"><img id="r-369781" data-claire-element-id="369781" src="medias/uploads.siteduzero.com_files_106001_107000_106926.png" alt="Image utilisateur"/></figure><p id="r-369784" data-claire-element-id="369784">Conséquence : on incrémente les abscisses de notre Mario à chaque fois que la boucle passe.</p><div id="r-369786" data-claire-element-id="369786" data-claire-semantic="question"><p id="r-369785" data-claire-element-id="369785">Les abscisses absolues ou relatives ?</p></div><p id="r-369787" data-claire-element-id="369787">Bonne question. :) Nous travaillons dans le repère fictif, donc ce seront les abscisses relatives :</p><pre id="r-369788" data-claire-element-id="369788"><code data-claire-semantic="c">posMarioRel.x++;</code></pre><p id="r-369789" data-claire-element-id="369789">Voilà pour la vitesse horizontale.</p><h3 id="r-la-vitesse-verticale" data-claire-element-id="369804">La vitesse verticale</h3><p id="r-369791" data-claire-element-id="369791">Pour la vitesse verticale, c'est là que notre équation de parabole va venir en aide. En effet, on avait dit qu'on pouvait trouver y en fonction de x :</p><p id="r-369792" data-claire-element-id="369792">y = -0,04x² + 100;</p><p id="r-369793" data-claire-element-id="369793">Donc :</p><pre id="r-369794" data-claire-element-id="369794"><code data-claire-semantic="c">posMarioRel.y=(-0.04*(posMarioRel.x*posMarioRel.x)+100);</code></pre><p id="r-369795" data-claire-element-id="369795">En C, « ² » n'existe pas, il faut donc le faire manuellement.</p><p id="r-369796" data-claire-element-id="369796">Voilà, nous avons géré nos variables relatives. Quant aux absolues, il faut se référer à la loi de Chasles ; si I est l'origine de notre nouvelle origine, et M un point quelconque dans le plan, on a :</p><p id="r-369797" data-claire-element-id="369797">\vec {OM} = \vec {OI} + \vec {IM}</p><p id="r-369798" data-claire-element-id="369798">Par conséquent, on peut ajouter les coordonnées :</p><pre id="r-369799" data-claire-element-id="369799"><code data-claire-semantic="c">posMarioAbs.x = posMarioAbs.x + posMarioRel.x +50;
+posMarioAbs.y = posMarioAbs.y + posMarioRel.y;</code></pre><aside id="r-369801" data-claire-element-id="369801" data-claire-semantic="information"><p id="r-369800" data-claire-element-id="369800">N.B. : dans le repère fictif, on commence à -50 px. Par conséquent, quand notre Mario saute dans le repère absolu, il sera décalé de 50 px de son point de départ absolu. D'où le « +50 » dans la formule.</p></aside><p id="r-369802" data-claire-element-id="369802">Il nous reste une dernière chose à faire : à chaque passage de boucle, les variables absolues sont modifiées ; si on ne veut pas que notre Mario parte à Saint-Perpète-les-Bains ( :p ) , il faut les remettre comme elles étaient avant ; on rajoute donc :</p><pre id="r-369803" data-claire-element-id="369803"><code data-claire-semantic="c">posMarioAbs.x = 200;
+posMarioAbs.y = 300;</code></pre><h2 id="r-affichage-3" data-claire-element-id="369809">Affichage</h2><p id="r-369806" data-claire-element-id="369806">N'oubliez pas non plus de <em>blitter</em> vos surfaces :</p><pre id="r-369807" data-claire-element-id="369807"><code data-claire-semantic="c">SDL_BlitSurface(fond, 0, ecran, &amp;amp;posFond);
+SDL_BlitSurface(mario, 0, ecran, &amp;amp;posMarioAbs);</code></pre><p id="r-369808" data-claire-element-id="369808">Lancez votre code, et observez... :p</p><h2 id="r-corriger-les-erreurs" data-claire-element-id="369828">Corriger les erreurs</h2><p id="r-369810" data-claire-element-id="369810">Hé hé hé, vous avez dû oublier quelque chose ! :D</p><p id="r-369811" data-claire-element-id="369811">On va corriger les erreurs une à une :</p><h3 id="r-mon-mario-commence-avec-la-tete-en-dessous-du-sol" data-claire-element-id="369814">Mon Mario commence avec la tête en dessous du sol !</h3><p id="r-369812" data-claire-element-id="369812">C'est normal, l'origine du repère de dessin est l'angle supérieur gauche de notre surface. Pour remédier à cela, il faut enlever la hauteur de Mario aux coordonnées absolues :</p><pre id="r-369813" data-claire-element-id="369813"><code data-claire-semantic="c">posMarioAbs.x = 200;
+posMarioAbs.y = 300-(mario-&gt;h);</code></pre><h3 id="r-mon-mario-tombe-et-remonte" data-claire-element-id="369817">Mon Mario tombe et remonte !</h3><p id="r-369815" data-claire-element-id="369815">Là on va voir ceux qui ont bien écouté : je l'ai dit un peu au-dessus ; le repère de la SDL est inversé. Il faut donc rajouter un « - » en ajoutant les ordonnées absolues et relatives :</p><pre id="r-369816" data-claire-element-id="369816"><code data-claire-semantic="c">posMarioAbs.x = posMarioAbs.x + posMarioRel.x;
+posMarioAbs.y = posMarioAbs.y - posMarioRel.y;</code></pre><h3 id="r-mon-mario-quitte-l-ecran-a-la-fin-du-saut" data-claire-element-id="369827">Mon Mario quitte l'écran à la fin du saut !</h3><p id="r-369818" data-claire-element-id="369818">Il faut remettre à zéro les variables relatives quand elles deviennent trop grandes ; rajoutez ça au début de l'évolution, juste après avoir incrémenté la valeur relative des abscisses :</p><pre id="r-369819" data-claire-element-id="369819"><code data-claire-semantic="c">if(posMarioRel.x&gt;=50)
+{
+    posMarioRel.x=-50;
+}</code></pre><p id="r-369820" data-claire-element-id="369820">Pour éviter que Mario ne s'enfonce dans le sol ! :p</p><p id="r-369821" data-claire-element-id="369821">Voilà : normalement, il n'y a plus d'erreurs.</p><p id="r-369822" data-claire-element-id="369822">Tenez, voici le code complet pour ceux qui n'ont pas écouté ( :p ) :</p><pre id="r-369823" data-claire-element-id="369823"><code data-claire-semantic="c">#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;SDL/SDL.h&gt;
+#include &lt;SDL/SDL_image.h&gt;
+
+int main ( int argc, char** argv )
+{
+    //Init de la SDL
+    SDL_Init( SDL_INIT_VIDEO );
+
+    // On crée une fenêtre
+    SDL_Surface* ecran = SDL_SetVideoMode(640, 480, 16, SDL_HWSURFACE|SDL_DOUBLEBUF);
+
+    // On charge le fond
+    SDL_Surface* fond = IMG_Load(&quot;fond.png&quot;);
+
+    //On charge Mario
+    SDL_Surface* mario = IMG_Load(&quot;mario.png&quot;);
+
+    // La position du fond
+    SDL_Rect posFond;
+    posFond.x = 0;
+    posFond.y = 0;
+
+    // La position absolue de Mario
+    SDL_Rect posMarioAbs;
+    posMarioAbs.x = 200;
+    posMarioAbs.y = 300-(mario-&gt;h);
+
+    // La position relative de Mario
+    SDL_Rect posMarioRel;
+    posMarioRel.x = -50;
+    posMarioRel.y = 0;
+
+    // Boucle principale du programme
+    int fin = 0;
+    while (!fin)
+    {
+        // Gestion des evenements
+        SDL_Event event;
+        while (SDL_PollEvent(&amp;event))
+        {
+            switch (event.type)
+            {
+                // Quand on ferme la fenetre
+            case SDL_QUIT:
+                fin = 1;
+                break;
+
+                // Quand on appuie sur une touche
+            case SDL_KEYDOWN:
+                {
+                    // ECHAP
+                    if (event.key.keysym.sym == SDLK_ESCAPE)
+                        fin = 1;
+                    break;
+                }
+            }
+        }
+
+        // EVOLUTION
+            //On avance de 1
+            posMarioRel.x++;
+
+            if(posMarioRel.x&gt;=50)
+            {
+                posMarioRel.x=-50;
+            }
+
+            //On met à &quot;0&quot; les pos abs:
+            posMarioAbs.x = 200;
+            posMarioAbs.y = 300-(mario-&gt;h);
+
+            //On calcule la valeur relative de y:
+            posMarioRel.y=(-0.04*(posMarioRel.x*posMarioRel.x)+100);
+
+            //On calcule maintenant les valeurs abs
+            posMarioAbs.x = posMarioAbs.x + posMarioRel.x+50;
+            posMarioAbs.y = posMarioAbs.y - posMarioRel.y;
+
+        //Intervalle de 10ms
+        SDL_Delay(10);
+
+        // FIN EVOLUTION
+
+        // DESSIN
+
+        // On vide l'ecran
+        SDL_FillRect(ecran, 0, SDL_MapRGB(ecran-&gt;format, 0, 0, 0));
+
+        // On dessine les images aux positions respectives
+        SDL_BlitSurface(fond, 0, ecran, &amp;posFond);
+        SDL_BlitSurface(mario, 0, ecran, &amp;posMarioAbs);
+
+        // FIN DESSIN
+
+        // Et on oublie pas de rafraichir l'image !
+        SDL_Flip(ecran);
+    }
+
+    // Soulageons la memoire !
+    SDL_FreeSurface(fond);
+    SDL_FreeSurface(mario);
+
+    SDL_Quit();
+
+    return 0;
+}</code></pre><aside id="r-369825" data-claire-element-id="369825" data-claire-semantic="error"><p id="r-369824" data-claire-element-id="369824">Hé, moi je le trouve moche ce saut ! En vrai, je suis sûr que les lois physiques empêchent de sauter de cette façon !</p></aside><p id="r-369826" data-claire-element-id="369826">Oui, vous devez sûrement <strong>tous</strong> penser ça. :p Voilà pourquoi je vous présente maintenant une seconde méthode... plus compliquée, plus déroutante, plus sanglante, plus horrible que jamais... :pirate: J'ai nommé... <strong>les courbes paramétriques</strong> ! :pirate:</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-sauts-2d-en-c">Les sauts 2D en C</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-sauts-2d-en-c/preparer-le-terrain-3">
+Préparer le terrain
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-sauts-2d-en-c/methode-1-paraboles">
+Méthode 1 : paraboles
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-sauts-2d-en-c/methode-2-lois-de-newton-cie">
+Méthode 2 : lois de Newton &amp; Cie
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-sauts-2d-en-c/methode-3-approche-intuitive">
+Méthode 3 : approche intuitive
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-sauts-2d-en-c/preparer-le-terrain-3">
+<span class="arrow"></span>
+<span class="next">Préparer le terrain</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-sauts-2d-en-c/methode-2-lois-de-newton-cie">
+<span class="next">Méthode 2 : lois de Newton &amp; Cie</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Mthode2loisdeNewtonampCie"></a><h2>Méthode 2 : lois de Newton &amp; Cie</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-sauts-2d-en-c/methode-1-paraboles">
+<span class="arrow"></span>
+<span class="next">Méthode 1 : paraboles</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-sauts-2d-en-c/methode-3-approche-intuitive">
+<span class="next">Méthode 3 : approche intuitive</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-369830" data-claire-element-id="369830">Un poil plus dure que la précédente ( :D ), cette méthode relève du programme de physique de terminale S.</p><aside id="r-369832" data-claire-element-id="369832" data-claire-semantic="warning"><p id="r-369831" data-claire-element-id="369831">Attention ! Je ne vais pas m'amuser à démontrer de nouveau les acquis mentionnés ci-dessus. Soit tout cela est dans votre cours, soit vous l'acceptez comme c'est écrit ! :p</p></aside><div id="r-369834" data-claire-element-id="369834" data-claire-semantic="question"><p id="r-369833" data-claire-element-id="369833">À quoi ça sert de faire encore plus compliqué ?</p></div><p id="r-369835" data-claire-element-id="369835">^^ À obtenir des sauts <strong>réalistes</strong>, bien sûr ! En effet, les paraboles permettent parfois de faire... trop de choses. Je m'explique : on peut, avec la méthode précédente, faire sauter Mario de 200 px vers la droite, en ne l'élevant au total que de 1 px ; c'est complètement contre les lois de la nature ! Ou plutôt, les lois de Newton... :p Donc si vous n'avez pas envie de <em>tâter</em> pour chercher une solution, cette méthode est pour vous !</p><h2 id="r-la-seconde-loi-de-newton" data-claire-element-id="369845">La seconde loi de Newton</h2><p id="r-369836" data-claire-element-id="369836">Je ne vous la citerai pas ici, elle est trop barbare, elle va sûrement vous faire peur et vous décourager pour le QCM. :p Sachez simplement que l'on se base dessus pour le reste du tutoriel, car le saut que l'on va programmer a une vitesse non rectiligne ni uniforme.</p><p id="r-369837" data-claire-element-id="369837">Le principe de cette méthode est bien plus réaliste, car elle permet de s'adapter à des situations plus « réalistes » qu'avec la méthode précédente. En effet, imaginez que votre perso coure avec une vitesse initiale V et qu'il saute... Comment reproduire ça avec une parabole ?!? o_O</p><p id="r-369838" data-claire-element-id="369838">J'ai déjà révélé le premier paramètre de notre saut : <strong>la vitesse initiale</strong> ; maintenant, si je vous annonçais qu'on peut programmer un saut uniquement avec l'angle de saut et cette vitesse initiale ? Si, si ! :D</p><p id="r-369839" data-claire-element-id="369839">En gros, le début du saut sera comme ceci :</p><figure id="r-369841" data-claire-element-id="369842"><img id="r-369840" data-claire-element-id="369840" src="medias/uploads.siteduzero.com_files_106001_107000_106941.png" alt="Image utilisateur"/></figure><p id="r-369843" data-claire-element-id="369843">L'angle initial de saut est bien sûr dans le sens direct, par convention opposé aux aiguilles d'une montre. :D</p><p id="r-369844" data-claire-element-id="369844">Il va maintenant falloir appliquer ces deux paramètres à notre saut. Commençons par les <strong>vitesses horizontale et verticale</strong>.</p><h2 id="r-decomposer-la-vitesse-et-en-deduire-la-trajectoire" data-claire-element-id="369879">Décomposer la vitesse, et en déduire la trajectoire</h2><h3 id="r-tout-d-abord-la-vitesse" data-claire-element-id="369854">Tout d'abord, la vitesse</h3><p id="r-369846" data-claire-element-id="369846">Bon, je vous rappelle mon magnifique schéma ( :p ) :</p><figure id="r-369848" data-claire-element-id="369849"><img id="r-369847" data-claire-element-id="369847" src="medias/uploads.siteduzero.com_files_106001_107000_106926.png" alt="Image utilisateur"/></figure><p id="r-369850" data-claire-element-id="369850">Notre but est d'abord de trouver la vitesse horizontale Vx puis la vitesse verticale Vy. Les accros de la trigo verront vite que l'on peut établir ces relations :</p><p id="r-369851" data-claire-element-id="369851">\left v_x = v_0 \ imes \ \cos\ heta\left v_y = v_0 \ imes \ \sin\ heta</p><p id="r-369852" data-claire-element-id="369852">v_0 représente la vitesse initiale.</p><p id="r-369853" data-claire-element-id="369853">Ça, c'était la partie facile.</p><h3 id="r-trajectoire-deux-facons-de-la-trouver" data-claire-element-id="369878">Trajectoire : deux façons de la trouver</h3><p id="r-369855" data-claire-element-id="369855">Continuons d'innover ; en effet, nous allons utiliser ici les <strong>axes paramétriques</strong> !</p><p id="r-369856" data-claire-element-id="369856">En gros, <strong>y ne dépend plus de x</strong>. o_O</p><p id="r-369857" data-claire-element-id="369857">Eh oui ! À partir de maintenant, <strong>y dépend de t, et x aussi</strong>.</p><div id="r-369859" data-claire-element-id="369859" data-claire-semantic="question"><p id="r-369858" data-claire-element-id="369858">t ?!?! Qu'est-ce que c'est que ça ?</p></div><p id="r-369860" data-claire-element-id="369860">« Ça » c'est tout simplement notre intervalle de temps régulier que l'on retrouve ici. <strong>« t » est l'instant où y vaudra tant, et où x vaudra tant</strong>. Pour nous programmeurs, t est l'instant où on <em>blittera</em> notre image à une abscisse donnée et une ordonnée donnée. Or, avec notre SDL_Delay();, les instants deviennent virtuels. En effet, si on met un délai de 10 ms, toutes les 10 ms notre image sera affichée à nouveau. Ainsi, t = 0 est l'instant donné où Mario n'a pas encore quitté le sol, et pour nous ça correspond peut-être au 1er passage de boucle.</p><p id="r-369861" data-claire-element-id="369861">Reprenons. :) Maintenant que nous avons calculé les vitesses, intéressons-nous à la trajectoire. De quoi dépend-elle exactement ? On vient de dire qu'elle dépendait de l'instant où on procède à l'affichage, et des vitesses horizontale et verticale ! En fait, on peut dire que :</p><p id="r-369862" data-claire-element-id="369862">x_{(t)} = v_x \ imes \ ty_{(t)} = v_y \ imes \ t \ - \ \frac{gt^2}{2}</p><p id="r-369863" data-claire-element-id="369863">Pour la vitesse horizontale, on retrouve bien nos paramètres. x(t) veut dire : « x à l'instant t ». Mais pour la position verticale ? Ce serait une erreur d'exprimer y de la même façon que x, car on obtiendrait en fin de compte... une fonction linéaire, c'est-à-dire, une droite. :( Notre Mario irait droit dans le ciel ! :p Or nous recherchons une parabole, il nous faut donc des x².</p><div id="r-369865" data-claire-element-id="369865" data-claire-semantic="question"><p id="r-369864" data-claire-element-id="369864">Mais, tu ne nous avais pas dit que y ne dépendait plus de x ?</p></div><p id="r-369866" data-claire-element-id="369866">C'est là la réponse au sujet. En effet, il faut en fait enlever à chaque instant quelques pixels de notre position verticale, à la façon d'une parabole mais par rapport à la constante gravitationnelle. D'où la formule complexe ci-dessus.</p><p id="r-369867" data-claire-element-id="369867">Ne vous posez pas trop de questions si vous ne comprenez pas. Dites-vous simplement que l'on retrouve dans ce calcul :</p><ul id="r-369876" data-claire-element-id="369876"><li id="r-369869" data-claire-element-id="369869"><p id="r-369868" data-claire-element-id="369868">la <strong>vitesse verticale Vy</strong> ;</p></li><li id="r-369871" data-claire-element-id="369871"><p id="r-369870" data-claire-element-id="369870">l'<strong>instant t</strong> par rapport à la vitesse verticale ;</p></li><li id="r-369873" data-claire-element-id="369873"><p id="r-369872" data-claire-element-id="369872">la <strong>constante gravitationnelle g</strong>. Sur Terre, elle vaut <strong>9,81 N/kg</strong> environ ;</p></li><li id="r-369875" data-claire-element-id="369875"><p id="r-369874" data-claire-element-id="369874">encore une fois l'instant t par rapport à la constante gravitationnelle, et au carré pour bien confirmer que la trajectoire est <strong>une parabole</strong>.</p></li></ul><p id="r-369877" data-claire-element-id="369877">Voilà. :) Votre Mario est prêt à être lancé. :p Passons donc à la programmation.</p><h2 id="r-ce-que-ca-donne-en-c" data-claire-element-id="369910">Ce que ça donne en C</h2><p id="r-369880" data-claire-element-id="369880">Résumons ce qu'il faut faire. :)</p><h3 id="r-les-variables-19" data-claire-element-id="369896">Les variables</h3><p id="r-369881" data-claire-element-id="369881">Il y a plus de variables à définir que chez les paraboles.<br/> Tout d'abord, il y a la <strong>constante gravitationnelle</strong>, qui fera « l'effet poids » :</p><pre id="r-369882" data-claire-element-id="369882"><code data-claire-semantic="c">const double g = 9.81;
+const double pi = 3.14;</code></pre><p id="r-369883" data-claire-element-id="369883">Vous noterez que j'ai défini pi dans le code. Vous verrez après pourquoi.</p><p id="r-369884" data-claire-element-id="369884">Puis, on définit un instant t que l'on initialise à 0 :</p><pre id="r-369885" data-claire-element-id="369885"><code data-claire-semantic="c">int t = 0;</code></pre><p id="r-369886" data-claire-element-id="369886">Enfin, on établit les paramètres initiaux de notre saut. Cependant, l'angle initial s'exprime en radians ! D'après mon magnifique cercle trigonométrique...</p><p id="r-369887" data-claire-element-id="369887">Image</p><p id="r-369888" data-claire-element-id="369888">... choisissons un angle potable ! On va choisir ici un angle de 60°, ce qui correspond à ...</p><pre id="r-369889" data-claire-element-id="369889"><code data-claire-semantic="c">int v_init = 2;
+int angle_init = pi/3;</code></pre><p id="r-369890" data-claire-element-id="369890">On peut ainsi tout de suite calculer nos vitesses horizontale et verticale :</p><pre id="r-369891" data-claire-element-id="369891"><code data-claire-semantic="c">double v_x = cos(angle_init)*v_init;
+double v_y = sin(angle_init)*v_init;</code></pre><aside id="r-369893" data-claire-element-id="369893" data-claire-semantic="warning"><p id="r-369892" data-claire-element-id="369892">Les fonctions cos et sin n'existent pas par défaut en C ! Il faut ajouter un petit include :</p></aside><pre id="r-369894" data-claire-element-id="369894"><code data-claire-semantic="c">#include &lt;math.h&gt;</code></pre><p id="r-369895" data-claire-element-id="369895">Gardez bien nos positions absolues et relatives. On peut maintenant passer à l'évolution !</p><h3 id="r-evolution-1" data-claire-element-id="369909">Évolution</h3><p id="r-369897" data-claire-element-id="369897">Dans l'évolution, on va d'abord faire changer le temps. Placez votre SDL_Delay(); à la fin, et occupez-vous de l'instant t :</p><pre id="r-369898" data-claire-element-id="369898"><code data-claire-semantic="c">t+=10;</code></pre><p id="r-369899" data-claire-element-id="369899">t est ici exprimé en ms. Cela sera conséquent pour la suite. Continuons donc avec nos formules pour les trajectoires :</p><pre id="r-369900" data-claire-element-id="369900"><code data-claire-semantic="c">posMarioRel.x=(int)(v_x*t);
+posMarioRel.y=(int)((v_y*t)-((g*t*t)/2000));</code></pre><p id="r-369901" data-claire-element-id="369901">Ça fait une expression barbare, je l'admets. :p J'ai ajouté un convertisseur en entiers devant, car la fonction cosinus et la fonction sinus, à partir desquelles sont calculées les décompositions de la vitesse initiale, sont loin de donner un résultat toujours entier. Or, notre compilateur risque de nous insulter poliment si on donne un nombre décimal à une variable censée contenir un nombre entier. D'où le (int), ayant le même effet qu'une troncature. Vous pouvez vous amuser à trouver la fonction pour arrondir si jamais vous avez besoin d'avoir des résultats précis. :D</p><p id="r-369902" data-claire-element-id="369902">De plus, ici, ce n'est plus gt²/2 mais gt²/2000. o_O En effet, t est exprimé en ms, et nous on veut un résultat en secondes, d'où la division supplémentaire par mille.</p><p id="r-369903" data-claire-element-id="369903">Gardez bien sûr ça :</p><pre id="r-369904" data-claire-element-id="369904"><code data-claire-semantic="c">posMarioAbs.x = 200;
+posMarioAbs.y = 300-(mario-&gt;h);
+ 
+posMarioAbs.x = posMarioAbs.x + posMarioRel.x;
+posMarioAbs.y = posMarioAbs.y - posMarioRel.y;</code></pre><p id="r-369905" data-claire-element-id="369905">Et pour remettre à 0 notre position de Mario, tapez ceci :</p><pre id="r-369906" data-claire-element-id="369906"><code data-claire-semantic="c">if((posMarioAbs.y)&gt;=(300))
+{
+     t=0;
+}</code></pre><p id="r-369907" data-claire-element-id="369907">Je vous rappelle que tout dépend de t ici ! :)</p><p id="r-369908" data-claire-element-id="369908">Cette fois, il ne devrait pas y avoir d'erreurs... :p</p><h2 id="r-le-code-complet-8" data-claire-element-id="369912">Le code complet</h2><pre id="r-369911" data-claire-element-id="369911"><code data-claire-semantic="c">#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;math.h&gt;
+#include &lt;SDL/SDL.h&gt;
+#include &lt;SDL/SDL_image.h&gt;
+
+int main ( int argc, char** argv )
+{
+    //Init de la SDL
+    SDL_Init( SDL_INIT_VIDEO );
+
+    // On crée une fenêtre
+    SDL_Surface* ecran = SDL_SetVideoMode(640, 480, 16, SDL_HWSURFACE|SDL_DOUBLEBUF);
+
+    // On charge le fond
+    SDL_Surface* fond = IMG_Load(&quot;fond.png&quot;);
+
+    //On charge Mario
+    SDL_Surface* mario = IMG_Load(&quot;mario.png&quot;);
+
+    // La position du fond
+    SDL_Rect posFond;
+    posFond.x = 0;
+    posFond.y = 0;
+
+    // La position absolue de Mario
+    SDL_Rect posMarioAbs;
+    posMarioAbs.x = 200;
+    posMarioAbs.y = 300-(mario-&gt;h);
+
+    // La position relative de Mario
+    SDL_Rect posMarioRel;
+    posMarioRel.x = 0;
+    posMarioRel.y = 0;
+
+    //Variables méthode 2:
+    const double g = 9.81;
+    const double pi = 3.14;
+    int v_init = 2;
+    int angle_init = pi/3;
+    int t = 0;
+    double v_x = cos(angle_init)*v_init;
+    double v_y = sin(angle_init)*v_init;
+
+    // Boucle principale
+    int fin = 0;
+    while (!fin)
+    {
+        // Gestion des evenements
+        SDL_Event event;
+        while (SDL_PollEvent(&amp;event))
+        {
+            switch (event.type)
+            {
+            case SDL_QUIT:
+                fin = 1;
+                break;
+
+            case SDL_KEYDOWN:
+                {
+                    // ECHAP
+                    if (event.key.keysym.sym == SDLK_ESCAPE)
+                        fin = 1;
+                    break;
+                }
+            }
+        }
+
+        // EVOLUTION
+
+            //On met à &quot;0&quot; les pos abs:
+
+            posMarioAbs.x = 200;
+            posMarioAbs.y = 300-(mario-&gt;h);
+
+            //On calcule la valeur relative de y:
+            posMarioRel.x=(int)(v_x*t);
+            posMarioRel.y=(int)((v_y*t)-((g*t*t)/2000));
+
+            //On calcule maintenant les valeurs absolues
+
+            posMarioAbs.x = posMarioAbs.x + posMarioRel.x;
+            posMarioAbs.y = posMarioAbs.y - posMarioRel.y;
+
+        //Intervalle de 10ms
+
+        t+=10;
+
+        // FIN EVOLUTION
+        //Avec en bonus une petite mise a 0 des coordonnees lorsque mario s'en va trop loin :)
+        if((posMarioAbs.y+(mario-&gt;h))&lt;=(100))
+        {
+            t=0;
+        }
+
+        // DESSIN
+
+        // Effacement de l'ecran
+        SDL_FillRect(ecran, 0, SDL_MapRGB(ecran-&gt;format, 0, 0, 0));
+
+        // Dessin des images
+        SDL_BlitSurface(fond, 0, ecran, &amp;posFond);
+        SDL_BlitSurface(mario, 0, ecran, &amp;posMarioAbs);
+
+        // FIN DESSIN
+
+        // Et n'oublions pas...
+        SDL_Flip(ecran);
+    }
+
+    // Et on soulage la mémoire !
+    SDL_FreeSurface(fond);
+    SDL_FreeSurface(mario);
+
+    SDL_Quit();
+
+    return 0;
+}</code></pre><h2 id="r-consequence" data-claire-element-id="369919">Conséquence</h2><p id="r-369913" data-claire-element-id="369913">On obtient une parabole. Vous me direz, une parabole peut s'écrire de la façon y = ax²+bx+c. Eh bien, je vous annonce un scoop : d'après la formule hyper-compliquée ci-dessus, on peut en tirer <strong>une équation de parabole</strong> ! Je ne le démontrerai pas ici ( ^^ ) , mais ça donne :</p><p id="r-369914" data-claire-element-id="369914">y = - \frac{g}{2} \ . \ \frac{x^2^}{(v . \cos \ heta)^2} \ + \ \frac{v . (\sin \ heta) . x}{v . \cos \ heta}</p><p id="r-369915" data-claire-element-id="369915">Normalement il y a un « + h » à la fin de cette équation de suicidaire. :p h correspondrait à c dans une équation parabolique. Ainsi, h = 0 car nous sommes toujours dans les coordonnées relatives. Têta correspond à notre angle initial. Si vous remplacez la parabole dans la méthode 1 ci-dessus par cette équation, vous donnez en fait à votre ordinateur l'équation suivante :</p><pre id="r-369916" data-claire-element-id="369916"><code data-claire-semantic="c">posMarioRel.y = (int)(-(g/2)*((posMarioRel.x*posMarioRel.x)/
+((v_init*cos(angle_init))*(v_init*cos(angle_init))))
++((v_init*sin(angle_init)*posMarioRel.x)/(v_init*cos(angle_init))));</code></pre><p id="r-369917" data-claire-element-id="369917">Normalement je n'ai pas oublié de parenthèses. :D Il faut avouer que cette méthode est vraiment barbare. Mais si vous calculez a, b et c auparavant, cela ne devrait pas trop poser de problèmes à l'ordinateur de les calculer de nouveau lorsque vous voulez adapter la parabole à vos rêves les plus fous. :p</p><p id="r-369918" data-claire-element-id="369918">Passons maintenant à une nouvelle méthode pleine de mystères...</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-sauts-2d-en-c">Les sauts 2D en C</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-sauts-2d-en-c/preparer-le-terrain-3">
+Préparer le terrain
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-sauts-2d-en-c/methode-1-paraboles">
+Méthode 1 : paraboles
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-sauts-2d-en-c/methode-2-lois-de-newton-cie">
+Méthode 2 : lois de Newton &amp; Cie
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-sauts-2d-en-c/methode-3-approche-intuitive">
+Méthode 3 : approche intuitive
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-sauts-2d-en-c/methode-1-paraboles">
+<span class="arrow"></span>
+<span class="next">Méthode 1 : paraboles</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-sauts-2d-en-c/methode-3-approche-intuitive">
+<span class="next">Méthode 3 : approche intuitive</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Mthode3approcheintuitive"></a><h2>Méthode 3 : approche intuitive</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-sauts-2d-en-c/methode-2-lois-de-newton-cie">
+<span class="arrow"></span>
+<span class="next">Méthode 2 : lois de Newton &amp; Cie</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-369921" data-claire-element-id="369921">Les méthodes présentées ci-dessus peuvent sembler inadaptées pour beacoup d'entre vous. Après une discussion sur le forum, il a semblé nécessaire de vous faire connaître une approche plus intuitive.</p><div id="r-369923" data-claire-element-id="369923" data-claire-semantic="question"><p id="r-369922" data-claire-element-id="369922">Dans quels cas les méthodes ci-dessus sont-elles inadaptées ?</p></div><p id="r-369924" data-claire-element-id="369924">L'argument principal est la difficulté du code observé. En effet, les calculs ne sont pas forcément simples, ils sont longs et fastidieux ; et pensez-vous vraiment que les développeurs de SuperMario Land ont travaillé avec des paraboles ?</p><div id="r-369926" data-claire-element-id="369926" data-claire-semantic="question"><p id="r-369925" data-claire-element-id="369925">Donc il ne nous servait à rien de savoir tout ça ?</p></div><p id="r-369927" data-claire-element-id="369927">Comme je l'ai dit dans l'introduction, il faut faire au cas par cas. Dans un jeu que l'on veut le plus réaliste possible (avec des éléments de ballistique), ou encore dans des simulations, il faudra indéniablement utiliser les lois de Newton. Quand on veut pré-établir le point d'arrivée de l'objet qui saute, une parabole devient alors plus utile.</p><p id="r-369928" data-claire-element-id="369928">La méthode que je vais vous présenter, et on ne peut le nier (<em>hum hum</em> :ange: ) est approximative. Voyez ci-dessous pour ce que ça veut dire.</p><aside id="r-369930" data-claire-element-id="369930" data-claire-semantic="information"><p id="r-369929" data-claire-element-id="369929">À propos, on n'est pas obligé de toujours utiliser une parabole. Imaginer une fonction polinôme du troisième degré même pour faire bouger un curseur ou autre, cela peut être très esthétique !</p></aside><h2 id="r-d-ou-la-necessite-d-une-nouvelle-methode" data-claire-element-id="369942">D'où la nécessité d'une nouvelle méthode</h2><p id="r-369931" data-claire-element-id="369931">Les programmeurs sont paresseux de nature :D . On a donc imaginé un système qui <em>imiterait</em> la parabole dans un saut. Le rendu est parfait : on dirait vraiment une parabole.</p><p id="r-369932" data-claire-element-id="369932">Il y a deux problèmes mineurs dans cette méthode :</p><ul id="r-369937" data-claire-element-id="369937"><li id="r-369934" data-claire-element-id="369934"><p id="r-369933" data-claire-element-id="369933">On ne peut pas prévoir où le personnage va retomber (c'est possible et facile avec les deux méthodes précédentes), d'où le fait que j'ai dit qu'elle était approximative ;</p></li><li id="r-369936" data-claire-element-id="369936"><p id="r-369935" data-claire-element-id="369935">Cette méthode ne s'obtient qu'en <em>tâtonnant</em>. o_O En gros on essaie jusqu'à ce que ça marche. Ne vous attendez donc pas à vous mettre devant l'ordinateur, taper votre code, et obtenir un saut après la compilation (bon, ici je vous prémâche les paramètres). Vous devrez d'abord essayer une série de paramètres, voir ce que ça donne, une autre série si c'est pas bon, et ainsi de suite. Il n'y a vraiment aucun moyen facile de savoir à l'avance le comportement <em>exact</em> de l'image qui devra bouger.</p></li></ul><p id="r-369938" data-claire-element-id="369938">Il y a cependant aussi un problème majeur :colere2:. Vous verrez que toute variable introduite dans cette partie sera <strong>prédéfinie</strong>. En gros, si vous avez 5 sauts différents dans votre jeu, vous allez être obligé, <em>avant de compiler</em>, de définir tous les paramètres des 5 sauts ! Contrairement à la méthode des paraboles, ou la méthode des lois de Newton, où vous pouvez (et c'est recommandé) trouver toutes les variables en temps réel. dans ces-méthodes-là, vous pouvez demander à votre ordinateur de trouver les paramètres pour vous. Ca vous évite de réfléchir trop à l'avance :p</p><aside id="r-369940" data-claire-element-id="369940" data-claire-semantic="warning"><p id="r-369939" data-claire-element-id="369939">Cette méthode peut, cependant, marcher pour des sauts dont la hauteur et la vitesse dépendent de certains paramètres dans le programme, comme la masse du personnage. Il y a des variables, que nous verront plus tard, que vous pouvez essayer de définir en fonction d'autres paramètres. Cependant, je le répète, ce système-là devra aussi être testé, on n'est jamais sûr du résultat !</p></aside><p id="r-369941" data-claire-element-id="369941">Ainsi, en fait, on perd du temps dans tous les cas. L'avantage, c'est que je vous prémâche le travail : je vous offre les données de la méthode, déjà trouvées auparavant.</p><h2 id="r-la-dite-methode" data-claire-element-id="369972">La-dite méthode</h2><aside id="r-369944" data-claire-element-id="369944" data-claire-semantic="warning"><p id="r-369943" data-claire-element-id="369943">Attention, je vous préviens. Cette méthode est loin d'être aussi rigoureuse que les méthodes précédentes. Dans cette partie, nous allons ajouter des vitesses à des positions. De quoi faire hérisser un physicien. :D Si vous êtes allergique à ce genre de choses, dites-vous que vous ajoutez des variations de positions à des positions, ou alors que chaque tour de boucle représente implicitement une multiplication par un temps. Ca va mieux ? :)</p></aside><p id="r-369945" data-claire-element-id="369945">Je vais maintenant vous poser une question qui peut sembler bête. Quel est l'avantage que les programmeurs ont sur les physiciens et les mathématiciens ? Voici la réponse :</p><p id="r-369946" data-claire-element-id="369946">On peut utiliser plein de variables !</p><p id="r-369947" data-claire-element-id="369947">Et oui, les mathématiciens, eux, ils font tout en fonction d'une variable (généralement...) ce qui leur donne des formules pharaoniques (comme ci-dessus :p ). Dans cette méthode, nous n'allons pas nous limiter à des x et des y, bien au contraire.</p><p id="r-369948" data-claire-element-id="369948">Reprenez donc vos codes de base et créez 4 petites variables :</p><pre id="r-369949" data-claire-element-id="369949"><code data-claire-semantic="c">double v_x = 0;
+double v_y = 0;
+double v_saut = 0;
+double v_gravitation = 0;</code></pre><p id="r-369950" data-claire-element-id="369950">Dans mon cas, mon saut va dépendre de 5 éléments :</p><ul id="r-369959" data-claire-element-id="369959"><li id="r-369952" data-claire-element-id="369952"><p id="r-369951" data-claire-element-id="369951"><strong>v_x</strong>, vous l'aurez deviné, il s'agit de la vitesse horizontale. Bien évidemment, au début pour le moins, celle-ci sera constante.</p></li><li id="r-369954" data-claire-element-id="369954"><p id="r-369953" data-claire-element-id="369953"><strong>v_y</strong> est la vitesse verticale. Celle-ci va influencer la position en ordonnées de l'image. C'est donc sur cette vitesse que nous allons concentrer les variations.</p></li><li id="r-369956" data-claire-element-id="369956"><p id="r-369955" data-claire-element-id="369955">À l'état initial, la vitesse verticale sera égale à <strong>v_saut</strong>. En effet, pour une fois, nous allons commencer avec mario, déjà en train de sauter, qui retombe.</p></li><li id="r-369958" data-claire-element-id="369958"><p id="r-369957" data-claire-element-id="369957">Et les variations de la vitesse verticale résultent de la variable <strong>v_grav</strong>, qui va progressivement atténuer cette chute.</p></li></ul><p id="r-369960" data-claire-element-id="369960">Pour l'instant, suivez-moi, même si vous n'avez pas bien compris. On va d'abord donner une valeur à nos variables :</p><pre id="r-369961" data-claire-element-id="369961"><code data-claire-semantic="c">v_x = 1.5;
+
+v_saut = -4;
+v_gravitation = 0.08;
+
+v_y = v_saut;</code></pre><aside id="r-369963" data-claire-element-id="369963" data-claire-semantic="information"><p id="r-369962" data-claire-element-id="369962">Je vous rappelle que j'ai trouvé ces valeurs en <em>tâtonnant</em> !</p></aside><p id="r-369964" data-claire-element-id="369964">Maintenant je vous explique au cas par cas :</p><ul id="r-369971" data-claire-element-id="369971"><li id="r-369966" data-claire-element-id="369966"><p id="r-369965" data-claire-element-id="369965">À l'état initial, Mario est au sol. Sa vitesse horizontale restera toujours fixe. Sa vitesse verticale, quant à elle, est négative. Ceci est bien logique puisque notre Mario doit monter ! N'oublions pas que notre cher repère SDL voit tout à l'envers !</p></li><li id="r-369968" data-claire-element-id="369968"><p id="r-369967" data-claire-element-id="369967">Lorsque Mario est en train de monter, sa vitesse verticale <em>augmente</em>. Je dis bien augmente puisqu'elle va se rapprocher de 0 alors qu'elle est négative. Comment peut-on bien la faire rapprocher progressivement de 0 ? Grâce à <strong>v_grav</strong> ! Ainsi à chaque tour de boucle, on ajoute v_grav à la vitesse verticale.</p></li><li id="r-369970" data-claire-element-id="369970"><p id="r-369969" data-claire-element-id="369969">Lorsque Mario atteint une vitesse verticale nulle, on dira qu'il est au sommet de sa trajectoire. Pour retomber, on continue à augmenter la valeur de v_y avec v_grav. Mario va alors progressivement descendre.</p></li></ul><h2 id="r-le-code-complet-9" data-claire-element-id="369975">Le code complet</h2><p id="r-369973" data-claire-element-id="369973">D'où le code suivant :</p><pre id="r-369974" data-claire-element-id="369974"><code data-claire-semantic="c">#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;math.h&gt;
+#include &lt;SDL/SDL.h&gt;
+#include &lt;SDL/SDL_image.h&gt;
+
+int main ( int argc, char** argv )
+{
+    //Init de la SDL
+    SDL_Init( SDL_INIT_VIDEO );
+
+    // On crée une fenêtre
+    SDL_Surface* ecran = SDL_SetVideoMode(640, 480, 16, SDL_HWSURFACE|SDL_DOUBLEBUF);
+
+    // On charge le fond
+    SDL_Surface* fond = IMG_Load(&quot;fond.png&quot;);
+
+    //On charge Mario
+    SDL_Surface* mario = IMG_Load(&quot;mario.png&quot;);
+
+    // La position du fond
+    SDL_Rect posFond;
+    posFond.x = 0;
+    posFond.y = 0;
+
+    // La position de Mario
+    SDL_Rect posMario;
+    posMario.x = 100;
+    posMario.y = 300-(mario-&gt;h);
+
+    // Les variables de la troisieme methode
+    double v_x = 1.5;
+
+    double v_grav = 0.08;
+    double v_saut = -4;
+
+    double v_y = v_saut;
+
+    // Boucle principale
+    int fin = 0;
+    while (!fin)
+    {
+        // Gestion des evenements
+        SDL_Event event;
+        while (SDL_PollEvent(&amp;event))
+        {
+            switch (event.type)
+            {
+            case SDL_QUIT:
+                fin = 1;
+                break;
+
+            case SDL_KEYDOWN:
+                {
+                    // ECHAP
+                    if (event.key.keysym.sym == SDLK_ESCAPE)
+                        fin = 1;
+                    break;
+                }
+            }
+        }
+
+        // EVOLUTION
+
+            // Evolution des positions : vive la rigueur !
+            posMario.x += v_x;
+            posMario.y += v_y;
+
+            // evolution de la vitesse verticale
+            v_y += v_grav;
+
+	    // POINT A
+
+        // FIN EVOLUTION
+
+        // DESSIN
+
+        // Effacement de l'ecran
+        SDL_FillRect(ecran, 0, SDL_MapRGB(ecran-&gt;format, 0, 0, 0));
+
+        // Dessin des images
+        SDL_BlitSurface(fond, 0, ecran, &amp;posFond);
+        SDL_BlitSurface(mario, 0, ecran, &amp;posMario);
+
+        // FIN DESSIN
+
+        // Et n'oublions pas...
+        SDL_Flip(ecran);
+    }
+
+    // Et on soulage la mémoire !
+    SDL_FreeSurface(fond);
+    SDL_FreeSurface(mario);
+
+    SDL_Quit();
+
+    return 0;
+}</code></pre><h2 id="r-de-l-amelioration" data-claire-element-id="369994">De l'amélioration</h2><p id="r-369976" data-claire-element-id="369976">Vous l'aurez vu en lançant le programme, Mario saute, tombe et... s'enfonce inévitablement dans les profondeurs abyssales de votre écran d'ordinateur ! o_O Une simple gestion des collisions permet d'éviter ce problème. J'ai spécifié dans le code un <em>POINT A</em>. Vous n'aurez qu'à remplacer cette ligne avec le code suivant :</p><pre id="r-369977" data-claire-element-id="369977"><code data-claire-semantic="c">if (posMario.y &gt; 300)
+	v_y = v_saut;</code></pre><p id="r-369978" data-claire-element-id="369978">Sagement Mario va maintenant recommencer à sauter bien trois fois avant de sortir de votre écran par la droite. :p Je vous conseille donc de remédier à cela avec une petite gestion des collisions en abscisses.</p><p id="r-369979" data-claire-element-id="369979">Ceci répond à vos questions ? :D</p><p id="r-369980" data-claire-element-id="369980">Vous pouvez maintenant faire sauter vos personnages avec trois méthodes différentes - mathématique, physique et logique. N'oubliez pas que vous pouvez les appliquer à quelconque objet qui bouge sur votre écran : un projectile, un simple saut de personnage et même un curseur, avec un peu d'imagination ! Si, si !</p><p id="r-369981" data-claire-element-id="369981">Ceci est en fait un grand pas dans la programmation de jeux, car :</p><ul id="r-369990" data-claire-element-id="369990"><li id="r-369983" data-claire-element-id="369983"><p id="r-369982" data-claire-element-id="369982">vous pouvez vous servir de ces méthodes en 3D ;</p></li><li id="r-369985" data-claire-element-id="369985"><p id="r-369984" data-claire-element-id="369984">les sauts dans les jeux de plates-formes, par exemple, sont nombreux, variables et très importants ;</p></li><li id="r-369987" data-claire-element-id="369987"><p id="r-369986" data-claire-element-id="369986">le code ci-dessus est réadaptable lui-même pour d'autres langages qui vous semblent bien plus pratiques que le C, ou alors dans une autre bibliothèque que la SDL, qui est lente ;</p></li><li id="r-369989" data-claire-element-id="369989"><p id="r-369988" data-claire-element-id="369988">dans la deuxième méthode, si vous êtes fin mathématicien, vous pouvez trouver les équations horaires en incluant les frottements ! de quoi faire une simulation sans erreurs !</p></li></ul><aside id="r-369992" data-claire-element-id="369992" data-claire-semantic="information"><p id="r-369991" data-claire-element-id="369991">Vous pouvez aussi appliquer la méthode des paraboles à tout ! en effet, trouvez-vous une fonction du troisième degré ou une exponentielle par exemple, pour rendre esthétiques les mouvements dans vos jeux !</p></aside><p id="r-369993" data-claire-element-id="369993">J'espère donc, qu'en fin de compte, vous avez compris ce que je vous ai expliqué, et que vous saurez le réutiliser dans tous les cas possibles et imaginables. N'hésitez pas à m'envoyer un MP si jamais erreur il y a. ;)</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-sauts-2d-en-c">Les sauts 2D en C</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-sauts-2d-en-c/preparer-le-terrain-3">
+Préparer le terrain
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-sauts-2d-en-c/methode-1-paraboles">
+Méthode 1 : paraboles
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-sauts-2d-en-c/methode-2-lois-de-newton-cie">
+Méthode 2 : lois de Newton &amp; Cie
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-sauts-2d-en-c/methode-3-approche-intuitive">
+Méthode 3 : approche intuitive
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-sauts-2d-en-c/methode-2-lois-de-newton-cie">
+<span class="arrow"></span>
+<span class="next">Méthode 2 : lois de Newton &amp; Cie</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/les-sauts-2d-en-c.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 05:47:11 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/les-sauts-2d-en-c.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:02:00 GMT -->
+</html>

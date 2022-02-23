@@ -1,0 +1,699 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/deboguer-son-programme-avec-gdb.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 00:01:11 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/deboguer-son-programme-avec-gdb.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:15:33 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Déboguer son programme avec GDB</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/deboguer-son-programme-avec-gdb.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Déboguer son programme avec GDB</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#DboguersonprogrammeavecGDB">Déboguer son programme avec GDB</a><br/><a href="#DmarrerunesessionGDB">Démarrer une session GDB</a><br/><a href="#Excuterleprogramme">Exécuter le programme</a><br/><a href="#Placerdespointsd039arrt">Placer des points d&#039;arrêt</a><br/><a href="#Contrlerl039tatdesvariablesetregistres">Contrôler l&#039;état des variables et registres</a><br/><a href="#Contrlerledroulementdel039excution">Contrôler le déroulement de l&#039;exécution</a><br/><a href="#Unpetitexemple">Un petit exemple</a><br/></div>
+<a name="DboguersonprogrammeavecGDB"></a><h2>Déboguer son programme avec GDB</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/demarrer-une-session-gdb">
+<span class="next">Démarrer une session GDB</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-525530" data-claire-element-id="525530">Ah, la programmation ! Qui ne s'est jamais débattu pendant des heures avec des plantages biscornus et impossibles à cerner ? Qui ne s'est jamais retrouvé obligé de remplir son code d'instructions de &quot;debug&quot;, affichant ici et là diverses variables, histoire de pouvoir s'assurer de leur contenu ? Que serait la vie d'un développeur sans ce temps perdu, passé à maudire de tous les noms (et de toutes les onomatopées) les messages de plantage déversés par un programme un peu trop fougueux ?</p><p id="r-525531" data-claire-element-id="525531">Heureusement, il existe de nombreux logiciels dits de &quot;debugging&quot;. Je vous propose, parmi la flopée de prétendants, de nous lancer dans la conquête de GDB, le debogueur de GNU.</p><p id="r-525532" data-claire-element-id="525532">GDB est portable, il fonctionne donc aussi bien sur UNIX/Linux que sur Windows ou sur MacOS. Ce tutoriel a été développé sous Linux.</p>
+</div><a name="DmarrerunesessionGDB"></a><h2>Démarrer une session GDB</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/executer-le-programme">
+<span class="next">Exécuter le programme</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-installation-78" data-claire-element-id="525538">Installation</h2><h3 id="r-sous-linux-unix" data-claire-element-id="525537">Sous Linux/Unix</h3><p id="r-525533" data-claire-element-id="525533">GDB est disponible dans la plupart des dépôts et peut également être <a href="http://sourceware.org/gdb/download/">téléchargé</a> directement sur le <a href="http://sourceware.org/gdb/">site officiel</a>.</p><p id="r-525534" data-claire-element-id="525534">Si vous ne savez pas comment installer un programme depuis les dépôts, référez-vous au tutoriel du site, dans la partie Linux : &quot;<a href="http://www.siteduzero.com/tuto-3-29039-1-installer-des-programmes-avec-apt-get.html">Installer des programmes avec apt-get</a>&quot;.</p><p id="r-525535" data-claire-element-id="525535">Si GDB n'est pas dans vos dépôts, téléchargez les sources de la dernière version et compilez-les. Ça devrait se faire facilement, je vous donne les étapes principales, si vous rencontrez un problème référez-vous au site de votre distribution pour trouver comment compiler (rem. remplacez les X.X par les numéros de la dernière version stable) :</p><pre id="r-525536" data-claire-element-id="525536"><code data-claire-semantic="console">wget http://ftp.gnu.org/gnu/gdb/gdb-X.X.tar.gz
+tar -xvvf gdb-X.X.tar.gz
+cd gdb-X.X.tar.gz
+./configure
+make
+make install</code></pre><h2 id="r-lancement-d-une-session" data-claire-element-id="525550">Lancement d'une session</h2><p id="r-525539" data-claire-element-id="525539">GDB fonctionne sur le principe d'une invite de commandes. Pour démarrer une session, on lance simplement GDB en lui passant éventuellement des paramètres. Le moyen le plus courant de démarrer une session est de préciser l'exécutable qu'on veut débugger en paramètre :</p><pre id="r-525540" data-claire-element-id="525540"><code data-claire-semantic="console">gdb program</code></pre><p id="r-525541" data-claire-element-id="525541">Lorsqu'un programme plante, vous avez certainement déjà lu &quot;(core dumped)&quot;. Cela signifie en fait que le système a enregistré dans un fichier une copie de ce qui se trouvait en mémoire au moment du plantage (la zone du programme qui a planté uniquement). C'est parfois utile pour faire des vérifications, mais ce n'est pas simple et donc nous n'en parlerons pas ici. Cependant, sachez que GDB permet de spécifier le nom de ce fichier comme second argument :</p><pre id="r-525542" data-claire-element-id="525542"><code data-claire-semantic="console">gdb program dumpfile</code></pre><p id="r-525543" data-claire-element-id="525543">Parfois on souhaite déboguer un exécutable qui est déjà lancé, ce qu'on peut faire en précisant en second paramètre l'identifiant du processus. En général pour voir la liste des processus lancés, on utilise la commande ps (lisez la page man pour plus d'informations). Attention cependant, il ne doit pas y avoir de fichier portant le même nom que l'id du processus, sinon GDB va utiliser ce fichier comme fichier de dump au lieu de se référer au processus (ce qui peut avoir des effets désastreux).</p><pre id="r-525544" data-claire-element-id="525544"><code data-claire-semantic="console">gdb program 1234</code></pre><p id="r-525545" data-claire-element-id="525545">Lorsque vous lancez GDB, il commence par vous afficher quelques informations légales. Vous pouvez préciser de ne pas afficher ces informations avec le paramètre -silent (ou -quiet ou encore -q) :</p><pre id="r-525546" data-claire-element-id="525546"><code data-claire-semantic="console">gdb program -silent</code></pre><p id="r-525547" data-claire-element-id="525547">Une fois que vous avez lancé GDB, vous devez entrer des commandes pour lui indiquer quoi faire. D'ailleurs, GDB ne lance pas l'exécution du programme tant que vous ne le lui indiquez pas. Une ligne de commande GDB commence par le nom de la commande, qui peut être suivi par des paramètres. Si vous validez une ligne blanche, GDB répète la commande précédente. Vous pouvez également utiliser des abréviations au lieu des noms complets des commandes. Vous pouvez également placer des commentaires, ceux-ci commencent par # et se terminent à la fin de la ligne (donc marquent la fin de la commande).</p><pre id="r-525548" data-claire-element-id="525548"><code data-claire-semantic="console">$gdb program -q
+(gdb) command params #comment
+...</code></pre><p id="r-525549" data-claire-element-id="525549">Comme dans un terminal, vous pouvez utiliser l'auto-complétion avec la touche TAB.</p><h2 id="r-obtenir-de-l-aide-sur-une-commande" data-claire-element-id="525556">Obtenir de l'aide sur une commande</h2><p id="r-525551" data-claire-element-id="525551">Vous pouvez obtenir des informations sur les commandes grâce à &quot;help&quot; (abr. &quot;h&quot;). Si vous ne précisez pas la commande, GDB affiche les catégories de commandes disponibles. De même, si vous précisez une catégorie de commandes, GDB vous affichera la liste des commandes. Enfin, si vous précisez une commande ou son abréviation, GDB vous affichera les informations la concernant.</p><pre id="r-525552" data-claire-element-id="525552"><code data-claire-semantic="console">$gdb -q
+(gdb) help
+List of classes of commands:
+ 
+aliases -- Aliases of other commands
+breakpoints -- Making program stop at certain points
+data -- Examining data
+files -- Specifying and examining files
+internals -- Maintenance commands
+obscure -- Obscure features
+running -- Running the program
+stack -- Examining the stack
+status -- Status inquiries
+support -- Support facilities
+tracepoints -- Tracing of program execution without stopping the program
+user-defined -- User-defined commands
+ 
+Type &quot;help&quot; followed by a class name for a list of commands in that class.
+Type &quot;help all&quot; for the list of all commands.
+Type &quot;help&quot; followed by command name for full documentation.
+Type &quot;apropos word&quot; to search for commands related to &quot;word&quot;.
+Command name abbreviations are allowed if unambiguous.</code></pre><p id="r-525553" data-claire-element-id="525553">Comme indiqué, vous pouvez également utiliser &quot;help all&quot; pour obtenir la liste des toutes les commandes (classées par catégories).</p><p id="r-525554" data-claire-element-id="525554">Pour effectuer une recherche dans l'aide, il suffit d'utiliser la commande &quot;apropos&quot; qui prend comme paramètre une chaine à rechercher :</p><pre id="r-525555" data-claire-element-id="525555"><code data-claire-semantic="console">(gdb) apropos exit
+q -- Exit gdb
+quit -- Exit gdb
+set history save -- Set saving of the history record on exit
+show history save -- Show saving of the history record on exit</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb">Déboguer son programme avec GDB</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/demarrer-une-session-gdb">
+Démarrer une session GDB
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/executer-le-programme">
+Exécuter le programme
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/placer-des-points-d-arret">
+Placer des points d&#039;arrêt
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/controler-l-etat-des-variables-et-registres">
+Contrôler l&#039;état des variables et registres
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/controler-le-deroulement-de-l-execution">
+Contrôler le déroulement de l&#039;exécution
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/un-petit-exemple-6">
+Un petit exemple
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/executer-le-programme">
+<span class="next">Exécuter le programme</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Excuterleprogramme"></a><h2>Exécuter le programme</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/demarrer-une-session-gdb">
+<span class="arrow"></span>
+<span class="next">Démarrer une session GDB</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/placer-des-points-d-arret">
+<span class="next">Placer des points d&#039;arrêt</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-525558" data-claire-element-id="525558">Maintenant que nous avons quelques bases, il est temps de nous lancer dans le véritable travail du débogueur.</p><h2 id="r-compiler-avec-les-informations-de-debogage" data-claire-element-id="525562">Compiler avec les informations de débogage</h2><p id="r-525559" data-claire-element-id="525559">Pour déboguer un programme, il est nécessaire de pouvoir obtenir certaines informations le concernant, comme le nom et le type des variables, ainsi que les numéros de lignes correspondant aux instructions. Pour pouvoir les obtenir, on doit le préciser lors de la compilation. La plupart du temps, il s'agit de l'option &quot;-g&quot;, cependant, vous devriez vérifier dans la documentation de votre compilateur.</p><p id="r-525560" data-claire-element-id="525560">GCC et NASM, par exemple, permettent de compiler avec les informations de débogage :</p><pre id="r-525561" data-claire-element-id="525561"><code data-claire-semantic="console">$ g++ -g myprogram.cpp
+$ nasm -g myprogram.asm</code></pre><h2 id="r-lancer-l-execution" data-claire-element-id="525567">Lancer l'exécution</h2><p id="r-525563" data-claire-element-id="525563">Il est temps de passer à la phase qui nous intéresse, l'exécution du programme. Rien de plus simple, il s'agit de la commande &quot;run&quot; (abr. &quot;r&quot;). Vous pouvez lui passer autant de paramètres que vous le souhaitez, ils seront simplement passés comme paramètres au programme exécuté.</p><pre id="r-525564" data-claire-element-id="525564"><code data-claire-semantic="console">(gdb) run args
+...
+(gdb)</code></pre><p id="r-525565" data-claire-element-id="525565">Le programme s'exécute alors normalement, jusqu'à ce qu'il se termine. Dès qu'il a fini de s'exécuter, ou lorsqu'il rencontre une erreur, vous revenez à l'invite de commandes de gdb. Il existe une autre commande pour lancer le programme : &quot;start&quot;, qui contrairement à &quot;run&quot;, place un point d'arrêt (breakpoint) à l'entrée du programme. Pour un programme réalisé en C par exemple, ce point d'arrêt sera placé à l'endroit du main().<br/> Il est important de noter que le point d'entrée n'est pas toujours la première chose exécutée dans un programme. En C++, les constructeurs d'objets globaux et statiques sont appelés avant le main(), dans une phase dite &quot;d'élaboration&quot;. Nous verrons plus tard comment placer des points d'arrêt précis.<br/> Comme pour &quot;run&quot;, vous pouvez spécifier les paramètres du programme.</p><pre id="r-525566" data-claire-element-id="525566"><code data-claire-semantic="console">(gdb) start args
+...
+(gdb)</code></pre><h2 id="r-contexte-d-execution" data-claire-element-id="525577">Contexte d'exécution</h2><p id="r-525568" data-claire-element-id="525568">Lorsque vous démarrez un programme, il hérite de certaines propriétés : les variables d'environnement, les arguments de ligne de commande, et le dossier courant.<br/> Le dossier courant, c'est le dossier dans lequel vous exécutez le programme. Il est utilisé par exemple lorsque vous ouvrez un fichier sans préciser de chemin, le programme regarde alors dans ce répertoire courant.<br/> Les arguments de ligne de commande, c'est ce que vous ajoutez après le nom de l'exécutable pour le lancer (ex : &quot;$ g++ monfichier.cpp&quot;, g++ est le nom de l'exécutable, et &quot;monfichier.cpp&quot; est un argument).<br/> Enfin, les variables d'environnement sont des variables globales, accessibles par tous les programmes. On y retrouve par exemple la variable PATH, qui donne des chemins vers les répertoires où chercher les exécutables (par exemple, lorsque vous lancez &quot;$ g++&quot;, le programme gcc se trouve dans un de ces répertoires).</p><p id="r-525569" data-claire-element-id="525569">L'ensemble de ces paramètres est appelé le &quot;contexte d'exécution&quot; d'un programme. Et bien entendu, vous pourriez avoir besoin (ou juste une folle envie) de modifier ces paramètres. GDB propose donc des commandes pour y accéder.</p><p id="r-525570" data-claire-element-id="525570"><em><strong>(gdb) show args</strong></em><br/> Affiche la ligne d'arguments actuelle du programme.</p><p id="r-525571" data-claire-element-id="525571"><em><strong>(gdb) set args </strong></em><em>arguments</em><br/> Règle la ligne d'arguments à &quot;arguments&quot; (vous pouvez aussi passer les arguments comme paramètres à start ou run).</p><p id="r-525572" data-claire-element-id="525572"><em><strong>(gdb) show environment</strong> [variable]</em><br/> ou <strong>(gdb) show env</strong><em>(gdb) show env [variable]</em><br/> Affiche les variables d'environnement. Si vous précisez un nom de variable (ex : PATH), seule cette variable est affichée.<br/> Vous pouvez aussi utiliser &quot;(gdb) show paths&quot; pour afficher la variable PATH.</p><p id="r-525573" data-claire-element-id="525573"><em><strong>(gdb) set environment</strong> variable [=value]</em><br/><strong>(gdb) set env</strong><em>(gdb) set env variable [=value]</em><br/> Règle la valeur d'une variable &quot;variable&quot; à &quot;value&quot;. Si vous ne donnez pas de valeur, celle-ci sera une chaîne vide.<br/> Vous pouvez aussi utiliser &quot;(gdb) path [newpath]&quot; pour ajouter newpath à la liste des répertoires d'exécutables.</p><p id="r-525574" data-claire-element-id="525574"><em><strong>(gdb) unset environment</strong> variable</em><br/><strong>(gdb) unset env</strong><em>(gdb) unset env variable</em><br/> Supprime la variable d'environnement &quot;variable&quot; (son contenu ne devient même pas une chaine vide, elle est complètement supprimée de la liste).</p><p id="r-525575" data-claire-element-id="525575"><strong><em>(gdb) pwd</em></strong><br/> Affiche le répertoire courant.</p><p id="r-525576" data-claire-element-id="525576"><em><strong>(gdb) cd</strong> directory</em><br/> Règle le répertoire courant à &quot;directory&quot;.</p><h2 id="r-les-entrees-et-sorties" data-claire-element-id="525587">Les entrées et sorties</h2><p id="r-525578" data-claire-element-id="525578">Si votre programme utilise les entrées et sorties standards, les opérations d'entrée et de sortie seront effectuées dans le même terminal que GDB. Vous pouvez, pour plus de clarté par exemple, changer le terminal du programme exécuté.</p><p id="r-525579" data-claire-element-id="525579">Vous pouvez savoir dans quel terminal vous êtes avec &quot;$ tty&quot;. Si vous êtes déjà dans gdb, inutile d'en sortir :</p><p id="r-525580" data-claire-element-id="525580"><strong><em>(gdb) show inferior-tty</em></strong><br/> Affiche le terminal courant utilisé pour le programme exécuté.</p><p id="r-525581" data-claire-element-id="525581"><em><strong>(gdb) set inferior-tty</strong> terminal</em><br/><strong>(gdb) tty</strong><em>(gdb) tty terminal</em><br/> Règle le terminal courant pour l'exécution du programme à &quot;terminal&quot;.</p><p id="r-525582" data-claire-element-id="525582">Exemple :</p><p id="r-525583" data-claire-element-id="525583">TERMINAL /dev/pts/2</p><pre id="r-525584" data-claire-element-id="525584"><code data-claire-semantic="console">(gdb) tty /dev/pts/3
+(gdb) run
+(gdb)</code></pre><p id="r-525585" data-claire-element-id="525585">TERMINAL /dev/pts/3</p><pre id="r-525586" data-claire-element-id="525586"><code data-claire-semantic="console">$ Sorties et entrées du programme exécuté par GDB...</code></pre><h2 id="r-stopper-l-execution" data-claire-element-id="525590">Stopper l'exécution</h2><p id="r-525588" data-claire-element-id="525588">Vous pouvez décider de stopper l'exécution du programme en cours. Il suffit d'utiliser la commande kill :</p><pre id="r-525589" data-claire-element-id="525589"><code data-claire-semantic="console">(gdb) kill
+Kill the program being debugged? (y or n) y
+(gdb)</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb">Déboguer son programme avec GDB</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/demarrer-une-session-gdb">
+Démarrer une session GDB
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/executer-le-programme">
+Exécuter le programme
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/placer-des-points-d-arret">
+Placer des points d&#039;arrêt
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/controler-l-etat-des-variables-et-registres">
+Contrôler l&#039;état des variables et registres
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/controler-le-deroulement-de-l-execution">
+Contrôler le déroulement de l&#039;exécution
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/un-petit-exemple-6">
+Un petit exemple
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/demarrer-une-session-gdb">
+<span class="arrow"></span>
+<span class="next">Démarrer une session GDB</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/placer-des-points-d-arret">
+<span class="next">Placer des points d&#039;arrêt</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Placerdespointsd039arrt"></a><h2>Placer des points d&#039;arrêt</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/executer-le-programme">
+<span class="arrow"></span>
+<span class="next">Exécuter le programme</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/controler-l-etat-des-variables-et-registres">
+<span class="next">Contrôler l&#039;état des variables et registres</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-525592" data-claire-element-id="525592">Pour contrôler l'exécution d'un programme, on utilise des points d'arrêt. On donne à GDB une liste d'endroits où il doit faire une pause dans l'exécution. Cela permet par exemple de vérifier l'état d'une variable ou le contenu d'un registre. Comme nous l'avons vu plus tôt, il est possible de placer automatiquement un point d'arrêt au point d'entrée du programme, avec la commande &quot;start&quot;. Cependant, si le programme comporte plusieurs milliers de lignes, nous n'allons pas faire tourner tout le programme au &quot;pas à pas&quot; (une instruction à la fois, nous verrons plus tard comment faire), nous allons plutôt placer des points d'arrêt aux endroits qui nous intéressent.</p><p id="r-525593" data-claire-element-id="525593">Il y a trois façons de préciser un point d'arrêt :</p><ul id="r-525600" data-claire-element-id="525600"><li id="r-525595" data-claire-element-id="525595"><p id="r-525594" data-claire-element-id="525594">indiquer un endroit précis (fonction, ligne, fichier) ;</p></li><li id="r-525597" data-claire-element-id="525597"><p id="r-525596" data-claire-element-id="525596">lors de la modification d'une variable (ou à sa lecture) ;</p></li><li id="r-525599" data-claire-element-id="525599"><p id="r-525598" data-claire-element-id="525598">lorsqu'un certain événement se produit (création d'un nouveau processus, chargement d'une librairie, throw ou catch d'une exception, etc.).</p></li></ul><p id="r-525601" data-claire-element-id="525601">Respectivement, ces trois types de points d'arrêt se nomment <em>breakpoints</em>, <em>watchpoints</em> (points de surveillance), et <em>catchpoints</em> (points d'interception).</p><p id="r-525602" data-claire-element-id="525602">Lorsque GDB interrompt le programme, il affiche la raison de l'arrêt, la ligne de l'instruction suivante (la prochaine qui sera exécutée) et l'invite de commande :</p><pre id="r-525603" data-claire-element-id="525603"><code data-claire-semantic="console">(gdb) r
+Starting program: main
+Breakpoint 3, main () at sample1.cpp:9
+9           a = a / b;
+(gdb)</code></pre><p id="r-525604" data-claire-element-id="525604"><em><strong>(gdb) info break</strong> [breaknum]</em><br/> Affiche la liste des points d'arrêt. Si vous précisez un numéro (et non une position), vous ne verrez que les infos qui concernent ce point d'arrêt.</p><h2 id="r-les-breakpoints" data-claire-element-id="525626">Les breakpoints</h2><p id="r-525605" data-claire-element-id="525605">GDB s'arrête juste avant l'instruction qui suit le breakpoint. Cela signifie par exemple que si vous demandez à GDB de s'arrêter à la ligne 17, il va s'arrêter juste au début de la ligne, sans l'exécuter.</p><p id="r-525606" data-claire-element-id="525606"><em><strong>(gdb) break</strong> [position]</em><br/> Si on ne donne pas de position, GDB s'arrêtera à la prochaine instruction qui sera exécutée. Sinon on peut spécifier l'endroit où le programme sera arrêté :</p><ul id="r-525619" data-claire-element-id="525619"><li id="r-525608" data-claire-element-id="525608"><p id="r-525607" data-claire-element-id="525607">en donnant un numéro de ligne (break 123) du fichier courant ;</p></li><li id="r-525610" data-claire-element-id="525610"><p id="r-525609" data-claire-element-id="525609">en donnant un décalage en lignes par rapport à la prochaine instruction (break +5 #s'arrêter 5 lignes après la prochaine instruction) ;</p></li><li id="r-525612" data-claire-element-id="525612"><p id="r-525611" data-claire-element-id="525611">en donnant un nom de fichier et un numéro de ligne (break monfichier.cpp:123) ;</p></li><li id="r-525614" data-claire-element-id="525614"><p id="r-525613" data-claire-element-id="525613">en donnant un nom de fonction (break ma_fonction) ;</p></li><li id="r-525616" data-claire-element-id="525616"><p id="r-525615" data-claire-element-id="525615">en donnant un nom de fichier et de fonction (break monfichier.cpp:ma_fonction) ;</p></li><li id="r-525618" data-claire-element-id="525618"><p id="r-525617" data-claire-element-id="525617">en donnant une adresse (break *adresse #adresse peut être un nombre, une variable, une expression...).<br/> Exemple : &quot;(gdb) break *(0x80F523 + maVariable).</p></li></ul><p id="r-525620" data-claire-element-id="525620">Remarque : en précisant une fonction, plusieurs breakpoints peuvent êtres placés, par exemple avec un programme écrit en C++ où on aurait surchargé la fonction.</p><p id="r-525621" data-claire-element-id="525621"><em><strong>(gdb) break</strong> [position] <strong>if condition</strong></em><br/> On peut aussi préciser une condition d'arrêt. GDB va alors évaluer (calculer) cette condition juste avant de s'arrêter, pour savoir s'il doit ou non continuer. Exemple :</p><pre id="r-525622" data-claire-element-id="525622"><code data-claire-semantic="console">(gdb) break 123 if a+b &lt; 0</code></pre><p id="r-525623" data-claire-element-id="525623">GDB arrêtera alors l'exécution du programme à la ligne 123 seulement si a+b est négatif. La condition est écrite avec la syntaxe du langage utilisé pour le programme.</p><p id="r-525624" data-claire-element-id="525624">Parfois, vous ne souhaitez vous arrêter qu'une fois (par exemple, seulement lors du premier appel à une fonction). Il suffit alors d'utiliser &quot;tbreak&quot; à la place de &quot;break&quot;, en l'utilisant exactement de la même manière.</p><p id="r-525625" data-claire-element-id="525625"><em><strong>(gdb) clear</strong> [position]</em><br/> Supprime le breakpoint correspondant à la position indiquée. Comme précédemment, ne pas indiquer de position suppose qu'il s'agit de l'instruction suivante.</p><h2 id="r-ajouter-un-watchpoint" data-claire-element-id="525630">Ajouter un watchpoint</h2><p id="r-525627" data-claire-element-id="525627"><em><strong>(gdb) watch</strong> variable</em><br/> Indique à GDB de s'arrêter dès que la variable est modifiée. L'instruction qu'il vous affiche correspond donc à celle qui sera exécutée juste après (et non pas à celle qui a modifié la variable, puisqu'elle a déjà été exécutée).<br/> Vous pouvez également utiliser une expression, par exemple &quot;a*b&quot;, pour indiquer à GDB de ne s'arrêter que lorsque (a*b) aura été modifié. Mais il faut bien noter que pour surveiller une expression, GDB est obligé de surveiller chaque variable de cette expression et d'évaluer le résultat.</p><p id="r-525628" data-claire-element-id="525628"><em><strong>(gdb) rwatch</strong> variable</em><br/> Indique à GDB de s'arrêter dès que la variable est accédée par le programme (r pour &quot;read&quot;).</p><p id="r-525629" data-claire-element-id="525629"><em><strong>(gdb) awatch</strong> variable</em><br/> Indique à GDB de s'arrêter aussi bien lorsque la variable est modifiée que lorsqu'elle est lue.</p><h2 id="r-ajouter-un-catchpoint" data-claire-element-id="525634">Ajouter un catchpoint</h2><p id="r-525631" data-claire-element-id="525631">Le plus simple est que je vous donne l'aide traduite. Si vous ne savez pas à quoi correspond un événement, c'est que vous n'en avez pas besoin pour l'instant. ^^</p><pre id="r-525632" data-claire-element-id="525632"><code data-claire-semantic="console">Intercepter un signal :
+        catch signal              - Tous les signaux
+        catch signal &lt;signame&gt;    - Seulement le signal &lt;signame&gt;
+Intercepter une exception :
+        catch throw               - Toutes les exceptions lorsqu'elles sont lancées (throw...)
+        catch throw &lt;exceptname&gt;  - Seulement l'exception &lt;exceptname&gt; lorsqu'elle est lancée (throw...)
+        catch catch               - Toutes les exceptions lorsqu'elles sont catchées
+        catch catch &lt;exceptname&gt;  - Seulement l'exception &lt;exceptname&gt; lorsqu'elle est catchée
+Intercepter les événements de threads :
+        catch thread_start        - Lors de la création d'un nouveau thread
+        catch thread_exit         - Lors de la fermeture d'un thread
+        catch thread_join         - Lors d'un join de threads
+Intercepter les événements de processus :
+        catch start               - Lors de la création d'un nouveau procesus
+        catch exit                - Lors de la fermeture d'un processus
+        catch fork                - Lors d'un appel à fork()
+        catch vfork               - Lors d'un appel à vfork()
+        catch exec                - Lors d'un appel à exec()
+Intercepter les chargements/déchargements de librairies dynamiques :
+        catch load                - Lors du chargement de n'importe quelle librairie
+        catch load &lt;libname&gt;      - Lors du chargement de la librairie &lt;libname&gt;
+        catch unload              - Lors du déchargement de n'importe quelle librairie
+        catch unload &lt;libname&gt;    - Lors du déchargement de la librairie &lt;libname&gt;</code></pre><p id="r-525633" data-claire-element-id="525633">Tout comme pour break, on peut vouloir placer un catchpoint qui n'aura effet qu'une seule fois. Il suffit d'utiliser &quot;tcatch&quot; au lieu de &quot;catch&quot;.</p><h2 id="r-supprimer-un-point-d-arret" data-claire-element-id="525641">Supprimer un point d'arrêt</h2><p id="r-525635" data-claire-element-id="525635">Dans les commandes suivantes, si [breaknum] n'est pas spécifié, cela signifie &quot;tous les points d'arrêt&quot;.</p><p id="r-525636" data-claire-element-id="525636"><em><strong>(gdb) delete</strong> [breaknum]</em><br/> Supprime le point d'arrêt numéro &quot;breaknum&quot;.</p><p id="r-525637" data-claire-element-id="525637"><em><strong>(gdb) disable</strong> [breaknum]</em><br/> Désactive un point d'arrêt, mais ne le supprime pas (GDB ne s'arrêtera pas, mais vous pourrez toujours le réactiver par la suite).</p><p id="r-525638" data-claire-element-id="525638"><em><strong>(gdb) enable</strong> [breaknum]</em><br/> Active un point d'arrêt.</p><p id="r-525639" data-claire-element-id="525639"><em><strong>(gdb) enable</strong> [breaknum] <strong>once</strong></em><br/> Active un point d'arrêt pour un seul passage. Dès qu'il est atteint une fois, il est désactivé automatiquement.</p><p id="r-525640" data-claire-element-id="525640"><em><strong>(gdb) enable</strong> [breaknum] <strong>delete</strong></em><br/> Active un point d'arrêt pour un seul passage. Dès qu'il est atteint une fois, il est automatiquement supprimé.</p><h2 id="r-continuer-l-execution" data-claire-element-id="525649">Continuer l'exécution</h2><p id="r-525642" data-claire-element-id="525642">Lorsque le programme est interrompu, GDB vous passe l'invite de commande. Vous pouvez y entrer toutes les commandes que vous souhaitez. Une fois que vous souhaitez continuer l'exécution du programme, il suffit d'entrer la commande &quot;continue&quot; (abr. &quot;c&quot;).</p><p id="r-525643" data-claire-element-id="525643">Vous pouvez également utiliser le mode &quot;pas à pas&quot; (step-by-step en anglais). Il y a plusieurs façons de faire, dont les plus utiles sont :</p><p id="r-525644" data-claire-element-id="525644"><em><strong>(gdb) step</strong> [count]</em><br/> Exécute les [count] prochaines lignes de code. Si count n'est pas spécifié, il vaut 1. Si l'instruction est un appel de fonction, step va passer à l'intérieur de cette fonction. Attention cependant, step ne peut aller que dans les fichiers qui ont des informations de débogage (il a besoin des numéros de ligne).</p><p id="r-525645" data-claire-element-id="525645"><em><strong>(gdb) next</strong> [count]</em><br/> Comme &quot;step&quot;, exécute les [count] prochaines lignes de code. La différence étant que si l'instruction est un appel de fonction, next ne s'arrêtera pas à l'intérieur de celle-ci, mais bien à la ligne suivant l'appel de la fonction.</p><p id="r-525646" data-claire-element-id="525646"><strong><em>(gdb) until</em></strong><br/> Exécute toutes les instructions jusqu'à ce que le programme arrive à une ligne qui suit la ligne actuelle. C'est utile dans le cas de boucles. Par exemple, la boucle suivante en C++ :</p><pre id="r-525647" data-claire-element-id="525647"><code data-claire-semantic="cpp">for (int i=0;i&lt;1000;++i)
+    cout &lt;&lt; i;</code></pre><p id="r-525648" data-claire-element-id="525648">Avec step ou next, GDB va s'arrêter 1000 fois sur ces deux lignes (en fait, 1001 fois pour la première, la 1001e fois la seconde n'est plus exécutée car i est alors égal à 1000 , et 1000 /&lt; 1000 ^^ ).<br/> Avec until, GDB ne va s'y arrêter que la première fois, puis il s'arrêtera seulement à la prochaine ligne.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb">Déboguer son programme avec GDB</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/demarrer-une-session-gdb">
+Démarrer une session GDB
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/executer-le-programme">
+Exécuter le programme
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/placer-des-points-d-arret">
+Placer des points d&#039;arrêt
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/controler-l-etat-des-variables-et-registres">
+Contrôler l&#039;état des variables et registres
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/controler-le-deroulement-de-l-execution">
+Contrôler le déroulement de l&#039;exécution
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/un-petit-exemple-6">
+Un petit exemple
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/executer-le-programme">
+<span class="arrow"></span>
+<span class="next">Exécuter le programme</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/controler-l-etat-des-variables-et-registres">
+<span class="next">Contrôler l&#039;état des variables et registres</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Contrlerl039tatdesvariablesetregistres"></a><h2>Contrôler l&#039;état des variables et registres</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/placer-des-points-d-arret">
+<span class="arrow"></span>
+<span class="next">Placer des points d&#039;arrêt</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/controler-le-deroulement-de-l-execution">
+<span class="next">Contrôler le déroulement de l&#039;exécution</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-525651" data-claire-element-id="525651">Avec tout ce que nous venons de voir, vous êtes capables de lancer et d'arrêter l'exécution d'un programme. Mais cela suffit rarement à trouver la cause d'un plantage. Maintenant, lorsque le programme plante, on aimerait connaître l'état de certaines variables, pouvoir les modifier, ou encore savoir exactement à quel moment le programme a planté.</p><h2 id="r-examiner-des-variables" data-claire-element-id="525685">Examiner des variables</h2><p id="r-525652" data-claire-element-id="525652">Rien plus simple, il suffit d'utiliser la commande &quot;print&quot; (abr. &quot;p&quot;) en précisant le nom de la variable. Attention, il faut que la variable existe au moment où vous demandez l'affichage. Petit exemple :</p><pre id="r-525653" data-claire-element-id="525653"><code data-claire-semantic="cpp">void myfunc();
+ 
+int main(){
+    char msg[] = &quot;Hello World!&quot;;
+    myfunc();
+    return 0;
+}
+ 
+void myfunc(){
+    int boo = 16;
+}</code></pre><pre id="r-525654" data-claire-element-id="525654"><code data-claire-semantic="console">(gdb) break 5
+(gdb) r
+Starting program: main
+ 
+Breakpoint 1, main () at sample1.cpp:5
+5           myfunc();
+(gdb)print msg
+$1 = &quot;Hello World!&quot;
+(gdb) print boo
+No symbol &quot;boo&quot; in current context.</code></pre><p id="r-525655" data-claire-element-id="525655">Si l'on souhaite accéder à une variable qui n'est pas dans la portée actuelle, on doit le préciser avec &quot;::&quot;. Cependant, les variables hors de la portée courante sont rarement définies, elle ne le seront en fait que lorsque le programme sera dans ce bloc. À quoi peut bien servir de vouloir y accéder alors ? Eh bien voyons encore un petit exemple en utilisant le même code que précédemment :</p><pre id="r-525656" data-claire-element-id="525656"><code data-claire-semantic="console">(gdb) break 10
+(gdb) r
+Starting program: main
+ 
+Breakpoint 1, main () at sample1.cpp:10
+10          int boo = 16;
+(gdb) print msg
+No symbol &quot;msg&quot; in current context.
+(gdb) print main::msg
+$2 = &quot;Hello World!&quot;</code></pre><p id="r-525657" data-claire-element-id="525657">Eh oui, puisque l'appel de myfunc se fait à l'intérieur du main(), on se trouve toujours à l'intérieur du main et on peut donc accéder à la variable msg.</p><p id="r-525658" data-claire-element-id="525658">Chaque fois que vous affichez quelque chose, GDB le garde dans l'historique pour que vous puissiez y accéder par la suite. C'est pour cette raison que vous voyez des &quot;$1 = ...&quot;, $1 signifie qu'il s'agit de la première valeur que vous affichez. &quot;print $1&quot; permet d'ailleurs d'afficher $1 (mais crée du coup une nouvelle entrée dans l'historique). Vous pouvez également afficher l'historique sans passer par ces variables propres à GDB :</p><p id="r-525659" data-claire-element-id="525659"><em><strong>(gdb) show values</strong> n</em><br/> Affiche dix valeurs de l'historique, en partant de (n-5) et en allant jusqu'à (n+4).</p><p id="r-525660" data-claire-element-id="525660">GDB tente toujours de déterminer le meilleur moyen d'afficher une valeur. Mais il est tout à fait possible de choisir le format, en utilisant :</p><p id="r-525661" data-claire-element-id="525661"><em><strong>(gdb) print /format</strong> expr</em><br/> Affiche &quot;expr&quot; en utilisant le format spécifié. L'espace avant le &quot;/&quot; est obsolète (car une commande ne pouvant pas contenir de slash, GDB s'arrête de toute manière juste avant), mais il ne doit pas y en avoir après. Les formats sont les suivants :</p><ul id="r-525678" data-claire-element-id="525678"><li id="r-525663" data-claire-element-id="525663"><p id="r-525662" data-claire-element-id="525662">x : entier affiché en hexadécimal ;</p></li><li id="r-525665" data-claire-element-id="525665"><p id="r-525664" data-claire-element-id="525664">d : entier signé ;</p></li><li id="r-525667" data-claire-element-id="525667"><p id="r-525666" data-claire-element-id="525666">u : entier non-signé ;</p></li><li id="r-525669" data-claire-element-id="525669"><p id="r-525668" data-claire-element-id="525668">o : entier affiché en octal ;</p></li><li id="r-525671" data-claire-element-id="525671"><p id="r-525670" data-claire-element-id="525670">t : entier affiché en binaire ;</p></li><li id="r-525673" data-claire-element-id="525673"><p id="r-525672" data-claire-element-id="525672">a : adresse ;</p></li><li id="r-525675" data-claire-element-id="525675"><p id="r-525674" data-claire-element-id="525674">c : caractère ;</p></li><li id="r-525677" data-claire-element-id="525677"><p id="r-525676" data-claire-element-id="525676">f : nombre à virgule flottante (float).</p></li></ul><pre id="r-525679" data-claire-element-id="525679"><code data-claire-semantic="console">(gdb) p/x 1234
+$1 = 0x4d2
+(gdb) p/d -1234
+$2 = -1234
+(gdb) p/u -1234
+$3 = 4294966062
+(gdb) p/o 1234
+$4 = 02322
+(gdb) p/t 1234
+$5 = 10011010010
+(gdb) p/a 1234
+$6 = 0x4d2
+(gdb) p/c 76
+$7 = 76 'L'
+(gdb) p/f 1234
+$8 = 1.7292023e-42</code></pre><p id="r-525680" data-claire-element-id="525680">On peut forcer GDB à afficher un vecteur, en utilisant &quot;@&quot; :</p><p id="r-525681" data-claire-element-id="525681"><em><strong>(gdb) print [/format]</strong> *adresse@taille</em><br/> Affiche un tableau de taille et d'adresse de départ spécifiées. Chaque élément du tableau est affiché dans le format choisi.</p><pre id="r-525682" data-claire-element-id="525682"><code data-claire-semantic="console">(gdb) p/c *msg@5
+$1 = {72 'H', 101 'e', 108 'l', 108 'l', 111 'o'}</code></pre><p id="r-525683" data-claire-element-id="525683">Enfin, signalons également qu'on peut en fait afficher presque n'importe quelle expression évaluable dans le langage courant :</p><pre id="r-525684" data-claire-element-id="525684"><code data-claire-semantic="console">(gdb) print msg[3]+msg[4]+1
+$1 = 220
+(gdb) print myfunc()
+$2 = void
+(gdb) print myfunc
+$3 = {void (void)} 0x8048574 &lt;myfunc()&gt;</code></pre><h2 id="r-examiner-la-memoire-et-les-registres" data-claire-element-id="525695">Examiner la mémoire et les registres</h2><p id="r-525686" data-claire-element-id="525686">GDB permet de définir des variables (hors du programme, qui ne seront disponibles que depuis les commandes de GDB). Quand nous avons parlé des valeurs placées dans l'historique, eh bien en réalité chaque valeur $1, $2... est une nouvelle variable créée par GDB, c'est pourquoi on peut les afficher avec print. Mais il existe aussi d'autres variables spéciales : les registres. Ces variables, qui portent le nom des registres du processeur (et du coprocesseur) permettent d'accéder aux registres. Par exemple, le registre EAX est accessible via $eax. On peut également voir les informations de tous les registres avec &quot;info&quot;.</p><p id="r-525687" data-claire-element-id="525687">Note : la valeur des registres est celle qu'ils contiennent au point d'exécution du programme où vous vous trouvez.</p><p id="r-525688" data-claire-element-id="525688"><strong><em>(gdb) info all-registers</em></strong><br/> Affiche la liste complète des registres.</p><p id="r-525689" data-claire-element-id="525689"><strong><em>(gdb) info registers</em></strong><br/> Affiche la liste des registres principaux.</p><p id="r-525690" data-claire-element-id="525690">On peut également afficher une zone de la mémoire, à condition bien sûr que le programme exécuté y ait accès.</p><p id="r-525691" data-claire-element-id="525691"><em><strong>(gdb) examine [/tfu]</strong> adresse</em><br/><strong>(gdb) x [/tfu]</strong><em>(gdb) x [/tfu] adresse</em><br/> Affiche le contenu de la mémoire à partir de l'adresse spécifiée. Vous pouvez utiliser des expressions, par exemple un nom de fonction, une adresse contenue dans une variable, etc. Vous pouvez également préciser la taille de la zone à afficher (en octets), le format d'affichage (avec un des formats vu plus haut¹) et la taille d'une unité (b = 1 octet, h = 2 octets, w = 4 octets, g = 8 octets). Vous n'êtes pas obligés de préciser les trois options. ;)</p><p id="r-525692" data-claire-element-id="525692">¹ : en plus des formats déjà vus, vous pouvez utiliser &quot;i&quot; pour afficher l'instruction en assembleur correspondant à la valeur en mémoire.</p><p id="r-525693" data-claire-element-id="525693">Exemples :</p><pre id="r-525694" data-claire-element-id="525694"><code data-claire-semantic="console">(gdb) x /10xb main #Affiche les 10 (10) octets (b) à l'adresse de main en hexadécimal (x)
+(gdb) x /3dw 0x123456 #Affiche les 3 (3) mots de 4 octets (w) à l'adresse 0x123456 comme des entiers signés (d)
+(gdb) x /10i main #Affiche les 10 instructions assembleur à partir de l'adresse main</code></pre><h2 id="r-modifier-une-variable-ou-un-registre" data-claire-element-id="525699">Modifier une variable ou un registre</h2><p id="r-525696" data-claire-element-id="525696">On peut vouloir modifier le contenu d'une variable ou même d'un registre durant l'exécution. Par exemple si on se rend compte qu'on divise par 0 mais qu'on souhaite continuer l'exécution, on peut modifier la valeur d'une variable lorsqu'on arrive à l'endroit qui pose problème.</p><p id="r-525697" data-claire-element-id="525697"><em><strong>(gdb) set </strong> $variable = value</em><br/> Permet de modifier la valeur contenue dans une variable GDB, il s'agit par exemple d'un registre (ex : &quot;(gdb) set $eax = 5&quot; pour mettre EAX à 0).<br/> Si la variable n'existe pas, elle est créée.</p><p id="r-525698" data-claire-element-id="525698"><em><strong>(gdb) set variable </strong> variable = value</em><br/><strong>(gdb) set var </strong><em>(gdb) set var variable = value</em><br/> Permet de modifier le contenu d'une variable du programme. Vous ne pouvez pas en créer de nouvelle, et vous ne pouvez pas non plus modifier la taille d'une variable, donc faites attention à ne pas placer n'importe quoi dedans. ^^</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb">Déboguer son programme avec GDB</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/demarrer-une-session-gdb">
+Démarrer une session GDB
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/executer-le-programme">
+Exécuter le programme
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/placer-des-points-d-arret">
+Placer des points d&#039;arrêt
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/controler-l-etat-des-variables-et-registres">
+Contrôler l&#039;état des variables et registres
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/controler-le-deroulement-de-l-execution">
+Contrôler le déroulement de l&#039;exécution
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/un-petit-exemple-6">
+Un petit exemple
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/placer-des-points-d-arret">
+<span class="arrow"></span>
+<span class="next">Placer des points d&#039;arrêt</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/controler-le-deroulement-de-l-execution">
+<span class="next">Contrôler le déroulement de l&#039;exécution</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Contrlerledroulementdel039excution"></a><h2>Contrôler le déroulement de l&#039;exécution</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/controler-l-etat-des-variables-et-registres">
+<span class="arrow"></span>
+<span class="next">Contrôler l&#039;état des variables et registres</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/un-petit-exemple-6">
+<span class="next">Un petit exemple</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-525701" data-claire-element-id="525701">Il n'est pas toujours évident de savoir à quel moment un programme plante. Par exemple, si l'erreur se trouve dans une fonction (recevant par exemple des paramètres erronés), qui est appelée de différents endroits, on voudrait savoir qui l'a appelée. GDB fournit donc plusieurs commandes permettant de se repérer dans l'exécution du programme.</p><p id="r-525702" data-claire-element-id="525702">Mais avant de voir ces commandes, un peu de théorie s'impose. Lorsque dans un programme vous appelez une fonction, l'ordinateur doit &quot;sauter&quot; à l'adresse de cette fonction pour en exécuter les instructions. Mais il est nécessaire, pour pouvoir faire cet appel correctement, de sauvegarder des informations. Par exemple, l'ordinateur doit savoir à quel endroit il doit revenir une fois qu'il termine l'exécution de la fonction. Il faut donc, au minimum, sauvegarder cette adresse avant de faire le saut. Il faut aussi passer les arguments à la fonction, ce qui se fait en général en utilisant une pile (une zone mémoire où on va ajouter et retirer des informations, allez voir sur Wikipédia si vous voulez plus de détails, ça peut être très intéressant). Et il se peut même que dans une fonction, on en appelle d'autres. Il faut donc, à chaque appel, sauvegarder certaines valeurs (en général des registres). Chaque fonction a donc ce qu'on appelle une &quot;frame&quot; (abr. &quot;f&quot;), qui correspond à un ensemble d'informations la concernant.</p><p id="r-525703" data-claire-element-id="525703"><em><strong>(gdb) frame</strong> [frameid]</em><br/> Si vous ne précisez pas de frameid, affiche les informations sur la frame courante. Sinon, se place dans la frame indiquée et en affiche les informations.<br/> Remarque : changer de frame ne perturbe pas l'exécution du programme. En fait, le programme se trouve toujours au même point d'exécution, c'est GDB qui se &quot;place&quot; dans la frame indiquée. Les commandes que vous entrerez auront alors effet sur la frame sélectionnée (par exemple si vous faites un print, les variables &quot;locales&quot; seront celles de la frame courante, et pour les autres vous devrez spécifier la frame comme nous l'avions vu avec &quot;::&quot;).</p><p id="r-525704" data-claire-element-id="525704"><em><strong>(gdb) select-frame</strong> frameid</em><br/> Se place dans la frame indiquée.</p><p id="r-525705" data-claire-element-id="525705"><em><strong>(gdb) up</strong> [n]</em><br/> Remonte de n frames (ou de 1 si n n'est pas spécifié).</p><p id="r-525706" data-claire-element-id="525706"><em><strong>(gdb) down</strong> [n]</em><br/> Descend de n frames (ou de 1 si n n'est pas spécifié).</p><p id="r-525707" data-claire-element-id="525707"><strong><em>(gdb) info frame</em></strong><br/> Affiche des informations détaillées sur la frame courante. On y trouve par exemple les registres qui ont été sauvegardés, l'adresse de la frame précédente, etc.</p><h2 id="r-backtrace-le-stack-de-frames" data-claire-element-id="525715">Backtrace : le stack de frames</h2><p id="r-525708" data-claire-element-id="525708">Obtenir des informations sur une frame est utile, mais le plus souvent ce qui nous intéresse c'est de voir le <em>stack</em> (la pile) des frames, pour savoir par où le programme est passé pour arriver à l'endroit d'exécution où il se trouve. Il existe pour ce faire une commande toute simple, &quot;backtrace&quot; (abr. &quot;bt&quot;). Prenons le code C++ suivant :</p><pre id="r-525709" data-claire-element-id="525709"><code data-claire-semantic="cpp">#include &lt;iostream&gt;
+using namespace std;
+ 
+void myfunc(int i);
+ 
+int main(){
+    char msg[] = &quot;Hello World!&quot;;
+    myfunc(2);
+    return 0;
+}
+ 
+void myfunc(int i){
+    int boo = 16;
+    if (i &gt; 0) myfunc(i-1);
+}</code></pre><p id="r-525710" data-claire-element-id="525710"><strong><em>(gdb) backtrace</em></strong><br/> Affiche le stack d'appel (liste des frames).</p><p id="r-525711" data-claire-element-id="525711">Voici une petite session GDB, j'ai effacé les lignes inutiles pour clarifier :</p><pre id="r-525712" data-claire-element-id="525712"><code data-claire-semantic="console">(gdb) break myfunc
+(gdb) run
+Breakpoint 1, myfunc (i=2) at sample1.cpp:13
+(gdb) bt
+#0  myfunc (i=2) at sample1.cpp:13
+#1  0x080485e2 in main () at sample1.cpp:8
+(gdb) continue
+Breakpoint 1, myfunc (i=1) at sample1.cpp:13
+(gdb) bt
+#0  myfunc (i=1) at sample1.cpp:13
+#1  0x08048595 in myfunc (i=2) at sample1.cpp:14
+#2  0x080485e2 in main () at sample1.cpp:8
+(gdb) continue
+Breakpoint 1, myfunc (i=0) at sample1.cpp:13
+(gdb) bt
+#0  myfunc (i=0) at sample1.cpp:13
+#1  0x08048595 in myfunc (i=1) at sample1.cpp:14
+#2  0x08048595 in myfunc (i=2) at sample1.cpp:14
+#3  0x080485e2 in main () at sample1.cpp:8</code></pre><p id="r-525713" data-claire-element-id="525713">On voit rapidement que backtrace part de la frame courante, et remonte jusqu'à la frame la plus éloignée (ici le main). On peut voir pour chaque frame son numéro (#...), l'adresse où elle commence (là où se trouve le code en mémoire), suivie du nom de la fonction et des paramètres passés, ainsi que du fichier et de la ligne où elle se trouve. Si vous souhaitez également afficher les informations sur les variables locales de chaque frame, vous pouvez utiliser l'option &quot;full&quot; :</p><p id="r-525714" data-claire-element-id="525714"><strong><em>(gdb) backtrace full</em></strong><br/> Affiche le stack d'appel (liste des frames) avec, pour chaque frame, le contenu des variables locales.</p><h2 id="r-changer-le-point-d-execution" data-claire-element-id="525735">Changer le point d'exécution</h2><p id="r-525716" data-claire-element-id="525716">Il existe certaines commandes qui modifient le déroulement du programme :</p><p id="r-525717" data-claire-element-id="525717"><em><strong>(gdb) jump</strong> position</em><br/> Continue l'exécution à l'endroit spécifié. Comme pour les points d'arrêt, la position peut être indiquée :</p><ul id="r-525730" data-claire-element-id="525730"><li id="r-525719" data-claire-element-id="525719"><p id="r-525718" data-claire-element-id="525718">en donnant un numéro de ligne ;</p></li><li id="r-525721" data-claire-element-id="525721"><p id="r-525720" data-claire-element-id="525720">en donnant un décalage en lignes par rapport à la prochaine instruction ;</p></li><li id="r-525723" data-claire-element-id="525723"><p id="r-525722" data-claire-element-id="525722">en donnant un nom de fichier et un numéro de ligne ;</p></li><li id="r-525725" data-claire-element-id="525725"><p id="r-525724" data-claire-element-id="525724">en donnant un nom de fonction ;</p></li><li id="r-525727" data-claire-element-id="525727"><p id="r-525726" data-claire-element-id="525726">en donnant un nom de fichier et de fonction ;</p></li><li id="r-525729" data-claire-element-id="525729"><p id="r-525728" data-claire-element-id="525728">en donnant une adresse.</p></li></ul><p id="r-525731" data-claire-element-id="525731">Attention à ce que vous faites, car si vous passez d'une fonction à une autre, n'oubliez pas qu'il faudra peut-être régler vous même les paramètres (avec <strong>set var</strong>).</p><p id="r-525732" data-claire-element-id="525732"><em><strong>(gdb) return</strong> [value]</em><br/> Exécute l'instruction de retour de la fonction dans laquelle vous vous trouvez. Vous pouvez préciser la valeur de retour.<br/> Par exemple, si vous interrompez l'exécution dans la fonction myfunc(), vous pouvez utiliser <strong>return</strong>, ce qui quittera la fonction.</p><p id="r-525733" data-claire-element-id="525733"><em><strong>(gdb) call</strong> expression</em><br/><strong>Call</strong> est identique à <strong>print</strong>, sauf qu'il n'affiche le résultat que s'il est différent de void. En fait, avec <strong>print</strong> comme avec <strong>call</strong>, vous pouvez appeler des fonctions :</p><pre id="r-525734" data-claire-element-id="525734"><code data-claire-semantic="console">(gdb) print myfunc(5)
+$1 = void
+(gdb) call myfunc(5)
+(gdb)</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb">Déboguer son programme avec GDB</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/demarrer-une-session-gdb">
+Démarrer une session GDB
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/executer-le-programme">
+Exécuter le programme
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/placer-des-points-d-arret">
+Placer des points d&#039;arrêt
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/controler-l-etat-des-variables-et-registres">
+Contrôler l&#039;état des variables et registres
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/controler-le-deroulement-de-l-execution">
+Contrôler le déroulement de l&#039;exécution
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/un-petit-exemple-6">
+Un petit exemple
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/controler-l-etat-des-variables-et-registres">
+<span class="arrow"></span>
+<span class="next">Contrôler l&#039;état des variables et registres</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/un-petit-exemple-6">
+<span class="next">Un petit exemple</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Unpetitexemple"></a><h2>Un petit exemple</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/controler-le-deroulement-de-l-execution">
+<span class="arrow"></span>
+<span class="next">Contrôler le déroulement de l&#039;exécution</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-525737" data-claire-element-id="525737">Avec tout ce que nous avons vu, nous pouvons maintenant facilement déboguer nos programmes. Voici un petit exemple assez simple.</p><pre id="r-525738" data-claire-element-id="525738"><code data-claire-semantic="cpp">#include &lt;stdio.h&gt;
+ 
+int main(){
+    char * Buffer;
+    printf(&quot;Nom? &quot;);
+    scanf(&quot;%s&quot;, Buffer);
+    return 0;
+}</code></pre><p id="r-525739" data-claire-element-id="525739">Bien entendu c'est un programme ridicule, et l'erreur est évidente, mais comme le but est juste de montrer le fonctionnement de GDB, nous nous en contenterons. Compilons :</p><pre id="r-525740" data-claire-element-id="525740"><code data-claire-semantic="console">$ g++ -Wall -Wextra -pedantic -ansi -g -o main sample1.cpp</code></pre><p id="r-525741" data-claire-element-id="525741">Aucune erreur de compilation, même avec les options de compilation strictes (logique, syntaxiquement tout est correct). Mais lorsqu'on lance le programme, on obtient une <em>segmentation fault</em> dès qu'on entre quelque chose au clavier. Utilisons GDB :</p><pre id="r-525742" data-claire-element-id="525742"><code data-claire-semantic="console">$ gdb main
+(gdb) run
+Starting program: /home/dhkold/Documents/code/gdb/main
+Nom? DHKold
+ 
+Program received signal SIGSEGV, Segmentation fault.
+0xb7d70dae in _IO_vfscanf () from /lib/tls/i686/cmov/libc.so.6</code></pre><p id="r-525743" data-claire-element-id="525743">Voyons maintenant où nous nous trouvons :</p><pre id="r-525744" data-claire-element-id="525744"><code data-claire-semantic="console">(gdb) bt
+#0  0xb7d70dae in _IO_vfscanf () from /lib/tls/i686/cmov/libc.so.6
+#1  0xb7d784cb in scanf () from /lib/tls/i686/cmov/libc.so.6
+#2  0x080484b4 in main () at sample1.cpp:7</code></pre><p id="r-525745" data-claire-element-id="525745">L'erreur vient donc de l'appel à scanf fait depuis la ligne 7. Et en effet, Buffer n'est pas alloué et pointe sur n'importe quoi. On peut simplement recompiler après avoir corrigé, mais on peut aussi vérifier que l'erreur vient bien de là :</p><pre id="r-525746" data-claire-element-id="525746"><code data-claire-semantic="console">(gdb) start
+Breakpoint 1 at 0x8048495: file sample1.cpp, line 6.
+Starting program: /home/dhkold/Documents/code/gdb/main
+main () at sample1.cpp:6
+6           printf(&quot;Nom? &quot;);
+(gdb) set var Buffer = malloc(50)
+(gdb) print Buffer
+$1 = 0x804a008 &quot;&quot;
+(gdb) c
+Continuing.
+Nom? DHKold
+ 
+Program exited normally.</code></pre><p id="r-525747" data-claire-element-id="525747">Et voilà, c'est donc bien Buffer qui pose problème, et il suffit de l'allouer pour ne plus avoir d'erreur. J'espère que ce tout petit exemple vous a permis de voir comment utiliser les commandes GDB que nous avons étudiées durant ce tutoriel. N'hésitez pas à aller lire la documentation sur le site de GDB, elle est en anglais et n'est pas toujours très claire, mais si vous connaissez déjà les bases vous devriez pouvoir vous y retrouver.</p><p id="r-525748" data-claire-element-id="525748">Voilà qui est fait, vous devriez maintenant être capables de vous servir de GDB correctement.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb">Déboguer son programme avec GDB</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/demarrer-une-session-gdb">
+Démarrer une session GDB
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/executer-le-programme">
+Exécuter le programme
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/placer-des-points-d-arret">
+Placer des points d&#039;arrêt
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/controler-l-etat-des-variables-et-registres">
+Contrôler l&#039;état des variables et registres
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/controler-le-deroulement-de-l-execution">
+Contrôler le déroulement de l&#039;exécution
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/un-petit-exemple-6">
+Un petit exemple
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/deboguer-son-programme-avec-gdb/controler-le-deroulement-de-l-execution">
+<span class="arrow"></span>
+<span class="next">Contrôler le déroulement de l&#039;exécution</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/deboguer-son-programme-avec-gdb.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 00:01:11 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/deboguer-son-programme-avec-gdb.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:15:34 GMT -->
+</html>

@@ -1,0 +1,824 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/charger-des-fichiers-obj.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 01:29:58 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/charger-des-fichiers-obj.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:26:13 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Charger des fichiers .OBJ</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/charger-des-fichiers-obj.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Charger des fichiers .OBJ</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Chargerdesfichiers.OBJ">Charger des fichiers .OBJ</a><br/><a href="#LesformatsOBJetMTL">Les formats OBJ et MTL</a><br/><a href="#ParserlesformatsOBJetMTL">Parser les formats OBJ et MTL</a><br/><a href="#Modlestatique">Modèle statique</a><br/><a href="#Modledynamique">Modèle dynamique</a><br/></div>
+<a name="Chargerdesfichiers.OBJ"></a><h2>Charger des fichiers .OBJ</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/charger-des-fichiers-obj/les-formats-obj-et-mtl">
+<span class="next">Les formats OBJ et MTL</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-540375" data-claire-element-id="540375">Vous utilisez OpenGL et vous trouvez fastidieux le système de définition de modèles point par point ? Et bien j'ai conçu une petite lib sans prétention qui permet de charger facilement des fichiers .OBJ que vous pouvez obtenir en exportant vos modèles dans ce format, à partir de votre logiciel de modélisation. J'utilise Blender, par conséquent si vous utilisez un autre logiciel vous devrez vous y adapter ;) . A l'heure actuelle, elle gère les modèles statiques comme animés, plusieurs matériaux et une seule texture en tout.<br/> Une connaissance des tutoriels <a href="http://www.siteduzero.com/tutoriel-3-11406-apprenez-a-programmer-en-c.html">Apprenez à programmer en C++</a> de <a href="http://www.siteduzero.com/membres-294-3.html">M@teo21</a> et <a href="http://www.siteduzero.com/tutoriel-3-5014-creez-des-programmes-en-3d-avec-opengl.html">Créez des programmes en 3D avec OpenGL</a> de <a href="http://www.siteduzero.com/membres-294-5.html">Kayl</a> est requise pour bien comprendre le tutoriel.<br/> Voilà, j'espère que ce tutoriel vous plaira :) .</p>
+</div><a name="LesformatsOBJetMTL"></a><h2>Les formats OBJ et MTL</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/charger-des-fichiers-obj/parser-les-formats-obj-et-mtl">
+<span class="next">Parser les formats OBJ et MTL</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-540376" data-claire-element-id="540376">Bien qu'il ne soit pas toujours encodé de la même manière, le format OBJ a une syntaxe particulière.<br/> Il se divise en deux fichiers : un fichier .OBJ qui donne toutes les informations sur les sommets et les faces, et un fichier .mtl (comme Material Template Library) qui contient les données sur les matériaux.</p><p id="r-540377" data-claire-element-id="540377">On peut décomposer un fichier .OBJ de cette manière :</p><ul id="r-540384" data-claire-element-id="540384"><li id="r-540379" data-claire-element-id="540379"><p id="r-540378" data-claire-element-id="540378">Indication du fichier .MTL</p></li><li id="r-540381" data-claire-element-id="540381"><p id="r-540380" data-claire-element-id="540380">Définition des sommets</p></li><li id="r-540383" data-claire-element-id="540383"><p id="r-540382" data-claire-element-id="540382">Attribution des faces.</p></li></ul><p id="r-540385" data-claire-element-id="540385">L'indication du fichier .MTL se fait comme ceci :</p><pre id="r-540386" data-claire-element-id="540386"><code>mtllib mon_fichier.mtl</code></pre><p id="r-540387" data-claire-element-id="540387">C'est donc cette ligne qui permet de déterminer où se trouve le .mtl à charger.</p><p id="r-540388" data-claire-element-id="540388">Ensuite vient la définition des sommets en position, coordonnées de texture et en normales.<br/> Chaque ligne de définition de sommets commence par un &quot;v&quot; comme &quot;vertex&quot;, &quot;sommet&quot; en Anglais.<br/> La position se note comme ceci :</p><pre id="r-540389" data-claire-element-id="540389"><code>v X Y Z</code></pre><p id="r-540390" data-claire-element-id="540390">Où X, Y et Z sont respectivement les coordonnées X, Y et Z du sommet.<br/> Par exemple :</p><pre id="r-540391" data-claire-element-id="540391"><code>v 0.532 1.265 0.273</code></pre><p id="r-540392" data-claire-element-id="540392">Cette ligne permet d'indiquer que l'on crée un sommet de coordonnées (0.532 ; 1.265 ; 0.273).<br/> Pour les coordonnées de texture, la ligne sera similaire sauf qu'on mettra un &quot;t&quot; (comme &quot;texture&quot;) après le &quot;v&quot; et que nous n'avons que deux axes :</p><pre id="r-540393" data-claire-element-id="540393"><code>vt X Y</code></pre><p id="r-540394" data-claire-element-id="540394">Même principe pour les normales, mais avec &quot;vn&quot; (&quot;n&quot; comme &quot;normal&quot;) et trois axes :</p><pre id="r-540395" data-claire-element-id="540395"><code>vn X Y Z</code></pre><p id="r-540396" data-claire-element-id="540396">Maintenant que nous avons une liste de sommets, il s'agit de les ordonner pour former des faces. Votre exportateur est intelligent : il regroupe toutes les faces d'un même matériau ensemble.</p><div id="r-540398" data-claire-element-id="540398" data-claire-semantic="question"><p id="r-540397" data-claire-element-id="540397">Mais comment on sait quel matériau appliquer ?</p></div><p id="r-540399" data-claire-element-id="540399">Grâce à leur nom :</p><pre id="r-540400" data-claire-element-id="540400"><code>usemtl nom_du_materiau</code></pre><p id="r-540401" data-claire-element-id="540401">Ma lib fonctionne avec les faces triangulaires ou les quadrilatères, autrement dit elle accepte les face à trois ou quatre sommets.<br/> Pour définir une face, on va assembler les numéros des sommets concernés comme ceci (dans le cas d'un carré) :</p><pre id="r-540402" data-claire-element-id="540402"><code>f V1/T1/N1 V2/T2/N2 V3/T3/N3 V4/T4/N4</code></pre><p id="r-540403" data-claire-element-id="540403">Les V1, V2, V3, V4 sont les numéros des positions ; les T1, T2, T3, T4 sont les numéros des coordonnées de texture ; et les N1, N2, N3, N4 sont les numéros des normales.<br/> Par exemple :</p><pre id="r-540404" data-claire-element-id="540404"><code>f 1/2/3 4/5/6 7/8/9</code></pre><p id="r-540405" data-claire-element-id="540405">On définit une face triangulaire dont le premier point est défini par la position n°1, les coordonnées de texture n°2 et les normales n°3 ; et ainsi de suite pour les autres sommets.<br/> S'il n'y a pas de textures, vous pourrez avoir une ligne de la sorte :</p><pre id="r-540406" data-claire-element-id="540406"><code>f 1//2 4//6 7//9</code></pre><p id="r-540407" data-claire-element-id="540407">Rien de tel qu'un exemple récapitulatif : le cube !</p><pre id="r-540408" data-claire-element-id="540408"><code># Blender3D v249 OBJ File: 
+# www.blender3d.org
+mtllib cube.mtl
+v 1.000000 1.000000 -1.000000
+v 1.000000 -1.000000 -1.000000
+v -1.000000 -1.000000 -1.000000
+v -1.000000 1.000000 -1.000000
+v 1.000000 0.999999 1.000000
+v 0.999999 -1.000001 1.000000
+v -1.000000 -1.000000 1.000000
+v -1.000000 1.000000 1.000000
+vn 0.000000 0.000000 -1.000000
+vn 0.000000 0.000000 1.000000
+vn 1.000000 -0.000000 0.000000
+vn -0.000000 -1.000000 -0.000000
+vn -1.000000 0.000000 -0.000000
+vn 0.000000 1.000000 0.000000
+usemtl Material
+s off
+f 1//1 2//1 3//1 4//1
+f 5//2 8//2 7//2 6//2
+f 1//3 5//3 6//3 2//3
+f 2//4 6//4 7//4 3//4
+f 3//5 7//5 8//5 4//5
+f 5//6 1//6 4//6 8//6</code></pre><p id="r-540409" data-claire-element-id="540409">Les deux premières lignes sont des commentaires de mon exportateur, et la ligne &quot;s off&quot; signifie &quot;smooth off&quot; mais on ne la prend pas en compte car on peut jouer dessus directement dans notre code avec <code data-claire-semantic="cpp">glEnable(GL_SMOOTH) </code> et <code data-claire-semantic="cpp">glDisable(GL_SMOOTH) </code>.<br/> On peut voir que certains points ne sont pas parfaits (0.999999 à la place de 1.000000) mais globalement le contenu du fichier sera fidèle à ce que vous avez modélisé ^^ .</p><p id="r-540410" data-claire-element-id="540410">A présent, regardons la syntaxe du format MTL vu que nous nous sommes familiarisés avec le format OBJ.<br/> Nous n'utiliserons pas toutes les données, mais le strict nécessaire, ce qui est déjà suffisant.<br/> En premier lieu, le nom du matériau, ce qui permet de les identifier lorsque l'on fait appel à &quot;usemtl&quot; :</p><pre id="r-540411" data-claire-element-id="540411"><code>newmtl nom_du_materiau</code></pre><p id="r-540412" data-claire-element-id="540412">Ensuite la couleur globale de l'objet sera la couleur diffuse &quot;Kd&quot; :</p><pre id="r-540413" data-claire-element-id="540413"><code>Kd R G B</code></pre><p id="r-540414" data-claire-element-id="540414">Où R, G et B sont des flottants allant de 0 à 1.<br/> Par exemple :</p><pre id="r-540415" data-claire-element-id="540415"><code>Kd 1.000000 0.500000 0.000000</code></pre><p id="r-540416" data-claire-element-id="540416">Vous aurez une couleur orangée. Vérifiez ces données car il se peut qu'elles ne correspondent pas exactement à celles entrées dans votre logiciel de modélisation.<br/> Dernier paramètre : la transparence &quot;d&quot; allant de 0 (totalement transparent) à 1 (totalement opaque).<br/> Ce sont les seules données prises en compte dans ma lib, néanmoins ce sont les principales.<br/> Voici le MTL de notre cube :</p><pre id="r-540417" data-claire-element-id="540417"><code># Blender3D MTL File: 
+# Material Count: 1
+newmtl Material
+Ns 96.078431
+Ka 0.000000 0.000000 0.000000
+Kd 0.640000 0.640000 0.640000
+Ks 0.500000 0.500000 0.500000
+Ni 1.000000
+d 1.000000
+illum 2</code></pre><p id="r-540418" data-claire-element-id="540418">Le résultat sera donc un carré gris et opaque :) !</p><p id="r-540419" data-claire-element-id="540419">Nous allons nous attaquer au plus intéressant : coder la lib !</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/charger-des-fichiers-obj">Charger des fichiers .OBJ</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/charger-des-fichiers-obj/les-formats-obj-et-mtl">
+Les formats OBJ et MTL
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/charger-des-fichiers-obj/parser-les-formats-obj-et-mtl">
+Parser les formats OBJ et MTL
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/charger-des-fichiers-obj/modele-statique">
+Modèle statique
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/charger-des-fichiers-obj/modele-dynamique">
+Modèle dynamique
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/charger-des-fichiers-obj/parser-les-formats-obj-et-mtl">
+<span class="next">Parser les formats OBJ et MTL</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="ParserlesformatsOBJetMTL"></a><h2>Parser les formats OBJ et MTL</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/charger-des-fichiers-obj/les-formats-obj-et-mtl">
+<span class="arrow"></span>
+<span class="next">Les formats OBJ et MTL</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/charger-des-fichiers-obj/modele-statique">
+<span class="next">Modèle statique</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-540421" data-claire-element-id="540421">Maintenant que nous avons vu dans le détail les deux formats, nous allons aborder l'implémentation de notre loader.</p><aside id="r-540423" data-claire-element-id="540423" data-claire-semantic="warning"><p id="r-540422" data-claire-element-id="540422">Certains passages ne seront pas détaillés, étant donné que le but de ce tutoriel est de comprendre comment charger les formats OBJ et MTL.</p></aside><p id="r-540424" data-claire-element-id="540424">Tout d'abord vous l'avez bien vu, on a souvent besoin de coordonnées de points, de couleurs, etc. donc on va créer une classe contenant 4 flottants (x, y, z et a ; XYZ pour les coordonnées et A pour l'opacité avec RGB=XYZ) :</p><pre id="r-540425" data-claire-element-id="540425"><code data-claire-semantic="cpp">class FloatVector
+{
+    /*
+    Classe FloatVector : simple vecteur XYZ ou XYZA (dans le cas de couleurs).
+    */
+    public:
+        FloatVector(float px=0,float py=0,float pz=0,float pa=0);
+        /* FloatVector(float px=0,float py=0,float pz=0,float pa=0);
+           Constructeur, prend en paramètres des flottants correspondant respectivement à x, y, z et a.
+        */
+        ~FloatVector();
+        /* ~FloatVector();
+           Destructeur, totalement inutile.
+        */
+        FloatVector operator=(const FloatVector &amp;fv);
+        /* FloatVector operator=(const FloatVector &amp;fv);
+           Affecte au vecteur courant le contenu du vecteur passé en argument.
+           Retourne le vecteur courant ainsi modifié.
+        */
+        float x,y,z,a;
+};</code></pre><pre id="r-540426" data-claire-element-id="540426"><code data-claire-semantic="cpp">FloatVector::FloatVector(float px,float py,float pz,float pa):x(px),y(py),z(pz),a(pa)
+{
+}
+FloatVector::~FloatVector()
+{
+}
+FloatVector FloatVector::operator=(const FloatVector &amp;fv)
+{
+    x=fv.x;
+    y=fv.y;
+    z=fv.z;
+    a=fv.a;
+
+    return *this;
+}</code></pre><p id="r-540427" data-claire-element-id="540427">Attaquons-nous aux matériaux, on se limitera à sa couleur et à son nom. Pour la couleur nous allons donc prendre un <em>FloatVector</em> et pour le nom un <em>std::string</em> :</p><pre id="r-540428" data-claire-element-id="540428"><code data-claire-semantic="cpp">class Material
+{
+    /*
+    Classe Material : définition d'un matériau, composé d'une couleur et d'un nom spécifique.
+    */
+    public:
+        Material(float r,float g,float b,std::string n);
+        /* Material(float r,float g,float b,std::string n);
+           Constructeur, les trois premiers arguments représentent la couleur RGB du matériau et n est son nom.
+        */
+        Material(Material *mat);
+        /* Material(Material *mat);
+           Constructeur alternatif, affecte au matériau courant le contenu du matériau passé en argument.
+        */
+        ~Material();
+        /* ~Material();
+           Destructeur, totalement inutile.
+        */
+
+        FloatVector coul;
+        std::string name;
+};</code></pre><pre id="r-540429" data-claire-element-id="540429"><code data-claire-semantic="cpp">Material::Material(float r,float g,float b,string n):name(n)
+{
+    coul.x=r;
+    coul.y=g;
+    coul.z=b;
+}
+Material::Material(Material *mat)
+{
+    coul=mat-&gt;coul;
+    name=mat-&gt;name;
+}</code></pre><p id="r-540430" data-claire-element-id="540430">Il reste maintenant le plus intéressant, commençons par une classe représentant un modèle statique.<br/> Tout d'abord réfléchissons au mode d'affichage, dans la lib nous utiliserons les <a href="http://www.siteduzero.com/tutoriel-3-3852-les-vertex-arrays.html">Vertex Arrays</a> (tutoriel de <a href="http://www.siteduzero.com/membres-294-3160.html">Yno</a>).<br/> Notre classe <em>MeshObj</em> contiendra alors un <em>GLuint</em> pour la texture, un entier pour le nombre de quads à dessiner, des tableaux dynamiques pour les coordonnées de sommets, de texture, de normales ainsi que les couleurs par sommet. Enfin, elle contiendra un <em>std::vector</em> de <em>Material</em> :</p><pre id="r-540431" data-claire-element-id="540431"><code data-claire-semantic="cpp">class MeshObj
+{
+    /*
+    Classe MeshObj : définition d'un modèle statique.
+    */
+    public:
+        MeshObj(std::string,MeshObj *first=NULL);
+        /* MeshObj(std::string,MeshObj *first=NULL);
+           Constructeur, prend en arguments le nom du modèle à charger et le pointeur de la première frame si le modèle appartient à une animation (sinon laissez-le à NULL).
+        */
+        ~MeshObj();
+        /* ~MeshObj();
+           Destructeur, libère toute la mémoire qui lui a été allouée.
+        */
+        void charger_obj(std::string,MeshObj *first=NULL);
+        /* void charger_obj(std::string,MeshObj *first=NULL);
+           Charge un fichier OBJ et son MTL, prend en arguments le nom du modèle à charger et le pointeur de la première frame si le modèle appartient à une animation (sinon laissez-le à NULL). Cette fonction est appelée par le constructeur.
+           Aucune valeur de retour.
+        */
+        void charger_mtl(std::string);
+        /* void charger_mtl(std::string);
+           Charge un fichier MTL, prend en argument le nom du fichier à charger. Cette fonction est appelée par charger_obj.
+           Aucune valeur de retour.
+        */
+        void draw_model(bool nor=true,bool tex=false);
+        /* void draw_model(bool nor=true,bool tex=false);
+           Dessine le modèle, prend en arguments deux booléens représentant respectivement les normales et la texture. Si nor vaut true alors on prend en compte les normales, et si tex vaut true alors on applique la texture.
+           Aucune valeur de retour.
+        */
+        void setMaterialsAndTex(std::vector&lt;Material*&gt; mats,GLuint tex);
+        /* void setMaterialsAndTex(std::vector&lt;Material*&gt; mats,GLuint tex);
+           Définit directement les matériaux et la texture du modèle, prend en arguments un vector&lt;Material*&gt; et la texture. Cette fonction est appelée par giveMaterialsAndTex.
+           Aucune valeur de retour.
+        */
+        void giveMaterialsAndTex(MeshObj *target);
+        /* void giveMaterialsAndTex(MeshObj *target);
+           Modifie les matériaux et la texture de target en les remplaçant par ses propres matériaux et sa texture. Cette fonction est appelée par charger_obj uniquement lorsque first!=NULL.
+           Aucune valeur de retour.
+        */
+    private:
+        GLuint texture;
+        int n_data;
+        float *vertice,*normals,*textures,*colours;
+        std::vector&lt;Material*&gt; materiaux;
+};</code></pre><p id="r-540432" data-claire-element-id="540432">Ne faites pas attention aux deux dernières méthodes de cette classe, elle n'ont pas de rapport avec le parsage des formats OBJ et MTL.<br/> Occupons-nous du constructeur et du destructeur :</p><pre id="r-540433" data-claire-element-id="540433"><code data-claire-semantic="cpp">MeshObj::MeshObj(string s,MeshObj *first)
+{
+    charger_obj(s,first);
+}
+MeshObj::~MeshObj()
+{
+    free(vertice);
+    free(normals);
+    free(textures);
+    free(colours);
+
+    for(unsigned int i=0;i&lt;materiaux.size();i++)
+        delete materiaux[i];
+    materiaux.clear();
+}</code></pre><h2 id="r-format-obj" data-claire-element-id="540479">Format OBJ</h2><p id="r-540434" data-claire-element-id="540434">Ca y est, nous arrivons enfin à la méthode <em>MeshObj::charger_obj</em> :) ! Nous savons que dans le format OBJ on définit d'abord chaque point, puis ensuite on les assemble pour former des faces. Nous allons donc créer un <em>std::vector</em> de <em>FloatVector</em> pour les coordonnées de sommets, de normales, de textures et pour les couleurs ; ainsi qu'un <em>std::vector</em> d'entiers non signés représentant les indices des points à assembler. Au premier abord, ça peut paraître dur mais en réalité ce sera assez simple à mettre en place. Déjà, regardons le code que nous obtenons :</p><pre id="r-540435" data-claire-element-id="540435"><code data-claire-semantic="cpp">vector&lt;FloatVector&gt; ver,nor,tex,col;
+vector&lt;unsigned int&gt; iv,it,in;</code></pre><p id="r-540436" data-claire-element-id="540436">Maintenant on ouvre le fichier passé en argument :</p><pre id="r-540437" data-claire-element-id="540437"><code data-claire-semantic="cpp">ifstream fichier(nom.c_str(),ios::in);</code></pre><p id="r-540438" data-claire-element-id="540438">Nous allons le lire ligne après ligne, donc nous allons créer un <em>std::string</em> et par la même occasion un autre <em>std::string</em> qui correspond au nom du matériau en cours :</p><pre id="r-540439" data-claire-element-id="540439"><code data-claire-semantic="cpp">string ligne,curname=&quot;&quot;;</code></pre><p id="r-540440" data-claire-element-id="540440">On peut enfin lire le fichier, à condition que celui-ci existe ! C'est pourquoi il faudra faire un test au préalable.</p><p id="r-540441" data-claire-element-id="540441">Ensuite il faut différencier plusieurs cas :</p><ul id="r-540450" data-claire-element-id="540450"><li id="r-540443" data-claire-element-id="540443"><p id="r-540442" data-claire-element-id="540442">les lignes commençant par 'v'</p></li><li id="r-540445" data-claire-element-id="540445"><p id="r-540444" data-claire-element-id="540444">les lignes commençant par 'f'</p></li><li id="r-540447" data-claire-element-id="540447"><p id="r-540446" data-claire-element-id="540446">les lignes commençant par &quot;mtllib&quot;</p></li><li id="r-540449" data-claire-element-id="540449"><p id="r-540448" data-claire-element-id="540448">les lignes commençant par &quot;usemtl&quot;.</p></li></ul><p id="r-540451" data-claire-element-id="540451">Occupons-nous des premières. Elles se divisent en trois catégories : &quot;v &quot; qui définissent les coordonnées des points, &quot;vt&quot; pour les textures et &quot;vn&quot; pour les normales :</p><pre id="r-540452" data-claire-element-id="540452"><code data-claire-semantic="cpp">if(ligne[0]=='v') //Coordonnées de points (vertex, texture et normale)
+{
+    if(ligne[1]==' ') //Vertex
+    {
+        char x[255],y[255],z[255];
+        sscanf(ligne.c_str(),&quot;v %s %s %s&quot;,x,y,z);
+        ver.push_back(FloatVector(strtod(x,NULL),strtod(y,NULL),strtod(z,NULL)));
+    }
+    else if(ligne[1]=='t') //Texture
+    {
+        char x[255],y[255];
+        sscanf(ligne.c_str(),&quot;vt %s %s&quot;,x,y);
+        tex.push_back(FloatVector(strtod(x,NULL),strtod(y,NULL)));
+    }
+    else if(ligne[1]=='n') //Normale
+    {
+        char x[255],y[255],z[255];
+        sscanf(ligne.c_str(),&quot;vn %s %s %s&quot;,x,y,z);
+        nor.push_back(FloatVector(strtod(x,NULL),strtod(y,NULL),strtod(z,NULL)));
+    }
+}</code></pre><p id="r-540453" data-claire-element-id="540453">Ce code est assez clair (juste les [255] qui sont un peu bourrins ^^ ), au final on se retrouve avec les vector de coordonnées de points, de texture et de normales.</p><p id="r-540454" data-claire-element-id="540454">Maintenant regardons du côté des définitions de faces.<br/> Dans certains modèles il n'y a pas de texture, donc on se retrouvera avec des &quot;//&quot; (car on omet les numéros de textures, ce qui est logique ^^ ), on va les remplacer par &quot;/1/&quot;.<br/> C'est ma fonction doubleSlash :</p><pre id="r-540455" data-claire-element-id="540455"><code data-claire-semantic="cpp">string doubleSlash(string s)
+{
+    //Remplace &quot;//&quot; par &quot;/1/&quot;.
+    string s1=&quot;&quot;;
+    for(unsigned int i=0;i&lt;s.size();i++)
+    {
+        if(i&lt;s.size()-1&amp;&amp;s[i]=='/'&amp;&amp;s[i+1]=='/')
+        {
+            s1+=&quot;/1/&quot;;
+            i++;
+        }
+        else
+            s1+=s[i];
+    }
+    return s1;
+}</code></pre><p id="r-540456" data-claire-element-id="540456">Puis on remplace les slashes par des espaces, c'est ma fonction remplacerSlash :</p><pre id="r-540457" data-claire-element-id="540457"><code data-claire-semantic="cpp">string remplacerSlash(string s)
+{
+    //Remplace les '/' par des espaces.
+    string ret=&quot;&quot;;
+    for(unsigned int i=0;i&lt;s.size();i++)
+    {
+        if(s[i]=='/')
+            ret+=' ';
+        else
+            ret+=s[i];
+    }
+    return ret;
+}</code></pre><p id="r-540458" data-claire-element-id="540458">Ensuite on éclate la chaîne en ses espaces, c'est ma fonction splitSpace :</p><pre id="r-540459" data-claire-element-id="540459"><code data-claire-semantic="cpp">vector&lt;string&gt; splitSpace(string s)
+{
+    //Eclate une chaîne au niveau de ses espaces.
+    vector&lt;string&gt; ret;
+    string s1=&quot;&quot;;
+    for(unsigned int i=0;i&lt;s.size();i++)
+    {
+        if(s[i]==' '||i==s.size()-1)
+        {
+            if(i==s.size()-1)
+                s1+=s[i];
+            ret.push_back(s1);
+            s1=&quot;&quot;;
+        }
+        else
+            s1+=s[i];
+    }
+    return ret;
+}</code></pre><p id="r-540460" data-claire-element-id="540460">Revenons à nos faces :</p><pre id="r-540461" data-claire-element-id="540461"><code data-claire-semantic="cpp">else if(ligne[0]=='f') //Indice faces
+{
+    ligne=doubleSlash(ligne); //On remplace &quot;//&quot; par &quot;/1/&quot; dans toute la ligne
+    ligne=remplacerSlash(ligne); //On remplace les '/' par des espaces, ex : pour &quot;f 1/2/3 4/5/6 7/8/9&quot; on obtiendra &quot;f 1 2 3 4 5 6 7 8 9&quot;
+
+    vector&lt;string&gt; termes=splitSpace(ligne.substr(2)); //On éclate la chaîne en ses espaces (le substr permet d'enlever &quot;f &quot;)
+
+    int ndonnees=(int)termes.size()/3;
+    for(int i=0;i&lt;(ndonnees==3?3:4);i++) //On aurait très bien pu mettre i&lt;ndonnees mais je veux vraiment limiter à 3 ou 4
+    {
+        iv.push_back(strtol(termes[i*3].c_str(),NULL,10)-1);
+        it.push_back(strtol(termes[i*3+1].c_str(),NULL,10)-1);
+        in.push_back(strtol(termes[i*3+2].c_str(),NULL,10)-1);
+    }
+    if(ndonnees==3) //S'il n'y a que 3 sommets on duplique le dernier pour faire un quad ayant l'apparence d'un triangle
+    {
+        iv.push_back(strtol(termes[0].c_str(),NULL,10)-1);
+        it.push_back(strtol(termes[1].c_str(),NULL,10)-1);
+        in.push_back(strtol(termes[2].c_str(),NULL,10)-1);
+    }
+
+    for(unsigned int i=0;i&lt;materiaux.size();i++)
+        if(materiaux[i]-&gt;name==curname)
+        {
+            for(int j=0;j&lt;4;j++)
+                col.push_back(materiaux[i]-&gt;coul); //On ajoute la couleur correspondante
+            break;
+        }
+}</code></pre><p id="r-540462" data-claire-element-id="540462">Maintenant on va traiter la ligne commençant par &quot;mtllib&quot;. Si le fichier .OBJ ne se trouve pas dans le même répertoire que l'exécutable, son .MTL ne le sera pas non plus. Il faut donc récupérer le dossier où se trouve le .OBJ, c'est ma fonction get_directory :</p><pre id="r-540463" data-claire-element-id="540463"><code data-claire-semantic="cpp">string get_directory(string s)
+{
+    string s1=&quot;&quot;,s2=&quot;&quot;;
+    for(unsigned int i=0;i&lt;s.size();i++)
+    {
+        if(s[i]=='/'||s[i]=='\\')
+        {
+            s1+=s2+&quot;/&quot;;
+            s2=&quot;&quot;;
+        }
+        else
+            s2+=s[i];
+    }
+    return s1;
+}</code></pre><p id="r-540464" data-claire-element-id="540464">Pour savoir si la ligne commence par &quot;mtllib&quot;, on testera simplement si la ligne commence par 'm', &quot;mtllib&quot; étant le seul mot-clef du format OBJ commençant par un 'm' :</p><pre id="r-540465" data-claire-element-id="540465"><code data-claire-semantic="cpp">else if(ligne[0]=='m'&amp;&amp;first==NULL)//fichier MTL et si c'est la première frame (comme ça on ne charge pas plusieurs fois le même MTL et la même texture)
+    charger_mtl(get_directory(nom)+ligne.substr(7));</code></pre><p id="r-540466" data-claire-element-id="540466">La raison du substr(7) est que &quot;mtllib &quot; fait sept caractères.<br/> Nous verrons la fonction <em>charger_mtl</em> en détail plus tard.<br/> Maintenant il ne reste plus que &quot;usemtl&quot;, de la même manière nous ne testerons que la première lettre de la ligne :</p><pre id="r-540467" data-claire-element-id="540467"><code data-claire-semantic="cpp">else if(ligne[0]=='u')//utiliser un MTL
+    curname=ligne.substr(7);</code></pre><p id="r-540468" data-claire-element-id="540468">Le parsage est terminé, après avoir fermé le fichier on applique les indices de sommets pour avoir toutes les faces :</p><pre id="r-540469" data-claire-element-id="540469"><code data-claire-semantic="cpp">vector&lt;float&gt; tv(0),tc(0),tn(0),tt(0);
+for(unsigned int i=0;i&lt;iv.size();i++)
+    if(iv[i]&lt;ver.size())
+    {
+        tv.push_back(ver[iv[i]].x);
+        tv.push_back(ver[iv[i]].y);
+        tv.push_back(ver[iv[i]].z);
+
+        tc.push_back(col[i].x);
+        tc.push_back(col[i].y);
+        tc.push_back(col[i].z);
+        tc.push_back(col[i].a);
+    }
+
+for(unsigned int i=0;i&lt;in.size();i++)
+    if(in[i]&lt;nor.size())
+    {
+        tn.push_back(nor[in[i]].x);
+        tn.push_back(nor[in[i]].y);
+        tn.push_back(nor[in[i]].z);
+    }
+
+for(unsigned int i=0;i&lt;it.size();i++)
+    if(it[i]&lt;tex.size())
+    {
+        tt.push_back(tex[it[i]].x);
+        tt.push_back(tex[it[i]].y);
+    }</code></pre><p id="r-540470" data-claire-element-id="540470">Pour utiliser les VBA nous devrons avoir des tableaux de flottants, et non un <em>std::vector</em>. Une simple fonction peut faire la conversion :</p><pre id="r-540471" data-claire-element-id="540471"><code data-claire-semantic="cpp">float* vector2float(vector&lt;float&gt;&amp; tableau)
+{
+    float* t=NULL;
+    t=(float*)malloc(tableau.size()*sizeof(float));
+    if(t==NULL||tableau.empty())
+    {
+        float *t1=(float*)malloc(sizeof(float)*3);
+        for(int i=0;i&lt;3;i++)
+            t1[i]=0.;
+        return t1;
+    }
+
+    for(unsigned int i=0;i&lt;tableau.size();i++)
+        t[i]=tableau[i];
+    return t;
+}</code></pre><p id="r-540472" data-claire-element-id="540472">On va l'employer comme suit :</p><pre id="r-540473" data-claire-element-id="540473"><code data-claire-semantic="cpp">vertice=vector2float(tv);
+normals=vector2float(tn);
+textures=vector2float(tt);
+colours=vector2float(tc);</code></pre><p id="r-540474" data-claire-element-id="540474">En ce qui concerne le nombre d'éléments, nous prendrons juste le nombre d'éléments du vecteur <em>iv</em> :</p><pre id="r-540475" data-claire-element-id="540475"><code data-claire-semantic="cpp">n_data=iv.size();</code></pre><p id="r-540476" data-claire-element-id="540476">Enfin viennent quelques libérations de mémoire :</p><pre id="r-540477" data-claire-element-id="540477"><code data-claire-semantic="cpp">ver.clear();
+nor.clear();
+tex.clear();
+col.clear();
+
+iv.clear();
+it.clear();
+in.clear();</code></pre><p id="r-540478" data-claire-element-id="540478">Et voilà, nous avons chargé notre fichier .OBJ :soleil: ! A présent voyons du côté du format MTL.</p><h2 id="r-format-mtl" data-claire-element-id="540496">Format MTL</h2><p id="r-540480" data-claire-element-id="540480">Là aussi nous ouvrons le fichier :</p><pre id="r-540481" data-claire-element-id="540481"><code data-claire-semantic="cpp">ifstream fichier(nom.c_str(),ios::in);</code></pre><p id="r-540482" data-claire-element-id="540482">On déclare le nom du matériel courant :</p><pre id="r-540483" data-claire-element-id="540483"><code data-claire-semantic="cpp">string curname=&quot;&quot;;</code></pre><p id="r-540484" data-claire-element-id="540484">De même que précédemment, nous lirons le contenu du fichier ligne par ligne. Commençons par créer notre variable <em>ligne</em> :</p><pre id="r-540485" data-claire-element-id="540485"><code data-claire-semantic="cpp">string ligne=&quot;&quot;;</code></pre><p id="r-540486" data-claire-element-id="540486">Dans ce code nous ne tiendront compte que de quatre mots-clefs, ce qui est largement suffisant : &quot;newmtl&quot;, &quot;Kd&quot;, &quot;map_Kd&quot; et &quot;d&quot;.<br/> Pour &quot;newmtl&quot; il suffit de savoir si la ligne commence par 'n' :</p><pre id="r-540487" data-claire-element-id="540487"><code data-claire-semantic="cpp">if(ligne[0]=='n') //nouveau materiau
+    curname=ligne.substr(7);</code></pre><p id="r-540488" data-claire-element-id="540488">Ce code a simplement pour effet de modifier <em>curname</em> (vu que la ligne commence par &quot;newmtl &quot; il faut donc éliminer les sept premiers caractères de la ligne, d'où le <em>substr</em>).<br/> Pour &quot;Kd&quot; (couleur diffuse), on va tester si le premier caractère est 'K' et le deuxième 'd'. Si c'est le cas, on crée un nouveau matériau aux couleurs lues dans le fichier :</p><pre id="r-540489" data-claire-element-id="540489"><code data-claire-semantic="cpp">else if(ligne[0]=='K'&amp;&amp;ligne[1]=='d') //couleur
+{
+    vector&lt;string&gt; termes=splitSpace(ligne.substr(3));
+    materiaux.push_back(new Material((float)strtod(termes[0].c_str(),NULL),(float)strtod(termes[1].c_str(),NULL),(float)strtod(termes[2].c_str(),NULL),curname));
+}</code></pre><p id="r-540490" data-claire-element-id="540490">La ligne commence par &quot;Kd &quot; donc ici on élimine les trois premiers caractères avec substr(3) ; et on convertit les différents termes de chaîne de caractères à flottants en utilisant <em>strtod</em>.</p><p id="r-540491" data-claire-element-id="540491">A présent nous allons charger la texture (s'il y a), en sachant que le nom du fichier est écrit après &quot;Map_Kd &quot; et qu'il faut lui rajouter le dossier du fichier .MTL :</p><pre id="r-540492" data-claire-element-id="540492"><code data-claire-semantic="cpp">else if(ligne[0]=='m'&amp;&amp;ligne[5]=='d')//map_Kd (texture)
+{
+    string f=get_directory(nom)+ligne.substr(7);
+    texture=loadTexture(f.c_str());
+}</code></pre><p id="r-540493" data-claire-element-id="540493">Il ne reste plus que l'opacité :</p><pre id="r-540494" data-claire-element-id="540494"><code data-claire-semantic="cpp">else if(ligne[0]=='d') //opacité
+{
+    string n=ligne.substr(2);
+    materiaux[materiaux.size()-1]-&gt;coul.a=strtod(n.c_str(),NULL);
+}</code></pre><p id="r-540495" data-claire-element-id="540495">Notre fichier .MTL est chargé, allons voir du côté du dessin :) .</p><h2 id="r-affichage-du-modele" data-claire-element-id="540512">Affichage du modèle</h2><p id="r-540497" data-claire-element-id="540497">Rappelons-nous le prototype de <em>MeshObj::draw_model</em> :</p><pre id="r-540498" data-claire-element-id="540498"><code data-claire-semantic="cpp">void draw_model(bool nor=true,bool tex=false);
+/* void draw_model(bool nor=true,bool tex=false);
+   Dessine le modèle, prend en arguments deux booléens représentant respectivement les normales et la texture. Si nor vaut true alors on prend en compte les normales, et si tex vaut true alors on applique la texture.
+   Aucune valeur de retour.
+*/</code></pre><p id="r-540499" data-claire-element-id="540499">On va d'abord activer les listes de sommets (le plus important ^^ ) :</p><pre id="r-540500" data-claire-element-id="540500"><code data-claire-semantic="cpp">glEnableClientState(GL_VERTEX_ARRAY);</code></pre><p id="r-540501" data-claire-element-id="540501">Si on veut tenir compte des normales on les active :</p><pre id="r-540502" data-claire-element-id="540502"><code data-claire-semantic="cpp">if(nor)
+    glEnableClientState(GL_NORMAL_ARRAY);</code></pre><p id="r-540503" data-claire-element-id="540503">De même pour la texture :</p><pre id="r-540504" data-claire-element-id="540504"><code data-claire-semantic="cpp">if(tex)
+{
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glBindTexture(GL_TEXTURE_2D,texture);
+}</code></pre><p id="r-540505" data-claire-element-id="540505">Et on active les couleurs :</p><pre id="r-540506" data-claire-element-id="540506"><code data-claire-semantic="cpp">glEnableClientState(GL_COLOR_ARRAY);</code></pre><p id="r-540507" data-claire-element-id="540507">Les initialisations sont faites, on va maintenant dessiner les listes correspondant aux différents éléments :</p><pre id="r-540508" data-claire-element-id="540508"><code data-claire-semantic="cpp">glVertexPointer(3,GL_FLOAT,0,vertice);
+
+if(tex)
+    glTexCoordPointer(2,GL_FLOAT,0,textures);
+if(nor)
+    glNormalPointer(GL_FLOAT,0,normals);
+glColorPointer(4,GL_FLOAT,0,colours);
+
+glDrawArrays(GL_QUADS,0,n_data);</code></pre><p id="r-540509" data-claire-element-id="540509">Enfin, on désactive les états :</p><pre id="r-540510" data-claire-element-id="540510"><code data-claire-semantic="cpp">glDisableClientState(GL_COLOR_ARRAY);
+glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+glDisableClientState(GL_NORMAL_ARRAY);
+glDisableClientState(GL_VERTEX_ARRAY);</code></pre><p id="r-540511" data-claire-element-id="540511">L'essentiel de la lib est faite ici, en prenant cinq minutes vous pourrez aisément refaire les classes <em>AnimMesh</em> et <em>VirtualAnim</em>.<br/> Maintenant que nous avons fait connaissance avec le format OBJ, nous allons voir comment nous l'approprier dans nos programmes :pirate: .</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/charger-des-fichiers-obj">Charger des fichiers .OBJ</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/charger-des-fichiers-obj/les-formats-obj-et-mtl">
+Les formats OBJ et MTL
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/charger-des-fichiers-obj/parser-les-formats-obj-et-mtl">
+Parser les formats OBJ et MTL
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/charger-des-fichiers-obj/modele-statique">
+Modèle statique
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/charger-des-fichiers-obj/modele-dynamique">
+Modèle dynamique
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/charger-des-fichiers-obj/les-formats-obj-et-mtl">
+<span class="arrow"></span>
+<span class="next">Les formats OBJ et MTL</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/charger-des-fichiers-obj/modele-statique">
+<span class="next">Modèle statique</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Modlestatique"></a><h2>Modèle statique</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/charger-des-fichiers-obj/parser-les-formats-obj-et-mtl">
+<span class="arrow"></span>
+<span class="next">Parser les formats OBJ et MTL</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/charger-des-fichiers-obj/modele-dynamique">
+<span class="next">Modèle dynamique</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-540514" data-claire-element-id="540514">Nous allons voir comment charger un modèle statique, mais avant commençons par télécharger la lib. Elle se trouve <a href="http://www.mediafire.com/?8i5mwrm5z8g4uu7">ici</a>.<br/> Cette archive comporte deux dossiers : un <em>bin</em> qui contient un programme que j'ai fait pour les animations (que nous verrons plus tard), et un <em>src</em> qui contient le header <em>OBJlib.h</em> et le fichier source <em>OBJlib.cpp</em>.</p><aside id="r-540516" data-claire-element-id="540516" data-claire-semantic="warning"><p id="r-540515" data-claire-element-id="540515">Pour que cette lib puisse fonctionner, il vous faut <a href="http://www.siteduzero.com/tutoriel-3-4956-les-textures.html">sdlglutils</a> de <a href="http://www.siteduzero.com/membres-294-5.html">Kayl</a>. Si vous voulez utiliser votre propre loader de textures, modifiez la lib à votre guise ;) .</p></aside><h3 id="r-exporter-son-modele" data-claire-element-id="540524">Exporter son modèle</h3><p id="r-540517" data-claire-element-id="540519">Nous allons commencer par exporter un modèle. Si vous en avez un sous la main, prenez-le, sinon faites un cube (ou prenez celui par défaut de Blender).<br/> Maintenant changez de vue pour choisir le menu &quot;Scripts Window&quot; (cliquez pour agrandir) :<br/><a href="medias/uploads.siteduzero.com_files_261001_262000_261202.png"><img id="r-540519" data-claire-element-id="540518" src="medias/uploads.siteduzero.com_thb_261001_262000_261202.png" alt="Image utilisateur"/></a><a href="medias/uploads.siteduzero.com_files_261001_262000_261197.png"><img id="r-540518" data-claire-element-id="540517" src="medias/uploads.siteduzero.com_thb_261001_262000_261197.png" alt="Image utilisateur"/></a><br/> Dans le bouton &quot;Scripts&quot; choisissez Export &gt; Wavefont (.obj) :<br/><br/> Choisissez une destination et enregistrez &quot;cube.obj&quot; (prenez autre chose si vous le souhaitez mais il ne faudra pas oublier de changer le nom dans les codes :) ).<br/> Ensuite une fenêtre devrait apparaître avec quelques réglages. Enlevez &quot;Rotate X90&quot;, mettez &quot;Apply Modifiers&quot; et &quot;Normals&quot; comme sur l'image ci-dessous :</p><figure id="r-540521" data-claire-element-id="540522"><img id="r-540520" data-claire-element-id="540520" src="medias/uploads.siteduzero.com_files_261001_262000_261204.png" alt="Image utilisateur"/></figure><p id="r-540523" data-claire-element-id="540523">Enfin, appuyez sur &quot;Export&quot;. Vous devriez voir apparaître un fichier <em>cube.obj</em> et <em>cube.mtl</em>.<br/> Et c'est fini, il ne vous reste plus qu'à créer un nouveau projet ^^ .</p><h3 id="r-le-code-19" data-claire-element-id="540544">Le code !</h3><p id="r-540525" data-claire-element-id="540525">On va partir du code suivant :</p><pre id="r-540526" data-claire-element-id="540526"><code data-claire-semantic="cpp">#include &lt;SDL/SDL.h&gt;
+
+#include &lt;GL/GL.h&gt;
+#include &lt;GL/GLU.h&gt;
+
+int main(int argc,char *argv[])
+{
+    SDL_Event event;
+    bool continuer=true;
+
+    SDL_Init(SDL_INIT_VIDEO);
+
+    SDL_SetVideoMode(640,480,32,SDL_OPENGL);
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(70,(double)640/480,.1,100);
+    glEnable(GL_DEPTH_TEST);
+
+    while(continuer)
+    {
+        SDL_PollEvent(&amp;event);
+        if(event.type==SDL_QUIT)
+            continuer=false;
+
+        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+
+        glMatrixMode(GL_MODELVIEW);
+
+        glLoadIdentity();
+
+        gluLookAt(0,-3,0,0,0,0,0,0,1);
+
+        //Dessin ici
+
+        glFlush();
+        SDL_GL_SwapBuffers();
+        SDL_Delay(10);
+    }
+
+    return EXIT_SUCCESS;
+}</code></pre><p id="r-540527" data-claire-element-id="540527">N'oubliez pas de linker <em>sdlglutils.cpp</em> et <em>OBJlib.cpp</em> !<br/> De même vous devez linker les libs suivantes :</p><pre id="r-540528" data-claire-element-id="540528"><code>-lmingw32
+-lSDLmain
+-lSDL
+-lSDL_image
+-lopengl32
+-lglu32</code></pre><p id="r-540529" data-claire-element-id="540529">Et maintenant vos obtenez... rien ! C'est donc parfait ^^ . Nous allons pouvoir commencer à intégrer notre modèle.<br/> Pour séparer les modèles du programme, nous allons créer un sous-dossier <em>models</em> dans le répertoire de votre programme. Vous pouvez aller encore plus loin, faire un sous-dossier pour chaque modèle dans <em>models</em>. Pour l'instant nous n'en avons pas besoin, mais ce pourra être utile avec des dizaines de modèles ^^ .<br/> Copiez-y <em>cube.obj</em> et <em>cube.mtl</em>.</p><p id="r-540530" data-claire-element-id="540530">Retournons au code. On va inclure la lib :</p><pre id="r-540531" data-claire-element-id="540531"><code data-claire-semantic="cpp">#include &quot;OBJlib.h&quot;</code></pre><p id="r-540532" data-claire-element-id="540532">Maintenant on va créer une variable qui contiendra toutes les informations permettant de dessiner l'objet.<br/> Cette variable sera de type <em>MeshObj</em> et son constructeur prend pour argument un <em>std::string</em> : le nom du fichier tout simplement :) !</p><pre id="r-540533" data-claire-element-id="540533"><code data-claire-semantic="cpp">MeshObj *cube=new MeshObj(&quot;models/cube.obj&quot;);</code></pre><p id="r-540534" data-claire-element-id="540534">Et pour dessiner le modèle, nous utiliserons cette méthode :</p><pre id="r-540535" data-claire-element-id="540535"><code data-claire-semantic="cpp">void MeshObj::draw_model(bool nor=true,bool tex=false);</code></pre><p id="r-540536" data-claire-element-id="540536">L'argument <em>nor</em> indique s'il faut ou non prendre en compte les normales et l'argument <em>tex</em> indique si on applique la texture ou pas. Notez que par défaut on tient compte des normales et on n'applique pas la texture.<br/> Donc pour notre exemple ceci ira très bien :</p><pre id="r-540537" data-claire-element-id="540537"><code data-claire-semantic="cpp">cube-&gt;draw_model();</code></pre><p id="r-540538" data-claire-element-id="540538">Ainsi vous pouvez dessiner plusieurs fois le même modèle avec une seule variable, vous n'aurez qu'à changer la position, la rotation, l'échelle, etc. .<br/> Par exemple :</p><pre id="r-540539" data-claire-element-id="540539"><code data-claire-semantic="cpp">#include &lt;SDL/SDL.h&gt;
+
+#include &lt;GL/GL.h&gt;
+#include &lt;GL/GLU.h&gt;
+
+#include &quot;OBJlib.h&quot;
+
+int main(int argc,char *argv[])
+{
+    SDL_Event event;
+    bool continuer=true;
+
+    SDL_Init(SDL_INIT_VIDEO);
+
+    SDL_SetVideoMode(640,480,32,SDL_OPENGL);
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(70,(double)640/480,.1,100);
+    glEnable(GL_DEPTH_TEST);
+
+    MeshObj *cube=new MeshObj(&quot;models/cube.obj&quot;);
+
+    int angle=0;
+
+    while(continuer)
+    {
+        SDL_PollEvent(&amp;event);
+        if(event.type==SDL_QUIT)
+            continuer=false;
+
+        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+
+        glMatrixMode(GL_MODELVIEW);
+
+        glLoadIdentity();
+
+        gluLookAt(0,-3,0,0,0,0,0,0,1);
+
+        glRotatef(angle,0,0,1); //Petite rotation sur les Z
+
+        glTranslatef(0,-1,0);
+        cube-&gt;draw_model(); //Premier cube
+
+        glTranslatef(0,2,0);
+        glScalef(.5,.5,.5);
+        cube-&gt;draw_model(); //Deuxième cube, dont les dimensions sont 2 fois plus petites, donc 8 fois moins volumineux
+
+        glFlush();
+        SDL_GL_SwapBuffers();
+        SDL_Delay(10);
+
+        angle++;
+        angle%=360; //Angle dans l'intervalle [0;359]
+    }
+
+    delete cube;
+
+    return EXIT_SUCCESS;
+}</code></pre><p id="r-540540" data-claire-element-id="540540">Et on obtient un rendu magnifique !</p><figure id="r-540542" data-claire-element-id="540543"><img id="r-540541" data-claire-element-id="540541" src="medias/uploads.siteduzero.com_files_261001_262000_261335.png" alt="Image utilisateur"/></figure>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/charger-des-fichiers-obj">Charger des fichiers .OBJ</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/charger-des-fichiers-obj/les-formats-obj-et-mtl">
+Les formats OBJ et MTL
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/charger-des-fichiers-obj/parser-les-formats-obj-et-mtl">
+Parser les formats OBJ et MTL
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/charger-des-fichiers-obj/modele-statique">
+Modèle statique
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/charger-des-fichiers-obj/modele-dynamique">
+Modèle dynamique
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/charger-des-fichiers-obj/parser-les-formats-obj-et-mtl">
+<span class="arrow"></span>
+<span class="next">Parser les formats OBJ et MTL</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/charger-des-fichiers-obj/modele-dynamique">
+<span class="next">Modèle dynamique</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Modledynamique"></a><h2>Modèle dynamique</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/charger-des-fichiers-obj/modele-statique">
+<span class="arrow"></span>
+<span class="next">Modèle statique</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-540546" data-claire-element-id="540546">Nous avons vu comment charger un modèle statique, c'est chouette... Maintenant si on veut utiliser un modèle animé il va falloir ruser. En effet, le format OBJ est à l'origine un format uniquement prévu pour les modèles statiques. L'exportateur va donc créer un fichier .obj et un fichier .mtl par frame, ce qui peut s'avérer très lourd. Cela constitue un premier inconvénient de ce format pour l'animation.<br/> Pour apprendre à animer vos modèles (avec une armature) je vous conseille de lire <a href="http://www.siteduzero.com/tutoriel-3-95785-l-animation-avec-une-armature.html">L'animation avec une armature</a> de <a href="http://www.siteduzero.com/membres-294-136114.html">Crabe05</a>.<br/> Une fois votre animation prête à être exportée, procédez de la même façon que pour les modèles statiques, à l'exception près du bouton &quot;Animation&quot; (en haut à droite) qui doit être enfoncé :</p><figure id="r-540548" data-claire-element-id="540549"><img id="r-540547" data-claire-element-id="540547" src="medias/uploads.siteduzero.com_files_262001_263000_262089.png" alt="Image utilisateur"/></figure><p id="r-540550" data-claire-element-id="540550">Et maintenant vous avez votre tonne de fichiers !<br/> C'est là que l'application du dossier <em>bin</em> de ma lib va intervenir.</p><aside id="r-540552" data-claire-element-id="540552" data-claire-semantic="warning"><p id="r-540551" data-claire-element-id="540551">Dans le dossier <em>bin</em> ne se trouve qu'un fichier .cpp, c'est la source du programme. Vous devrez d'abord la compiler (sans options particulières de compilation) pour utiliser l'exécutable.</p></aside><p id="r-540553" data-claire-element-id="540553">Tous vos fichiers sont sous la forme &quot;nom_XXXXXX.obj&quot; et &quot;nom_XXXXXX.mtl&quot;. Renommez un seul .mtl &quot;nom.mtl&quot; et supprimez les autres, ça fait déjà de la place ;) . Et maintenant sélectionnez tous les .obj et faites les glisser avec la souris sur <em>model_anim.exe</em>.<br/> Une fenêtre de console doit alors apparaître et vous demander le nom du .mtl sans l'extension. Par exemple si votre .mtl s'appelle <em>perso.mtl</em>, n'écrivez que &quot;perso&quot;. Ensuite c'est fini, on peut commencer le code :soleil: !</p><p id="r-540554" data-claire-element-id="540554">Si vous n'avez pas de modèle dynamique prêt à l'emploi, prenez <a href="http://www.mediafire.com/?n9e80muocmd3h4s">un poisson low-poly</a> juste à titre d'exemple ^^ .<br/> Evidemment, dans un premier temps on va copier ces fichiers dans un sous-dossier de notre répertoire <em>models</em>, que j'ai nommé <em>fish</em>.<br/> Maintenant attaquons-nous au chargement de l'animation. Deux variables de types différents seront nécessaires, et vous allez en voir l'utilité.<br/> Le premier type est <em>AnimMesh</em>, c'est lui qui contient toutes les frames sous forme de <em>MeshObj</em>. Le deuxième type est <em>VirtualAnim</em> qui correspond en fait à la frame qui doit être jouée à un instant t. Contrairement à <em>AnimMesh</em>, elle ne contient que des <code data-claire-semantic="cpp">int </code>, des <code data-claire-semantic="cpp">unsigned int </code> et des <code data-claire-semantic="cpp">bool </code>, ce qui est quand même beaucoup plus léger que des <em>MeshObj</em>.<br/> Et donc ce qu'on va faire, c'est un seul <em>AnimMesh</em> et autant de <em>VirtualAnim</em> que d'animations simultanées. C'est bon vous avez compris le principe ;) ?<br/> Bien, codons :pirate: !</p><p id="r-540555" data-claire-element-id="540555">Le constructeur de <em>AnimMesh</em> se présente sous la forme :</p><pre id="r-540556" data-claire-element-id="540556"><code data-claire-semantic="cpp">AnimMesh::AnimMesh(int nframes,std::string name);</code></pre><p id="r-540557" data-claire-element-id="540557">L'argument <em>nframes</em> correspond au nombre de frames de l'animation (pour notre poisson c'est 25 :) ), <em>name</em> est le nom d'une frame sans le nombre et sans l'extension (par exemple &quot;models/fish/fish&quot;) :</p><pre id="r-540558" data-claire-element-id="540558"><code data-claire-semantic="cpp">AnimMesh *fish=new AnimMesh(25,&quot;models/fish/fish&quot;);</code></pre><p id="r-540559" data-claire-element-id="540559">Ensuite le constructeur de <em>VirtualAnim</em> est :</p><pre id="r-540560" data-claire-element-id="540560"><code data-claire-semantic="cpp">VirtualAnim::VirtualAnim();</code></pre><p id="r-540561" data-claire-element-id="540561">Simple, n'est-ce pas :p ?<br/> Voici ce qu'on obtiendra donc :</p><pre id="r-540562" data-claire-element-id="540562"><code data-claire-semantic="cpp">VirtualAnim *anim=new VirtualAnim();</code></pre><p id="r-540563" data-claire-element-id="540563">Pour lancer l'animation nous utiliserons :</p><pre id="r-540564" data-claire-element-id="540564"><code data-claire-semantic="cpp">void VirtualAnim::start(int frame_debut,int frame_fin,int fps=25,bool retour_au_debut=false,int n_cycles=-1);</code></pre><p id="r-540565" data-claire-element-id="540565">L'argument <em>frame_debut</em> est la frame de départ, <em>frame_fin</em> est la frame d'arrivée, <em>fps</em> est le nombre de frames par seconde (par défaut 25), <em>retour_au_debut</em> indique si vous voulez que l'animation recommence à la frame 0 ou à <em>frame_debut</em> et <em>n_cycles</em> est le nombre de &quot;tours&quot; de l'animation (si vous le laissez à -1 l'animation continuera sans cesse) :</p><pre id="r-540566" data-claire-element-id="540566"><code data-claire-semantic="cpp">anim-&gt;start(0,24,75);</code></pre><p id="r-540567" data-claire-element-id="540567">Il existe une méthode <em>stop</em> :</p><pre id="r-540568" data-claire-element-id="540568"><code data-claire-semantic="cpp">void VirtualAnim::stop();</code></pre><p id="r-540569" data-claire-element-id="540569">Tout simplement ;) .<br/> Il ne nous reste plus qu'à afficher la bonne frame grâce à cette variable avec :</p><pre id="r-540570" data-claire-element-id="540570"><code data-claire-semantic="cpp">void VirtualAnim::draw(AnimMesh *mesh,bool nor=true,bool tex=false);</code></pre><p id="r-540571" data-claire-element-id="540571">L'argument <em>mesh</em> correspond au modèle dynamique à afficher, <em>nor</em> indique si on doit prendre en compte ou pas les normales et <em>tex</em> indique s'il faut appliquer la texture ou pas.<br/> Pour notre cas on aura :</p><pre id="r-540572" data-claire-element-id="540572"><code data-claire-semantic="cpp">anim-&gt;draw(fish,false,true);</code></pre><p id="r-540573" data-claire-element-id="540573">Donc récapitulons :</p><pre id="r-540574" data-claire-element-id="540574"><code data-claire-semantic="cpp">#include &lt;SDL/SDL.h&gt;
+
+#include &lt;GL/GL.h&gt;
+#include &lt;GL/GLU.h&gt;
+
+#include &quot;OBJlib.h&quot;
+
+int main(int argc,char *argv[])
+{
+    SDL_Event event;
+    bool continuer=true;
+
+    SDL_Init(SDL_INIT_VIDEO);
+
+    SDL_SetVideoMode(640,480,32,SDL_OPENGL);
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(70,(double)640/480,.1,100);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_TEXTURE_2D); //Nous avons une texture à charger, donc il faut activer le système de textures
+
+    AnimMesh *fish=new AnimMesh(25,&quot;models/fish/fish&quot;); //On charge les frames
+    VirtualAnim *anim=new VirtualAnim(); //On crée une animation virtuelle
+
+    anim-&gt;start(0,24,75); //On lance l'animation
+
+    int angle=0;
+
+    while(continuer)
+    {
+        SDL_PollEvent(&amp;event);
+        if(event.type==SDL_QUIT)
+            continuer=false;
+
+        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+
+        glMatrixMode(GL_MODELVIEW);
+
+        glLoadIdentity();
+
+        gluLookAt(0,-3,0,0,0,0,0,0,1);
+
+        glRotatef(angle,0,0,1); //Petite rotation sur les Z
+
+        anim-&gt;draw(fish,false,true); //On dessine la frame de fish en fonction de la frame courante de anim
+
+        glFlush();
+        SDL_GL_SwapBuffers();
+        SDL_Delay(10);
+
+        angle++;
+        angle%=360; //Angle dans l'intervalle [0;359]
+    }
+
+    delete anim;
+    delete fish;
+
+    return EXIT_SUCCESS;
+}</code></pre><p id="r-540575" data-claire-element-id="540575">Bon l'animation n'est pas terrible (surtout qu'avec ce modèle de qualité...) ^^ mais vous pouvez obtenir de beaux rendus avec cette technique.<br/> En tout cas, voilà ce qu'on obtient :</p><figure id="r-540577" data-claire-element-id="540578"><img id="r-540576" data-claire-element-id="540576" src="medias/uploads.siteduzero.com_files_262001_263000_262441.png" alt="Image utilisateur"/></figure><p id="r-540579" data-claire-element-id="540579">Merci d'avoir lu ce tutoriel, maintenant vous pouvez facilement importer vos modèles dans vos programmes :soleil: !</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/charger-des-fichiers-obj">Charger des fichiers .OBJ</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/charger-des-fichiers-obj/les-formats-obj-et-mtl">
+Les formats OBJ et MTL
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/charger-des-fichiers-obj/parser-les-formats-obj-et-mtl">
+Parser les formats OBJ et MTL
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/charger-des-fichiers-obj/modele-statique">
+Modèle statique
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/charger-des-fichiers-obj/modele-dynamique">
+Modèle dynamique
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/charger-des-fichiers-obj/modele-statique">
+<span class="arrow"></span>
+<span class="next">Modèle statique</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/charger-des-fichiers-obj.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 01:30:10 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/charger-des-fichiers-obj.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:26:15 GMT -->
+</html>

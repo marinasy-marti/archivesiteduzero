@@ -1,0 +1,265 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/la-representation-intervallaire.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 23:19:56 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/la-representation-intervallaire.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:04:30 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : La représentation intervallaire</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/la-representation-intervallaire.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : La représentation intervallaire</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Lareprsentationintervallaire">La représentation intervallaire</a><br/><a href="#Lathorie">La théorie</a><br/><a href="#Lapratique">La pratique</a><br/></div>
+<a name="Lareprsentationintervallaire"></a><h2>La représentation intervallaire</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-representation-intervallaire/la-theorie-23">
+<span class="next">La théorie</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-567841" data-claire-element-id="567841">Une notion bien étrange que voilà...</p><p id="r-567842" data-claire-element-id="567842">Pour mieux expliquer, prenons (par exemple) des forums, ayant plusieurs &quot;niveaux&quot; (comprenez sous-forums). Pour accéder aux &quot;enfants&quot; et aux &quot;parents&quot; d'un forum, vous pensez sûrement (et, je pense, vous les utiliserez) les héritages (présence d'une colonne parent_id, méthode également connue sous le nom de <em>représentation classique</em>) par auto-jointures, c'est-à-dire en renseignant récursivement la clause WHERE à l'aide de sous-requêtes. <br/> Mais, ceci peut <strong>très</strong> vite devenir lourd... et peu pratique, surtout à partir d'un certain niveau (et qui, au grand dam de tous, est vite atteint).</p><aside id="r-567844" data-claire-element-id="567844" data-claire-semantic="information"><p id="r-567843" data-claire-element-id="567843">Notez que, tout au long du tutoriel, pour la plupart des exemples, j'utiliserai l'exemple de forums. ;)</p></aside><p id="r-567845" data-claire-element-id="567845">Dans ce tuto, nous allons donc voir comment éviter cette lourdeur en employant une &quot;ruse&quot; mise au point par les développeurs : <strong>la représentation intervallaire</strong> (nommée RI pour les intimes) !<br/> Accrochez-vous, on y va !</p>
+</div><a name="Lathorie"></a><h2>La théorie</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-representation-intervallaire/la-pratique-13">
+<span class="next">La pratique</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-une-petite-presentation-de-tout-le-schmilblik" data-claire-element-id="567875">Une (petite) présentation de tout le &quot;schmilblik&quot;</h2><p id="r-567846" data-claire-element-id="567846">Avant d'attaquer la bête, nous avons, tout d'abord, besoin de la définir. Tout d'abord, qu'est-ce que la repr...</p><div id="r-567848" data-claire-element-id="567848" data-claire-semantic="question"><p id="r-567847" data-claire-element-id="567847">C'est vrai ça, c'est quoi la rapré... représentation invert... cette chose ?</p></div><p id="r-567849" data-claire-element-id="567849">La représentation intervallaire ! Je la voyais arriver à des kilomètres à la ronde, celle-là !</p><p id="r-567850" data-claire-element-id="567850">Je commence par un point optionnel (ce sera plus facile à expliquer). Cette technique peut permettre de situer un élément dans une hiérarchie. Pour donner une image de cette notion de hiérarchie, prenons l'exemple d'un immeuble, couplé à un système de forums (vous allez très vite comprendre). Vous savez, un immeuble est constitué d'étages...<br/> Disons que la catégorie d'un système de forums est le rez-de-chaussée de cet immeuble, et les étages, les sous-forums (qui sont chacun des sous-forums de l'étage précédent). Voilà ce qu'est la notion de hiérarchie : si je suis au quatrième étage (non, non, je ne vais pas sauter :D ), ça veut dire que je suis... au quatrième niveau, ou à la quatrième hiérarchie. Il peut, bien entendu, y avoir plusieurs sous-forums ayant le même niveau, comme, toujours à l'image d'un immeuble, il peut y avoir plusieurs appartements à chaque étage.</p><p id="r-567851" data-claire-element-id="567851">Ensuite, un point essentiel à <em>retenir</em> dans la représentation intervallaire (je ne vois pas ce qu'il y a de compliqué à retenir là-dedans, ce n'est quand même pas de l'acide acétyli... acide acytéli... bref, un certain médicament :p ), les notions de <em>borne gauche</em>, <em>borne droite</em>.</p><p id="r-567852" data-claire-element-id="567852">Pour illustrer cette notion, voici un schéma fait par mes soins (mes capacités en graphisme étant très limitées, vous m'excuserez de la qualité de celui-ci), qui, je dois vous l'avouer, reprend un peu la même idée que <a href="http://sqlpro.developpez.com/cours/arborescence/#L2">le schéma de Frédéric Brouard</a> (le mien étant simplifié, et (surtout) plus adapté à notre cas de développeurs en herbe), qui d'ailleurs présente de très bons tutos sur SQL.</p><figure id="r-567854" data-claire-element-id="567855"><img id="r-567853" data-claire-element-id="567853" src="medias/uploads.siteduzero.com_files_77001_78000_77936.jpg" alt="Image utilisateur"/></figure><p id="r-567856" data-claire-element-id="567856"><em>Merci à <a href="http://www.siteduzero.com/membres-294-228.html">Shadow_f</a> pour le schéma</em></p><p id="r-567857" data-claire-element-id="567857">Comme vous pouvez le voir, chaque borne de chaque élément se voit attribuer un nombre. Ce nombre permet de déterminer la position de l'élément dans l'ensemble. Notez également que <em>le nombre de la borne gauche est <strong>toujours inférieur</strong> au nombre de la borne droite</em>. Notez bien ce point, il est très important (je fais une liste de rappels à la fin de cette première sous-partie) !</p><p id="r-567858" data-claire-element-id="567858">À propos de points importants, en voilà un autre à noter : si <strong>la différence entre sa borne droite et sa borne gauche</strong> (<em>et non pas l'inverse !</em>) <strong>est égale à <em>1</em></strong>, on désigne alors l'élément étant <em>une feuille</em>. Sinon, ce sera <em>un noeud</em>, et cette même différence sera égale au <strong>double du nombre d'enfants</strong>, auquel on ajoute 1.</p><p id="r-567859" data-claire-element-id="567859">Je pense que vous constaterez qu'au lieu de mettre des noms aux éléments sur mon schéma, j'ai juste indiqué les niveaux de chaque élément, pour vous montrer la tête que ça peut avoir.</p><div id="r-567861" data-claire-element-id="567861" data-claire-semantic="question"><p id="r-567860" data-claire-element-id="567860">Euh... C'est bien beau tout ça, mais quels sont les points essentiels de la représentation intervallaire ?</p></div><p id="r-567862" data-claire-element-id="567862">J'y viens, et vous posez la question pile au bon moment. Je vous ai fait une petite liste de trucs à retenir....</p><ul id="r-567873" data-claire-element-id="567873"><li id="r-567864" data-claire-element-id="567864"><p id="r-567863" data-claire-element-id="567863">La notion de niveaux détermine la hiérarchisation de la feuille, qui, je dois vous l'avouer, n'est pas essentielle à la RI, mais plutôt utile (pour les tris par exemple).</p></li><li id="r-567866" data-claire-element-id="567866"><p id="r-567865" data-claire-element-id="567865">La notion de bornes, qui détermine la situation de la feuille (ou du noeud) par rapport à l'ensemble.</p></li><li id="r-567868" data-claire-element-id="567868"><p id="r-567867" data-claire-element-id="567867">Une feuille désigne un élément caractérisé par le fait que la différence entre sa borne droite et sa borne gauche est égale à 1. Un noeud, lui, est un élément caractérisé par les autres cas (donc la différence borne droite - borne gauche supérieure à 1).</p></li><li id="r-567870" data-claire-element-id="567870"><p id="r-567869" data-claire-element-id="567869">Pour calculer la différence entre les deux bornes, il faut <em><strong>TOUJOURS</strong></em> soustraire la borne gauche à la borne droite, et non pas l'inverse. En effet, la borne gauche est <em><strong>TOUJOURS</strong></em>inférieure à la borne droite.</p></li><li id="r-567872" data-claire-element-id="567872"><p id="r-567871" data-claire-element-id="567871">La différence entre les deux bornes d'un même noeud (et non pas d'une feuille) est (quoi qu'il advienne) <strong><em>TOUJOURS</em></strong> égale au <em>double</em> du nombre d'enfants, auquel on rajoute 1.</p></li></ul><p id="r-567874" data-claire-element-id="567874">Passons maintenant à la préparation pour pouvoir pratiquer, dans la seconde partie de ce tutoriel (majoritairement des requêtes SQL, pour servir à titre d'exemples). Je montrerai également pourquoi il est difficile (et coûteux) d'utiliser les &quot;auto-jointures&quot; (c'est-à-dire d'utiliser avec abus la clause WHERE et les sous-requêtes) pour accéder aux noeuds parents et aux feuilles... Et que c'est même presque impossible pour nous en ce moment. À moins d'avoir des idées tordues... :lol:</p><h2 id="r-pourquoi-preferer-la-ri-a-l-heritage-recursif-les-tables-sql-d-exemple" data-claire-element-id="567915">Pourquoi préférer la RI à l'héritage récursif ? Les tables SQL d'exemple</h2><aside id="r-567877" data-claire-element-id="567877" data-claire-semantic="information"><p id="r-567876" data-claire-element-id="567876">Dans cette sous-partie, je considère que vous savez manipuler <strong>SELECT</strong> et ses clauses <strong>WHERE</strong>, <strong>ORDER BY</strong>, et (éventuellement) comprendre les <strong>requêtes d'insertion</strong>. Sinon, vous avez la porte, le big tutoriel de <a href="http://www.siteduzero.com/membres-294-3.html">M@teo21</a>, &quot;<a href="http://www.siteduzero.com/tuto-3-4-0-un-site-dynamique-avec-php.html#part_20">Faire un site dynamique avec PHP - Base de Données</a>&quot;, le big tutoriel de <a href="http://www.siteduzero.com/membres-294-302.html">Shepard</a>, &quot;<a href="http://www.siteduzero.com/tuto-3-1348-0-pour-aller-plus-loin.html">Pour aller plus loin...</a>&quot; à disposition.</p></aside><h3 id="r-l-heritage-recursif-ourf-c-est-lourd-et-infaisable-pour-des-zeros-comme-nous-d" data-claire-element-id="567888">L'héritage récursif ? Ourf, c'est lourd... et infaisable (pour des Zéros comme nous) :D</h3><p id="r-567878" data-claire-element-id="567878">Voici la table type que nous allons utiliser pour illustrer la faiblesse ( :p ) de l'héritage récursif :</p><pre id="r-567879" data-claire-element-id="567879"><code data-claire-semantic="sql">CREATE TABLE tuto_herit (
+        forum_id mediumint(8) NOT NULL AUTO_INCREMENT,
+        forum_parent_id mediumint(8) DEFAULT NULL,
+        forum_name varchar(30) NOT NULL,
+        
+        PRIMARY KEY  (forum_id),
+        KEY forum_parent_id (forum_parent_id)
+    );
+ 
+INSERT INTO tuto_herit (forum_id, forum_parent_id, forum_name) 
+    VALUES 
+        (1, NULL, '1'),
+        (2, 1, '1.1'),
+        (3, 2, '1.1.1'),
+        (4, 3, '1.1.1.1'),
+        (5, 4, '1.1.1.1.1'),
+        (6, 5, '1.1.1.1.1.1'),
+        (7, 6, '1.1.1.1.1.1.1'),
+        (8, 6, '1.1.1.1.1.1.2'),
+        (9, 6, '1.1.1.1.1.1.3'),
+        (10, 4, '1.1.1.1.1.2'),
+        (11, 4, '1.1.1.1.1.3'),
+        (12, 4, '1.1.1.1.2'),
+        (13, 4, '1.1.1.1.3'),
+        (14, 2, '1.1.2'),
+        (15, 1, '1.2'),
+        (16, 1, '1.3'),
+        (17, 1, '1.4'),
+        (18, 11, '1.4.1'),
+        (19, 11, '1.4.2'),
+
+        (20, NULL, '2')/*,[...]*/;</code></pre><aside id="r-567881" data-claire-element-id="567881" data-claire-semantic="information"><p id="r-567880" data-claire-element-id="567880">Notez que j'ai délibérément choisi de nommer les éléments en fonction de leur parent, pour pouvoir les distinguer. Ainsi, X.Y.Z veut dire que l'élément correspondant appartient à un parent X, qui a un fils Y, ... etc. Mais vous êtes libres de nommer les tables comme vous le souhaitez, ce nommage n'étant <strong>pas</strong> une condition pour l'utilisation de la RI.</p></aside><p id="r-567882" data-claire-element-id="567882">À partir d'un des sous-forums (on va dire celui ayant l'id numéro 7, le plus profond :diable: ), comment faire, à l'aide des jointures, pour accéder à la catégorie 1, en affichant tous les forums parents au sous-forum sélectionné ? Je vous laisse 5 minutes pour essayer de faire cette requête... Et bien entendu, en ayant qu'un seul forum par ligne (pas tous, sinon ce serait trop facile, surtout si on connaît la profondeur du sous-forum :p ).</p><p id="r-567883" data-claire-element-id="567883">...</p><p id="r-567884" data-claire-element-id="567884">...</p><p id="r-567885" data-claire-element-id="567885">Vous n'y arrivez pas ? Pour tout vous avouer, moi non plus :D . Ici, on peut facilement avoir tous les forums parents sur la <strong>même ligne</strong> à l'aide de <em>quelques</em> jointures (en utilisant l'héritage de la colonne forum_parent_id) ; or, ce n'était pas ce qui était demandé : on voulait un forum par ligne. Certes, les jointures, c'est pratique, mais à la longue... c'est vite pesant et peu pratique.</p><aside id="r-567887" data-claire-element-id="567887" data-claire-semantic="information"><p id="r-567886" data-claire-element-id="567886">N.d.A. : pour ce problème, je pense qu'il faut soit utiliser la récursivité d'une fonction pour trouver ce qu'on cherche, mais ça reste consommateur de ressource si l'arbre est trop profond (dans notre cas, cela peut être considéré comme trop profond), soit, toujours dans la récursivité, une série de sous-requêtes, ce qui n'est également pas terrible.</p></aside><h3 id="r-la-representation-intervallaire-yeah" data-claire-element-id="567914">La représentation intervallaire ? Yeah !</h3><p id="r-567889" data-claire-element-id="567889">Reprenons la première table... En l'adaptant quelque peu pour pouvoir la rendre utilisable par la représentation intervallaire... Hop, la voilà prête à l'emploi (toujours avec les insertions, converties qui plus est :magicien: ) !</p><pre id="r-567890" data-claire-element-id="567890"><code data-claire-semantic="sql">CREATE TABLE tuto_ri (
+        forum_id mediumint(8) NOT NULL AUTO_INCREMENT,
+        forum_level mediumint(8) NOT NULL DEFAULT 0,
+        forum_gauche mediumint(8) NOT NULL,
+        forum_droite mediumint(8) NOT NULL,
+        forum_name varchar(30) NOT NULL,
+        
+        PRIMARY KEY  (forum_id),
+        KEY forum_gauche (forum_gauche),
+        KEY forum_droite (forum_droite)
+    );
+ 
+INSERT INTO tuto_ri (forum_id, forum_level, forum_gauche, forum_droite, forum_name) 
+    VALUES 
+        (1, 0, 1, 38, '1'),
+        (2, 1, 2, 27, '1.1'),
+        (3, 2, 3, 24, '1.1.1'),
+        (4, 3, 4, 23, '1.1.1.1'),
+        (5, 4, 5, 18, '1.1.1.1.1'),
+        (6, 5, 6, 13, '1.1.1.1.1.1'),
+        (7, 6, 7, 8, '1.1.1.1.1.1.1'),
+        (8, 6, 9, 10, '1.1.1.1.1.1.2'),
+        (9, 6, 11, 12, '1.1.1.1.1.1.3'),
+        (10, 5, 14, 15, '1.1.1.1.1.2'),
+        (11, 5, 16, 17, '1.1.1.1.1.3'),
+        (12, 4, 19, 20, '1.1.1.1.2'),
+        (13, 4, 21, 22, '1.1.1.1.3'),
+        (14, 2, 25, 26, '1.1.2'),
+        (15, 1, 28, 29, '1.2'),
+        (16, 1, 30, 31, '1.3'),
+        (17, 1, 32, 37, '1.4'),
+        (18, 2, 33, 34, '1.4.1'),
+        (19, 2, 35, 36, '1.4.2'),
+
+        (20, 0, 39, 40, '2')/*,[...]*/;</code></pre><p id="r-567891" data-claire-element-id="567891">La note concernant les noms des (sous-)forums reste toujours valable dans ce cas-ci.</p><p id="r-567892" data-claire-element-id="567892">Allez : même exercice que tout à l'heure ! Vous avez... 10 minutes pour le faire : rechercher l'id, le nom, et la hiérarchie des noeuds parents de la feuille ayant l'id &quot;7&quot;, en les triant du parent le plus proche au parent le plus lointain !</p><p id="r-567893" data-claire-element-id="567893">...</p><p id="r-567894" data-claire-element-id="567894">...</p><p id="r-567895" data-claire-element-id="567895">...</p><p id="r-567896" data-claire-element-id="567896">...</p><p id="r-567897" data-claire-element-id="567897">...</p><p id="r-567898" data-claire-element-id="567898">...</p><p id="r-567899" data-claire-element-id="567899">Ah, c'est vrai, j'avais oublié le petit indice : utiliser les bornes des feuilles. Si vous n'aviez pas deviné (nan, surtout pas, pas la fenêtre :waw: !), ce n'est pas grave, voici ma solution, et pour tenter de me faire pardonner ( :ange: ), je l'ai commentée pour que vous la compreniez mieux).</p><p id="r-567900" data-claire-element-id="567900"></p><div id="r-567903" data-claire-element-id="567904"><img id="r-567904" data-claire-element-id="567903" src="medias/uploads.siteduzero.com_files_132001_133000_132718.png" alt="Image utilisateur"/><pre id="r-567901" data-claire-element-id="567901"><code data-claire-semantic="sql">SELECT forum_id, forum_name
+    FROM tuto_ri
+    WHERE forum_gauche &lt; 7 
+        AND forum_droite &gt; 8
+    ORDER BY forum_level DESC;</code></pre><p id="r-567902" data-claire-element-id="567902"><em>On retrouve donc ce qu'on recherchait</em></p></div><p id="r-567905" data-claire-element-id="567905">On cherche à récupérer l'ID, le nom, et la hiérarchisation des noeuds parents, ce qu'on fait en sélectionnant les champs forum_id, forum_name, et forum_level. <br/> Ensuite, dans la clause WHERE, on applique ce qu'on a pu observer sur mon (beau :p ) schéma : la borne gauche d'un des (sous-)forums est <em>toujours</em><strong>plus grande</strong> que celle des noeuds parents. On sélectionne donc tous les noeuds ayant une borne gauche plus petite que (dans notre cas) 7. On applique la même chose à la borne droite, sauf que cette fois-ci, la borne droite de la feuille est <em>toujours</em><strong>plus petite</strong> que celle des noeuds parents.</p><p id="r-567906" data-claire-element-id="567906">On a donc les noeuds que l'on désire... Mais ce n'est pas fini, il y avait un petit piège : on souhaite avoir les noeuds... Du plus proche au plus lointain par rapport à la feuille. Il suffisait juste d'ajouter une petite clause ORDER BY, en indiquant le nom de la colonne qui sert à trier (forum_level), et par ordre <strong>décroissant</strong>. Je vous avais bien dit que la notion de hiérarchisation pouvait s'avérer utile par moments... En voilà la preuve même !</p><aside id="r-567908" data-claire-element-id="567908" data-claire-semantic="information"><p id="r-567907" data-claire-element-id="567907">Notez que si je vous avais demandé, dans la liste des forums ressortie, de ressortir également le forum dans lequel on est, à la place des opérateurs <strong>&lt;</strong> et <strong>&gt;</strong>, il aurait fallu utiliser <strong>&lt;=</strong> et <strong>&gt;=</strong>. En effet, les bornes gauche et droite du forum sont bien plus petites ou égales aux bornes de notre forum. ;)</p></aside><figure id="r-567910" data-claire-element-id="567911"><img id="r-567909" data-claire-element-id="567909" src="medias/uploads.siteduzero.com_files_132001_133000_132719.png" alt="Image utilisateur"/></figure><p id="r-567912" data-claire-element-id="567912"><em>Ici, on cherche aussi à inclure le forum courant dans le résultat</em></p><p id="r-567913" data-claire-element-id="567913">Bon, je vous pense prêts pour la pratique : à l'assauuuuuut :pirate: !</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/la-representation-intervallaire">La représentation intervallaire</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/la-representation-intervallaire/la-theorie-23">
+La théorie
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-representation-intervallaire/la-pratique-13">
+La pratique
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-representation-intervallaire/la-pratique-13">
+<span class="next">La pratique</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lapratique"></a><h2>La pratique</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-representation-intervallaire/la-theorie-23">
+<span class="arrow"></span>
+<span class="next">La théorie</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-567917" data-claire-element-id="567917">Ici, nous allons voir les différentes techniques et opérations chirurgicales liées à la représentation intervallaire : modifier le statut d'un élément (transformer un noeud en une feuille, et vice-versa), ajouter des feuilles à un noeud, compter le nombre d'éléments dans un noeud, pouvoir mettre à jour les indices aux bornes en fonction du nombre d'éléments (selon que ce sera une feuille ou un noeud), le déplacement de noeuds...</p><p id="r-567918" data-claire-element-id="567918">Cette partie du tuto agira donc en tant que plusieurs séries de &quot;minis-TP&quot;, qui demandent par moments de la réflexion, et par moments des astuces... que je développerai ici.</p><h2 id="r-stats-sur-les-differents-noeuds" data-claire-element-id="567970">Stats sur les différents noeuds</h2><p id="r-567919" data-claire-element-id="567919">Dans cette sous-partie, nous allons voir comment compter le nombre d'éléments d'un noeud, le nombre de feuilles d'un noeud, le nombre de noeuds dans un même noeud, ... bref, on va compter. :p</p><h3 id="r-compter-le-nombre-d-elements-d-un-noeud" data-claire-element-id="567937">Compter le nombre d'éléments d'un noeud</h3><p id="r-567920" data-claire-element-id="567920">Pour compter le nombre d'éléments d'un noeud, ça va être relativement (très) simple, et (très) vite expédié. Vous vous souvenez, à la fin de la première partie de ce tuto, on a vu comment récupérer tous les parents (et leur caractéristiques) d'une feuille / d'un noeud, en incluant ou non l'élément, non ? Eh bien ici, ça va plus ou moins être le même topo.</p><div id="r-567922" data-claire-element-id="567922" data-claire-semantic="question"><p id="r-567921" data-claire-element-id="567921">Ha ! Laisse-moi deviner : au lieu d'inclure l'élément dans la sélection, on va déjà devoir utiliser les signes strictement supérieur / inférieur, non ?</p></div><p id="r-567923" data-claire-element-id="567923">Bingo ! De plus, vous aurez besoin, comme je l'ai dit, <strong>non pas</strong> de sélectionner <em>les parents</em> de l'élément, <strong>mais <em>ses enfants</em></strong> ! Donc, au lieu de rechercher tous les éléments qui ont une borne gauche inférieure à celle de l'élément recherché, et une borne droite supérieure à celle de l'élément, on va faire l'inverse !<br/> Je vous file la solution dans quelques minutes, le temps pour vous de chercher (et moi d'aller piquer un petit somme :ninja: ). Ah, j'oubliais pour quel forum on va faire cette opération : cette fois-ci, on va chercher le nombre d'enfants pour le forum ayant l'ID numéro... 3 !</p><p id="r-567924" data-claire-element-id="567924">Petit indice : utilisez la fonction d'agrégat COUNT(*) (pour les fonctions d'agrégat, voyez <a href="http://www.siteduzero.com/tutoriel-3-9864-un-peu-de-stats-avec-group-by-1-2.html">le tutorial de Shepard</a> sur le sujet).</p><p id="r-567925" data-claire-element-id="567925">...</p><p id="r-567926" data-claire-element-id="567926">...</p><p id="r-567927" data-claire-element-id="567927">Hmm ? Vous avez (déjà) fini ? Voici donc la correction :) .</p><div id="r-567932" data-claire-element-id="567934"><img id="r-567933" data-claire-element-id="567932" src="medias/uploads.siteduzero.com_files_132001_133000_132720.png" alt="Image utilisateur"/><img id="r-567934" data-claire-element-id="567933" src="medias/uploads.siteduzero.com_files_132001_133000_132721.png" alt="Image utilisateur"/><pre id="r-567928" data-claire-element-id="567928"><code data-claire-semantic="sql">SELECT COUNT(*)
+    FROM tuto_ri
+    WHERE forum_gauche &gt; 3 
+        AND forum_droite &lt; 24;</code></pre><p id="r-567929" data-claire-element-id="567929">Vous avez vu, ce n'était pas si sorcier, il suffisait donc juste d'inverser les signes pour les deux bornes pour obtenir les enfants et non pas les parents du noeud, et d'utiliser, comme je vous l'ai dit, la fonction d'agrégat COUNT(*).</p><p id="r-567930" data-claire-element-id="567930"><em>On trouve donc 10 éléments fils au noeud '1.1.1'</em></p><p id="r-567931" data-claire-element-id="567931"><em>Dans le sens inverse, on retrouve 2 éléments parents au noeud '1.1.1'</em></p></div><aside id="r-567936" data-claire-element-id="567936" data-claire-semantic="information"><p id="r-567935" data-claire-element-id="567935">Vous verrez par la suite (bon, tout de suite après, pour tout vous avouer :D ) que le nombre d'éléments parents est forcément celui des noeuds parents (c'est de la pure logique ;) ).</p></aside><h3 id="r-compter-le-nombre-de-feuilles-de-noeuds-d-un-noeud" data-claire-element-id="567969">Compter le nombre de feuilles / de noeuds d'un noeud</h3><div id="r-567939" data-claire-element-id="567939" data-claire-semantic="question"><p id="r-567938" data-claire-element-id="567938">Mais... Mais... N'est-ce pas la même chose que ce qu'on a fait à l'instant même ?</p></div><p id="r-567940" data-claire-element-id="567940">Pas tout à fait. Ici, on ne cherchera pas à compter tous les <strong>enfants</strong> (ou les <strong>parents</strong>) d'un noeud, mais <strong>seulement <em>les feuilles</em> (ou <em>les noeuds</em>) enfants (ou les parents) d'un noeud</strong>. Donc, on va à peu près procéder de la même manière qu'auparavant, mais, tâchez juste de vous rappeler d'un des points à retenir de la représentation intervallaire. Vous y êtes ? Non ? Bon bah cherchez le nombre de noeuds enfants pour le même forum que le précédent :p (et ça va me permettre d'aller chercher un café pour finir de me réveiller :ninja: ).</p><p id="r-567941" data-claire-element-id="567941">...</p><p id="r-567942" data-claire-element-id="567942">...</p><p id="r-567943" data-claire-element-id="567943">...</p><p id="r-567944" data-claire-element-id="567944">...</p><p id="r-567945" data-claire-element-id="567945">Que vous ayez fini ou non, voici la correction !</p><div id="r-567948" data-claire-element-id="567949"><img id="r-567949" data-claire-element-id="567948" src="medias/uploads.siteduzero.com_files_132001_133000_132722.png" alt="Image utilisateur"/><pre id="r-567946" data-claire-element-id="567946"><code data-claire-semantic="sql">SELECT COUNT(*)
+    FROM tuto_ri
+    WHERE forum_gauche &gt; 3 
+        AND forum_droite &lt; 24 
+        AND (forum_droite - forum_gauche) = 1;</code></pre><p id="r-567947" data-claire-element-id="567947"><em>On trouve 7 feuilles filles pour le &quot;Forum 1.1.1&quot;</em></p></div><p id="r-567950" data-claire-element-id="567950">Ce TP était également plutôt facile ; il suffisait de se souvenir que pour toutes les feuilles d'un arbre, la différence entre les deux bornes est <em>toujours</em><strong>égale à 1</strong>. De même, pour compter le nombre de noeuds fils, vous pouvez, je pense, aisément le deviner : il faut chercher non pas les fils ayant une différence entre leurs bornes égale à 1, mais supérieure à 1.</p><figure id="r-567952" data-claire-element-id="567953"><img id="r-567951" data-claire-element-id="567951" src="medias/uploads.siteduzero.com_files_132001_133000_132724.png" alt="Image utilisateur"/></figure><p id="r-567954" data-claire-element-id="567954"><em>On trouve 3 noeuds fils pour le noeud &quot;1.1.1&quot;</em></p><figure id="r-567956" data-claire-element-id="567957"><img id="r-567955" data-claire-element-id="567955" src="medias/uploads.siteduzero.com_files_132001_133000_132723.png" alt="Image utilisateur"/></figure><p id="r-567958" data-claire-element-id="567958"><em>On trouve 0 feuilles parentes pour le noeud &quot;1.1.1&quot;</em></p><figure id="r-567960" data-claire-element-id="567961"><img id="r-567959" data-claire-element-id="567959" src="medias/uploads.siteduzero.com_files_132001_133000_132725.png" alt="Image utilisateur"/></figure><p id="r-567962" data-claire-element-id="567962"><em>On trouve 2 noeuds parents pour le noeud &quot;1.1.1&quot;</em></p><aside id="r-567964" data-claire-element-id="567964" data-claire-semantic="information"><p id="r-567963" data-claire-element-id="567963">Pour le troisième résultat, je suppose que vous vous en doutiez : un enfant ne peut avoir de feuilles parentes. Ou alors c'est qu'il y a un problème au niveau des bornes. :-°</p></aside><aside id="r-567966" data-claire-element-id="567966" data-claire-semantic="information"><p id="r-567965" data-claire-element-id="567965">De même, vous vous doutez que <strong>si vous mettez un signe supérieur (respectivement inférieur) ou égal à 1 pour la différence</strong>, ça équivaut à la même chose que tout à l'heure... Si ce n'est de pomper des ressources inutilement. :D</p></aside><aside id="r-567968" data-claire-element-id="567968" data-claire-semantic="information"><p id="r-567967" data-claire-element-id="567967">Dernière remarque : si vous additionnez les deux premiers résultats, vous pourrez retrouver le résultat qu'on a vu plus haut, soit tous les éléments fils du noeud &quot;Forum 1.1.1&quot;... Même remarque pour les éléments parents. ;)</p></aside><h2 id="r-mettre-a-jour-un-element" data-claire-element-id="568050">Mettre à jour un élément</h2><p id="r-567971" data-claire-element-id="567971">Ici, on va voir comment mettre à jour un élément : mettre ses bornes à jour (ajout / suppression d'éléments), mise à jour qui peut entraîner la transformation d'une feuille en un noeud (et vice-versa :p )... Bref, on va s'amuser à mettre à jour notre arbre. :D</p><h3 id="r-ajout-suppression-d-elements-transformation-d-une-feuille-en-un-noeud-simple-d-un-noeud-simple-en-une-feuille" data-claire-element-id="568011">Ajout / suppression d'éléments (transformation d'une feuille en un noeud &quot;simple&quot;, d'un noeud &quot;simple&quot; en une feuille)</h3><p id="r-567972" data-claire-element-id="567972">Déjà, vous devez savoir comment insérer / supprimer des lignes d'une base de données, à l'aide des requêtes <strong>INSERT</strong> et <strong>DELETE</strong>.... Vous y êtes ? On va insérer une nouvelle ligne par la droite à la feuille de niveau 4, 1.[...].3 (ID N°13). Pour cela, puisque nous connaissons déjà la borne gauche, la borne droite, et le niveau de la feuille, on évite une requête. Enfin, c'est à vous de voir si vous voulez (ou non) ajouter une requête SELECT, ça dépend des cas.</p><p id="r-567973" data-claire-element-id="567973">De plus, on aura également besoin de faire 2 <em>updates</em> : changer les bornes gauches et droites de tous les éléments à partir desquels on souhaite insérer la nouvelle feuille. Donc, à chacune des bornes, on va incrémenter tout d'abord la borne droite de 2, puis la borne gauche de... 2 également, et le tout en 2 requêtes. Pourquoi deux ? Pour ne pas nous embêter à pondre un truc trop complexe, et pour une raison que je préciserai dans le corrigé, plus bas. Après tout, pourquoi faire complexe quand on peut faire simple ?<br/> Et enfin, on insère la nouvelle feuille... par la droite. Pourquoi par la droite ? Parce que c'est plus pratique... :p <br/> Mais après, libre à vous de suivre le conseil que je vous donne (qui est également celui de M Brouard). ^^</p><p id="r-567974" data-claire-element-id="567974">Ici, on cherche donc à insérer notre nouvelle feuille par la droite : je vous laisse un peu de temps (pour percuter) et essayer de pondre les requêtes.</p><div id="r-567976" data-claire-element-id="567976" data-claire-semantic="question"><p id="r-567975" data-claire-element-id="567975">Euh... Mais attends, je comprends pas, pourquoi appelles-tu ceci un noeud &quot;simple&quot; :euh: ?</p></div><p id="r-567977" data-claire-element-id="567977">Ah, c'est vrai, je n'ai pas détaillé. J'appelle ici noeud &quot;simple&quot; le fait que ce noeud n'ait qu'une feuille, et le fait que l'on insère que des feuilles.... et non pas des noeuds. Je détaillerai dans le prochain mini-TP comment procéder dans ce cas (pour retirer un noeud d'un arbre aussi ^^ ). Bref, allez-y, la correction arrive dans quelques instants ;) .</p><p id="r-567978" data-claire-element-id="567978">...</p><p id="r-567979" data-claire-element-id="567979">...</p><p id="r-567980" data-claire-element-id="567980">...</p><p id="r-567981" data-claire-element-id="567981">Voici la correction tant désirée. :)</p><div id="r-567984" data-claire-element-id="567985"><img id="r-567985" data-claire-element-id="567984" src="medias/uploads.siteduzero.com_files_132001_133000_132728.png" alt="Image utilisateur"/><pre id="r-567982" data-claire-element-id="567982"><code data-claire-semantic="sql">UPDATE tuto_ri
+    SET forum_droite = forum_droite + 2
+    WHERE forum_droite &gt;= 22;
+
+UPDATE tuto_ri 
+    SET forum_gauche = forum_gauche + 2
+    WHERE forum_gauche &gt;= 22;
+
+INSERT INTO tuto_ri (forum_level, forum_gauche, forum_droite, forum_name) 
+    VALUES (5, 22, 23, '1.1.1.1.3.1');</code></pre><p id="r-567983" data-claire-element-id="567983"><em>Insertion d'une feuille dans un noeud / une feuille</em></p></div><p id="r-567986" data-claire-element-id="567986">Vous ayant tout expliqué avant, c'était juste une application de ce que j'ai dit plus haut. :p</p><p id="r-567987" data-claire-element-id="567987">Lorsqu'on sélectionne les données, on trouve la feuille insérée à la bonne place (ici, je n'ai sélectionné que les colonnes forum_gauche, forum_droite, et forum_name, pour éviter d'avoir une largeur trop grande pour mon screen) :</p><figure id="r-567989" data-claire-element-id="567990"><img id="r-567988" data-claire-element-id="567988" src="medias/uploads.siteduzero.com_files_132001_133000_132729.png" alt="Image utilisateur"/></figure><p id="r-567991" data-claire-element-id="567991"><em>OK, tout est correct !</em></p><aside id="r-567993" data-claire-element-id="567993" data-claire-semantic="information"><p id="r-567992" data-claire-element-id="567992">Vous pouvez ainsi transformer une &quot;simple&quot; feuille en un noeud... &quot;simple&quot;.</p></aside><p id="r-567994" data-claire-element-id="567994">Je pense que vous devinerez comment supprimer une feuille :</p><pre id="r-567995" data-claire-element-id="567995"><code data-claire-semantic="sql">DELETE 
+    FROM tuto_ri
+    WHERE forum_gauche = 22;
+
+UPDATE tuto_ri
+    SET forum_gauche = forum_gauche - 2
+    WHERE forum_gauche &gt;= 22;
+
+UPDATE tuto_ri
+    SET forum_droite = forum_droite - 2
+    WHERE forum_droite &gt;= 22;</code></pre><p id="r-567996" data-claire-element-id="567996">Le topo est à peu près le même que pour l'insertion, sauf que cette fois-ci, on procède d'abord à la suppression, puis à la mise à jour de la borne gauche, et enfin à la mise à jour de la borne droite ; j'expliquerai pourquoi, lors de l'insertion, on commence toujours par la mise à jour de la borne droite, puis on s'occupe de la borne gauche, puis de l'insertion, et dans le sens inverse lors de la suppression (enfin, on change l'insertion par la suppression, je pense que pour ça, vous avez déjà percuté :p ), plus bas pour résumer ce TP.</p><figure id="r-567998" data-claire-element-id="567999"><img id="r-567997" data-claire-element-id="567997" src="medias/uploads.siteduzero.com_files_132001_133000_132726.png" alt="Image utilisateur"/></figure><p id="r-568000" data-claire-element-id="568000"><em>Suppression d'une feuille dans un noeud / retransformation d'un noeud &quot;simple&quot; en une feuille</em></p><figure id="r-568002" data-claire-element-id="568003"><img id="r-568001" data-claire-element-id="568001" src="medias/uploads.siteduzero.com_files_132001_133000_132727.png" alt="Image utilisateur"/></figure><p id="r-568004" data-claire-element-id="568004"><em>On retourne à l'état initial</em></p><div id="r-568006" data-claire-element-id="568006" data-claire-semantic="question"><p id="r-568005" data-claire-element-id="568005">Alors ? Pourquoi recommandes-tu d'exécuter ces actions dans cet ordre précis ?</p></div><p id="r-568007" data-claire-element-id="568007">C'est juste pour ne pas avoir d'erreurs trop bêtes, si vous avez mis des contraintes d'unicité sur vos deux bornes. Ainsi, lors de l'insertion, on décale d'abord toutes les bornes à partir desquelles on veut insérer notre feuille, pour pouvoir ensuite décaler les bornes gauches des feuilles suivantes sans que la borne gauche ne soit jamais égale à une borne droite, et vice-versa (phew). Ensuite seulement, on insère la feuille à la borne désirée. Pour la suppression, c'est à peu près le même topo, mais dans le sens inverse.</p><aside id="r-568009" data-claire-element-id="568009" data-claire-semantic="information"><p id="r-568008" data-claire-element-id="568008">Pour la suppression, vous n'êtes pas obligés de tout re-décaler, mais suivez mon conseil, et faites-le, histoire d'avoir un arbre plus propre et ne pas avoir &quot;trop&quot; de trous et pas mal d'emmerdes au fur et à mesure des différentes opérations.</p></aside><p id="r-568010" data-claire-element-id="568010">Maintenant, si vous êtes toujours là, on va aborder la même chose... Mais avec des noeuds, c'est-à-dire l'insertion et la suppression d'un noeud dans un arbre ! :soleil:</p><h3 id="r-insertion-suppression-d-un-sous-arbre-noeud-dans-un-arbre" data-claire-element-id="568049">Insertion / suppression d'un sous-arbre (noeud) dans un arbre</h3><p id="r-568012" data-claire-element-id="568012">Je ne pense pas avoir besoin de trop détailler. Vous avez juste besoin de connaître les bornes de l'arbre à insérer, le nombre d'éléments qu'il contient, et ça devrait faire l'affaire, si on emploie la même méthode que tout à l'heure. ;)</p><p id="r-568013" data-claire-element-id="568013">Voici l'arbre que l'on va chercher à insérer :</p><figure id="r-568015" data-claire-element-id="568016"><img id="r-568014" data-claire-element-id="568014" src="medias/uploads.siteduzero.com_files_77001_78000_77937.jpg" alt="Image utilisateur"/></figure><p id="r-568017" data-claire-element-id="568017"><em>Merci à <a href="http://www.siteduzero.com/membres-294-228.html">Shadow_f</a> pour le schéma</em></p><p id="r-568018" data-claire-element-id="568018">On va donc rattacher cet arbre à la feuille &quot;2&quot;, c'est-à-dire celle étant comprise entre les bornes... 39 et 40. En ayant cet arbre, et sachant qu'il y a <strong>9 éléments</strong>, la différence entre les deux bornes de la catégorie 2 va être égale à (je sors ma calculette :D ) : 2 * 9 + 1, soit 19. La borne droite de notre nouveau &quot;conteneur&quot; sera donc de 58 (car, d'après ma calculette, <em>58 - 19 =</em> ... <em>39</em> !) ; on aura aussi besoin d'incrémenter toutes les bornes droites du noeud à insérer du double du nombre d'éléments, soit... 9 * 2.. 18 !</p><p id="r-568019" data-claire-element-id="568019">Je vous laisse cogiter un peu (n'oubliez pas de décaler les bornes de l'arbre à insérer... Vous verrez que c'est plutôt facile ;) )...</p><p id="r-568020" data-claire-element-id="568020">...</p><p id="r-568021" data-claire-element-id="568021">...</p><p id="r-568022" data-claire-element-id="568022">Rendez vos copies, voilà la correction !</p><div id="r-568025" data-claire-element-id="568026"><img id="r-568026" data-claire-element-id="568025" src="medias/uploads.siteduzero.com_files_132001_133000_132732.png" alt="Image utilisateur"/><pre id="r-568023" data-claire-element-id="568023"><code data-claire-semantic="sql">UPDATE tuto_ri
+    SET forum_droite = forum_droite + 18
+    WHERE forum_droite &gt;= 39;
+
+UPDATE tuto_ri
+    SET forum_gauche = forum_gauche + 18
+    WHERE forum_gauche &gt; 39;
+
+INSERT INTO tuto_ri (forum_level, forum_gauche, forum_droite, forum_name) 
+        VALUES 
+        (1, 40, 57, '2.1'),
+        (2, 41, 46, '2.1.1'),
+        (2, 47, 48, '2.1.2'),
+        (2, 49, 50, '2.1.3'),
+        (2, 51, 56, '2.1.4'),
+        (3, 42, 43, '2.1.1.1'),
+        (3, 44, 45, '2.1.1.2'),
+        (3, 52, 53, '2.1.4.1'),
+        (4, 54, 55, '2.1.4.2');</code></pre><p id="r-568024" data-claire-element-id="568024"><em>Insertion d'un arbre (noeud) dans un noeud : transformation d'une feuille en un noeud</em></p></div><p id="r-568027" data-claire-element-id="568027">Bon, c'est vrai, fallait faire des maths : ajouter 39 (borne gauche du nouveau parent, c'est-à-dire la catégorie 2) à toutes les bornes de ce noeud (et à ses éléments fils), pour le rendre &quot;compatible&quot; avec notre arbre récepteur. Ensuite, c'était une insertion des plus banales : il faut décaler les bornes de tous les éléments de notre arbre de.. petit calcul... <strong>18</strong> (à partir de la borne gauche <em>- non incluse -</em> du nouveau parent), pour le rendre compatible avec notre arbre. Soit le double du nombre d'éléments à rajouter (9 éléments dans notre cas). Pour les niveaux, il &quot;suffisait&quot; juste de sélectionner les niveaux de l'arbre, et leur additionner le niveau du noeud auquel on veut fixer le nouvel arbre. Or, comme notre noeud &quot;récepteur&quot; a un niveau égal à 0... dans notre cas, ça n'a aucun effet (si ce n'est consommer des ressources). :p</p><aside id="r-568029" data-claire-element-id="568029" data-claire-semantic="information"><p id="r-568028" data-claire-element-id="568028">Notez qu'ici, puisque la &quot;catégorie 2&quot;, en plus d'être simple feuille, est le dernier élément de notre arbre, la seconde requête UPDATE ne sert donc (dans notre cas) à rien, mais je l'ai mise pour vous signaler son existence. Rien de plus, rien de moins ;) .</p></aside><figure id="r-568031" data-claire-element-id="568032"><img id="r-568030" data-claire-element-id="568030" src="medias/uploads.siteduzero.com_files_132001_133000_132733.png" alt="Image utilisateur"/></figure><p id="r-568033" data-claire-element-id="568033"><em>Et voilà le travail :)</em></p><p id="r-568034" data-claire-element-id="568034">Voici la suppression (vous pouviez la deviner, quand même :p ) :</p><pre id="r-568035" data-claire-element-id="568035"><code data-claire-semantic="sql">DELETE 
+    FROM tuto_ri
+    WHERE forum_gauche &gt; 39 
+        AND forum_droite &lt; 58;
+
+UPDATE tuto_ri
+    SET forum_gauche = forum_gauche - 18
+    WHERE forum_gauche &gt; 39;
+
+UPDATE tuto_ri
+    SET forum_droite = forum_droite - 18
+    WHERE forum_droite &gt;= 58;</code></pre><p id="r-568036" data-claire-element-id="568036">C'était tout simplement un mélange entre l'application de la suppression d'une feuille et l'insertion d'un arbre. Comme pour la suppression d'une feuille, les mises à niveau des bornes de l'arbre dans lequel on a supprimé notre noeud ne sont pas obligatoires, mais restent un plus non négligeable pour avoir un arbre propre, et pour pouvoir éviter les trous trop gros dans l'arbre au fur et à mesure des opérations. :p</p><p id="r-568037" data-claire-element-id="568037">Dans notre cas, comme pour l'insertion, la mise à jour des bornes gauche de tous les éléments n'était pas nécessaire, car notre catégorie 2 se transforme en simple feuille, tout en étant la dernière de notre arbre.</p><figure id="r-568039" data-claire-element-id="568040"><img id="r-568038" data-claire-element-id="568038" src="medias/uploads.siteduzero.com_files_132001_133000_132730.png" alt="Image utilisateur"/></figure><p id="r-568041" data-claire-element-id="568041"><em>Suppression d'un sous-arbre (noeud à plusieurs éléments fils) dans un noeud : transformation d'un noeud en une feuille</em></p><figure id="r-568043" data-claire-element-id="568044"><img id="r-568042" data-claire-element-id="568042" src="medias/uploads.siteduzero.com_files_132001_133000_132727.png" alt="Image utilisateur"/></figure><p id="r-568045" data-claire-element-id="568045"><em>On retourne à notre configuration initiale</em></p><aside id="r-568047" data-claire-element-id="568047" data-claire-semantic="information"><p id="r-568046" data-claire-element-id="568046">Comme pour l'insertion, pour connaître le nombre à soustraire aux deux bornes, il &quot;suffisait&quot; de connaître le nombre d'éléments à supprimer, et à le doubler... Un peu de maths n'a jamais tué personne :p !</p></aside><p id="r-568048" data-claire-element-id="568048">C'est &quot;déjà&quot; la fin de ce tutoriel :'( . <br/> Vous savez maintenant utiliser un bel outil nommé la &quot;représentation intervallaire&quot;, qui vous permet de vous débrouiller avec aisance pour gérer un super-système de catégories (allant jusqu'à une profondeur très-très-très-(...)très grande (voire infinie)) de ce-que-vous-voulez (l'exemple le plus probant étant celui de <a href="http://www.siteduzero.com/news-62-29577-vos-tutos-3-5-un-mythe-une-legende.html">la gestion des tutoriels du Site du Zéro</a>).</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/la-representation-intervallaire">La représentation intervallaire</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-representation-intervallaire/la-theorie-23">
+La théorie
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/la-representation-intervallaire/la-pratique-13">
+La pratique
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-representation-intervallaire/la-theorie-23">
+<span class="arrow"></span>
+<span class="next">La théorie</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/la-representation-intervallaire.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 23:20:07 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/la-representation-intervallaire.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:04:33 GMT -->
+</html>

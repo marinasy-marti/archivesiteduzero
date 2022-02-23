@@ -1,0 +1,772 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/le-preprocesseur-3.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 08:28:44 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/le-preprocesseur-3.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:31:22 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Le préprocesseur</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/le-preprocesseur-3.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Le préprocesseur</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Leprprocesseur">Le préprocesseur</a><br/><a href="#definedefinedundef">#define, defined, #undef</a><br/><a href="#Leetle">Le # et le ##</a><br/><a href="#lineerrorpragma">#line, #error, #pragma</a><br/><a href="#Lesmacrosquienappellentd039autresetlesmacrosnombrevariabled039arguments.">Les macros qui en appellent d&#039;autres et les macros à nombre variable d&#039;arguments.</a><br/><a href="#LesX-macros.">Les X-macros.</a><br/></div>
+<a name="Leprprocesseur"></a><h2>Le préprocesseur</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/define-defined-undef">
+<span class="next">#define, defined, #undef</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-570907" data-claire-element-id="570907">Bonjour à tous,</p><p id="r-570908" data-claire-element-id="570908">M@teo21 dans son tutoriel sur le langage C nous fait un petit aperçu de ce qu'est le préprocesseur mais il y a encore beaucoup de choses à apprendre !<br/> Toutefois, ce que je vais vous montrer n'est pas indispensable, mais c'est toujours mieux de savoir ce que c'est quand on en rencontre.<br/> Vous allez voir que pour créer des macros il faut réfléchir un peu avant de faire n'importe quoi, parce que pour débugger ce n'est pas aussi facile qu'avec des fonctions.</p><p id="r-570909" data-claire-element-id="570909">Pour bien comprendre ce tutoriel il faut avoir compris et être un minimum à l'aise avec le préprocesseur.</p><p id="r-570910" data-claire-element-id="570910">Je ne reparlerai pas des <code data-claire-semantic="c">#include #ifdef #else #elif #endif</code>. Si vous avez un doute là-dessus retourner voir le tuto de M@teo21.</p>
+</div><a name="definedefinedundef"></a><h2>#define, defined, #undef</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/le-et-le">
+<span class="next">Le # et le ##</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h3 id="r-define" data-claire-element-id="570926">#define</h3><p id="r-570912" data-claire-element-id="570912">Je ne vais pas trop m'étaler sur ce paramètre car il est expliqué dans le tuto de M@teo21.<br/> Pour résumer, cette directive sert à définir un nom ou une macro.</p><p id="r-570913" data-claire-element-id="570913">La macro suivante définit un nom sans aucun paramètre :</p><pre id="r-570914" data-claire-element-id="570914"><code data-claire-semantic="c">#define DEBUG</code></pre><p id="r-570915" data-claire-element-id="570915">La macro suivante définit un nom et associe une valeur à ce nom :</p><pre id="r-570916" data-claire-element-id="570916"><code data-claire-semantic="c">#define NOIR 0x00000000</code></pre><p id="r-570917" data-claire-element-id="570917">Une macro peut être redéfinie autre part dans le programme à la seule condition que celle-ci soit exactement pareille, seul quelques espaces peuvent être rajoutés. Exemple :</p><pre id="r-570918" data-claire-element-id="570918"><code data-claire-semantic="c">/* Incorrect */
+#define N 1
+#define N 2</code></pre><pre id="r-570919" data-claire-element-id="570919"><code data-claire-semantic="c">/* Correct */
+#define N 1
+#define N 1</code></pre><p id="r-570920" data-claire-element-id="570920">La macro suivante contient 1 paramètre et retourne la valeur absolue de ce paramètre :</p><pre id="r-570921" data-claire-element-id="570921"><code data-claire-semantic="c">#define MY_ABS(x) (((x) &lt; 0) ? -(x) : (x))</code></pre><p id="r-570922" data-claire-element-id="570922">Notez que les parenthèses sont très importantes dans les macros dues à la priorité des opérateurs. Certaines peuvent être omises, d'autres non. Pour être sûr de ne pas avoir de mauvaise surprise je vous conseille d'abuser des parenthèses pour ne laisser aucune ambiguïté possible !</p><p id="r-570923" data-claire-element-id="570923">Il faut faire très attention aux effets de bords. Une macro appelée normalement ne pose pas de problèmes, mais on aurait aussi pu appeler notre macro comme ça <code data-claire-semantic="c">MY_ABS(a++)</code>. Cette expression évalue 2 fois (a++), ce qui est gênant. Mettre des parenthèses limite déjà certains effets de bords, mais c'est à l'utilisateur de faire attention à ce qu'il fait !</p><p id="r-570924" data-claire-element-id="570924">Vous pouvez créer des macros qui portent le même nom qu'une fonction déjà existante. Cependant, il faut bien différencier l'appel de la fonction de celle de la macro, sinon c'est uniquement la macro qui est prise en compte et pas la fonction. Pour utiliser la macro il faut l'appeler comme on le ferait normalement, par contre pour la fonction il faut entourer le nom de parenthèses. Certains puristes diront qu'il faut aussi déclarer votre fonction avec des parenthèses pour ne pas interférer avec les macros.</p><pre id="r-570925" data-claire-element-id="570925"><code data-claire-semantic="c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+#define puts(s) printf(&quot;Macro : %s\n&quot;, (s))
+
+int main(void) {
+  char s[] = &quot;Salut :-)&quot;;
+  
+  puts(s);   /* Macro */
+  (puts)(s); /* Fonction */
+  return EXIT_SUCCESS;
+}</code></pre><h3 id="r-les-macros-sur-plusieurs-lignes" data-claire-element-id="570940">Les macros sur plusieurs lignes</h3><p id="r-570927" data-claire-element-id="570927">Les macros peuvent être définies sur plusieurs lignes, pour ça il faut terminer la ligne par un antislash (\) et avoir un retour à la ligne juste après. Un antislash non suivit d'un retour la la ligne termine la macro et tout ce qui suit n'est pas compris dedans.<br/> Il est important de noter qu'aucune macro ne peut contenir de directives commençant par <code data-claire-semantic="c">#</code> (y compris la directive nulle). Dès que le préprocesseur rencontre un antislash suivit d'un retour à la ligne il supprime ces 2 là pour en faire une seule ligne. Voilà pourquoi l'utilisation d'autres directives à l'intérieur d'une macro est incorrect. :) <br/> On peut parfois retrouver cette utilisation pour les chaînes de caractères. Une chaîne de caractère longue peut être 'coupée' par l'antislash + retour à la ligne et être terminée sur la ligne d'après.<br/> Voilà un exemple de ce qu'il faut pas faire :</p><pre id="r-570928" data-claire-element-id="570928"><code data-claire-semantic="c">#define MAJEUR(age)  \
+#if (age &gt;= 18)      \
+...</code></pre><p id="r-570929" data-claire-element-id="570929">Un petit exemple pour montrer comment agit le préprocesseur :</p><pre id="r-570930" data-claire-element-id="570930"><code data-claire-semantic="c">#define M() 3 + \
+            2 + 1;
+
+int main(void) {
+  char s[] = &quot;Bonjour a tous ! Vous etes bien sur le site du zero\
+  mais comme cette chaine est trop longue je la met sur plusieurs\
+  lignes. Evitez tout de meme d'utiliser ca, c'est pas tres propre !&quot;;
+  M()
+  return 0;
+}</code></pre><div id="r-570932" data-claire-element-id="570932"><pre id="r-570931" data-claire-element-id="570931"><code data-claire-semantic="console">int main(void) {
+  char s[] = &quot;Bonjour a tous ! Vous etes bien sur le site du zero  mais comme cette chaine est trop longue je la met sur plusieurs  lignes. Evitez tout de meme d'utiliser ca, c'est pas tres propre !&quot;;
+
+
+  3 + 2 + 1;
+  return 0;
+}</code></pre></div><p id="r-570933" data-claire-element-id="570933">Il faut faire attention tout de même aux macros faites sur plusieurs lignes. Le piège étant de mettre une suite d'instruction et d'appeler cette macro dans un if sans accolades, par exemple. Un exemple vaut mieux qu'un long discours :</p><pre id="r-570934" data-claire-element-id="570934"><code data-claire-semantic="c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+#define M(a)                    \
+  if ((a) &lt; 0)                    \
+    printf(&quot;Inferieur a 0\n&quot;);  \
+  if ((a) &gt; 0)                    \
+    printf(&quot;Superieur a 0\n&quot;);  \
+  if ((a) == 0)                   \
+    printf(&quot;Egal a 0&quot;);
+
+int main(void) {
+  int a = 5;
+  
+  if (a &lt; 0)
+    M(a)
+  else
+    printf(&quot;Autre instruction&quot;);
+  
+  return EXIT_SUCCESS;
+}</code></pre><p id="r-570935" data-claire-element-id="570935">Ce code bidon et anodin n'affichera pas <code data-claire-semantic="console">Autre instruction</code> mais <code data-claire-semantic="console">Superieur a 0 Autre instruction</code>.<br/> Pour palier ce problème, une astuce assez courante est d'utiliser la boucle <code data-claire-semantic="c">do { ... } while(0);</code> qui permet de regrouper les instructions et éventuellement, d'obliger le programmeur à mettre un point virgule après l'appel de la macro. Pour que le code du dessus soit correct, on aurait dû écrire :</p><p id="r-570936" data-claire-element-id="570936"></p><div id="r-570938" data-claire-element-id="570938"><pre id="r-570937" data-claire-element-id="570937"><code data-claire-semantic="c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+#define M(a)                      \
+  do {                            \
+    if ((a) &lt; 0)                    \
+      printf(&quot;Inferieur a 0\n&quot;);  \
+    if ((a) &gt; 0)                    \
+      printf(&quot;Superieur a 0\n&quot;);  \
+    if ((a) == 0)                   \
+      printf(&quot;Egal a 0&quot;);         \
+  } while(0)
+
+int main(void) {
+  int a = 5;
+  
+  if (a &lt; 0)
+    M(a);
+  else
+    printf(&quot;Autre instruction&quot;);
+  
+  return EXIT_SUCCESS;
+}</code></pre></div><p id="r-570939" data-claire-element-id="570939">On peut aussi n'utiliser que les accolades, mais l'utilisation de la boucle sert à bien montrer au programmeur qu'il s'agit d'un bloc d'instructions.</p><h3 id="r-defined-2" data-claire-element-id="570945">defined</h3><p id="r-570941" data-claire-element-id="570941">L'opérateur <code data-claire-semantic="c">defined</code> agit au même titre que <code data-claire-semantic="c">#ifdef</code> : il vérifie si la macro existe ; il est remplacé par 1 si elle existe, par 0 le cas échéant. Avec <code data-claire-semantic="c">#if</code> ou <code data-claire-semantic="c">#ifdef</code> on ne peut tester qu'un seul paramètre à la fois, avec l'utilisation de <code data-claire-semantic="c">defined</code> on va pouvoir en tester plusieurs. :) <br/> L'utilisation se fait avec ou sans parenthèses.</p><p id="r-570942" data-claire-element-id="570942">Exemple pour l'implémentation sur différents systèmes d'exploitation :</p><pre id="r-570943" data-claire-element-id="570943"><code data-claire-semantic="c">#if defined __APPLE__ || defined linux
+# include &lt;unistd.h&gt;
+#elif defined ( WIN32 ) || defined ( WIN64 )
+# include &lt;windows.h&gt;
+#endif</code></pre><p id="r-570944" data-claire-element-id="570944">Vous trouverez une liste des différentes constantes définies en fonction de l'implémentation <a href="http://predef.sourceforge.net/preos.html">en allant sur ce lien</a>.</p><h3 id="r-bonus-gcc" data-claire-element-id="570949">* Bonus GCC *</h3><p id="r-570946" data-claire-element-id="570946">Plutôt que de mettre des <code data-claire-semantic="c">#define</code> un peu partout pour faire des tests (par exemple le <code data-claire-semantic="c">#ifdef DEBUG</code> qu'on retrouve souvent) on peut définir ce paramètre avec l'option <code data-claire-semantic="console">-D</code> de GCC. Avec l'exemple du DEBUG cité précédemment, on a <code data-claire-semantic="console">$ gcc -DDEBUG main.c</code>. Cette commande aura la même action que <code data-claire-semantic="c">#define DEBUG</code> et agira sur l'ensemble du fichier.</p><aside id="r-570948" data-claire-element-id="570948" data-claire-semantic="information"><p id="r-570947" data-claire-element-id="570947">Cette astuce fonctionne avec Code::Blocks, il suffit d'aller dans les options de compilation.</p></aside><h3 id="r-undef" data-claire-element-id="570953">#undef</h3><p id="r-570950" data-claire-element-id="570950">Le <code data-claire-semantic="c">#undef</code> fait exactement l'inverse de ce que fait <code data-claire-semantic="c">#define</code>. :p <br/> Il supprime ce qui a été défini auparavant !<br/> Utilisation très simple :</p><pre id="r-570951" data-claire-element-id="570951"><code data-claire-semantic="c">#undef X</code></pre><p id="r-570952" data-claire-element-id="570952">Où X est le nom à supprimer.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3">Le préprocesseur</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/define-defined-undef">
+#define, defined, #undef
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/le-et-le">
+Le # et le ##
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/line-error-pragma">
+#line, #error, #pragma
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/les-macros-qui-en-appellent-d-autres-et-les-macros-a-nombre-variable-d-arguments">
+Les macros qui en appellent d&#039;autres et les macros à nombre variable d&#039;arguments.
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/les-x-macros">
+Les X-macros.
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/le-et-le">
+<span class="next">Le # et le ##</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Leetle"></a><h2>Le # et le ##</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/define-defined-undef">
+<span class="arrow"></span>
+<span class="next">#define, defined, #undef</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/line-error-pragma">
+<span class="next">#line, #error, #pragma</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h3 id="r-l-operateur-4" data-claire-element-id="570968">L'opérateur #</h3><p id="r-570955" data-claire-element-id="570955">Vous avez déjà dû le rencontrer plus d'une fois celui-là dans les déclarations telles que <code data-claire-semantic="c">#define #if #else</code> etc.<br/> Maintenant je vais vous montrer une autre manière de l'utiliser. :p</p><p id="r-570956" data-claire-element-id="570956">On va commencer par la plus simple : la directive nulle !<br/> C'est tout simplement le <code data-claire-semantic="c">#</code> sans rien derrière (éventuellement des espaces/tabulations ou commentaires).<br/> On s'en sert généralement pour 'lier' différentes directives. Ce que j'entends par 'lier' c'est en quelque sorte faire un 'bloc' de directives.<br/> Un exemple vaut mieux qu'un long discours :</p><pre id="r-570957" data-claire-element-id="570957"><code data-claire-semantic="c">#if defined ( __APPLE__ )
+#   /* Si on est sur du matériel APPLE on inclut      */
+#   /* &lt;unistd.h&gt; et tout le reste pour les sockets   */
+# include &lt;unistd.h&gt;
+# include &lt;sys/socket.h&gt;
+# include &lt;sys/types.h&gt;
+# include &lt;arpa/inet.h&gt;
+#elif defined ( linux )
+#   /* Si on est sur Linux on inclut ... la même chose */
+# include &lt;unistd.h&gt;
+# include &lt;sys/socket.h&gt;
+# include &lt;sys/types.h&gt;
+# include &lt;arpa/inet.h&gt;
+#else
+#   /* Sinon on est sous Windows */
+# include &lt;windows.h&gt;
+# include &lt;winsock2.h&gt;
+#endif</code></pre><aside id="r-570959" data-claire-element-id="570959" data-claire-semantic="warning"><p id="r-570958" data-claire-element-id="570958">Il ne peut en aucun cas être placé dans une macro.</p></aside><p id="r-570960" data-claire-element-id="570960">Maintenant le plus intéressant !<br/> L'opérateur <code data-claire-semantic="c">#</code> suivi d'un nom remplace automatiquement ce nom en chaîne de caractères.<br/> Petit exemple :</p><pre id="r-570961" data-claire-element-id="570961"><code data-claire-semantic="c">#define AFFICHE_INT(x) printf( #x &quot; = %d\n&quot;, (x) );</code></pre><p id="r-570962" data-claire-element-id="570962">Comme vous pouvez le remarquer j'ai placé <code data-claire-semantic="c">#x</code> au début du printf, ce qui aura pour effet de transformer l'argument x en chaîne de caractère. Les espaces contenus entre le <code data-claire-semantic="c">#</code> et le paramètre sont ignorés (<code data-claire-semantic="c">#a</code> est équivalent à <code data-claire-semantic="c"># a</code>).<br/> Un petit exemple pour illustrer tout ça :</p><pre id="r-570963" data-claire-element-id="570963"><code data-claire-semantic="c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+#define AFFICHE_INT(x) printf( #x &quot; = %d\n&quot;, (x) );
+
+int main(void) {
+  int a = 5, b = 6;
+  AFFICHE_INT(a)
+  AFFICHE_INT(b)
+  AFFICHE_INT(a + b)
+  return EXIT_SUCCESS;
+}</code></pre><p id="r-570964" data-claire-element-id="570964">Ce code sera 'transformé' en sortie en :</p><pre id="r-570965" data-claire-element-id="570965"><code data-claire-semantic="c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+
+
+int main(void) {
+  int a = 5, b = 6;
+  printf( &quot;a&quot; &quot; = %d\n&quot;, a );
+  printf( &quot;b&quot; &quot; = %d\n&quot;, b );
+  printf( &quot;a + b&quot; &quot; = %d\n&quot;, a + b );
+  return EXIT_SUCCESS;
+}</code></pre><p id="r-570966" data-claire-element-id="570966">Ce qui nous donne en sortie :</p><pre id="r-570967" data-claire-element-id="570967"><code data-claire-semantic="console">a = 5
+b = 6
+a + b = 11</code></pre><h3 id="r-l-operateur-5" data-claire-element-id="570975">L'opérateur ##</h3><p id="r-570969" data-claire-element-id="570969">L'opérateur <code data-claire-semantic="c">##</code> concatène l'argument de gauche avec celui de droite tout en restant 'macro'. Les espaces contenus entre les différents arguments sont ignorés ( <code data-claire-semantic="c">A ## B</code> est égal à <code data-claire-semantic="c">A##B</code>).<br/> Comme la résultante reste un argument 'macro', il faut que celle-ci soit définie auparavant pour être utilisée à bon escient. Si elle n'est pas définie au moment de l'appel, le compilateur nous indiquera une erreur.<br/> Exemple :</p><pre id="r-570970" data-claire-element-id="570970"><code data-claire-semantic="c">#define AFFICHE_INT(x, y) printf( #x #y &quot; = %d\n&quot;, x##y );</code></pre><p id="r-570971" data-claire-element-id="570971">Dans ce cas-là si on appelle notre macro comme ça : <code data-claire-semantic="c">AFFICHE_INT(a, b)</code>, elle sera remplacée par : <code data-claire-semantic="c">printf( &quot;a&quot; &quot;b&quot; &quot; = %d &quot;, ab );</code>.<br/> Il faut donc que l'argument ab soit défini avant l'appel de la macro. Notez que j'ai mis 'avant l'appel' et pas 'avant la déclaration', ce qui signifie que AFFICHE_INT peut être défini sans que ab ne soit connu. ab peut être soit défini par le préprocesseur (<code data-claire-semantic="c">#define</code>) ou alors comme une simple variable.</p><pre id="r-570972" data-claire-element-id="570972"><code data-claire-semantic="c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+#define AFFICHE_INT(x, y) printf( #x #y &quot; = %d\n&quot;, x##y );
+
+#define ab 5
+
+int main(void) {
+  int a = 5, b = 6;
+  int ba = 10;
+  AFFICHE_INT(a, b)   /* Affiche 'ab' défini par le préprocesseur */
+  AFFICHE_INT(b, a)   /* Affiche la variable 'ba'                 */
+  return EXIT_SUCCESS;
+}</code></pre><p id="r-570973" data-claire-element-id="570973">Ce code nous affichera :</p><pre id="r-570974" data-claire-element-id="570974"><code data-claire-semantic="console">ab = 5
+ba = 10</code></pre><h3 id="r-utilisation-des-operateurs-et-dans-la-meme-expression" data-claire-element-id="570980">Utilisation des opérateurs # et ## dans la même expression.</h3><p id="r-570976" data-claire-element-id="570976">Si vous avez fait des tests en essayant d'utiliser à la fois <code data-claire-semantic="c">#</code> et <code data-claire-semantic="c">##</code> vous aurez remarqué que le compilateur apprécie modérément.<br/> De ce fait, pour pouvoir utiliser ces 2 opérateurs en même temps, il va falloir faire plusieurs macros afin de la créer.</p><p id="r-570977" data-claire-element-id="570977">Un exemple pour montrer comment concaténer 2 chaînes de caractères :</p><pre id="r-570978" data-claire-element-id="570978"><code data-claire-semantic="c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+#define CREER_CHAINE(chaine)              #chaine
+#define TMP(chaine)                       CREER_CHAINE(chaine)
+#define CONCAT_CHAINE(chaine1, chaine2)   TMP(chaine1 ## chaine2)
+
+int main(void) {
+  printf(&quot;%s&quot;, CONCAT_CHAINE(Hello\n, Ca va ?));
+  return EXIT_SUCCESS;
+}</code></pre><p id="r-570979" data-claire-element-id="570979">Comme je vous l'ai dit pour pouvoir utiliser les 2 opérateurs, il faut faire plusieurs macros. C'est en fait pour 'isoler' chaque paramètre afin que la macro qui contient un <code data-claire-semantic="c">#</code> ou <code data-claire-semantic="c">##</code> ne 'voit' pas le <code data-claire-semantic="c">#</code> ou <code data-claire-semantic="c">##</code> de l'autre.</p><h3 id="r-petit-exercice-9" data-claire-element-id="570994">Petit exercice</h3><p id="r-570981" data-claire-element-id="570981">Écrivez une macro PRINT qui prend 2 paramètres. Le premier est le type de l'élément à afficher et le second est l'expression à afficher.<br/> Le 'prototype' est celui-là : <code data-claire-semantic="c">#define PRINT(type, expr)</code>.<br/> Exemple d'utilisation :</p><pre id="r-570982" data-claire-element-id="570982"><code data-claire-semantic="c">PRINT(int, 1+3);
+PRINT(double, 4.0 * atan(1.0));
+PRINT(char, 'c');</code></pre><p id="r-570983" data-claire-element-id="570983">Dois nous retourner :</p><pre id="r-570984" data-claire-element-id="570984"><code data-claire-semantic="console">1+3 = 4
+4.0 * atan(1.0) = 3.141593
+'c' = c</code></pre><p id="r-570985" data-claire-element-id="570985">Indice :</p><p id="r-570986" data-claire-element-id="570986"></p><div id="r-570988" data-claire-element-id="570988"><p id="r-570987" data-claire-element-id="570987">Il faut définir, à partir du type, le formateur approprié. On peut définir une macro du type : <code data-claire-semantic="c">#define PRINT_(type) PRINT_##type</code>.<br/> Il faut ensuite définir les différents types qui seront utilisés ( <code data-claire-semantic="c">PRINT_int</code>, <code data-claire-semantic="c">PRINT_double</code>, <code data-claire-semantic="c">PRINT_char</code>) et leur associer le formateur adéquat. :)</p></div><p id="r-570989" data-claire-element-id="570989">Correction :</p><p id="r-570990" data-claire-element-id="570990"></p><div id="r-570993" data-claire-element-id="570993"><p id="r-570991" data-claire-element-id="570991">Á partir de l'indice on peut arriver à ce résultat-là :</p><pre id="r-570992" data-claire-element-id="570992"><code data-claire-semantic="c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;math.h&gt;
+
+#define PRINT_(type)  PRINT_##type
+#define PRINT_int     &quot;%d&quot;
+#define PRINT_double  &quot;%f&quot;
+#define PRINT_char    &quot;%c&quot;
+
+#define PRINT(type, expr) printf(#expr &quot; = &quot; PRINT_(type) &quot;\n&quot;, expr)
+
+int main(void) {
+  PRINT(int, 1+3);
+  PRINT(double, 4.0 * atan(1.0));
+  PRINT(char, 'c');
+  return EXIT_SUCCESS;
+}</code></pre></div>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3">Le préprocesseur</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/define-defined-undef">
+#define, defined, #undef
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/le-et-le">
+Le # et le ##
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/line-error-pragma">
+#line, #error, #pragma
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/les-macros-qui-en-appellent-d-autres-et-les-macros-a-nombre-variable-d-arguments">
+Les macros qui en appellent d&#039;autres et les macros à nombre variable d&#039;arguments.
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/les-x-macros">
+Les X-macros.
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/define-defined-undef">
+<span class="arrow"></span>
+<span class="next">#define, defined, #undef</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/line-error-pragma">
+<span class="next">#line, #error, #pragma</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="lineerrorpragma"></a><h2>#line, #error, #pragma</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/le-et-le">
+<span class="arrow"></span>
+<span class="next">Le # et le ##</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/les-macros-qui-en-appellent-d-autres-et-les-macros-a-nombre-variable-d-arguments">
+<span class="next">Les macros qui en appellent d&#039;autres et les macros à nombre variable d&#039;arguments.</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h3 id="r-line-3" data-claire-element-id="571004">#line</h3><p id="r-570996" data-claire-element-id="570996">Cette directive est assez intéressante. Elle permet de définir le numéro de ligne en cours, ainsi que le nom de fichier.<br/> Vous pouvez définir le numéro de ligne en cours en spécifiant tout simplement le numéro de ligne souhaité.<br/> Par exemple si votre fichier s'appelle main.c et vous voulez le redéfinir en test.c vous pouvez. :D <br/> Son utilisation est la suivante :</p><pre id="r-570997" data-claire-element-id="570997"><code data-claire-semantic="c">#line ligne [&quot;nom du fichier&quot;]</code></pre><p id="r-570998" data-claire-element-id="570998">Notez que renommer le fichier est facultatif.</p><aside id="r-571000" data-claire-element-id="571000" data-claire-semantic="error"><p id="r-570999" data-claire-element-id="570999">Cette directive ne renomme pas le fichier, elle ne fait qu'interpréter le fichier en tant que.</p></aside><pre id="r-571001" data-claire-element-id="571001"><code data-claire-semantic="c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+int main(void) {
+	printf(&quot;Ligne : %5d\tFichier : %s\n&quot;, __LINE__, __FILE__);
+#line 300
+	printf(&quot;Ligne : %5d\tFichier : %s\n&quot;, __LINE__, __FILE__);
+#line 55 &quot;test.c&quot;
+	printf(&quot;Ligne : %5d\tFichier : %s\n&quot;, __LINE__, __FILE__);
+	return EXIT_SUCCESS;
+}</code></pre><p id="r-571002" data-claire-element-id="571002">La sortie donne :</p><pre id="r-571003" data-claire-element-id="571003"><code data-claire-semantic="console">Ligne :    45        Fichier : main.c
+Ligne :   300        Fichier : main.c
+Ligne :    55        Fichier : test.c</code></pre><h3 id="r-error" data-claire-element-id="571008">#error</h3><p id="r-571005" data-claire-element-id="571005">Cette directive sert tout simplement à mettre une erreur.<br/> Attention, il faut la mettre avec des <code data-claire-semantic="c">#if </code> ou <code data-claire-semantic="c">#ifdef </code> sinon ça ne compilera tout simplement pas (bah oui ça met une erreur :D ).<br/> Mon interprétation préférée est celle-là :</p><pre id="r-571006" data-claire-element-id="571006"><code data-claire-semantic="c">#ifdef __cplusplus
+#error Compilez en C ...
+#endif</code></pre><p id="r-571007" data-claire-element-id="571007">Si vous avez une erreur quand vous compilez ce code c'est que vous compilez en C++ et pas en C. :D</p><h3 id="r-pragma" data-claire-element-id="571017">#pragma</h3><p id="r-571009" data-claire-element-id="571009">La directive <code data-claire-semantic="c">#pragma </code> est spécifique à chaque compilateur. Elle indique au compilateur de prendre en compte certains paramètres.<br/> Toute directive <code data-claire-semantic="c">#pragma </code> qui n'est pas reconnue est tout simplement ignorée.</p><p id="r-571010" data-claire-element-id="571010">Un exemple de directive : <code data-claire-semantic="c">#pragma pack(1) </code>.<br/> Cette directive permet de forcer l'alignement mémoire tous les octets. C'est-à-dire que par défaut quand on crée une structure comme ça :</p><pre id="r-571011" data-claire-element-id="571011"><code data-claire-semantic="c">struct non_alignee_s {
+	char a;
+	int b;
+};</code></pre><p id="r-571012" data-claire-element-id="571012">Si vous faites un <code data-claire-semantic="c">sizeof </code> de cette structure il apparaîtra qu'elle occupe 8 octets en mémoire ! (considérant qu'un int fait 4 octets)<br/> Avec la directive décrite plus haut vous aurez 5. :) <br/> Les valeurs de cette directive sont : 1, 2, 4.</p><aside id="r-571014" data-claire-element-id="571014" data-claire-semantic="error"><p id="r-571013" data-claire-element-id="571013">Comme dit plus haut chaque directive est propre à son compilateur. De ce fait la directive <code data-claire-semantic="c">#pragma pack(1) </code> ne fonctionnera peut-être pas chez vous.</p></aside><p id="r-571015" data-claire-element-id="571015">Un exemple de non-portabilité : sous GCC on peut utiliser la directive <code data-claire-semantic="c">#pragma unused( ma_variable ) </code> pour ne pas avoir de warning sur la variable non utilisée spécifiée.<br/> Sous Xcode (Mac et GCC) on peut utiliser la directive <code data-claire-semantic="c">#pragma mark XXX </code> qui sert à structurer l'arborescence de son code pour une recherche plus facile et plus rapide (très utile !).<br/> Sous Visual C++ on peut linker les bibliothèques avec la directive <code data-claire-semantic="c">#pragma comment( lib, &quot;emapi&quot; ) </code>.</p><p id="r-571016" data-claire-element-id="571016">Pour plus d'infos vous pouvez aller ici <a href="http://gcc.gnu.org/onlinedocs/gcc/Pragmas.html">pragmas pour GCC</a>, et là <a href="http://msdn.microsoft.com/en-us/library/d9x1s805(VS.71).aspx"> pragmas pour Visual C++</a>.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3">Le préprocesseur</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/define-defined-undef">
+#define, defined, #undef
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/le-et-le">
+Le # et le ##
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/line-error-pragma">
+#line, #error, #pragma
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/les-macros-qui-en-appellent-d-autres-et-les-macros-a-nombre-variable-d-arguments">
+Les macros qui en appellent d&#039;autres et les macros à nombre variable d&#039;arguments.
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/les-x-macros">
+Les X-macros.
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/le-et-le">
+<span class="arrow"></span>
+<span class="next">Le # et le ##</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/les-macros-qui-en-appellent-d-autres-et-les-macros-a-nombre-variable-d-arguments">
+<span class="next">Les macros qui en appellent d&#039;autres et les macros à nombre variable d&#039;arguments.</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lesmacrosquienappellentd039autresetlesmacrosnombrevariabled039arguments."></a><h2>Les macros qui en appellent d&#039;autres et les macros à nombre variable d&#039;arguments.</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/line-error-pragma">
+<span class="arrow"></span>
+<span class="next">#line, #error, #pragma</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/les-x-macros">
+<span class="next">Les X-macros.</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h3 id="r-une-macro-qui-en-appelle-une-autre" data-claire-element-id="571022">Une macro qui en appelle une autre.</h3><p id="r-571019" data-claire-element-id="571019">Une macro peut en appeler une autre, ça vous le savez. Mais une macro peut prendre en paramètre le nom d'une autre pour l'appeler.<br/> Par exemple, j'ai une macro MIN, une autre MAX et une dernière EVALUE. Cette dernière prend 3 paramètres : le nom de la macro à appeler et deux variables.<br/> Voilà comment ce groupe se compose :</p><pre id="r-571020" data-claire-element-id="571020"><code data-claire-semantic="c">#define MIN(x, y) (((x) &lt; (y)) ? (x) : (y))
+#define MAX(x, y) (((x) &gt; (y)) ? (x) : (y))
+
+/* Je préfère mettre l'underscore '_' plutôt que 'macro', mais vous faîtes comme vous voulez.
+ * Par la suite je mettrai _ . */
+#define EVALUE(macro, x, y) macro(x, y)</code></pre><p id="r-571021" data-claire-element-id="571021">Si je veux calculer le minimum de 2 nombres, il suffit que j'appelle ma macro EVALUE comme ça : <code data-claire-semantic="c">EVALUE(MIN, 5, 3) </code>.</p><h3 id="r-les-macros-a-nombre-variable-d-arguments" data-claire-element-id="571029">Les macros à nombre variable d'arguments.</h3><p id="r-571023" data-claire-element-id="571023">Tout comme une fonction, une macro peut recevoir un nombre variable d'argument. Oui, mais la macro 'finale' doit avoir une nombre fini d'arguments.</p><p id="r-571024" data-claire-element-id="571024">La différence entre une fonction et une macro, c'est que la fonction est évaluée à l'exécution et la macro à la compilation. De ce fait, il faut que celle-ci soit entièrement connue à la compilation.<br/> Pour qu'une macro prenne un nombre variable d'arguments, il faut tout simplement utiliser les trois petits points : ... (comme une fonction). Aucun intérêt, parce que la macro n'est pas entièrement connue ...<br/> Vous vous souvenez qu'une macro peut en appeler une autre ?<br/> Hé bien nous allons nous servir de ça ! Pour passer les arguments 'variables' il va falloir utiliser la macro <code data-claire-semantic="c">__VA_ARGS__ </code>.</p><p id="r-571025" data-claire-element-id="571025">Prenons notre exemple de EVALUE plus haut. Pour l'instant elle prend 3 arguments. Nous allons la modifier pour qu'elle prenne un nombre d'arguments variable. Ainsi on va faire une macro générique pour appeler plusieurs macros. :) <br/> Donc maintenant, sans toucher ni à MIN, ni à MAX, on obtient ça :</p><pre id="r-571026" data-claire-element-id="571026"><code data-claire-semantic="c">#define MIN(x, y) (((x) &lt; (y)) ? (x) : (y))
+#define MAX(x, y) (((x) &gt; (y)) ? (x) : (y))
+
+/* Souvenez-vous, j'utilise '_' mais vous pouvez utiliser 'macro' ou ce que vous voulez.
+ * Du moment que ça reste un nom valide. */
+#define EVALUE(_, ...) _(__VA_ARGS__)</code></pre><aside id="r-571028" data-claire-element-id="571028" data-claire-semantic="warning"><p id="r-571027" data-claire-element-id="571027">Note si vous utilisez Visual: la macro __VA_ARGS__ n'a été introduite qu'à partir de la version 2005, de ce fait, si vous avez une version antérieure, ça ne fonctionnera pas.</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3">Le préprocesseur</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/define-defined-undef">
+#define, defined, #undef
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/le-et-le">
+Le # et le ##
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/line-error-pragma">
+#line, #error, #pragma
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/les-macros-qui-en-appellent-d-autres-et-les-macros-a-nombre-variable-d-arguments">
+Les macros qui en appellent d&#039;autres et les macros à nombre variable d&#039;arguments.
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/les-x-macros">
+Les X-macros.
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/line-error-pragma">
+<span class="arrow"></span>
+<span class="next">#line, #error, #pragma</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/les-x-macros">
+<span class="next">Les X-macros.</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="LesX-macros."></a><h2>Les X-macros.</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/les-macros-qui-en-appellent-d-autres-et-les-macros-a-nombre-variable-d-arguments">
+<span class="arrow"></span>
+<span class="next">Les macros qui en appellent d&#039;autres et les macros à nombre variable d&#039;arguments.</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-571031" data-claire-element-id="571031">Nous arrivons à la partie la plus intéressante (mais aussi la plus compliquée) : les X-macros !</p><div id="r-571033" data-claire-element-id="571033" data-claire-semantic="question"><p id="r-571032" data-claire-element-id="571032">Que sont les X-macros ?</p></div><p id="r-571034" data-claire-element-id="571034">Rassurez-vous ça n'a rien à voir avec des trucs cochons. :p <br/> Ça permet, dans le cas le plus simple, de faire simplement correspondre différentes valeurs entre elles (énumérations, structures, tableaux).<br/> Je prends l'exemple d'un marchand de voitures. Chaque voiture a une marque, un modèle, un prix, une couleur (et tout ce qui vous passe par la tête :D ).<br/> Première émission de votre programme vous rentrez tout à la main (bon pas de problème c'est la première émission).<br/> Deuxième émission de votre programme vous devez rajouter plusieurs voitures, en modifier certaines et en supprimer. Oui mais voilà pour chercher les valeurs à modifier et à supprimer ce n'est pas forcement tâche facile.<br/> C'est là qu'interviennent les X-macros ! Grâce à ces macros particulières on verra que la tâche va être grandement simplifiée. ;)</p><p id="r-571035" data-claire-element-id="571035">Prenons notre exemple de voiture.<br/> En temps normal nous aurions fait 4 tableaux de chaînes de caractères. Je vais faire aussi une énumération pour permettre une recherche facile de notre voiture.<br/> (les valeurs ont été prises au hasard, ne venez pas me dire que le prix n'est pas bon etc. ce n'est qu'un exemple)</p><pre id="r-571036" data-claire-element-id="571036"><code data-claire-semantic="c">enum index_e {
+  Renault_Clio,
+  Peugeot_207,
+  Citroen_C4,
+  NOMBRE_VOITURES
+};
+
+char const * const marque_a [] = {
+  &quot;Renault&quot;, &quot;Peugeot&quot;, &quot;Citroen&quot;
+};
+
+char const * const modele_a [] = {
+  &quot;Clio&quot;, &quot;207&quot;, &quot;C4&quot;
+};
+
+int const prix_a [] = {
+  10000, 12000, 15000
+};
+
+char const * const couleur_a [] = {
+  &quot;blanc&quot;, &quot;rouge&quot;, &quot;bleu&quot;
+};</code></pre><p id="r-571037" data-claire-element-id="571037">Ce code est pratique. Si on cherche une voiture en particulier il suffit de prendre la valeur de l'énumération comme indice de chaque tableau :</p><pre id="r-571038" data-claire-element-id="571038"><code data-claire-semantic="c">printf(&quot;%s %s %d %s&quot;, marque_a[Citroen_C4], modele_a[Citroen_C4], prix_a[Citroen_C4], couleur_a[Citroen_C4]);</code></pre><p id="r-571039" data-claire-element-id="571039">Mais voilà, dès qu'on doit modifier, rajouter ou supprimer des modèles ça se révèle très peu pratique.<br/> Nous allons donc faire une X-macro qui va se charger de créer tout ça toute seule. C'est une macro qui fait appel à toute une série de macros qui portent le même nom. J'ai choisi ici de la nommer X_VOITURE. Elle appellera 3 'sous-macros' (normal on a 3 voitures :D ) nommées X et contenant les éléments de nos voitures.</p><p id="r-571040" data-claire-element-id="571040">Voilà comment elle est constituée :</p><pre id="r-571041" data-claire-element-id="571041"><code data-claire-semantic="c">#define X_VOITURE                 \
+  X(Renault, Clio, 10000, blanc)  \
+  X(Peugeot, 207, 12000, rouge)   \
+  X(Citroen, C4, 15000, bleu)</code></pre><p id="r-571042" data-claire-element-id="571042">C'est à partir de maintenant que toute la magie des X-macros se fait. :) <br/> Le principe est tout bête : afin de définir l'action de X_VOITURE, il faut tout d'abord définir X. Une fois X_VOITURE appelée il suffit d'utiliser la directive <code data-claire-semantic="c">#undef X</code> et de continuer. On redéfinit X, on appelle X_VOITURE et on la supprime. On recommence le processus partout où vous voulez utiliser votre X-macro.<br/> Grâce à ça, pour rajouter, modifier ou supprimer des informations sur nos voitures nous n'avons pas de problèmes ! Tout est répertorié au même endroit, il suffit de trouver la ligne concernée et de la modifier/supprimer ou d'en rajouter une.<br/> Si vous avez compris le principe vous ne devriez pas avoir de mal à implémenter ça !</p><p id="r-571043" data-claire-element-id="571043"></p><div id="r-571045" data-claire-element-id="571045"><pre id="r-571044" data-claire-element-id="571044"><code data-claire-semantic="c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+#define X_VOITURE                 \
+  X(Renault, Clio, 10000, blanc)  \
+  X(Peugeot, 207, 12000, rouge)   \
+  X(Citroen, C4, 15000, bleu)
+
+/* Définit une macro qui concatène la marque, un underscore et le modèle. */
+#define X(marque, modele, prix, couleur) marque ## _ ## modele ,
+enum index_e {
+  /* On appelle X_VOITURE qui appellera notre macro définie juste avant */
+  X_VOITURE
+  NOMBRE_VOITURES
+};
+/* On supprime notre macro X */
+#undef X
+
+/* On définit de nouveau une macro X qui créera cette fois une
+ * chaîne de caractère de la marque. */
+#define X(marque, modele, prix, couleur) # marque ,
+char const * const marque_a [] = {
+  X_VOITURE
+};
+#undef X
+
+/* On définit notre macro pour créer le modèle. */
+#define X(marque, modele, prix, couleur) # modele ,
+char const * const modele_a [] = {
+  X_VOITURE
+};
+#undef X
+
+/* On définit notre macro pour créer le prix. */
+#define X(marque, modele, prix, couleur) prix ,
+int const prix_a [] = {
+  X_VOITURE
+};
+#undef X
+
+/* On définit notre macro pour créer la couleur. */
+#define X(marque, modele, prix, couleur) # couleur ,
+char const * const couleur_a [] = {
+  X_VOITURE
+};
+#undef X
+
+int main(void) {
+  int i;
+  /* Liste toutes les voitures répertoriées.
+   * Le '-' juste après le % sert à justifier le texte à gauche. */
+  for (i = 0; i &lt; NOMBRE_VOITURES; i++)
+    printf(&quot;Marque: %-8s - Modele: %-5s - Prix: %-6d - Couleur: %-6s\n&quot;,
+           marque_a[i], modele_a[i], prix_a[i], couleur_a[i]);
+  return EXIT_SUCCESS;
+}</code></pre></div><p id="r-571046" data-claire-element-id="571046">C'est à partir de maintenant qu'on voit bien l'utilité d'utiliser un tel truc !<br/> Maintenant si vous voulez modifier votre liste vous n'avez aucun mal, et tout le code sera modifié en conséquence. ;)</p><pre id="r-571047" data-claire-element-id="571047"><code data-claire-semantic="c">#define X_VOITURE                 \
+  X(Renault, Clio, 10000, blanc)  \
+  X(Renault, Laguna, 15000, vert) \
+  X(Peugeot, 207, 12000, rouge)   \
+  X(Peugeot, 1007, 13000, noir)   \
+  X(Citroen, C4, 15000, bleu)</code></pre><p id="r-571048" data-claire-element-id="571048">Une autre alternative est de créer un fichier qui contiendra les appels aux macros et ensuite on inclut tout simplement notre fichier. L'extension du fichier n'a pas d'importance, mais on choisira en général .def.<br/> Fichier contenant les appels :</p><pre id="r-571049" data-claire-element-id="571049"><code data-claire-semantic="c">X(Renault, Clio, 10000, blanc)
+X(Renault, Laguna, 15000, vert)
+X(Peugeot, 207, 12000, rouge)
+X(Peugeot, 1007, 13000, noir)
+X(Citroen, C4, 15000, bleu)</code></pre><p id="r-571050" data-claire-element-id="571050">Et le fichier contenant les inclusions :</p><p id="r-571051" data-claire-element-id="571051"></p><div id="r-571053" data-claire-element-id="571053"><pre id="r-571052" data-claire-element-id="571052"><code data-claire-semantic="c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+#define X(marque, modele, prix, couleur) marque ## _ ## modele ,
+enum index_e {
+# include &quot;Mes_Voitures.def&quot;
+  NOMBRE_VOITURES
+};
+#undef X
+
+#define X(marque, modele, prix, couleur) # marque ,
+char const * const marque_a [] = {
+# include &quot;Mes_Voitures.def&quot;
+};
+#undef X
+
+#define X(marque, modele, prix, couleur) # modele ,
+char const * const modele_a [] = {
+# include &quot;Mes_Voitures.def&quot;
+};
+#undef X
+
+#define X(marque, modele, prix, couleur) prix ,
+int const prix_a [] = {
+# include &quot;Mes_Voitures.def&quot;
+};
+#undef X
+
+#define X(marque, modele, prix, couleur) # couleur ,
+char const * const couleur_a [] = {
+# include &quot;Mes_Voitures.def&quot;
+};
+#undef X
+
+int main(void) {
+  int i;
+  /* Liste toutes les voitures répertoriées.
+   * Le '-' juste après le % sert à justifier le texte à gauche. */
+  for (i = 0; i &lt; NOMBRE_VOITURES; i++)
+    printf(&quot;Marque: %-8s - Modele: %-7s - Prix: %-6d - Couleur: %-6s\n&quot;,
+           marque_a[i], modele_a[i], prix_a[i], couleur_a[i]);
+  return EXIT_SUCCESS;
+}</code></pre></div><p id="r-571054" data-claire-element-id="571054">Si vous avez compris le principe des X-macros, ainsi que celui des macros à nombre variable d'arguments, vous allez pouvoir combiner les macros et les X-macros entre elles.</p><h3 id="r-exercice-62" data-claire-element-id="571064">Exercice :</h3><p id="r-571055" data-claire-element-id="571055">Vous devez créer, à l'aide des macros et X-macros, une structure contenant 2 nombres de type int nommés x et y ainsi que 3 autres de type double nommés pythagore, sinx, siny.<br/> Vous devez définir une macro qui initialisera tous les champs de la structure à 0, et une autre qui servira à afficher tous les champs de la structure.</p><p id="r-571056" data-claire-element-id="571056">Solution :</p><p id="r-571057" data-claire-element-id="571057"></p><div id="r-571059" data-claire-element-id="571059"><pre id="r-571058" data-claire-element-id="571058"><code data-claire-semantic="c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+#define X_DEF_STRUCT(type, variable, rien)  type variable;
+
+#define X_PRINT_FORMAT_(type)   X_PRINT_FORMAT_##type
+#define X_PRINT_FORMAT_double   &quot;%f&quot;
+#define X_PRINT_FORMAT_int      &quot;%d&quot;
+
+#define X_PRINT(type, variable, struct_nombres)           \
+  printf(&quot;%-7s %-10s : &quot; X_PRINT_FORMAT_(type) &quot;\n&quot;,      \
+          #type, #variable, struct_nombres-&gt;variable);
+
+#define X_INIT(type, variable, struct_nombres)  \
+  struct_nombres-&gt;variable = 0;
+
+#define DEC_NBVAR(_, ...)             \
+  _(int, x, __VA_ARGS__)              \
+  _(int, y, __VA_ARGS__)              \
+  _(double, pythagore, __VA_ARGS__)   \
+  _(double, sinx, __VA_ARGS__)        \
+  _(double, siny, __VA_ARGS__)
+
+struct nombres {
+  DEC_NBVAR(X_DEF_STRUCT, )
+};
+
+void initStruct(struct nombres *s) {
+  DEC_NBVAR(X_INIT, s)
+}
+
+void printStruct(struct nombres *s) {
+  DEC_NBVAR(X_PRINT, s)
+}
+
+int main(void) {
+  struct nombres s;
+  initStruct(&amp;s);
+  printStruct(&amp;s);
+  puts(&quot;&quot;);
+  return EXIT_SUCCESS;
+}</code></pre></div><p id="r-571060" data-claire-element-id="571060">Voilà vous en savez un peu plus sur le préprocesseur. :) <br/> Cependant en ce qui concerne les X-macros il faut éviter de les utiliser (voire pas du tout), ou si vous les utilisez il faut le faire avec précaution ! C'est source d'erreurs, et des erreurs difficiles à débugger.<br/> Faites attention à ne pas abuser des macros non plus, si elles sont mal utilisées, ça peut faire du code très difficile à lire. Exemple (merci SpaceFox) :</p><pre id="r-571061" data-claire-element-id="571061"><code data-claire-semantic="c">#define x =
+#define double(a,b) int
+#define char k['a']
+#define union static struct</code></pre><p id="r-571062" data-claire-element-id="571062">J'espère que ça ne vous a pas paru trop compliqué.</p><p id="r-571063" data-claire-element-id="571063">A bientôt ! ;)</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3">Le préprocesseur</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/define-defined-undef">
+#define, defined, #undef
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/le-et-le">
+Le # et le ##
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/line-error-pragma">
+#line, #error, #pragma
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/les-macros-qui-en-appellent-d-autres-et-les-macros-a-nombre-variable-d-arguments">
+Les macros qui en appellent d&#039;autres et les macros à nombre variable d&#039;arguments.
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/les-x-macros">
+Les X-macros.
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-preprocesseur-3/les-macros-qui-en-appellent-d-autres-et-les-macros-a-nombre-variable-d-arguments">
+<span class="arrow"></span>
+<span class="next">Les macros qui en appellent d&#039;autres et les macros à nombre variable d&#039;arguments.</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/le-preprocesseur-3.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 08:28:44 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/le-preprocesseur-3.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:31:22 GMT -->
+</html>

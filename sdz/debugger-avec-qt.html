@@ -1,0 +1,599 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/debugger-avec-qt.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 02:50:21 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/debugger-avec-qt.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:37:24 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Débugger avec Qt</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/debugger-avec-qt.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Débugger avec Qt</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#DbuggeravecQt">Débugger avec Qt</a><br/><a href="#Commentdbugger">Comment débugger ?</a><br/><a href="#Moderelease_debug">Mode release/debug</a><br/><a href="#Afficherdesmessagesdedbuggage">Afficher des messages de débuggage</a><br/><a href="#Redirigerlesflux">Rediriger les flux</a><br/><a href="#Uncodeuniquequelquesoitlemodedecompilation">Un code unique quel que soit le mode de compilation</a><br/><a href="#Fonctionsdedbuggage">Fonctions de débuggage</a><br/></div>
+<a name="DbuggeravecQt"></a><h2>Débugger avec Qt</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/comment-debugger">
+<span class="next">Comment débugger ?</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-576407" data-claire-element-id="576407">Lorsque l'on programme, il y a une constante qui revient à chaque fois : le débuggage.</p><p id="r-576408" data-claire-element-id="576408">Petit rappel pour ce qui ne savent pas ou plus : le débuggage est « l'art » de suivre toutes les opérations d'un programme afin de déterminer l'origine d'une ou plusieurs erreurs.</p><p id="r-576409" data-claire-element-id="576409">En effet, lorsque l'on réalise un programme ou une librairie (quel que soit le langage) il y a toujours un moment où on a besoin de débugger. Il s'agit en général d'un travail long et souvent pénible car les erreurs n'apparaissent pas toujours lors de la compilation. Il faut donc faire en sorte de les traquer une à une.</p><p id="r-576410" data-claire-element-id="576410">Ce tutoriel vous propose donc d'apprendre une des nombreuses manières de débugger vos programmes ou vos librairies, et ce grâce à Qt.</p><aside id="r-576412" data-claire-element-id="576412" data-claire-semantic="information"><p id="r-576411" data-claire-element-id="576411">Pour comprendre ce tutoriel il faut connaitre un minimum le C++ (notamment la POO et la notion d'objet). Et comme les techniques de débuggage portent sur Qt, il est mieux de savoir de quoi on parle.</p></aside>
+</div><a name="Commentdbugger"></a><h2>Comment débugger ?</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/mode-release-debug">
+<span class="next">Mode release/debug</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-576413" data-claire-element-id="576413">Il existe de nombreuses manières de débugger, certaines fonctionnant mieux que d'autres. Mais, en général, toutes fonctionnent relativement bien et ont chacune leurs avantages / désavantages.<br/> Le choix d'une technique de débuggage ressemble au choix d'un OS (<strong>Operating System</strong> : système d'exploitation) : chacun dit que le sien est meilleur que les autres et tente d'en convaincre tout le monde (j'exagère un peu, je sais ;) ). Personnellement je pense que la meilleure technique de débuggage est celle avec laquelle vous vous sentez le plus à l'aise.</p><p id="r-576414" data-claire-element-id="576414">Parmi les nombreuses manières de débugger un programme, voici les deux principales :</p><ul id="r-576429" data-claire-element-id="576429"><li id="r-576421" data-claire-element-id="576421"><p id="r-576415" data-claire-element-id="576415">Utiliser un <em>debugger</em> : cette technique consiste à utiliser un programme qui intègre des fonctions de débuggage comme les « breakpoints » ou la visualisation des variables en temps réel ;</p><ul id="r-576420" data-claire-element-id="576420"><li id="r-576417" data-claire-element-id="576417"><p id="r-576416" data-claire-element-id="576416"><strong>Avantage</strong> : facilité de mise en œuvre, utilisation simple et rapide ;</p></li><li id="r-576419" data-claire-element-id="576419"><p id="r-576418" data-claire-element-id="576418"><strong>Désavantage</strong> : — (ce n'est pas vrai, mais voir ci-dessous) ;</p></li></ul></li><li id="r-576428" data-claire-element-id="576428"><p id="r-576422" data-claire-element-id="576422">Utiliser la console : ici, on modifie le code pour ajouter des lignes qui donnent des informations sur le déroulement du programme ;</p><ul id="r-576427" data-claire-element-id="576427"><li id="r-576424" data-claire-element-id="576424"><p id="r-576423" data-claire-element-id="576423"><strong>Avantage</strong> : — (idem, voir plus bas) ;</p></li><li id="r-576426" data-claire-element-id="576426"><p id="r-576425" data-claire-element-id="576425"><strong>Désavantage</strong> : obligation de re-compiler à chaque modification du débuggage.</p></li></ul></li></ul><div id="r-576431" data-claire-element-id="576431" data-claire-semantic="question"><p id="r-576430" data-claire-element-id="576430">Heu… Je ne vois pas trop où est la difficulté de choisir telle ou telle technique. Tu es sûr de ce que tu dis ?</p></div><p id="r-576432" data-claire-element-id="576432">Absolument certain, mais le débuggage ne s'utilise pas que pour débugger des programmes. On peut aussi débugger des librairies/plugins et autres objets non exécutables. Dans ces cas-là, il est impossible d'utiliser la visualisation des variables et les &quot;breakpoints&quot; directement sur les fichiers de sortie. En effet, ceux-ci ne disposent pas de fonction <em>main</em>, donc le débugger ne sait pas par où il doit commencer. Donc les <em>debuggers</em> perdent tout leur intérêt dans ce genre de cas. La seule manière d'utiliser un <em>debugger</em> avec une librairie/plugin, c'est de créer un code exemple puis de lancer le <em>debugger</em> avec l'exemple.<br/> On peut donc deviner qu'il devient plus facile d'utiliser la deuxième méthode.</p><p id="r-576433" data-claire-element-id="576433">Comme je l'ai dit plus haut, ce tutoriel est là pour vous apprendre à vous servir des outils mis en place par Qt pour le débuggage. Comme Qt est une librairie, elle ne propose pas de <em>debugger</em> en tant que programme, mais elle offre de nombreux outils pour afficher des « choses » dans la console. C'est donc sur cet aspect qu'on va se pencher.</p><aside id="r-576435" data-claire-element-id="576435" data-claire-semantic="warning"><p id="r-576434" data-claire-element-id="576434">Ne perdez pas de vue que c'est aussi utilisable pour des programmes, notamment sur les systèmes embarqués (quoique la plupart d'entre eux ont des <em>debuggers</em> spécifiques fournis). Donc n'hésitez pas à lire la suite.</p></aside><p id="r-576436" data-claire-element-id="576436">De plus, les fonctions de débuggage proposées par Qt peuvent transmettre des informations au <em>debugger</em> (principalement sous Windows). Donc la suite n'est pas forcément à négliger.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt">Débugger avec Qt</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/comment-debugger">
+Comment débugger ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/mode-release-debug">
+Mode release/debug
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/afficher-des-messages-de-debuggage">
+Afficher des messages de débuggage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/rediriger-les-flux">
+Rediriger les flux
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/un-code-unique-quel-que-soit-le-mode-de-compilation">
+Un code unique quel que soit le mode de compilation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/fonctions-de-debuggage">
+Fonctions de débuggage
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/mode-release-debug">
+<span class="next">Mode release/debug</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Moderelease_debug"></a><h2>Mode release/debug</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/comment-debugger">
+<span class="arrow"></span>
+<span class="next">Comment débugger ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/afficher-des-messages-de-debuggage">
+<span class="next">Afficher des messages de débuggage</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-576438" data-claire-element-id="576438">La première chose à savoir lorsqu'on souhaite faire du débuggage avec Qt, c'est qu'il existe, en gros, deux modes de compilation :</p><ul id="r-576443" data-claire-element-id="576443"><li id="r-576440" data-claire-element-id="576440"><p id="r-576439" data-claire-element-id="576439">Le mode <strong>debug</strong> : lors de l'exécution et notamment lors d'une erreur, les fonctions renvoient plus d'informations concernant ce qui c'est produit. En contrepartie les librairies sont plus lourdes (environ facteur 6 pour QtCore) ;</p></li><li id="r-576442" data-claire-element-id="576442"><p id="r-576441" data-claire-element-id="576441">Le mode <strong>release</strong> : l'inverse du mode <em>debug</em>. Les librairies sont plus légères mais donnent moins d'informations.</p></li></ul><p id="r-576444" data-claire-element-id="576444">D'une manière générale, lorsque vous téléchargez une librairie, vous obtenez la version <em>release</em> (s'il y avait un mode <em>debug</em>). En effet, une librairie en mode <em>debug</em> ne donne des informations que sur elle-même en cas de problème interne, donc ça importe peu pour la plupart des utilisateurs. Cependant, il reste toujours possible de récupérer la version <em>debug</em> d'une librairie.<br/> Comme la librairie Qt se veut « libre », et qu'on peut la recompiler à volonté, les créateurs ont aussi donné accès aux versions <em>debug</em>, celles-ci étant incluses dans les « packages ».</p><aside id="r-576446" data-claire-element-id="576446" data-claire-semantic="information"><p id="r-576445" data-claire-element-id="576445">Pour savoir si vous utilisez une librairie en mode <em>release</em> ou non sous Qt, regardez le nom de la dll/so : si elle finit par un « d », sans tenir compte du chiffre (exemple « QtCored4.dll »), c'est qu'elle est en mode <em>debug</em>.</p></aside><h2 id="r-changer-le-mode" data-claire-element-id="576479">Changer le mode</h2><p id="r-576447" data-claire-element-id="576447">Comme vous pouvez le constater, il peut être fort utile de pouvoir compiler à volonté soit en mode <em>debug</em>, soit en mode <em>release</em>. D'ailleurs, le changement se fait non seulement pour les librairies de Qt dont vous avez besoin, mais cela permet deux-trois choses dans votre propre programme ou votre propre librairie que nous verrons légèrement plus tard.</p><p id="r-576448" data-claire-element-id="576448">Pour changer de mode, c'est très simple. Si vous avez suivi le tutoriel de M@teo21 sur Qt, tâchez de vous rappeler comment on compile un projet. En fait, ça se résumait à trois « instructions » dans la console (dans le cas d'un nouveau projet). Les voici :</p><pre id="r-576449" data-claire-element-id="576449"><code data-claire-semantic="console">qmake -project
+qmake
+make</code></pre><p id="r-576450" data-claire-element-id="576450">Si on prend les instructions une à une, voici ce qu'elles font :</p><ul id="r-576457" data-claire-element-id="576457"><li id="r-576452" data-claire-element-id="576452"><p id="r-576451" data-claire-element-id="576451"><code data-claire-semantic="console">qmake -project</code> : Qt génère automatiquement votre fichier de projet (.pro) en fonction des fichiers présents ;</p></li><li id="r-576454" data-claire-element-id="576454"><p id="r-576453" data-claire-element-id="576453"><code data-claire-semantic="console">qmake</code> : Qt lit votre fichier projet (.pro) et génère les <em>makefiles</em> ;</p></li><li id="r-576456" data-claire-element-id="576456"><p id="r-576455" data-claire-element-id="576455"><code data-claire-semantic="console">make</code> : Qt utilise MinGW (le compilateur) et les <em>makefiles</em> pour créer le fichier de sortie (en général un exécutable).</p></li></ul><p id="r-576458" data-claire-element-id="576458">La modification que nous devons apporter se situe entre la première et la deuxième étape. En effet, le mode de compilation se décide dans le fichier de projet.<br/> Si vous l'ouvrez (avec le bloc-notes par exemple), vous devriez obtenir quelque chose comme ceci :</p><pre id="r-576459" data-claire-element-id="576459"><code>######################################################################
+# Automatically generated by qmake (2.01a) lun. 23. mars 22:46:38 2009
+######################################################################
+
+TEMPLATE = app
+TARGET = 
+DEPENDPATH += .
+INCLUDEPATH += .
+
+# Input
+SOURCES += main.cpp</code></pre><aside id="r-576461" data-claire-element-id="576461" data-claire-semantic="information"><p id="r-576460" data-claire-element-id="576460">Pour ceux que ça intéresserait, la documentation de Qt sur le <a href="http://doc.trolltech.com/4.5/qmake-manual.html">qmake</a> est très bien fournie. Et le réglage d'un projet Qt permet de faire de grandes choses.</p></aside><p id="r-576462" data-claire-element-id="576462">Pour le réglage du mode de compilation, tout se passe avec la variable <a href="http://doc.trolltech.com/4.5/qmake-variable-reference.html#config">CONFIG</a>. Comme celle-ci est déjà pré-remplie (même si on ne la voit pas), il faudra employer le symbole += pour indiquer qu'on souhaite ajouter des propriétés.</p><p id="r-576463" data-claire-element-id="576463">Si vous souhaitez faire de la compilation en mode <em>debug</em>, vous avez deux choix :</p><ul id="r-576468" data-claire-element-id="576468"><li id="r-576465" data-claire-element-id="576465"><p id="r-576464" data-claire-element-id="576464">ne rien faire. Par défaut Qt est réglé sur le mode <em>debug</em>. Mais il est possible que ça change en fonction des versions (les versions antérieures de Qt étaient en mode <em>release</em> par défaut) ;</p></li><li id="r-576467" data-claire-element-id="576467"><p id="r-576466" data-claire-element-id="576466">ajouter « debug » après le += de la variable CONFIG.</p></li></ul><p id="r-576469" data-claire-element-id="576469">Et si vous préférez le mode <em>release</em>, il suffit de mettre « release » à la place de « debug ».</p><p id="r-576470" data-claire-element-id="576470">Facile, non ?</p><aside id="r-576472" data-claire-element-id="576472" data-claire-semantic="warning"><p id="r-576471" data-claire-element-id="576471">Si vous vous amusez à placer les deux en même temps, c'est celui placé en dernier qui est pris en compte.</p></aside><p id="r-576473" data-claire-element-id="576473">Quel que soit le mode de compilation choisi, vous pouvez à tout moment ajouter aussi « console ». Cela force — dans le cas d'une application graphique — à ouvrir une console en arrière-plan. C'est très pratique pour voir vos propres messages de débuggage (on va voir dans un instant comment faire) mais aussi pour voir ceux de Qt, notamment concernant les signaux ou les slots qui ne se sont pas connectés ensemble (quelle qu'en soit la raison).</p><aside id="r-576475" data-claire-element-id="576475" data-claire-semantic="information"><p id="r-576474" data-claire-element-id="576474">Le mode « console » n'a d'effet que sous Windows. Pour les autres, tout dépend de la manière dont vous lancez le programme.</p></aside><p id="r-576476" data-claire-element-id="576476">Imaginons qu'on se place en mode <em>debug</em>. Voici ce qu'on obtient :</p><pre id="r-576477" data-claire-element-id="576477"><code>######################################################################
+# Automatically generated by qmake (2.01a) lun. 23. mars 22:46:38 2009
+######################################################################
+
+TEMPLATE = app
+CONFIG +=  console debug
+TARGET = 
+DEPENDPATH += .
+INCLUDEPATH += .
+
+# Input
+SOURCES += main.cpp</code></pre><p id="r-576478" data-claire-element-id="576478">Vous pouvez voir que j'ai aussi ajouté le mot « console ».</p><h2 id="r-mode-debug-et-release-en-meme-temps" data-claire-element-id="576485">Mode <em>debug</em> et <em>release</em> en même temps</h2><p id="r-576480" data-claire-element-id="576480">En fait, il est possible de considérer qu'il existe un troisième mode de compilation… Celui-ci est une combinaison des deux autres car il effectue les deux compilations en même temps (enfin l'une après l'autre, sans pause).<br/> Pour cela, remplacez le « debug » ou le « release » par « <strong>debug_and_release</strong> ».</p><aside id="r-576482" data-claire-element-id="576482" data-claire-semantic="warning"><p id="r-576481" data-claire-element-id="576481">La documentation de Qt dit qu'il est possible que l'utilisation de ce mode puisse causer des effets inattendus. Je vous conseille donc de faire très attention quand vous vous lancez dans ce genre de choses.</p></aside><p id="r-576483" data-claire-element-id="576483">Dans ce cas, pour compiler, il vous faudra faire <code data-claire-semantic="console">make all</code> à la place de <code data-claire-semantic="console">make</code>.<br/> Cependant, il reste possible d'utiliser <code data-claire-semantic="console">make</code> pour compiler les deux modes. Pour faire ça, ajoutez en plus de « debug_and_release » un « <strong>build_all</strong> ». Voilà, maintenant vous pouvez compiler les deux modes à la suite avec un simple <code data-claire-semantic="console">make</code>.</p><p id="r-576484" data-claire-element-id="576484">Prêt(e) à entrer dans le débuggage profond ?</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt">Débugger avec Qt</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/comment-debugger">
+Comment débugger ?
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/mode-release-debug">
+Mode release/debug
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/afficher-des-messages-de-debuggage">
+Afficher des messages de débuggage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/rediriger-les-flux">
+Rediriger les flux
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/un-code-unique-quel-que-soit-le-mode-de-compilation">
+Un code unique quel que soit le mode de compilation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/fonctions-de-debuggage">
+Fonctions de débuggage
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/comment-debugger">
+<span class="arrow"></span>
+<span class="next">Comment débugger ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/afficher-des-messages-de-debuggage">
+<span class="next">Afficher des messages de débuggage</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Afficherdesmessagesdedbuggage"></a><h2>Afficher des messages de débuggage</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/mode-release-debug">
+<span class="arrow"></span>
+<span class="next">Mode release/debug</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/rediriger-les-flux">
+<span class="next">Rediriger les flux</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-576487" data-claire-element-id="576487">Enfin, on attaque la partie vraiment pratique.</p><div id="r-576489" data-claire-element-id="576489" data-claire-semantic="question"><p id="r-576488" data-claire-element-id="576488">Avant que tu ne commences… Pourquoi présenter des fonctions faites par Qt alors qu'un simple « cout » suffirait (maintenant qu'on sait afficher la console) ?</p></div><p id="r-576490" data-claire-element-id="576490">Très bonne question. En fait absolument rien ne vous empêche d'employer le bon vieux (mais fidèle) « cout ».<br/> Mais voici deux-trois raisons de ne PAS l'utiliser :</p><ul id="r-576495" data-claire-element-id="576495"><li id="r-576492" data-claire-element-id="576492"><p id="r-576491" data-claire-element-id="576491">Une question « d'homogénéité » : dans tout votre programme on utilise Qt, alors pourquoi juste pour le débuggage utiliserait-on la bibliothèque standard ?</p></li><li id="r-576494" data-claire-element-id="576494"><p id="r-576493" data-claire-element-id="576493">Un grand nombre de classes Qt intègrent déjà un opérateur de flux vers la console pour se décrire elles-mêmes. C'est mieux que de devoir toutes les réécrire pour cout.</p></li></ul><p id="r-576496" data-claire-element-id="576496">Après c'est à vous de voir ce que vous préférez.</p><h2 id="r-les-fonctions-de-base-1" data-claire-element-id="576514">Les fonctions de base</h2><p id="r-576497" data-claire-element-id="576497">Qt intègre quatre fonctions dédiées au débuggage et aux rapports d'erreurs. Chacune a un but défini. Les voici :</p><ul id="r-576506" data-claire-element-id="576506"><li id="r-576499" data-claire-element-id="576499"><p id="r-576498" data-claire-element-id="576498"><a href="http://doc.trolltech.com/4.5/qtglobal.html#qCritical">qCritical</a> : le simple rapport d'erreur, qui ne fait pas obligatoirement quitter le programme (voir <strong>qFatal</strong>) ;</p></li><li id="r-576501" data-claire-element-id="576501"><p id="r-576500" data-claire-element-id="576500"><a href="http://doc.trolltech.com/4.5/qtglobal.html#qDebug">qDebug</a> : taillée exprès pour le débuggage ;</p></li><li id="r-576503" data-claire-element-id="576503"><p id="r-576502" data-claire-element-id="576502"><a href="http://doc.trolltech.com/4.5/qtglobal.html#qFatal">qFatal</a> : identique à <strong>qCritical</strong>, mais implique en générale que le programme se termine juste après (une erreur fatale donc :p ) ;</p></li><li id="r-576505" data-claire-element-id="576505"><p id="r-576504" data-claire-element-id="576504"><a href="http://doc.trolltech.com/4.5/qtglobal.html#qWarning">qWarning</a> : pour les messages de prévention.</p></li></ul><p id="r-576507" data-claire-element-id="576507">Je vous invite vivement à consulter la doc les concernant, c'est très utile.<br/> Par défaut, les messages sont envoyés sur « stderr » (le flux standard des erreurs). Dans le cas d'une application graphique sans console, c'est envoyé vers le débugger (s'il est présent, sinon adieu le message :-° )</p><p id="r-576508" data-claire-element-id="576508">ATTENTION : Ces fonctions sont très très basiques et fonctionnent comme les (très vieilles) fonctions du C, c'est-à-dire du genre de la fonction « printf » (ouh, que c'est vieux). C'est-à-dire une chaîne de caractère avec des « %s » pour les chaînes de caractères, « %d » pour les entiers, etc.<br/> De plus elles vont automatiquement à la ligne. Donc pas besoin de finir avec des «  ».</p><div id="r-576510" data-claire-element-id="576510" data-claire-semantic="question"><p id="r-576509" data-claire-element-id="576509">QUOI ? Mais mais… et la classe QString ?</p></div><p id="r-576511" data-claire-element-id="576511">Je pense que les programmeurs de Qt (merci à <a href="http://www.siteduzero.com/membres-294-49110.html">Nanoc</a>), lorsqu'ils ont créé ces fonctions, ont réfléchi à la chose suivante : si on emploie des fonctions comme <strong>qCritical</strong> ou <strong>qFatal</strong>, c'est qu'<em>a priori</em> quelque chose ne va pas. Si on utilise la classe QString alors que quelque chose ne va pas, QString risque aussi d'avoir un problème. Et là on va avoir de gros problèmes car une erreur se produit pendant le rapport d'une autre erreur. Et cette erreur va elle aussi être rapportée en appelant QString, qui provoquera une nouvelle erreur qui…</p><p id="r-576512" data-claire-element-id="576512">Assez peu pratique, non ? Et puis dans le cas où il se produit une erreur dans QString, on ne peut pas appeler les fonction prévues car celle-ci fonctionne avec QString.</p><p id="r-576513" data-claire-element-id="576513">Cependant, dans le cadre de vos projets, vous partez de l'hypothèse que Qt fonctionne correctement. De toute manière, s'il y a un problème interne, c'est Qt qui gère. Donc rien ne vous empêche d'utiliser QString avec ces fonctions. Et comme nous parlons de Qt, ils ont quand même prévu les choses, et mettent donc à notre disposition deux mécanismes pour nous simplifier la vie.</p><h2 id="r-simplifiez-vous-la-vie" data-claire-element-id="576533">Simplifiez-vous la vie</h2><h3 id="r-qprintable" data-claire-element-id="576523">qPrintable</h3><p id="r-576515" data-claire-element-id="576515">Certains connaissent déjà cette fonction miracle : <a href="http://doc.trolltech.com/4.5/qtglobal.html#qPrintable">qPrintable</a>. On en peut pas faire plus simple : vous lui donnez en paramètre une QString et elle vous sort... un « char * ». Parfait pour le donner à votre fonction.</p><p id="r-576516" data-claire-element-id="576516">Voyons un exemple :</p><pre id="r-576517" data-claire-element-id="576517"><code data-claire-semantic="cpp">qFatal(qPrintable(tr(&quot;Erreur fatale : la variable %1 n'existe pas&quot;).arg(i)));</code></pre><p id="r-576518" data-claire-element-id="576518">Comme vous pouvez le voir, ça permet aussi d'utiliser directement la fonction « tr » (pour d'éventuelles traductions !).</p><p id="r-576519" data-claire-element-id="576519">Personnellement, je vous conseille de créer une petite macro, du genre :</p><pre id="r-576520" data-claire-element-id="576520"><code data-claire-semantic="cpp">#define FATAL_ERROR(msg)    qFatal(qPrintable(msg))</code></pre><p id="r-576521" data-claire-element-id="576521">Comme ça, plus de problème.</p><p id="r-576522" data-claire-element-id="576522">Passons donc au deuxième mécanisme (le meilleur).</p><h3 id="r-qtdebug" data-claire-element-id="576532">QtDebug</h3><p id="r-576524" data-claire-element-id="576524">Comme je vous l'ai dit légèrement plus haut, un des avantages de Qt c'est que nombre de ses classes savent se représenter seules dans une console. Pourtant aucune ne semble avoir de fonction du style <code data-claire-semantic="cpp">char * debug () const</code>. Alors comment font-elles ?</p><p id="r-576525" data-claire-element-id="576525">En fait il est possible d'utiliser nos quatre fonctions comme « cout », c'est-à-dire avec des opérateurs de flux. Pour cela, il suffit d'inclure « QtDebug » dans votre fichier :</p><pre id="r-576526" data-claire-element-id="576526"><code data-claire-semantic="cpp">#include &lt;QtDebug&gt;</code></pre><aside id="r-576528" data-claire-element-id="576528" data-claire-semantic="warning"><p id="r-576527" data-claire-element-id="576527">Ceci ne fonctionne PAS pour la fonction qFatal. En effet celle-ci est là pour afficher un ultime message d'adieu avant la fin brutale du programme. On n'est pas là pour décrire toutes les variables du programme.</p></aside><p id="r-576529" data-claire-element-id="576529">Rien ne vaut un bon exemple, donc :</p><pre id="r-576530" data-claire-element-id="576530"><code data-claire-semantic="cpp">qDebug() &lt;&lt; &quot;Début du programme, il est &quot; &lt;&lt; QTime::currentTime().toString(&quot;HH:mm::ss&quot;);</code></pre><p id="r-576531" data-claire-element-id="576531">Notez la présence des parenthèses après l'appel de la fonction. Elles sont obligatoires. Comme leur version « de base », ces fonctions vont automatiquement à la ligne.</p><h2 id="r-les-fonctions-supra-complexes" data-claire-element-id="576542">Les fonctions supra-complexes</h2><p id="r-576534" data-claire-element-id="576534">Comme chacun le sait peut-être, Qt ne fait pas dans les demi-mesures. Donc on dispose encore de deux fonctions… très particulières. Celles-ci font partie intégrante de la classe QObject, donc tout le monde (ou presque) en dispose :</p><ul id="r-576539" data-claire-element-id="576539"><li id="r-576536" data-claire-element-id="576536"><p id="r-576535" data-claire-element-id="576535"><a href="http://doc.trolltech.com/4.5/qobject.html#dumpObjectInfo">dumpObjectInfo</a> : affiche des informations sur l'objet, notamment sur les signaux ou les slots.</p></li><li id="r-576538" data-claire-element-id="576538"><p id="r-576537" data-claire-element-id="576537"><a href="http://doc.trolltech.com/4.5/qobject.html#dumpObjectTree">dumpObjectTree</a> : affiche un espèce d'arbre de l'objet et des ses enfants.</p></li></ul><p id="r-576540" data-claire-element-id="576540">À vous de tester !</p><p id="r-576541" data-claire-element-id="576541">Avec ça, on a déjà de quoi réfléchir, non ? Alors pour ceux qui ont réussi à digérer, voici la suite.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt">Débugger avec Qt</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/comment-debugger">
+Comment débugger ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/mode-release-debug">
+Mode release/debug
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/afficher-des-messages-de-debuggage">
+Afficher des messages de débuggage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/rediriger-les-flux">
+Rediriger les flux
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/un-code-unique-quel-que-soit-le-mode-de-compilation">
+Un code unique quel que soit le mode de compilation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/fonctions-de-debuggage">
+Fonctions de débuggage
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/mode-release-debug">
+<span class="arrow"></span>
+<span class="next">Mode release/debug</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/rediriger-les-flux">
+<span class="next">Rediriger les flux</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Redirigerlesflux"></a><h2>Rediriger les flux</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/afficher-des-messages-de-debuggage">
+<span class="arrow"></span>
+<span class="next">Afficher des messages de débuggage</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/un-code-unique-quel-que-soit-le-mode-de-compilation">
+<span class="next">Un code unique quel que soit le mode de compilation</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-576544" data-claire-element-id="576544">Comme je l'ai dit, les messages sont expédiés sur <em>stderr</em>. De ce fait, dans le cas d'une application graphique, on est obligé de faire afficher la console. Ce n'est pas très beau (surtout lorsqu'elle disparaît dès la fin du programme).</p><p id="r-576545" data-claire-element-id="576545">Le truc génial, ça serait de pouvoir expédier le tout dans un fichier. Mais à faire pour les quatre fonctions ça risque de se révéler pénible. Heureusement, grâce à Qt, on peut rediriger chaque fonction vers le même fichier ou chacun dans le sien. On peut même inserer du texte « obligatoire » (comme « WARNING : » pour chaque appel à qWarning).</p><p id="r-576546" data-claire-element-id="576546">La méthode n'est peut-être pas des plus claires, mais elle marche. Pour commencer, il faut déclarer une fonction ayant ce prototype (<strong>rappel :</strong> seul le nom de la fonction peut changer) :</p><pre id="r-576547" data-claire-element-id="576547"><code data-claire-semantic="cpp">void myMessageOutput (QtMsgType type, const char *msg)</code></pre><p id="r-576548" data-claire-element-id="576548">Ensuite, c'est dans cette fonction que vous déciderez de faire ce que vous voulez des messages, etc.</p><p id="r-576549" data-claire-element-id="576549">Pour mettre en application cette fonction, il suffit de faire :</p><pre id="r-576550" data-claire-element-id="576550"><code data-claire-semantic="cpp">qInstallMsgHandler(myMessageOutput);</code></pre><p id="r-576551" data-claire-element-id="576551">De préférence dans le <em>main</em>, avec QApplication.</p><p id="r-576552" data-claire-element-id="576552">Le mieux est de vous mettre l'exemple de Qt (visible <a href="http://doc.trolltech.com/4.5/qtglobal.html#qInstallMsgHandler">ici</a>) :</p><pre id="r-576553" data-claire-element-id="576553"><code data-claire-semantic="cpp">#include &lt;qapplication.h&gt;
+ #include &lt;stdio.h&gt;
+ #include &lt;stdlib.h&gt;
+
+ void myMessageOutput(QtMsgType type, const char *msg)
+ {
+     switch (type) {
+     case QtDebugMsg:
+         fprintf(stderr, &quot;Debug: %s\n&quot;, msg);
+         break;
+     case QtWarningMsg:
+         fprintf(stderr, &quot;Warning: %s\n&quot;, msg);
+         break;
+     case QtCriticalMsg:
+         fprintf(stderr, &quot;Critical: %s\n&quot;, msg);
+         break;
+     case QtFatalMsg:
+         fprintf(stderr, &quot;Fatal: %s\n&quot;, msg);
+         abort();
+     }
+ }
+
+ int main(int argc, char **argv)
+ {
+     qInstallMsgHandler(myMessageOutput);
+     QApplication app(argc, argv);
+     ...
+     return app.exec();
+ }</code></pre><p id="r-576554" data-claire-element-id="576554">Voilà, vous savez comment détourner les messages d'erreur pour les expédier où vous voulez (même dans le néant :-° ).<br/> Dans la prochaine partie, je vais vous donner encore deux conseils pour mieux débugger, puis je vous laisse vous débrouiller.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt">Débugger avec Qt</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/comment-debugger">
+Comment débugger ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/mode-release-debug">
+Mode release/debug
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/afficher-des-messages-de-debuggage">
+Afficher des messages de débuggage
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/rediriger-les-flux">
+Rediriger les flux
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/un-code-unique-quel-que-soit-le-mode-de-compilation">
+Un code unique quel que soit le mode de compilation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/fonctions-de-debuggage">
+Fonctions de débuggage
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/afficher-des-messages-de-debuggage">
+<span class="arrow"></span>
+<span class="next">Afficher des messages de débuggage</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/un-code-unique-quel-que-soit-le-mode-de-compilation">
+<span class="next">Un code unique quel que soit le mode de compilation</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Uncodeuniquequelquesoitlemodedecompilation"></a><h2>Un code unique quel que soit le mode de compilation</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/rediriger-les-flux">
+<span class="arrow"></span>
+<span class="next">Rediriger les flux</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/fonctions-de-debuggage">
+<span class="next">Fonctions de débuggage</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-576556" data-claire-element-id="576556">Tout au long de ce tutoriel, il y a quelque chose dont je n'ai pas parlé, mais que j'aimerais quand même vous présenter car vous allez forcément tomber dessus un jour.</p><h2 id="r-le-probleme-21" data-claire-element-id="576561">Le problème</h2><p id="r-576557" data-claire-element-id="576557">Imaginez que vous avez fait un superbe programme, et en vous souvenant de ce tutoriel, vous l'avez truffé de qDebug et qWarning.<br/> Maintenant que vous l'avez débuggé à 100 %, vous voulez faire le compiler en mode <em>release</em>. Rien de plus facile, vous changez votre projet et hop, c'est fait.</p><div id="r-576559" data-claire-element-id="576559" data-claire-semantic="question"><p id="r-576558" data-claire-element-id="576558">Et où est le problème ?</p></div><p id="r-576560" data-claire-element-id="576560">Maintenant exécutez le programme. Et, oh, stupeur, les messages s'affichent aussi. Pas très joli pour la première version de votre super programme.<br/> Bien évidemment, vous pouvez les enlever puis recompiler. Mais il va falloir le faire à chaque fois... Un peu pénible, avouez-le.<br/> Pour pallier ce problème, il existe deux solutions.</p><h2 id="r-les-solutions" data-claire-element-id="576570">Les solutions</h2><p id="r-576562" data-claire-element-id="576562">La première consiste à modifier votre projet en ajoutant à <em>DEFINES</em> (comme pour CONFIG) ceci : <strong>QT_NO_DEBUG_OUTPUT</strong> et <strong>QT_NO_WARNING_OUTPUT</strong>. Ça va enlever les messages, mais ça ne marche que pour <code data-claire-semantic="cpp">qDebug</code> et <code data-claire-semantic="cpp">QWarning</code>.</p><p id="r-576563" data-claire-element-id="576563">La deuxième provient d'une simple observation : lorsque vous compilez en mode <em>release</em>, le « #define » <strong>QT_NO_DEBUG</strong> est passé à l'ensemble de vos fichiers.<br/> Si on résume, vous disposez d'un « #define » automatique dans le cas d'une compilation en mode <em>release</em>. Dans les autres cas, il n'est pas là. Il faut donc, dans votre code, faire ceci pour chaque message :</p><pre id="r-576564" data-claire-element-id="576564"><code data-claire-semantic="cpp">#ifndef QT_NO_DEBUG
+    qDebug(&quot;...&quot;);
+#endif</code></pre><p id="r-576565" data-claire-element-id="576565">Dans la mesure où ça peut être très fastidieux, je vous propose (vous faites comme vous l'entendez) de procéder comme suit, dans un fichier .h inclus partout :</p><pre id="r-576566" data-claire-element-id="576566"><code data-claire-semantic="cpp">#ifdef QT_NO_DEBUG
+    #define debug(msg)
+#else
+    #define debug(msg)    qDebug(qPrintable(msg));
+#endif</code></pre><p id="r-576567" data-claire-element-id="576567">Analysons le code rapidement : dans le cas où vous êtes en mode <em>debug</em>, tout va bien, la fonction « debug » est remplacée par qDebug. Lors de l'exécution, les messages s'affichent correctement.</p><p id="r-576568" data-claire-element-id="576568">Mais si vous passez en mode <em>release</em>, lorsque vous appelez la fonction « debug », elle est remplacée par… rien ! Bien évidemment les messages ne s'affichent plus lors de l'exécution (et pour cause !).</p><p id="r-576569" data-claire-element-id="576569">De cette manière donc, vous pouvez utiliser la fonction « debug » directement avec les QString et n'afficher les messages que si vous êtes en mode <em>debug</em>.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt">Débugger avec Qt</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/comment-debugger">
+Comment débugger ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/mode-release-debug">
+Mode release/debug
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/afficher-des-messages-de-debuggage">
+Afficher des messages de débuggage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/rediriger-les-flux">
+Rediriger les flux
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/un-code-unique-quel-que-soit-le-mode-de-compilation">
+Un code unique quel que soit le mode de compilation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/fonctions-de-debuggage">
+Fonctions de débuggage
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/rediriger-les-flux">
+<span class="arrow"></span>
+<span class="next">Rediriger les flux</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/fonctions-de-debuggage">
+<span class="next">Fonctions de débuggage</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Fonctionsdedbuggage"></a><h2>Fonctions de débuggage</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/un-code-unique-quel-que-soit-le-mode-de-compilation">
+<span class="arrow"></span>
+<span class="next">Un code unique quel que soit le mode de compilation</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-576572" data-claire-element-id="576572">J'avais promis d'en finir, mais je ne peux m'empêcher de vous parler d'elles…</p><aside id="r-576574" data-claire-element-id="576574" data-claire-semantic="information"><p id="r-576573" data-claire-element-id="576573">Ces deux fonctions n'ont d'effet qu'en mode <em>debug</em>, et ce de manière automatique, donc pas besoin de faire de macros.</p></aside><p id="r-576575" data-claire-element-id="576575">Même si la documentation est limpide en ce qui les concerne, nous sommes sur le Site du Zéro, donc je vais légèrement parler d'elles.</p><p id="r-576576" data-claire-element-id="576576">Elles sont là pour faire de simples tests et vérifier que tout va bien (elles sont souvent employées pour l'opérateur [] pour tester si l'index est dans les limites autorisées). Je vous demande donc d'applaudir d'accueillir <a href="http://doc.trolltech.com/qtglobal.html#Q_ASSERT">Q_ASSERT</a> et <a href="http://doc.trolltech.com/qtglobal.html#Q_ASSERT_X">Q_ASSERT_X</a> !</p><h2 id="r-q-assert" data-claire-element-id="576585">Q_ASSERT</h2><p id="r-576577" data-claire-element-id="576577">Très basique. Vous lui donnez comme seul paramètre un test. Si le test est vrai, tout va bien, le programme se poursuit. Par contre, s'il a le malheur d'être faux… il est mal, très mal !</p><p id="r-576578" data-claire-element-id="576578">En effet, Qt ne plaisante pas avec Q_ASSERT. Si le test est faux, ça affiche automatiquement un petit message et pfiout… terminé le programme (d'ailleurs, il arrive à Windows de se plaindre de cette fin soudaine avec un deuxième message).</p><p id="r-576579" data-claire-element-id="576579">Le message possède une forme standard, il ressemble donc à ceci :</p><pre id="r-576580" data-claire-element-id="576580"><code data-claire-semantic="console">ASSERT: &quot;Test&quot; in file main.cpp, line 10</code></pre><p id="r-576581" data-claire-element-id="576581">« Test » est bien sûr remplacé par votre test, ainsi que le nom du fichier et la ligne.</p><aside id="r-576583" data-claire-element-id="576583" data-claire-semantic="information"><p id="r-576582" data-claire-element-id="576582">Pour ceux qui connaissent, cette fonction est identique à la fonction <em>assert</em> du C++ (seul le texte en sortie change très légèrement). Le choix de la fonction à employer ne dépend que de vous.</p></aside><p id="r-576584" data-claire-element-id="576584">Bien que ce soit parfaitement compréhensible par un programmeur, le jour où un utilisateur lambda tombe dessus… Il est bien embêté.<br/> C'est pourquoi nous passons à la deuxième candidate.</p><h2 id="r-q-assert-x" data-claire-element-id="576603">Q_ASSERT_X</h2><p id="r-576586" data-claire-element-id="576586">Il s'agit en fait de la grande sœur de Q_ASSERT. En plus du test, elle accepte deux paramètres supplémentaires, qui peuvent facilement être décrits par <em>où</em> et <em>quoi</em> :</p><ul id="r-576591" data-claire-element-id="576591"><li id="r-576588" data-claire-element-id="576588"><p id="r-576587" data-claire-element-id="576587"><strong>Où</strong> : ça vous permet de dire où s'est produite l'erreur (en un peu mieux que « fichier &quot;blabla&quot; à la ligne 10 »). En règle générale, on met le nom de la fonction ainsi que le nom de l'objet (en reprenant un morceau du code source de Qt) : « QVector::at » ;</p></li><li id="r-576590" data-claire-element-id="576590"><p id="r-576589" data-claire-element-id="576589"><strong>Quoi</strong> : qu'est-ce qui est à l'origine du problème, par exemple « index invalide ».</p></li></ul><aside id="r-576593" data-claire-element-id="576593" data-claire-semantic="error"><p id="r-576592" data-claire-element-id="576592">Le C++ ne dispose pas d'une fonction équivalente !</p></aside><p id="r-576594" data-claire-element-id="576594">Personnellement, j'ai plus tendance à employer la deuxième fonction, mais c'est vous qui décidez.</p><p id="r-576595" data-claire-element-id="576595">Rien ne parle mieux qu'un exemple, donc le voici :</p><pre id="r-576596" data-claire-element-id="576596"><code data-claire-semantic="cpp">#include &lt;QCoreApplication&gt;
+
+int main (int argc, char **argv)
+{
+	QCoreApplication app(argc, argv);
+
+	int * valeurs = new int[3];
+
+	valeurs[0] = 0;
+	valeurs[1] = 1;
+	valeurs[2] = 2;
+
+	int i = 0;
+	while(i &lt;= 3)
+	{
+		Q_ASSERT_X(i &gt;= 0 &amp;&amp; i &lt;= 2, &quot;main&quot;, &quot;Valeur invalide pour 'i'&quot;);
+
+		qDebug(qPrintable(QString(&quot;valeurs[%1] = %2&quot;).arg(i).arg(valeurs[i])));
+		i++;
+	}
+
+	return app.exec();
+}</code></pre><pre id="r-576597" data-claire-element-id="576597"><code data-claire-semantic="console">valeurs[0] = 0
+valeurs[1] = 1
+valeurs[2] = 2
+ASSERT failure in main: &quot;Valeur invalide pour 'i'&quot;, file main.cpp, line 16</code></pre><p id="r-576598" data-claire-element-id="576598">Bien évidemment, il s'agit d'un pur « cas d'école », le code ici présent ne servant pas à grand-chose.<br/> Vous pouvez aussi voir que la fonction Q_ASSERT_X affiche toutes les informations nécessaires et quitte toute seule si le test échoue.</p><p id="r-576599" data-claire-element-id="576599">C'est fini ! FI-NI !</p><p id="r-576600" data-claire-element-id="576600">Vous voilà enfin déjà au bout de ce tutoriel. J'espère que mes explications sur le débuggage ont été comprises et surtout utiles.<br/> Prenez bien le temps de relire, n'hésitez pas à repasser pour vérifier (j'ai moi-même été pris par de solides doutes durant l'écriture de ce tutoriel)</p><p id="r-576601" data-claire-element-id="576601">Maintenant je ne veux plus voir que des programmes qui écrivent deux pages A4 par fonction en mode <em>debug</em>.</p><p id="r-576602" data-claire-element-id="576602">Sur ce, je vous laisse retourner à vos chers programmes !</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt">Débugger avec Qt</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/comment-debugger">
+Comment débugger ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/mode-release-debug">
+Mode release/debug
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/afficher-des-messages-de-debuggage">
+Afficher des messages de débuggage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/rediriger-les-flux">
+Rediriger les flux
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/un-code-unique-quel-que-soit-le-mode-de-compilation">
+Un code unique quel que soit le mode de compilation
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/fonctions-de-debuggage">
+Fonctions de débuggage
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/debugger-avec-qt/un-code-unique-quel-que-soit-le-mode-de-compilation">
+<span class="arrow"></span>
+<span class="next">Un code unique quel que soit le mode de compilation</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/debugger-avec-qt.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 02:50:21 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/debugger-avec-qt.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:37:24 GMT -->
+</html>

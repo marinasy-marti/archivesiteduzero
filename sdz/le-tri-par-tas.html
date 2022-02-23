@@ -1,0 +1,196 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/le-tri-par-tas.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 11:23:22 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/le-tri-par-tas.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:50:17 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Le tri par tas</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/le-tri-par-tas.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Le tri par tas</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Letripartas">Le tri par tas</a><br/><a href="#Lestasbinaires">Les tas (binaires)</a><br/><a href="#Tripartas">Tri par tas</a><br/></div>
+<a name="Letripartas"></a><h2>Le tri par tas</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-tri-par-tas/les-tas-binaires">
+<span class="next">Les tas (binaires)</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-453960" data-claire-element-id="453960">Nous allons découvrir ici un algorithme de tri original : le tri par tas. Cet algorithme de tri par comparaison est de complexité asympotiquement optimal car de complexité O(n log n). En termes moins barbare ça signifie que à la différence du tri par insertion où lorsque l'on double la taille de l'entrée, on multiplie par 4 le nombre d'opérations effectuées par l'algorithme; le tri par tas ne multipliera, dans les mêmes circonstances, qu'environ par 2 (un peu plus en réalité, mais lorsque n est grand c'est négligeable) le nombre d'opérations. D'où le terme d'algorithme de tri optimal pour de grandes entrées.</p><p id="r-453961" data-claire-element-id="453961">Les différents algorithmes seront implémentés en OCaml, cependant ils seront expliqués en détail et donc facilement transposables dans votre langage préféré.</p>
+</div><a name="Lestasbinaires"></a><h2>Les tas (binaires)</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-tri-par-tas/tri-par-tas-1">
+<span class="next">Tri par tas</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-definition-59" data-claire-element-id="453975">Définition</h2><p id="r-453962" data-claire-element-id="453962">Le tas (heap en anglais) peut être représenté comme un arbre binaire presque complet. Pour rappel un arbre binaire est dit complet si toutes ses feuilles sont de même profondeur.</p><p id="r-453963" data-claire-element-id="453963">On peut définir deux sortes de tas binaires : les tas min et les tas max.</p><ul id="r-453968" data-claire-element-id="453968"><li id="r-453965" data-claire-element-id="453965"><p id="r-453964" data-claire-element-id="453964">Tas-min : chaque élément est supérieur à son parent.</p></li><li id="r-453967" data-claire-element-id="453967"><p id="r-453966" data-claire-element-id="453966">Tas-max : chaque élément est inférieur à son parent.</p></li></ul><p id="r-453969" data-claire-element-id="453969">Le tas peut être stocké de façon très simple dans un tableau. Soit i l'indice d'un noeud. Les indices de son parent, enfant de gauche, et enfant de droite sont calculables de manières très simple.</p><pre id="r-453970" data-claire-element-id="453970"><code data-claire-semantic="ocaml">let parent i = (i - 1) / 2;;
+let enfant_gauche i = 2 * i + 1 ;;
+let enfant_droite i = 2 * i + 2;;</code></pre><p id="r-453971" data-claire-element-id="453971">On rajoute +1 et +2 car la racine du tas a pour index 0 et non 1.</p><figure id="r-453973" data-claire-element-id="453974"><img id="r-453972" data-claire-element-id="453972" src="medias/uploads.siteduzero.com_files_286001_287000_286613.jpg" alt="Image utilisateur"/></figure><h2 id="r-entassement" data-claire-element-id="453982">Entassement</h2><p id="r-453976" data-claire-element-id="453976">La plus importante des opérations que l'on effectue sur les tas est l'entassement. On va maintenant supposer que l'on utilise un tas-max représenté par un tableau a. Le rôle de la fonction entasser-tas est de faire respecter la propriété suivante du tas-max :</p><pre id="r-453977" data-claire-element-id="453977"><code data-claire-semantic="ocaml">a.(parent i) &gt;= a.(i)</code></pre><p id="r-453978" data-claire-element-id="453978">Concrétement, soit un noeud i, entasser-tas va faire &quot;descendre&quot; le noeud i dans le tas max jusqu'à ce qu'il respecte cette règle. Pour coder cette fonction, on attend de l'utilisateur qu'il nous fournisse la taille actuelle du tas.</p><p id="r-453979" data-claire-element-id="453979">On définit aussi permuter qui nous sera souvent utile par la suite.</p><pre id="r-453980" data-claire-element-id="453980"><code data-claire-semantic="ocaml">let permuter a i j = 
+  let tmp = a.(i) in
+    a.(i) &lt;- a.(j);
+    a.(j) &lt;- tmp;;
+
+let rec entasser_tas a taille i =
+  let gauche = enfant_gauche i in
+  let droite = enfant_droite i in
+  let max = ref 0 in
+    if gauche &lt;= taille - 1 &amp;&amp; a.(gauche) &gt; a.(i)
+    then max := gauche
+    else max := i;
+
+    if droite &lt;= taille - 1 &amp;&amp; a.(droite) &gt; a.(!max)
+      then max := droite;
+
+    if !max &lt;&gt; i then begin permuter a i !max; 
+      entasser_tas a taille !max;
+    end;;</code></pre><p id="r-453981" data-claire-element-id="453981">entasser-tas vérifie donc que le noeud en question est supérieur à ses deux enfants. Si ce n'est pas le cas, elle permute ce noeud avec le plus grand de ses enfants. Pourquoi ? Si on avait permuté le noeud avec le plus petit de ses deux enfants, ce dernier se retrouverait parent d'un enfant plus grand que lui. Et donc contradiction avec la propriété du tas max. Une fois les deux noeuds permutés on rappelle entasser_tas sur le noeud qui est alors &quot;descendu&quot;. Dans le pire des cas, entasser-tas effectue lg n opérations, puisque la hauteur d'un tas à n éléments est lg n.</p><h2 id="r-convertir-un-tableau-en-tas" data-claire-element-id="453989">Convertir un tableau en tas</h2><p id="r-453983" data-claire-element-id="453983">Le problème est le suivant : soit un tableau A de n éléments, on souhaite le converir en tas max. L'idée est d'entasser chacun des noeuds du tableau, ainsi touts les noeuds seront à une place qui ne contredira pas la propriété du tas-max. On remarque qu'il est inutile de lancer entasser-tas sur les éléments du sous-tableau a [(n/2)+1, .., n] puisque ces éléments sont des feuilles du tas.</p><p id="r-453984" data-claire-element-id="453984">L'implémentation de la fonction creer-tas est donc simple :</p><pre id="r-453985" data-claire-element-id="453985"><code data-claire-semantic="ocaml">let creer_tas a taille = 
+for i = taille/2 downto 0 
+ do
+        entasser_tas a taille i
+ done;;</code></pre><p id="r-453986" data-claire-element-id="453986">creer-tas appelle n fois entasser-tas dont le cout est de O(lg n). On peut donc majorer le nombre d'opération effectué par creer-tas par O(n lg n). Cependant, on peut en fait affiner notre majoration et démontrer que creer-tas s'exécute en temps linéaire : O(n).</p><p id="r-453987" data-claire-element-id="453987">Pour les curieux (cette démonstration est tirée du Cormen), c'est <a href="http://progmod.org/assets/demotri/demo1.html">ici</a>.</p><p id="r-453988" data-claire-element-id="453988">Pour ceux qui ont remarqué, ce n'est par hasard que l'on fait itérer la boucle de taille/2 à 0 au lieu de faire l'inverse, dans ce sens entasser-tas effectuera moins d'opérations.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/le-tri-par-tas">Le tri par tas</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/le-tri-par-tas/les-tas-binaires">
+Les tas (binaires)
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-tri-par-tas/tri-par-tas-1">
+Tri par tas
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-tri-par-tas/tri-par-tas-1">
+<span class="next">Tri par tas</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Tripartas"></a><h2>Tri par tas</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-tri-par-tas/les-tas-binaires">
+<span class="arrow"></span>
+<span class="next">Les tas (binaires)</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-implementation-21" data-claire-element-id="453996">Implémentation</h2><p id="r-453991" data-claire-element-id="453991">Nous avons maintenant tout les fonctions nécessaires pour coder notre algorithme de tri par tas. Le principe est le suivant : <br/> On convertit notre tableau en tas-max. <br/> Le tas max nous garantit que la racine du tas est le plus grand élément du tas. On permute donc la racine avec le dernier élément du tas. On entasse alors la nouvelle racine qui n'est plus à sa place.<br/> On réitère alors cette opération avec la nouvelle racine du tas.</p><p id="r-453992" data-claire-element-id="453992">Cela donne :</p><pre id="r-453993" data-claire-element-id="453993"><code data-claire-semantic="ocaml">let tri_par_tas a taille = 
+  creer_tas a taille;    
+  for i = taille-1 downto 1 do   
+    permuter a 0 i;   
+    entasser_tas a i 0;      
+  done;;</code></pre><p id="r-453994" data-claire-element-id="453994">Un petit test :</p><pre id="r-453995" data-claire-element-id="453995"><code data-claire-semantic="console"># let t = [| 1; 3; 9; 1; 4; 0|];;
+val t : int array = [|1; 3; 9; 1; 4; 0|]
+# tri_par_tas t 6;;
+- : unit = ()
+# t;;
+- : int array = [|0; 1; 1; 3; 4; 9|]</code></pre><h2 id="r-efficacite-5" data-claire-element-id="454008">Efficacité</h2><p id="r-453997" data-claire-element-id="453997">La complexité de tri-par-tas est facilement calculable :<br/> creer-tas prend un temps O(n)<br/> entasser-tas prend un temps O(lg n). Cette procédure est appelé n-2 fois donc les différents appels de entasser-tas prennent un temps O(n lg n).</p><p id="r-453998" data-claire-element-id="453998">Au final le tri-par-tas prends bien un temps O(n log n) comme annoncé en introduction.</p><p id="r-453999" data-claire-element-id="453999">J'ai codé une fonction comparer-tri pour pouvoir comparer le temps que mettent 2 fonctions de tri pour trier des tableaux de grandes tailles que l'on a rempli au hasard. En fait comparer-tri fait effectuer n tri de tableau de taille taille_entree.</p><pre id="r-454000" data-claire-element-id="454000"><code data-claire-semantic="ocaml">let comparer_tri tri1 tri2 taille_entree n = 
+  let remplir_tab n =
+   Random.self_init ();
+   let rand i = Random.int 50 in
+    Array.init n rand
+  in
+  let temps_tri tri = 
+    let t1 =  Sys.time () in
+      for i = 0 to n do
+        tri (remplir_tab taille_entree) taille_entree;
+      done;
+      print_float (Sys.time () -. t1);
+      print_newline ();
+  in
+ print_string &quot;tri 1 : &quot;; temps_tri tri1;
+ print_string &quot;tri 2 : &quot;; temps_tri tri2;;</code></pre><p id="r-454001" data-claire-element-id="454001">Voici les résultats quand on compare le tri par tas avec le tri à bulle (de complexité O(n²)) :</p><pre id="r-454002" data-claire-element-id="454002"><code data-claire-semantic="console"># comparer_tri tri_par_tas tri_a_bulle 100 100;;
+tri1 : 0.100006
+tri2 : 0.284018- : unit = ()</code></pre><p id="r-454003" data-claire-element-id="454003">Ca peut paraître faible mais il suffit d'augmenter la taille de l'entrée pour constater une énorme différence :</p><pre id="r-454004" data-claire-element-id="454004"><code data-claire-semantic="console"># comparer_tri tri_par_tas tri_a_bulle 1000 1000;;
+tri1 : 1.12807
+tri2 : 25.969624- : unit = ()</code></pre><p id="r-454005" data-claire-element-id="454005">On peut aussi comparer le tri par tas avec le tri rapide :</p><pre id="r-454006" data-claire-element-id="454006"><code data-claire-semantic="console"># comparer_tri tri_par_tas tri_rapide 1000 1000;;
+tri1 : 1.112069
+tri2 : 0.592037- : unit = ()</code></pre><p id="r-454007" data-claire-element-id="454007">Avantage donc au tri rapide. A noter que la différence est tout même largement inférieur qu'avec le tri à bulle.</p><h2 id="r-introduction-aux-files-de-priorite" data-claire-element-id="454012">Introduction aux files de priorité</h2><p id="r-454009" data-claire-element-id="454009">Pour conclure, je voudrais rapidement introduire les files de priorité. Le tas n'est évidemment pas utilisé seulement dans le cadre du tri par tas. Une de ses utilisation importante est l'implantation de file de priorité. Ces files de priorités sont notemment utilisé dans le cadre des algorithmes de plus court chemin (comme l'algorithme de Dijkstra) pour connaître le prochain noeud à visiter.</p><p id="r-454010" data-claire-element-id="454010">Pourquoi on utilise des tas en tant que file de priorité ?</p><p id="r-454011" data-claire-element-id="454011">Souvenez vous de la propriété du tas-min. La racine d'un tas contient la valeur la moins importante du tas. Donc dans un tas-min on peut accéder en temps constant à la plus petite valeur du tas. Dans le cadre d'un algorithme de plus court chemin, cette valeur peut par exemple être la distance de la racine au noeud étudié. Bref, si un jour vous avez besoin d'une structure de donnée qui doit vous permettre de connaitre la plus grande ou plus petite valeur d'un ensemble, implanter un tas peut être une bonne idée. Vous avez maintenant tout les outils en main pour le faire.</p><h2 id="r-references-4" data-claire-element-id="454015">Références</h2><p id="r-454013" data-claire-element-id="454013">Introduction à l'algorithmique, Cormen, 2ème édition <br/> Tas : http://fr.wikipedia.org/wiki/Tas_(informatique)<br/> Tri par tas : <a href="http://fr.wikipedia.org/wiki/Tri_par_tas">http://fr.wikipedia.org/wiki/Tri_par_tas</a></p><p id="r-454014" data-claire-element-id="454014">Remerciement à iPoulet pour sa relecture.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/le-tri-par-tas">Le tri par tas</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-tri-par-tas/les-tas-binaires">
+Les tas (binaires)
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/le-tri-par-tas/tri-par-tas-1">
+Tri par tas
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-tri-par-tas/les-tas-binaires">
+<span class="arrow"></span>
+<span class="next">Les tas (binaires)</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/le-tri-par-tas.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 11:23:22 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/le-tri-par-tas.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:50:18 GMT -->
+</html>

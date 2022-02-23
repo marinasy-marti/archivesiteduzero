@@ -1,0 +1,220 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/les-caches-adresses-par-somme-sum-adressed-caches.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 08:48:24 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/les-caches-adresses-par-somme-sum-adressed-caches.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:34:27 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Les Caches adressés par somme (Sum Adressed Caches)</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/les-caches-adresses-par-somme-sum-adressed-caches.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Les Caches adressés par somme (Sum Adressed Caches)</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#LesCachesadresssparsommeSumAdressedCaches">Les Caches adressés par somme (Sum Adressed Caches)</a><br/><a href="#Cacheindexs">Cache indexés</a><br/><a href="#Dcodage">Décodage</a><br/><a href="#Sum-AdressedCaches">Sum-Adressed Caches</a><br/></div>
+<a name="LesCachesadresssparsommeSumAdressedCaches"></a><h2>Les Caches adressés par somme (Sum Adressed Caches)</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-caches-adresses-par-somme-sum-adressed-caches/cache-indexes">
+<span class="next">Cache indexés</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<aside id="r-581511" data-claire-element-id="581511" data-claire-semantic="warning"><p id="r-581509" data-claire-element-id="581509">Vous ne comprendrez rien à ce tutoriel si vous ne savez pas ce qu'est un mode d'adressage, une mémoire cache, ou une porte logique. Si ce n'est pas le cas, je vous conseille de lire les 6 premiers chapitres du tutoriel suivant : <a href="http://www.siteduzero.com/tutoriel-3-509203-fonctionnement-d-un-ordinateur-depuis-zero.html">Fonctionnement d'un ordinateur depuis zéro</a>. Vous devez aussi lire le chapitre sur les mémoires caches de ce même tutoriel, ainsi que le chapitre sur le contrôleur mémoire - si vous ne savez pas à quoi sert un décodeur dans une mémoire, vous ne devez pas lire ce tutoriel.</p><p id="r-581510" data-claire-element-id="581510">De plus, le début du tutoriel nécessite de savoir ce qu'est une table de hachage, ainsi que comment faire pour en implanter une avec un tableau. Ce qui peut s'apprendre grâce au tutoriel suivant : <a href="http://www.siteduzero.com/tutoriel-3-322017-les-tables-de-hachage.html"> Les tables de hachage</a>.</p></aside><p id="r-581512" data-claire-element-id="581512">Comme vous le savez, nos processeurs sont capables de gérer plusieurs modes d'adressages bien différents. Parmi eux, certains modes d'adressages ont étés conçus pour faciliter l'implémentation de certaines structures de données, comme les tableaux, les structures, les tableaux de structures, les piles, etc. Ces modes d'adressages ont tous un point en commun : ils doivent calculer une adresse mémoire à partir de certaines informations, comme un indice, un décalage, etc.</p><p id="r-581513" data-claire-element-id="581513">Sur la majorité des processeurs, ce calcul est effectué soit dans l'unité de calcul, soit dans un circuit dédié aux calculs d'adresse, implanté dans les circuits chargés de communiquer avec la mémoire. Une instruction voulant utiliser ce genre de mode d'adressage devra donc s'effectuer en deux étapes : une étape de calcul d'adresse, et une autre qui accède à la mémoire. D'ordinaire, cet accès mémoire va atterrir dans la mémoire cache, et se terminera soit en <em>Cache Hit</em>, soit en <em>Cache Miss</em>. Il faut un certain temps avant de savoir si la donnée est bien présente dans le cache. Et ce temps est vraiment long.</p><p id="r-581514" data-claire-element-id="581514">Pour diminuer le plus possible ce temps d'attente, certains processeurs cherchent à diminuer le plus possible de temps mit à calculer l'adresse. C'est pour résoudre de petit problème que l'on a inventé les caches adressés par somme, aussi appelés <strong><em>Sum Adressed Caches</em></strong>. Avec eux, le calcul de l'adresse n'est plus nécessaire pour accéder à notre donnée. Voyons un peu ce que ces caches ont dans le ventre !</p>
+</div><a name="Cacheindexs"></a><h2>Cache indexés</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-caches-adresses-par-somme-sum-adressed-caches/decodage">
+<span class="next">Décodage</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-581515" data-claire-element-id="581515">Au cas où vous n'auriez pas remarqué, on peut parfaitement considérer que notre mémoire cache est une table de hachage (et plus précisément une table associative), qui associe des adresses mémoires à des données. Une portion cette adresse mémoire, nommée le <em>Tag</em>, fait ainsi office de clé permettant de retrouver une donnée dans notre cache.</p><figure id="r-581517" data-claire-element-id="581518"><img id="r-581516" data-claire-element-id="581516" src="medias/uploads.siteduzero.com_files_414001_415000_414035.png" alt="Image utilisateur"/></figure><h2 id="r-caches-direct-mapped" data-claire-element-id="581524">Caches Direct Mapped</h2><p id="r-581519" data-claire-element-id="581519">Si vous vous souvenez de vos cours d'algorithmique, vous savez qu'il est possible d'implanter une table de hachage en utilisant un tableau. Pour retrouver notre donnée à partir de la clé, on va utiliser une fonction de hachage : celle-ci va prendre la clé, et va l'utiliser pour déterminer l'indice de notre donnée dans le tableau.</p><figure id="r-581521" data-claire-element-id="581522"><img id="r-581520" data-claire-element-id="581520" src="medias/uploads.siteduzero.com_files_414001_415000_414036.png" alt="Image utilisateur"/></figure><p id="r-581523" data-claire-element-id="581523">En Hardware, on dispose de l'équivalent d'un tableau : il s'agit d'une mémoire RAM. On peut parfaitement considérer qu'une RAM est un tableau de <em>Bytes </em>dont les adresses mémoires sont des indices. On peut donc utiliser une RAM en guise de cache; en ajoutant quelques circuits autour. Certaines mémoires caches sont implémentées d'une telle manière : il s'agit des mémoires <em>Direct Mapped</em>. D'autres mémoires caches sont conçues en rassemblant plusieurs caches <em>Direct Mapped</em> : ce sont les caches <em>N-Ways Associative</em>. Tout ce qui suivre sera applicable à ces deux types de caches.</p><h2 id="r-tags" data-claire-element-id="581530">Tags</h2><p id="r-581525" data-claire-element-id="581525">La fonction de hachage est implémentée directement en matériel, dans des circuits spéciaux. L'adresse mémoire servant de clé va ainsi subir quelques modifications pour être transformée en indice (en adresse destinée à la mémoire RAM intégrée au cache). Généralement, la fonction de hachage est un simple modulo : certains bits de poids faible forment l'indice, et les autres servent de <em>Tag</em>. Et le reste sert à préciser la position de la donnée dans notre ligne de cache.</p><figure id="r-581527" data-claire-element-id="581528"><img id="r-581526" data-claire-element-id="581526" src="medias/uploads.siteduzero.com_files_413001_414000_413943.png" alt="Image utilisateur"/></figure><p id="r-581529" data-claire-element-id="581529">Il est évident que cette fonction de hachage n'est pas parfaite, et peut donner naissance à des collisions : on peut obtenir le même indice en appliquant la fonction de hachage sur deux adresses mémoires différentes.</p><h2 id="r-implementation-28" data-claire-element-id="581536">Implémentation</h2><p id="r-581531" data-claire-element-id="581531">Quoiqu'il en soit, notre mémoire cache <em>Direct Mapped</em> ressemble alors à ceci :</p><figure id="r-581533" data-claire-element-id="581534"><img id="r-581532" data-claire-element-id="581532" src="medias/uploads.siteduzero.com_files_413001_414000_413942.png" alt="Image utilisateur"/></figure><p id="r-581535" data-claire-element-id="581535">Une mémoire cache <em>N-Ways Associative</em> ressemble fortement à une mémoire cache <em>Direct Mapped</em>, avec tout de même quelques différences. Il y a notamment plusieurs mémoires RAM internes au cache. Mais passons, ce n'est pas très important pour la suite.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-caches-adresses-par-somme-sum-adressed-caches">Les Caches adressés par somme (Sum Adressed Caches)</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-caches-adresses-par-somme-sum-adressed-caches/cache-indexes">
+Cache indexés
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-caches-adresses-par-somme-sum-adressed-caches/decodage">
+Décodage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-caches-adresses-par-somme-sum-adressed-caches/sum-adressed-caches">
+Sum-Adressed Caches
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-caches-adresses-par-somme-sum-adressed-caches/decodage">
+<span class="next">Décodage</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Dcodage"></a><h2>Décodage</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-caches-adresses-par-somme-sum-adressed-caches/cache-indexes">
+<span class="arrow"></span>
+<span class="next">Cache indexés</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-caches-adresses-par-somme-sum-adressed-caches/sum-adressed-caches">
+<span class="next">Sum-Adressed Caches</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-581538" data-claire-element-id="581538">Comme on l'a vu plus haut, les caches <em>direct mapped</em> ou <em>N way-associative</em>, contiennent toujours une ou plusieurs mémoires RAM internes au cache, qui servent à stocker les données et les <em>Tags</em>. Cette mémoire RAM est composé comme toute les autres mémoires RAM : elle contient un décodeur, des <em>bytes</em>, et des tas d'autres choses. L'intérieur de notre mémoire RAM ressemble à ceci :</p><p id="r-581539" data-claire-element-id="581539"><em>Exemple d'une mémoire de 4 cases mémoires avec une adresse de deux bits.</em></p><figure id="r-581541" data-claire-element-id="581542"><img id="r-581540" data-claire-element-id="581540" src="../../user.oc-static.com/files/407001_408000/407097.png" alt="Image utilisateur"/></figure><p id="r-581543" data-claire-element-id="581543">Dans ce qui va suivre, nous allons nous intéresser au décodeur : c'est lui qu'on va améliorer. Et quelques rappels sur ces décodeurs s'imposent.</p><h2 id="r-c-est-quoi-6" data-claire-element-id="581561">C'est quoi ?</h2><p id="r-581544" data-claire-element-id="581544">Pour rappel, un décodeur est un composant qui sélectionne un byte à partir d'une adresse codée sur n bits. Il doit répondre à plusieurs exigences :</p><ul id="r-581555" data-claire-element-id="581555"><li id="r-581546" data-claire-element-id="581546"><p id="r-581545" data-claire-element-id="581545">Il doit manipuler une adresse de n<em>bits</em> : ce contrôleur a donc n entrées ;</p></li><li id="r-581548" data-claire-element-id="581548"><p id="r-581547" data-claire-element-id="581547">notre adresse de n bits peut adresser 2^{n} bytes : notre contrôleur mémoire doit donc posséder 2^{n} sorties ;</p></li><li id="r-581550" data-claire-element-id="581550"><p id="r-581549" data-claire-element-id="581549">chacune de ces sorties permettra de connecter ou déconnecter une case mémoire du bus ;</p></li><li id="r-581552" data-claire-element-id="581552"><p id="r-581551" data-claire-element-id="581551">on ne doit sélectionner qu'une seule case mémoire à la fois : une seule sortie devra être placée à 1, et toutes les autres à zéro ;</p></li><li id="r-581554" data-claire-element-id="581554"><p id="r-581553" data-claire-element-id="581553">et enfin, deux adresses différentes devront sélectionner des cases mémoires différentes : la sortie de notre contrôleur qui sera mise à 1 sera différente pour deux adresses différentes placées sur son entrée.</p></li></ul><p id="r-581556" data-claire-element-id="581556"><em>Exemple d'un décodeur à 3 entrée et 8 sorties.</em></p><figure id="r-581558" data-claire-element-id="581559"><img id="r-581557" data-claire-element-id="581557" src="../../user.oc-static.com/files/362001_363000/362643.png" alt="Image utilisateur"/></figure><p id="r-581560" data-claire-element-id="581560">On peut remarquer que toutes les sorties d'un décodeur sont numérotées : sur un décodeur possédant N entrées, nos sorties sont numérotées de 0 à 2^{N} - 1. Le fonctionnement de notre décodeur est très simple : il prend sur son entrée un nombre entier <strong>x</strong> codé en binaire, positionne à 1 la sortie numéroté <strong>x</strong> et positionne à zéro toutes les autres sorties.</p><h2 id="r-implementation-29" data-claire-element-id="581567">Implémentation</h2><p id="r-581562" data-claire-element-id="581562">Ce décodeur est, comme tous les autres circuits électroniques, conçu avec des portes logiques. Reste à savoir comment le concevoir... En réfléchissant bien, on sait qu'on peut déduire la sortie assez facilement en fonction de l'entrée. Si l’entrée vaut 0, la sortie mise à 1 sera la sortie 0. Si l'adresse vaut 1, ce sera la sortie 1. Et on peut continuer ainsi de suite. En clair : si l'adresse vaut N, la sortie mise à 1 sera la sortie N. Bref, déduire quand mettre à 1 la sortie N est facile : il suffit de comparer l'adresse avec N. Si l'adresse vaut N, on envoie un 1 sur la sortie, et on envoie un zéro sinon. Pour cela, j'ai donc besoin d'un comparateur spécial pour chaque sortie, et le tour est joué.</p><p id="r-581563" data-claire-element-id="581563">Exemple d'un décodeur à 8 sorties.</p><figure id="r-581565" data-claire-element-id="581566"><img id="r-581564" data-claire-element-id="581564" src="../../user.oc-static.com/files/408001_409000/408461.png" alt="Image utilisateur"/></figure>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-caches-adresses-par-somme-sum-adressed-caches">Les Caches adressés par somme (Sum Adressed Caches)</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-caches-adresses-par-somme-sum-adressed-caches/cache-indexes">
+Cache indexés
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-caches-adresses-par-somme-sum-adressed-caches/decodage">
+Décodage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-caches-adresses-par-somme-sum-adressed-caches/sum-adressed-caches">
+Sum-Adressed Caches
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-caches-adresses-par-somme-sum-adressed-caches/cache-indexes">
+<span class="arrow"></span>
+<span class="next">Cache indexés</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-caches-adresses-par-somme-sum-adressed-caches/sum-adressed-caches">
+<span class="next">Sum-Adressed Caches</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Sum-AdressedCaches"></a><h2>Sum-Adressed Caches</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-caches-adresses-par-somme-sum-adressed-caches/decodage">
+<span class="arrow"></span>
+<span class="next">Décodage</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-581569" data-claire-element-id="581569">Certains modes d'adressages donnent directement l'adresse à laquelle on doit accéder (peut importe que celle-ci soit placées dans un registre ou dans une instruction). Mais d'autres ont besoin de calculer cette adresse. Et certains vont additionner un décalage à une adresse mémoire. Le décalage en question peut être un Indice de tableau, un <em>Offset</em> permettent de localiser une donnée dans une structure ou un cadre de pile, peut importe.</p><p id="r-581570" data-claire-element-id="581570">Ces modes d'adressages sont les suivants :</p><ul id="r-581577" data-claire-element-id="581577"><li id="r-581572" data-claire-element-id="581572"><p id="r-581571" data-claire-element-id="581571">Indexed Absolute ;</p></li><li id="r-581574" data-claire-element-id="581574"><p id="r-581573" data-claire-element-id="581573">Base + Index ;</p></li><li id="r-581576" data-claire-element-id="581576"><p id="r-581575" data-claire-element-id="581575">Base + Offset.</p></li></ul><p id="r-581578" data-claire-element-id="581578">Sur un cache ordinaire, l'addition est faite séparément du décodage.</p><figure id="r-581580" data-claire-element-id="581581"><img id="r-581579" data-claire-element-id="581579" src="medias/uploads.siteduzero.com_files_413001_414000_413721.png" alt="Image utilisateur"/></figure><p id="r-581582" data-claire-element-id="581582">D'ordinaire, l'addition est réalisée dans l'unité de calcul du processeur. Ce qui fait que le schéma du dessus est un schéma de principe, et ne doit pas être pris au pied de la lettre.</p><h2 id="r-bitwise-indexing" data-claire-element-id="581585">Bitwise Indexing</h2><p id="r-581583" data-claire-element-id="581583">Pour éviter d'avoir à effectuer l'addition entre l'adresse-clé et l'Offset, certains concepteurs de mémoire cache ont donc cherchés à ruser en remplaçant cette addition par autre chose. Avec la techniques ordinaire, on calcule l'adresse de notre donnée via une addition, avant de lui faire subir une fonction de hachage pour retrouver l'emplacement de la donnée. Au lieu de cela, certains ont tentés d'inventer une fonction de hachage qui prendrait en entrée un couple Adresse / Offset. Certains ont essayés d'utiliser des opération Bitwise du style XOR, AND ou OR, etc.</p><p id="r-581584" data-claire-element-id="581584">Seulement, utiliser des opérations bitwise a un problème. Il arrive souvent que deux couples Adresse / Offset donnent au final la même adresse mémoire. Par exemple, le couple Adresse/Offset 11101111/0001 donnera la même adresse que le couple 11110000/0000. Logiquement, ces deux couples devront donner un indice identique. Mais ce n'est pas forcément le cas : il arrive que deux couples, donnant la même adresse mémoire, donnent des indices différents une fois passés par la fonction de hachage ! Autant dire que cela ne marchait pas fort. Il était toutefois possible de gérer ces situations, mais cela nécessitait quelques techniques de haute volée pour faire fonctionner la mémoire cache correctement.</p><h2 id="r-sum-adressed-cache" data-claire-element-id="581590">Sum Adressed Cache</h2><p id="r-581586" data-claire-element-id="581586">Mais d'autres chercheurs ont eu une meilleure idée : pour diminuer le plus possible ce temps d'attente, ils ont décidés de fusionner le décodage avec l'addition. Au lieu d'envoyer le résultat de l'addition au décodeur, on va envoyer les deux nombres, et notre décodeur vérifiera si la somme de ces deux nombres est égale à 0, 1, 2, etc. L'addition est en quelque sorte fusionnée dans le décodeur.</p><figure id="r-581588" data-claire-element-id="581589"><img id="r-581587" data-claire-element-id="581587" src="medias/uploads.siteduzero.com_files_414001_415000_414086.png" alt="Image utilisateur"/></figure><h2 id="r-principes-et-circuits" data-claire-element-id="581763">Principes et circuits</h2><p id="r-581591" data-claire-element-id="581591">Comme on le voit, notre décodeur nouvelle version est composé de plusieurs circuits de base. Ils sont chacun capables de tester si la somme Adresse + Offset est égale à une constante. Si on sait créer ces circuits de base, il suffira d'en mettre plusieurs, de les calibrer convenablement, et le tour est joué !</p><h3 id="r-quelques-formules" data-claire-element-id="581601">Quelques formules</h3><p id="r-581592" data-claire-element-id="581592">Pour créer un de ces circuit de base, on a besoin de savoir comment faire pour vérifier si la somme de deux nombres (l'adresse et l'Offset) est égale à une constante. Pour cela, on doit remarquer quelque chose : A + B = K peut aussi s'écrire comme ceci :</p><p id="r-581593" data-claire-element-id="581593">A + B - K = 0</p><p id="r-581594" data-claire-element-id="581594">D'après les règles du complément à deux, on sait que -K = \overline{K}+1. On peut donc remplacer -K par \overline{K}+1 dans la première équation. On trouve alors :</p><p id="r-581595" data-claire-element-id="581595">A + B + \overline{K} + 1 = 0</p><p id="r-581596" data-claire-element-id="581596">Ce qui est équivalent à :</p><p id="r-581597" data-claire-element-id="581597">A + B + \overline{K} = -1</p><p id="r-581598" data-claire-element-id="581598">Or, -1 s'écrit 11111111...111 en binaire. Ce qui fait que l'on cherche à vérifier que :</p><p id="r-581599" data-claire-element-id="581599">A + B + \overline{K} = 111111...1</p><p id="r-581600" data-claire-element-id="581600">En clair, il nous suffit d'additionner nos trois nombres et vérifier que tous les bits du résultat valent bien 1.</p><h3 id="r-carry-save" data-claire-element-id="581613">Carry Save</h3><p id="r-581602" data-claire-element-id="581602">Sur le principe, cela semble mal parti : on remplace une addition et une comparaison, par deux additions et une comparaison. Mais ces deux additions et cette comparaison peuvent s'effectuer très rapidement en utilisant une représentation un peu spéciale du résultat : le <strong>Carry Save</strong>. Avec cette représentation, on va pouvoir additionner plusieurs nombres et obtenir un résultat représenté en <em>Carry Save</em> bien plus rapidement qu'en temps normal. Pour effectuer cette addition en <em>Carry Save</em>, on additionne les bits de même poids, et on stocke le résultat sur plusieurs bits, sans propager les retenues.</p><p id="r-581603" data-claire-element-id="581603">Par exemple, regardons ce qui se passe avec trois nombres. L'addition de trois bits en <em>Carry Save</em> va donner un résultat sur deux bits : une retenue, et une somme. En additionnant chaque bit de nos trois nombres uns par uns, on obtient la somme des trois nombres en<em>Carry Save</em>.</p><p id="r-581604" data-claire-element-id="581604">~~1~~0~~0~~0+~1~~0~~1~~0+~1~~1~~1~~0 =~3~~1~~2~~0 =~11~01~10~00</p><p id="r-581605" data-claire-element-id="581605">Le résultat peut être interprété comme étant composé de deux résultats : un nombre composé des sommes des bits, et un autre composé des retenues.</p><figure id="r-581607" data-claire-element-id="581608"><img id="r-581606" data-claire-element-id="581606" src="medias/uploads.siteduzero.com_files_414001_415000_414031.png" alt="Image utilisateur"/></figure><p id="r-581609" data-claire-element-id="581609">Cette addition de trois nombres en <em>Carry Save</em> n'est pas compliquée à faire. Naïvement, on se dit qu'il suffit de créer un petit circuit capable d'additionner trois bits et d'en placer plusieurs les uns à coté des autres.</p><figure id="r-581611" data-claire-element-id="581612"><img id="r-581610" data-claire-element-id="581610" src="medias/uploads.siteduzero.com_files_414001_415000_414073.png" alt="Image utilisateur"/></figure><h3 id="r-circuit-total" data-claire-element-id="581628">Circuit total</h3><p id="r-581614" data-claire-element-id="581614">Il ne nous reste plus qu'à vérifier que la somme de la retenue et de la somme de deux bits donne bien -1.</p><figure id="r-581616" data-claire-element-id="581617"><img id="r-581615" data-claire-element-id="581615" src="medias/uploads.siteduzero.com_files_414001_415000_414037.png" alt="Image utilisateur"/></figure><p id="r-581618" data-claire-element-id="581618">Cela n'est possible qu'à une condition : entre le bit C_{i-1} et le S_i, un seul doit valoir 1. On doit donc créer un circuit pour ça. Faites sa table de vérité, vous tomberez sur une porte <em><strong>XOR</strong></em>.</p><figure id="r-581620" data-claire-element-id="581621"><img id="r-581619" data-claire-element-id="581619" src="medias/uploads.siteduzero.com_files_414001_415000_414458.png" alt="Image utilisateur"/></figure><p id="r-581622" data-claire-element-id="581622">Et cela doit être valable pour tous les bits du nombre. En clair, on doit effectuer un gros <strong><em>ET</em></strong> entre toutes les sorties des Portes <strong><em>XOR</em></strong> : on obtient une sortie de notre décodeur.</p><figure id="r-581624" data-claire-element-id="581625"><img id="r-581623" data-claire-element-id="581623" src="medias/uploads.siteduzero.com_files_414001_415000_414457.png" alt="Image utilisateur"/></figure><p id="r-581626" data-claire-element-id="581626">Il ne reste plus qu'à dupliquer ces circuits, en modifiant l'additionneur (pour régler la constante), et le tour est joué !</p><p id="r-581627" data-claire-element-id="581627">Comme on le voit, l'addition disparait et est remplacée par quelques portes logiques en plus. Autant dire que l'on gagne tout de même un petit peu en rapidité. Mais ne vous affolez pas : on gagne assez peu, juste de quoi gagner un cycle d'horloge sur un accès au cache L1/L2. Autant dire que ce n'est pas une technique miracle pour avoir un cache accessible rapidement.</p><h3 id="r-optimisations" data-claire-element-id="581762">Optimisations</h3><p id="r-581629" data-claire-element-id="581629">Le décodeur que l'on a vu plus haut est franchement simpliste, et on peut lui apporter de nombreuses améliorations. Voyons lesquelles.</p><p id="r-581630" data-claire-element-id="581630">Plus haut, on a utilisé des additionneurs complets pour additionner l'adresse, l'Offset, et notre constante. Ces additionneurs complets sont assez lourds et utilisent pas mal de portes logiques. Pour votre culture générale, un additionneur complet est souvent implémenté comme ceci :</p><figure id="r-581632" data-claire-element-id="581633"><img id="r-581631" data-claire-element-id="581631" src="medias/uploads.siteduzero.com_files_414001_415000_414076.png" alt="Image utilisateur"/></figure><p id="r-581634" data-claire-element-id="581634">Mais vu que notre troisième nombre est une constante, on n'a pas vraiment besoin d'additionneurs complets : un simple circuit qui additionne deux bits et qui supposent que le bit du troisième nombre (la constante K) vaut 1 ou 0.</p><p id="r-581635" data-claire-element-id="581635">Notre premier circuit, qui additionne deux bits, en supposant que le bit de la constante vaut zéro a la table de vérité suivante :</p><table id="r-581693" data-claire-element-id="581693"><thead id="r-581647" data-claire-element-id="581647"><tr id="r-581646" data-claire-element-id="581646"><th id="r-581637" data-claire-element-id="581637"><p id="r-581636" data-claire-element-id="581636">Bit A</p></th><th id="r-581639" data-claire-element-id="581639"><p id="r-581638" data-claire-element-id="581638">Bit B</p></th><th id="r-581641" data-claire-element-id="581641"><p id="r-581640" data-claire-element-id="581640">-</p></th><th id="r-581643" data-claire-element-id="581643"><p id="r-581642" data-claire-element-id="581642">Retenue</p></th><th id="r-581645" data-claire-element-id="581645"><p id="r-581644" data-claire-element-id="581644">Somme</p></th></tr></thead><tbody id="r-581692" data-claire-element-id="581692"><tr id="r-581658" data-claire-element-id="581658"><td id="r-581649" data-claire-element-id="581649"><p id="r-581648" data-claire-element-id="581648">0</p></td><td id="r-581651" data-claire-element-id="581651"><p id="r-581650" data-claire-element-id="581650">0</p></td><td id="r-581653" data-claire-element-id="581653"><p id="r-581652" data-claire-element-id="581652">-</p></td><td id="r-581655" data-claire-element-id="581655"><p id="r-581654" data-claire-element-id="581654">0</p></td><td id="r-581657" data-claire-element-id="581657"><p id="r-581656" data-claire-element-id="581656">0</p></td></tr><tr id="r-581669" data-claire-element-id="581669"><td id="r-581660" data-claire-element-id="581660"><p id="r-581659" data-claire-element-id="581659">0</p></td><td id="r-581662" data-claire-element-id="581662"><p id="r-581661" data-claire-element-id="581661">1</p></td><td id="r-581664" data-claire-element-id="581664"><p id="r-581663" data-claire-element-id="581663">-</p></td><td id="r-581666" data-claire-element-id="581666"><p id="r-581665" data-claire-element-id="581665">0</p></td><td id="r-581668" data-claire-element-id="581668"><p id="r-581667" data-claire-element-id="581667">1</p></td></tr><tr id="r-581680" data-claire-element-id="581680"><td id="r-581671" data-claire-element-id="581671"><p id="r-581670" data-claire-element-id="581670">1</p></td><td id="r-581673" data-claire-element-id="581673"><p id="r-581672" data-claire-element-id="581672">0</p></td><td id="r-581675" data-claire-element-id="581675"><p id="r-581674" data-claire-element-id="581674">-</p></td><td id="r-581677" data-claire-element-id="581677"><p id="r-581676" data-claire-element-id="581676">0</p></td><td id="r-581679" data-claire-element-id="581679"><p id="r-581678" data-claire-element-id="581678">1</p></td></tr><tr id="r-581691" data-claire-element-id="581691"><td id="r-581682" data-claire-element-id="581682"><p id="r-581681" data-claire-element-id="581681">1</p></td><td id="r-581684" data-claire-element-id="581684"><p id="r-581683" data-claire-element-id="581683">1</p></td><td id="r-581686" data-claire-element-id="581686"><p id="r-581685" data-claire-element-id="581685">-</p></td><td id="r-581688" data-claire-element-id="581688"><p id="r-581687" data-claire-element-id="581687">1</p></td><td id="r-581690" data-claire-element-id="581690"><p id="r-581689" data-claire-element-id="581689">0</p></td></tr></tbody></table><p id="r-581694" data-claire-element-id="581694">On obtient alors le circuit suivant :</p><figure id="r-581696" data-claire-element-id="581697"><img id="r-581695" data-claire-element-id="581695" src="medias/uploads.siteduzero.com_files_414001_415000_414079.png" alt="Image utilisateur"/></figure><p id="r-581698" data-claire-element-id="581698">Le second circuit, qui additionne deux bits, en supposant que le bit de la constante vaut 1, a la table de vérité suivante :</p><table id="r-581756" data-claire-element-id="581756"><thead id="r-581710" data-claire-element-id="581710"><tr id="r-581709" data-claire-element-id="581709"><th id="r-581700" data-claire-element-id="581700"><p id="r-581699" data-claire-element-id="581699">Bit A</p></th><th id="r-581702" data-claire-element-id="581702"><p id="r-581701" data-claire-element-id="581701">Bit B</p></th><th id="r-581704" data-claire-element-id="581704"><p id="r-581703" data-claire-element-id="581703">-</p></th><th id="r-581706" data-claire-element-id="581706"><p id="r-581705" data-claire-element-id="581705">Retenue</p></th><th id="r-581708" data-claire-element-id="581708"><p id="r-581707" data-claire-element-id="581707">Somme</p></th></tr></thead><tbody id="r-581755" data-claire-element-id="581755"><tr id="r-581721" data-claire-element-id="581721"><td id="r-581712" data-claire-element-id="581712"><p id="r-581711" data-claire-element-id="581711">0</p></td><td id="r-581714" data-claire-element-id="581714"><p id="r-581713" data-claire-element-id="581713">0</p></td><td id="r-581716" data-claire-element-id="581716"><p id="r-581715" data-claire-element-id="581715">-</p></td><td id="r-581718" data-claire-element-id="581718"><p id="r-581717" data-claire-element-id="581717">0</p></td><td id="r-581720" data-claire-element-id="581720"><p id="r-581719" data-claire-element-id="581719">1</p></td></tr><tr id="r-581732" data-claire-element-id="581732"><td id="r-581723" data-claire-element-id="581723"><p id="r-581722" data-claire-element-id="581722">0</p></td><td id="r-581725" data-claire-element-id="581725"><p id="r-581724" data-claire-element-id="581724">1</p></td><td id="r-581727" data-claire-element-id="581727"><p id="r-581726" data-claire-element-id="581726">-</p></td><td id="r-581729" data-claire-element-id="581729"><p id="r-581728" data-claire-element-id="581728">1</p></td><td id="r-581731" data-claire-element-id="581731"><p id="r-581730" data-claire-element-id="581730">0</p></td></tr><tr id="r-581743" data-claire-element-id="581743"><td id="r-581734" data-claire-element-id="581734"><p id="r-581733" data-claire-element-id="581733">1</p></td><td id="r-581736" data-claire-element-id="581736"><p id="r-581735" data-claire-element-id="581735">0</p></td><td id="r-581738" data-claire-element-id="581738"><p id="r-581737" data-claire-element-id="581737">-</p></td><td id="r-581740" data-claire-element-id="581740"><p id="r-581739" data-claire-element-id="581739">1</p></td><td id="r-581742" data-claire-element-id="581742"><p id="r-581741" data-claire-element-id="581741">0</p></td></tr><tr id="r-581754" data-claire-element-id="581754"><td id="r-581745" data-claire-element-id="581745"><p id="r-581744" data-claire-element-id="581744">1</p></td><td id="r-581747" data-claire-element-id="581747"><p id="r-581746" data-claire-element-id="581746">1</p></td><td id="r-581749" data-claire-element-id="581749"><p id="r-581748" data-claire-element-id="581748">-</p></td><td id="r-581751" data-claire-element-id="581751"><p id="r-581750" data-claire-element-id="581750">1</p></td><td id="r-581753" data-claire-element-id="581753"><p id="r-581752" data-claire-element-id="581752">1</p></td></tr></tbody></table><p id="r-581757" data-claire-element-id="581757">On obtient alors le circuit suivant :</p><figure id="r-581759" data-claire-element-id="581760"><img id="r-581758" data-claire-element-id="581758" src="medias/uploads.siteduzero.com_files_414001_415000_414081.png" alt="Image utilisateur"/></figure><p id="r-581761" data-claire-element-id="581761">Bien que cette petite amélioration ne semble pas vraiment efficace, presque tous les caches des processeurs actuels sont basés sur ce principe. Le premier processeur commercial qui a implanté ce genre de cache était le processeur Ultra-SPARC III. Depuis, de nombreux processeurs RISC utilisent ce genre de cache, afin de gagner en performances.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-caches-adresses-par-somme-sum-adressed-caches">Les Caches adressés par somme (Sum Adressed Caches)</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-caches-adresses-par-somme-sum-adressed-caches/cache-indexes">
+Cache indexés
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-caches-adresses-par-somme-sum-adressed-caches/decodage">
+Décodage
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-caches-adresses-par-somme-sum-adressed-caches/sum-adressed-caches">
+Sum-Adressed Caches
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-caches-adresses-par-somme-sum-adressed-caches/decodage">
+<span class="arrow"></span>
+<span class="next">Décodage</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/les-caches-adresses-par-somme-sum-adressed-caches.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 08:48:28 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/les-caches-adresses-par-somme-sum-adressed-caches.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:34:31 GMT -->
+</html>

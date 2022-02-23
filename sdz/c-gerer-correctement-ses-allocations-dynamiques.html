@@ -1,0 +1,236 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/c-gerer-correctement-ses-allocations-dynamiques.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 07:11:58 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/c-gerer-correctement-ses-allocations-dynamiques.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:17:21 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : C++ : Gérer correctement ses allocations dynamiques</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/c-gerer-correctement-ses-allocations-dynamiques.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : C++ : Gérer correctement ses allocations dynamiques</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#CGrercorrectementsesallocationsdynamiques">C++ : Gérer correctement ses allocations dynamiques</a><br/><a href="#Rappelsetprisedeconscience">Rappels et prise de conscience</a><br/><a href="#Solutionlespointeursintelligents">Solution : les pointeurs intelligents</a><br/><a href="#Discussion">Discussion</a><br/></div>
+<a name="CGrercorrectementsesallocationsdynamiques"></a><h2>C++ : Gérer correctement ses allocations dynamiques</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/c-gerer-correctement-ses-allocations-dynamiques/rappels-et-prise-de-conscience">
+<span class="next">Rappels et prise de conscience</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-450521" data-claire-element-id="450521">En C++, la mémoire allouée dynamiquement n'est pas libérée automatiquement.<br/> Vouloir gérer ceci manuellement tout en produisant du code correct est une tâche très difficile et risquée. On peut donc s'intéresser à la question suivante : comment automatiser tout cela ?</p>
+</div><a name="Rappelsetprisedeconscience"></a><h2>Rappels et prise de conscience</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/c-gerer-correctement-ses-allocations-dynamiques/solution-les-pointeurs-intelligents">
+<span class="next">Solution : les pointeurs intelligents</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-rappels-8" data-claire-element-id="450527">Rappels</h2><p id="r-450522" data-claire-element-id="450522">Qu'est-ce qu'une allocation dynamique ? C'est simplement l'allocation d'un bout de mémoire sur le tas. Par opposition, l'allocation statique est faite sur la pile. Les objets alloués sur le tas ont une durée de vie que le programmeur peut contrôler autrement que par les blocs : leur destruction n'est pas automatique. En revanche, pour les objets alloués sur la pile, la destruction est faite à la fin du bloc où se trouve la déclaration. Si leur destruction n'est pas automatique, c'est que c'est justement au programmeur de la faire. Ainsi, le C++ offre quatre opérateurs pour gérer l'allocation dynamique : new, new[], delete et delete[]. On les utilise très simplement :</p><pre id="r-450523" data-claire-element-id="450523"><code data-claire-semantic="cpp">int* array = new int[42];
+delete[] array;
+A* obj = new A(&quot;blabla&quot;, true, 'a');
+delete obj;</code></pre><p id="r-450524" data-claire-element-id="450524">new alloue un objet unique sur le tas tandis que new[] alloue une série d'objets, un tableau. Respectivement, il faut utiliser delete et delete[] pour détruire les entités allouées. Il est très important de ne pas mélanger ces opérateurs, on ne fait pas n'importe quoi avec l'allocation dynamique.</p><p id="r-450525" data-claire-element-id="450525">Pourquoi ne pas utiliser std::malloc() qui est une fonction héritée du C ? Tout simplement parce que std::malloc() n'est pas du tout adaptée au C++ : en C, les types sont tous ce qu'en C++ on appelle PODT (plain old data type). Un certain nombre de règles doivent être satisfaites pour qu'un type soit un PODT (vous trouverez plus d'info sur <a href="http://en.wikipedia.org/wiki/Plain_old_data_structure">wikipédia</a> à ce sujet) et notamment l'absence de constructeur et de destructeur dans une structure. C'est là le problème : std::malloc() n'appelle pas le constructeur et la fonction de libération de la mémoire qui va avec, std::free(), n'appelle pas le destructeur. S'il n'y a pas appel au constructeur et au destructeur, automatiquement, un objet non-POD ne pourra pas correctement être construit ni correctement être détruit. Pourtant, c'est un comportement qu'on attend d'un système d'allocation dynamique en C++, et comme les opérateurs new, etc. ne sont pas aussi restrictifs et fonctionnent aussi sur les PODT, on préfèrera toujours utiliser new, delete, etc. plutôt que std::malloc() et std::free().</p><p id="r-450526" data-claire-element-id="450526">Quand bien même on serait amené à utiliser std::malloc(), il faut impérativement libérer la mémoire avec std::free() et avec rien d'autre. Plus généralement, il y a un principe très simple que l'on dicte très souvent aux débutants et qui permet de faire du code correct au niveau de la gestion de la mémoire : un new = un delete ; un new[] = un delete[] ; un std::malloc() = un std::free().</p><h2 id="r-le-danger-dans-tout-ca" data-claire-element-id="450534">Le danger dans tout ça</h2><p id="r-450528" data-claire-element-id="450528">C'est bien beau, mais si l'on suit toujours cette règle à la lettre, notre code restera toujours garanti sans fuite de mémoire et autre tracas ? Normalement oui, mais en pratique ... non. Un système d'allocations dynamiques géré entièrement ainsi (&quot;à la main&quot; vais-je dire) ne sera jamais ou presque jamais à 100% sécurisé. Du moins, pour un projet de taille conséquente, il est très difficile de parvenir à ce résultat et quand on y arrive, on aura tellement amoché le code qu'il ne ressemblera à plus rien. &quot;À la main&quot;, on arrivera pas à trouver un bon compromis entre &quot;code lisible&quot; et &quot;code correct&quot;. Le principal concept du C++ qui présente un réel danger pour ces systèmes gérés &quot;à la main&quot; sont les exceptions. Plus rarement, il peut tout simplement y avoir un oubli quelque part.</p><p id="r-450529" data-claire-element-id="450529">Les exceptions sont des objets qui peuvent être lancés à partir d'un point du programme (souvent quand un problème s'est présenté) et qui, une fois lancés, remontent la pile d'appels jusqu'à ce qu'ils rencontrent un système de réception (un bloc try) suivi d'un système de traitement (un ou plusieurs bloc catch). Un ensemble try - catch suit toujours cette logique : &quot;on exécute le bout de code que je contiens et s'il lance une exception, je la rattrape et je la traite selon son type&quot;. C'est un mécanisme d'interruption de code et de gestion d'erreurs très pratique dans beaucoup de cas. Si une exception n'est jamais rattrapée, c'est-à-dire si elle n'est même pas rattrapée dans le main, on obtient une erreur fatale.</p><p id="r-450530" data-claire-element-id="450530">Pourquoi ces exceptions présentent-ils un réel problème pour l'allocation dynamique &quot;nue&quot; ? Imaginez simplement un bout de code présentant à la chaîne une allocation dynamique, un appel à une fonction (appelons-la f()) et la libération de la mémoire allouée juste avant. Si f() lance une exception, la mémoire allouée dynamiquement ne sera jamais libérée puisque l'instruction de libération ne sera jamais exécutée. On pourrait évidemment contourner ce problème avec quelques blocs en plus, mais le code deviendrait carrément ingérable et totalement incompréhensible.</p><p id="r-450531" data-claire-element-id="450531">Autre exemple : imaginez une classe qui fait deux allocations dynamiques pour deux pointeurs membres dans le constructeur et que leur libération est faite dans le destructeur. À priori, pas de problème. Mais si la deuxième allocation échoue (ce qui peut arriver) mais que la première a réussi, une exception est lancée et l'objet n'est ainsi pas considéré comme existant, comme construit. En d'autres termes le destructeur n'est jamais appelé et la première zone pourtant allouée avec succès ne sera jamais libérée.</p><p id="r-450532" data-claire-element-id="450532">D'autres problèmes qui ne sont pas forcément liés aux exceptions peuvent aussi survenir comme la tentative de libération d'une zone non-allouée (par exemple quand on essaye de delete un pointeur non-initialisé ou qu'on delete deux fois un pointeur sur une zone allouée dynamiquement), ou encore la tentative d'accès à la valeur pointée par un pointeur invalide : imaginez deux pointeurs sur le même objet alloué sur le tas, on peut très bien par accident &quot;deleter&quot; un pointeur et continuer à bosser avec l'autre comme si de rien n'était.</p><p id="r-450533" data-claire-element-id="450533">Le C++ possède pourtant la capacité de contrecarrer ces problèmes, et je vais présenter une technique très répandue de gestion sécurisée des allocations dynamiques.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/c-gerer-correctement-ses-allocations-dynamiques">C++ : Gérer correctement ses allocations dynamiques</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/c-gerer-correctement-ses-allocations-dynamiques/rappels-et-prise-de-conscience">
+Rappels et prise de conscience
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-gerer-correctement-ses-allocations-dynamiques/solution-les-pointeurs-intelligents">
+Solution : les pointeurs intelligents
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-gerer-correctement-ses-allocations-dynamiques/discussion">
+Discussion
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/c-gerer-correctement-ses-allocations-dynamiques/solution-les-pointeurs-intelligents">
+<span class="next">Solution : les pointeurs intelligents</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Solutionlespointeursintelligents"></a><h2>Solution : les pointeurs intelligents</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/c-gerer-correctement-ses-allocations-dynamiques/rappels-et-prise-de-conscience">
+<span class="arrow"></span>
+<span class="next">Rappels et prise de conscience</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/c-gerer-correctement-ses-allocations-dynamiques/discussion">
+<span class="next">Discussion</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-450536" data-claire-element-id="450536">Une idée savante qu'on eu très tôt les programmeurs, c'est de ne plus manipuler des pointeurs &quot;nus&quot; (comme int*, float*, A**, etc.), mais des pointeurs encapsulés dans une classe à qui l'on confierait le travail d'assurer sa bonne gestion. Une instance d'une telle classe, allouée statiquement, serait alors en mesure de libérer à sa destruction automatiquement la mémoire allouée, ou encore d'empêcher les tentatives d'accès aux données de la zone pointée si celle-ci n'est pas allouée, etc. On parle de pointeur intelligent.</p><h2 id="r-une-methode-plus-generale-la-raii" data-claire-element-id="450540">Une méthode plus générale : la RAII</h2><p id="r-450537" data-claire-element-id="450537">Ce que j'ai décrit plus haut n'est qu'une application pratique parmi d'autres d'un principe très répandu en programmation orientée objet : RAII, pour &quot;Ressource Acquisition Is Initialisation&quot;. Très simplement, ce principe nous dit que pour chaque acquisition de ressource que l'on fait, on crée aussi un objet qui va garantir sa bonne gestion. Cet objet encapsulera la ressource et nous donnera une autre interface, plus adaptée, une interface de plus haut niveau. C'est un idiome de programmation qui permet de faire du code plus fiable, plus maintenable, plus compréhensible, plus sécurisée et plus simple.</p><p id="r-450538" data-claire-element-id="450538">L'utilité de la RAII trouve sa source dans la destruction automatique des objets alloués sur la pile : chaque objet alloué statiquement sera libéré, son destructeur sera appelé et ceci même en cas d'exception. On écrira l'instruction de libération de la ressource dans le destructeur et on est certain que la ressource sera libérée, sans besoin d'un appel à delete ou close() etc. Si l'acquisition échoue dans le constructeur, l'objet RAII en tiendra compte pour la suite. Cela implique donc aussi qu'on n'aura pas besoin de contrôler immédiatement de manière barbante si l'allocation d'une ressource s'est faite correctement.</p><p id="r-450539" data-claire-element-id="450539">Vous connaissez tous au moins une classe de la STL qui utilise ce principe. Il s'agit de std::fstream. On vous présente toujours cette classe comme offrant un système simple et sécurisé pour manipuler les fichiers en C++. Ce qu'on oublie de dire en général, c'est que c'est totalement basé sur de la RAII : la fichier est ouvert à la construction d'un objet fstream (qui sera son représentant), alloué statiquement, et il est automatiquement fermé à la destruction de cet objet. L'approche RAII se retrouve encore ailleurs : std::vector, std::string, etc. Et elle constitue la base de la technique du pointeur intelligent.</p><h2 id="r-zoom-2" data-claire-element-id="450547">Zoom</h2><p id="r-450541" data-claire-element-id="450541">Pourquoi parle-t-on de pointeur intelligent ? En quoi sont-ils intelligents ?</p><p id="r-450542" data-claire-element-id="450542">Premièrement, ils libèrent la mémoire sans qu'on le demande explicitement et ce quand ils partent du principe qu'on en a plus besoin. Dans la même logique que std::fstream, on crée un objet statiquement représentant une zone mémoire allouée dynamiquement. En disséquant un peu, cela se présente comme un objet encapsulant un pointeur sur cette zone. On se sert alors de la libération statique de cet objet pour mettre en œuvre une libération dynamique.</p><p id="r-450543" data-claire-element-id="450543">Deuxièmement, ils permettent d'adopter un autre point de vue sur les entités allouées. Quand l'on travaille avec un pointeur nu, on voit un pointeur et on se dit que ce n'est qu'une variable stockant une valeur qui est une adresse d'une autre variable. Mais quand on voit dans un code une déclaration et une utilisation d'un pointeur intelligent, on voit un objet en lui-même, l'entité allouée dynamiquement prend ainsi forme et se confond dans l'entité du pointeur ; un peu comme pour un objet std::fstream duquel on dirait &quot;voilà notre fichier&quot;.</p><p id="r-450544" data-claire-element-id="450544">Troisièmement, le pointeur contrôle ce que l'on veut faire et assure avant tout la sécurité du code. Le problème de l'allocation dynamique gérée &quot;à la main&quot;, c'est souvent la copie de pointeurs ou l'accès à des données non-allouées. On peut alors très imaginer un pointeur intelligent qui mettra en place un système sécurisé de copie ou qui empêchera l'utilisateur d'accéder à une zone non-allouée.</p><p id="r-450545" data-claire-element-id="450545">L'objet de ce concept RAII (c'est-à-dire le pointeur intelligent) a ainsi un double rôle : il doit ajouter ou au moins préserver la sémantique du code. Autrement dit, à la vue du code, on doit être en mesure de comprendre simplement ce que l'on fait ou veut faire, et au moins tout aussi simplement qu'avec les pointeurs nus. Deuxièmement, cet objet doit s'occuper de tous les tracas de l'allocation dynamique à notre place. Les deux sont très liés : en étant &quot;intelligents&quot;, ces pointeurs nous évitent d'écrire du code qui aurait résolu (peut-être mal) autrement les problèmes, code souvent indigeste qu'on peut donc s'épargner. On ajoute de la lisibilité, de la sémantique.</p><p id="r-450546" data-claire-element-id="450546">La STL a évidemment (comme toujours) pensé à nous et nous propose un type de pointeur intelligent que je vais présenter : std::auto_ptr. Malheureusement, auto_ptr souffre d'un problème (que nous allons voir tout de suite), ce qui fait qu'on le déconseille très souvent. Boost également propose toute une panoplie de pointeurs intelligents, chacun pour un usage différent. Je vais vous présenter le plus connu d'entre eux, boost::shared_ptr, et ses avantages par rapport à std::auto_ptr. Cela dit en passant, si vous n'avez pas encore installé Boost, c'est le moment de le faire, on ne fait plus grand-chose sans ce framework.</p><h2 id="r-en-c-ca-donne-quoi" data-claire-element-id="450551">En C++, ça donne quoi ?</h2><p id="r-450548" data-claire-element-id="450548">En C++, un pointeur intelligent est donc un objet. Le type de cet objet est quasiment toujours une instance d'une classe template, c'est-à-dire ici une classe qui prend le type de l'objet (au sens large) alloué dynamiquement en paramètre template. D'un point de vue de méta-programmation template, en créant un pointeur intelligent, on écrit d'abord une classe similaire à la classe template en remplaçant son paramètre par le type de la donnée que l'on va vouloir pointer. std::auto_ptr fonctionne de cette manière, boost::shared_ptr également (et d'autres).</p><p id="r-450549" data-claire-element-id="450549">Un détail surprend souvent les débutants : le paramètre template n'est pas le type du pointeur &quot;nu&quot; que l'on aurait eu à la place. En se disant qu'ils veulent un pointeur intelligent sur un int par exemple, ils (ou peut-être vous si vous êtes débutant) écrivent intuitivement &quot;pointeur_intelligent &lt; int* &gt;&quot;, pourtant ceci n'aura pas l'effet attendu. En effet, il ne faut pas considérer un pointeur intelligent comme un objet encapsulant un pointeur, mais plutot comme un vrai pointeur dont on précise le type de la donnée pointée. Dans ce cas, &quot;pointeur_intelligent &lt; int &gt;&quot; est donc correct.</p><p id="r-450550" data-claire-element-id="450550">Un autre détail d'ordre &quot;C++&quot; : l'allocation dynamique est tout de même faite en-dehors du pointeur intelligent ; ce n'est pas lui qui s'en charge, il se contente de récupérer un pointeur sur une zone déjà allouée ou NULL.</p><h2 id="r-premiere-exemple-std-auto-ptr" data-claire-element-id="450561">Première exemple : std::auto_ptr</h2><p id="r-450552" data-claire-element-id="450552">La STL fourni donc un pointeur intelligent standard : std::auto_ptr, défini dans le fichier &lt;memory&gt;. Il s'agit donc d'une classe template qui prend en paramètre le type traité. Le constructeur de std::auto_ptr prend un pointeur &quot;nu&quot; en paramètre qui pointera sur une zone que l'on aura pris soin d'allouer. Généralement, on retrouve donc l'allocation dynamique directement en tant qu'expression dans les paramètres du constructeur lors de la déclaration du pointeur intelligent.</p><p id="r-450553" data-claire-element-id="450553">std::auto_ptr considère qu'il manipule une zone allouée avec l'opérateur new : ne vous permettez donc pas de lui envoyer une zone allouée avec new[] car il tentera tôt ou tard d'y appliquer l'opérateur delete. Il y a d'autres pointeurs intelligents qui sont faits pour cela, en particulier un que je mentionnerai plus loin. Parce que l'allocation à proprement parler n'est pas gérée par la classe, cette dernière n'est pas susceptible de lancer une exception (une exception std::bad_alloc ou encore une exception lancée depuis le constructeur de l'objet alloué dynamiquement aurait été possible sinon).</p><p id="r-450554" data-claire-element-id="450554">std::auto_ptr surcharge les opérateurs classiques que l'on peut appliquer aux pointeurs nus : operator*, operator-&gt;, operator=, etc. mais aussi la conversion vers d'autres types de pointeurs. La sémantique d'un vrai pointeur est donc gardée sauf qu'on a ajouté de l' &quot;intelligence&quot;. Exemple sans intérêt :</p><pre id="r-450555" data-claire-element-id="450555"><code data-claire-semantic="cpp">#include &lt;memory&gt;
+
+// du code...
+
+std::auto_ptr &lt; std::string &gt; ptr(new std::string(&quot;hello&quot;));
+std::cout &lt;&lt; *ptr &lt;&lt; std::endl; // affiche hello
+std::cout &lt;&lt; ptr -&gt; at(1) &lt;&lt; std::endl; // affiche e
+*ptr += &quot; world !&quot;;
+
+// du code...</code></pre><p id="r-450556" data-claire-element-id="450556">Et on n'écrira aucune libération de mémoire, c'est entièrement l'objet ptr qui s'en occupera à sa destruction. Tout est bien beau, mais quel est alors le problème de std::auto_ptr que j'ai mentionné plus haut ? Pour le comprendre, il faut comprendre la stratégie de std::auto_ptr pour gérer les copies. En effet, la plupart des problèmes que l'on rencontre avec les pointeurs nus existent parce qu'il y a eu copie de pointeur. C'est donc principalement au niveau des copies de pointeurs intelligents qu'il faut ajouter justement de l' &quot;intelligence&quot;. Par exemple, si l'on part du principe que la libération de mémoire est faite à coup sûr dans le destructeur, est-il seulement raisonnable de laisser la possibilité de copier un pointeur intelligent ? Si l'on est aussi restrictif, on garde beaucoup de problèmes qu'on souhaiterait pourtant régler.</p><p id="r-450557" data-claire-element-id="450557">Plusieurs approches sont possibles pour résoudre le problème, mais l'idée de base c'est d'adopter un certain point de vue sur les copies. std::auto_ptr considère que chaque pointeur intelligent est un propriétaire unique d'une zone allouée dynamiquement. Ce type considère les copies simplement comme un changement de propriétaire. On ne libère la mémoire dans le destructeur que si l'objet en question est propriétaire de quelque chose, ce qu'il n'est donc plus forcément (ou n'a jamais été si le pointeur n'a jamais été initialisé). Le pointeur copié est donc en quelque sort &quot;destitué&quot; de son titre de propriétaire et ne libèrera rien, ça sera à la copie de s'en charger.</p><p id="r-450558" data-claire-element-id="450558">Le problème de std::auto_ptr est donc là : on est certain que la mémoire allouée sera libérée tôt ou tard, mais peut-être ... trop tôt. Prenez par exemple le code suivant :</p><pre id="r-450559" data-claire-element-id="450559"><code data-claire-semantic="cpp">std::auto_ptr &lt; int &gt; ptr(new int(42));
+f(ptr);
+*ptr = 36;</code></pre><p id="r-450560" data-claire-element-id="450560">f() est une fonction qui prend en paramètre un pointeur intelligent std::auto_ptr. En supposant qu'il n'y a pas passage par référence, il y aura une copie lors de l'envoi de ptr à cette fonction. Autrement dit, c'est le pointeur intelligent que l'on retrouvera dans f() qui sera le propriétaire de l'entier alloué à la ligne 1. Conséquence : ptr n'en est plus le propriétaire et n'y a donc plus droit d'accès. La ligne 3 n'a donc aucun sens, d'autant plus qu'au moment où l'on exécute cette instruction, le pointeur intelligent propriétaire interne à f() aura déjà libéré l'entier. Si l'on est pas à l'aise avec l'approche de std::auto_ptr, il vaut donc mieux éviter de l'utiliser pour ne pas tomber dans de pièges subtils de ce genre.</p><h2 id="r-deuxieme-exemple-boost-shared-ptr" data-claire-element-id="450569">Deuxième exemple : boost::shared_ptr</h2><p id="r-450562" data-claire-element-id="450562">Comment résoudre ce problème de copie et de propriétaire unique ? Une astuce possible serait d'autoriser les propriétaires multiples et à la fois de garantir qu'aucun de ces propriétaires ne sera invalidés mais que la zone allouée soit tout de même libérée à coup sûr.</p><p id="r-450563" data-claire-element-id="450563">L'idée est de trouver une autre approche sur la copie de pointeur intelligent : déjà on ne parlera plus de propriétaire mais de référence sur une zone allouée, mais en plus une copie ne sera plus un changement de propriétaire mais la création d'une nouvelle référence sur la zone allouée. Par opposition, la destruction d'un pointeur intelligent est la suppression d'une référence sur cette zone. Cette approche est très simple et pourtant très puissante : en gardant trace quelque part du nombre de références sur chaque zone allouée dynamiquement, on peut aisément déterminer quand libérer la mémoire sans qu'il y ait d'éventuelles retombées plus tard.</p><p id="r-450564" data-claire-element-id="450564">Concrètement, on teste dans le destructeur d'un pointeur intelligent s'il est le dernier objet à pointer sur la zone qu'il réfère. Si oui, il peut tranquillement la libérer (et même doit, car normalement personne ne pourra le faire après lui), sinon, il se contente de décrémenter le nombre de références sur cette zone, puisque lui sera alors en moins.</p><p id="r-450565" data-claire-element-id="450565">Ingénieux ? Oui, très. Avec cette approche, on résout non seulement tous les problèmes des pointeurs &quot;nus&quot; mais également le principal problème que l'on reproche à std::auto_ptr. C'est en fait un principe répandu et très connu appelé de manière transparente : &quot;comptage de référence&quot;. Ce principe possède néanmoins le défaut de devoir stocker en plus de l'objet RAII le nombre de références sur chaque zone allouée dynamiquement et contrôlée par un tel système.</p><p id="r-450566" data-claire-element-id="450566">Cette fois-ci, c'est Boost qui nous propose une classe pour gérer un tel pointeur intelligent : boost::shared_ptr (&quot;pointeur partagé&quot;). En réalité, Boost propose plusieurs pointeurs intelligents comme dit, chacun servant à un usage spécifique (boost::weak_ptr, boost::scoped_ptr, boost::unique_ptr, etc.). Cependant, boost::shared_ptr est celui que l'on peut utiliser le plus généralement. Pour ce faire, il faut déjà commencer par inclure le fichier boost/shared_ptr.hpp ou boost/smart_ptr/shared_ptr.hpp. Pour ce qui est du reste, un pointeur intelligent de type boost::shared_ptr s'utilise avec la même sémantique qu'un objet std::auto_ptr.</p><pre id="r-450567" data-claire-element-id="450567"><code data-claire-semantic="cpp">boost::shared_ptr &lt; int &gt; ptr(new int(42));
+f(ptr);
+*ptr = 36; // affectation cohérente et autorisée</code></pre><p id="r-450568" data-claire-element-id="450568">Boost pense à tout. Non seulement c'est simple, mais en plus maintenant on peut dormir sur nos deux oreilles. Si l'on veut appliquer la même stratégie pour gérer de manière sécurisée des pointeurs sur des zones allouées avec new[], on peut par exemple envisager d'utiliser boost::shared_array. Cependant, ne vous précipitez pas : pour les tableaux dynamiques, on préfèrera si possible toujours std::vector ou plus spécifiquement std::string.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/c-gerer-correctement-ses-allocations-dynamiques">C++ : Gérer correctement ses allocations dynamiques</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-gerer-correctement-ses-allocations-dynamiques/rappels-et-prise-de-conscience">
+Rappels et prise de conscience
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/c-gerer-correctement-ses-allocations-dynamiques/solution-les-pointeurs-intelligents">
+Solution : les pointeurs intelligents
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-gerer-correctement-ses-allocations-dynamiques/discussion">
+Discussion
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/c-gerer-correctement-ses-allocations-dynamiques/rappels-et-prise-de-conscience">
+<span class="arrow"></span>
+<span class="next">Rappels et prise de conscience</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/c-gerer-correctement-ses-allocations-dynamiques/discussion">
+<span class="next">Discussion</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Discussion"></a><h2>Discussion</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/c-gerer-correctement-ses-allocations-dynamiques/solution-les-pointeurs-intelligents">
+<span class="arrow"></span>
+<span class="next">Solution : les pointeurs intelligents</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-les-pools-de-memoire" data-claire-element-id="450576">Les pools de mémoire</h2><p id="r-450571" data-claire-element-id="450571">Connaissez-vous les pools de mémoire ? Il s'agit d'un système pour gérer les allocations et les libérations de mémoire. En gros, plutôt que de confier ce travail à l'OS, on peut le laisser à une entité qui pourra peut-être mieux s'en charger selon ce que l'on veut faire. Un pool de mémoire se présente comme un objet auquel on peut demander de la mémoire (en précisant un nombre de bytes ou un type) et plus tard la libération de manière correcte de cette mémoire. On peut lui demander de la mémoire pour de nombreux objets.</p><p id="r-450572" data-claire-element-id="450572">Il y a deux types de pools de mémoire : les pools objet et les pools singleton. Les pools objet libèrent à leur propre destruction toutes les allocations de mémoire qui ont été faites avec. Les pools singleton sont presque similaires, sauf qu'ils libèrent la mémoire juste avant la fermeture du programme et pas avant. std::allocator par exemple, que vous avez peut-être déjà vu, est un type de pool.</p><p id="r-450573" data-claire-element-id="450573">Différentes raisons peuvent nous pousser à utiliser des pools. Premièrement, on peut très bien imaginer un pool distribuant exclusivement de la mémoire partagée. On peut ainsi construire des objets sur cette mémoire en confiant simplement le travail d'allocation à ce pool. Un autre exemple : on peut également souhaiter n'avoir que des objets contigus en mémoire, ce que permettrait de faire un pool et non une série de new traditionnels. On peut aussi supposer qu'on travaille sur un microcontroleur qui a un mécanisme de gestion de la mémoire très exotique qui ne nous permet pas d'utiliser new.</p><p id="r-450574" data-claire-element-id="450574">En C++, un pool se présente généralement comme un objet, instance d'une classe template - s'il faut préciser un type - ou non - si la taille en bytes est passée au constructeur -, qui possède entre-autres une méthode spéciale pour réserver de la place en mémoire (comment et selon quelle logique, c'est géré en interne). On récupère un pointeur sur cette zone mémoire allouée et on s'en sert ordinairement pour faire un placement new (new auquel on précise où construire l'objet). Le placement new n'autorise donc plus new à choisir l'emplacement mémoire, il sert juste à construire véritablement les objets.</p><p id="r-450575" data-claire-element-id="450575">Si vous voulez vous procurer une bibliothèque proposant des pools, c'est encore Boost qui vient à notre secours et qui propose Boost.Pool. Celle-ci met à disposition deux types de pool objet : boost::pool et boost::object_pool ; et deux types de pool singleton : boost::singleton_pool et boost::pool_allocator.</p><h2 id="r-pool-ou-pointeur-intelligent" data-claire-element-id="450585">Pool ou pointeur intelligent ?</h2><p id="r-450577" data-claire-element-id="450577">Pourquoi est-ce que j'en parle ici ? Tout simplement parce qu'un pool libère quasiment toujours automatiquement toute la mémoire qu'on lui a demandée (c'est le cas de boost::object_pool, std::allocator, etc.). Autrement dit, les pools de mémoire pourraient être, parmi tant d'autres applications, une alternative intéressante aux pointeurs intelligents.</p><p id="r-450578" data-claire-element-id="450578">Il y a plusieurs avantages à utiliser les pools : déjà, on peut manipuler des pointeurs nus sans problème (vu qu'ils pointent sur une zone allouée avec un pool). Visuellement, c'est un peu plus agréable qu'une flopée de boost::shared_ptr un peu partout. On peut même envisager d'utiliser des références, mais c'est du détail. De plus, on peut appliquer toutes les copies que l'on veut et avoir autant de références sur un même objet qu'on le souhaite sans se poser plus de questions : toute la mémoire est libérée à la destruction du pool ou au moins à la fermeture du programme. Si par exemple on a un pool dont la durée de vie des objets alloués est égale au programme, on peut très paisiblement manipuler ces objets via des pointeurs nus comme on le souhaite et où l'on veut en étant toujours sûr que ce système n'invalidera à un aucun moment ces pointeurs mais que toute la mémoire sera libérée à coup sûr.</p><p id="r-450579" data-claire-element-id="450579">Ce dernier avantage est également le principal défaut des pools par rapport aux pointeurs intelligents : ils gardent toute la mémoire allouée et ne la libèrent que d'un coup (on peut par contre demander explicitement la destruction d'une zone bien spécifique, mais ça ne rentre pas dans nos propos ici vu qu'on aimerait éviter d'avoir à faire cela). Souvent, on ne trouve donc plus aucune utilité à garder un objet en mémoire, mais il y restera quand même encore un certain temps.</p><p id="r-450580" data-claire-element-id="450580">Les pointeurs intelligents n'ont pas ce problème, vu qu'ils n'adoptent pas une vision globale mais plutôt focalisée astucieusement sur chaque zone. Si notre but est de gérer de manière sécurisée la mémoire et non d'utiliser quelque chose de plus spécifique aux pools, il peut donc être intéressant de peser le pour et le contre et de choisir intelligemment entre pool et pointeur RAII.</p><p id="r-450581" data-claire-element-id="450581">Ce cours n'est qu'une introduction aux concepts présentés : intéressez-vous plus en détail aux pools et aux différents pointeurs intelligents que proposent par exemple Boost. Et surtout, n'en restez pas à la théorie, écrivez vous-même du code, testez et constatez les choses. Je vous conseille même d'essayer de réécrire certains classes comme boost::shared_ptr, c'est un très bon exercice et c'est toujours une expérience stimulante.</p><p id="r-450582" data-claire-element-id="450582">Les notions que j'ai présentées ne sont pas aussi rigides qu'il n'y parait. On peut par exemple très bien utiliser std::malloc() en C++ et ainsi réserver de la mémoire sur laquelle on va pouvoir faire en toute légalité ... un placement new. Ou encore, le problème de std::auto_ptr peut se régler autrement que par le comptage de référence : on peut s'apercevoir qu'une copie d'un tel pointeur est en fait un déplacement déguisé. boost::unique_ptr par exemple résout le problème de auto_ptr en retirant ce &quot;déguisement&quot; et en interdisant les copies. C'est une approche différente de celle de boost::shared_ptr conçue pour une utilisation plus spécifique mais qui résout tout de même le problème d'auto_ptr.</p><p id="r-450583" data-claire-element-id="450583">Un grand merci à <a href="http://www.siteduzero.com/membres-294-1398.html">Thunderseb</a> pour sa relecture.<br/> shareman</p><p id="r-450584" data-claire-element-id="450584">PS : Renseignez-vous d'avantage ! Quelques liens :<br/><a href="http://www.devx.com/cplus/10MinuteSolution/39071/1954">Présentation de std::auto_ptr et boost::unique_ptr</a> ;<br/><a href="http://cpp.developpez.com/faq/cpp/?page=pointeurs">Fac C++ de développez.com : Gestion dynamique de la mémoire</a> ;<br/><a href="http://www.boost.org/doc/libs/1_43_0/libs/smart_ptr/smart_ptr.htm">Boost et les pointeurs intelligents</a> ;<br/><a href="http://en.wikipedia.org/wiki/Memory_pool">Wikipédia (en) : pool de mémoire</a> ;<br/><a href="http://en.wikipedia.org/wiki/Smart_pointer">Wikipédia (en) : pointeur intelligent</a> ;<br/><a href="http://www.cplusplus.com/reference/std/memory/auto_ptr/">Cplusplus.com : std::auto_ptr</a>.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/c-gerer-correctement-ses-allocations-dynamiques">C++ : Gérer correctement ses allocations dynamiques</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-gerer-correctement-ses-allocations-dynamiques/rappels-et-prise-de-conscience">
+Rappels et prise de conscience
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-gerer-correctement-ses-allocations-dynamiques/solution-les-pointeurs-intelligents">
+Solution : les pointeurs intelligents
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/c-gerer-correctement-ses-allocations-dynamiques/discussion">
+Discussion
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/c-gerer-correctement-ses-allocations-dynamiques/solution-les-pointeurs-intelligents">
+<span class="arrow"></span>
+<span class="next">Solution : les pointeurs intelligents</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/c-gerer-correctement-ses-allocations-dynamiques.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 07:11:58 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/c-gerer-correctement-ses-allocations-dynamiques.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:17:21 GMT -->
+</html>

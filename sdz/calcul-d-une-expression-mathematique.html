@@ -1,0 +1,552 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/calcul-d-une-expression-mathematique.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 01:27:34 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/calcul-d-une-expression-mathematique.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:25:42 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Calcul d&#039;une expression mathématique</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/calcul-d-une-expression-mathematique.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Calcul d&#039;une expression mathématique</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Calculd039uneexpressionmathmatique">Calcul d&#039;une expression mathématique</a><br/><a href="#Objectifdecetutoriel">Objectif de ce tutoriel</a><br/><a href="#L039analyselexicale">L&#039;analyse lexicale</a><br/><a href="#L039analysesyntaxique">L&#039;analyse syntaxique</a><br/><a href="#Calculdel039arbre">Calcul de l&#039;arbre</a><br/><a href="#Codecomplet">Code complet</a><br/></div>
+<a name="Calculd039uneexpressionmathmatique"></a><h2>Calcul d&#039;une expression mathématique</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/objectif-de-ce-tutoriel">
+<span class="next">Objectif de ce tutoriel</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-553154" data-claire-element-id="553154">Ce tutoriel est une première approche à la compilation (ou plutôt à l'interprétation), à travers la réalisation d'un petit interpréteur d'expression mathématiques, une calculatrice qui calcule les expression usuelle, comme `2+(54+3*4)`, en respectant la priorité des opérateurs, et les parenthèses.<br/> Bien entendu, il sera possible par la suite d'étendre la syntaxe de l'interpréteur.</p><p id="r-553155" data-claire-element-id="553155">Les domaines abordés dans ce tutoriel seront nombreux. Je préconise les connaissances suivantes :</p><ul id="r-553160" data-claire-element-id="553160"><li id="r-553157" data-claire-element-id="553157"><p id="r-553156" data-claire-element-id="553156"><a href="http://www.siteduzero.com/tutoriel-3-36703-la-recursivite.html">la récursivité</a> ;</p></li><li id="r-553159" data-claire-element-id="553159"><p id="r-553158" data-claire-element-id="553158"><a href="http://fr.wikipedia.org/wiki/Arbre_(informatique)">les arbres</a></p></li></ul><p id="r-553161" data-claire-element-id="553161">Les codes d'exemple seront écrits en <a href="http://fr.wikipedia.org/wiki/Objective_Caml">OCaml</a>, et demande parfois des bases dans le langage pour bien comprendre les codes postés : ocaml est un langage particulièrement bien adapté à ce type de problèmes, mais la théorie s'applique bien sur à tous les langages :).</p>
+</div><a name="Objectifdecetutoriel"></a><h2>Objectif de ce tutoriel</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/l-analyse-lexicale">
+<span class="next">L&#039;analyse lexicale</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-553162" data-claire-element-id="553162">Ce document est juste une petite introduction à l'interprétation (et peut-être plus largement à la compilation, bien que nous produirons pas de langage source), où vous serez amenés, pour accompagner les quelques informations théoriques, à créer une petite calculatrice.</p><p id="r-553163" data-claire-element-id="553163">Très simplement, on peut traiter le problème en trois étapes :</p><ul id="r-553170" data-claire-element-id="553170"><li id="r-553165" data-claire-element-id="553165"><p id="r-553164" data-claire-element-id="553164">l'analyse lexicale (ou lexer) : la chaîne de caractères est convertie en une liste de lexèmes comme [&quot;56&quot;; &quot;+&quot;; &quot;3&quot;] ;</p></li><li id="r-553167" data-claire-element-id="553167"><p id="r-553166" data-claire-element-id="553166">l'analyse syntaxique (ou parser) : on transforme les jetons en un arbre syntaxique ;</p></li><li id="r-553169" data-claire-element-id="553169"><p id="r-553168" data-claire-element-id="553168">l'exécution : on calcule l'arbre syntaxique, et on renvoie un résultat.</p></li></ul><p id="r-553171" data-claire-element-id="553171">D'une manière plus générale, on retrouve ces parties dans n'importe quel processus de compilation. En fonction du langage compilé, une &quot;exécution&quot; peut être une traduction dans un autre langage (C++ vers assembleur, etc.), tout dépend de ce que l'on veut faire avec après découpage et construction de l'arbre syntaxique. Ici, nous allons simplement calculer l'arbre.</p><p id="r-553172" data-claire-element-id="553172">L'analyseur syntaxique construira un arbre binaire, où chaque nœud possède soit 0 fils (un nombre) soit 2 fils (pour un opérateur).<br/>Ex d'un tel arbre :</p><figure id="r-553174" data-claire-element-id="553175"><img id="r-553173" data-claire-element-id="553173" src="medias/uploads.siteduzero.com_files_147001_148000_147684.png" alt="Image utilisateur"/></figure>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique">Calcul d&#039;une expression mathématique</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/objectif-de-ce-tutoriel">
+Objectif de ce tutoriel
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/l-analyse-lexicale">
+L&#039;analyse lexicale
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/l-analyse-syntaxique">
+L&#039;analyse syntaxique
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/calcul-de-l-arbre">
+Calcul de l&#039;arbre
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/code-complet-13">
+Code complet
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/l-analyse-lexicale">
+<span class="next">L&#039;analyse lexicale</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="L039analyselexicale"></a><h2>L&#039;analyse lexicale</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/objectif-de-ce-tutoriel">
+<span class="arrow"></span>
+<span class="next">Objectif de ce tutoriel</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/l-analyse-syntaxique">
+<span class="next">L&#039;analyse syntaxique</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-553177" data-claire-element-id="553177">Le lexer est l'étape qui consiste en la transformation de la chaîne de caractères qui contient l'expression mathématique en une pile de jetons (<em>tokens</em> ou lexèmes).<br/> Ainsi l'expression &quot;45+3*78&quot; peut se décomposer en : &quot;45&quot;, &quot;+&quot;, &quot;3&quot;, &quot;*&quot;, et &quot;78&quot;.</p><p id="r-553178" data-claire-element-id="553178">Pour créer le lexer, à partir de la chaîne de caractères, il existe des outils spécialisés comme Flex par exemple (un outil GNU), mais il est tout à fait possible de s'en sortir &quot;à la main&quot;.<br/> Pour notre calculatrice, nous avons besoin des jetons &quot;+&quot;, &quot;-&quot;, &quot;*&quot;, &quot;/&quot;, &quot;(&quot;, &quot;)&quot; et des nombres.<br/> Les autres jetons seront considérés comme inconnus.</p><p id="r-553179" data-claire-element-id="553179">En OCaml, le module Genlex permet l'obtention d'un lexer avec une facilité remarquable :</p><pre id="r-553180" data-claire-element-id="553180"><code data-claire-semantic="ocaml">open Genlex
+let lexer str =
+    let keywords = [&quot;(&quot;; &quot;)&quot;; &quot;+&quot;; &quot;-&quot;; &quot;*&quot;; &quot;/&quot;] in
+    make_lexer keywords (Stream.of_string str)</code></pre><p id="r-553181" data-claire-element-id="553181">La fonction retournera à partir d'une chaîne de caractères un <em><a href="http://www.pps.jussieu.fr/Livres/ora/DA-OCAML/book-ora040.html">stream</a></em>. Un <em>stream</em> est une liste paresseuse destructive : l'élément suivant d'un <em>stream</em> n'est calculé que quand on le demande, et il est automatiquement supprimé (il existe aussi des moyens de lire les éléments du <em>stream</em> sans les supprimer).</p><p id="r-553182" data-claire-element-id="553182">Ici, pour l'expression &quot;56+3&quot;, la fonction lexer renverrait ce <em>stream</em> : <code data-claire-semantic="ocaml">[&lt; 'Int 56; 'Kwd &quot;+&quot;; 'Int 3 &gt;]</code></p><p id="r-553183" data-claire-element-id="553183">Dans d'autres langages, comme PHP par exemple, ce genre de bibliothèque n'existe pas.<br/> Il faut donc coder le lexer à la main, et cela est tout à fait faisable. Si vous le pouvez, utilisez comme structure de données la file (premier entré, premier sorti), il me semble que c'est la structure de données la plus adaptée.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique">Calcul d&#039;une expression mathématique</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/objectif-de-ce-tutoriel">
+Objectif de ce tutoriel
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/l-analyse-lexicale">
+L&#039;analyse lexicale
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/l-analyse-syntaxique">
+L&#039;analyse syntaxique
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/calcul-de-l-arbre">
+Calcul de l&#039;arbre
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/code-complet-13">
+Code complet
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/objectif-de-ce-tutoriel">
+<span class="arrow"></span>
+<span class="next">Objectif de ce tutoriel</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/l-analyse-syntaxique">
+<span class="next">L&#039;analyse syntaxique</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="L039analysesyntaxique"></a><h2>L&#039;analyse syntaxique</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/l-analyse-lexicale">
+<span class="arrow"></span>
+<span class="next">L&#039;analyse lexicale</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/calcul-de-l-arbre">
+<span class="next">Calcul de l&#039;arbre</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-objectif-11" data-claire-element-id="553191">Objectif</h2><p id="r-553185" data-claire-element-id="553185">L'objectif du parseur est de transformer le lexer en un arbre syntaxique abstrait (AST en anglais).<br/> Dans cet arbre, il n'y a plus de parenthèses, et l'ordre des éléments insérés définit l'ordre dans lequel les opérations vont être calculées.<br/> Par exemple, pour l'expression &quot;(56+18)*3&quot;, correspondant donc au lexer &quot;(&quot;, &quot;56&quot;, &quot;+&quot;, &quot;18&quot;, &quot;)&quot;, &quot;*&quot;, &quot;3&quot;, l'arbre correspondant serait le suivant :</p><figure id="r-553187" data-claire-element-id="553188"><img id="r-553186" data-claire-element-id="553186" src="medias/uploads.siteduzero.com_files_147001_148000_147684.png" alt="Image utilisateur"/></figure><p id="r-553189" data-claire-element-id="553189">On voit bien que l'addition 56+18 sera effectuée en premier, puis ensuite sera effectuée la multiplication par 3 du résultat de 56+18.<br/> Toute la difficulté est d'obtenir cet arbre : l'opérateur de puissance à la priorité sur la multiplication et la division, qui ont la priorité sur l'addition et la soustraction, et les parenthèses ont la priorité sur l'ensemble des opérateurs !</p><p id="r-553190" data-claire-element-id="553190">Comment s'en sortir ?</p><h2 id="r-la-bnf" data-claire-element-id="553227">La BNF</h2><h3 id="r-theorie-18" data-claire-element-id="553201">Théorie</h3><p id="r-553192" data-claire-element-id="553192">On voit ici que réfléchir de cette façon est délicate. Il faudrait écrire tout cela mathématiquement.<br/> Deux chercheurs en informatique, <a href="http://fr.wikipedia.org/wiki/John_Backus">John Backus</a> et <a href="http://fr.wikipedia.org/wiki/Peter_Naur">Peter Naur</a>, également confrontés à un problème similaire, ont alors inventés la BNF, pour <strong>Backus Naur Form</strong>.</p><p id="r-553193" data-claire-element-id="553193">L'objectif était de pouvoir décrire rigoureusement un langage de programmation.</p><p id="r-553194" data-claire-element-id="553194">La BNF est constituée de méta-symboles, de règles terminales et de règles non terminales.<br/> Les méta-symboles sont les symboles propres à la BNF.<br/> Chaque règle est constituée de deux parties : son nom et sa définition.<br/> nom_regle ::= definition_de_la_regle.<br/> Lorsque la règle appelle une autre règle, elle est dite non-terminale.</p><p id="r-553195" data-claire-element-id="553195">Les méta-symboles de la BNF sont &quot;(&quot;, &quot;)&quot;, &quot;+&quot;, &quot;*&quot;, &quot;[&quot;, &quot;]&quot;, &quot;|&quot;, et &quot;'&quot;.<br/> Le symbole &quot;|&quot; signifie &quot;ou&quot;. Chaque mot ou expression recherché est entouré d'apostrophes.<br/> Ainsi, on peut définir un nombre de cette façon :</p><pre id="r-553196" data-claire-element-id="553196"><code>Num ::= ('0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9') (ø|Num)</code></pre><p id="r-553197" data-claire-element-id="553197">Cela signifie que chaque nombre est constitué d'un chiffre suivi soit de rien, soit d'un autre chiffre.<br/> Le symbole &quot;*&quot; signifie répéter 0 fois ou plus, et le symbole &quot;+&quot; signifie répéter au moins une fois et le symbole &quot;?&quot; signifie &quot;doit être présent&quot; 0 ou une fois.<br/> Ainsi Num peut se définir également de cette façon :</p><pre id="r-553198" data-claire-element-id="553198"><code>Num ::= ('0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')+</code></pre><p id="r-553199" data-claire-element-id="553199">Et de cette façon :</p><pre id="r-553200" data-claire-element-id="553200"><code>Num ::= Chiffre(Chiffre)*
+Chiffre ::= '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'</code></pre><h3 id="r-retour-au-probleme-bnf-d-une-expression-mathematique" data-claire-element-id="553226">Retour au problème : BNF d'une expression mathématique</h3><p id="r-553202" data-claire-element-id="553202">Dans une expression mathématique, on peut classer les opérateurs par ordre de priorité :</p><ol id="r-553211" data-claire-element-id="553211"><li id="r-553204" data-claire-element-id="553204"><p id="r-553203" data-claire-element-id="553203">les parenthèses : règle pth ;</p></li><li id="r-553206" data-claire-element-id="553206"><p id="r-553205" data-claire-element-id="553205">l'opérateur puissance : règle pow ;</p></li><li id="r-553208" data-claire-element-id="553208"><p id="r-553207" data-claire-element-id="553207">les opérateurs de division et de multiplication : règle ope_high ;</p></li><li id="r-553210" data-claire-element-id="553210"><p id="r-553209" data-claire-element-id="553209">les opérateurs d'addition et de soustraction : règle ope_low.</p></li></ol><p id="r-553212" data-claire-element-id="553212">On peut donc définir la grammaire des expressions mathématiques de cette façon :</p><pre id="r-553213" data-claire-element-id="553213"><code>ope_low ::= ope_high(('+'|'-')ope_high)*
+ope_high ::= pth(('*'|'/')pth)*
+pth ::= ('('ope_low')')|num
+num ::= ('0'|'1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9')+</code></pre><p id="r-553214" data-claire-element-id="553214">L'idée, c'est que plus l'opérateur est fort en terme de priorité, plus il doit être appelé &quot;vite&quot;, car ce sont les opérateurs forts qui doivent se retrouver en bas de l'arbre (pour être exécutés en premier).<br/> La règle pth est la plus forte : elle est donc exécutée en premier (car ope_low appelle d'abord ope_high qui appelle d'abord pth).<br/> Ensuite il y a ope_high et ope_low.</p><p id="r-553215" data-claire-element-id="553215">Entre les parenthèses, on revient à ope_low, c'est un autre calcul qui commence.<br/> Dans cet exemple très simple, la fonction qui valide la syntaxe de la phrase et la fonction qui transforme le lexer en arbre binaire n'en sont qu'une seule.<br/> Chaque fonction (règle) renverra un arbre binaire.</p><p id="r-553216" data-claire-element-id="553216">Tous les nombres qui seront dans l'arbre sont des éléments terminaux de l'arbre. Par exemple, dans l'arbre correspondant à &quot;5 + 3&quot;, 5 et 3 n'ont pas d'enfants :</p><figure id="r-553218" data-claire-element-id="553219"><img id="r-553217" data-claire-element-id="553217" src="medias/uploads.siteduzero.com_files_147001_148000_147683.png" alt="Image utilisateur"/></figure><p id="r-553220" data-claire-element-id="553220">Donc dans la règle pth, quand le <em>token</em> sera un nombre, on renverra un arbre qui contient juste le nombre en noeud.</p><p id="r-553221" data-claire-element-id="553221">Dans les autres règles, ope_low, ope_high et pow, on renvoie un arbre ou le noeud est l'opérateur, ou la partie droite est la fonction de priorité supérieure et la partie gauche est cette même fonction.<br/> Par exemple, pour ope_low, l'arbre serait :</p><figure id="r-553223" data-claire-element-id="553224"><img id="r-553222" data-claire-element-id="553222" src="medias/uploads.siteduzero.com_files_147001_148000_147693.png" alt="Image utilisateur"/></figure><p id="r-553225" data-claire-element-id="553225">Vous comprenez le principe ?<br/> Bien, maintenant passons à l'implémentation.</p><h2 id="r-implementation-du-parseur" data-claire-element-id="553239">Implémentation du parseur</h2><p id="r-553228" data-claire-element-id="553228">Tout d'abord, définissons la structure de l'arbre binaire que l'on va ressortir :</p><pre id="r-553229" data-claire-element-id="553229"><code data-claire-semantic="ocaml">type tree =
+| Nb of int
+| Op of tree * string * tree</code></pre><p id="r-553230" data-claire-element-id="553230">Le type arbre est composé soit d'une feuille terminale (Nb), soit d'un sous arbre (Op) composé d'un <em>string</em> (le nom de l'opérateur) et de deux sous-arbres, à gauche et à droite.<br/> C'est donc un type récursif.</p><p id="r-553231" data-claire-element-id="553231">Pour implémenter la grammaire décrite, on peut soit utiliser des outils comme <a href="http://fr.wikipedia.org/wiki/Bison_(GNU)">Bison</a>, ou le faire à la main.<br/> Dans ce cas, la technique consiste à voir chaque règle comme une fonction.<br/> Chaque fonction renvoie un arbre, et la valeur renvoyée à la fin est un arbre constitué d'un empilement des arbres renvoyés par les fonctions.</p><p id="r-553232" data-claire-element-id="553232">Implémentons la règle ope_low :</p><pre id="r-553233" data-claire-element-id="553233"><code data-claire-semantic="ocaml">(* ope_low ::= ope_high(('+'|'-')ope_high)* *)
+    let rec ope_low = 
+        let rec aux gauche = parser
+          [&lt;'Kwd ((&quot;+&quot; | &quot;-&quot;) as op); droite = ope_high; s &gt;] -&gt; aux (Op (gauche, op, droite)) s
+        | [&lt; &gt;] -&gt; gauche
+        in
+        parser [&lt; gauche = ope_high; s &gt;] -&gt; aux gauche s</code></pre><p id="r-553234" data-claire-element-id="553234">La fonction ope_low prend en argument le lexer (grâce au mot clé &quot;parser&quot;), traite le ope_high (qui renvoie un arbre binaire, appelons-le &quot;gauche&quot;), et <em>match</em> le reste du lexer.<br/> S'il y a un opérateur faible qui vient juste après, et que le reste du lexer vérifie la règle ope_high (arbre binaire &quot;droite&quot;), on renvoie un arbre binaire constitué de l'opérateur en noeud, de &quot;gauche&quot; pour la branche gauche et de &quot;droite&quot; pour la branche droite, puis on recommence (rappel de la fonction aux jusqu'à ce que les <em>tokens</em> suivants ne respectent plus le motif <code data-claire-semantic="ocaml">[&lt;'Kwd ((&quot;+&quot; | &quot;-&quot;) as op); droite = ope_high; s &gt;] </code>.</p><p id="r-553235" data-claire-element-id="553235">De la même manière, on peut implémenter toutes les autres règles :</p><pre id="r-553236" data-claire-element-id="553236"><code data-claire-semantic="ocaml">let rec ope_low = 
+        let rec aux gauche = parser
+          [&lt;'Kwd ((&quot;+&quot; | &quot;-&quot;) as op); droite = ope_high; s &gt;] -&gt; aux (Op (gauche, op, droite)) s
+        | [&lt; &gt;] -&gt; gauche
+        in
+        parser [&lt; gauche = ope_high; s &gt;] -&gt; aux gauche s
+    and ope_high = 
+        let rec aux gauche = parser
+          [&lt;'Kwd ((&quot;*&quot; | &quot;/&quot; | &quot;mod&quot;) as op); droite = pth; s &gt;] -&gt; aux (Op (gauche, op, droite)) s
+        | [&lt; &gt;] -&gt; gauche
+        in
+        parser [&lt; gauche = pth; s &gt;] -&gt; aux gauche s
+    and pth = parser
+      | [&lt; 'Kwd &quot;(&quot;; e = ope_low; 'Kwd &quot;)&quot; &gt;] -&gt; e
+      | [&lt; 'Int n &gt;] -&gt; Nb n</code></pre><p id="r-553237" data-claire-element-id="553237">On voit que le code de chaque fonction respecte la forme de la règle qui lui correspond.<br/> On observe également que le code de la fonction ope_high et le code de la fonction ope_low sont très proches.<br/> On peut donc &quot;factoriser&quot; les deux fonctions :</p><pre id="r-553238" data-claire-element-id="553238"><code data-claire-semantic="ocaml">let op_parser op_list next_level =
+        let rec aux gauche next_level = parser
+              [&lt;'Kwd op when List.mem op op_list; droite = next_level; s &gt;] -&gt; aux (Op (gauche, op, droite)) next_level s
+            | [&lt; &gt;] -&gt; gauche
+        in parser [&lt; gauche = next_level; s &gt;] -&gt; aux gauche next_level s
+
+     let rec ope_low l = op_parser [&quot;+&quot;; &quot;-&quot;] ope_high l
+         and ope_high l = op_parser [&quot;*&quot;; &quot;/&quot;] pth l
+         and pth = parser
+             | [&lt; 'Kwd &quot;(&quot;; e = ope_low; 'Kwd &quot;)&quot; &gt;] -&gt; e
+             | [&lt; 'Int n &gt;] -&gt; Nb n</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique">Calcul d&#039;une expression mathématique</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/objectif-de-ce-tutoriel">
+Objectif de ce tutoriel
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/l-analyse-lexicale">
+L&#039;analyse lexicale
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/l-analyse-syntaxique">
+L&#039;analyse syntaxique
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/calcul-de-l-arbre">
+Calcul de l&#039;arbre
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/code-complet-13">
+Code complet
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/l-analyse-lexicale">
+<span class="arrow"></span>
+<span class="next">L&#039;analyse lexicale</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/calcul-de-l-arbre">
+<span class="next">Calcul de l&#039;arbre</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Calculdel039arbre"></a><h2>Calcul de l&#039;arbre</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/l-analyse-syntaxique">
+<span class="arrow"></span>
+<span class="next">L&#039;analyse syntaxique</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/code-complet-13">
+<span class="next">Code complet</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-553241" data-claire-element-id="553241">La dernière étape consiste à calculer l'arbre.</p><figure id="r-553243" data-claire-element-id="553244"><img id="r-553242" data-claire-element-id="553242" src="medias/uploads.siteduzero.com_files_147001_148000_147686.png" alt="Image utilisateur"/></figure><p id="r-553245" data-claire-element-id="553245">On procède donc par réduction de l'arbre :</p><ul id="r-553250" data-claire-element-id="553250"><li id="r-553247" data-claire-element-id="553247"><p id="r-553246" data-claire-element-id="553246">soit le noeud est un nombre, et on renvoie ce nombre ;</p></li><li id="r-553249" data-claire-element-id="553249"><p id="r-553248" data-claire-element-id="553248">soit le noeud est un opérateur, et on l'applique sur ses deux enfants.</p></li></ul><p id="r-553251" data-claire-element-id="553251">Cela donne en OCaml :</p><pre id="r-553252" data-claire-element-id="553252"><code data-claire-semantic="ocaml">let rec execute tree = match tree with
+| Nb n -&gt; n
+| Op(fg, r, fd) -&gt;
+    let gauche, droite = execute fg, execute fd in
+    match r with
+    | &quot;+&quot; -&gt; gauche + droite
+    | &quot;-&quot; -&gt; gauche - droite
+    | &quot;*&quot; -&gt; gauche * droite
+    | &quot;/&quot; -&gt; gauche / droite
+    | _ -&gt; failwith &quot;Fonction non connue.&quot;</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique">Calcul d&#039;une expression mathématique</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/objectif-de-ce-tutoriel">
+Objectif de ce tutoriel
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/l-analyse-lexicale">
+L&#039;analyse lexicale
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/l-analyse-syntaxique">
+L&#039;analyse syntaxique
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/calcul-de-l-arbre">
+Calcul de l&#039;arbre
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/code-complet-13">
+Code complet
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/l-analyse-syntaxique">
+<span class="arrow"></span>
+<span class="next">L&#039;analyse syntaxique</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/code-complet-13">
+<span class="next">Code complet</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Codecomplet"></a><h2>Code complet</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/calcul-de-l-arbre">
+<span class="arrow"></span>
+<span class="next">Calcul de l&#039;arbre</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-553254" data-claire-element-id="553254">Une fois ces trois étapes implémentées, vous devriez obtenir un code similaire à celui-ci :</p><pre id="r-553255" data-claire-element-id="553255"><code data-claire-semantic="ocaml">open Genlex
+
+type tree =
+| Nb of int
+| Op of tree * string * tree
+
+ let lexer str =
+    let keywords = [&quot;(&quot;; &quot;)&quot;; &quot;+&quot;; &quot;-&quot;; &quot;*&quot;; &quot;/&quot;] in
+    make_lexer keywords (Stream.of_string str)
+
+let parseur lexer = 
+     let op_parser op_list next_level =
+        let rec aux gauche next_level = parser
+              [&lt;'Kwd op when List.mem op op_list; droite = next_level; s &gt;] -&gt; aux (Op (gauche, op, droite)) next_level s
+            | [&lt; &gt;] -&gt; gauche
+        in parser [&lt; gauche = next_level; s &gt;] -&gt; aux gauche next_level s
+     in
+     let rec ope_low l = op_parser [&quot;+&quot;; &quot;-&quot;] ope_high l
+         and ope_high l = op_parser [&quot;*&quot;; &quot;/&quot;] pth l
+         and pth = parser
+             | [&lt; 'Kwd &quot;(&quot;; e = ope_low; 'Kwd &quot;)&quot; &gt;] -&gt; e
+             | [&lt; 'Int n &gt;] -&gt; Nb n
+     in ope_low lexer
+
+let rec execute tree = match tree with
+| Nb n -&gt; n
+| Op(fg, r, fd) -&gt;
+    let gauche, droite = execute fg, execute fd in
+    match r with
+    | &quot;+&quot; -&gt; gauche + droite
+    | &quot;-&quot; -&gt; gauche - droite
+    | &quot;*&quot; -&gt; gauche * droite
+    | &quot;/&quot; -&gt; gauche / droite
+    | _ -&gt; failwith &quot;Fonction non connue.&quot;
+
+let () = 
+    let c = read_line() in
+    let r = execute (parseur (lexer c)) in
+    print_int r</code></pre><p id="r-553256" data-claire-element-id="553256">Exemple d'utilisation :</p><pre id="r-553257" data-claire-element-id="553257"><code data-claire-semantic="console">quentin@quentin-desktop:~/ocaml$ ocaml camlp4o.cma calculatrice.ml
+5+3*2
+11</code></pre><p id="r-553258" data-claire-element-id="553258">On se rend compte cependant d'un problème :</p><pre id="r-553259" data-claire-element-id="553259"><code data-claire-semantic="console">quentin@quentin-desktop:~/ocaml$ ocaml camlp4o.cma calculatrice.ml
+5-3
+5</code></pre><p id="r-553260" data-claire-element-id="553260">Cela vient en fait du module Genlex qui, en prenant les int, prend les &quot;-&quot; suivis d'un nombre comme des entiers négatifs.<br/> Une technique simple pour éviter cela est de mettre automatiquement un espace entre chaque &quot;-&quot; et chaque nombre.</p><p id="r-553261" data-claire-element-id="553261">Reprenons le <em>stream</em> de char généré par la fonction <code data-claire-semantic="ocaml">Stream.of_string str </code> :</p><pre id="r-553262" data-claire-element-id="553262"><code data-claire-semantic="ocaml">let rec minus = parser
+    [&lt; ''-'; s &gt;] -&gt; [&lt; ''-'; '' '; minus s &gt;]
+  | [&lt; 'a; s &gt;] -&gt; [&lt; 'a; minus s &gt;]
+  | [&lt; &gt;] -&gt; [&lt; &gt;] in</code></pre><p id="r-553263" data-claire-element-id="553263">Cette fois c'est bon, notre calculette est opérationnelle :</p><pre id="r-553264" data-claire-element-id="553264"><code data-claire-semantic="ocaml">open Genlex
+
+type tree =
+| Nb of int
+| Op of tree * string * tree
+
+let lexer str =
+    let rec minus = parser
+        | [&lt; ''-'; s &gt;] -&gt; [&lt; ''-'; '' '; minus s &gt;]
+        | [&lt; 'a; s &gt;] -&gt; [&lt; 'a; minus s &gt;]
+        | [&lt; &gt;] -&gt; [&lt; &gt;] in
+    let keywords = [&quot;(&quot;; &quot;)&quot;; &quot;+&quot;; &quot;-&quot;; &quot;*&quot;; &quot;/&quot;] in
+    make_lexer keywords (minus(Stream.of_string str))
+
+let parseur lexer = 
+     let op_parser op_list next_level =
+        let rec aux gauche next_level = parser
+              [&lt;'Kwd op when List.mem op op_list; droite = next_level; s &gt;] -&gt; aux (Op (gauche, op, droite)) next_level s
+            | [&lt; &gt;] -&gt; gauche
+        in parser [&lt; gauche = next_level; s &gt;] -&gt; aux gauche next_level s
+     in
+     let rec ope_low l = op_parser [&quot;+&quot;; &quot;-&quot;] ope_high l
+         and ope_high l = op_parser [&quot;*&quot;; &quot;/&quot;] pth l
+         and pth = parser
+             | [&lt; 'Kwd &quot;(&quot;; e = ope_low; 'Kwd &quot;)&quot; &gt;] -&gt; e
+             | [&lt; 'Int n &gt;] -&gt; Nb n
+     in ope_low lexer
+
+let rec execute tree = match tree with
+| Nb n -&gt; n
+| Op(fg, r, fd) -&gt;
+    let gauche, droite = execute fg, execute fd in
+    match r with
+    | &quot;+&quot; -&gt; gauche + droite
+    | &quot;-&quot; -&gt; gauche - droite
+    | &quot;*&quot; -&gt; gauche * droite
+    | &quot;/&quot; -&gt; gauche / droite
+    | _ -&gt; failwith &quot;Fonction non connue.&quot;
+
+let () = 
+    let c = read_line() in
+    let r = execute (parseur (lexer c)) in
+    print_int r</code></pre><p id="r-553265" data-claire-element-id="553265">Exemple :</p><pre id="r-553266" data-claire-element-id="553266"><code data-claire-semantic="console">quentin@quentin-desktop:~/ocaml$ ocaml camlp4o.cma calculette_tuto.ml 
+((5-3)*4)/2
+4</code></pre><h3 id="r-ameliorations-possibles-10" data-claire-element-id="553285">Améliorations possibles</h3><p id="r-553267" data-claire-element-id="553267">On peut très facilement perfectionner cette approche, qui se veut didactique et est donc simple.<br/> Voici quelques idées qui me viennent à l'esprit :</p><ul id="r-553275" data-claire-element-id="553275"><li id="r-553269" data-claire-element-id="553269"><p id="r-553268" data-claire-element-id="553268">intégrer l'opérateur puissance et l'opérateur modulo ;</p></li><li id="r-553271" data-claire-element-id="553271"><p id="r-553270" data-claire-element-id="553270">perfectionner la gestion de l'opérateur &quot;-&quot;, qui est encore archaïque ;</p></li><li id="r-553273" data-claire-element-id="553273"><p id="r-553272" data-claire-element-id="553272">définir une nouvelle grammaire pour que l'on puisse utiliser des fonctions comme sqrt (5+3) ou encore 5+gcd(56,12).</p></li><p id="r-553274" data-claire-element-id="553274">La grammaire pourrait alors être la suivante :</p></ul><pre id="r-553276" data-claire-element-id="553276"><code>ope_low ::= ope_high (('+'|'-') ope_high)*
+ope_high ::= pow (('*'|'/'|'%')pow)*
+pow  ::=pth ('^' pth)*
+pth ::= '('ope_low')' | num | fonction
+fonction ::= lettres '(' (ope_low(', 'ope_low)*)? ')'
+lettres ::= ('a'|...|'z')+
+num ::= chiffre+ (',' chiffre+)?
+chiffre ::= '0'|...|'9'</code></pre><p id="r-553277" data-claire-element-id="553277">J'espère que cette petite introduction à la compilation vous a plu. J'aimerais finir ce tutoriel en vous rappelant que ce qui compte, ce n'est pas forcément de comprendre pourquoi il y a un &quot;;&quot; derrière une de mes fonctions dans un des codes présentés, mais bien de comprendre le concept et les idées qu'il y a derrière, pour que vous puissiez implémenter cette technique dans votre langage favori le jour où vous en aurez besoin.</p><p id="r-553278" data-claire-element-id="553278">Pour aller plus loin, vous pouvez essayer d'implémenter d'autres formes d'expression mathématiques, comme la notation lisp (ex : <code data-claire-semantic="console">(+ 5 (* 2 3))</code> ).<br/> Sa B.N.F. est <code data-claire-semantic="console">S:='(' fonction S* ')' | num</code></p><p id="r-553279" data-claire-element-id="553279">Si la compilation en général vous interesse, je vous invite à lire le <a href="http://fr.wikipedia.org/wiki/Dragon_book"><em>dragon book</em></a>, Compilateurs : principes, techniques et outils, une référence dans le domaine, ainsi que le <a href="http://caml.inria.fr/pub/distrib/books/llc.pdf">LLC (pdf)</a>, qui présente dans la dernière partie de nombreux exemples, jusqu'à l'écriture d'un compilateur d'ocaml !</p><p id="r-553280" data-claire-element-id="553280">Je tiens à remercier <a href="http://www.siteduzero.com/membres-294-119920.html">Kuragari</a>, un élève de l'Epitech, qui m'a fait découvrir cette technique.</p><p id="r-553281" data-claire-element-id="553281">Sachez également que j'ai appris ce procédé en partie par des recherches personnelles, je n'ai jamais été dans une école d'informatique, et par conséquent il risque d'y avoir de petites erreurs, mots non adaptés, voire peut-être même une vue d'ensemble erronée.<br/> Si tel est le cas, je vous invite à m'en faire part, ainsi que de toutes vos questions ou autres remarques.</p><p id="r-553282" data-claire-element-id="553282">Merci pour votre lecture.</p><p id="r-553283" data-claire-element-id="553283"><strong>Remerciements</strong> : <a href="http://www.siteduzero.com/membres-294-227.html">bluestorm</a> pour l'optimisation (refonte) des codes OCaml, <a href="http://www.zcorrecteurs.fr/profil-95.html">Guillawme</a> et <a href="http://www.zcorrecteurs.fr/profil-21.html">Ejis</a> pour la correction de l'orthographe.</p><p id="r-553284" data-claire-element-id="553284">Robocop</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique">Calcul d&#039;une expression mathématique</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/objectif-de-ce-tutoriel">
+Objectif de ce tutoriel
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/l-analyse-lexicale">
+L&#039;analyse lexicale
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/l-analyse-syntaxique">
+L&#039;analyse syntaxique
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/calcul-de-l-arbre">
+Calcul de l&#039;arbre
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/code-complet-13">
+Code complet
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/calcul-d-une-expression-mathematique/calcul-de-l-arbre">
+<span class="arrow"></span>
+<span class="next">Calcul de l&#039;arbre</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/calcul-d-une-expression-mathematique.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 01:27:35 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/calcul-d-une-expression-mathematique.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:25:43 GMT -->
+</html>

@@ -1,0 +1,470 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/decouverte-de-la-programmation-par-contraintes.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 04:33:12 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/decouverte-de-la-programmation-par-contraintes.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:54:37 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Découverte de la programmation par contraintes</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/decouverte-de-la-programmation-par-contraintes.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Découverte de la programmation par contraintes</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Dcouvertedelaprogrammationparcontraintes">Découverte de la programmation par contraintes</a><br/><a href="#installerGecodeetcompileravec">installer Gecode et compiler avec</a><br/><a href="#l039assautdescarrsmagiques">À l&#039;assaut des carrés magiques</a><br/><a href="#Programmonsdescontraintes">Programmons des contraintes</a><br/><a href="#Lecodedtaill">Le code détaillé</a><br/></div>
+<a name="Dcouvertedelaprogrammationparcontraintes"></a><h2>Découverte de la programmation par contraintes</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/decouverte-de-la-programmation-par-contraintes/installer-gecode-et-compiler-avec">
+<span class="next">installer Gecode et compiler avec</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-592704" data-claire-element-id="592704">Bienvenue dans le monde merveilleux de la programmation par contraintes. Ici on déclare simplement notre problème et notre cher ordinateur trouve les solutions tout seul :waw: !<br/> Dans ce court tutoriel, vous allez pouvoir résoudre un problème en utilisant des contraintes.<br/> Pour suivre correctement, savoir parcourir un tableau avec une boucle est tout ce dont vous avez besoin. Le C++ n'est pas important ici (connaître soit le C, soit le C++ peut cependant aider).</p>
+</div><a name="installerGecodeetcompileravec"></a><h2>installer Gecode et compiler avec</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/decouverte-de-la-programmation-par-contraintes/a-l-assaut-des-carres-magiques">
+<span class="next">À l&#039;assaut des carrés magiques</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-592705" data-claire-element-id="592705">Pour commencer, il va nous falloir un outil pour la programmation par contraintes. Je vous propose d'utiliser Gecode, une bibliothèque C++ libre et gratuite.</p><h2 id="r-sous-windows-43" data-claire-element-id="592712">Sous windows</h2><p id="r-592706" data-claire-element-id="592706">On commence par installer Visual Studio C++ et <a href="http://www.gecode.org/download.html">Gecode</a>.</p><p id="r-592707" data-claire-element-id="592707">Pour compiler l'exemple que je vais présenter juste après, deux commandes magiques dans l'invite de commande windows feront l'affaire :</p><pre id="r-592708" data-claire-element-id="592708"><code>cl /DNDEBUG /EHsc /MD /Ox /wd4355 -I&quot;%GECODEDIR%\include&quot; -c -Focarre-magique.obj -Tpcarre-magique.cpp</code></pre><p id="r-592709" data-claire-element-id="592709">Suivi de :</p><pre id="r-592710" data-claire-element-id="592710"><code>cl /DNDEBUG /EHsc /MD /Ox /wd4355 -I&quot;%GECODEDIR%\include&quot; -Fecarre-magique.exe carre-magique.obj /link /LIBPATH:&quot;%GECODEDIR%\lib&quot;</code></pre><p id="r-592711" data-claire-element-id="592711">Et vous aurez un exécutable tout neuf à tester :magicien: .</p><h2 id="r-sous-unix-linux-et-mac-os-x" data-claire-element-id="592718">Sous unix (Linux et Mac OS X)</h2><p id="r-592713" data-claire-element-id="592713">Pour installer Gecode sous Mac OS X, c'est par <a href="http://www.gecode.org/download.html">ici</a>. Sous linux, commencez par vérifier si le paquet n'est pas disponible (sous Archlinux, il l'est). Si ce n'est pas le cas, je vous invite à suivre les instructions sur le site de <a href="http://www.gecode.org/doc-latest/reference/PageComp.html">Gecode</a> pour compiler la bibliothèque à partir des sources (c'est en anglais, envoyez moi un message si vous avez un problème).</p><p id="r-592714" data-claire-element-id="592714">Pour la compilation voici un makefile à placer dans le dossier ou se trouvera le code à compiler. Ensuite dans un terminal, la commande 'make' fera le boulot à votre place :) .</p><p id="r-592715" data-claire-element-id="592715"></p><div id="r-592717" data-claire-element-id="592717"><pre id="r-592716" data-claire-element-id="592716"><code>CXX=g++
+CFLAGS=-W -Wall -pedantic -I/usr/include 
+LDFLAGS=-L/usr/lib -lgecodeint -lgecodesearch -lgecodekernel -lgecodesupport -lgecodedriver -lgecodeminimodel
+
+all: carre-magique
+
+%.o: %.cpp
+        $(CXX) $(CFLAGS) -c -o $@ $&lt;
+
+%: %.o
+        $(CXX) $(CFLAGS) $&lt; $(LDFLAGS) -o $@ 
+
+clean:
+        rm -f *.cpp~ *.o makefile~</code></pre></div>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/decouverte-de-la-programmation-par-contraintes">Découverte de la programmation par contraintes</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/decouverte-de-la-programmation-par-contraintes/installer-gecode-et-compiler-avec">
+installer Gecode et compiler avec
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/decouverte-de-la-programmation-par-contraintes/a-l-assaut-des-carres-magiques">
+À l&#039;assaut des carrés magiques
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/decouverte-de-la-programmation-par-contraintes/programmons-des-contraintes">
+Programmons des contraintes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/decouverte-de-la-programmation-par-contraintes/le-code-detaille">
+Le code détaillé
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/decouverte-de-la-programmation-par-contraintes/a-l-assaut-des-carres-magiques">
+<span class="next">À l&#039;assaut des carrés magiques</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="l039assautdescarrsmagiques"></a><h2>À l&#039;assaut des carrés magiques</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/decouverte-de-la-programmation-par-contraintes/installer-gecode-et-compiler-avec">
+<span class="arrow"></span>
+<span class="next">installer Gecode et compiler avec</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/decouverte-de-la-programmation-par-contraintes/programmons-des-contraintes">
+<span class="next">Programmons des contraintes</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-592720" data-claire-element-id="592720">C'est ici que les choses sérieuses commencent :pirate: ! Pour vous présenter la programmation par contraintes, il nous faut un problème à attaquer. Nous allons résoudre des carrés magique, un petit problème qui peut être très long à résoudre.<br/> Le but est de remplir un tableau carré de nombres en respectant certaines règles.</p><ul id="r-592727" data-claire-element-id="592727"><li id="r-592722" data-claire-element-id="592722"><p id="r-592721" data-claire-element-id="592721">Les nombres de 1 jusqu'au nombres de cases du tableau doivent tous apparaître une fois. Pour un carré de taille 3 il faudra donc placer les nombres de 1 à 9.</p></li><li id="r-592724" data-claire-element-id="592724"><p id="r-592723" data-claire-element-id="592723">La somme des nombres sur chaque ligne, colonne et grande diagonale du tableau doit être la même.</p></li><li id="r-592726" data-claire-element-id="592726"><p id="r-592725" data-claire-element-id="592725">C'est tout :D !</p></li></ul><p id="r-592728" data-claire-element-id="592728">Voici un exemple résolu pour un carré de taille 3 :</p><figure id="r-592730" data-claire-element-id="592731"><img id="r-592729" data-claire-element-id="592729" src="medias/uploads.siteduzero.com_files_198001_199000_198790.png" alt="Image utilisateur"/></figure><p id="r-592732" data-claire-element-id="592732">Prenez le temps de vérifier que je n'ai pas fait de bêtises, toutes les sommes concernées doivent être égale à 15 !<br/> Bon maintenant, pour comprendre que la programmation par contraintes va nous être utile, essayez de résoudre un carré magique de taille 10. N'essayez pas trop longtemps quand même :-° .</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/decouverte-de-la-programmation-par-contraintes">Découverte de la programmation par contraintes</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/decouverte-de-la-programmation-par-contraintes/installer-gecode-et-compiler-avec">
+installer Gecode et compiler avec
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/decouverte-de-la-programmation-par-contraintes/a-l-assaut-des-carres-magiques">
+À l&#039;assaut des carrés magiques
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/decouverte-de-la-programmation-par-contraintes/programmons-des-contraintes">
+Programmons des contraintes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/decouverte-de-la-programmation-par-contraintes/le-code-detaille">
+Le code détaillé
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/decouverte-de-la-programmation-par-contraintes/installer-gecode-et-compiler-avec">
+<span class="arrow"></span>
+<span class="next">installer Gecode et compiler avec</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/decouverte-de-la-programmation-par-contraintes/programmons-des-contraintes">
+<span class="next">Programmons des contraintes</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Programmonsdescontraintes"></a><h2>Programmons des contraintes</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/decouverte-de-la-programmation-par-contraintes/a-l-assaut-des-carres-magiques">
+<span class="arrow"></span>
+<span class="next">À l&#039;assaut des carrés magiques</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/decouverte-de-la-programmation-par-contraintes/le-code-detaille">
+<span class="next">Le code détaillé</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-592734" data-claire-element-id="592734">Nous y voici, nous y voilà ! Pour avoir un programme complet avec Gecode, il va nous falloir plusieurs éléments : les données du problème puis les contraintes qui vont avec.</p><h2 id="r-les-donnees-du-probleme" data-claire-element-id="592738">Les données du problème</h2><p id="r-592735" data-claire-element-id="592735">En fait, pour les carrés magiques, la seule chose qu'on connait est la taille du carré qu'on doit remplir. Donc ici les données du problème se résument à un simple entier supérieur ou égal à 1 !</p><aside id="r-592737" data-claire-element-id="592737" data-claire-semantic="information"><p id="r-592736" data-claire-element-id="592736">Dans la suite je noterais <strong>n</strong> la taille du carré magique.</p></aside><h2 id="r-les-contraintes-1" data-claire-element-id="592747">Les contraintes</h2><p id="r-592739" data-claire-element-id="592739">Oui, j'en parle beaucoup depuis le début et elles arrivent enfin ! Elles vont en fait nous permettre d'expliquer à la bibliothèque Gecode ce qu'est notre problème. Nous devons exprimer nos contraintes sur des variables. Ces variables doivent être définies par leurs types et leurs domaines.</p><h3 id="r-les-variables-37" data-claire-element-id="592744">Les variables</h3><p id="r-592740" data-claire-element-id="592740">Pour les carrés magiques on devrait donc commencer par dire qu'on se place sur un tableau d'entiers <strong>carreMag</strong> de taille n*n, chaque entier ayant pour <strong>domaine</strong> les nombres de 1 jusqu'au nombre de cases du tableau (soit n*n). Le domaine d'une variable est l'ensemble des valeurs qu'elle peut prendre. Dans un carré magique, chaque case peut contenir chaque nombre, tant qu'on a pas commencé à le résoudre. Donc ici les variables de notre tableau doivent bien avoir comme valeurs possibles tout les nombres de 1 à n.<br/> Nous avons également besoin d'une variable entière <strong>s</strong> qui sera la somme commune de chaque ligne, colonne et grande diagonale du carré.</p><div id="r-592742" data-claire-element-id="592742" data-claire-semantic="question"><p id="r-592741" data-claire-element-id="592741">Mais on lui met quoi comme domaine à cette somme :euh: ?</p></div><p id="r-592743" data-claire-element-id="592743">Ah ! Justement j'y venais :) . Nous n'avons pas besoin d'être très précis dans le domaine que l'on donne à une variable. C'est un des but de la programmation par contraintes : laisser le programme faire le boulot !<br/> Ici, on sait que la somme sera au minimum 1 et au maximum il y aura n fois le nombre n*n, donc n*n*n en tout. Même si on peut donner un domaine bien plus restreint en se creusant un peu plus la tête, nous n'en avons pas besoin. Si jamais notre programme s'avère trop lent, nous pourrons affiner tout cela. L'important c'est d'avoir une base solide et simple.</p><h3 id="r-les-contraintes" data-claire-element-id="592746">Les contraintes</h3><p id="r-592745" data-claire-element-id="592745">Maintenant que nous avons nos variables, il va falloir les contraindres. Le tableau <strong>carreMag</strong> devra avoir toutes ses cases disctintes les unes des autres. Les lignes, colonnes et grandes diagonales du carré devront avoir pour somme <strong>s</strong>.<br/> Et voilà, nous avons tout ce qu'il nous faut ! On passe au code et à son explication maintenant :D .</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/decouverte-de-la-programmation-par-contraintes">Découverte de la programmation par contraintes</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/decouverte-de-la-programmation-par-contraintes/installer-gecode-et-compiler-avec">
+installer Gecode et compiler avec
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/decouverte-de-la-programmation-par-contraintes/a-l-assaut-des-carres-magiques">
+À l&#039;assaut des carrés magiques
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/decouverte-de-la-programmation-par-contraintes/programmons-des-contraintes">
+Programmons des contraintes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/decouverte-de-la-programmation-par-contraintes/le-code-detaille">
+Le code détaillé
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/decouverte-de-la-programmation-par-contraintes/a-l-assaut-des-carres-magiques">
+<span class="arrow"></span>
+<span class="next">À l&#039;assaut des carrés magiques</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/decouverte-de-la-programmation-par-contraintes/le-code-detaille">
+<span class="next">Le code détaillé</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lecodedtaill"></a><h2>Le code détaillé</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/decouverte-de-la-programmation-par-contraintes/programmons-des-contraintes">
+<span class="arrow"></span>
+<span class="next">Programmons des contraintes</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-592749" data-claire-element-id="592749">Je vais expliquer ici pas à pas le code pour résoudre notre problème, et vous allez vous apercevoir que tout le boulot fait à la partie précédente va porter ses fruits :soleil: . Pour ceux qui veulent le tester d'abord, le code entier est à la fin de cette partie.</p><p id="r-592750" data-claire-element-id="592750">On commence par quelques includes et déclarations de variables de classes :</p><pre id="r-592751" data-claire-element-id="592751"><code data-claire-semantic="cpp">#include &lt;gecode/driver.hh&gt;
+#include &lt;gecode/int.hh&gt;
+#include &lt;gecode/minimodel.hh&gt;
+ 
+using namespace Gecode;
+ 
+class CarreMagique : public Script {
+private:
+  const int n;
+  IntVarArray carreMag;</code></pre><p id="r-592752" data-claire-element-id="592752">On peut remarquer la syntaxe de Gecode pour un tableau de variables entières, IntVarArray.</p><p id="r-592753" data-claire-element-id="592753">Puis viens ensuite le principal morceau, le constructeur dont voici le début :</p><pre id="r-592754" data-claire-element-id="592754"><code data-claire-semantic="cpp">public:
+  CarreMagique(const SizeOptions&amp; opt)
+    : n(opt.size()), carreMag(*this,n*n,1,n*n)</code></pre><p id="r-592755" data-claire-element-id="592755">La seule chose intéressante ici est <code data-claire-semantic="cpp">carreMag(*this,n*n,1,n*n) </code>, qui dit, dans l'ordre, que carreMag est de taille n*n, chacune de ses variables ayant un domaine de 1 à n*n. Comme nous l'avions modélisé dans la précédente partie !</p><p id="r-592756" data-claire-element-id="592756">Ensuite on déclare la variable s et on utilise une fourberie de Gecode pour accéder au tableau comme on le ferais pour une matrice.</p><pre id="r-592757" data-claire-element-id="592757"><code data-claire-semantic="cpp">// Somme de chaque ligne, colonne et grande diagonale
+    IntVar s(*this, 1, n*n*n);
+
+    // Pour acceder au tableau comme à une matrice
+    Matrix&lt;IntVarArray&gt; m(carreMag, n, n);</code></pre><p id="r-592758" data-claire-element-id="592758">Et voici maintenant les contraintes :</p><pre id="r-592759" data-claire-element-id="592759"><code data-claire-semantic="cpp">// Les lignes et colonnes doit avoir comme somme s
+    for (int i = 0; i &lt; n; i++) {
+      linear(*this, m.row(i), IRT_EQ, s);
+      linear(*this, m.col(i), IRT_EQ, s);
+    }
+    // Les deux grandes diagonales doivent avoir comme somme s
+    {
+      IntVarArgs d1(n);
+      IntVarArgs d2(n);
+      for (int i = 0; i &lt; n; i++) {
+        d1[i] = m(i,i);
+        d2[i] = m(n-i-1,i);
+      }
+      linear(*this, d1, IRT_EQ, s);
+      linear(*this, d2, IRT_EQ, s);
+    }
+
+    // Toutes les cases doivent avoir une valeur différente
+    distinct(*this, carreMag);</code></pre><p id="r-592760" data-claire-element-id="592760">On découvre ici la façon de déclarer des contraintes. <code data-claire-semantic="cpp">linear(*this, m.row(i), IRT_EQ, s); </code> indique que la somme des éléments de la ligne (&quot;row&quot; en anglais) i est égale à s. De même pour les colonnes et les diagonales. Enfin la dernière contrainte <code data-claire-semantic="cpp">distinct(*this, carreMag); </code> indique que toutes les variables du tableau carreMag doivent prendre des valeurs disctinctes les unes des autres. Plutot simple non :) ?</p><p id="r-592761" data-claire-element-id="592761">La ligne de code qui suit est importante :</p><pre id="r-592762" data-claire-element-id="592762"><code data-claire-semantic="cpp">// On cherche les solutions sur le carré
+    branch(*this, carreMag, INT_VAR_SIZE_MIN, INT_VAL_SPLIT_MIN);</code></pre><p id="r-592763" data-claire-element-id="592763">Elle indique sur quelles variables le programme va chercher des solutions. Dans notre cas on veut résoudre le carré magique et c'est donc sur le tableau que l'on va effectuer les &quot;branchements&quot;. Les deux autres arguments indiquent la méthode de branchement, ne vous y attardez pas.</p><p id="r-592764" data-claire-element-id="592764">Suivent des méthodes requises par Gecode, plus la fonction d'affichage du carré magique :</p><pre id="r-592765" data-claire-element-id="592765"><code data-claire-semantic="cpp">CarreMagique(bool share, CarreMagique&amp; s) : Script(share,s), n(s.n) {
+    carreMag.update(*this, share, s.carreMag);
+  }
+
+  virtual Space* copy(bool share) {
+    return new CarreMagique(share,*this);
+  }
+
+  virtual void print(std::ostream&amp; os) const {
+    // Pour acceder au tableau comme à une matrice
+    Matrix&lt;IntVarArray&gt; m(carreMag, n, n);
+    for (int i = 0; i &lt; n; i++) {
+      os &lt;&lt; &quot;\t&quot;;
+      for (int j = 0; j &lt; n; j++) {
+        os.width(2);
+        os &lt;&lt; m(i,j) &lt;&lt; &quot;  &quot;;
+      }
+      os &lt;&lt; std::endl;
+    }
+  }</code></pre><p id="r-592766" data-claire-element-id="592766">Sachez simplement que votre programme a besoin de ces fonctions de mise à jour et de copie.</p><p id="r-592767" data-claire-element-id="592767">Finalement nous pouvons écrire le &quot;main&quot; :</p><pre id="r-592768" data-claire-element-id="592768"><code data-claire-semantic="cpp">int main(int argc, char* argv[]) {
+  SizeOptions opt(&quot;CarreMagique&quot;);
+  opt.size(4);
+  Script::run&lt;CarreMagique,DFS,SizeOptions&gt;(opt);
+  return 0;
+}</code></pre><p id="r-592769" data-claire-element-id="592769">Rien de fou ici, <code data-claire-semantic="cpp">opt.size(4); </code> est la taille du carré magique à résoudre. Notre programme n'étant pas franchement optimisé, ne dépassez pas 6 sinon vous allez attendre longtemps avant la réponse ! Quant à la ligne <code data-claire-semantic="cpp">Script::run&lt;CarreMagique,DFS,SizeOptions&gt;(opt); </code>, c'est ici que tout commence ! Vous appelez ici le solveur, soit le programme qui essaye de satisfaire les contraintes et s'occupe de tout, en fait :magicien: .</p><p id="r-592770" data-claire-element-id="592770">Pour récapituler, voici le code en entier :</p><div id="r-592772" data-claire-element-id="592772"><pre id="r-592771" data-claire-element-id="592771"><code data-claire-semantic="cpp">#include &lt;gecode/driver.hh&gt;
+#include &lt;gecode/int.hh&gt;
+#include &lt;gecode/minimodel.hh&gt;
+ 
+using namespace Gecode;
+ 
+class CarreMagique : public Script {
+private:
+  const int n;
+  IntVarArray carreMag;
+ 
+  public:
+  CarreMagique(const SizeOptions&amp; opt)
+    : n(opt.size()), carreMag(*this,n*n,1,n*n) {
+
+    // Somme de chaque ligne, colonne et grande diagonale
+    IntVar s(*this, 1, n*n*n);
+
+    // Pour acceder au tableau comme à une matrice
+    Matrix&lt;IntVarArray&gt; m(carreMag, n, n);
+
+    // Les lignes et colonnes doit avoir comme somme s
+    for (int i = 0; i &lt; n; i++) {
+      linear(*this, m.row(i), IRT_EQ, s);
+      linear(*this, m.col(i), IRT_EQ, s);
+    }
+    // Les deux grandes diagonales doivent avoir comme somme s
+    {
+      IntVarArgs d1(n);
+      IntVarArgs d2(n);
+      for (int i = 0; i &lt; n; i++) {
+        d1[i] = m(i,i);
+        d2[i] = m(n-i-1,i);
+      }
+      linear(*this, d1, IRT_EQ, s);
+      linear(*this, d2, IRT_EQ, s);
+    }
+
+    // Toutes les cases doivent avoir une valeur différente
+    distinct(*this, carreMag);
+
+    // On cherche les solutions sur le carré
+    branch(*this, carreMag, INT_VAR_SIZE_MIN, INT_VAL_SPLIT_MIN);
+  }
+
+  CarreMagique(bool share, CarreMagique&amp; s) : Script(share,s), n(s.n) {
+    carreMag.update(*this, share, s.carreMag);
+  }
+
+  virtual Space* copy(bool share) {
+    return new CarreMagique(share,*this);
+  }
+
+  virtual void print(std::ostream&amp; os) const {
+    // Pour acceder au tableau comme à une matrice
+    Matrix&lt;IntVarArray&gt; m(carreMag, n, n);
+    for (int i = 0; i &lt; n; i++) {
+      os &lt;&lt; &quot;\t&quot;;
+      for (int j = 0; j &lt; n; j++) {
+        os.width(2);
+        os &lt;&lt; m(i,j) &lt;&lt; &quot;  &quot;;
+      }
+      os &lt;&lt; std::endl;
+    }
+  }
+
+};
+
+int main(int argc, char* argv[]) {
+  SizeOptions opt(&quot;CarreMagique&quot;);
+  opt.size(4);
+  Script::run&lt;CarreMagique,DFS,SizeOptions&gt;(opt);
+  return 0;
+}</code></pre></div><p id="r-592773" data-claire-element-id="592773">Je vous invite à compiler tout ça et à l'exécuter ! Lorsque votre programme trouve une solution il l'affiche avec quelques statistiques en bonus. En voici un exemple pour un carré magique de taille 4 :</p><pre id="r-592774" data-claire-element-id="592774"><code>CarreMagique
+         1  12  13   8  
+         2  14   7  11  
+        15   3  10   6  
+        16   5   4   9  
+
+Initial
+        propagators:  11
+        branchings:   1
+
+Summary
+        runtime:      0.009 (9.105000 ms)
+        solutions:    1
+        propagations: 22929
+        nodes:        1688
+        failures:     838
+        peak depth:   24
+        peak memory:  35 KB</code></pre><p id="r-592775" data-claire-element-id="592775">Le &quot;runtime&quot; est le temps que votre programme à mis pour trouver cete solution. Quand aux autres chiffres, plus ils sont grands, plus le problème spécifié dans votre programme est complexe à résoudre (oui, ici je vous cache des choses).</p><h3 id="r-pour-les-aventuriers" data-claire-element-id="592779">Pour les aventuriers</h3><p id="r-592776" data-claire-element-id="592776">Ce code peut être amélioré de différentes façons. Par exemple, en faisant un peu de maths, on peut connaître la valeur de la somme s uniquement à partir de n, la taille du problème (voir <a href="http://fr.wikipedia.org/wiki/Carré magique (mathématiques)">wikipedia</a>). Vous pouvez donc modifier le code donné pour changer le domaine de s, puis tester le changement en vous aidant des statistiques données par Gecode.<br/> Et si vous vous embêtez encore, essayer de coder un solveur de sudokus. C'est un des problèmes les plus simples qu'on peut résoudre en programmation par contraintes, et vous savez maintenant tout ce qu'il faut pour le programmer !</p><p id="r-592777" data-claire-element-id="592777">Eh bien, ce tutoriel touche à sa fin. Vous avez pu apercevoir une autre façon de programmer, où il suffit de déclarer les contraintes et appuyer sur &quot;entrée&quot; pour obtenir la solution !<br/> Il vous reste à découvrir les mécanismes du solveur, ce que sont les branchements et tout ce que j'ai passé sous silence dans cette introduction.</p><p id="r-592778" data-claire-element-id="592778">P.S. : si vous êtes encore en train de me lire, tout commentaire, MP ou demande d'explications et de continuer ce tutoriel sont les bienvenus !</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/decouverte-de-la-programmation-par-contraintes">Découverte de la programmation par contraintes</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/decouverte-de-la-programmation-par-contraintes/installer-gecode-et-compiler-avec">
+installer Gecode et compiler avec
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/decouverte-de-la-programmation-par-contraintes/a-l-assaut-des-carres-magiques">
+À l&#039;assaut des carrés magiques
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/decouverte-de-la-programmation-par-contraintes/programmons-des-contraintes">
+Programmons des contraintes
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/decouverte-de-la-programmation-par-contraintes/le-code-detaille">
+Le code détaillé
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/decouverte-de-la-programmation-par-contraintes/programmons-des-contraintes">
+<span class="arrow"></span>
+<span class="next">Programmons des contraintes</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/decouverte-de-la-programmation-par-contraintes.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 04:33:12 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/decouverte-de-la-programmation-par-contraintes.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:54:38 GMT -->
+</html>

@@ -1,0 +1,1293 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/les-animations-optimisees-avec-sdl.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 01:25:49 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/les-animations-optimisees-avec-sdl.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:25:34 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Les animations optimisées avec SDL</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/les-animations-optimisees-avec-sdl.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Les animations optimisées avec SDL</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#LesanimationsoptimisesavecSDL">Les animations optimisées avec SDL</a><br/><a href="#Introduction">Introduction</a><br/><a href="#Premireapproche">Première approche</a><br/><a href="#Leclipping">Le clipping</a><br/><a href="#Alternative">Alternative</a><br/><a href="#Extension">Extension</a><br/></div>
+<a name="LesanimationsoptimisesavecSDL"></a><h2>Les animations optimisées avec SDL</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/introduction-68">
+<span class="next">Introduction</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-454216" data-claire-element-id="454216">Ce cours s'adresse essentiellement aux personnes qui ont déjà assez bien pratiqué SDL.<br/> Si ce n'est pas le cas, vous pouvez commencer par lire le tuto officiel de M@teo21, puis ensuite vous perfectionner en participant au forum C.<br/> Le but de ce cours est de vous présenter deux méthodes pour optimiser le rafraichissement des images.</p>
+</div><a name="Introduction"></a><h2>Introduction</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/premiere-approche-3">
+<span class="next">Première approche</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-454217" data-claire-element-id="454217">Commençons d'abord par une animation dite naïve.<br/> En fait, pour faire une animation, le plus simple est de, à chaque nouveau frame, redessiner tous les objets.</p><p id="r-454218" data-claire-element-id="454218">Prenons un exemple :</p><figure id="r-454220" data-claire-element-id="454221"><img id="r-454219" data-claire-element-id="454219" src="../../user.oc-static.com/files/9001_10000/9650.jpg" alt="Image utilisateur"/></figure><p id="r-454222" data-claire-element-id="454222">Pour faire bouger zozor, la méthode intuitive est de redessiner l'image de fond en entier... Ceci aura pour effet d'effacer zozor. Puis ensuite, dessiner zozor à sa nouvelle position.</p><p id="r-454223" data-claire-element-id="454223">On peut remarquer qu'en voulant déplacer une petite image (zozor), la méthode intuitive oblige à redessiner tout le décor, même celui qui n'a pas été changé.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl">Les animations optimisées avec SDL</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/introduction-68">
+Introduction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/premiere-approche-3">
+Première approche
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/le-clipping">
+Le clipping
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/alternative">
+Alternative
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/extension">
+Extension
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/premiere-approche-3">
+<span class="next">Première approche</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Premireapproche"></a><h2>Première approche</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/introduction-68">
+<span class="arrow"></span>
+<span class="next">Introduction</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/le-clipping">
+<span class="next">Le clipping</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-methode-naive" data-claire-element-id="454232">Méthode naïve</h2><p id="r-454225" data-claire-element-id="454225">Pour illustrer les méthodes d'optimisation, je vais utiliser tout au long de ce tuto un petit programme qui fait une animation.</p><p id="r-454226" data-claire-element-id="454226">Voici une version naïve du programme :</p><pre id="r-454227" data-claire-element-id="454227"><code data-claire-semantic="c">#include &lt;stdio.h&gt;
+#include &lt;SDL/SDL.h&gt;
+
+SDL_Surface *ecran, *imageDeFond, *zozor;
+/*
+ * Fonction pour initialiser SDL
+ * et les variables globales.
+ */
+void init(void)
+{
+	SDL_Init(SDL_INIT_VIDEO);
+	ecran = SDL_SetVideoMode(800, 600, 32, SDL_HWSURFACE);
+	imageDeFond = SDL_LoadBMP(&quot;lac_en_montagne.bmp&quot;);
+	zozor = SDL_LoadBMP(&quot;zozor.bmp&quot;);
+}
+
+/*
+ * Fonction pour être à l'écoute
+ * de l'événement SDL_Quit.
+ */
+void input_handle(void)
+{
+	SDL_Event event;
+
+	while (SDL_PollEvent(&amp;event)) {
+
+		switch (event.type) {
+		case SDL_QUIT:
+			SDL_Quit();
+			exit(0);
+			break;
+		}
+	}
+}
+
+/*
+ * La fonction qui fera l'animation
+ */
+void anime(void)
+{
+	SDL_Rect positionFond, positionZozor;
+	int avanceX = 1, avanceY = 1; // Ces variables diront si zozor doit avancer ou reculer.
+
+	positionFond.x = 0;
+	positionFond.y = 0;
+
+	positionZozor.x = 0;
+	positionZozor.y = 0;
+
+	while (1) {
+
+		SDL_BlitSurface(imageDeFond, NULL, ecran, &amp;positionFond); // Dessiner le fond
+		SDL_BlitSurface(zozor, NULL, ecran, &amp;positionZozor); // Dessiner zozor
+
+		if (avanceX) {
+			positionZozor.x++; // Si avance est à 1 alors on incrémente x
+		} else {
+			positionZozor.x--; // Sinon on décrémente x 
+		}
+
+		if (avanceY) {
+			positionZozor.y++;
+		} else {
+			positionZozor.y--;
+		}
+
+                /* 
+                 * Arrivé à l'une des extrémités, on change la valeur de avance
+                 */
+		if (positionZozor.x == ecran-&gt;w - zozor-&gt;w - 1)
+			avanceX = 0;
+		else if (positionZozor.x == 0)
+			avanceX = 1;
+
+		if (positionZozor.y == ecran-&gt;h - zozor-&gt;h - 1)
+			avanceY = 0;
+		else if (positionZozor.y == 0)
+			avanceY = 1;
+
+		SDL_Flip(ecran); // On affiche réellement l'image.
+		input_handle(); // On appelle le gestionnaire d'évènements.
+		//SDL_Delay(10);
+	}
+}
+
+int main(void)
+{
+	init();
+	anime();
+	return 0;
+}</code></pre><p id="r-454228" data-claire-element-id="454228"><a href="http://www.siteduzero.com/uploads/fr/ftp/mateo21/pack_images_sdz.zip">Les fichiers bmp sont téléchargeables ici.</a></p><p id="r-454229" data-claire-element-id="454229">Ne vous attardez pas trop pour comprendre tous les détails du programme.<br/> Ce qui nous intéresse le plus est cette partie :</p><pre id="r-454230" data-claire-element-id="454230"><code data-claire-semantic="c">SDL_BlitSurface(imageDeFond, NULL, ecran, &amp;positionFond);
+SDL_BlitSurface(zozor, NULL, ecran, &amp;positionZozor);
+SDL_Flip(ecran);</code></pre><p id="r-454231" data-claire-element-id="454231">On voit bien qu'à chaque itération, on redessine tout... Et bien sûr ceci est très couteux.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl">Les animations optimisées avec SDL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/introduction-68">
+Introduction
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/premiere-approche-3">
+Première approche
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/le-clipping">
+Le clipping
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/alternative">
+Alternative
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/extension">
+Extension
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/introduction-68">
+<span class="arrow"></span>
+<span class="next">Introduction</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/le-clipping">
+<span class="next">Le clipping</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Leclipping"></a><h2>Le clipping</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/premiere-approche-3">
+<span class="arrow"></span>
+<span class="next">Première approche</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/alternative">
+<span class="next">Alternative</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-preparation-16" data-claire-element-id="454238">Préparation</h2><p id="r-454234" data-claire-element-id="454234">Cette fois nous ferons une approche différente :<br/> Au lieu de redessiner tout le fond, on ne redessinera que la partie du fond qui a été modifiée.<br/> Cette méthode s'appelle le clipping.<br/> C'est-à-dire qu'on définit un clipper (un rectangle), pour dire à SDL : N'applique les blitsurface que sur cette partie de la surface.<br/> Par défaut, le clipper est défini comme étant toute la surface.</p><p id="r-454235" data-claire-element-id="454235">Avant d'entamer l'implémentation du clipping, d'abord il nous faut imaginer un moyen pour nous rappeler l'ancienne position de zozor.<br/> Je vous propose de faire comme ceci :</p><pre id="r-454236" data-claire-element-id="454236"><code data-claire-semantic="c">void anime(void)
+{
+	SDL_Rect positionFond, positionZozor;
+        SDL_Rect oldpositionZozor; // On ajoute une variable qui mémorisera l'ancienne position de zozor.
+	int avanceX = 1, avanceY = 1;
+
+	positionFond.x = 0;
+	positionFond.y = 0;
+
+	positionZozor.x = 0;
+	positionZozor.y = 0;
+
+	oldpositionZozor.x = 0; // Initialement, cette variable aura la même valeur que positionZozor.
+	oldpositionZozor.y = 0;
+
+
+	while (1) {
+
+		SDL_BlitSurface(imageDeFond, NULL, ecran, &amp;positionFond);
+		SDL_BlitSurface(zozor, NULL, ecran, &amp;positionZozor);
+
+                /*
+                 * On met à jour oldpositionZozor avant de modifier positionZozor
+                 */
+		oldpositionZozor.x = positionZozor.x;
+		oldpositionZozor.y = positionZozor.y;
+			
+		if (avanceX) {
+			positionZozor.x++;
+		} else {
+			positionZozor.x--;
+		}
+
+		if (avanceY) {
+			positionZozor.y++;
+		} else {
+			positionZozor.y--;
+		}
+
+		if (positionZozor.x == ecran-&gt;w - zozor-&gt;w - 1)
+			avanceX = 0;
+		else if (positionZozor.x == 0)
+			avanceX = 1;
+
+		if (positionZozor.y == ecran-&gt;h - zozor-&gt;h - 1)
+			avanceY = 0;
+		else if (positionZozor.y == 0)
+			avanceY = 1;
+
+		SDL_Flip(ecran);
+		input_handle();
+		//SDL_Delay(10);
+	}
+}</code></pre><p id="r-454237" data-claire-element-id="454237">Cette fois ci, oldpositionZozor contient l'ancienne position de zozor.<br/> Maintenant, passons aux choses sérieuses...</p><h2 id="r-pratique-12" data-claire-element-id="454271">Pratique</h2><p id="r-454239" data-claire-element-id="454239">Comme vous le savez déjà, une image est un rectangle, caractérisé par une position, une hauteur et une largeur.<br/> Donc avec oldpositionZozor, zozor-&gt;w et zozor-&gt;h, on connait exactement où zozor a été avant.<br/> Il ne reste plus qu'à définir le clipper.</p><h3 id="r-le-clipper-sur-sdl" data-claire-element-id="454249">Le clipper sur SDL</h3><p id="r-454240" data-claire-element-id="454240">SDL offre une fonction qui met un clipper sur une surface.<br/> C'est à dire, comme expliqué plus haut, mettre un rectangle, pour qu'au moment où l'on fait un blit, seul la partie du rectangle sera prise en compte.</p><p id="r-454241" data-claire-element-id="454241">Cette fonction s'appelle SDL_SetClipRect, et voici son prototype :</p><pre id="r-454242" data-claire-element-id="454242"><code data-claire-semantic="c">void SDL_SetClipRect(SDL_Surface *surface, SDL_Rect *rect);</code></pre><p id="r-454243" data-claire-element-id="454243">Ça prend en paramètre une surface sur laquelle on posera le clipper, et un rectangle qui jouera le rôle du clipper.</p><p id="r-454244" data-claire-element-id="454244">Pour ce qui est de SDL_Rect, vous connaissez sûrement cette structure...<br/> Pour mon code, je l'ai utilisée comme ceci :</p><pre id="r-454245" data-claire-element-id="454245"><code data-claire-semantic="c">SDL_Rect positionFond;
+positionFond.x = 0;
+positionFond.y = 0;
+SDL_BlitSurface(imageDeFond, NULL, ecran, &amp;positionFond);</code></pre><p id="r-454246" data-claire-element-id="454246">En fait ce type offre encore plus de possibilités.<br/> Voici la définition de SDL_Rect :</p><pre id="r-454247" data-claire-element-id="454247"><code data-claire-semantic="c">typedef struct{
+   Sint16 x, y;
+   Uint16 w, h;
+} SDL_Rect;</code></pre><p id="r-454248" data-claire-element-id="454248">On voit que ça permet de définir un vrai rectangle, et non seulement une position.<br/> Petit rappel : <br/> w = largeur<br/> h = hauteur</p><h3 id="r-code-1" data-claire-element-id="454270">Code</h3><p id="r-454250" data-claire-element-id="454250">Maintenant, appliquons le clipping sur notre petite animation...<br/> Commençons par définir le clipper :</p><pre id="r-454251" data-claire-element-id="454251"><code data-claire-semantic="c">SDL_Rect clipper;
+/* Comme position, on prend l'ancienne position de zozor */
+clipper.x = oldpositionZozor.x;
+clipper.y = oldpositionZozor.y;
+
+/* Pour la largeur et la hauteur, nous prendrons celles de zozor */
+clipper.h = zozor-&gt;h;
+clipper.w = zozor-&gt;w;</code></pre><p id="r-454252" data-claire-element-id="454252">Et maintenant, il suffit de mettre ce clipper sur ecran à chaque tour de boucle :</p><pre id="r-454253" data-claire-element-id="454253"><code data-claire-semantic="c">SDL_SetClipRect(ecran, &amp;clipper);</code></pre><p id="r-454254" data-claire-element-id="454254">De cette façon, peu importe la surface blitée sur ecran, seule la partie du clipper sera prise en considération.</p><p id="r-454255" data-claire-element-id="454255">Maintenant, si on dessine l'image du fond, ceci aura un effet uniquement sur le rectangle de l'ancienne position de zozor... En d'autres mots, dessiner l'image de fond maintenant aura pour effet d'effacer l'ancien zozor, sans pour autant dessiner les pixels qui n'ont pas changé.</p><p id="r-454256" data-claire-element-id="454256">Globalement, le code ressemblerait ça :</p><pre id="r-454257" data-claire-element-id="454257"><code data-claire-semantic="c">clipper.x = oldpositionZozor.x;
+clipper.y = oldpositionZozor.y;
+clipper.h = zozor-&gt;h;
+clipper.w = zozor-&gt;w;
+SDL_SetClipRect(ecran,&amp;clipper);
+
+SDL_BlitSurface(imageDeFond, NULL, ecran, &amp;positionFond);</code></pre><p id="r-454258" data-claire-element-id="454258">Sauf que là, ça ne va pas marcher.<br/> On ne vous l'a jamais dit, mais SDL_BlitSurface peut changer ce qui est passé comme argument de position quand on manipule les clippers.<br/> Je ne vais pas entrer dans les détails de ce changement dans ce tuto.<br/> Pour dévier ce problème, nous allons créer une copie de cette position, et la passer en paramètre :</p><pre id="r-454259" data-claire-element-id="454259"><code data-claire-semantic="c">clipper.x = oldpositionZozor.x;
+clipper.y = oldpositionZozor.y;
+clipper.h = zozor-&gt;h;
+clipper.w = zozor-&gt;w;
+SDL_SetClipRect(ecran,&amp;clipper);
+
+/* On met à jour les copies */
+positionFond_c.x = positionFond.x;
+positionFond_c.y = positionFond.y;
+positionZozor_c.x = positionZozor.x;
+positionZozor_c.y = positionZozor.y;
+
+/* On passe une copie en paramètre */
+SDL_BlitSurface(imageDeFond, NULL, ecran, &amp;positionFond_c);</code></pre><p id="r-454260" data-claire-element-id="454260">Puis maintenant, pour dessiner zozor, on a le choix, soit on relâche le clipper, en passant comme argument de rectangle à la fonction SDL_SetClipRect() un argument NULL comme ceci :</p><pre id="r-454261" data-claire-element-id="454261"><code data-claire-semantic="c">SDL_SetClipRect(ecran,NULL);</code></pre><p id="r-454262" data-claire-element-id="454262">Soit on peut définir un nouveau clipper qui correspondra à la nouvelle position de zozor :</p><pre id="r-454263" data-claire-element-id="454263"><code data-claire-semantic="c">clipper.x = positionZozor.x;
+clipper.y = positionZozor.y;
+clipper.h = zozor-&gt;h;
+clipper.w = zozor-&gt;w;
+SDL_SetClipRect(ecran,&amp;clipper);
+
+SDL_BlitSurface(zozor, NULL, ecran, &amp;positionZozor_c);</code></pre><p id="r-454264" data-claire-element-id="454264">Et n'oublions pas que, vu que dans la boucle de la fonction anime on ne dessine qu'une partie de l'image de fond, il faut bien dessiner l'image en entier dans l'initialisation.</p><pre id="r-454265" data-claire-element-id="454265"><code data-claire-semantic="c">void init(void)
+{
+	SDL_Init(SDL_INIT_VIDEO);
+	ecran = SDL_SetVideoMode(800, 600, 32, SDL_HWSURFACE);
+	imageDeFond = SDL_LoadBMP(&quot;lac_en_montagne.bmp&quot;);
+	zozor = SDL_LoadBMP(&quot;zozor.bmp&quot;);
+	
+	SDL_Rect positionFond;
+	positionFond.x = 0;
+	positionFond.y = 0;
+
+        /* On dessine entièrement l'image de fond */
+	SDL_BlitSurface(imageDeFond, NULL, ecran, &amp;positionFond);
+}</code></pre><p id="r-454266" data-claire-element-id="454266">Code complet :</p><div id="r-454268" data-claire-element-id="454268"><pre id="r-454267" data-claire-element-id="454267"><code data-claire-semantic="c">#include &lt;stdio.h&gt;
+#include &lt;SDL/SDL.h&gt;
+
+SDL_Surface *ecran, *imageDeFond, *zozor;
+
+void init(void)
+{
+	SDL_Init(SDL_INIT_VIDEO);
+	ecran = SDL_SetVideoMode(800, 600, 32, SDL_HWSURFACE);
+	imageDeFond = SDL_LoadBMP(&quot;lac_en_montagne.bmp&quot;);
+	zozor = SDL_LoadBMP(&quot;zozor.bmp&quot;);
+	
+	SDL_Rect positionFond;
+	positionFond.x = 0;
+	positionFond.y = 0;
+
+	SDL_BlitSurface(imageDeFond, NULL, ecran, &amp;positionFond);
+}
+
+void input_handle(void)
+{
+	SDL_Event event;
+
+	while (SDL_PollEvent(&amp;event)) {
+
+		switch (event.type) {
+		case SDL_QUIT:
+			SDL_Quit();
+			exit(0);
+			break;
+		}
+	}
+}
+
+void anime(void)
+{
+	SDL_Rect positionFond, positionZozor, oldpositionZozor;
+	SDL_Rect positionFond_c, positionZozor_c;
+	SDL_Rect clipper;
+	int avanceX = 1, avanceY = 1;
+
+	positionFond.x = 0;
+	positionFond.y = 0;
+
+	positionZozor.x = 0;
+	positionZozor.y = 0;
+
+	oldpositionZozor.x = 0;
+	oldpositionZozor.y = 0;
+
+
+	while (1) {
+		
+		clipper.x = oldpositionZozor.x;
+		clipper.y = oldpositionZozor.y;
+		clipper.h = zozor-&gt;h;
+		clipper.w = zozor-&gt;w;
+		SDL_SetClipRect(ecran,&amp;clipper);
+
+		positionFond_c.x = positionFond.x;
+		positionFond_c.y = positionFond.y;
+
+		positionZozor_c.x = positionZozor.x;
+		positionZozor_c.y = positionZozor.y;
+
+
+		SDL_BlitSurface(imageDeFond, NULL, ecran, &amp;positionFond_c);
+
+                SDL_SetClipRect(ecran,NULL); // J'ai choisi cette solution
+		SDL_BlitSurface(zozor, NULL, ecran, &amp;positionZozor_c);
+
+		oldpositionZozor.x = positionZozor.x;
+		oldpositionZozor.y = positionZozor.y;
+			
+		if (avanceX) {
+			positionZozor.x++;
+		} else {
+			positionZozor.x--;
+		}
+
+		if (avanceY) {
+			positionZozor.y++;
+		} else {
+			positionZozor.y--;
+		}
+
+		if (positionZozor.x == ecran-&gt;w - zozor-&gt;w - 1)
+			avanceX = 0;
+		else if (positionZozor.x == 0)
+			avanceX = 1;
+
+		if (positionZozor.y == ecran-&gt;h - zozor-&gt;h - 1)
+			avanceY = 0;
+		else if (positionZozor.y == 0)
+			avanceY = 1;
+
+		SDL_Flip(ecran);
+		input_handle();
+		//SDL_Delay(10);
+	}
+}
+
+int main(void)
+{
+	init();
+	anime();
+	return 0;
+}</code></pre></div><p id="r-454269" data-claire-element-id="454269">Je vous laisse admirer la vitesse de zozor avec la méthode de clipping. ;)</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl">Les animations optimisées avec SDL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/introduction-68">
+Introduction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/premiere-approche-3">
+Première approche
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/le-clipping">
+Le clipping
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/alternative">
+Alternative
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/extension">
+Extension
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/premiere-approche-3">
+<span class="arrow"></span>
+<span class="next">Première approche</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/alternative">
+<span class="next">Alternative</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Alternative"></a><h2>Alternative</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/le-clipping">
+<span class="arrow"></span>
+<span class="next">Le clipping</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/extension">
+<span class="next">Extension</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-454273" data-claire-element-id="454273">Je vous rappelle le code naïf qu'on avait avant :</p><pre id="r-454274" data-claire-element-id="454274"><code data-claire-semantic="c">SDL_BlitSurface(imageDeFond, NULL, ecran, &amp;positionFond);
+SDL_BlitSurface(zozor, NULL, ecran, &amp;positionZozor);</code></pre><p id="r-454275" data-claire-element-id="454275">Une autre façon d'optimiser l'affichage, est d'utiliser un paramètre de SDL_BlitSurface que vous n'avez pas beaucoup l'habitude d'utiliser.<br/> Le prototype de cette fonction étant :</p><pre id="r-454276" data-claire-element-id="454276"><code data-claire-semantic="c">int SDL_BlitSurface(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst, SDL_Rect *dstrect);</code></pre><p id="r-454277" data-claire-element-id="454277">Nous allons utiliser le paramètre srcrect.</p><p id="r-454278" data-claire-element-id="454278">Comme son nom peut l'indiquer, il précise le rectangle dans lequel le blit sera effectué.<br/> Avec ceci, le code devient très facile, car il suffit de faire directement :</p><pre id="r-454279" data-claire-element-id="454279"><code data-claire-semantic="c">/*
+ * De la même manière, on positionne le clipper 
+ * sur l'ancienne position de zozor
+ */
+clipper.x = oldpositionZozor.x;
+clipper.y = oldpositionZozor.y;
+clipper.h = zozor-&gt;h;
+clipper.w = zozor-&gt;w;
+
+/* Maintenant, on dessine la partie de l'image de fond à l'ancienne position de zozor */
+SDL_BlitSurface(imageDeFond, &amp;clipper, ecran, &amp;oldpositionZozor);
+
+/* On dessine le nouveau zozor */
+SDL_BlitSurface(zozor, NULL, ecran, &amp;positionZozor);</code></pre><p id="r-454280" data-claire-element-id="454280">Cela veut dire qu'on dessine une partie de l'image du fond (définie par le clipper) à l'ancienne position de zozor.</p><p id="r-454281" data-claire-element-id="454281">Le code complet :</p><div id="r-454283" data-claire-element-id="454283"><pre id="r-454282" data-claire-element-id="454282"><code data-claire-semantic="c">#include &lt;stdio.h&gt;
+#include &lt;SDL/SDL.h&gt;
+
+SDL_Surface *ecran, *imageDeFond, *zozor;
+
+void init(void)
+{
+	SDL_Init(SDL_INIT_VIDEO);
+	ecran = SDL_SetVideoMode(800, 600, 32, SDL_HWSURFACE);
+	imageDeFond = SDL_LoadBMP(&quot;lac_en_montagne.bmp&quot;);
+	zozor = SDL_LoadBMP(&quot;zozor.bmp&quot;);
+	
+	SDL_Rect positionFond;
+	positionFond.x = 0;
+	positionFond.y = 0;
+
+	SDL_BlitSurface(imageDeFond, NULL, ecran, &amp;positionFond);
+}
+
+void input_handle(void)
+{
+	SDL_Event event;
+
+	while (SDL_PollEvent(&amp;event)) {
+
+		switch (event.type) {
+		case SDL_QUIT:
+			SDL_Quit();
+			exit(0);
+			break;
+		}
+	}
+}
+
+void anime(void)
+{
+	SDL_Rect positionFond, positionZozor, oldpositionZozor;
+	SDL_Rect clipper;
+	int avanceX = 1, avanceY = 1;
+
+	//SDL_SetClipRect(ecran,&amp;clipper);
+
+	positionFond.x = 0;
+	positionFond.y = 0;
+
+	positionZozor.x = 0;
+	positionZozor.y = 0;
+
+	oldpositionZozor.x = 0;
+	oldpositionZozor.y = 0;
+
+
+	while (1) {
+		
+		clipper.x = positionZozor.x;
+		clipper.y = positionZozor.y;
+		clipper.h = zozor-&gt;h;
+		clipper.w = zozor-&gt;w;
+		SDL_BlitSurface(imageDeFond, &amp;clipper, ecran, &amp;oldpositionZozor);
+		SDL_BlitSurface(zozor, NULL, ecran, &amp;positionZozor);
+		oldpositionZozor.x = positionZozor.x;
+		oldpositionZozor.y = positionZozor.y;
+			
+		if (avanceX) {
+			positionZozor.x++;
+		} else {
+			positionZozor.x--;
+		}
+
+		if (avanceY) {
+			positionZozor.y++;
+		} else {
+			positionZozor.y--;
+		}
+
+		if (positionZozor.x == ecran-&gt;w - zozor-&gt;w - 1)
+			avanceX = 0;
+		else if (positionZozor.x == 0)
+			avanceX = 1;
+
+		if (positionZozor.y == ecran-&gt;h - zozor-&gt;h - 1)
+			avanceY = 0;
+		else if (positionZozor.y == 0)
+			avanceY = 1;
+
+		SDL_Flip(ecran);
+		input_handle();
+		//SDL_Delay(10);
+	}
+}
+
+int main(void)
+{
+	init();
+	anime();
+	return 0;
+}</code></pre></div><p id="r-454284" data-claire-element-id="454284">Encore une fois, le résultat est surprenant. :D</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl">Les animations optimisées avec SDL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/introduction-68">
+Introduction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/premiere-approche-3">
+Première approche
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/le-clipping">
+Le clipping
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/alternative">
+Alternative
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/extension">
+Extension
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/le-clipping">
+<span class="arrow"></span>
+<span class="next">Le clipping</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/extension">
+<span class="next">Extension</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Extension"></a><h2>Extension</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/alternative">
+<span class="arrow"></span>
+<span class="next">Alternative</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-454286" data-claire-element-id="454286">Nous parlerons dans cette partie de comment utiliser le clipping pour gérer plusieurs objets animés.</p><p id="r-454287" data-claire-element-id="454287">Pour illustrer un exemple, je prendrai zozor et une planète qui se baladeront sur l'ecran.<br/> Je vous propose ce code naïf :</p><pre id="r-454288" data-claire-element-id="454288"><code data-claire-semantic="c">#include &lt;stdio.h&gt;
+#include &lt;SDL/SDL.h&gt;
+
+SDL_Surface *ecran, *imageDeFond, *zozor, *icone;
+
+void init(void)
+{
+	SDL_Init(SDL_INIT_VIDEO);
+	ecran = SDL_SetVideoMode(800, 600, 32, SDL_HWSURFACE);
+	imageDeFond = SDL_LoadBMP(&quot;lac_en_montagne.bmp&quot;);
+	zozor = SDL_LoadBMP(&quot;zozor.bmp&quot;);
+	icone = SDL_LoadBMP(&quot;sdl_icone.bmp&quot;); // La 2eme image animée.
+	
+	SDL_Rect positionFond;
+	positionFond.x = 0;
+	positionFond.y = 0;
+}
+
+void input_handle(void)
+{
+	SDL_Event event;
+
+	while (SDL_PollEvent(&amp;event)) {
+
+		switch (event.type) {
+		case SDL_QUIT:
+			SDL_Quit();
+			exit(0);
+			break;
+		}
+	}
+}
+
+void anime(void)
+{
+	SDL_Rect positionFond, positionZozor, positionIcone;
+	int avanceX = 1, avanceY = 1;
+	int avanceXI = 0, avanceYI = 1;
+
+	positionFond.x = 0;
+	positionFond.y = 0;
+
+	positionZozor.x = 0;
+	positionZozor.y = 0;
+
+	positionIcone.x = ecran-&gt;w - icone-&gt;w; // La nouvelle image sera initialement en haut à droite
+	positionIcone.y = 0;
+
+	while (1) {
+		SDL_BlitSurface(imageDeFond, NULL, ecran, &amp;positionFond);
+
+		SDL_BlitSurface(zozor, NULL, ecran, &amp;positionZozor);
+		
+		SDL_BlitSurface(icone, NULL, ecran, &amp;positionIcone);
+			
+		if (avanceX) {
+			positionZozor.x++;
+		} else {
+			positionZozor.x--;
+		}
+
+		if (avanceY) {
+			positionZozor.y++;
+		} else {
+			positionZozor.y--;
+		}
+
+		if (positionZozor.x == ecran-&gt;w - zozor-&gt;w - 1)
+			avanceX = 0;
+		else if (positionZozor.x == 0)
+			avanceX = 1;
+
+		if (positionZozor.y == ecran-&gt;h - zozor-&gt;h - 1)
+			avanceY = 0;
+		else if (positionZozor.y == 0)
+			avanceY = 1;	
+
+                /* Les calculs qui suivent sont analogues aux précédents */ 
+		if (avanceXI) {
+			positionIcone.x++;
+		} else {
+			positionIcone.x--;
+		}
+		if (avanceYI) {
+			positionIcone.y++;
+		} else {
+			positionIcone.y--;
+		}
+
+		if (positionIcone.x == ecran-&gt;w - icone-&gt;w - 1)
+			avanceXI = 0;
+		else if (positionIcone.x == 0)
+			avanceXI = 1;
+
+		if (positionIcone.y == ecran-&gt;h - icone-&gt;h - 1)
+			avanceYI = 0;
+		else if (positionIcone.y == 0)
+			avanceYI = 1;
+
+		SDL_Flip(ecran);
+		input_handle();
+		//SDL_Delay(10);
+	}
+}
+
+int main(void)
+{
+	init();
+	anime();
+	return 0;
+}</code></pre><h2 id="r-application-du-clipping" data-claire-element-id="454318">Application du clipping</h2><p id="r-454289" data-claire-element-id="454289">Nous avons initialement ce code :</p><pre id="r-454290" data-claire-element-id="454290"><code data-claire-semantic="c">SDL_BlitSurface(imageDeFond, NULL, ecran, &amp;positionFond);
+
+SDL_BlitSurface(zozor, NULL, ecran, &amp;positionZozor);
+		
+SDL_BlitSurface(icone, NULL, ecran, &amp;positionIcone);</code></pre><p id="r-454291" data-claire-element-id="454291">De façon très analogue à ce qui a été vu plus haut, nous utiliserons deux variables pour nous souvenir des anciennes positions de zozor et de la planète.</p><pre id="r-454292" data-claire-element-id="454292"><code data-claire-semantic="c">SDL_Rect oldpositionZozor, oldpositionIcone;
+	oldpositionZozor.x = 0;
+	oldpositionZozor.y = 0;
+
+	oldpositionIcone.x = ecran-&gt;w - icone-&gt;w;
+	oldpositionIcone.y = 0;
+
+	while (1) {
+		SDL_BlitSurface(imageDeFond, NULL, ecran, &amp;positionFond);
+
+		SDL_BlitSurface(zozor, NULL, ecran, &amp;positionZozor);
+		
+		SDL_BlitSurface(icone, NULL, ecran, &amp;positionIcone);
+
+                /* Sauvegarde de l'ancienne position de zozor */
+		oldpositionZozor.x = positionZozor.x;
+		oldpositionZozor.y = positionZozor.y;
+
+                /* Sauvegarde de l'ancienne position de la planète */
+		oldpositionIcone.x = positionIcone.x;
+		oldpositionIcone.y = positionIcone.y;</code></pre><p id="r-454293" data-claire-element-id="454293">Maintenant, il suffit d'appliquer les mêmes notions vues auparavant... Le schéma est le suivant :</p><ul id="r-454306" data-claire-element-id="454306"><li id="r-454295" data-claire-element-id="454295"><p id="r-454294" data-claire-element-id="454294">Mettre le clipper sur le rectangle de zozor</p></li><li id="r-454297" data-claire-element-id="454297"><p id="r-454296" data-claire-element-id="454296">Dessiner le fond pour effacer zozor.</p></li><li id="r-454299" data-claire-element-id="454299"><p id="r-454298" data-claire-element-id="454298">Mettre le clipper sur le rectangle de la planète</p></li><li id="r-454301" data-claire-element-id="454301"><p id="r-454300" data-claire-element-id="454300">Dessiner le fond pour effacer la planète.</p></li><li id="r-454303" data-claire-element-id="454303"><p id="r-454302" data-claire-element-id="454302">Enlever le clipper.</p></li><li id="r-454305" data-claire-element-id="454305"><p id="r-454304" data-claire-element-id="454304">Dessiner les nouveaux zozor et planète.</p></li></ul><p id="r-454307" data-claire-element-id="454307">En code, ça donnerait ceci :</p><pre id="r-454308" data-claire-element-id="454308"><code data-claire-semantic="c">//Code sans copie
+	        clipper.x = oldpositionZozor.x;
+		clipper.y = oldpositionZozor.y;
+		clipper.h = zozor-&gt;h;
+		clipper.w = zozor-&gt;w;
+		SDL_SetClipRect(ecran,&amp;clipper); // Clipper sur zozor
+
+		SDL_BlitSurface(imageDeFond, NULL, ecran, &amp;positionFond); // Effacer zozor
+
+		clipper.x = oldpositionIcone.x;
+		clipper.y = oldpositionIcone.y;
+		clipper.h = icone-&gt;h;
+		clipper.w = icone-&gt;w;
+		SDL_SetClipRect(ecran,&amp;clipper); // Clipper sur la planète
+
+		SDL_BlitSurface(imageDeFond, NULL, ecran, &amp;positionFond); // Effacer la planète.
+
+		SDL_SetClipRect(ecran,NULL); // Enlever le clipper
+
+		SDL_BlitSurface(zozor, NULL, ecran, &amp;positionZozor);
+		
+		SDL_BlitSurface(icone, NULL, ecran, &amp;positionIcone);</code></pre><p id="r-454309" data-claire-element-id="454309">Pour que ça marche, il ne reste plus qu'à rajouter des copies (rappelez vous, blitsurface peut changer le paramètre de position).</p><pre id="r-454310" data-claire-element-id="454310"><code data-claire-semantic="c">//Code avec copie.
+		clipper.x = oldpositionZozor.x;
+		clipper.y = oldpositionZozor.y;
+		clipper.h = zozor-&gt;h;
+		clipper.w = zozor-&gt;w;
+		SDL_SetClipRect(ecran,&amp;clipper); // Clipper sur zozor
+
+		positionFond_c.x = positionFond.x;
+		positionFond_c.y = positionFond.y;
+
+		SDL_BlitSurface(imageDeFond, NULL, ecran, &amp;positionFond_c); // Effacer zozor
+
+		clipper.x = oldpositionIcone.x;
+		clipper.y = oldpositionIcone.y;
+		clipper.h = icone-&gt;h;
+		clipper.w = icone-&gt;w;
+		SDL_SetClipRect(ecran,&amp;clipper); // Clipper sur la planète
+
+		positionFond_c.x = positionFond.x;
+		positionFond_c.y = positionFond.y;
+
+		SDL_BlitSurface(imageDeFond, NULL, ecran, &amp;positionFond_c); // Effacer la planète.
+
+		SDL_SetClipRect(ecran,NULL); // Enlever le clipper
+
+                /* Pas besoin de copie ici, car le clipper est désactivé.*/
+
+		SDL_BlitSurface(zozor, NULL, ecran, &amp;positionZozor);
+		
+		SDL_BlitSurface(icone, NULL, ecran, &amp;positionIcone);
+
+		oldpositionZozor.x = positionZozor.x;
+		oldpositionZozor.y = positionZozor.y;
+
+		oldpositionIcone.x = positionIcone.x;
+		oldpositionIcone.y = positionIcone.y;</code></pre><p id="r-454311" data-claire-element-id="454311">Voici le code complet :</p><div id="r-454313" data-claire-element-id="454313"><pre id="r-454312" data-claire-element-id="454312"><code data-claire-semantic="c">#include &lt;stdio.h&gt;
+#include &lt;SDL/SDL.h&gt;
+
+SDL_Surface *ecran, *imageDeFond, *zozor, *icone;
+
+void init(void)
+{
+	SDL_Init(SDL_INIT_VIDEO);
+	ecran = SDL_SetVideoMode(800, 600, 32, SDL_HWSURFACE);
+	imageDeFond = SDL_LoadBMP(&quot;lac_en_montagne.bmp&quot;);
+	zozor = SDL_LoadBMP(&quot;zozor.bmp&quot;);
+	icone = SDL_LoadBMP(&quot;sdl_icone.bmp&quot;);
+	
+	SDL_Rect positionFond;
+	positionFond.x = 0;
+	positionFond.y = 0;
+
+	SDL_BlitSurface(imageDeFond, NULL, ecran, &amp;positionFond);
+}
+
+void input_handle(void)
+{
+	SDL_Event event;
+
+	while (SDL_PollEvent(&amp;event)) {
+
+		switch (event.type) {
+		case SDL_QUIT:
+			SDL_Quit();
+			exit(0);
+			break;
+		}
+	}
+}
+
+void anime(void)
+{
+	SDL_Rect positionFond, positionZozor, positionIcone;
+	SDL_Rect positionFond_c;
+	SDL_Rect oldpositionZozor, oldpositionIcone;
+	SDL_Rect clipper;
+	
+	int avanceX = 1, avanceY = 1;
+	int avanceXI = 0, avanceYI = 1;
+
+	positionFond.x = 0;
+	positionFond.y = 0;
+
+	positionZozor.x = 0;
+	positionZozor.y = 0;
+
+	positionIcone.x = ecran-&gt;w - icone-&gt;w;
+	positionIcone.y = 0;
+
+	oldpositionZozor.x = 0;
+	oldpositionZozor.y = 0;
+
+	oldpositionIcone.x = ecran-&gt;w - icone-&gt;w;
+	oldpositionIcone.y = 0;
+
+	while (1) {
+
+		clipper.x = oldpositionZozor.x;
+		clipper.y = oldpositionZozor.y;
+		clipper.h = zozor-&gt;h;
+		clipper.w = zozor-&gt;w;
+		SDL_SetClipRect(ecran,&amp;clipper); // Clipper sur zozor
+
+		positionFond_c.x = positionFond.x;
+		positionFond_c.y = positionFond.y;
+
+		SDL_BlitSurface(imageDeFond, NULL, ecran, &amp;positionFond_c); // Effacer zozor
+
+		clipper.x = oldpositionIcone.x;
+		clipper.y = oldpositionIcone.y;
+		clipper.h = icone-&gt;h;
+		clipper.w = icone-&gt;w;
+		SDL_SetClipRect(ecran,&amp;clipper); // Clipper sur la planète
+
+		positionFond_c.x = positionFond.x;
+		positionFond_c.y = positionFond.y;
+
+		SDL_BlitSurface(imageDeFond, NULL, ecran, &amp;positionFond_c); // Effacer la planète.
+
+		SDL_SetClipRect(ecran,NULL); // Enlever le clipper
+
+		SDL_BlitSurface(zozor, NULL, ecran, &amp;positionZozor);
+		
+		SDL_BlitSurface(icone, NULL, ecran, &amp;positionIcone);
+
+		oldpositionZozor.x = positionZozor.x;
+		oldpositionZozor.y = positionZozor.y;
+
+		oldpositionIcone.x = positionIcone.x;
+		oldpositionIcone.y = positionIcone.y;
+		
+			
+		if (avanceX) {
+			positionZozor.x++;
+		} else {
+			positionZozor.x--;
+		}
+
+		if (avanceY) {
+			positionZozor.y++;
+		} else {
+			positionZozor.y--;
+		}
+
+		if (positionZozor.x == ecran-&gt;w - zozor-&gt;w - 1)
+			avanceX = 0;
+		else if (positionZozor.x == 0)
+			avanceX = 1;
+
+		if (positionZozor.y == ecran-&gt;h - zozor-&gt;h - 1)
+			avanceY = 0;
+		else if (positionZozor.y == 0)
+			avanceY = 1;	
+
+		if (avanceXI) {
+			positionIcone.x++;
+		} else {
+			positionIcone.x--;
+		}
+		if (avanceYI) {
+			positionIcone.y++;
+		} else {
+			positionIcone.y--;
+		}
+
+		if (positionIcone.x == ecran-&gt;w - icone-&gt;w - 1)
+			avanceXI = 0;
+		else if (positionIcone.x == 0)
+			avanceXI = 1;
+
+		if (positionIcone.y == ecran-&gt;h - icone-&gt;h - 1)
+			avanceYI = 0;
+		else if (positionIcone.y == 0)
+			avanceYI = 1;
+
+		SDL_Flip(ecran);
+		input_handle();
+		//SDL_Delay(10);
+	}
+}
+
+int main(void)
+{
+	init();
+	anime();
+	return 0;
+}</code></pre></div><p id="r-454314" data-claire-element-id="454314">Ou encore un code (donné par Mircko) pour gérer l'affichage de plusieurs zozor :</p><div id="r-454316" data-claire-element-id="454316"><pre id="r-454315" data-claire-element-id="454315"><code data-claire-semantic="c">#include &lt;stdio.h&gt;
+#include &lt;time.h&gt;
+#include &lt;SDL/SDL.h&gt;
+#define LARGEUR 800
+#define HAUTEUR 600
+
+SDL_Surface *ecran, *imageDeFond, *zozor;
+
+typedef struct{
+    int vx;
+    int vy;
+    SDL_Rect pos;
+    SDL_Rect oldPos;
+} Objet ;
+
+void init(void)
+{
+	SDL_Init(SDL_INIT_VIDEO);
+        srand(time(NULL));
+	ecran = SDL_SetVideoMode(LARGEUR, HAUTEUR, 32, SDL_HWSURFACE);
+	imageDeFond = SDL_LoadBMP(&quot;lac_en_montagne.bmp&quot;);
+	zozor = SDL_LoadBMP(&quot;zozor.bmp&quot;);
+	
+	SDL_Rect positionFond;
+	positionFond.x = 0;
+	positionFond.y = 0;
+
+	SDL_BlitSurface(imageDeFond, NULL, ecran, &amp;positionFond);
+}
+
+void input_handle(void)
+{
+	SDL_Event event;
+
+	while (SDL_PollEvent(&amp;event)) {
+
+		switch (event.type) {
+		case SDL_QUIT:
+			SDL_Quit();
+			exit(0);
+			break;
+		}
+	}
+}
+
+void init_objets(Objet objs[], int nbObjs)
+{
+    int i;
+    
+    for(i = 0; i &lt; nbObjs; i++)
+    {
+        objs[i].vx = rand() % 4 + 1;
+        objs[i].vy = rand() % 4 + 1;
+        objs[i].pos.x = rand() % (LARGEUR - zozor-&gt;w);
+        objs[i].pos.y = rand() % (HAUTEUR - zozor-&gt;h);
+        objs[i].oldPos.x = objs[i].pos.x;
+        objs[i].oldPos.y = objs[i].pos.y;
+    }
+}
+
+void anime(int nbZozors)
+{
+	int i;
+    Objet objs[nbZozors];
+    SDL_Rect positionFond = {0, 0, 0, 0},
+             positionFond_c = {0, 0, 0, 0},
+	         clipper;
+    
+    init_objets(objs, nbZozors);
+    
+	while (1) {
+        for(i = 0; i &lt; nbZozors; i++)
+        {
+            clipper.x = objs[i].oldPos.x;
+            clipper.y = objs[i].oldPos.y;
+            clipper.h = zozor-&gt;h;
+            clipper.w = zozor-&gt;w;
+            
+            SDL_SetClipRect(ecran, &amp;clipper); // Clipper sur l'objet[i]
+            
+            positionFond_c.x = positionFond.x;
+            positionFond_c.y = positionFond.y;
+
+            SDL_BlitSurface(imageDeFond, NULL, ecran, &amp;positionFond_c); // Effacer l'objet[i]
+        }
+		
+		SDL_SetClipRect(ecran,NULL); // Enlever le clipper
+        for(i = 0; i &lt; nbZozors; i++)
+        {
+            SDL_BlitSurface(zozor, NULL, ecran, &amp;objs[i].pos);
+            objs[i].oldPos.x = objs[i].pos.x;
+            objs[i].oldPos.y = objs[i].pos.y;
+        }
+		
+        for(i = 0; i &lt; nbZozors; i++)
+        {
+            objs[i].pos.x += objs[i].vx;
+            objs[i].pos.y += objs[i].vy;
+            if(objs[i].pos.x &gt;= ecran-&gt;w - zozor-&gt;w - 1)
+            {
+                objs[i].pos.x = ecran-&gt;w - zozor-&gt;w - 1;
+                objs[i].vx = -objs[i].vx;
+            }
+            else if(objs[i].pos.x &lt;= 0)
+            {
+                objs[i].pos.x = 0;
+                objs[i].vx = -objs[i].vx;
+            }
+            if(objs[i].pos.y &gt;= ecran-&gt;h - zozor-&gt;h - 1)
+            {
+                objs[i].pos.y = ecran-&gt;h - zozor-&gt;h - 1;
+                objs[i].vy = -objs[i].vy;
+            }
+            else if(objs[i].pos.y &lt;= 0)
+            {
+                objs[i].pos.y = 0;
+                objs[i].vy = -objs[i].vy;
+            }
+        }
+
+		SDL_Flip(ecran);
+		input_handle();
+		//SDL_Delay(10);
+	}
+}
+
+int main(int argc, char *argv[])
+{
+	init();
+	anime(8);
+	return 0;
+}</code></pre></div><p id="r-454317" data-claire-element-id="454317">Le tuto est fini !!<br/> Avec ces deux techniques, les animations deviennent beaucoup plus fluides. ;) <br/> Si vous avez d'autres idées d'optimisation, vous pouvez toujours les présenter dans les commentaires.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl">Les animations optimisées avec SDL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/introduction-68">
+Introduction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/premiere-approche-3">
+Première approche
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/le-clipping">
+Le clipping
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/alternative">
+Alternative
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/extension">
+Extension
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-animations-optimisees-avec-sdl/alternative">
+<span class="arrow"></span>
+<span class="next">Alternative</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/les-animations-optimisees-avec-sdl.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 01:25:49 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/les-animations-optimisees-avec-sdl.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:25:35 GMT -->
+</html>

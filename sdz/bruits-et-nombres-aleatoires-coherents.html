@@ -1,0 +1,782 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/bruits-et-nombres-aleatoires-coherents.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 09:01:20 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/bruits-et-nombres-aleatoires-coherents.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:36:46 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Bruits et nombres aléatoires cohérents</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Bruits et nombres aléatoires cohérents</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Bruitsetnombresalatoirescohrents">Bruits et nombres aléatoires cohérents</a><br/><a href="#Introductionauxbruits">Introduction aux bruits</a><br/><a href="#Interpolationdesvaleursdiscrtes">Interpolation des valeurs discrètes</a><br/><a href="#Sommedefonctionsdebruit">Somme de fonctions de bruit</a><br/><a href="#L039algorithmecomplet">L&#039;algorithme complet</a><br/><a href="#Enpratique">En pratique</a><br/></div>
+<a name="Bruitsetnombresalatoirescohrents"></a><h2>Bruits et nombres aléatoires cohérents</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/introduction-aux-bruits">
+<span class="next">Introduction aux bruits</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-370603" data-claire-element-id="370603">Bonjour à tous !</p><p id="r-370604" data-claire-element-id="370604">Si vous avez déjà essayé de générer un terrain, une texture de nuage ou de marbre, de simuler l'oscillation des herbes sous l'effet du vent, vous vous êtes vite rendu compte qu'il faut intégrer un facteur aléatoire à l'algorithme.</p><p id="r-370605" data-claire-element-id="370605">Prenons par exemple la génération d'un terrain, sous forme d'une <a href="http://en.wikipedia.org/wiki/Heightmap">heightmap</a> (donc un tableau bidimensionnel stockant l'altitude de chaque point de la carte). L'idée « naïve » qui vient souvent est de faire une double boucle et de remplir le tableau avec une fonction aléatoire <strong><code>rand()</code></strong>. Comme on s'en rend vite compte, les résultats ne sont pas très glorieux, on obtient de la neige comme sur les vieux postes de télévision. Il va donc falloir creuser un peu plus afin d'avoir un effet à la fois aléatoire et cohérent.</p><p id="r-370606" data-claire-element-id="370606">Pour avoir un effet cohérent, il faut préserver une certaine régularité dans les valeurs générées. Par là, on entend qu'il ne faut pas avoir de trop grands écarts entre deux valeurs successives. Le problème, c'est que plus on augmente la cohérence, plus on diminue le côté « aléatoire »...</p><p id="r-370607" data-claire-element-id="370607">La plupart des langages actuels fournissent des outils facilitant la génération de nombres aléatoires, mais si on veut quelque chose de cohérent, il faudra les retravailler soi-même. Pour cela, on utilise plusieurs fois le même jeu de valeurs, en les combinant tout en accordant plus d'importance à celles qui sont les plus cohérentes.</p><p id="r-370608" data-claire-element-id="370608">Voici quelques exemples expliqués dans ce tutoriel :</p><table id="r-370620" data-claire-element-id="370620"><tbody id="r-370619" data-claire-element-id="370619"><tr id="r-370618" data-claire-element-id="370618"><td id="r-370610" data-claire-element-id="370611"><img id="r-370611" data-claire-element-id="370610" src="medias/uploads.siteduzero.com_files_108001_109000_108381.png" alt="Image utilisateur"/><img id="r-370609" data-claire-element-id="370609" src="medias/uploads.siteduzero.com_files_108001_109000_108381.png" alt="Image utilisateur"/></td><td id="r-370613" data-claire-element-id="370614"><img id="r-370614" data-claire-element-id="370613" src="medias/uploads.siteduzero.com_files_148001_149000_148762.png" alt="Image utilisateur"/><img id="r-370612" data-claire-element-id="370612" src="medias/uploads.siteduzero.com_files_148001_149000_148762.png" alt="Image utilisateur"/></td><td id="r-370616" data-claire-element-id="370617"><img id="r-370617" data-claire-element-id="370616" src="medias/uploads.siteduzero.com_files_148001_149000_148761.png" alt="Image utilisateur"/><img id="r-370615" data-claire-element-id="370615" src="medias/uploads.siteduzero.com_files_148001_149000_148761.png" alt="Image utilisateur"/></td></tr></tbody></table>
+</div><a name="Introductionauxbruits"></a><h2>Introduction aux bruits</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/interpolation-des-valeurs-discretes">
+<span class="next">Interpolation des valeurs discrètes</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-370627" data-claire-element-id="370627">En algorithmique, on utilise le terme de bruit pour parler d'un jeu de valeurs aléatoires erratiques.<br/> Voici un exemple de bruit (sur une seule dimension) :</p><figure id="r-370629" data-claire-element-id="370630"><img id="r-370628" data-claire-element-id="370628" src="medias/uploads.siteduzero.com_files_106001_107000_106581.png" alt="Image utilisateur"/></figure><p id="r-370631" data-claire-element-id="370631">Petits mots de vocabulaire : l'<em>amplitude</em> du bruit est l'écart entre la plus grande et la plus petite valeur du bruit. On parle aussi d'<em>effectif total</em> pour désigner le nombre de valeurs du bruit.</p><p id="r-370632" data-claire-element-id="370632">La première étape consiste donc à générer un bruit. Il y a plusieurs méthodes possibles, et pour rester général, nous allons donc créer une fonction <code data-claire-semantic="c">double bruit(int i)</code> qui renvoie la <em>i</em>-ème valeur de notre bruit.<br/> Pour générer ce bruit, il y a plusieurs méthodes :</p><ul id="r-370641" data-claire-element-id="370641"><li id="r-370634" data-claire-element-id="370634"><p id="r-370633" data-claire-element-id="370633">on génère un tableau préalablement à partir d'une fonction <strong>rand()</strong>, comme il y en a dans tous les langages ;</p></li><li id="r-370636" data-claire-element-id="370636"><p id="r-370635" data-claire-element-id="370635">on définit explicitement un jeu de valeurs dans le code source. C'est notamment nécessaire lorsqu'il est difficile de faire persister les données entre les différentes exécutions de l'algorithme (dans les <a href="http://fr.wikipedia.org/wiki/Shader">shaders</a>, par exemple) ;</p></li><li id="r-370640" data-claire-element-id="370640"><p id="r-370637" data-claire-element-id="370637">on peut aussi écrire sa propre fonction pseudo-aléatoire.</p><aside id="r-370639" data-claire-element-id="370639" data-claire-semantic="warning"><p id="r-370638" data-claire-element-id="370638">Avec cette fonction vous aurez toujours, avec le même argument, le même bruit généré. Ajouter une constante, qui peut être modifiée entre deux générations successives de bruit, permet d'obtenir une grande variété de bruits. Notons que cette constante est généralement appelée graine (<em>seed</em> en anglais).</p></aside></li></ul><aside id="r-370643" data-claire-element-id="370643" data-claire-semantic="information"><p id="r-370642" data-claire-element-id="370642">Si vous comptez utiliser une des deux premières méthodes, vous êtes maintenant en droit de vous demander quel est l'effectif total de notre bruit. J'en reparlerai plus tard, étant donné qu'il dépend d'un paramètre que nous n'avons pas encore abordé.</p></aside><aside id="r-370645" data-claire-element-id="370645" data-claire-semantic="information"><p id="r-370644" data-claire-element-id="370644">Par mesure de simplicité, disons que notre fonction <strong>bruit()</strong> renvoie un nombre entre 0 et 1.</p></aside><div id="r-370647" data-claire-element-id="370647" data-claire-semantic="question"><p id="r-370646" data-claire-element-id="370646">Et si l'on voulait faire un bruit bidimensionnel ?</p></div><p id="r-370648" data-claire-element-id="370648">Dans ce cas, nous aurons besoin d'un bruit en deux dimension, c'est-à-dire d'un jeu de valeurs bivarié. On aurait donc une fonction similaire <code data-claire-semantic="c">double bruit2D(int i, int j)</code>.</p><p id="r-370649" data-claire-element-id="370649">Maintenant on a notre bruit. Mais bon, ce n'est qu'un jeu de points discrets. L'étape suivante va être de construire une fonction assez régulière à partir de ça. À cette fonction, nous donnerons le nom de <em>fonction de bruit</em>.</p><p id="r-370650" data-claire-element-id="370650">Pour construire cette fonction, on associe à certaines de ses valeurs celles du bruit, et on tente de les relier entre eux. Pour associer les valeurs, on les dispose à intervalle régulier (on appelle la distance entre deux points le <em>pas</em>).<br/> En clair, notre fonction est telle que <code data-claire-semantic="c">fonction_bruit(i * pas) == bruit(i)</code> (pour tout entier positif <strong>i</strong> plus petit que notre effectif total, évidemment).</p><p id="r-370651" data-claire-element-id="370651">Reprenons notre image précédente, et voici un résultat qu'on pourrait obtenir, avec un <strong>pas</strong> unitaire.</p><figure id="r-370653" data-claire-element-id="370654"><img id="r-370652" data-claire-element-id="370652" src="medias/uploads.siteduzero.com_files_106001_107000_106579.png" alt="Image utilisateur"/></figure><p id="r-370655" data-claire-element-id="370655">Maintenant, il ne reste plus qu'à calculer les points entre nos valeurs. Pour cela, nous allons introduire la notion d'interpolation.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents">Bruits et nombres aléatoires cohérents</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/introduction-aux-bruits">
+Introduction aux bruits
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/interpolation-des-valeurs-discretes">
+Interpolation des valeurs discrètes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/somme-de-fonctions-de-bruit">
+Somme de fonctions de bruit
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/l-algorithme-complet">
+L&#039;algorithme complet
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/en-pratique-10">
+En pratique
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/interpolation-des-valeurs-discretes">
+<span class="next">Interpolation des valeurs discrètes</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Interpolationdesvaleursdiscrtes"></a><h2>Interpolation des valeurs discrètes</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/introduction-aux-bruits">
+<span class="arrow"></span>
+<span class="next">Introduction aux bruits</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/somme-de-fonctions-de-bruit">
+<span class="next">Somme de fonctions de bruit</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-370657" data-claire-element-id="370657">Ce procédé consiste à construire une fonction continue à partir d'un nombre fini de points. Il existe pas mal d'interpolations, mais nous n'en verrons ici que trois. Comme vous l'aurez compris, on cherche à relier les points entre eux. Pour cela, la stratégie habituelle consiste à utiliser une petite fonction différente pour chaque intervalle entre deux points (c'est le cas de toutes les interpolations utilisées ici, mais ce n'est pas une généralité — les interpolations polynomiales, par exemple, ne sont pas construites ainsi). Évidemment, toutes ces petites fonctions se ressembleront fortement, c'est-à-dire qu'elles seront de même nature, mais leurs coefficients varieront.</p><aside id="r-370659" data-claire-element-id="370659" data-claire-semantic="information"><p id="r-370658" data-claire-element-id="370658">Lorsque ces « petites » fonctions sont des polynômes de degré fixé, on parle de <em>spline</em>. Par exemple, l'interpolation linéaire porte aussi le nom de <em>spline</em> linéaire, et c'est aussi le cas de la cubique.</p></aside><h2 id="r-interpolation-lineaire" data-claire-element-id="370669">Interpolation linéaire</h2><figure id="r-370661" data-claire-element-id="370662"><img id="r-370660" data-claire-element-id="370660" src="medias/uploads.siteduzero.com_files_106001_107000_106795.png" alt="Image utilisateur"/></figure><p id="r-370663" data-claire-element-id="370663">Cette interpolation est simplissime, elle relie simplement deux points par un segment.</p><p id="r-370664" data-claire-element-id="370664">La fonction suivante interpole les points <strong>a</strong> et <strong>b</strong>, avec <strong>x</strong> le facteur qui varie entre 0 et 1 (0 correspond évidemment à <strong>a</strong> et 1 à <strong>b</strong>).</p><pre id="r-370665" data-claire-element-id="370665"><code data-claire-semantic="c">double interpolation_lineaire(double a, double b, double x) {
+   return a * (1 - x) + b * x;
+}</code></pre><p id="r-370666" data-claire-element-id="370666">Le seul avantage que l'on puisse lui trouver est la rapidité d'exécution, mais le rendu final aura vite fait de nous en dégoûter.</p><p id="r-370667" data-claire-element-id="370667">Pour faire une interpolation linéaire en deux dimensions des points formant le carré abcd, il suffit d'interpoler <code><strong>a</strong></code> et <code><strong>b</strong></code>, et <code><strong>c</strong></code> et <code><strong>d</strong></code> sur <code><strong>x</strong></code>, puis les résultats obtenus sur <code><strong>y</strong></code>.</p><pre id="r-370668" data-claire-element-id="370668"><code data-claire-semantic="c">double interpolation_lineaire2D(double a, double b, double c, double d, double x, double y) {
+   i1 = interpolation_lineaire(a, b, x);
+   i2 = interpolation_lineaire(c, d, x);
+   return interpolation_lineaire(i1, i2, y);
+}</code></pre><h2 id="r-l-interpolation-cosinusoidale" data-claire-element-id="370681">L'interpolation cosinusoïdale</h2><figure id="r-370671" data-claire-element-id="370672"><img id="r-370670" data-claire-element-id="370670" src="medias/uploads.siteduzero.com_files_106001_107000_106804.png" alt="Image utilisateur"/></figure><p id="r-370673" data-claire-element-id="370673">Le principe est le même que pour la première : on a un point <code><strong>a</strong></code>, un point <code><strong>b</strong></code>, et on relie les deux. Sauf que, au lieu de les relier linéairement, on va utiliser une courbe en forme de S. Jetons donc un œil à la fonction \frac{(1 - \cos(\pi x))}2.</p><figure id="r-370675" data-claire-element-id="370676"><img id="r-370674" data-claire-element-id="370674" src="medias/uploads.siteduzero.com_files_106001_107000_106908.png" alt="Image utilisateur"/></figure><p id="r-370677" data-claire-element-id="370677">Comme on le voit sur le graphe de la fonction, elle varie entre 0 et 1 lorsque <strong>x</strong> est entre 0 et 1. Ainsi, on peut considérer \frac{(1 - \cos(\pi x))}2 plutôt que <strong>x</strong> comme facteur d'interpolation.</p><pre id="r-370678" data-claire-element-id="370678"><code data-claire-semantic="c">double interpolation_cos(double a, double b, double x) {
+   double k = (1 - cos(x * PI)) / 2;
+   return interpolation_lineaire(a, b, k);
+}</code></pre><p id="r-370679" data-claire-element-id="370679">Pour la faire en 2D, le principe est le même qu'au-dessus :</p><pre id="r-370680" data-claire-element-id="370680"><code data-claire-semantic="c">double interpolation_cos2D(double a, double b, double c, double d, double x, double y) {
+   double x1 = interpolation_cos(a, b, x);
+   double x2 = interpolation_cos(c, d, x);
+   return interpolation_cos(x1, x2, y);
+}</code></pre><h2 id="r-l-interpolation-cubique" data-claire-element-id="370706">L'interpolation cubique</h2><figure id="r-370683" data-claire-element-id="370684"><img id="r-370682" data-claire-element-id="370682" src="medias/uploads.siteduzero.com_files_106001_107000_106813.png" alt="Image utilisateur"/></figure><p id="r-370685" data-claire-element-id="370685">L'interpolation cubique consiste à relier deux points en calculant une cubique les reliant.</p><aside id="r-370687" data-claire-element-id="370687" data-claire-semantic="information"><p id="r-370686" data-claire-element-id="370686">Une cubique est un polynôme du troisième degré, c'est-à-dire une fonction du type f(x) = ax^3 + bx^2 + cx + d où <strong>a, b, c, d</strong> sont des constantes (avec <strong>d</strong> non nul de préférence).</p></aside><p id="r-370688" data-claire-element-id="370688">Bon comme vous l'avez peut-être remarqué, il existe une infinité de cubiques passant par ces deux points, et elles ne donnent pas toutes des résultats très glorieux. Pour réduire le nombre de cubiques possibles, nous allons aussi regarder le point précédent ainsi que le suivant. Il y a d'autres critères concernant la continuité des dérivées premières et secondes, mais cela sort du cadre de ce tutoriel.</p><pre id="r-370689" data-claire-element-id="370689"><code data-claire-semantic="c">double interpolation_cubique(double y0, double y1, double y2, double y3, double x) {
+     a = y3 - y2 - y0 + y1;
+     b = y0 - y1 - a;
+     c = y2 - y0;
+     d = y1;
+  
+     return a *x * x * x + b * x * x + c * x + d;
+}</code></pre><p id="r-370690" data-claire-element-id="370690">Eh bien, passons à la 2D, nous verrons... On va faire comme pour les autres alors.<br/> Alors le hic, c'est qu'on a 4 points, non plus 2.<br/> Alors on n'aura pas 3 interpolations de 2 points, mais bien 5 de 4 points.</p><pre id="r-370691" data-claire-element-id="370691"><code data-claire-semantic="c">double interpolation_cubique2D(double y00, double y01, double y02, double y03, 
+double y10, double y11, double y12, double y13, double y20, double y21, double y22,
+ double y23, double y30, double y31, double y32, double y33, double x, double y)
+   v0 = interpolation_cubique(y00,y01,y02,y03,x);
+   v1 = interpolation_cubique(y10,y11,y12,y13,x);
+   v2 = interpolation_cubique(y20,y21,y22,y23,x);
+   v3 = interpolation_cubique(y30,y31,y32,y33,x);
+                
+   return interpolation_cubique(v0,v1,v2,v3,y);</code></pre><p id="r-370692" data-claire-element-id="370692">Voilà qui est fini pour les interpolations. Il reste maintenant à construire notre fonction.</p><p id="r-370693" data-claire-element-id="370693"><em>Pour les matheux en herbe :</em></p><div id="r-370705" data-claire-element-id="370705"><p id="r-370694" data-claire-element-id="370694">Il est intéressant ici de remarquer le sens mathématique de ce que l'on appelait tantôt la « régularité » de la fonction. En fait, une fonction est plus régulière plus elle est continument dérivable un grand nombre de fois (donc plus le n tel qu'elle appartienne à C_n est grand). Notons que comme on n'a rien de plus méchant que des polynômes et des cosinus, et que ces fonctions sont infiniment continument dérivables, le seul problème qu'on pourrait avoir se situe aux « joints » entre les différentes fonctions.</p><p id="r-370695" data-claire-element-id="370695">Regardons la régularité des interpolations proposées :</p><ul id="r-370702" data-claire-element-id="370702"><li id="r-370697" data-claire-element-id="370697"><p id="r-370696" data-claire-element-id="370696">interpolation linéaire \in C_0 ;</p></li><li id="r-370699" data-claire-element-id="370699"><p id="r-370698" data-claire-element-id="370698">interpolation cosinusoïdale \in C_1 ;</p></li><li id="r-370701" data-claire-element-id="370701"><p id="r-370700" data-claire-element-id="370700">interpolation cubique \in C_2.</p></li></ul><p id="r-370703" data-claire-element-id="370703">Cela appuie donc notre intuition.</p><p id="r-370704" data-claire-element-id="370704">Notons que ce n'est plus nécessairement vrai en 2D...</p></div><h2 id="r-interpolons-notre-bruit" data-claire-element-id="370718">Interpolons notre bruit</h2><p id="r-370707" data-claire-element-id="370707">Nous avons maintenant une fonction qui nous permet de relier deux points successifs. L'étape suivante consiste donc à obtenir une fonction qui, pour une valeur donnée, trouve les deux points entre lesquels se situe la valeur, ainsi que la position entre les deux points (sous la forme d'une pourcentage, entre 0 et 1, où 0 est le point à gauche et 1 le point à droite) et les relies grâce à la fonction précédemment définie.</p><p id="r-370708" data-claire-element-id="370708">Comme les différents points sont espacés d'une distance <em>pas</em>, le point à gauche de notre valeur (appelons la <em>x</em>) à pour indice un entier <em>i</em> tel que <code data-claire-semantic="c">i * pas &lt;= x &lt; (i+1) * pas</code> (et donc <em>i+1</em> est l'indice du point à droite).</p><p id="r-370709" data-claire-element-id="370709">On trouve donc l'indice du point à gauche en calculant le plus grand entier plus petit ou égal à <code data-claire-semantic="c">x / pas</code> (en utilisant <code data-claire-semantic="c">floor()</code>, ou en faisant un cast en entier).</p><p id="r-370710" data-claire-element-id="370710">La position entre les deux points se calcule en prenant distance entre la valeur et le point à gauche moins la distance entre les deux points, c'est-à-dire <code data-claire-semantic="c">(x - i*pas) / pas</code>. Cela dit, comme c'est équivalant à <code data-claire-semantic="c">x / pas - i</code>, et que <code data-claire-semantic="c">i</code> est la partie entière de <code data-claire-semantic="c">x/pas</code> (c'est comme ça qu'on a calculé <code data-claire-semantic="c">i</code>), on peut aussi prendre la partie décimale de <code data-claire-semantic="c">x / pas</code> (donc on fait modulo 1).</p><p id="r-370711" data-claire-element-id="370711">Évidement, dans le cas d'une interpolation cubique, il faut trouver plus de points, mais ce n'est guère différent. Voilà le code de la fonction :</p><pre id="r-370712" data-claire-element-id="370712"><code data-claire-semantic="c">// int pas = ...
+// int effectif = ...
+
+double fonction_bruit(double x) {
+   int i = (int) (x / pas);
+   return interpolation_cos(bruit(i), bruit(i + 1), (x / pas) % 1);
+
+   // On peut aussi choisir une des deux autres interpolations :
+   // return interpolation_lineaire(bruit(i), bruit(i + 1), (((double) x) / pas) % 1);
+   // return interpolation_cubique(bruit(max(0, i - 1)), bruit(i), bruit(i + 1), bruit(min(i + 2, effectif)), (x*f)%T);
+}</code></pre><p id="r-370713" data-claire-element-id="370713">Remarquez pour l'interpolation cubique, l'utilisation de <strong>min()</strong> et de <strong>max()</strong> pour éviter les erreurs de débordement si vous utilisez des tableaux.</p><p id="r-370714" data-claire-element-id="370714">Et en 2D, rien de bien étonnant :</p><pre id="r-370715" data-claire-element-id="370715"><code data-claire-semantic="c">// int pas = ...
+
+double fonction_bruit2D(double x, double y) {
+   int i = (int) (x / pas);
+   int j = (int) (y / pas);
+   return interpolation_cos2D(bruit2D(i, j), bruit2D(i + 1, j), bruit2D(i, j + 1), bruit2D(i + 1, j + 1), (x / pas) % 1, (y / pas) % 1);
+// Évidemment, on peut changer d'interpolation.
+}</code></pre><aside id="r-370717" data-claire-element-id="370717" data-claire-semantic="information"><p id="r-370716" data-claire-element-id="370716">Lorsqu'on génère une texture procédurale, on choisit souvent comme <strong>pas</strong> de base une valeur assez grande, généralement la moitié de la taille de l'image. Plus le <strong>pas</strong> est grand, plus l'effet sera cohérent.</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents">Bruits et nombres aléatoires cohérents</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/introduction-aux-bruits">
+Introduction aux bruits
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/interpolation-des-valeurs-discretes">
+Interpolation des valeurs discrètes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/somme-de-fonctions-de-bruit">
+Somme de fonctions de bruit
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/l-algorithme-complet">
+L&#039;algorithme complet
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/en-pratique-10">
+En pratique
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/introduction-aux-bruits">
+<span class="arrow"></span>
+<span class="next">Introduction aux bruits</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/somme-de-fonctions-de-bruit">
+<span class="next">Somme de fonctions de bruit</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Sommedefonctionsdebruit"></a><h2>Somme de fonctions de bruit</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/interpolation-des-valeurs-discretes">
+<span class="arrow"></span>
+<span class="next">Interpolation des valeurs discrètes</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/l-algorithme-complet">
+<span class="next">L&#039;algorithme complet</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-370720" data-claire-element-id="370720">Dans l'introduction, j'ai parlé de réutiliser le même jeu de valeurs, que l'on peut maintenant appeler bruit. En fait, on utilise une seule fonction de bruit de base, et on fait varier ses paramètres (le pas et l'amplitude) pour obtenir d'autres fonctions de bruit.</p><p id="r-370721" data-claire-element-id="370721">Petit mot de vocabulaire : le nombre de bruits &quot;élémentaires&quot; utilisés est appelé <em>nombre d'octaves</em>. Notons-le n.</p><p id="r-370722" data-claire-element-id="370722">Nous allons donc faire varier le pas et l'amplitude de notre fonction de bruit. Plus le pas est petit, moins le bruit est cohérent. Il est nécessaire de diminuer l'amplitude du bruit au fur et à mesure que le pas diminue. Nous allons donc diviser le pas de notre fonction de bruit par deux, et multiplier son amplitude par un paramètre p compris entre 0 et 1, que nous appellerons <em>persistance</em>.</p><p id="r-370723" data-claire-element-id="370723">Pour obtenir une troisième fonction de bruit, il suffit de répéter l'opération sur la deuxième, et ainsi de suite jusqu'à obtenir n bruits.</p><p id="r-370724" data-claire-element-id="370724">Dernière petite chose, on remarque que diviser le pas par 2 revient à multiplier le paramètre <strong>x</strong> de la fonction par 2.</p><p id="r-370725" data-claire-element-id="370725">Dès lors, la formule de la <strong>i</strong>-ème fonction de bruit est :</p><p id="r-370726" data-claire-element-id="370726">\mbox{fonction\underline{\ \ }bruit}_{i}(x) = p^{i-1}.\mbox{fonction\underline{\ \ }bruit}(2^{i-1}.x)</p><h2 id="r-le-tout-en-images" data-claire-element-id="370787">Le tout en images</h2><p id="r-370727" data-claire-element-id="370727">Comme un petit schéma vaut mieux qu'une grande explication, regardons la tête de nos différents bruits consécutifs.</p><p id="r-370728" data-claire-element-id="370728">Pour information : nous prenons ici une persistance de 0,5 et notre pas fondamental est de 128 px. La taille du bruit est de 256 px. Nous générons le bruit sur 5 octaves. L'interpolation utilisée est la cubique.</p><table id="r-370784" data-claire-element-id="370784"><thead id="r-370736" data-claire-element-id="370736"><tr id="r-370735" data-claire-element-id="370735"><th id="r-370730" data-claire-element-id="370730"><p id="r-370729" data-claire-element-id="370729">Pas (px)</p></th><th id="r-370732" data-claire-element-id="370732"><p id="r-370731" data-claire-element-id="370731">Amplitude (px)</p></th><th id="r-370734" data-claire-element-id="370734"><p id="r-370733" data-claire-element-id="370733">Image</p></th></tr></thead><tbody id="r-370783" data-claire-element-id="370783"><tr id="r-370744" data-claire-element-id="370744"><td id="r-370738" data-claire-element-id="370738"><p id="r-370737" data-claire-element-id="370737">128</p></td><td id="r-370740" data-claire-element-id="370740"><p id="r-370739" data-claire-element-id="370739">256</p></td><td id="r-370742" data-claire-element-id="370743"><img id="r-370743" data-claire-element-id="370742" src="medias/uploads.siteduzero.com_files_106001_107000_106945.png" alt="Image utilisateur"/><img id="r-370741" data-claire-element-id="370741" src="medias/uploads.siteduzero.com_files_106001_107000_106945.png" alt="Image utilisateur"/></td></tr><tr id="r-370752" data-claire-element-id="370752"><td id="r-370746" data-claire-element-id="370746"><p id="r-370745" data-claire-element-id="370745">64</p></td><td id="r-370748" data-claire-element-id="370748"><p id="r-370747" data-claire-element-id="370747">128</p></td><td id="r-370750" data-claire-element-id="370751"><img id="r-370751" data-claire-element-id="370750" src="medias/uploads.siteduzero.com_files_106001_107000_106946.png" alt="Image utilisateur"/><img id="r-370749" data-claire-element-id="370749" src="medias/uploads.siteduzero.com_files_106001_107000_106946.png" alt="Image utilisateur"/></td></tr><tr id="r-370760" data-claire-element-id="370760"><td id="r-370754" data-claire-element-id="370754"><p id="r-370753" data-claire-element-id="370753">32</p></td><td id="r-370756" data-claire-element-id="370756"><p id="r-370755" data-claire-element-id="370755">64</p></td><td id="r-370758" data-claire-element-id="370759"><img id="r-370759" data-claire-element-id="370758" src="medias/uploads.siteduzero.com_files_106001_107000_106947.png" alt="Image utilisateur"/><img id="r-370757" data-claire-element-id="370757" src="medias/uploads.siteduzero.com_files_106001_107000_106947.png" alt="Image utilisateur"/></td></tr><tr id="r-370768" data-claire-element-id="370768"><td id="r-370762" data-claire-element-id="370762"><p id="r-370761" data-claire-element-id="370761">16</p></td><td id="r-370764" data-claire-element-id="370764"><p id="r-370763" data-claire-element-id="370763">32</p></td><td id="r-370766" data-claire-element-id="370767"><img id="r-370767" data-claire-element-id="370766" src="medias/uploads.siteduzero.com_files_106001_107000_106948.png" alt="Image utilisateur"/><img id="r-370765" data-claire-element-id="370765" src="medias/uploads.siteduzero.com_files_106001_107000_106948.png" alt="Image utilisateur"/></td></tr><tr id="r-370776" data-claire-element-id="370776"><td id="r-370770" data-claire-element-id="370770"><p id="r-370769" data-claire-element-id="370769">8</p></td><td id="r-370772" data-claire-element-id="370772"><p id="r-370771" data-claire-element-id="370771">16</p></td><td id="r-370774" data-claire-element-id="370775"><img id="r-370775" data-claire-element-id="370774" src="medias/uploads.siteduzero.com_files_106001_107000_106949.png" alt="Image utilisateur"/><img id="r-370773" data-claire-element-id="370773" src="medias/uploads.siteduzero.com_files_106001_107000_106949.png" alt="Image utilisateur"/></td></tr><tr id="r-370782" data-claire-element-id="370782"><td id="r-370778" data-claire-element-id="370778"><p id="r-370777" data-claire-element-id="370777">Et la somme du tout</p></td><td id="r-370780" data-claire-element-id="370781"><img id="r-370781" data-claire-element-id="370780" src="medias/uploads.siteduzero.com_files_106001_107000_106950.png" alt="Image utilisateur"/><img id="r-370779" data-claire-element-id="370779" src="medias/uploads.siteduzero.com_files_106001_107000_106950.png" alt="Image utilisateur"/></td></tr></tbody></table><p id="r-370785" data-claire-element-id="370785">Vous l'aurez compris à notre dernière image, le bruit final n'est rien de plus compliqué que la somme de ces bruits &quot;élémentaires&quot;. Cela dit, cette fonction peut nous donner des valeurs plus grandes que 1. Afin de réduire mes valeurs à l'intervalle [0;1], il faut diviser le tout par l'amplitude maximum possible de la fonction, qui est égale à 1 + p + p^2 + \ldots + p^{n-1} = \frac{1 - p^n}{1 - p}.</p><p id="r-370786" data-claire-element-id="370786">Notons que si p = 1, il suffit de diviser par n (on ne peut décemment pas utiliser la formule précédente qui amène une division par 0).</p><h2 id="r-et-quand-on-change-la-persistance" data-claire-element-id="370837">Et quand on change la persistance ?</h2><p id="r-370788" data-claire-element-id="370788">Voici maintenant un petit tableau montrant ce qui se passe lorsqu'on change la persistance. On conserve toujours un même pas et un même nombre d'octaves.</p><table id="r-370812" data-claire-element-id="370812"><thead id="r-370798" data-claire-element-id="370798"><tr id="r-370797" data-claire-element-id="370797"><th id="r-370790" data-claire-element-id="370790"><p id="r-370789" data-claire-element-id="370789">Persistance :</p></th><th id="r-370792" data-claire-element-id="370792"><p id="r-370791" data-claire-element-id="370791">1</p></th><th id="r-370794" data-claire-element-id="370794"><p id="r-370793" data-claire-element-id="370793">0,9</p></th><th id="r-370796" data-claire-element-id="370796"><p id="r-370795" data-claire-element-id="370795">0,7</p></th></tr></thead><tbody id="r-370811" data-claire-element-id="370811"><tr id="r-370810" data-claire-element-id="370810"><td id="r-370800" data-claire-element-id="370800"><p id="r-370799" data-claire-element-id="370799">Image :</p></td><td id="r-370802" data-claire-element-id="370803"><img id="r-370803" data-claire-element-id="370802" src="medias/uploads.siteduzero.com_files_106001_107000_106957.png" alt="Image utilisateur"/><img id="r-370801" data-claire-element-id="370801" src="medias/uploads.siteduzero.com_files_106001_107000_106957.png" alt="Image utilisateur"/></td><td id="r-370805" data-claire-element-id="370806"><img id="r-370806" data-claire-element-id="370805" src="medias/uploads.siteduzero.com_files_106001_107000_106953.png" alt="Image utilisateur"/><img id="r-370804" data-claire-element-id="370804" src="medias/uploads.siteduzero.com_files_106001_107000_106953.png" alt="Image utilisateur"/></td><td id="r-370808" data-claire-element-id="370809"><img id="r-370809" data-claire-element-id="370808" src="medias/uploads.siteduzero.com_files_106001_107000_106954.png" alt="Image utilisateur"/><img id="r-370807" data-claire-element-id="370807" src="medias/uploads.siteduzero.com_files_106001_107000_106954.png" alt="Image utilisateur"/></td></tr></tbody></table><table id="r-370836" data-claire-element-id="370836"><thead id="r-370822" data-claire-element-id="370822"><tr id="r-370821" data-claire-element-id="370821"><th id="r-370814" data-claire-element-id="370814"><p id="r-370813" data-claire-element-id="370813">Persistance :</p></th><th id="r-370816" data-claire-element-id="370816"><p id="r-370815" data-claire-element-id="370815">0,5</p></th><th id="r-370818" data-claire-element-id="370818"><p id="r-370817" data-claire-element-id="370817">0,3</p></th><th id="r-370820" data-claire-element-id="370820"><p id="r-370819" data-claire-element-id="370819">0,1</p></th></tr></thead><tbody id="r-370835" data-claire-element-id="370835"><tr id="r-370834" data-claire-element-id="370834"><td id="r-370824" data-claire-element-id="370824"><p id="r-370823" data-claire-element-id="370823">Image :</p></td><td id="r-370826" data-claire-element-id="370827"><img id="r-370827" data-claire-element-id="370826" src="medias/uploads.siteduzero.com_files_106001_107000_106950.png" alt="Image utilisateur"/><img id="r-370825" data-claire-element-id="370825" src="medias/uploads.siteduzero.com_files_106001_107000_106950.png" alt="Image utilisateur"/></td><td id="r-370829" data-claire-element-id="370830"><img id="r-370830" data-claire-element-id="370829" src="medias/uploads.siteduzero.com_files_106001_107000_106955.png" alt="Image utilisateur"/><img id="r-370828" data-claire-element-id="370828" src="medias/uploads.siteduzero.com_files_106001_107000_106955.png" alt="Image utilisateur"/></td><td id="r-370832" data-claire-element-id="370833"><img id="r-370833" data-claire-element-id="370832" src="medias/uploads.siteduzero.com_files_106001_107000_106956.png" alt="Image utilisateur"/><img id="r-370831" data-claire-element-id="370831" src="medias/uploads.siteduzero.com_files_106001_107000_106956.png" alt="Image utilisateur"/></td></tr></tbody></table><h2 id="r-et-en-2d" data-claire-element-id="370912">Et en 2D...</h2><table id="r-370911" data-claire-element-id="370911"><thead id="r-370849" data-claire-element-id="370849"><tr id="r-370848" data-claire-element-id="370848"><th id="r-370839" data-claire-element-id="370839"><p id="r-370838" data-claire-element-id="370838">Persistance :</p></th><th id="r-370841" data-claire-element-id="370841"><p id="r-370840" data-claire-element-id="370840">0,2</p></th><th id="r-370843" data-claire-element-id="370843"><p id="r-370842" data-claire-element-id="370842">0,5</p></th><th id="r-370845" data-claire-element-id="370845"><p id="r-370844" data-claire-element-id="370844">0,8</p></th><th id="r-370847" data-claire-element-id="370847"><p id="r-370846" data-claire-element-id="370846">1,0</p></th></tr></thead><tbody id="r-370910" data-claire-element-id="370910"><tr id="r-370864" data-claire-element-id="370864"><td id="r-370851" data-claire-element-id="370851"><p id="r-370850" data-claire-element-id="370850">1 octave</p></td><td id="r-370853" data-claire-element-id="370854"><img id="r-370854" data-claire-element-id="370853" src="medias/uploads.siteduzero.com_files_108001_109000_108388.png" alt="Image utilisateur"/><img id="r-370852" data-claire-element-id="370852" src="medias/uploads.siteduzero.com_files_108001_109000_108388.png" alt="Image utilisateur"/></td><td id="r-370856" data-claire-element-id="370857"><img id="r-370857" data-claire-element-id="370856" src="medias/uploads.siteduzero.com_files_108001_109000_108388.png" alt="Image utilisateur"/><img id="r-370855" data-claire-element-id="370855" src="medias/uploads.siteduzero.com_files_108001_109000_108388.png" alt="Image utilisateur"/></td><td id="r-370859" data-claire-element-id="370860"><img id="r-370860" data-claire-element-id="370859" src="medias/uploads.siteduzero.com_files_108001_109000_108388.png" alt="Image utilisateur"/><img id="r-370858" data-claire-element-id="370858" src="medias/uploads.siteduzero.com_files_108001_109000_108388.png" alt="Image utilisateur"/></td><td id="r-370862" data-claire-element-id="370863"><img id="r-370863" data-claire-element-id="370862" src="medias/uploads.siteduzero.com_files_108001_109000_108388.png" alt="Image utilisateur"/><img id="r-370861" data-claire-element-id="370861" src="medias/uploads.siteduzero.com_files_108001_109000_108388.png" alt="Image utilisateur"/></td></tr><tr id="r-370879" data-claire-element-id="370879"><td id="r-370866" data-claire-element-id="370866"><p id="r-370865" data-claire-element-id="370865">3 octaves</p></td><td id="r-370868" data-claire-element-id="370869"><img id="r-370869" data-claire-element-id="370868" src="medias/uploads.siteduzero.com_files_108001_109000_108376.png" alt="Image utilisateur"/><img id="r-370867" data-claire-element-id="370867" src="medias/uploads.siteduzero.com_files_108001_109000_108376.png" alt="Image utilisateur"/></td><td id="r-370871" data-claire-element-id="370872"><img id="r-370872" data-claire-element-id="370871" src="medias/uploads.siteduzero.com_files_108001_109000_108377.png" alt="Image utilisateur"/><img id="r-370870" data-claire-element-id="370870" src="medias/uploads.siteduzero.com_files_108001_109000_108377.png" alt="Image utilisateur"/></td><td id="r-370874" data-claire-element-id="370875"><img id="r-370875" data-claire-element-id="370874" src="medias/uploads.siteduzero.com_files_108001_109000_108378.png" alt="Image utilisateur"/><img id="r-370873" data-claire-element-id="370873" src="medias/uploads.siteduzero.com_files_108001_109000_108378.png" alt="Image utilisateur"/></td><td id="r-370877" data-claire-element-id="370878"><img id="r-370878" data-claire-element-id="370877" src="medias/uploads.siteduzero.com_files_108001_109000_108379.png" alt="Image utilisateur"/><img id="r-370876" data-claire-element-id="370876" src="medias/uploads.siteduzero.com_files_108001_109000_108379.png" alt="Image utilisateur"/></td></tr><tr id="r-370894" data-claire-element-id="370894"><td id="r-370881" data-claire-element-id="370881"><p id="r-370880" data-claire-element-id="370880">5 octaves</p></td><td id="r-370883" data-claire-element-id="370884"><img id="r-370884" data-claire-element-id="370883" src="medias/uploads.siteduzero.com_files_108001_109000_108380.png" alt="Image utilisateur"/><img id="r-370882" data-claire-element-id="370882" src="medias/uploads.siteduzero.com_files_108001_109000_108380.png" alt="Image utilisateur"/></td><td id="r-370886" data-claire-element-id="370887"><img id="r-370887" data-claire-element-id="370886" src="medias/uploads.siteduzero.com_files_108001_109000_108381.png" alt="Image utilisateur"/><img id="r-370885" data-claire-element-id="370885" src="medias/uploads.siteduzero.com_files_108001_109000_108381.png" alt="Image utilisateur"/></td><td id="r-370889" data-claire-element-id="370890"><img id="r-370890" data-claire-element-id="370889" src="medias/uploads.siteduzero.com_files_108001_109000_108382.png" alt="Image utilisateur"/><img id="r-370888" data-claire-element-id="370888" src="medias/uploads.siteduzero.com_files_108001_109000_108382.png" alt="Image utilisateur"/></td><td id="r-370892" data-claire-element-id="370893"><img id="r-370893" data-claire-element-id="370892" src="medias/uploads.siteduzero.com_files_108001_109000_108383.png" alt="Image utilisateur"/><img id="r-370891" data-claire-element-id="370891" src="medias/uploads.siteduzero.com_files_108001_109000_108383.png" alt="Image utilisateur"/></td></tr><tr id="r-370909" data-claire-element-id="370909"><td id="r-370896" data-claire-element-id="370896"><p id="r-370895" data-claire-element-id="370895">7 octaves</p></td><td id="r-370898" data-claire-element-id="370899"><img id="r-370899" data-claire-element-id="370898" src="medias/uploads.siteduzero.com_files_108001_109000_108384.png" alt="Image utilisateur"/><img id="r-370897" data-claire-element-id="370897" src="medias/uploads.siteduzero.com_files_108001_109000_108384.png" alt="Image utilisateur"/></td><td id="r-370901" data-claire-element-id="370902"><img id="r-370902" data-claire-element-id="370901" src="medias/uploads.siteduzero.com_files_108001_109000_108385.png" alt="Image utilisateur"/><img id="r-370900" data-claire-element-id="370900" src="medias/uploads.siteduzero.com_files_108001_109000_108385.png" alt="Image utilisateur"/></td><td id="r-370904" data-claire-element-id="370905"><img id="r-370905" data-claire-element-id="370904" src="medias/uploads.siteduzero.com_files_108001_109000_108386.png" alt="Image utilisateur"/><img id="r-370903" data-claire-element-id="370903" src="medias/uploads.siteduzero.com_files_108001_109000_108386.png" alt="Image utilisateur"/></td><td id="r-370907" data-claire-element-id="370908"><img id="r-370908" data-claire-element-id="370907" src="medias/uploads.siteduzero.com_files_108001_109000_108387.png" alt="Image utilisateur"/><img id="r-370906" data-claire-element-id="370906" src="medias/uploads.siteduzero.com_files_108001_109000_108387.png" alt="Image utilisateur"/></td></tr></tbody></table>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents">Bruits et nombres aléatoires cohérents</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/introduction-aux-bruits">
+Introduction aux bruits
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/interpolation-des-valeurs-discretes">
+Interpolation des valeurs discrètes
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/somme-de-fonctions-de-bruit">
+Somme de fonctions de bruit
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/l-algorithme-complet">
+L&#039;algorithme complet
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/en-pratique-10">
+En pratique
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/interpolation-des-valeurs-discretes">
+<span class="arrow"></span>
+<span class="next">Interpolation des valeurs discrètes</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/l-algorithme-complet">
+<span class="next">L&#039;algorithme complet</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="L039algorithmecomplet"></a><h2>L&#039;algorithme complet</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/somme-de-fonctions-de-bruit">
+<span class="arrow"></span>
+<span class="next">Somme de fonctions de bruit</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/en-pratique-10">
+<span class="next">En pratique</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-370914" data-claire-element-id="370914">Voyons maintenant l'algorithme.</p><p id="r-370915" data-claire-element-id="370915">On a donc déjà une fonction <strong>fonction_bruit(double x)</strong>.</p><pre id="r-370916" data-claire-element-id="370916"><code data-claire-semantic="c">double bruit_coherent(double x, double persistance, int nombre_octaves) {
+        
+        double somme = 0;
+        double p = 1;
+        int f = 1;
+
+        for(int i = 0 ; i &lt; nombre_octaves ; i++) {
+                somme += p * fonction_bruit(x * f);
+                p *= persistance;
+                f *= 2;
+        }
+        
+        return somme * (1 - persistance) / (1 - p);
+}</code></pre><aside id="r-370918" data-claire-element-id="370918" data-claire-semantic="information"><p id="r-370917" data-claire-element-id="370917">Petite précision : on sait maintenant que l'effectif total nécessaire pour notre bruit est de <code data-claire-semantic="c">ceil(taille * pow(2, nombre_octaves - 1) / pas)</code>.</p></aside><p id="r-370919" data-claire-element-id="370919">Et en 2D :</p><pre id="r-370920" data-claire-element-id="370920"><code data-claire-semantic="c">double bruit_coherent2D(double x, double y, double persistance, int nombre_octaves) {
+        
+        double somme = 0;
+        double p = 1;
+        int f = 1;
+
+        for(int i = 0 ; i &lt; nombre_octaves ; i++) {
+                somme += p * fonction_bruit2D(x * f, y * f);
+                p *= persistance;
+                f *= 2;
+        }
+ 
+        return somme * (1 - persistance) / (1 - p);
+}</code></pre><p id="r-370921" data-claire-element-id="370921"><em>Pour les matheux en herbe :</em></p><div id="r-370924" data-claire-element-id="370924"><p id="r-370922" data-claire-element-id="370922">L'expression mathématique du bruit est la suivante :<br/>P_n(x) = \sum_{i=0}^{n-1} p^i{\mbox{bruit}}(2^i.x).<br/> C'est une série (absolument) convergente, majorée par la série géométrique :<br/>\sum_{i=0}^{n-1} p^i = \frac{1 - p^n}{1 - p}.</p><p id="r-370923" data-claire-element-id="370923">Autre remarque intéressante, c'est que la fonction de bruit cohérent possède le même niveau de régularité que la fonction interpolée. Dès lors, certains bruits, où le temps fait office de paramètre, nécessiteront une interpolation cubique afin de préserver la continuité de l'accélération.</p></div><p id="r-370925" data-claire-element-id="370925">Voici le code complet (avec l'interpolation cosinusoïdale) en langage C.</p><div id="r-370929" data-claire-element-id="370929"><pre id="r-370926" data-claire-element-id="370926"><code data-claire-semantic="c">void initBruit1D(int longueur, int pas, int octaves);
+double bruit_coherent1D(double x, double persistance);
+void destroyBruit1D();
+
+void initBruit2D(int longueur, int hauteur, int pas, int octaves);
+double bruit_coherent2D(double x, double y, double persistance);
+void destroyBruit2D();</code></pre><pre id="r-370927" data-claire-element-id="370927"><code data-claire-semantic="c">#include &lt;stdlib.h&gt;
+#include &lt;math.h&gt;
+#include &lt;time.h&gt;
+
+const double pi = 3.14159265;
+
+static int pas1D = 0;
+static int nombre_octaves1D = 0;
+static int taille = 0;
+static double* valeurs1D;
+
+static int pas2D = 0;
+static int nombre_octaves2D = 0;
+static int hauteur = 0;
+static int longueur = 0;
+static int longueur_max = 0;
+static double* valeurs2D;
+
+void initBruit1D(int t, int p, int n) {
+    nombre_octaves1D = n;
+    if(taille != 0)
+        free(valeurs1D);
+    taille = t;
+    pas1D = p;
+
+    valeurs1D = (double*) malloc(sizeof(double) * (int) ceil(taille * pow(2, nombre_octaves1D  - 1)  / pas1D));
+
+    srand(time(NULL));
+    int i;
+    for(i = 0; i &lt; ceil(taille *  pow(2, nombre_octaves1D  - 1)  / pas1D); i++)
+        valeurs1D[i] = (double) rand() / RAND_MAX;
+}
+
+void destroyBruit1D() {
+    if(taille != 0)
+        free(valeurs1D);
+    taille = 0;
+}
+
+static double bruit1D(int i) {
+    return valeurs1D[i];
+}
+
+static double interpolation_cos1D(double a, double b, double x) {
+   double k = (1 - cos(x * pi)) / 2;
+    return a * (1 - k) + b * k;
+}
+
+static double fonction_bruit1D(double x) {
+   int i = (int) (x / pas1D);
+   return interpolation_cos1D(bruit1D(i), bruit1D(i + 1), fmod(x / pas1D, 1));
+}
+
+
+double bruit_coherent1D(double x, double persistance) {
+    double somme = 0;
+    double p = 1;
+    int f = 1;
+    int i;
+
+    for(i = 0 ; i &lt; nombre_octaves1D ; i++) {
+        somme += p * fonction_bruit1D(x * f);
+        p *= persistance;
+        f *= 2;
+    }
+    return somme * (1 - persistance) / (1 - p);
+}
+
+void initBruit2D(int l, int h, int p, int n) {
+    nombre_octaves2D = n;
+    if(taille != 0)
+        free(valeurs2D);
+    longueur = l;
+    hauteur = h;
+    pas2D = p;
+    longueur_max = (int) ceil(longueur * pow(2, nombre_octaves2D  - 1)  / pas2D);
+    int hauteur_max = (int) ceil(hauteur * pow(2, nombre_octaves2D  - 1)  / pas2D);
+
+    valeurs2D = (double*) malloc(sizeof(double) * longueur_max * hauteur_max);
+
+    srand(time(NULL));
+    int i;
+    for(i = 0; i &lt; longueur_max * hauteur_max; i++)
+        valeurs2D[i] = ((double) rand()) / RAND_MAX;
+}
+
+void destroyBruit2D() {
+    if(longueur != 0)
+        free(valeurs2D);
+    longueur = 0;
+}
+
+static double bruit2D(int i, int j) {
+    return valeurs2D[i * longueur_max + j];
+}
+
+static double interpolation_cos2D(double a, double b, double c, double d, double x, double y) {
+   double y1 = interpolation_cos1D(a, b, x);
+   double y2 = interpolation_cos1D(c, d, x);
+   return  interpolation_cos1D(y1, y2, y);
+}
+
+static double fonction_bruit2D(double x, double y) {
+   int i = (int) (x / pas2D);
+   int j = (int) (y / pas2D);
+   return interpolation_cos2D(bruit2D(i, j), bruit2D(i + 1, j), bruit2D(i, j + 1), bruit2D(i + 1, j + 1), fmod(x / pas2D, 1), fmod(y / pas2D, 1));
+}
+
+double bruit_coherent2D(double x, double y, double persistance) {
+    double somme = 0;
+    double p = 1;
+    int f = 1;
+    int i;
+
+    for(i = 0 ; i &lt; nombre_octaves2D ; i++) {
+        somme += p * fonction_bruit2D(x * f, y * f);
+        p *= persistance;
+        f *= 2;
+    }
+    return somme * (1 - persistance) / (1 - p);
+}</code></pre><p id="r-370928" data-claire-element-id="370928">Niveau utilisation, rien de bien étrange. N'oubliez juste pas d'appeler les fonctions <strong>initBruit*D()</strong> et <strong>destroyBruit*D()</strong> avant et après utilisation.</p></div>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents">Bruits et nombres aléatoires cohérents</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/introduction-aux-bruits">
+Introduction aux bruits
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/interpolation-des-valeurs-discretes">
+Interpolation des valeurs discrètes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/somme-de-fonctions-de-bruit">
+Somme de fonctions de bruit
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/l-algorithme-complet">
+L&#039;algorithme complet
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/en-pratique-10">
+En pratique
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/somme-de-fonctions-de-bruit">
+<span class="arrow"></span>
+<span class="next">Somme de fonctions de bruit</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/en-pratique-10">
+<span class="next">En pratique</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Enpratique"></a><h2>En pratique</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/l-algorithme-complet">
+<span class="arrow"></span>
+<span class="next">L&#039;algorithme complet</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-370931" data-claire-element-id="370931">Voilà, maintenant on sait faire un bruit cohérent. Et si l'on peut l'utiliser directement, on peut faire bien plus en en faisant une utilisation plus originale.</p><p id="r-370932" data-claire-element-id="370932">Je vais vous montrer ici quelques usages possibles. Certains sont des standards bien connus, d'autres sont inventés de toutes pièces. Je ne peux que vous conseiller d'essayer, vous aussi, toutes sortes de combinaisons afin de créer des textures réalistes.</p><h2 id="r-creer-une-image-a-partir-d-un-bruit-coherent" data-claire-element-id="370940">Créer une image à partir d'un bruit cohérent</h2><p id="r-370933" data-claire-element-id="370933">Je n'ai peut-être pas été très explicite là-dessus dans le début de ce tutoriel. Pour générer une texture procédurale, il faut calculer sa couleur à chaque pixel. Pour ce faire, il faut une fonction du genre <code data-claire-semantic="c">int obtenirPixel(int x, int y)</code>. Après quoi il suffit de faire une double boucle sur les « x » et les « y », et puis de dessiner votre pixel avec votre bibliothèque préférée.</p><p id="r-370934" data-claire-element-id="370934">Comme c'est la bibliothèque présentée dans le cours officiel de ce site, je vais utiliser ici la SDL. Vous pouvez d'ailleurs aller jeter un coup d'œil du côté de <a href="http://www.siteduzero.com/tutoriel-3-35172-modifier-une-image-pixel-par-pixel.html">ce tutoriel</a>, qui parle de la modification procédurale d'images. Je ne m'attarderai moi-même pas sur l'utilisation de la SDL, cela dépassant le cadre de ce tutoriel.</p><p id="r-370935" data-claire-element-id="370935">Dès lors, voici le code que je vais utiliser dans toutes les fonctions suivantes :</p><pre id="r-370936" data-claire-element-id="370936"><code data-claire-semantic="c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;SDL/SDL.h&gt;
+#include &quot;noise.h&quot;
+
+// On définit la taille de l'image.
+#define TAILLE 512
+// On définit le nombre d'octaves.
+#define OCTAVES 8
+// On définit le pas.
+#define PAS 128
+// On définit la persistance.
+#define PERSISTANCE 0.5
+
+void definirPixel(SDL_Surface *surface, int x, int y, Uint32 pixel);
+Uint32 obtenirCouleur(double rouge, double vert, double bleu);
+Uint32 obtenirPixel(int x, int y);
+
+int main(int argc, char *argv[]) {
+    SDL_Surface *ecran = NULL, *img = NULL;
+    SDL_Rect position;
+
+    // On initialise la SDL.
+    SDL_Init(SDL_INIT_VIDEO);
+    ecran = SDL_SetVideoMode(TAILLE, TAILLE, 32,  SDL_ANYFORMAT | SDL_HWSURFACE );
+    SDL_WM_SetCaption(&quot;Test Bruit cohérent&quot;, NULL);
+
+    // On crée une surface SDL pour dessiner dedans.
+    img = SDL_CreateRGBSurface(SDL_HWSURFACE, TAILLE, TAILLE, 32, 0, 0, 0, 0);
+
+    initBruit2D(TAILLE + 1, TAILLE + 1, PAS, OCTAVES);
+
+    int x,y;
+    for(y = 0; y &lt; TAILLE; y++)
+        for(x = 0; x &lt; TAILLE; x++)
+            definirPixel(img, x, y, obtenirPixel(x, y));
+    destroyBruit2D();
+
+    /* ************ Affichage du résultat **************** */
+
+    position.x = position.y = 0;
+    SDL_BlitSurface(img, NULL, ecran, &amp;position);
+
+    // On force l'affichage.
+    SDL_Flip(ecran);
+
+    // On attend que l'utilisateur quitte.
+    SDL_Event event;
+    do
+        SDL_WaitEvent( &amp;event );
+    while ( event.type!= SDL_QUIT);
+    SDL_Quit();
+
+    return EXIT_SUCCESS;
+}
+
+void definirPixel(SDL_Surface *surface, int x, int y, Uint32 pixel) {
+    int opp = surface-&gt;format-&gt;BytesPerPixel;
+    Uint8 *p = (Uint8 *)surface-&gt;pixels + y * surface-&gt;pitch + x * opp;
+
+    switch(opp) {
+        case 1:
+            *p = pixel;
+            break;
+
+        case 2:
+            *(Uint16 *) p = pixel;
+            break;
+
+        case 3:
+            if(SDL_BYTEORDER == SDL_BIG_ENDIAN)
+            {
+                p[0] = (pixel &gt;&gt; 16) &amp; 0xff;
+                p[1] = (pixel &gt;&gt; 8) &amp; 0xff;
+                p[2] = pixel &amp; 0xff;
+            }
+            else
+            {
+                p[0] = pixel &amp; 0xff;
+                p[1] = (pixel &gt;&gt; 8) &amp; 0xff;
+                p[2] = (pixel &gt;&gt; 16) &amp; 0xff;
+            }
+            break;
+
+        case 4:
+            * (Uint32 *) p = pixel;
+            break;
+    }
+}
+
+Uint32 obtenirCouleur(double rouge, double vert, double bleu) {
+   return (((int) (rouge * 255)) &lt;&lt; 16) + (((int) (vert * 255)) &lt;&lt; 8) + (int) (bleu * 255);
+}</code></pre><p id="r-370937" data-claire-element-id="370937">Notons que j'utilise ici le format <strong>Uint32</strong>. C'est un format déclaré dans <strong>SDL.h</strong>, et donc spécifique à la SDL, comme au langage C. Dans la suite, comme j'essaie de rester plus général, j'utiliserai la fonction <code data-claire-semantic="c">int obtenirPixel(int x, int y)</code>, en utilisant un simple <strong>int</strong>, n'oubliez donc pas de changer en conséquence.</p><p id="r-370938" data-claire-element-id="370938">Maintenant on va pouvoir s'intéresser à notre fonction <code data-claire-semantic="c">int obtenirPixel(int x, int y)</code>. Déjà cette fonction retourne un entier, alors encore faut-il pouvoir obtenir un entier à partir d'une couleur.</p><p id="r-370939" data-claire-element-id="370939">Bon, je suppose qu'à ce niveau vous savez qu'une couleur peut être décrite par ses composantes rouge, verte et bleue. Généralement, on stocke tout cela sur un seul entier de 24 bits de profondeur (32 si l'on a un canal alpha). Pour ce faire, j'ai déclaré la fonction <code data-claire-semantic="c">int obtenirCouleur(double rouge, double vert, double bleu)</code>.</p><h2 id="r-generation-de-heightmap" data-claire-element-id="370944">Génération de Heightmap</h2><p id="r-370941" data-claire-element-id="370941">Attention, ceci n'est qu'une mise en bouche.</p><pre id="r-370942" data-claire-element-id="370942"><code data-claire-semantic="c">int obtenirPixel(int x, int y) {
+    double valeur = bruit_coherent2D(x, y, PERSISTANCE);
+    return obtenirCouleur(valeur, valeur, valeur);
+}</code></pre><p id="r-370943" data-claire-element-id="370943">Rien de bien compliqué quoi. Je ne vous ajoute pas un <em>screenshot</em> étant donné que vous en avez pas moins de 17 plus haut.</p><h2 id="r-bruit-avec-seuils" data-claire-element-id="370974">Bruit avec seuils</h2><p id="r-370945" data-claire-element-id="370945">Pour ce bruit, on utilise des seuils qui définissent des intervalles auxquels on associe une couleur. Bon, ce sera sans doute plus clair avec un exemple.<br/> Je vais ici montrer un bruit avec 3 seuils. Soient des seuils <strong>s1, s2</strong> et <strong>s3</strong>.<br/> Et des couleurs <strong>c1</strong>, <strong>c2</strong> et <strong>c3</strong>.</p><p id="r-370946" data-claire-element-id="370946">On regarde entre quels seuils se situe la valeur de notre bruit (appelons-la v) et on fait une interpolation linéaire entre les deux couleurs correspondantes aux seuils. Si v &lt; s1, on renvoie <strong>c1</strong>, et si v &gt; s3, on renvoie <strong>c3</strong>.</p><p id="r-370947" data-claire-element-id="370947">Bon pour la cause, définissons une petite structure pour notre couleur.</p><pre id="r-370948" data-claire-element-id="370948"><code data-claire-semantic="c">typedef struct Couleur Couleur;
+struct Couleur
+{
+    double rouge;
+    double vert;
+    double bleu;
+};</code></pre><p id="r-370949" data-claire-element-id="370949">Si l'on prend par exemple les couleurs rouge, verte et bleue ; et des seuils à 0.25, 0.5 et 0.75 ; voici le code de notre fonction :</p><pre id="r-370950" data-claire-element-id="370950"><code data-claire-semantic="c">static double s1 = 0.25;
+static double s2 = 0.5;
+static double s3 = 0.75;
+
+static Couleur c1 = {1.0, 0.0, 0.0}; // Du rouge
+static Couleur c2 = {0.0, 1.0, 0.0}; // Du vert
+static Couleur c3 = {0.0, 0.0, 1.0}; // Du bleu
+
+int obtenirPixel(int x, int y) {
+
+    double valeur = bruit_coherent2D(x, y, PERSISTANCE);
+
+    Couleur resultat;
+    if(valeur &lt;= s1)
+        resultat = c1;
+    else if(valeur &lt; s2) {
+        double f = (valeur - s1) / (s2 - s1);
+        resultat.r = c1.r * (1 - f) + c2.r * f;
+        resultat.v = c1.v * (1 - f) + c2.v * f;
+        resultat.b = c1.b * (1 - f) + c2.b * f;
+    } else if(valeur &lt; s3) {
+        double f = (valeur - s2) / (s3 - s2);
+        resultat.r = c2.r * (1 - f) + c3.r * f;
+        resultat.v = c2.v * (1 - f) + c3.v * f;
+        resultat.b = c2.b * (1 - f) + c3.b * f;
+    } else resultat = c3;
+
+    return obtenirCouleur(resultat.r, resultat.v, resultat.b);
+}</code></pre><table id="r-370970" data-claire-element-id="370970"><thead id="r-370958" data-claire-element-id="370958"><tr id="r-370957" data-claire-element-id="370957"><th id="r-370952" data-claire-element-id="370952"><p id="r-370951" data-claire-element-id="370951">0.25</p></th><th id="r-370954" data-claire-element-id="370954"><p id="r-370953" data-claire-element-id="370953">0.5</p></th><th id="r-370956" data-claire-element-id="370956"><p id="r-370955" data-claire-element-id="370955">0.75</p></th></tr></thead><tbody id="r-370969" data-claire-element-id="370969"><tr id="r-370968" data-claire-element-id="370968"><td id="r-370960" data-claire-element-id="370961"><img id="r-370961" data-claire-element-id="370960" src="medias/uploads.siteduzero.com_files_223001_224000_223731.png" alt="Image utilisateur"/><img id="r-370959" data-claire-element-id="370959" src="medias/uploads.siteduzero.com_files_223001_224000_223731.png" alt="Image utilisateur"/></td><td id="r-370963" data-claire-element-id="370964"><img id="r-370964" data-claire-element-id="370963" src="medias/uploads.siteduzero.com_files_223001_224000_223732.png" alt="Image utilisateur"/><img id="r-370962" data-claire-element-id="370962" src="medias/uploads.siteduzero.com_files_223001_224000_223732.png" alt="Image utilisateur"/></td><td id="r-370966" data-claire-element-id="370967"><img id="r-370967" data-claire-element-id="370966" src="medias/uploads.siteduzero.com_files_223001_224000_223733.png" alt="Image utilisateur"/><img id="r-370965" data-claire-element-id="370965" src="medias/uploads.siteduzero.com_files_223001_224000_223733.png" alt="Image utilisateur"/></td></tr></tbody></table><p id="r-370971" data-claire-element-id="370971">Vous me direz sûrement que ce n'est pas très réaliste, mais les seuils pourront vous permettre de faire plein de choses, et avec autant de seuils que vous voudrez. Par exemple, on pourrait définir des seuils d'altitude avec du bleu sous le niveau de la mer, puis du jaune (sable), puis du vert (herbe) et puis du blanc (neige), et ainsi dessiner une carte. Évidemment, c'est un peu simpliste, une carte doit tenir compte d'autres éléments comme la végétation ou l'inclinaison du sol, mais ce n'est pas le sujet ici.</p><aside id="r-370973" data-claire-element-id="370973" data-claire-semantic="information"><p id="r-370972" data-claire-element-id="370972">Pour générer trois fois le même bruit avec des paramètres différents, j'ai retiré le <strong>srand()</strong> dans l'initialisation de mon bruit.</p></aside><h2 id="r-texture-de-bois" data-claire-element-id="370991">Texture de bois</h2><p id="r-370975" data-claire-element-id="370975">On utilise ici deux couleurs (brun clair et brun foncé).</p><p id="r-370976" data-claire-element-id="370976">Le bois possède des veines de formes plus ou moins circulaires. Or, le bruit fait des genres de « taches » circulaires. On peut donc reprendre la méthode des seuils, en employant alternativement la couleur claire puis la foncée, avec un assez grand nombre de seuils.</p><p id="r-370977" data-claire-element-id="370977">Dans la pratique, au lieu d'utiliser un grand nombre de seuils, on va employer une petite astuce : imaginons qu'on ait 10 seuils alternant deux couleurs et disposés régulièrement, cela revient à mettre un premier seuil clair à 0, un second foncé à 0.1, un troisième clair à 0.2, et de faire un modulo 0.2 sur la valeur.</p><p id="r-370978" data-claire-element-id="370978">De plus, si l'on a une valeur v entre 0.1 et 0.2, la couleur interpolée sera la même que celle de 0.2 - v.</p><p id="r-370979" data-claire-element-id="370979">Dernière chose, j'utilise une interpolation cosinusoïdale entre les deux couleurs, au lieu d'une linéaire (c'est plus joli).</p><pre id="r-370980" data-claire-element-id="370980"><code data-claire-semantic="c">// N'oubliez pas le #include&lt;math.h&gt;.
+static double seuil = 0.2;
+
+static Couleur c1 = {0.6, 0.6, 0.0}; // brun clair
+static Couleur c2 = {0.2, 0.2, 0.0}; // brun foncé
+
+int obtenirPixel(int x, int y) {
+
+    double valeur = fmod(bruit_coherent2D(x, y, PERSISTANCE), seuil);
+    if(valeur &gt; seuil / 2)
+        valeur = seuil - valeur;
+
+    Couleur resultat;
+    double f = (1 - cos(pi * valeur / (seuil / 2))) / 2;
+    resultat.r = c1.r * (1 - f) + c2.r * f;
+    resultat.v = c1.v * (1 - f) + c2.v * f;
+    resultat.b = c1.b * (1 - f) + c2.b * f;
+
+    return obtenirCouleur(resultat.r, resultat.v, resultat.b);
+}</code></pre><p id="r-370981" data-claire-element-id="370981">On peut faire varier les paramètres habituels et les couleurs afin d'obtenir différents types de bois (liège, chêne...). Diminuer le seuil, augmentera le nombre de lignes.<br/> Et deux-trois images pour la route :</p><table id="r-370990" data-claire-element-id="370990"><tbody id="r-370989" data-claire-element-id="370989"><tr id="r-370988" data-claire-element-id="370988"><td id="r-370983" data-claire-element-id="370984"><img id="r-370984" data-claire-element-id="370983" src="medias/uploads.siteduzero.com_files_142001_143000_142241.png" alt="Image utilisateur"/><img id="r-370982" data-claire-element-id="370982" src="medias/uploads.siteduzero.com_files_142001_143000_142241.png" alt="Image utilisateur"/></td><td id="r-370986" data-claire-element-id="370987"><img id="r-370987" data-claire-element-id="370986" src="medias/uploads.siteduzero.com_files_142001_143000_142240.png" alt="Image utilisateur"/><img id="r-370985" data-claire-element-id="370985" src="medias/uploads.siteduzero.com_files_142001_143000_142240.png" alt="Image utilisateur"/></td></tr></tbody></table><h2 id="r-texture-de-marbre-methode-a-lignes" data-claire-element-id="371010">Texture de marbre, méthode « à lignes »</h2><p id="r-370992" data-claire-element-id="370992">On utilise les deux couleurs gris moyen-clair et gris très clair-blanc.</p><p id="r-370993" data-claire-element-id="370993">Cette méthode utilise une approche un peu différente de celle des seuils. Elle va, d'une part, utiliser un cosinus afin de générer un effet de lignes parallèles, et d'autre part introduire dans cette fonction un bruit afin de perturber les lignes.</p><p id="r-370994" data-claire-element-id="370994">Nous allons prendre des lignes verticales. Comme on interpole toujours deux couleurs, on a besoin d'un facteur entre 0 et 1. Vous vous rappelez l'interpolation cosinusoïdale, on aura un truc du genre <code>(1 - cos(?))/2</code>.</p><p id="r-370995" data-claire-element-id="370995">Pour avoir nos lignes verticales, on aura donc un code dans ce genre.</p><pre id="r-370996" data-claire-element-id="370996"><code data-claire-semantic="c">int lignes = 30;
+valeur = (1 - cos(lignes * 2 * PI * x / TAILLE) / 2;</code></pre><p id="r-370997" data-claire-element-id="370997">Il reste à ajouter notre perturbation. Le code devrait ressembler à ceci.</p><pre id="r-370998" data-claire-element-id="370998"><code data-claire-semantic="c">static Couleur c1 = {0.7, 0.7, 0.7}; // gris clair
+static Couleur c2 = {1.0, 1.0, 1.0}; // blanc
+static int lignes = 30;
+static double perturbation = 0.25;
+
+int obtenirPixel(int x, int y) {
+
+    double valeur = (1 - cos(lignes * 2 * PI * ((double)x / TAILLE + perturbation * bruit_coherent2D(x, y, PERSISTANCE)))) / 2;
+
+    Couleur resultat;
+    resultat.r = c1.r * (1 - valeur) + c2.r * valeur;
+    resultat.v = c1.v * (1 - valeur) + c2.v * valeur;
+    resultat.b = c1.b * (1 - valeur) + c2.b * valeur;
+
+    return obtenirCouleur(resultat.r, resultat.v, resultat.b);
+}</code></pre><p id="r-370999" data-claire-element-id="370999">La perturbation est un pourcentage. Tant qu'elle est plus petite que 1, deux lignes ne s'intersecteront jamais.</p><p id="r-371000" data-claire-element-id="371000">Les images :</p><table id="r-371009" data-claire-element-id="371009"><tbody id="r-371008" data-claire-element-id="371008"><tr id="r-371007" data-claire-element-id="371007"><td id="r-371002" data-claire-element-id="371003"><img id="r-371003" data-claire-element-id="371002" src="medias/uploads.siteduzero.com_files_142001_143000_142247.png" alt="Image utilisateur"/><img id="r-371001" data-claire-element-id="371001" src="medias/uploads.siteduzero.com_files_142001_143000_142247.png" alt="Image utilisateur"/></td><td id="r-371005" data-claire-element-id="371006"><img id="r-371006" data-claire-element-id="371005" src="medias/uploads.siteduzero.com_files_142001_143000_142246.png" alt="Image utilisateur"/><img id="r-371004" data-claire-element-id="371004" src="medias/uploads.siteduzero.com_files_142001_143000_142246.png" alt="Image utilisateur"/></td></tr></tbody></table><h2 id="r-texture-de-marbre-methode-du-sin" data-claire-element-id="371047">Texture de marbre, méthode du sin</h2><p id="r-371011" data-claire-element-id="371011">On utilise les deux couleurs gris moyen-clair et gris très clair-blanc.<br/> Voilà ma propre méthode. On veut toujours faire une interpolation entre les deux couleurs. On va donc faire une interpolation.</p><p id="r-371012" data-claire-element-id="371012">On cherche donc à trouver un facteur d'interpolation qui varie entre 0 et 1. Dans une interpolation linéaire, ce facteur est le résultat du bruit, dans une cosinusoïdale, il s'agit de : <code>(1 - cos(bruit_coherent2D(x, y, PERSISTANCE)))/2</code>.</p><p id="r-371013" data-claire-element-id="371013"><em>Pour les matheux en herbe :</em></p><p id="r-371014" data-claire-element-id="371014"></p><div id="r-371023" data-claire-element-id="371023"><p id="r-371015" data-claire-element-id="371015">On peut considérer un facteur comme une fonction f:[0;1] ightarrow [0;1] telle que :</p><ul id="r-371020" data-claire-element-id="371020"><li id="r-371017" data-claire-element-id="371017"><p id="r-371016" data-claire-element-id="371016">f(0) = 0 ;</p></li><li id="r-371019" data-claire-element-id="371019"><p id="r-371018" data-claire-element-id="371018">f(1) = 1.</p></li></ul><p id="r-371021" data-claire-element-id="371021">Lorsqu'on cherche une interpolation plus ou moins cohérente, on attend souvent de cette fonction qu'elle soit bijective, et qu'elle ait un centre de symétrie en (0.5; 0.5), c'est-à-dire que pour tout x \in [0;1], on a f(x) = 1 - f(1 - x). Dès lors, on pourrait qualifier la répartition des valeurs d'homogène.</p><p id="r-371022" data-claire-element-id="371022">Le but recherché ici est contraire. On aimerait avoir une bien plus grande répartition de la couleur blanche par rapport à la couleur noire. D'où la recherche d'un facteur d'interpolation exotique.</p></div><p id="r-371024" data-claire-element-id="371024"><em>Pour les autres :</em><br/> En général, on veut que le facteur d'interpolation se comporte sans préférence pour l'une ou l'autre valeur interpolée. Ainsi, les deux valeurs sont réparties équitablement. Ici, j'ai décidé de faire l'inverse. Comme cela, on aura une grande répartition de blanc, et une plus fine de noir, ce qui donne le caractère zébré du marbre.</p><p id="r-371025" data-claire-element-id="371025">Après pas mal de digressions en tout genre, j'en ai trouvé un assez plaisant : <code>1 - abs(sin(bruit_coherent2D(x, y, PERSISTANCE)))</code>. Pour accentuer encore plus la finesse des veines, on peut aussi utiliser une racine carrée sur la valeur absolue.</p><pre id="r-371026" data-claire-element-id="371026"><code data-claire-semantic="c">static Couleur c2 = {0.7, 0.7, 0.7}; // Gris clair
+static Couleur c1 = {1.0, 1.0, 1.0}; // Blanc
+
+Uint32 obtenirPixel(int x, int y) {
+
+    double valeur = 1 - sqrt(fabs(sin(2 * 3.141592 * bruit_coherent2D(x, y, PERSISTANCE))));
+
+    Couleur resultat;
+    resultat.r = c1.r * (1 - valeur) + c2.r * valeur;
+    resultat.v = c1.v * (1 - valeur) + c2.v * valeur;
+    resultat.b = c1.b * (1 - valeur) + c2.b * valeur;
+
+    return obtenirCouleur(resultat.r, resultat.v, resultat.b);
+}</code></pre><p id="r-371027" data-claire-element-id="371027">Et encore des images :</p><table id="r-371036" data-claire-element-id="371036"><tbody id="r-371035" data-claire-element-id="371035"><tr id="r-371034" data-claire-element-id="371034"><td id="r-371029" data-claire-element-id="371030"><img id="r-371030" data-claire-element-id="371029" src="medias/uploads.siteduzero.com_files_142001_143000_142242.png" alt="Image utilisateur"/><img id="r-371028" data-claire-element-id="371028" src="medias/uploads.siteduzero.com_files_142001_143000_142242.png" alt="Image utilisateur"/></td><td id="r-371032" data-claire-element-id="371033"><img id="r-371033" data-claire-element-id="371032" src="medias/uploads.siteduzero.com_files_142001_143000_142237.png" alt="Image utilisateur"/><img id="r-371031" data-claire-element-id="371031" src="medias/uploads.siteduzero.com_files_142001_143000_142237.png" alt="Image utilisateur"/></td></tr></tbody></table><p id="r-371037" data-claire-element-id="371037">Voilà maintenant, amusez-vous à essayer toutes sortes d'interpolations diverses et variées, faites varier les couleurs et les paramètres du bruit et essayez d'obtenir vos propres méthodes pour dessiner des textures réalistes.</p><p id="r-371038" data-claire-element-id="371038">Vous pouvez aussi combiner les méthodes. Par exemple, en utilisant la méthode « à lignes » avec celle du bois, on obtient une texture de liège ou autre bois très léger.</p><figure id="r-371040" data-claire-element-id="371041"><img id="r-371039" data-claire-element-id="371039" src="medias/uploads.siteduzero.com_files_142001_143000_142236.png" alt="Image utilisateur"/></figure><p id="r-371042" data-claire-element-id="371042">(Et pourquoi pas, si vous obtenez un résultat original, postez-le dans les commentaires.)</p><p id="r-371043" data-claire-element-id="371043">Voilà, la génération de bruits cohérents n'a maintenant plus de secrets pour vous (ou pas :p).<br/> Avant que nous nous quittions, je vous laisse avec une petite application qui vous permettra de tester les différentes associations : (application jnlp, nécessite Java).</p><p id="r-371044" data-claire-element-id="371045"><a href="http://quarante-sept.isgreat.org/perlin/PerlinNoise.jnlp"><img id="r-371045" data-claire-element-id="371044" src="medias/uploads.siteduzero.com_files_223001_224000_223747.png" alt="Image utilisateur"/></a>(désolé si je n'ai pas pris la peine de rectifier le nom).</p><p id="r-371046" data-claire-element-id="371046">La source de cette application (en Java) est disponible <a href="http://www.toofiles.com/fr/oip/documents/rar/perlinnoise_src.html">ici</a>.<br/> Ce code source, ainsi que tous les codes précédents, sont placés sous la même licence que le tutoriel.</p><h2 id="r-credits-references-et-liens-utiles" data-claire-element-id="371063">Crédits, références et liens utiles</h2><p id="r-371048" data-claire-element-id="371048">Certains articles parlent de bruit de Perlin, ce qui est inexact (comme dit plus haut), mais cela n'en demeure pas moins de très bon articles.</p><ul id="r-371061" data-claire-element-id="371061"><li id="r-371051" data-claire-element-id="371051"><p id="r-371049" data-claire-element-id="371050"><a href="http://freespace.virgin.net/hugo.elias/models/m_perlin.htm"><img id="r-371050" data-claire-element-id="371049" src="../../openclassrooms.com/Templates/images/designs/2/pays/gb.html" alt="Image utilisateur"/>Perlin noise</a></p></li><li id="r-371054" data-claire-element-id="371054"><p id="r-371052" data-claire-element-id="371053">Page de Ken Perlin, vous trouverez quelques liens si vous voulez aller plus loin avec la génération procédural<a href="http://mrl.nyu.edu/~perlin/doc/oscar.html">e<img id="r-371053" data-claire-element-id="371052" src="../../openclassrooms.com/Templates/images/designs/2/pays/gb.html" alt="Image utilisateur"/>Page de Ken Perlin</a>, vous trouverez quelques liens si vous voulez aller plus loin avec la génération procédurale</p></li><li id="r-371057" data-claire-element-id="371057"><p id="r-371055" data-claire-element-id="371056"><a href="http://khayyam.developpez.com/articles/algo/perlin/"><img id="r-371056" data-claire-element-id="371055" src="../../openclassrooms.com/Templates/images/designs/2/pays/fr.html" alt="Image utilisateur"/>Génération de terrain par l'algorithme de Perlin</a></p></li><li id="r-371060" data-claire-element-id="371060"><p id="r-371058" data-claire-element-id="371059">Page de discution de l'article Wikipédia sur le bruit de Perlin, où il est question des erreurs à propos du nom<a href="http://en.wikipedia.org/wiki/Talk%3APerlin_noise">.<img id="r-371059" data-claire-element-id="371058" src="../../openclassrooms.com/Templates/images/designs/2/pays/gb.html" alt="Image utilisateur"/>Page de discution de l'article Wikipédia sur le bruit de Perlin</a>, où il est question des erreurs à propos du nom.</p></li></ul><p id="r-371062" data-claire-element-id="371062">J'ajouterai d'autres liens francophones quand je les retrouverai...</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents">Bruits et nombres aléatoires cohérents</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/introduction-aux-bruits">
+Introduction aux bruits
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/interpolation-des-valeurs-discretes">
+Interpolation des valeurs discrètes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/somme-de-fonctions-de-bruit">
+Somme de fonctions de bruit
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/l-algorithme-complet">
+L&#039;algorithme complet
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/en-pratique-10">
+En pratique
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/bruits-et-nombres-aleatoires-coherents/l-algorithme-complet">
+<span class="arrow"></span>
+<span class="next">L&#039;algorithme complet</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/bruits-et-nombres-aleatoires-coherents.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 09:01:51 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/bruits-et-nombres-aleatoires-coherents.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:36:56 GMT -->
+</html>

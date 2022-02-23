@@ -1,0 +1,525 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/comprendre-les-jeux-de-caracteres-et-interclassements.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 20:19:20 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/comprendre-les-jeux-de-caracteres-et-interclassements.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 03:50:02 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Comprendre les jeux de caractères et interclassements</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Comprendre les jeux de caractères et interclassements</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Comprendrelesjeuxdecaractresetinterclassements">Comprendre les jeux de caractères et interclassements</a><br/><a href="#Lesjeuxdecaractres">Les jeux de caractères</a><br/><a href="#Lesinterclassements">Les interclassements</a><br/><a href="#PrsentationdesfonctionnalitsdeMySQL">Présentation des fonctionnalités de MySQL</a><br/><a href="#Lesdonnesditesquotbinairesquot">Les données dites &quot;binaires&quot;</a><br/><a href="#Jeuxdecaractresetinterclassementsutilisspourlestockage">Jeux de caractères et interclassements utilisés pour le stockage</a><br/><a href="#Jeuxdecaractresetinterclassementsdeconnexion">Jeux de caractères et interclassements de connexion</a><br/></div>
+<a name="Comprendrelesjeuxdecaractresetinterclassements"></a><h2>Comprendre les jeux de caractères et interclassements</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/les-jeux-de-caracteres">
+<span class="next">Les jeux de caractères</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-337951" data-claire-element-id="337951">La version 4.1 de Mysql a introduit une nouvelle fonctionnalité : le serveur de bases de données a maintenant &quot;conscience&quot; du jeu de caractères utilisé pour stocker les données.</p><p id="r-337952" data-claire-element-id="337952">Mais vous vous en doutiez peut-être, en voyant apparaître dans votre vue de table habituelle dans phpmyadmin, un curieux paramètre nommé &quot;interclassement&quot;, et comportant une liste de valeurs bizarres et identiques (probablement latin1_swedish_ci). Mais, par manque de temps ou de curiosité, ou encore parce que vous n'arriviez pas à trouver d'informations au sujet de cette nouveauté, vous n'en savez pas plus que ça.</p><p id="r-337953" data-claire-element-id="337953">Ce tutoriel a pour but de vous expliquer en quoi consistent ces fonctionnalités, quels sont leurs buts et comment les utiliser.</p><aside id="r-337955" data-claire-element-id="337955" data-claire-semantic="information"><p id="r-337954" data-claire-element-id="337954">Par principe, ce tutoriel n'expliquera les manipulations que sous formes de requêtes SQL. Il n'y aura pas de captures d'écran de phpMyAdmin. Cependant, ce dernier dispose comme d'habitude des éléments nécessaires pour imiter ces manipulations via l'interface web (pour peu que vous ayez une version récente). Il vous sera facile de les trouver.</p></aside>
+</div><a name="Lesjeuxdecaractres"></a><h2>Les jeux de caractères</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/les-interclassements">
+<span class="next">Les interclassements</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-337956" data-claire-element-id="337956">Si vous voulez comprendre quelque chose à ce tutoriel, il faut absolument que vous maîtrisiez la notion de <em>jeu de caractères</em>. Si vous savez déjà de quoi il s'agit, vous pouvez passer directement à la section suivante. Sinon, lisez ce qui suit.</p><p id="r-337957" data-claire-element-id="337957">L'ordinateur ne connaît pas la notion de caractères à proprement parler ; il ne connaît que les nombres. Du coup, on a inventé une table de conversion qui fait correspondre un nombre à un caractère : il s'agit de l'ASCII. Ce dernier définit 128 caractères, sur 7 bits.</p><p id="r-337958" data-claire-element-id="337958">Cela fonctionnait très bien lorsque l'informatique n'était encore qu'à ses débuts. Mais ensuite, on s'est rendu compte qu'on avait oublié dans ce code d'inclure... les caractères accentués de nos chères langues nationales. Ainsi, il était impossible d'écrire un &quot;é&quot;, un &quot;è&quot;, un &quot;à&quot; ou un &quot;ù&quot;, et encore moins des glyphes arabes, chinois ou japonais.</p><p id="r-337959" data-claire-element-id="337959">Pour remédier à cela, on a utilisé le huitième bit, qui était jusqu'alors inutilisé (enfin, pas vraiment : il était utilisé à des fins de contrôle de l'intégrité des données, mais cela n'est plus très utile car cette fonction est maintenant prise en charge par les protocoles de communication), pour créer des &quot;extensions&quot; au code ASCII. Ces extensions particulières sont des <strong>encodages</strong>, ou encore des <strong>jeux de caractères (charsets)</strong> particuliers. En utilisant le huitième bit, on pouvait créer 128 caractères supplémentaires, ce qui était plus que suffisant pour y placer pas mal de caractères accentués.</p><p id="r-337960" data-claire-element-id="337960">Ainsi, toute une flopée de jeux de caractères ont été créés, chacun couvrant une plage de langues ou d'alphabets précis : ISO-8859-1 à ISO-8859-15 notamment. Celui correspondant à notre alphabet occidental est l'ISO-8859-1, mais il est de plus en plus remplacé par l'ISO-8859-15 car ce dernier, plus récent, ajoute le support du signe euro &quot;¬&quot;.</p><p id="r-337961" data-claire-element-id="337961">Ces nombreux encodages ont rapidement créé des problèmes d'incompatibilité. En effet, en l'absence d'informations, comment savoir si le caractère portant la valeur 233 est un &quot;é&quot;, comme en ISO-8859-1, ou la lettre hébraïque &quot;yod&quot;, comme en ISO-8859-8 (alphabet hébreu) ?</p><p id="r-337962" data-claire-element-id="337962">Pour éviter ce genre de dilemme, chaque document transmis ou enregistré porte en général à &quot;proximité&quot; (par exemple, dans un en-tête HTTP), voire dans le document lui-même (comme en XML) un champ indiquant le jeu de caractères dans lequel il a été encodé. Le cas échéant, le logiciel de lecture se replie en général vers un encodage par défaut (souvent, le plus répandu).</p><div id="r-337964" data-claire-element-id="337964" data-claire-semantic="question"><p id="r-337963" data-claire-element-id="337963">Mais que se passe-t-il si le logiciel se trompe et choisit le mauvais encodage, parce que l'encodage par défaut n'est pas le bon, ou parce que l'information d'encodage livrée avec le document est erronée ?</p></div><p id="r-337965" data-claire-element-id="337965">Eh bien, vous vous en doutez, on a droit à quelques problèmes ! Le plus souvent, le logiciel arrivera tout de même à afficher le document, mais tous les caractères accentués seront tout simplement massacrés (les caractères &quot;normaux&quot; sont épargnés car il s'agit de la base ASCII, commune à tous les encodages).</p><p id="r-337966" data-claire-element-id="337966">Le plus souvent, on est confronté à deux cas : soit le document est lu en ISO-8859-1 alors qu'il est encodé en UTF-8 (encodage que nous verrons un peu plus loin), auquel cas vous verrez des caractères de ce style à la place des accents : &quot;Ã©&quot; (très joli, n'est-il pas ? ;) ), soit le document est lu en UTF-8 alors qu'il est encodé en ISO-8859-1 (plus rare, sauf en XML), auquel cas tous les accents seront tout simplement remplacés par des &quot;?&quot;.</p><p id="r-337967" data-claire-element-id="337967">D'où l'intérêt de faire attention à bien vérifier que l'encodage spécifié est bien celui avec lequel on encode le document !</p><div id="r-337969" data-claire-element-id="337969" data-claire-semantic="question"><p id="r-337968" data-claire-element-id="337968">D'accord pour les problèmes d'encodage, mais il y en a un autre : comment faire pour écrire des glyphes latins, hébreu, chinois et russes dans la même page ? Par exemple, pour un cours d'histoire des langues ? Quel encodage ISO-8859-truc dois-je utiliser ?</p></div><p id="r-337970" data-claire-element-id="337970">Aucun. :D En fait, il n'est pas possible de stocker toutes ces possibilités dans les 128 combinaisons possibles. On n'a donc pas le choix : il faut agrandir l'espace, c'est-à-dire s'étendre sur plus d'un octet par caractère.</p><div id="r-337972" data-claire-element-id="337972" data-claire-semantic="question"><p id="r-337971" data-claire-element-id="337971">Oui, mais si on double chaque caractère (par exemple), la taille du document va doubler ! Il n'y a pas une meilleure solution ?</p></div><p id="r-337973" data-claire-element-id="337973">Si. En fait, on va utiliser le fameux huitième bit comme &quot;indicateur d'encodage&quot; : par exemple, on peut dire que s'il est à 0, il s'agit d'un caractère ASCII, et s'il est à 1, on est en présence d'un glyphe non standard et que ici, <em>et ici uniquement</em>, on va le coder avec deux octets. Cela nous donne donc les 7 bits du premier octet plus les 8 bits du second octet, soit 15 bits, soit encore 32768 possibilités. D'un coup, on se sent plus à l'aise !</p><p id="r-337974" data-claire-element-id="337974">Ce type d'encodage existe : il s'agit du &quot;célèbre&quot; UTF-8.</p><div id="r-337976" data-claire-element-id="337976" data-claire-semantic="question"><p id="r-337975" data-claire-element-id="337975">Attends, je pige pas là : pourquoi tout le monde ne se met pas à utiliser de l'UTF-8, puisqu'il est bien meilleur que les encodages de la série ISO ?</p></div><p id="r-337977" data-claire-element-id="337977">Pour plusieurs raisons (pour info, le Site du Zéro travaille en UTF-8).</p><ul id="r-337984" data-claire-element-id="337984"><li id="r-337979" data-claire-element-id="337979"><p id="r-337978" data-claire-element-id="337978">UTF-8 est un jeu de caractères récent par rapport aux autres. Il est longtemps resté méconnu et peu utilisé. Du coup, l'habitude d'utiliser ISO-8859-1 reste encore solidement répandue.</p></li><li id="r-337981" data-claire-element-id="337981"><p id="r-337980" data-claire-element-id="337980">UTF-8 n'est d'aucune utilité si vous êtes absolument certains que vous allez rester dans un alphabet bien précis (l'alphabet latin, par exemple). Auquel cas, il peut s'avérer plus judicieux d'utiliser un encodage de la série ISO car un caractère accentué y prend moins de place qu'en UTF-8.<br/> Attention : quand je dis &quot;absolument certains&quot;, c'est vraiment certain de chez certain : par exemple, irez-vous jurer sur votre tête que vous n'insérerez jamais de caractère hébreu ou russe sur votre blog ? Sur un billet ayant pour sujet l'encodage des caractères par exemple, ou sur une langue précise ?</p></li><li id="r-337983" data-claire-element-id="337983"><p id="r-337982" data-claire-element-id="337982">Surtout, le principal obstacle à la généralisation d'UTF-8 est que, contrairement aux encodages classiques, il faut que les logiciels soient adaptés. Pourquoi ? Parce que dans un encodage classique, le nombre d'octets est le même que le nombre de caractères (vu qu'un octet égale un caractère). Avec UTF-8, cette égalité ne tient plus. Du coup, le comportement des programmes non conçus pour gérer l'UTF-8 peut se révéler étrange avec ces types de documents. Il faut également signaler que pour cette même raison, une chaîne en UTF-8 est plus longue à traiter qu'une chaîne en encodage classique.</p></li></ul><div id="r-337986" data-claire-element-id="337986" data-claire-semantic="question"><p id="r-337985" data-claire-element-id="337985">Tout ça est bien joli, mais je ne sais même pas quel jeu de caractères j'utilise pour mon application/page web/documents !</p></div><p id="r-337987" data-claire-element-id="337987">Si vous ne savez pas quel encodage vous utilisez, il y a gros à parier qu'il s'agit de ISO-8859-1 (aussi appelé <em>latin1</em>).</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements">Comprendre les jeux de caractères et interclassements</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/les-jeux-de-caracteres">
+Les jeux de caractères
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/les-interclassements">
+Les interclassements
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/presentation-des-fonctionnalites-de-mysql">
+Présentation des fonctionnalités de MySQL
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/les-donnees-dites-binaires">
+Les données dites &quot;binaires&quot;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/jeux-de-caracteres-et-interclassements-utilises-pour-le-stockage">
+Jeux de caractères et interclassements utilisés pour le stockage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/jeux-de-caracteres-et-interclassements-de-connexion">
+Jeux de caractères et interclassements de connexion
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/les-interclassements">
+<span class="next">Les interclassements</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lesinterclassements"></a><h2>Les interclassements</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/les-jeux-de-caracteres">
+<span class="arrow"></span>
+<span class="next">Les jeux de caractères</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/presentation-des-fonctionnalites-de-mysql">
+<span class="next">Présentation des fonctionnalités de MySQL</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-337989" data-claire-element-id="337989">Maintenant que vous avez appris en quoi consistent les jeux de caractères, voyons maintenant ce que sont les interclassements, et à quoi ils servent.</p><p id="r-337990" data-claire-element-id="337990">Un interclassement (aussi appelé <em>collation</em>) est une table de correspondance spécifique à un jeu de caractères. Un jeu de caractères peut avoir plusieurs interclassements : en général, un par langue (par exemple, latin1 français, latin1 suédois).</p><p id="r-337991" data-claire-element-id="337991">Il a deux fonctions :</p><ul id="r-338000" data-claire-element-id="338000"><li id="r-337995" data-claire-element-id="337995"><p id="r-337992" data-claire-element-id="337992">il permet l'ordonnancement correct d'une liste de caractères. Par exemple, si l'on classe une liste par ordre alphabétique, qu'est-ce qui indique au logiciel que le &quot;é&quot; vient après le &quot;e&quot;, ou que les majuscules viennent avant les minuscules (par exemple) ? Eh bien c'est l'interclassement. Ces ordres sont en général spécifiques à une langue. MySQL s'en sert pour les clauses ORDER BY des requêtes.</p><aside id="r-337994" data-claire-element-id="337994" data-claire-semantic="information"><p id="r-337993" data-claire-element-id="337993">En l'absence d'interclassement, les codes des caractères sont utilisés ; or, ceux-ci ne reflètent pas le véritable ordre des glyphes.</p></aside></li><li id="r-337999" data-claire-element-id="337999"><p id="r-337996" data-claire-element-id="337996">Il permet de savoir quand un caractère est &quot;équivalent&quot; à un autre. Par exemple, avec un interclassement adapté, le logiciel peut &quot;prendre conscience&quot; du fait que le caractère &quot;e&quot; est équivalent à &quot;E&quot;, mais aussi à &quot;é&quot;, &quot;è&quot; ou &quot;ê&quot;. Cela peut se révéler extrêmement pratique pour la recherche : ainsi, une recherche sur &quot;élément&quot; retournera les résultats contenant &quot;élément&quot; mais aussi &quot;Element&quot;, &quot;element&quot;, voire &quot;élEmeNt&quot;. D'où des recherches plus efficaces.</p><aside id="r-337998" data-claire-element-id="337998" data-claire-semantic="information"><p id="r-337997" data-claire-element-id="337997">En l'absence d'interclassement, aucun caractère n'est équivalent à un autre.</p></aside></li></ul><p id="r-338001" data-claire-element-id="338001">Avec le jeu de caractères UTF-8, en plus des principales langues, un interclassement &quot;générique&quot; permet de gérer le cas des langues mélangées.</p><p id="r-338002" data-claire-element-id="338002">Les interclassements vous seront très utiles pour obtenir des classements ORDER BY plus exacts avec les chaînes de caractères, ou pour rendre vos recherches plus efficaces (notamment les recherches de type FULLTEXT).</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements">Comprendre les jeux de caractères et interclassements</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/les-jeux-de-caracteres">
+Les jeux de caractères
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/les-interclassements">
+Les interclassements
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/presentation-des-fonctionnalites-de-mysql">
+Présentation des fonctionnalités de MySQL
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/les-donnees-dites-binaires">
+Les données dites &quot;binaires&quot;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/jeux-de-caracteres-et-interclassements-utilises-pour-le-stockage">
+Jeux de caractères et interclassements utilisés pour le stockage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/jeux-de-caracteres-et-interclassements-de-connexion">
+Jeux de caractères et interclassements de connexion
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/les-jeux-de-caracteres">
+<span class="arrow"></span>
+<span class="next">Les jeux de caractères</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/presentation-des-fonctionnalites-de-mysql">
+<span class="next">Présentation des fonctionnalités de MySQL</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="PrsentationdesfonctionnalitsdeMySQL"></a><h2>Présentation des fonctionnalités de MySQL</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/les-interclassements">
+<span class="arrow"></span>
+<span class="next">Les interclassements</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/les-donnees-dites-binaires">
+<span class="next">Les données dites &quot;binaires&quot;</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-338004" data-claire-element-id="338004">MySQL gère une foule de jeux de caractères, parmi lesquels on retrouve les &quot;classiques&quot; ISO-8859-* et UTF-8, mais aussi des codages chinois, russes, japonais, coréens...</p><p id="r-338005" data-claire-element-id="338005">Pour afficher la liste de tous les jeux de caractères supportés par votre serveur MySQL, exécutez la requête suivante :</p><pre id="r-338006" data-claire-element-id="338006"><code data-claire-semantic="sql">SHOW CHARACTER SET</code></pre><p id="r-338007" data-claire-element-id="338007">Et pour les interclassements :</p><pre id="r-338008" data-claire-element-id="338008"><code data-claire-semantic="sql">SHOW COLLATION</code></pre><aside id="r-338010" data-claire-element-id="338010" data-claire-semantic="information"><p id="r-338009" data-claire-element-id="338009">Les interclassements se terminant par _ci sont insensibles à la casse (&quot;E&quot; = &quot;e&quot;), ceux se terminant par _cs sont sensibles à la casse, et enfin, ceux se terminant par _bin signifient classement binaire (autrement dit, pas d'interclassement).</p></aside><p id="r-338011" data-claire-element-id="338011">MySQL fait preuve d'une grande souplesse dans la définition de ces paramètres. Il est ainsi possible de spécifier dans quel jeu de caractères et interclassement les données sont stockées séparément pour chaque colonne. Il est également possible pour un client de préciser le jeu de caractères utilisé lors de la transmission des données, de sorte que le serveur fasse automatiquement la traduction, si nécessaire.</p><p id="r-338012" data-claire-element-id="338012">La manipulation de ces fonctions est quelque peu compliquée à expliquer (et donc à comprendre). Néanmoins, une fois que vous aurez compris, vous réaliserez que MySQL peut vous simplifier la vie dans bien des cas.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements">Comprendre les jeux de caractères et interclassements</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/les-jeux-de-caracteres">
+Les jeux de caractères
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/les-interclassements">
+Les interclassements
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/presentation-des-fonctionnalites-de-mysql">
+Présentation des fonctionnalités de MySQL
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/les-donnees-dites-binaires">
+Les données dites &quot;binaires&quot;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/jeux-de-caracteres-et-interclassements-utilises-pour-le-stockage">
+Jeux de caractères et interclassements utilisés pour le stockage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/jeux-de-caracteres-et-interclassements-de-connexion">
+Jeux de caractères et interclassements de connexion
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/les-interclassements">
+<span class="arrow"></span>
+<span class="next">Les interclassements</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/les-donnees-dites-binaires">
+<span class="next">Les données dites &quot;binaires&quot;</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lesdonnesditesquotbinairesquot"></a><h2>Les données dites &quot;binaires&quot;</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/presentation-des-fonctionnalites-de-mysql">
+<span class="arrow"></span>
+<span class="next">Présentation des fonctionnalités de MySQL</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/jeux-de-caracteres-et-interclassements-utilises-pour-le-stockage">
+<span class="next">Jeux de caractères et interclassements utilisés pour le stockage</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-338014" data-claire-element-id="338014">Les colonnes de type binaire (BLOB, BINARY VARCHAR...) ne gèrent pas les jeux de caractères, ni les interclassements, et considèrent leur contenu comme des données brutes (d'où leur nom : binaire). Mis à part cette particularité, elles fonctionnent comme des colonnes de type TEXT.</p><p id="r-338015" data-claire-element-id="338015">Vous devriez les utiliser pour stocker des données pour lesquelles le jeu de caractères n'apporte rien, c'est-à-dire des données non textuelles au sens strict du terme (par exemple, des URL, des adresses e-mail...).</p><aside id="r-338020" data-claire-element-id="338020" data-claire-semantic="warning"><p id="r-338016" data-claire-element-id="338016">Ne négligez pas ce point ! Si vous stockez des URL dans une colonne TEXT, cela signifie, par exemple, que ces deux adresses seront les mêmes pour MySQL :</p><pre id="r-338017" data-claire-element-id="338017"><code>http://www.example.com/éléctricité/PAGE.htm</code></pre><pre id="r-338018" data-claire-element-id="338018"><code>&lt;lien url=&quot;http://www.example.com/electricite/Page.htm&quot;&gt;http://www.example.com/electricite/Page.htm&lt;/lien&gt;</code></pre><p id="r-338019" data-claire-element-id="338019">Alors qu'en réalité, ces deux adresses sont <strong>différentes</strong> ! (Idem pour les adresses e-mail...)</p></aside><p id="r-338021" data-claire-element-id="338021">Il est possible, même avec des colonnes de type TEXT, de spécifier avec MySQL de ne pas prendre en charge les jeux de caractères et interclassements pour une opération précise. Il suffit d'ajouter le mot-clé BINARY devant la chaîne de caractères en question (ou le nom d'une colonne). Ainsi, la requête suivante retournera 1 (vrai) :</p><pre id="r-338022" data-claire-element-id="338022"><code data-claire-semantic="sql">SELECT &quot;éEe&quot; = &quot;eee&quot;</code></pre><p id="r-338023" data-claire-element-id="338023">Tandis que celle-ci retournera 0 (faux) :</p><pre id="r-338024" data-claire-element-id="338024"><code data-claire-semantic="sql">SELECT &quot;éEe&quot; = BINARY &quot;eee&quot;</code></pre><p id="r-338025" data-claire-element-id="338025">Notez que j'aurais pu mettre BINARY de n'importe quel côté de la comparaison.</p><aside id="r-338027" data-claire-element-id="338027" data-claire-semantic="warning"><p id="r-338026" data-claire-element-id="338026">Lors de l'utilisation de données considérées comme binaires, MySQL n'effectuera aucune conversion, y compris lors de la transmission des données ou du stockage !</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements">Comprendre les jeux de caractères et interclassements</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/les-jeux-de-caracteres">
+Les jeux de caractères
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/les-interclassements">
+Les interclassements
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/presentation-des-fonctionnalites-de-mysql">
+Présentation des fonctionnalités de MySQL
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/les-donnees-dites-binaires">
+Les données dites &quot;binaires&quot;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/jeux-de-caracteres-et-interclassements-utilises-pour-le-stockage">
+Jeux de caractères et interclassements utilisés pour le stockage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/jeux-de-caracteres-et-interclassements-de-connexion">
+Jeux de caractères et interclassements de connexion
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/presentation-des-fonctionnalites-de-mysql">
+<span class="arrow"></span>
+<span class="next">Présentation des fonctionnalités de MySQL</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/jeux-de-caracteres-et-interclassements-utilises-pour-le-stockage">
+<span class="next">Jeux de caractères et interclassements utilisés pour le stockage</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Jeuxdecaractresetinterclassementsutilisspourlestockage"></a><h2>Jeux de caractères et interclassements utilisés pour le stockage</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/les-donnees-dites-binaires">
+<span class="arrow"></span>
+<span class="next">Les données dites &quot;binaires&quot;</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/jeux-de-caracteres-et-interclassements-de-connexion">
+<span class="next">Jeux de caractères et interclassements de connexion</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-338029" data-claire-element-id="338029">Il est possible de spécifier un jeu de caractères et / ou un interclassement pour une base de données, pour une table, et pour une colonne d'une table. Les paramètres des bases de données et des tables ne sont en fait que des valeurs par défaut pour les nouvelles colonnes : seul le jeu de caractère / interclassement de la colonne est en fait exploité lors d'une opération.</p><p id="r-338030" data-claire-element-id="338030">En plus clair, cela signifie que si vous ne spécifiez pas de jeu de caractères (par exemple) lorsque vous créez ou &quot;altérez&quot; une colonne, ce sera le jeu de caractères de la table qui sera utilisé et écrit comme étant le jeu de caractères de la colonne. Même principe pour le jeu de caractères des tables et celui des des bases de données.</p><p id="r-338031" data-claire-element-id="338031">Voici les différentes requêtes à utiliser pour spécifier les jeux de caractères et les interclassements utilisés pour le stockage des données :</p><ul id="r-338044" data-claire-element-id="338044"><li id="r-338035" data-claire-element-id="338035"><p id="r-338032" data-claire-element-id="338032">pour une base de données :</p><pre id="r-338033" data-claire-element-id="338033"><code data-claire-semantic="sql">CREATE DATABASE base_de_donnees [...] CHARACTER SET jeu_de_caracteres COLLATE interclassement</code></pre><pre id="r-338034" data-claire-element-id="338034"><code data-claire-semantic="sql">ALTER DATABASE base_de_donnees CHARACTER SET jeu_de_caracteres COLLATE interclassement</code></pre></li><li id="r-338039" data-claire-element-id="338039"><p id="r-338036" data-claire-element-id="338036">pour une table :</p><pre id="r-338037" data-claire-element-id="338037"><code data-claire-semantic="sql">CREATE TABLE table [...] CHARACTER SET jeu_de_caracteres COLLATE interclassement</code></pre><pre id="r-338038" data-claire-element-id="338038"><code data-claire-semantic="sql">ALTER TABLE table CHARACTER SET jeu_de_caracteres COLLATE interclassement</code></pre></li><li id="r-338043" data-claire-element-id="338043"><p id="r-338040" data-claire-element-id="338040">pour une colonne :</p><pre id="r-338041" data-claire-element-id="338041"><code data-claire-semantic="sql">CREATE TABLE table (
+colonne [...] CHARACTER SET jeu_de_caracteres COLLATE interclassement
+[...]
+)
+[...]</code></pre><pre id="r-338042" data-claire-element-id="338042"><code data-claire-semantic="sql">ALTER TABLE table CHANGE colonne colonne type CHARACTER SET jeu_de_caracteres COLLATE interclassement</code></pre></li></ul><aside id="r-338046" data-claire-element-id="338046" data-claire-semantic="warning"><p id="r-338045" data-claire-element-id="338045">Attention : le fait de modifier le jeu de caractères d'une colonne avec ALTER entraîne automatiquement la conversion des données déjà présentes dans la colonne !</p></aside><p id="r-338047" data-claire-element-id="338047">Notez que la requête suivante permet de convertir toutes les colonnes de la table à un jeu de caractères précis :</p><pre id="r-338048" data-claire-element-id="338048"><code data-claire-semantic="sql">ALTER TABLE table CONVERT TO CHARACTER SET jeu_de_caracteres COLLATE interclassement</code></pre><div id="r-338050" data-claire-element-id="338050" data-claire-semantic="question"><p id="r-338049" data-claire-element-id="338049">J'ai une colonne déclarée en latin1, mais j'ai stocké à l'intérieur des données en UTF-8 ! Comment rétablir la cohérence de mes données ?</p></div><p id="r-338051" data-claire-element-id="338051">Ce problème se produit très souvent, notamment lorsque vous mettez à jour une base de données MySQL 4.0 en une version plus récente, prenant en compte les jeux de caractères, ou tout simplement parce que vous venez de découvrir les fonctionnalités de MySQL avec ce tuto, et que vous stockiez vos données en UTF-8 sans vous préoccuper de la déclaration de la colonne.</p><p id="r-338052" data-claire-element-id="338052">La documentation MySQL indique une astuce pour rétablir la situation : convertir la colonne en type binaire (BLOB, par exemple), puis la reconvertir en type texte en spécifiant le jeu de caractères voulu :</p><pre id="r-338053" data-claire-element-id="338053"><code data-claire-semantic="sql">ALTER TABLE table CHANGE colonne colonne type_binaire;
+ALTER TABLE table CHANGE colonne colonne type_texte CHARACTER SET jeu_de_caracteres;</code></pre><p id="r-338054" data-claire-element-id="338054">Par exemple :</p><pre id="r-338055" data-claire-element-id="338055"><code data-claire-semantic="sql">ALTER TABLE t1 CHANGE c1 c1 BLOB;
+ALTER TABLE t1 CHANGE c1 c1 TEXT CHARACTER SET utf8;</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements">Comprendre les jeux de caractères et interclassements</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/les-jeux-de-caracteres">
+Les jeux de caractères
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/les-interclassements">
+Les interclassements
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/presentation-des-fonctionnalites-de-mysql">
+Présentation des fonctionnalités de MySQL
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/les-donnees-dites-binaires">
+Les données dites &quot;binaires&quot;
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/jeux-de-caracteres-et-interclassements-utilises-pour-le-stockage">
+Jeux de caractères et interclassements utilisés pour le stockage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/jeux-de-caracteres-et-interclassements-de-connexion">
+Jeux de caractères et interclassements de connexion
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/les-donnees-dites-binaires">
+<span class="arrow"></span>
+<span class="next">Les données dites &quot;binaires&quot;</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/jeux-de-caracteres-et-interclassements-de-connexion">
+<span class="next">Jeux de caractères et interclassements de connexion</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Jeuxdecaractresetinterclassementsdeconnexion"></a><h2>Jeux de caractères et interclassements de connexion</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/jeux-de-caracteres-et-interclassements-utilises-pour-le-stockage">
+<span class="arrow"></span>
+<span class="next">Jeux de caractères et interclassements utilisés pour le stockage</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-338057" data-claire-element-id="338057">Considérez le problème suivant : vous avez une colonne dont les données sont stockées en UTF-8, et votre client (par exemple, un script PHP) utilise ISO-8859-1. Comment manipuler les données de la colonne ? Il faudrait d'abord convertir les données envoyées en UTF-8, puis les données reçues en ISO-8858-1... Pas très pratique, surtout lorsqu'on a plusieurs clients utilisant des encodages différents.</p><p id="r-338058" data-claire-element-id="338058">C'est là que MySQL va nous aider : il peut se charger lui-même de la traduction. Dans notre exemple, il suffirait de dire à MySQL que le client est en ISO-8859-1, pour qu'il effectue tout seul les conversions d'encodage là où c'est nécessaire ! Ainsi, il convertirait les données envoyées par le client en UTF-8, et vice-versa, pour les données que le serveur envoie. Elle est pas belle, la vie ? :D</p><p id="r-338059" data-claire-element-id="338059">Pour cela, il faut manipuler quatre variables MySQL :</p><ul id="r-338068" data-claire-element-id="338068"><li id="r-338061" data-claire-element-id="338061"><p id="r-338060" data-claire-element-id="338060"><strong>character_set_client</strong> indique au serveur l'encodage que le client utilise, c'est-à-dire dans quel jeu de caractères sont transmises les données du client vers le serveur.</p></li><li id="r-338063" data-claire-element-id="338063"><p id="r-338062" data-claire-element-id="338062"><strong>character_set_connection</strong> indique dans quel jeu de caractères le serveur va convertir les données avant de les traiter. Sauf rares exceptions, on indiquera la même valeur que pour character_set_client, afin d'éviter les conversions intermédiaires qui ne servent pas à grand-chose dans la plupart des cas.</p></li><li id="r-338065" data-claire-element-id="338065"><p id="r-338064" data-claire-element-id="338064"><strong>collation_connection</strong> indique quel interclassement sera utilisé dans la comparaison de chaînes <strong>littérales</strong>, c'est-à-dire par exemple &quot;machin&quot; = &quot;chose&quot;. Cette variable n'a aucun effet sur les comparaisons impliquant des colonnes, car celles-ci ont leur propre interclassement.</p></li><li id="r-338067" data-claire-element-id="338067"><p id="r-338066" data-claire-element-id="338066"><strong>character_set_results</strong> indique au serveur dans quel jeu de caractères celui-ci doit transmettre les résultats. Généralement, on indiquera le même encodage que pour character_set_client.</p></li></ul><p id="r-338069" data-claire-element-id="338069">Une variable peut se définir de la manière suivante :</p><pre id="r-338070" data-claire-element-id="338070"><code data-claire-semantic="sql">SET variable = valeur</code></pre><p id="r-338071" data-claire-element-id="338071">Évidemment, les 4 variables décrites plus haut doivent être redéfinies à chaque connexion.</p><p id="r-338072" data-claire-element-id="338072">Les développeurs de MySQL, qui sont des gens sympas, ont ajouté un &quot;raccourci&quot; pour régler toutes les variables d'un seul coup :</p><pre id="r-338073" data-claire-element-id="338073"><code data-claire-semantic="sql">SET NAMES jeu_de_caracteres</code></pre><p id="r-338074" data-claire-element-id="338074">Qui a le même effet que :</p><pre id="r-338075" data-claire-element-id="338075"><code data-claire-semantic="sql">SET character_set_client = jeu_de_caracteres;
+SET character_set_results = jeu_de_caracteres;
+SET character_set_connection = jeu_de_caracteres;</code></pre><p id="r-338076" data-claire-element-id="338076">Il existe aussi SET CHARACTER SET, mais il est moins utile.</p><p id="r-338077" data-claire-element-id="338077">En guise de conclusion, voici un petit récapitulatif des bonnes pratiques enseignées dans ce tuto.</p><ul id="r-338084" data-claire-element-id="338084"><li id="r-338079" data-claire-element-id="338079"><p id="r-338078" data-claire-element-id="338078">Définissez les jeux de caractères et interclassements de vos colonnes en fonction de vos besoins ; dans le doute, utilisez UTF-8. Ne stockez pas les données dans un jeu de caractères différent de celui déclaré pour la colonne.</p></li><li id="r-338081" data-claire-element-id="338081"><p id="r-338080" data-claire-element-id="338080">Définissez comme étant binaires (BLOB, BINARY VARCHAR, TINYBLOB...) les colonnes comportant des valeurs non textuelles, telles que les URL, les adresses e-mail, les hashs MD5 de mots de passe...</p></li><li id="r-338083" data-claire-element-id="338083"><p id="r-338082" data-claire-element-id="338082">Lorsque vous utilisez un client MySQL (par exemple, PHP), spécifiez le jeu de caractères que vous utilisez avec SET NAMES.</p></li></ul><p id="r-338085" data-claire-element-id="338085">Pour plus d'informations, consultez la <a href="http://dev.mysql.com/doc/refman/5.0/fr/charset.html">documention officielle de MySQL sur le sujet</a>.</p><p id="r-338086" data-claire-element-id="338086">Bonne chance !</p><p id="r-338087" data-claire-element-id="338087">Remerciements : ptipilou pour la zCorrection :)</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements">Comprendre les jeux de caractères et interclassements</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/les-jeux-de-caracteres">
+Les jeux de caractères
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/les-interclassements">
+Les interclassements
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/presentation-des-fonctionnalites-de-mysql">
+Présentation des fonctionnalités de MySQL
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/les-donnees-dites-binaires">
+Les données dites &quot;binaires&quot;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/jeux-de-caracteres-et-interclassements-utilises-pour-le-stockage">
+Jeux de caractères et interclassements utilisés pour le stockage
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/jeux-de-caracteres-et-interclassements-de-connexion">
+Jeux de caractères et interclassements de connexion
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/comprendre-les-jeux-de-caracteres-et-interclassements/jeux-de-caracteres-et-interclassements-utilises-pour-le-stockage">
+<span class="arrow"></span>
+<span class="next">Jeux de caractères et interclassements utilisés pour le stockage</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/comprendre-les-jeux-de-caracteres-et-interclassements.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 20:19:20 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/comprendre-les-jeux-de-caracteres-et-interclassements.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 03:50:02 GMT -->
+</html>

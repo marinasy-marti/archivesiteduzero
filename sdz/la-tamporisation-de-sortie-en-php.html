@@ -1,0 +1,293 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/la-tamporisation-de-sortie-en-php.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 03:25:42 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/la-tamporisation-de-sortie-en-php.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:42:52 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : La tamporisation de sortie en PHP</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/la-tamporisation-de-sortie-en-php.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : La tamporisation de sortie en PHP</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#LatamporisationdesortieenPHP">La tamporisation de sortie en PHP</a><br/><a href="#Perceptionduproblme">Perception du problème</a><br/><a href="#LesfonctionsdePHPpourlatamporisationdesortie">Les fonctions de PHP pour la tamporisation de sortie</a><br/><a href="#Allerplusloinfonctiondecallback">Aller plus loin : fonction de callback</a><br/></div>
+<a name="LatamporisationdesortieenPHP"></a><h2>La tamporisation de sortie en PHP</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-tamporisation-de-sortie-en-php/perception-du-probleme">
+<span class="next">Perception du problème</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-544197" data-claire-element-id="544197">Trop souvent, on doit repenser des scripts parce qu'on a eu la mauvaise idée de placer un <a href="http://php.net/setcookie">setcookie()</a> ou un <a href="http://php.net/header">header()</a> après avoir affiché du code HTML au client. Vous avez mal pensé votre script, soit.</p><p id="r-544198" data-claire-element-id="544198">La première chose que je vous suggère, c'est de corriger votre script de manière à ce que les en-têtes soient envoyés avant tout code HTML. Mais au-delà, il existe une solution bien pratique qui réglera beaucoup de vos soucis. :p Et j'ai nommé : <strong>la tamporisation* de sortie</strong>.</p><p id="r-544199" data-claire-element-id="544199"><em>* tamporisation : vous avez bien lu ; on fait ici référence à un tampon qui bloque le flux de sortie des scripts PHP.</em></p><div id="r-544201" data-claire-element-id="544201"><p id="r-544200" data-claire-element-id="544200">* t<strong>a</strong>mporisation : vous avez bien lu ; on fait ici référence à un tampon qui bloque le flux de sortie des scripts PHP.</p></div>
+</div><a name="Perceptionduproblme"></a><h2>Perception du problème</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-tamporisation-de-sortie-en-php/les-fonctions-de-php-pour-la-tamporisation-de-sortie">
+<span class="next">Les fonctions de PHP pour la tamporisation de sortie</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-544202" data-claire-element-id="544202">Oui, je sais : c'est assez laid à dire, « tamporisation de sortie ». Sachez que le terme <strong>bufferisation de sortie</strong> signifie exactement la même chose, et c'est probablement celui que vous verrez le plus souvent. Par contre, j'utilise le premier car il est plus français. ;)</p><p id="r-544203" data-claire-element-id="544203">Lorsque vous chargez un script PHP pour un site web, il retourne des données au navigateur. Généralement, vous ne vous préoccupez que de retourner du HTML, parfois quelques cookies ou d'autres informations d'en-tête avec <a href="http://php.net/header">header()</a>. Donc, selon ce que vous savez jusqu'à maintenant, si je fais :</p><pre id="r-544204" data-claire-element-id="544204"><code data-claire-semantic="html+php">&lt;?php
+echo 'Salut !';
+?&gt;</code></pre><p id="r-544205" data-claire-element-id="544205">… ça retourne au navigateur du visiteur le mot « Salut ! », logique. Si je veux faire une redirection en PHP en modifiant les en-têtes HTTP, et que je procède ainsi :</p><pre id="r-544206" data-claire-element-id="544206"><code data-claire-semantic="html+php">&lt;?php
+echo 'Salut !';
+header('Location: page.php');
+?&gt;</code></pre><p id="r-544207" data-claire-element-id="544207">… vous vous en doutez, on obtiendra l'erreur suivante :</p><p id="r-544208" data-claire-element-id="544208"><cite>Citation : erreur</cite></p><blockquote id="r-544210" data-claire-element-id="544210"><p id="r-544209" data-claire-element-id="544209"><strong>Warning</strong>: Cannot modify header information - headers already sent by (output started at c:\www\lol.php:2) in c:\www\lol.php on line 3</p></blockquote><p id="r-544211" data-claire-element-id="544211">Cela est normal : on ne peut pas dire au navigateur qu'on redirige vers une autre page alors qu'on a déjà commencé à lui donner la première. C'est comme si au restaurant, vous disiez au serveur que vous changiez de commande alors que le cuisinier a déjà commencé à préparer votre plat ! :p Maintenant, que dites-vous de ce code ?</p><pre id="r-544212" data-claire-element-id="544212"><code data-claire-semantic="html+php">&lt;?php
+$output = '';
+$output .= 'Salut !';
+header('Location: page.php');
+echo $output;
+?&gt;</code></pre><p id="r-544213" data-claire-element-id="544213">Ça fait une erreur ? Évidemment, ça n'en fait pas. Dans un premier temps, on initialise une variable <strong>$output</strong>, on lui assigne la valeur d'une chaîne de caractères vide. Jusqu'ici, on n'a fait aucun retour de HTML au navigateur. Ensuite, on ajoute à cette variable la valeur « Salut ! ». Si vous ne comprenez pas la signification du <strong>.=</strong>, je vous suggère de revoir le chapitre du cours de M@teo21 sur <a href="http://www.siteduzero.com/tutoriel-3-14451-les-variables.html#ss_part_3">la concaténation</a>. ;) Encore une fois, on n'a rien retourné au navigateur. On fait notre redirection avec header(), puis on affiche la valeur de $output. Donc, aucune erreur, notre code a été affiché après la redirection ! :D</p><p id="r-544214" data-claire-element-id="544214">Mine de rien, vous avez maintenant le principe de la tamporisation de sortie : on stocke tout ce qu'on veut afficher dans une variable, et <strong>à la fin</strong> (et seulement à la fin, sinon on perd tout l'intérêt), on affiche son contenu.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/la-tamporisation-de-sortie-en-php">La tamporisation de sortie en PHP</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/la-tamporisation-de-sortie-en-php/perception-du-probleme">
+Perception du problème
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-tamporisation-de-sortie-en-php/les-fonctions-de-php-pour-la-tamporisation-de-sortie">
+Les fonctions de PHP pour la tamporisation de sortie
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-tamporisation-de-sortie-en-php/aller-plus-loin-fonction-de-callback">
+Aller plus loin : fonction de callback
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-tamporisation-de-sortie-en-php/les-fonctions-de-php-pour-la-tamporisation-de-sortie">
+<span class="next">Les fonctions de PHP pour la tamporisation de sortie</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="LesfonctionsdePHPpourlatamporisationdesortie"></a><h2>Les fonctions de PHP pour la tamporisation de sortie</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-tamporisation-de-sortie-en-php/perception-du-probleme">
+<span class="arrow"></span>
+<span class="next">Perception du problème</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-tamporisation-de-sortie-en-php/aller-plus-loin-fonction-de-callback">
+<span class="next">Aller plus loin : fonction de callback</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-initialiser-et-vider-le-tampon-de-sortie" data-claire-element-id="544224">Initialiser et vider le tampon de sortie</h2><p id="r-544216" data-claire-element-id="544216">Maintenant qu'on sait ce que c'est, on va voir comment ça marche ! :) PHP nous offre toute une gamme de fonctions pour la tamporisation de sortie ; nous n'en utiliserons que deux, car ce sont les principales. Ces fonctions, ce sont <a href="http://php.net/ob_start">ob_start()</a> et <a href="http://php.net/ob_end_flush">ob_end_flush()</a>.</p><ul id="r-544221" data-claire-element-id="544221"><li id="r-544218" data-claire-element-id="544218"><p id="r-544217" data-claire-element-id="544217"><strong>ob_start()</strong> : cette fonction initialise le tampon de sortie, c'est-à-dire que tout ce que vous affichez après son appel (avec echo et print) est mis dans le tampon au lieu d'être retourné au navigateur.</p></li><li id="r-544220" data-claire-element-id="544220"><p id="r-544219" data-claire-element-id="544219"><strong>ob_end_flush()</strong> : lors de l'appel de cette fonction, tout le contenu de votre tampon est retourné au navigateur et donc, affiché.</p></li></ul><p id="r-544222" data-claire-element-id="544222">Le principe est simple, on va appeler ob_start() au tout début, et ob_end_flush() à la toute fin. Ce que vous afficherez entre les deux avec print et echo (ou avec ?&gt;...&lt;?php) sera stocké dans le tampon (<em>buffer</em>), puis affiché à la fin. Exemple :</p><pre id="r-544223" data-claire-element-id="544223"><code data-claire-semantic="html+php">&lt;?php
+ob_start(); /* On initialise le tampon. */
+ 
+ 
+/* Trois façons d'ajouter du texte au buffer : */
+echo 'Blablabla voici du texte qui sera mis dans dans le buffer';
+ 
+?&gt;
+Encore du texte qui sera mis dans le buffer !
+&lt;?php
+ 
+print 'OMG, encore du texte à mettre dans le buffer ! Il va déborder !?';
+ 
+$now = time();
+$end = $now + 600;
+setcookie('debut', $now, $end);
+ob_end_flush(); /* On vide le tampon et on retourne le contenu au client. */
+?&gt;</code></pre><h2 id="r-recuperer-le-contenu-du-buffer-tampon" data-claire-element-id="544231">Récupérer le contenu du buffer (tampon)</h2><p id="r-544225" data-claire-element-id="544225">À tout moment pendant l'exécution de votre script ( entre ob_start() et ob_end_flush() ), vous pouvez récupérer le contenu du buffer avec la fonction <a href="http://php.net/ob_get_contents">ob_get_contents()</a>. Ça peut être pratique parfois (mais rarement primordial), à vous de voir là où ça pourrait vous servir. Exemple avec ob_get_contents :</p><pre id="r-544226" data-claire-element-id="544226"><code data-claire-semantic="html+php">&lt;?php
+ob_start(); /* On initialise le tampon. */
+ 
+ 
+/* Trois façons d'ajouter du texte au buffer : */
+echo 'Blablabla voici du texte qui sera mis dans dans le buffer';
+ 
+?&gt;
+Encore du texte qui sera mis dans le buffer !
+&lt;?php
+ 
+print 'OMG, encore du texte à mettre dans le buffer ! Il va déborder !?';
+ 
+$now = time();
+$end = $now + 600;
+setcookie('debut', $now, $end);
+ 
+$contents = ob_get_contents(); // Que vaut $contents ??
+ob_end_flush(); /* On vide le tampon et on retourne le contenu au client. */
+?&gt;</code></pre><p id="r-544227" data-claire-element-id="544227">Vous vous en doutez, $contents vaut alors :</p><p id="r-544228" data-claire-element-id="544228"><cite>Citation : $contents</cite></p><blockquote id="r-544230" data-claire-element-id="544230"><p id="r-544229" data-claire-element-id="544229">Blablabla voici du texte qui sera mis dans dans le bufferEncore du texte qui sera mis dans le buffer !OMG, encore du texte à mettre dans le buffer ! Il va déborder !?</p></blockquote><h2 id="r-autres-fonctions-utiles" data-claire-element-id="544238">Autres fonctions utiles</h2><p id="r-544232" data-claire-element-id="544232">Voici une liste d'autres fonctions utiles à connaître, vous trouverez des détails plus précis dans la documentation de PHP :</p><ul id="r-544237" data-claire-element-id="544237"><li id="r-544234" data-claire-element-id="544234"><p id="r-544233" data-claire-element-id="544233"><a href="http://php.net/ob_flush">ob_flush()</a> affiche le contenu du tampon de sortie (contrairement à ob_end_flush, cela ne détruit pas votre buffer, ça ne fait que le retourner au navigateur, vous pouvez donc continuer à l'utiliser après) ;</p></li><li id="r-544236" data-claire-element-id="544236"><p id="r-544235" data-claire-element-id="544235"><a href="http://php.net/ob_clean">ob_clean()</a> réinitialise le tampon de sortie, c'est-à-dire qu'elle le remet à zéro sans le retourner au navigateur : vous perdez tout ce que vous avez affiché avant son appel.</p></li></ul>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/la-tamporisation-de-sortie-en-php">La tamporisation de sortie en PHP</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-tamporisation-de-sortie-en-php/perception-du-probleme">
+Perception du problème
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/la-tamporisation-de-sortie-en-php/les-fonctions-de-php-pour-la-tamporisation-de-sortie">
+Les fonctions de PHP pour la tamporisation de sortie
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-tamporisation-de-sortie-en-php/aller-plus-loin-fonction-de-callback">
+Aller plus loin : fonction de callback
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-tamporisation-de-sortie-en-php/perception-du-probleme">
+<span class="arrow"></span>
+<span class="next">Perception du problème</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-tamporisation-de-sortie-en-php/aller-plus-loin-fonction-de-callback">
+<span class="next">Aller plus loin : fonction de callback</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Allerplusloinfonctiondecallback"></a><h2>Aller plus loin : fonction de callback</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-tamporisation-de-sortie-en-php/les-fonctions-de-php-pour-la-tamporisation-de-sortie">
+<span class="arrow"></span>
+<span class="next">Les fonctions de PHP pour la tamporisation de sortie</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-544240" data-claire-element-id="544240">Si vous avez trouvé jusqu'ici ce dont vous aviez besoin, et que vous ne désirez pas pousser la machine plus loin (ça arrive :p ), cette partie n'est pas pour vous. Ici, on verra comment utiliser les paramètres facultatifs de la fonction ob_start(). J'insiste sur le fait qu'ils sont facultatifs. Ainsi, le code ci-dessous initialise bel et bien le tampon de sortie :</p><pre id="r-544241" data-claire-element-id="544241"><code data-claire-semantic="html+php">&lt;?php
+ob_start();
+?&gt;</code></pre><h2 id="r-un-callback-qu-est-ce-que-c-est" data-claire-element-id="544251">Un callback, qu'est-ce que c'est ?</h2><p id="r-544242" data-claire-element-id="544242">Un <em>callback</em> est l'appel d'une fonction définie par l'utilisateur, ou d'une fonction native de PHP à partir des paramètres d'une autre. Voyez <a href="http://php.net/manual/fr/language.pseudo-types.php">le site de PHP</a> à ce sujet. La fonction <a href="http://ca.php.net/call_user_func">call_user_func()</a> nous permet justement d'appeler une fonction en donnant son nom en premier argument. Les paramètres qui suivent le nom correspondront respectivement aux paramètres de la fonction que vous appelez. Testez le code ci-dessous pour vous en convaincre :</p><pre id="r-544243" data-claire-element-id="544243"><code data-claire-semantic="html+php">&lt;?php
+function AfficherNom($nom) {
+     echo('Ton nom est ' . $nom);
+     return(true);
+}
+call_user_func('AfficherNom', 'Alex');
+?&gt;</code></pre><p id="r-544244" data-claire-element-id="544244">En tamporisation de sortie, on peut donner un callback en paramètre à ob_start(). La fonction donnée en callback sera appelée au retour du buffer au navigateur, avec ob_end_flush() par exemple, et le contenu du tampon sera remplacé par ce que retourne la fonction de callback. Supposons que nous désirions impérativement censurer les mots suivants de tout notre site : <strong>patate, nain, chose</strong>. Il existe plusieurs solutions, mais nous pouvons le faire avec un callback :</p><pre id="r-544245" data-claire-element-id="544245"><code data-claire-semantic="html+php">&lt;?php
+function Censurer($buffer) {
+     // Ici c'est notre fonction qui sera appelée avec ob_end_flush().
+     $buffer = str_replace(array('patate', 'nain', 'chose'), '&lt;span style=&quot;color: red;&quot;&gt; [Censuré] &lt;/span&gt;', $buffer);
+     return $buffer;
+}
+ 
+// On initialise le buffer :
+ob_start('Censurer');
+ 
+//… le contenu de notre page :
+echo &quot;J'aime bien les nains, surtout ceux qui mangent des patates et qui aiment faire des choses.&quot;;
+/* 
+   Ici, la fonction ob_end_flush() va être appelée,
+   ce qui provoquera le retour du tampon au navigateur.
+   Mais avant, notre fonction de callback sera
+   automatiquement appelée pour appliquer la censure.
+*/
+ob_end_flush();
+?&gt;</code></pre><p id="r-544246" data-claire-element-id="544246"><cite>Citation : Résultat</cite></p><blockquote id="r-544248" data-claire-element-id="544248"><p id="r-544247" data-claire-element-id="544247">J'aime bien les [Censuré] s, surtout ceux qui mangent des [Censuré] s et qui aiment faire des [Censuré] s.</p></blockquote><p id="r-544249" data-claire-element-id="544249">Encore une fois, c'est du facile tout ça. :-°</p><p id="r-544250" data-claire-element-id="544250">Ce n'était pas difficile, hein ? Si ? :euh: Alors allez voir la <a href="http://ca.php.net/manual/fr/ref.outcontrol.php">doc de PHP à propos de la tamporisation de sortie</a>.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/la-tamporisation-de-sortie-en-php">La tamporisation de sortie en PHP</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-tamporisation-de-sortie-en-php/perception-du-probleme">
+Perception du problème
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-tamporisation-de-sortie-en-php/les-fonctions-de-php-pour-la-tamporisation-de-sortie">
+Les fonctions de PHP pour la tamporisation de sortie
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/la-tamporisation-de-sortie-en-php/aller-plus-loin-fonction-de-callback">
+Aller plus loin : fonction de callback
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-tamporisation-de-sortie-en-php/les-fonctions-de-php-pour-la-tamporisation-de-sortie">
+<span class="arrow"></span>
+<span class="next">Les fonctions de PHP pour la tamporisation de sortie</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/la-tamporisation-de-sortie-en-php.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 03:25:42 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/la-tamporisation-de-sortie-en-php.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:42:52 GMT -->
+</html>

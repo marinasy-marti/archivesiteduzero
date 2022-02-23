@@ -1,0 +1,607 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/introduction-a-l-injection-de-dependances-en-php.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 03:24:33 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/introduction-a-l-injection-de-dependances-en-php.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:42:40 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Introduction à l&#039;injection de dépendances en PHP</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/introduction-a-l-injection-de-dependances-en-php.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Introduction à l&#039;injection de dépendances en PHP</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Introductionl039injectiondedpendancesenPHP">Introduction à l&#039;injection de dépendances en PHP</a><br/><a href="#Qu039est-cequel039injectiondedpendances">Qu&#039;est-ce que l&#039;injection de dépendances ?</a><br/><a href="#Utilisationd039unconteneurdeservices">Utilisation d&#039;un conteneur de services</a><br/><a href="#Pimpleunconteneurminimaliste">Pimple, un conteneur minimaliste</a><br/><a href="#Unconteneurpluscomplexe">Un conteneur plus complexe</a><br/></div>
+<a name="Introductionl039injectiondedpendancesenPHP"></a><h2>Introduction à l&#039;injection de dépendances en PHP</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/introduction-a-l-injection-de-dependances-en-php/qu-est-ce-que-l-injection-de-dependances">
+<span class="next">Qu&#039;est-ce que l&#039;injection de dépendances ?</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-540665" data-claire-element-id="540665">Bonjour à tous,</p><p id="r-540666" data-claire-element-id="540666">Ce tutoriel vise à vous faire découvrir un modèle de gestion du cycle de vie des objets parfois méconnu des développeurs, particulièrement en PHP. Après une présentation du concept d'injection de dépendances, deux bibliothèques écrites en PHP seront présentées afin de permettre une utilisation facile dans vos scripts.</p><p id="r-540667" data-claire-element-id="540667">Le pré-requis de ce tutoriel est une bonne connaissance de PHP et une maîtrise de la programmation orientée objet (introduite dans <a href="http://www.siteduzero.com/tutoriel-3-232176-la-programmation-orientee-objet.html">le tutoriel officiel PHP</a> et approfondie <a href="http://www.siteduzero.com/tutoriel-3-147180-la-programmation-orientee-objet-en-php.html">dans ce tutoriel</a>). Une curiosité et une ouverture d'esprit sont aussi nécessaires pour aller au bout du tutoriel et comprendre l'intérêt du patron de conception que je vais vous présenter.</p><p id="r-540668" data-claire-element-id="540668">Notez que si les codes sont tous écrits en PHP, la théorie est facilement transposable dans d'autres langages. Les codes sont compréhensibles pour toute personne maîtrisant la POO dans n'importe quel langage (Java, C++, etc.).</p>
+</div><a name="Qu039est-cequel039injectiondedpendances"></a><h2>Qu&#039;est-ce que l&#039;injection de dépendances ?</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/introduction-a-l-injection-de-dependances-en-php/utilisation-d-un-conteneur-de-services">
+<span class="next">Utilisation d&#039;un conteneur de services</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-540669" data-claire-element-id="540669">Avant toute chose, il faut savoir que l'injection de dépendances s'inscrit dans un contexte de programmation orientée objet (POO pour les intimes) et que par conséquent le concept n'est que de peu d'utilité dans un langage ne permettant pas la POO ou bien si vous n'exploitez pas ses possibilités.</p><h2 id="r-presentation-du-probleme-1" data-claire-element-id="540693">Présentation du problème</h2><p id="r-540670" data-claire-element-id="540670">Comme tout design pattern qui se respecte, l'injection de dépendances (en anglais <em>dependency injection</em>, abrégé DI) est une réponse à un problème. Afin de le présenter, je vais prendre un exemple d'utilisation concret.</p><p id="r-540671" data-claire-element-id="540671">L'idée de départ est d'offrir une persistance des données entre deux pages chargées par un même utilisateur ; on a pour cela deux solutions dans toute application web : utiliser des cookies ou les sessions. Dans un contexte objet, vous serez amenés à écrire des classes afin de gérer cette persistance. La classe la plus naturelle est une classe de stockage fournissant un code objet pour manipuler les sessions PHP.</p><pre id="r-540672" data-claire-element-id="540672"><code data-claire-semantic="html+php">&lt;?php
+class SessionStorage
+{
+    function __construct($cookieName = 'PHP_SESS_ID')
+    {
+        session_name($cookieName);
+        session_start();
+    }
+ 
+    function set($key, $value)
+    {
+        $_SESSION[$key] = $value;
+    }
+ 
+    function get($key)
+    {
+        return $_SESSION[$key];
+    }
+ 
+    // ...
+}</code></pre><p id="r-540673" data-claire-element-id="540673">Cependant il n'est pas très confortable de manipuler cet objet directement et vous préférerez utiliser un objet plus haut niveau représentant un utilisateur.</p><pre id="r-540674" data-claire-element-id="540674"><code data-claire-semantic="html+php">&lt;?php
+class User
+{
+    protected $storage;
+ 
+    function __construct()
+    {
+        $this-&gt;storage = new SessionStorage();
+    }
+ 
+    function setAttribute($name, $value)
+    {
+        $this-&gt;storage-&gt;set($name, $value);
+    }
+ 
+    function getAttribute($name)
+    {
+        return $this-&gt;storage-&gt;get($name);
+    }
+ 
+    // ...
+}</code></pre><p id="r-540675" data-claire-element-id="540675">Cela fonctionne bien mais manque cruellement de flexibilité. Par exemple, si vous voulez changer le nom du cookie contenant l'id de la session, comment faites-vous ?</p><h3 id="r-solution-1-coder-la-valeur-en-dur" data-claire-element-id="540679">Solution 1 : coder la valeur en dur</h3><p id="r-540676" data-claire-element-id="540676">La première solution qui viendra est de coder la valeur en dur dans le constructeur de la classe User.</p><pre id="r-540677" data-claire-element-id="540677"><code data-claire-semantic="html+php">&lt;?php
+class User
+{
+    function __construct()
+    {
+        $this-&gt;storage = new SessionStorage('SESSION_ID');
+    }
+ 
+    // ...
+}</code></pre><p id="r-540678" data-claire-element-id="540678">On voit tout de suite que si on veut changer cette valeur à l'avenir, cela nécessite de changer le code. Vu que la classe SessionStorage accepte la valeur en paramètre dans son constructeur, c'est donc qu'elle est capable de s'adapter quel que soit le nom du cookie. Il est donc dommage que la classe User ne puisse pas être configurée plus facilement.</p><h3 id="r-solution-2-utiliser-une-constante" data-claire-element-id="540683">Solution 2 : utiliser une constante</h3><p id="r-540680" data-claire-element-id="540680">L'avantage par rapport à la situation précédente est que la constante est définie en dehors de la classe et donc qu'il est toujours possible de centraliser la configuration dans un seul fichier définissant toutes les constantes de configuration.</p><pre id="r-540681" data-claire-element-id="540681"><code data-claire-semantic="html+php">&lt;?php
+class User
+{
+    function __construct()
+    {
+        $this-&gt;storage = new SessionStorage(STORAGE_SESSION_NAME);
+    }
+ 
+    // ...
+}
+ 
+define('STORAGE_SESSION_NAME', 'SESSION_ID');</code></pre><p id="r-540682" data-claire-element-id="540682">Cependant la solution n'est toujours pas idéale vu que la classe dépend maintenant d'une constante pour fonctionner correctement. Même bien documentée, cette utilisation est rapidement source d'erreurs.</p><h3 id="r-solution-3-ajouter-un-argument-au-constructeur" data-claire-element-id="540687">Solution 3 : ajouter un argument au constructeur</h3><p id="r-540684" data-claire-element-id="540684">De même que la classe de gestion de session a un argument à son constructeur, on peut faire de même pour l'utilisateur.</p><pre id="r-540685" data-claire-element-id="540685"><code data-claire-semantic="html+php">&lt;?php
+class User
+{
+    function __construct($sessionName)
+    {
+        $this-&gt;storage = new SessionStorage($sessionName);
+    }
+ 
+    // ...
+}
+ 
+$user = new User('SESSION_ID');</code></pre><p id="r-540686" data-claire-element-id="540686">Une fois de plus ce n'est pas optimal puisqu'on encombre le constructeur avec des options n'ayant rien à voir avec la classe elle-même.</p><h3 id="r-une-solution-9" data-claire-element-id="540692">Une solution</h3><p id="r-540688" data-claire-element-id="540688">Vous aurez aussi peut-être remarqué un autre problème : comment changer facilement le stockage des sessions ? Même si utiliser les sessions natives de PHP est souvent la meilleure solution, surtout pour de petits sites, il y a des cas où d'autres solutions doivent être envisagées (stockage des données persistantes en base de données par exemple). Dans ce dernier cas, une classe DatabaseStorage sera écrite, mais il faudra alors une fois de plus changer le code du constructeur de User... Pas terrible.</p><p id="r-540689" data-claire-element-id="540689">Une solution (il y en a sans doute d'autres, mais c'est celle qui est exploitée dans le <em>design pattern</em> que je souhaite vous présenter) est de <strong>passer l'instance de la classe de stockage en argument au constructeur</strong> de la classe de l'utilisateur (on dit qu'on <strong>injecte</strong> une classe dans une autre).</p><pre id="r-540690" data-claire-element-id="540690"><code data-claire-semantic="html+php">&lt;?php
+class User
+{
+    function __construct($storage)
+    {
+        $this-&gt;storage = $storage;
+    }
+ 
+    // ...
+}
+
+$storage = new SessionStorage('SESSION_ID');
+$user = new User($storage);</code></pre><p id="r-540691" data-claire-element-id="540691">Si vous découvrez ce patron de conception, il y a des chances que vous soyez déçus comme je l'ai été la première fois que j'ai vu l'explication. Cependant malgré le fait que l'idée de base soit triviale (vous y aviez peut-être pensé avant que je ne dévoile la solution), sa mise en œuvre devient vite très complexe, surtout dans un environnement orienté objet dense. La création d'un objet devient alors rapidement un calvaire lorsque vous devez auparavant créer cinq autres classes, elles-mêmes dépendant d'autres classes, etc. De plus, vous aurez remarqué que vous n'y gagnez pas nécessairement en facilité de configuration si vous exploitez ce modèle tel quel. C'est tout l'objet des parties qui vont suivre.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-a-l-injection-de-dependances-en-php">Introduction à l&#039;injection de dépendances en PHP</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-a-l-injection-de-dependances-en-php/qu-est-ce-que-l-injection-de-dependances">
+Qu&#039;est-ce que l&#039;injection de dépendances ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-a-l-injection-de-dependances-en-php/utilisation-d-un-conteneur-de-services">
+Utilisation d&#039;un conteneur de services
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-a-l-injection-de-dependances-en-php/pimple-un-conteneur-minimaliste">
+Pimple, un conteneur minimaliste
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-a-l-injection-de-dependances-en-php/un-conteneur-plus-complexe">
+Un conteneur plus complexe
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/introduction-a-l-injection-de-dependances-en-php/utilisation-d-un-conteneur-de-services">
+<span class="next">Utilisation d&#039;un conteneur de services</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Utilisationd039unconteneurdeservices"></a><h2>Utilisation d&#039;un conteneur de services</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/introduction-a-l-injection-de-dependances-en-php/qu-est-ce-que-l-injection-de-dependances">
+<span class="arrow"></span>
+<span class="next">Qu&#039;est-ce que l&#039;injection de dépendances ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/introduction-a-l-injection-de-dependances-en-php/pimple-un-conteneur-minimaliste">
+<span class="next">Pimple, un conteneur minimaliste</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-540695" data-claire-element-id="540695">En réalité, la vraie force de l'injection de dépendances vient de l'écosystème qui l'accompagne. Chaque langage fournit des bibliothèques permettant de l'utiliser très facilement. Dans un premier temps, nous allons voir comment utiliser concrètement ce que nous avons vu dans la partie précédente avec un simple code PHP (sans bibliothèque).</p><h2 id="r-notre-premier-conteneur" data-claire-element-id="540700">Notre premier conteneur</h2><p id="r-540696" data-claire-element-id="540696">Cela passe par la notion de conteneur (en anglais <em>depdendency injection container</em>, abrégé DIC). C'est un objet qui <strong>sait comment construire d'autres objets</strong>. Ces objets sont ensuite généralement appelés des <strong>services</strong> (le dénomination n'est pas spécifique au DIC). En reprenant l'exemple de la section précédente, une telle classe s'écrit très simplement.</p><pre id="r-540697" data-claire-element-id="540697"><code data-claire-semantic="html+php">&lt;?php
+class Container
+{
+    public function getUser()
+    {
+        return new User($this-&gt;getUserStorage());
+    }
+
+    public function getUserStorage()
+    {
+        return new SessionStorage('SESSION_ID');
+    }
+}
+
+$container = new Container();</code></pre><p id="r-540698" data-claire-element-id="540698">Ainsi à partir de votre objet $container, vous pouvez construire à n'importe quel moment une instance de la classe User. La configuration est centralisée au sein de cette classe, et vous pouvez aisément modifier un nom de classe ou un paramètre en modifiant cette classe.</p><p id="r-540699" data-claire-element-id="540699">La seule difficulté à laquelle vous pourrez être confrontés est de garder votre instance accessible partout. Pour cela plusieurs remèdes sont possibles. Le cas idéal est une bonne conception objet qui permet d'injecter le conteneur (eh oui !) dans d'autres objets (par exemple des contrôleurs). Si cela n'est pas possible (par exemple si vous utilisez beaucoup de fonctions ou méthodes statiques) une autre solution est d'implémenter un <em>singleton</em> sur votre conteneur.</p><h2 id="r-partager-les-services" data-claire-element-id="540704">Partager les services</h2><p id="r-540701" data-claire-element-id="540701">Le code actuel comporte un petit désagrément : à chaque récupération de service, un nouveau service est créé. Le comportement peut être pratique dans certains cas, mais de façon générale vous préférez éviter de créer un nouvel utilisateur à chaque fois que vous voulez accéder à une valeur de session. Heureusement on corrige très facilement ce problème en n'instanciant qu'une seule fois chaque service. Plusieurs solutions sont possibles, en voici une.</p><pre id="r-540702" data-claire-element-id="540702"><code data-claire-semantic="html+php">&lt;?php
+class Container
+{
+    public function getUser()
+    {
+        static $instance;
+        if (!isset($instance))
+        {
+            $instance = new User($this-&gt;getUserStorage());
+        }
+
+        return $instance;
+    }
+
+    public function getUserStorage()
+    {
+        static $instance;
+        if (!isset($instance))
+        {
+            $instance = new SessionStorage('SESSION_ID');
+        }
+
+        return $instance;
+    }
+}</code></pre><p id="r-540703" data-claire-element-id="540703">Ainsi, le premier appel de <code data-claire-semantic="html+php">$container-&gt;getUser()</code> construira un utilisateur (et donc l'objet gérant le stockage des données persistantes). Les appels suivants retourneront toujours le même utilisateur, ce qui est bien le comportement souhaité. <strong>Attention à toujours n'instancier qu'un seul conteneur !</strong> Le conteneur ne pouvant s'instancier lui-même pour des raisons évidentes, c'est au développeur d'y faire attention.</p><h2 id="r-parametrer-les-services" data-claire-element-id="540716">Paramétrer les services</h2><p id="r-540705" data-claire-element-id="540705">Le paramétrage de nos services nécessite toujours de modifier le code de la classe. C'est pourquoi les DIC sont généralement paramétrables facilement. Le plus simple est de gérer une liste de paramètres qui seront accessibles dans les méthodes de construction. Ces paramètres sont typiquement passés au conteneur lors de son instanciation.</p><pre id="r-540706" data-claire-element-id="540706"><code data-claire-semantic="html+php">&lt;?php
+class Container
+{
+    protected $parameters;
+
+    public function __construct(array $parameters)
+    {
+        $this-&gt;parameters = $parameters;
+    }
+    
+    public function getUserStorage()
+    {
+        static $instance;
+        if (!isset($instance))
+        {
+            $instance = new SessionStorage($this-&gt;parameters['user.storage.cookie_name']);
+        }
+
+        return $instance;
+    }
+
+    //...
+}</code></pre><p id="r-540707" data-claire-element-id="540707">Une bonne pratique (utilisée dans Symfony) pour éviter les collisions de paramètres est d'utiliser une notation à point(s) afin de repérer facilement à quel service se rattache chaque paramètre. Pour faire encore plus fort (et c'est là que le DIC révèle tout son potentiel !), il est possible de paramétrer de même le nom de la classe :</p><pre id="r-540708" data-claire-element-id="540708"><code data-claire-semantic="html+php">&lt;?php
+class Container
+{
+    protected $parameters;
+
+    public function getUserStorage()
+    {
+        static $instance;
+        if (!isset($instance))
+        {
+            $className = $this-&gt;parameters['user.storage.class'];
+            $instance = new $className($this-&gt;parameters['user.storage.cookie_name']);
+        }
+
+        return $instance;
+    }
+
+    //...
+}</code></pre><p id="r-540709" data-claire-element-id="540709">C'est particulièrement utile dans le cas présenté, afin de passer facilement d'un stockage en session à un stockage en base de données par exemple. Deux remarques :</p><ul id="r-540714" data-claire-element-id="540714"><li id="r-540711" data-claire-element-id="540711"><p id="r-540710" data-claire-element-id="540710">il est plus confortable de gérer des valeurs par défaut pour les paramètres : dans la majorité des cas, la classe SessionStorage sera utilisée et ne pas devoir systématiquement la nommer explicitement est un plus ;</p></li><li id="r-540713" data-claire-element-id="540713"><p id="r-540712" data-claire-element-id="540712">l'utilisation des interfaces montre alors tout son intérêt quand on utilise un DIC. Cela permet de ne pas se soucier des implémentations mais juste des méthodes disponibles dans tout code utilisant des objets extraits d'un conteneur.</p></li></ul><p id="r-540715" data-claire-element-id="540715">On pourrait évidemment appliquer le même traitement à la méthode Container::getUser(). Même si dans le cas d'un utilisateur, spécifier la classe pourrait à première vue présenter moins d'intérêt, cela reste très utile dans un contexte d'héritage. Symfony utilise par exemple abusivement ce principe afin de permettre de personnaliser chaque classe utilisée dans le framework. Il suffit alors de créer une classe personnalisée héritant de la classe de base, de changer un paramètre (tout est paramétré) et le tour est joué !</p><h2 id="r-visibilite-des-services" data-claire-element-id="540719">Visibilité des services</h2><p id="r-540717" data-claire-element-id="540717">Certains services n'ont pas besoin d'être accessibles depuis n'importe quel morceau de code. Par exemple ici, notre service user.storage est uniquement destiné à être injecté dans notre service d'utilisateur et n'a pas vocation à être manipulé seul. Lui mettre une visibilité non publique est alors une bonne idée afin de prévenir une maladresse d'un développeur.</p><p id="r-540718" data-claire-element-id="540718">Notez que cela ne l'empêche pas d'être réutilisé pour la construction d'autres classes. Avec notre conteneur actuel, il suffit de remplacer le mot clé <code data-claire-semantic="html+php">public</code> par <code data-claire-semantic="html+php">protected</code> ou <code data-claire-semantic="html+php">private</code>.</p><h2 id="r-recapitulatif-17" data-claire-element-id="540722">Récapitulatif</h2><p id="r-540720" data-claire-element-id="540720">Voici le code complet à la fin de cette partie :</p><pre id="r-540721" data-claire-element-id="540721"><code data-claire-semantic="html+php">&lt;?php
+class Container
+{
+    protected $parameters;
+
+    public function __construct(array $parameters)
+    {
+        $this-&gt;parameters = $parameters;
+    }
+    
+    public function getUser()
+    {
+        static $instance;
+        if (!isset($instance))
+        {
+            $className = $this-&gt;parameters['user.class'];
+            $instance = new $className($this-&gt;getUserStorage());
+        }
+
+        return $instance;
+    }
+
+    protected function getUserStorage()
+    {
+        static $instance;
+        if (!isset($instance))
+        {
+            $className = $this-&gt;parameters['user.storage.class'];
+            $instance = new $className($this-&gt;parameters['user.storage.cookie_name']);
+        }
+
+        return $instance;
+    }
+}</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-a-l-injection-de-dependances-en-php">Introduction à l&#039;injection de dépendances en PHP</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-a-l-injection-de-dependances-en-php/qu-est-ce-que-l-injection-de-dependances">
+Qu&#039;est-ce que l&#039;injection de dépendances ?
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-a-l-injection-de-dependances-en-php/utilisation-d-un-conteneur-de-services">
+Utilisation d&#039;un conteneur de services
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-a-l-injection-de-dependances-en-php/pimple-un-conteneur-minimaliste">
+Pimple, un conteneur minimaliste
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-a-l-injection-de-dependances-en-php/un-conteneur-plus-complexe">
+Un conteneur plus complexe
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/introduction-a-l-injection-de-dependances-en-php/qu-est-ce-que-l-injection-de-dependances">
+<span class="arrow"></span>
+<span class="next">Qu&#039;est-ce que l&#039;injection de dépendances ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/introduction-a-l-injection-de-dependances-en-php/pimple-un-conteneur-minimaliste">
+<span class="next">Pimple, un conteneur minimaliste</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Pimpleunconteneurminimaliste"></a><h2>Pimple, un conteneur minimaliste</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/introduction-a-l-injection-de-dependances-en-php/utilisation-d-un-conteneur-de-services">
+<span class="arrow"></span>
+<span class="next">Utilisation d&#039;un conteneur de services</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/introduction-a-l-injection-de-dependances-en-php/un-conteneur-plus-complexe">
+<span class="next">Un conteneur plus complexe</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-540724" data-claire-element-id="540724">Le code que nous avons écrit précédemment marche correctement mais vous aurez constaté qu'il est très répétitif et qu'au delà de quelques classes (une dizaine) le maintenir peut rapidement devenir cauchemardesque. Nous allons donc découvrir rapidement quelques bibliothèques PHP permettant de gérer ses dépendances facilement. Si vous n'appréciez ni le framework symfony/Symfony ni son créateur Fabien Potencier, je vous conseille de passer immédiatement votre chemin : toutes les bibliothèques qui suivent proviennent soit de l'un, soit de l'autre !</p><h2 id="r-a-l-origine-de-pimple-twittee" data-claire-element-id="540731">À l'origine de Pimple : Twittee</h2><p id="r-540725" data-claire-element-id="540725">Pour l'anecdote, Pimple ressemble quelque peu à Twittee. Twittee est un défi (délire ?) consistant à faire tenir un DIC dans un tweet (140 caractères). Je vous laisse admirer le résultat (PHP 5.3 ou plus requis) :</p><pre id="r-540726" data-claire-element-id="540726"><code data-claire-semantic="html+php">&lt;?php
+class Container {
+ protected $s = array();
+ function __set($k, $c) { $this-&gt;s[$k] = $c; }
+ function __get($k) { return $this-&gt;s[$k]($this); }
+}</code></pre><p id="r-540727" data-claire-element-id="540727">Vous aurez remarqué que ce code ne fait au final pas grand chose de plus qu'un simple tableau en PHP. Mais strictement parlant, c'est bien un DIC ! Son utilisation exploite ensuite les fonctions anonymes de PHP, comme suit.</p><pre id="r-540728" data-claire-element-id="540728"><code data-claire-semantic="html+php">&lt;?php
+$c = new Container();
+$c-&gt;user_storage_name = 'SESSION_ID';
+$c-&gt;user_storage = function($c) { return new SessionStorage($c-&gt;user_storage_name); };
+$c-&gt;user = function($c) { return new User($c-&gt;user_storage); };</code></pre><p id="r-540729" data-claire-element-id="540729">Si vous voulez en savoir plus, <a href="http://twittee.org/">Twittee a même son site web</a> (tout aussi minimaliste que le script).</p><p id="r-540730" data-claire-element-id="540730">PS : si certains ont encore des doutes, non Twittee n'a pas vocation à être utilisé réellement !</p><h2 id="r-introduction-a-pimple" data-claire-element-id="540748">Introduction à Pimple</h2><p id="r-540732" data-claire-element-id="540732">La parenthèse culturelle étant faite, laissez-moi vous présenter Pimple. Bien qu'il comporte heureusement quelques fonctionnalités en plus par rapport à Twittee, sa conception a aussi été guidée par la simplicité. Contrairement à son petit frère, il est utilisable en pratique (le micro-framework <a href="http://silex-project.org/">Silex</a> le fait). Pour télécharger Pimple, une adresse : <a href="http://pimple-project.org/">son site officiel</a>. Vous pouvez aussi visiter directement <a href="https://github.com/fabpot/Pimple/">son dépôt GitHub</a>.</p><p id="r-540733" data-claire-element-id="540733">Si j'ai choisi Pimple comme premier exemple, c'est qu'il introduit la plupart des notions évoquées dans la partie précédente. Tout comme Twittee, il exploite les fonctions anonymes introduites en PHP 5.3.</p><h3 id="r-definir-des-parametres" data-claire-element-id="540738">Définir des paramètres</h3><p id="r-540734" data-claire-element-id="540734">Pour définir des paramètres, il suffit de manipuler une instance de Pimple comme un simple tableau.</p><pre id="r-540735" data-claire-element-id="540735"><code data-claire-semantic="html+php">&lt;?php
+$container = new Pimple();
+$container['user.class']         = 'User';
+$container['user.storage.class'] = 'SessionStorage';
+$container['user.storage.cookie_name']  = 'SESSION_ID';</code></pre><p id="r-540736" data-claire-element-id="540736">Notez qu'il est aussi possible de définir des paramètres plus complexes reposant sur le résultat d'une fonction (par exemple un appel à rand()). Dans ce cas vous <strong>devez</strong> protéger le paramètre comme suit (la raison de cette protection est l'implémentation faite dans Pimple des paramètres et des services) :</p><pre id="r-540737" data-claire-element-id="540737"><code data-claire-semantic="html+php">&lt;?php
+$container['random'] = $container-&gt;protect(function(){ return rand(); });</code></pre><h3 id="r-definir-des-services" data-claire-element-id="540747">Définir des services</h3><p id="r-540739" data-claire-element-id="540739">Les services sont définis de façon similaire aux paramètres, toujours en manipulant le conteneur comme un tableau.</p><pre id="r-540740" data-claire-element-id="540740"><code data-claire-semantic="html+php">&lt;?php
+$container['user'] = function($c){
+    return new $c['user.class']($c['user.storage']);
+};
+$container['user.storage'] = function($c){
+    return new $c['user.storage.class']($c['user.storage.cookie_name']);
+};</code></pre><p id="r-540741" data-claire-element-id="540741">Les fonctions anonymes définissant des services reçoivent toujours en premier et unique argument l'instance du conteneur dans son état courant (contrairement à une fonction anonyme définissant un paramètre, d'où la nécessité de protéger ces dernières !).</p><p id="r-540742" data-claire-element-id="540742">Remarquez bien que services et paramètres sont gérés de la même façon, ce qui implique qu'un paramètre et un service ne peuvent avoir le même nom. Les services sont ensuite récupérés comme les paramètres en demandant simplement la bonne clé dans le « tableau » (une exception est levée en cas de clé invalide) :</p><pre id="r-540743" data-claire-element-id="540743"><code data-claire-semantic="html+php">&lt;?php
+$user = $container['user'];</code></pre><p id="r-540744" data-claire-element-id="540744">Lorsqu'on souhaite ensuite accéder à un service, Pimple se contente d'exécuter la fonction anonyme définie. Cela signifie que par défaut, un nouveau service est recréé à chaque appel. Pour éviter cela, Pimple fournit un raccourci afin de partager un service :</p><pre id="r-540745" data-claire-element-id="540745"><code data-claire-semantic="html+php">&lt;?php
+$container['user'] = $container-&gt;share(function($c){
+    return new $c['user.class']($c['user.storage']);
+});
+$container['user.storage'] = $container-&gt;share(function($c){
+    return new $c['user.storage.class']($c['user.storage.cookie_name']);
+});</code></pre><p id="r-540746" data-claire-element-id="540746">Notez pour finir qu'il n'est pas possible de changer la visibilité d'un service, ils sont tous publics.</p><h2 id="r-reutilisation-d-un-conteneur" data-claire-element-id="540755">Réutilisation d'un conteneur</h2><p id="r-540749" data-claire-element-id="540749">La construction d'un conteneur se fait ici de façon dynamique. Il est possible, afin de faciliter la réutilisation d'un DIC, de le faire de façon statique en définissant une nouvelle classe étendant celle de Pimple. Les avantages sont de clarifier le code et simplifier la définition des services.</p><pre id="r-540750" data-claire-element-id="540750"><code data-claire-semantic="html+php">&lt;?php
+class Container extends Pimple
+{
+    public function __construct()
+    {
+        $this['user.class']                = 'User';
+        $this['user.storage.class']        = 'SessionStorage';
+        $this['user.storage.cookie_name']  = 'SESSION_ID';
+
+        $this['user'] = $this-&gt;share(function($c){
+            return new $c['user.class']($c['user.storage']);
+        });
+        $this['user.storage'] = $this-&gt;share(function($c){
+            return new $c['user.storage.class']($c['user.storage.cookie_name']);
+        });
+    }
+}</code></pre><p id="r-540751" data-claire-element-id="540751">Le conteneur peut ensuite être utilisé directement après instanciation...</p><pre id="r-540752" data-claire-element-id="540752"><code data-claire-semantic="html+php">&lt;?php
+$container = new Container();
+
+//Le conteneur reste paramétrable et modifiable au besoin
+$container['user.storage.cookie_name'] = 'OTHER_SESSION_ID';
+
+//Récupération du service d'utilisateur
+$user = $container['user'];</code></pre><p id="r-540753" data-claire-element-id="540753">... ou bien embarqué dans un autre conteneur.</p><pre id="r-540754" data-claire-element-id="540754"><code data-claire-semantic="html+php">&lt;?php
+$container = new Pimple();
+$container['embedded'] = $container-&gt;share(function(){ return new Container() });
+$user = $container['embedded']['user'];</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-a-l-injection-de-dependances-en-php">Introduction à l&#039;injection de dépendances en PHP</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-a-l-injection-de-dependances-en-php/qu-est-ce-que-l-injection-de-dependances">
+Qu&#039;est-ce que l&#039;injection de dépendances ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-a-l-injection-de-dependances-en-php/utilisation-d-un-conteneur-de-services">
+Utilisation d&#039;un conteneur de services
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-a-l-injection-de-dependances-en-php/pimple-un-conteneur-minimaliste">
+Pimple, un conteneur minimaliste
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-a-l-injection-de-dependances-en-php/un-conteneur-plus-complexe">
+Un conteneur plus complexe
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/introduction-a-l-injection-de-dependances-en-php/utilisation-d-un-conteneur-de-services">
+<span class="arrow"></span>
+<span class="next">Utilisation d&#039;un conteneur de services</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/introduction-a-l-injection-de-dependances-en-php/un-conteneur-plus-complexe">
+<span class="next">Un conteneur plus complexe</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Unconteneurpluscomplexe"></a><h2>Un conteneur plus complexe</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/introduction-a-l-injection-de-dependances-en-php/pimple-un-conteneur-minimaliste">
+<span class="arrow"></span>
+<span class="next">Pimple, un conteneur minimaliste</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-540757" data-claire-element-id="540757">Pour terminer notre introduction aux DIC, nous allons maintenant étudier une « vraie » bibliothèque fournissant beaucoup plus de possibilités que Pimple. Il s'agit du <em><a href="http://components.symfony-project.org/dependency-injection/">Symfony Dependency Injection Component</a></em>. C'est une bibliothèque écrite par Fabien Potencier du temps de symfony1 et donc compatible avec PHP 5.2.</p><p id="r-540758" data-claire-element-id="540758">Avant toute chose, pensez à enregistrer l'<em>autoloader</em> du composant afin d'éviter de devoir inclure les fichiers avant chaque utilisation :</p><pre id="r-540759" data-claire-element-id="540759"><code data-claire-semantic="html+php">&lt;?php
+require_once '/chemin/vers/sfServiceContainerAutoloader.php';
+sfServiceContainerAutoloader::register();</code></pre><h2 id="r-manipulation-des-parametres-et-services" data-claire-element-id="540763">Manipulation des paramètres et services</h2><p id="r-540760" data-claire-element-id="540760">La première classe importante du composant est le sfServiceContainer qui est similaire à Pimple (quoique plus complète). Cette classe implémente l'interface sfServiceContainerInterface que je vais reproduire ici.</p><pre id="r-540761" data-claire-element-id="540761"><code data-claire-semantic="html+php">&lt;?php
+interface sfServiceContainerInterface
+{
+    public function setParameters(array $parameters);
+    public function addParameters(array $parameters);
+    public function getParameters();
+    public function getParameter($name);
+    public function setParameter($name, $value);
+    public function hasParameter($name);
+    public function setService($id, $service);
+    public function getService($id);
+    public function hasService($name);
+}</code></pre><p id="r-540762" data-claire-element-id="540762">Ici le conteneur ne se manipule plus comme un tableau mais avec des méthodes plus classiques. On retrouve la manipulation des paramètres et des services. Je ne détaillerai pas plus car je trouve les noms de méthodes suffisamment explicites. Si vous souhaitez en savoir plus, je vous renvoie à <a href="http://components.symfony-project.org/dependency-injection/trunk/book/03-Service-Container">la page de documentation en parlant</a>.</p><h2 id="r-definition-des-services" data-claire-element-id="540786">Définition des services</h2><p id="r-540764" data-claire-element-id="540764">J'en viens maintenant à ce qui constitue le point fort du composant : la définition des services. En effet, en plus de fournir une implémentation d'un conteneur dans la classe sfServiceContainer, il fournit une classe sfServiceContainerBuilder très pratique. Il est utile de noter que sfServiceContainerBuilder implémente sfServiceContainerInterface et que par conséquent ce n'est qu'une extension d'un conteneur simple.</p><p id="r-540765" data-claire-element-id="540765">Contrairement à Pimple où la démarche de construction et de configuration de l'objet était faite entièrement par le développeur à l'intérieur de la fonction anonyme, cette nouvelle classe permet de construire nos services de façon plus descriptive. Cela revient à indiquer une recette de cuisine à la classe qui se chargera ensuite de la transformer en instructions PHP au moment de créer l'objet.</p><pre id="r-540766" data-claire-element-id="540766"><code data-claire-semantic="html+php">&lt;?php
+$container = new sfServiceContainerBuilder();
+
+//Ajout des paramètres de façon classique
+$container-&gt;addParameters(array(
+    'user.class'               =&gt; 'User',
+    'user.storage.class'       =&gt; 'SessionStorage',
+    'user.storage.cookie_name' =&gt; 'SESSION_ID',
+));
+
+//Définition du service « user »
+$container
+    -&gt;register('user', '%user.class%')
+    -&gt;addArgument(new sfServiceReference('user.storage'))
+;
+
+//Définition du service « user.storage »
+$container
+    -&gt;register('user.storage', '%user.storage.class%')
+    -&gt;addArgument('%user.storage.cookie_name%')
+    -&gt;setShared(false)
+;</code></pre><p id="r-540767" data-claire-element-id="540767">La première méthode à appeler pour enregistrer un service est toujours sfServiceContainerBuilder::register() avec en premier paramètre le nom du service et en second paramètre le nom de la classe. Diverses méthodes sont ensuite appelables sur l'objet qui est renvoyé (il est possible de les chainer entre elles) :</p><ul id="r-540784" data-claire-element-id="540784"><li id="r-540769" data-claire-element-id="540769"><p id="r-540768" data-claire-element-id="540768"><strong>addArgument</strong> : ajoute un argument lors de l'appel du constructeur (l'ordre des arguments est l'ordre de définition via addArgument()) ;</p></li><li id="r-540771" data-claire-element-id="540771"><p id="r-540770" data-claire-element-id="540770"><strong>setArguments</strong> : définit tous les arguments du constructeur en une seule fois ;</p></li><li id="r-540773" data-claire-element-id="540773"><p id="r-540772" data-claire-element-id="540772"><strong>setConstructor</strong> : définit une méthode statique servant de constructeur à la place de l'utilisation de l'opérateur new (utile dans le cas de l'emploi du patron factory) ;</p></li><li id="r-540775" data-claire-element-id="540775"><p id="r-540774" data-claire-element-id="540774"><strong>setShared</strong> : définit si le service est partagé (oui par défaut) ou non ;</p></li><li id="r-540777" data-claire-element-id="540777"><p id="r-540776" data-claire-element-id="540776"><strong>setFile</strong> : indique un fichier à inclure avant d'instancier le classe (utile si elle n'utilise pas l'autoload) ;</p></li><li id="r-540779" data-claire-element-id="540779"><p id="r-540778" data-claire-element-id="540778"><strong>addMethodCall</strong> : définit une méthode de l'objet à appeler juste après son instanciation afin d'achever sa configuration. Le premier argument est le nom de la méthode, le second un tableau d'arguments à transmettre. Les méthodes sont appelés dans le même ordre que leur définition ;</p></li><li id="r-540781" data-claire-element-id="540781"><p id="r-540780" data-claire-element-id="540780"><strong>setMethodCalls</strong> : définit plusieurs appels de méthodes en une seule fois ;</p></li><li id="r-540783" data-claire-element-id="540783"><p id="r-540782" data-claire-element-id="540782"><strong>setConfigurator</strong> : définit une fonction ou méthode statique à appeler après l'instanciation de l'objet et l'appel de toutes les méthodes définies.</p></li></ul><p id="r-540785" data-claire-element-id="540785">Pour toutes ces méthodes il est possible de donner des arguments provenant de types de base de PHP (entier, chaine de caractères, ...). En plus, vous pouvez indiquer une référence à un paramètre en entourant son nom avec deux symboles pourcentage %. Les références à des services se font elles en fournissant une instance de sfServiceReference (l'argument du constructeur étant le nom du service référencé).</p><h2 id="r-definition-des-services-en-yaml" data-claire-element-id="540794">Définition des services en YAML</h2><p id="r-540787" data-claire-element-id="540787">La définition des services précédentes ressemble au final fortement à celle proposée par Pimple, si ce n'est que l'abstraction est plus grande. Pourquoi s'embêter à apprendre cette syntaxe alors me direz-vous ? Parce que le meilleur arrive ! En effet, vous pouvez décrire vos services de façon bien moins verbeuse qu'en PHP à l'aide <a href="http://www.yaml.org/">du format YAML</a>. Peut-être ne connaissez-vous pas ce format, peu utilisé en PHP, auquel cas je vous invite avant à prendre connaissance avec sa syntaxe sur son site officiel ou bien <a href="http://components.symfony-project.org/yaml/trunk/book/02-YAML">dans la documentation de cet autre composant</a>. YAML est comme JSON destiné avant tout à la manipulation de tableaux.</p><p id="r-540788" data-claire-element-id="540788">Notez que pour utiliser ce format, vous aurez besoin du composant <a href="http://components.symfony-project.org/yaml/">sfYaml</a> pour <em>parser</em> ces fichiers. Je vous invite à le télécharger et à rendre disponible la classe sfYaml qu'il contient en l'incluant.</p><p id="r-540789" data-claire-element-id="540789">Vous pouvez ensuite remplacer toute la configuration précédente par le code YAML suivant, strictement équivalent.</p><pre id="r-540790" data-claire-element-id="540790"><code data-claire-semantic="yaml">parameters:
+    user.class: User
+    user.storage.class: SessionStorage
+    user.storage.cookie_name : SESSION_ID
+ 
+services:
+    user:
+        class:     %user.class%
+        arguments: [@user.storage]
+
+    user.storage:
+        class:     %user.storage.class%
+        arguments: [%user.storage.cookie_name%]
+        shared:    false</code></pre><p id="r-540791" data-claire-element-id="540791">Tout ce qui est configurable en PHP l'est également en YAML, je vous renvoie <a href="http://components.symfony-project.org/dependency-injection/trunk/book/05-Service-Description">à la documentation officielle</a> pour en savoir plus. Grâce à la concision du YAML, nous gagnons en lisibilité et en maintenabilité. Le chargement d'une telle configuration dans notre DIC se fait ensuite très facilement :</p><pre id="r-540792" data-claire-element-id="540792"><code data-claire-semantic="html+php">&lt;?php
+$loader = new sfServiceContainerLoaderFileYaml($container);
+$loader-&gt;load('/chemin/vers/la/configuration.yml');</code></pre><p id="r-540793" data-claire-element-id="540793">C'est à mon sens ce qui fait la force d'un tel composant par rapport à Pimple sur un gros projet. La configuration des services est aisée grâce à la centralisation des paramètres. Changer le nom du cookie de session ou le type de persistance de session est alors redoutablement simple : nous avons maintenant répondu à nos problématiques initiales !</p><h2 id="r-pour-aller-plus-loin-43" data-claire-element-id="540816">Pour aller plus loin</h2><p id="r-540795" data-claire-element-id="540795">Le composant décrit sommairement ici fournit encore plus de fonctionnalités ! Vous pouvez par exemple utiliser le format XML pour décrire vos services à la place du YAML. J'ai présenté le YAML car j'aime beaucoup ce format pour sa concision et son élégance. Cependant le XML offre d'autres avantages :</p><ul id="r-540802" data-claire-element-id="540802"><li id="r-540797" data-claire-element-id="540797"><p id="r-540796" data-claire-element-id="540796">il est plus utilisé et donc mieux intégré dans les IDE ;</p></li><li id="r-540799" data-claire-element-id="540799"><p id="r-540798" data-claire-element-id="540798">il autorise une validation de son contenu via un schéma inclus dans le composant présenté ;</p></li><li id="r-540801" data-claire-element-id="540801"><p id="r-540800" data-claire-element-id="540800">il est plus rapide car intégré de base dans PHP alors que YAML repose sur un composant externe.</p></li></ul><p id="r-540803" data-claire-element-id="540803">À vous de choisir ! Gardez juste bien en tête que peu importe que vous choisissiez du YAML, XML ou PHP, tout ce qui est faisable dans l'un est faisable dans l'autre.</p><p id="r-540804" data-claire-element-id="540804">Les conteneurs devenant rapidement complexes, vous pouvez aussi en obtenir une représentation au format Graphviz. Ce format permet ensuite de générer des graphiques comme celui qui suit (repris de la documentation du composant), très utiles pour s'y retrouver dans un gros projet.</p><figure id="r-540806" data-claire-element-id="540807"><img id="r-540805" data-claire-element-id="540805" src="medias/fabien.potencier.org_media_articles_di_template.png" alt="Image utilisateur"/></figure><p id="r-540808" data-claire-element-id="540808">Outre Graphviz, vous pouvez obtenir une représentation de votre conteneur dans d'autres formats : YAML, XML ou PHP. Cela permet de convertir facilement un format de configuration dans un autre. Mais la représentation PHP offre un autre avantage : vous pourrez mettre en cache votre conteneur afin d'éviter une analyse systématique des fichiers de configuration.</p><p id="r-540809" data-claire-element-id="540809">Toutes ces fonctionnalités sont décrites de façon exhaustive dans <a href="http://components.symfony-project.org/dependency-injection/documentation">la documentation du composant</a> que je vous invite très fortement à lire.</p><p id="r-540810" data-claire-element-id="540810">Vous vous en serez sans doute rendus compte, je suis passé assez vite sur certaines fonctions. Le but du tutoriel était de vous donner envie d'explorer ce domaine souvent peu connu. N'hésitez pas à lire les documentations officielles, elles sont vraiment très bien faites !</p><p id="r-540811" data-claire-element-id="540811">Je ne peux terminer sans mentionner <a href="http://symfony.com/">Symfony2</a>, le successeur du célèbre symfony 1. En effet, l'injection de dépendances est à la base même du framework. Si vous regardez <a href="http://symfony.com/doc/current/book/service_container.html">la documentation du DIC</a> de Symfony2, vous remarquerez de fortes similitudes avec celui que je viens de vous décrire. Vu que ce composant est découplé du framework, vous pouvez l'utiliser en remplacement. Il apporte encore de nouvelles fonctionnalités (imports, tags, ...) mais l'esprit reste le même. Et si vous l'utilisez combiné avec Symfony2, les résultats n'en seront que plus spectaculaires !</p><p id="r-540812" data-claire-element-id="540812">Bonne exploration !</p><p id="r-540813" data-claire-element-id="540813"><em>L'exemple servant de fil rouge à ce tutoriel, certains extraits de code associés ainsi que la dernière image du tutoriel sont extraits de la documentation du composant d'injection de dépendances de Fabien Potencier, qui a été présenté dans le tutoriel. Le tutoriel que vous avez sous les yeux est redistribué sous les même conditions, à savoir CC-BY-SA.</em></p><div id="r-540815" data-claire-element-id="540815"><p id="r-540814" data-claire-element-id="540814">L'exemple servant de fil rouge à ce tutoriel, certains extraits de code associés ainsi que la dernière image du tutoriel sont extraits de <a href="http://components.symfony-project.org/dependency-injection/trunk/book/01-Dependency-Injection">la documentation du composant d'injection de dépendances de Fabien Potencier</a>, qui a été présenté dans le tutoriel. Le tutoriel que vous avez sous les yeux est redistribué sous les même conditions, à savoir <a href="http://creativecommons.org/licenses/by-sa/2.0/fr/">CC-BY-SA</a>.</p></div>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-a-l-injection-de-dependances-en-php">Introduction à l&#039;injection de dépendances en PHP</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-a-l-injection-de-dependances-en-php/qu-est-ce-que-l-injection-de-dependances">
+Qu&#039;est-ce que l&#039;injection de dépendances ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-a-l-injection-de-dependances-en-php/utilisation-d-un-conteneur-de-services">
+Utilisation d&#039;un conteneur de services
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-a-l-injection-de-dependances-en-php/pimple-un-conteneur-minimaliste">
+Pimple, un conteneur minimaliste
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-a-l-injection-de-dependances-en-php/un-conteneur-plus-complexe">
+Un conteneur plus complexe
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/introduction-a-l-injection-de-dependances-en-php/pimple-un-conteneur-minimaliste">
+<span class="arrow"></span>
+<span class="next">Pimple, un conteneur minimaliste</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/introduction-a-l-injection-de-dependances-en-php.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 03:24:33 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/introduction-a-l-injection-de-dependances-en-php.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:42:40 GMT -->
+</html>

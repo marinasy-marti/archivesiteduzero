@@ -1,0 +1,451 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/erlang-partie-4-la-programmation-concurrente.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 09:01:51 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/erlang-partie-4-la-programmation-concurrente.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:36:56 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Erlang, partie 4 : la programmation concurrente</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/erlang-partie-4-la-programmation-concurrente.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Erlang, partie 4 : la programmation concurrente</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Erlangpartie4laprogrammationconcurrente">Erlang, partie 4 : la programmation concurrente</a><br/><a href="#Laprogrammationconcurrente">La programmation concurrente</a><br/><a href="#Lesprocessusetlesmessages">Les processus et les messages</a><br/><a href="#Unpeuplusdecontrlesurlesprocessus">Un peu plus de contrôle sur les processus</a><br/><a href="#Unautreexemple">Un autre exemple</a><br/></div>
+<a name="Erlangpartie4laprogrammationconcurrente"></a><h2>Erlang, partie 4 : la programmation concurrente</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/erlang-partie-4-la-programmation-concurrente/la-programmation-concurrente">
+<span class="next">La programmation concurrente</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-338193" data-claire-element-id="338193">Nous allons maintenant aborder l'un des points les plus intéressants d'Erlang : la programmation concurrente. Dans cette partie du cours, nous allons voir comment Erlang permet facilement de construire des programmes concurrents.</p>
+</div><a name="Laprogrammationconcurrente"></a><h2>La programmation concurrente</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/erlang-partie-4-la-programmation-concurrente/les-processus-et-les-messages">
+<span class="next">Les processus et les messages</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-338194" data-claire-element-id="338194">En informatique comme dans la vraie vie, les ressources (puits de pétrole ou base de données…) sont limitées, et de nombreux &quot;acteurs&quot; (c'est le terme que nous emploierons généralement) peuvent vouloir y accéder simultanément. C'est particulièrement vrai pour un serveur web comme celui du Site du Zéro, par exemple. De nombreux Zéros envoient des requêtes qui arrivent en même temps, et qui cherchent toutes à accéder à la base de données. Seulement, ces requêtes sont envoyées autant pour <em>lire</em> le contenu de la base de données que pour y <em>écrire</em>. Que se passe-t-il si quelqu'un lit la base de données pendant que vous y écrivez ?</p><p id="r-338195" data-claire-element-id="338195">C'est en partie pour régler ces problèmes qu'Erlang a été conçu. Naturellement, ils ne se limitent pas aux bases de données : il y a des tas de situations dans lesquelles ce que l'on appelle des accès concurrents peuvent se produire. Dès que plusieurs acteurs veulent modifier la même ressource, cela arrive (comme dans une banque en ligne, dans un jeu vidéo, etc.). La programmation concurrente traite donc de ces situations.</p><p id="r-338196" data-claire-element-id="338196">Mais elle ne se limite pas à ces cas de figure négatifs. Pour rester efficaces, les solutions informatiques ont parfois besoin de beaucoup de puissance de calcul, et les ingénieurs ont très rapidement compris que cette puissance pouvait être obtenue en combinant beaucoup d'unités traitantes. Les algorithmes sont alors <em>distribués</em> au niveau de ces unités pour une plus grande efficacité. De même, on peut chercher à multiplier les unités de stockage, ou bien la bande passante, etc. en <em>distribuant</em> un programme sur plusieurs postes, qui devront alors collaborer.</p><p id="r-338197" data-claire-element-id="338197">Cette façon de faire est appelée &quot;calcul parallèle&quot; ou &quot;calcul distribué&quot;, et relève également de la programmation concurrente. On peut penser à des systèmes comme le P2P (où les données sont distribuées sur des centaines de postes au moins), ou bien les systèmes de calcul réparti pour la recherche comme <a href="http://fr.wikipedia.org/wiki/SETI%40Home">SETI@Home</a>. La problématique devient alors de diviser un problème entre les unités traitantes, et de savoir recombiner les résultats efficacement. Et Erlang est également intéressant à utiliser pour étudier ce genre de problèmes.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/erlang-partie-4-la-programmation-concurrente">Erlang, partie 4 : la programmation concurrente</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/erlang-partie-4-la-programmation-concurrente/la-programmation-concurrente">
+La programmation concurrente
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/erlang-partie-4-la-programmation-concurrente/les-processus-et-les-messages">
+Les processus et les messages
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/erlang-partie-4-la-programmation-concurrente/un-peu-plus-de-controle-sur-les-processus">
+Un peu plus de contrôle sur les processus
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/erlang-partie-4-la-programmation-concurrente/un-autre-exemple-3">
+Un autre exemple
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/erlang-partie-4-la-programmation-concurrente/les-processus-et-les-messages">
+<span class="next">Les processus et les messages</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lesprocessusetlesmessages"></a><h2>Les processus et les messages</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/erlang-partie-4-la-programmation-concurrente/la-programmation-concurrente">
+<span class="arrow"></span>
+<span class="next">La programmation concurrente</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/erlang-partie-4-la-programmation-concurrente/un-peu-plus-de-controle-sur-les-processus">
+<span class="next">Un peu plus de contrôle sur les processus</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-le-concept-3" data-claire-element-id="338205">Le concept</h2><p id="r-338199" data-claire-element-id="338199">Pour aborder ces problèmes, il faut les modéliser au moyen de nouveaux concepts. Erlang pose à cette fin deux nouvelles définitions : les processus et les messages. Un processus est un bout de code tournant en parallèle des autres. Par exemple, si l'on crée deux processus A et B en leur attribuant deux séquences de code différentes, les deux s'exécuteront simultanément.</p><aside id="r-338201" data-claire-element-id="338201" data-claire-semantic="information"><p id="r-338200" data-claire-element-id="338200">En réalité, la simultanéité n'existe pas toujours en informatique ; lorsque l'on lance plusieurs processus sur la même unité traitante (le même processeur), ils ne tournent pas en même temps mais sont exécutés petit bout par petit bout chacun leur tour. En Erlang, les processus sont dits &quot;légers&quot; : ils ont été conçus pour prendre très peu de place en mémoire, et pour pouvoir être créés par milliers en même temps. La contrepartie est que l'on ne peut pas les remplacer avec des processus gérés par le système, d'où la nécessité de la machine virtuelle.</p></aside><p id="r-338202" data-claire-element-id="338202">En Erlang, les processus tournent indépendamment les uns des autres. La seule interaction possible entre eux est l'envoi de messages, qui peuvent être constitué de n'importe quelle objet Erlang. L'envoi d'un message suit la syntaxe <code>identifiant ! message</code>.</p><p id="r-338203" data-claire-element-id="338203">Une caractéristique intéressante d'Erlang est qu'il n'est pas nécessaire que cet envoi soit synchronisé avec la réception : si le processus qui reçoit le message ne le lit pas immédiatement, il sera conservé, placé &quot;en attente&quot;. L'envoi de message n'est donc pas bloquant : une fois que le message est envoyé, le processus expéditeur va continuer son exécution personnelle.</p><p id="r-338204" data-claire-element-id="338204">En revanche, la réception de message est, bien sûr, bloquante : les processus sont figés jusqu'à en recevoir un qui correspond à leurs attentes (il est tout à fait possible qu'ils reçoivent des messages d'une forme qu'ils n'ont pas prévue de lire, et que ces messages soient donc ignorés). Toutefois, il est possible de spécifier un temps au-delà duquel le processus arrête d'attendre et poursuit son exécution.</p><h2 id="r-recevoir-un-message" data-claire-element-id="338213">Recevoir un message</h2><p id="r-338206" data-claire-element-id="338206">La syntaxe de réception de messages va vous sembler familière… elle utilise la correspondance de motifs ! Lors de l'utilisation de <code>receive</code>, le mot clef de réception des messages, on cherche à faire correspondre un motif à chaque message reçu. Notez que <strong>l'ordre a une importance</strong> : les motifs placés le plus haut sont susceptibles d'être exécutés en premier, puisque leur correspondance est testée avant ceux qui suivent. Cela nous permet de définir facilement des messages prioritaires sur les autres.</p><p id="r-338207" data-claire-element-id="338207">Voici l'allure d'un code attendant un message :</p><pre id="r-338208" data-claire-element-id="338208"><code data-claire-semantic="erlang">receive
+    {foo, Bar} -&gt; 
+        %% Si on reçoit un doublet dont le premier élément est l'atome foo
+        instruction 1,
+        instruction 2;
+    foo -&gt; 
+        %% Si on reçoit foo tout seul
+        instruction 1,
+        instruction 2;
+    Bar -&gt;
+        %% Souvenez-vous que ce motif correspondra à n'importe quoi !
+        instruction 1,
+        instruction 2
+after   %% Rien reçu après X milisecondes ?
+    X -&gt; 
+        instruction 1,
+        instruction 2
+end</code></pre><p id="r-338209" data-claire-element-id="338209">La partie concernant <code>after</code> est optionnelle, elle sert juste à préciser un délai après lequel on fera autre chose. Le bloc <code>receive</code> s'utilise donc à l'intérieur du code d'un processus. Mais au juste, comment créer ces processus ? C'est le rôle de la fonction <code>spawn</code>.</p><p id="r-338210" data-claire-element-id="338210">La fonction prédéfinie <code>spawn</code> (de même que ses éventuelles variantes) sert à lancer un nouveau processus. Elle attend trois arguments : un module, une fonction dans ce module, et une liste d'arguments, qui représentent le code à lancer en parallèle. Elle retourne un identifiant de processus, qui est représenté en Erlang par un objet de la forme &lt;a.b.c&gt; où a, b et c sont des entiers naturels. Un tel objet est appelé PID, c'est un identifiant de processus unique. Les trois nombres qu'il contient servent en effet à repérer le processus sur un nœud erlang donné - nous ne nous y intéresserons pas pour le moment.</p><aside id="r-338212" data-claire-element-id="338212" data-claire-semantic="information"><p id="r-338211" data-claire-element-id="338211">Un point qui mérite d'être souligné : les fonctions utilisées par <code>spawn</code> doivent être exportées du module. Bien souvent, les débutants ne comprennent pas pourquoi rien ne marche, simplement parce que <code>spawn</code> ne signale pas les éventuelles erreurs qu'elle a pu rencontrer ; or la fonction n'ayant pas été exportée, aucun code n'a pu être lancé, et le processus est mort-né…</p></aside><h2 id="r-un-exemple-9" data-claire-element-id="338222">Un exemple</h2><p id="r-338214" data-claire-element-id="338214">Nous allons écrire un petit exemple de deux processus qui s'envoient des messages : l'un des deux jouera en quelque sorte un rôle de serveur, auquel on confiera d'ailleurs le rôle de stocker le nombre de messages reçus pour le renvoyer à l'autre, qui sera le client. Les messages seront élémentaires : le client se contentera d'envoyer un atome <code>ping</code> au serveur, qui lui renverra un tuple <code>{pong, N}</code> où N est le nombre stocké. Naturellement, il faudra penser à ajouter 1 à N à chaque fois.</p><p id="r-338215" data-claire-element-id="338215">Vous ne le voyez peut-être pas pour l'instant, mais tel quel notre projet est compromis : comment le client et le serveur vont-ils savoir à qui s'adresser, c'est à dire quel est le PID auquel ils doivent envoyer leurs messages ? On pourra passer le PID du serveur au client lors de la création du processus (comme s'il en connaissais déjà l'adresse). En revanche, pour que la réponse du serveur soit possible, le client devra également envoyer son propre PID au serveur ; le message ne sera donc pas un simple atome, mais plutôt <code>{ping, PID}</code>. Pour connaître son propre PID, un processus peut utiliser la fonction <code>self</code>.</p><p id="r-338216" data-claire-element-id="338216">La notation <code>?MODULE</code> correspond à une macro. Rien de bien sorcier à comprendre pour l'instant : ?MODULE est automatiquement remplacé par le nom du module courant.</p><pre id="r-338217" data-claire-element-id="338217"><code data-claire-semantic="erlang">-module(pingpong).
+
+-export([start/0, pingueur/1, pongueur/1]).
+
+%% Fonction qui va lancer nos deux processus avec le nombre initial
+start() -&gt;
+    PID = spawn(?MODULE, pongueur, [0]),
+    spawn(?MODULE, pingueur, [PID]). 
+    
+pingueur(PID) -&gt; 
+    PID ! {ping, self()},  
+    receive 
+        {pong, N} -&gt;
+            io:format(&quot;Reçu ~w~n&quot;, [N])
+    end,
+    pingueur(PID).  %% On boucle
+    
+pongueur(N) -&gt;
+    timer:sleep(2000),   %% Sert à attendre deux secondes (pour que les choses n'aillent pas trop vite)
+    receive
+        {ping, PID} -&gt;   %% Un ping envoyé par PID
+            M = N + 1,   %% Un message de plus
+            PID ! {pong, M},
+            pongueur(M)  %% On boucle avec le nouveau nombre de messages reçus.
+    after
+        5000 -&gt; io:format(&quot;Je ne reçois rien, donc je m'arrête.~n&quot;)
+    end.</code></pre><p id="r-338218" data-claire-element-id="338218">Notez que <code>start</code> renvoie au passage le PID du processus pingueur, on peut donc le récupérer en utilisant le module :</p><pre id="r-338219" data-claire-element-id="338219"><code data-claire-semantic="console">1&gt; c(pingpong).
+{ok,pingpong}
+2&gt; Foo = pingpong:start().
+&lt;0.39.0&gt;
+Reçu 1
+Reçu 2
+3&gt; Foo ! {pong, 42}.    %% On envoie un message au processus pingueur !
+Reçu 42
+{pong,42}
+Reçu 3
+Reçu 4
+4&gt;</code></pre><p id="r-338220" data-claire-element-id="338220">Pour stopper Erlang, faites un ctrl-c ;) .</p><p id="r-338221" data-claire-element-id="338221">Vous pouvez expérimenter plusieurs choses rigolotes sur ce code. Par exemple, modifiez le code pour que le processus de ping ne soit pas lancé, afin de voir ce que fait <code>after</code>. Vous pouvez aussi lancez un deuxième client, et rajouter le code nécessaire à l'affichage par la fonction <code>pingueur</code> du numéro du client lancé. Que se passe-t-il si les deux clients tournent en même temps ?</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/erlang-partie-4-la-programmation-concurrente">Erlang, partie 4 : la programmation concurrente</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/erlang-partie-4-la-programmation-concurrente/la-programmation-concurrente">
+La programmation concurrente
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/erlang-partie-4-la-programmation-concurrente/les-processus-et-les-messages">
+Les processus et les messages
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/erlang-partie-4-la-programmation-concurrente/un-peu-plus-de-controle-sur-les-processus">
+Un peu plus de contrôle sur les processus
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/erlang-partie-4-la-programmation-concurrente/un-autre-exemple-3">
+Un autre exemple
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/erlang-partie-4-la-programmation-concurrente/la-programmation-concurrente">
+<span class="arrow"></span>
+<span class="next">La programmation concurrente</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/erlang-partie-4-la-programmation-concurrente/un-peu-plus-de-controle-sur-les-processus">
+<span class="next">Un peu plus de contrôle sur les processus</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Unpeuplusdecontrlesurlesprocessus"></a><h2>Un peu plus de contrôle sur les processus</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/erlang-partie-4-la-programmation-concurrente/les-processus-et-les-messages">
+<span class="arrow"></span>
+<span class="next">Les processus et les messages</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/erlang-partie-4-la-programmation-concurrente/un-autre-exemple-3">
+<span class="next">Un autre exemple</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-338224" data-claire-element-id="338224">À côté de ces concepts élémentaires pour la programmation parallèle, Erlang met à notre disposition quelques outils pour nous faciliter la tâche. Le premier est plus ou moins un gadget qui permet de nommer des processus.</p><h2 id="r-nommer-les-processus" data-claire-element-id="338230">Nommer les processus</h2><p id="r-338225" data-claire-element-id="338225">Erlang nous laisse associer un nom de notre choix à un PID, qui nous permettra de rendre plus lisible notre code. La fonction standard <code>register/2</code>, qui prend en argument un atome et un PID, rend global un identifiant qui peut être utilisé à la place du PID du processus, et ce dans n'importe quelle partie du code.</p><p id="r-338226" data-claire-element-id="338226">Vous pouvez facilement adapter le code précédent pour qu'il ne soit plus nécessaire de passer en argument du client l'identifiant du processus : les deux premières fonctions sont maintenant</p><pre id="r-338227" data-claire-element-id="338227"><code data-claire-semantic="erlang">start() -&gt;
+    PID = spawn(?MODULE, pongueur, [0]),
+    register(serveur, PID),
+    spawn(?MODULE, pingueur, []). 
+    
+pingueur() -&gt; 
+    serveur ! {ping, self()},
+    receive 
+        {pong, N} -&gt;
+            io:format(&quot;Reçu ~w~n&quot;, [N])
+    end,
+    pingueur().  %% On boucle</code></pre><p id="r-338228" data-claire-element-id="338228">Si vous lancez le code depuis la ligne de commande, vous pourrez cette fois-ci envoyer un message au processus serveur en écrivant <code>server ! {ping, self()}.</code>. Vous n'aurez pas la réponse du serveur, mais un délai supplémentaire de deux secondes entre deux affichages du message du client, car le serveur aura bien été occupé momentanément par ce nouveau client :) .</p><p id="r-338229" data-claire-element-id="338229">Vous pouvez utiliser <code>registered/0</code> pour récupérer la liste des processus nommés localement. Un nom est oublié à l'aide de <code>unregister/1</code>, ou lorsque le processus se termine. Enfin, <code>whereis/1</code> fait correspondre au nom passé en argument l'éventuel PID auquel il correspond, ou <code>undefined</code> sinon.</p><h2 id="r-les-liens-4" data-claire-element-id="338240">Les liens</h2><p id="r-338231" data-claire-element-id="338231">Comme je l'ai dit, si jamais <code>spawn</code> ne réussit pas à exécuter un processus, le code se déroule quand même comme si de rien n'était (si vous essayez à l'aide de la ligne de commande, vous aurez un <em>rapport</em> d'erreur, mais pas pour autant de véritable erreur, au sens de celles que nous verrons au chapitre 5). En fait, le processus fils est lancé indépendamment du processus père, il vit en quelques sortes sa vie. Mais on peut s'arranger pour que les deux gardent contact, à l'aide de la fonction <code>spawn_link/3</code>, qui prend les mêmes arguments que <code>spawn</code>, ou bien de la fonction <code>link</code>, qui elle, <strong>utilisée à l'intérieur d'un processus X</strong>, va relier X au processus précisé en argument.</p><p id="r-338232" data-claire-element-id="338232">Lier des processus en Erlang nous permettra par la suite de traiter efficacement les erreurs des processus fils. Pour l'instant, je ne vais présenter que l'interception du message de sortie qui est produit lorsqu'un processus se termine. Il est bien sûr inutile que le processus serveur tourne indéfiniment alors que le processus client est arrêté. Notre première solution pour éviter cette situation a été d'utiliser <code>after</code>, mais on peut à la place utiliser un lien, qui présente l'avantage de ne pas placer de délai arbitraire dans le code.</p><p id="r-338233" data-claire-element-id="338233">On va donc, au lancement du processus de ping, relier les deux processus entre eux. On va également rajouter la possibilité pour le client de recevoir en message l'atome <code>exit</code> que nous enverrons depuis la ligne de commande, ce qui modifie un peu le début de notre code. La nouvelle fonction peut surprendre, c'est juste un détail : <code>pingueur</code> est exécutée plusieurs fois, il est inutile de recréer à chaque fois un lien à l'aide de <code>link</code>, donc on sépare l'utilisation de link du code répété.</p><pre id="r-338234" data-claire-element-id="338234"><code data-claire-semantic="erlang">-module(pingpong3).
+
+-export([start/0, pingueur_start/0, pongueur/1]).
+
+%% Fonction qui va lancer nos deux processus avec le nombre initial
+start() -&gt;
+    PID = spawn(?MODULE, pongueur, [0]),
+    register(serveur, PID),
+    spawn(?MODULE, pingueur_start, []). 
+    
+pingueur_start() -&gt;          
+    link(whereis(serveur)),   %% On utilie whereis car link attend un PID.
+    pingueur().
+  
+pingueur() -&gt; 
+    serveur ! {ping, self()},
+    receive 
+        {pong, N} -&gt;
+            io:format(&quot;Reçu ~w~n&quot;, [N]),
+            pingueur(); %% On boucle
+        exit -&gt; 
+            ok   %% Si on reçoit un message 'exit', on arrête tout
+    end.</code></pre><p id="r-338235" data-claire-element-id="338235">Que se passe-t-il lorsqu'un processus A se termine ? Selon qu'il termine sur une erreur ou sur un autre résultat (nous en reparlerons au prochain chapitre), la situation n'est pas la même. Dans le premier cas, un message d'erreur est propagé à tous les processus auxquels A est relié, et ces processus terminent également, sauf si une certaine option (propre à chaque processus) est réglée à <code>true</code> ; cette option, qui s'appelle <code>trap_exit</code>, intervient dans le deuxième cas : si le processus A termine sur autre chose qu'une erreur, alors <strong>les processus liés à A ne reçoivent un message que si l'option <code>trap_exit</code> est réglée sur <code>true</code></strong>.</p><p id="r-338236" data-claire-element-id="338236">C'est peut-être un peu flou pour l'instant, mais nous en reparlerons très prochainement. Pour l'instant, contentons nous de comprendre que si nous réglons l'option <code>trap_exit</code>, alors lorsque le processus de ping terminera, un message particulier sera envoyé au processus de pong. Sans plus de commentaires, voici le code correct :</p><pre id="r-338237" data-claire-element-id="338237"><code data-claire-semantic="erlang">pongueur(N) -&gt;
+    process_flag(trap_exit, true),
+    timer:sleep(2000),   %% Sert à attendre deux secondes (pour que les choses n'aillent pas trop vite)
+    receive
+        {ping, PID} -&gt;   %% Un ping envoyé par PID
+            M = N + 1,   %% Un message de plus
+            PID ! {pong, M},
+            pongueur(M); %% On boucle avec le nouveau nombre de messages reçus.
+        {'EXIT', PID, Raison} -&gt; 
+            io:format(&quot;Le serveur s'arrête !~n&quot;)
+    end.</code></pre><p id="r-338238" data-claire-element-id="338238">Notez le réglage de l'option, ainsi que le motif correspondant au message spécial de fin de processus. C'est un mécanisme utile qui nous permet de synchroniser un minimum nos processus, en leur donnant la possibilité de connaître l'état (vivant ou mort) de leurs voisins.</p><p id="r-338239" data-claire-element-id="338239">Lorsque Erlang a commencé à être utilisé sur des réseaux de grande taille, pour de la production industrielle, il devenait important de distinguer le code de gestion des erreurs du reste. Afin de surveiller l'état du réseau, le code de gestion devait avoir conscience des problèmes qui pouvaient survenir. Le mécanisme de liens nous donne l'opportunité de propager facilement des informations en cas de pépin : c'est une notion très importante en Erlang. Nous serons donc amené à la recroiser.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/erlang-partie-4-la-programmation-concurrente">Erlang, partie 4 : la programmation concurrente</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/erlang-partie-4-la-programmation-concurrente/la-programmation-concurrente">
+La programmation concurrente
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/erlang-partie-4-la-programmation-concurrente/les-processus-et-les-messages">
+Les processus et les messages
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/erlang-partie-4-la-programmation-concurrente/un-peu-plus-de-controle-sur-les-processus">
+Un peu plus de contrôle sur les processus
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/erlang-partie-4-la-programmation-concurrente/un-autre-exemple-3">
+Un autre exemple
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/erlang-partie-4-la-programmation-concurrente/les-processus-et-les-messages">
+<span class="arrow"></span>
+<span class="next">Les processus et les messages</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/erlang-partie-4-la-programmation-concurrente/un-autre-exemple-3">
+<span class="next">Un autre exemple</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Unautreexemple"></a><h2>Un autre exemple</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/erlang-partie-4-la-programmation-concurrente/un-peu-plus-de-controle-sur-les-processus">
+<span class="arrow"></span>
+<span class="next">Un peu plus de contrôle sur les processus</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-338242" data-claire-element-id="338242">Nous allons encore utiliser un peu les processus pour modéliser un &quot;faux problème réel&quot;. Joe est loueur de vélos en bord de mer. L'été, la ville dans laquelle il travaille se remplie de touristes. Comme il n'y a rien de plus agréable que de faire du vélo au bord de l'eau, ces derniers foncent tous chez Joe pour lui en louer un. Naturellement, Joe doit tenir le compte de ses vélos, gérer les demandes aussi bien que les retours, et tout ça sans personne pour l'aider : comme son commerce est récent, Joe n'a pas encore les moyens d'embaucher un employé !</p><p id="r-338243" data-claire-element-id="338243">Voici un premier code, sa compréhension ne devrait pas vous poser de problème car je n'ai utilisé que des concepts que nous avions déjà vus :</p><pre id="r-338244" data-claire-element-id="338244"><code data-claire-semantic="erlang">-module(joe).
+
+-export([start/2, clients_start/1, client/0, serveur/1]).
+
+start(Velos, ClientsMax) -&gt; 
+    register(joe, spawn(?MODULE, serveur, [Velos])),
+    spawn(?MODULE, clients_start, [ClientsMax]).
+  
+clients_start(0) -&gt; 
+    ok;
+clients_start(N) -&gt; 
+    timer:sleep(mon_random()), %% On attend un petit peu avant de lancer un nouveau processus
+    spawn(?MODULE, client, []),
+    clients_start(N-1).
+
+client() -&gt;
+    joe ! {emprunte, self()},
+    receive 
+        {velo, N} -&gt;                        %% Si on reçoit le vélo n°N
+            timer:sleep(1500),               %% Le temps d'une petite balade?
+            joe ! {restitue, N, self()};    %% et on rend le vélo !
+        non -&gt;                              %% Pas de vélo disponible ?
+            io:format(&quot;Un client s'en va, furieux !~n&quot;)
+    end,
+    timer:sleep(1500), %% Attente avant que le client ne revienne
+    client().
+    
+serveur(N) -&gt;
+    receive
+        {emprunte, PID} -&gt;  
+            if
+                N &gt; 0 -&gt; 
+                    io:format(&quot;On confie un vélo?~n&quot;),
+                    PID ! {velo, N},
+                    serveur(N-1);
+                true -&gt;
+                    PID ! non,
+                    serveur(0)
+            end;
+        {restitue, _, _} -&gt;     %% Voir plus bas
+            io:format(&quot;Vélo récupéré, merci de votre visite !~n&quot;),
+            serveur(N+1) 
+    end.
+    
+mon_random() -&gt;
+    random:uniform(3000) + 2000. %% Pour attendre entre 2 et 5 secondes, au hasard?</code></pre><p id="r-338245" data-claire-element-id="338245">Ce code est sujet à plusieurs améliorations. On pourrait s'amuser à rajouter des clients de différents types, certains étant capable d'attendre un petit peu avant de partir, en colère, parce qu'il n'y a plus de vélo disponible. Cette attente, vous pourriez la coder à l'aide de l'instruction <code>after</code> ;) . On pourrait également mettre en place un système de prix, ne plus se contenter de numéroter les vélos selon leur ordre de retour mais en gardant une numérotation fixe (c'est à ça que pourrait servir le N passé dans le message {velo, N}, ou dans le message de restitution).</p><p id="r-338246" data-claire-element-id="338246">On pourrait également considérer que Joe, après un été ou deux, a suffisamment de clients pour embaucher quelqu'un (ce qui se traduira par un deuxième processus jouant le rôle de Joe). Le problème est maintenant plus compliqué : comment faire pour que les vélos puissent être prêtés aussi bien par Joe que par son employé ?</p><p id="r-338247" data-claire-element-id="338247">À vous de voir, si vous avez envie de vous entraîner je vous recommande de plancher sur ces éventuels développements :) .</p><p id="r-338248" data-claire-element-id="338248">Son intégration profonde des éléments de la programmation concurrente valent à Erlang la qualification de &quot;langage concurrent&quot;. Il a été créé pour ça, alors pourquoi ne pas profiter de sa simplicité et de sa souplesse pour découvrir cet important paradigme, qui n'a certainement pas fini de faire réfléchir les ingénieurs ?</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/erlang-partie-4-la-programmation-concurrente">Erlang, partie 4 : la programmation concurrente</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/erlang-partie-4-la-programmation-concurrente/la-programmation-concurrente">
+La programmation concurrente
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/erlang-partie-4-la-programmation-concurrente/les-processus-et-les-messages">
+Les processus et les messages
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/erlang-partie-4-la-programmation-concurrente/un-peu-plus-de-controle-sur-les-processus">
+Un peu plus de contrôle sur les processus
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/erlang-partie-4-la-programmation-concurrente/un-autre-exemple-3">
+Un autre exemple
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/erlang-partie-4-la-programmation-concurrente/un-peu-plus-de-controle-sur-les-processus">
+<span class="arrow"></span>
+<span class="next">Un peu plus de contrôle sur les processus</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/erlang-partie-4-la-programmation-concurrente.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 09:01:51 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/erlang-partie-4-la-programmation-concurrente.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:36:57 GMT -->
+</html>

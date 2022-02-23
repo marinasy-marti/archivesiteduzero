@@ -1,0 +1,636 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/la-const-correctness-expliquee-aux-zeros.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 02:54:39 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/la-const-correctness-expliquee-aux-zeros.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:38:20 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : La const-correctness expliquée aux Zéros</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : La const-correctness expliquée aux Zéros</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Laconst-correctnessexpliqueauxZros">La const-correctness expliquée aux Zéros</a><br/><a href="#Introduction">Introduction</a><br/><a href="#lmentsdesyntaxesetgnralits">Éléments de syntaxes et généralités</a><br/><a href="#L039intrtdelaconst-correctnessenfin">L&#039;intérêt de la const-correctness, enfin !</a><br/><a href="#Allonsplusloindanslaconstance">Allons plus loin dans la constance !</a><br/><a href="#const_castetmutablealtrerlaconstanced039unevariable">const_cast et mutable : altérer la constance d&#039;une variable</a><br/></div>
+<a name="Laconst-correctnessexpliqueauxZros"></a><h2>La const-correctness expliquée aux Zéros</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/introduction-47">
+<span class="next">Introduction</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-343312" data-claire-element-id="343312">Bonjour ami Zéro.</p><p id="r-343313" data-claire-element-id="343313">Nous allons parler ici de la const-correctness. Derrière ce nom barbare se cache un élément important du C++ qui est généralement mal maîtrisé, voir complètement ignoré par les débutants. <br/> Avec ce tuto, la constance n'aura plus de secrets pour vous. ;)</p><p id="r-343314" data-claire-element-id="343314">Vous ne devriez pas avoir besoin d'un bon niveau en C++ pour suivre ce tutoriel. Le Zéro moyen à qui il s'adresse est celui qui a déjà écrit quelques classes et fonctions, même très simples, sans se soucier de problèmes de constance. <br/> Il est possible que vous ne soyez pas familiers avec certaines notions évoquées ici. Je vous ai généralement laissé un lien vers un article (le plus accessible possible) pour que vous puissiez découvrir ou réviser ce dont il est question.</p>
+</div><a name="Introduction"></a><h2>Introduction</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/elements-de-syntaxes-et-generalites">
+<span class="next">Éléments de syntaxes et généralités</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-qu-est-ce-que-la-const-correctness" data-claire-element-id="343317">Qu'est-ce que la const-correctness ?</h2><p id="r-343315" data-claire-element-id="343315">On pourrait (parce qu'on ne le fait jamais) traduire le terme de <strong>const-correctness</strong> par « correction de la constance », le mot « correction » renvoyant bien sûr à la qualité de ce qui est correct. La const-correctness est donc tout simplement la manière d'utiliser correctement la constance dans un code, et un code écrit de cette manière est dit <strong>const-correct</strong>.</p><p id="r-343316" data-claire-element-id="343316">La constance en C++ est matérialisée par un mot-clé : <code data-claire-semantic="cpp">const</code> qui, vous le savez, permet notamment de déclarer une variable comme étant constante, c'est-à-dire que sa valeur n'est pas sensée changer au cours de l'exécution du programme. <br/> La const-correctness inclue également l'utilisation d'un mot-clé et d'un opérateur que l'on emploie moins mais que nous allons étudier ici : <code data-claire-semantic="cpp">mutable</code> et <code data-claire-semantic="cpp">const_cast</code>. Ces deux éléments permettent dans une certaine mesure d'ignorer la constance d'une variable.</p><h2 id="r-pourquoi-ecrire-un-code-const-correct" data-claire-element-id="343325">Pourquoi écrire un code const-correct ?</h2><p id="r-343318" data-claire-element-id="343318">L'existence de <code data-claire-semantic="cpp">mutable</code> et de <code data-claire-semantic="cpp">const_cast</code> nous amène à cette terrible vérité : une variable constante peut voir son état modifié durant l'exécution du programme.</p><p id="r-343319" data-claire-element-id="343319">...</p><p id="r-343320" data-claire-element-id="343320">o_O</p><p id="r-343321" data-claire-element-id="343321">Mais dans ce cas, quel est l'intérêt de déclarer une variable constante si elle peut être modifiée ?</p><p id="r-343322" data-claire-element-id="343322">Certains programmeurs pensent que le mot-clé <code data-claire-semantic="cpp">const</code> permet au compilateur de faire des optimisations. C'est faux la plupart du temps, on n'est jamais à l'abri d'un <code data-claire-semantic="cpp">const_cast</code> ou d'un <code data-claire-semantic="cpp">mutable</code> qui viendrait rompre l'immutabilité supposée de notre objet. Je n'entrerais pas dans le détail des cas où la présence de <code data-claire-semantic="cpp">const</code> permet ou non des optimisations, si cela vous intéresse, je vous renvoie à <a href="http://www.gotw.ca/gotw/081.htm">cet article</a> (en anglais) d'Herb Sutter qui traite de cette question bien mieux que je ne saurais le faire. Nous allons tout de même aborder une de ces optimisations, très importante, facile à mettre en place et qui à elle seule va justifier l'écriture d'un code const-correct.</p><p id="r-343323" data-claire-element-id="343323">Hormis ce cas la const-correctness est utile au développeur comme sécurité lorsqu'il programme, puisque modifier accidentellement une variable constante entrainera une erreur de compilation. Elle sert également de documentation. Par exemple, utiliser des paramètres constants indique immédiatement à l'utilisateur que la fonction ne modifiera pas les variables qu'on lui envoie.</p><p id="r-343324" data-claire-element-id="343324">Au cours de ce tutoriel, nous allons approfondir ces avantages et en découvrir de nouveaux. Vous verrez que bientôt la const-correctness vous deviendra indispensable.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros">La const-correctness expliquée aux Zéros</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/introduction-47">
+Introduction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/elements-de-syntaxes-et-generalites">
+Éléments de syntaxes et généralités
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/l-interet-de-la-const-correctness-enfin">
+L&#039;intérêt de la const-correctness, enfin !
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/allons-plus-loin-dans-la-constance">
+Allons plus loin dans la constance !
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/const-cast-et-mutable-alterer-la-constance-d-une-variable">
+const_cast et mutable : altérer la constance d&#039;une variable
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/elements-de-syntaxes-et-generalites">
+<span class="next">Éléments de syntaxes et généralités</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="lmentsdesyntaxesetgnralits"></a><h2>Éléments de syntaxes et généralités</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/introduction-47">
+<span class="arrow"></span>
+<span class="next">Introduction</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/l-interet-de-la-const-correctness-enfin">
+<span class="next">L&#039;intérêt de la const-correctness, enfin !</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-les-valeurs-constantes" data-claire-element-id="343347">Les valeurs constantes</h2><p id="r-343327" data-claire-element-id="343327">Comme le veut la politique du site, nous allons partir de zéro et reprendre la base de l'utilisation de <code data-claire-semantic="cpp">const.</code> La const-correctness touchant le développement d'une application, la plupart des exemples que je vais présenter n'auront d'intérêt qu'à la compilation, ne vous en étonnez pas.</p><p id="r-343328" data-claire-element-id="343328">Le mot-clé <code data-claire-semantic="cpp">const</code> empêche toute modification ultérieure de la valeur d'une variable. L'<strong>état</strong> de cette variable ne pourra plus être modifié. Essayer de le faire malgré tout entrainera une erreur à la compilation. Dans le cas d'une classe ou d'une structure, tous les sous-objets de l'objet constant sont également constants.</p><p id="r-343329" data-claire-element-id="343329">Déclarer une variable constante se fait comme ceci :</p><pre id="r-343330" data-claire-element-id="343330"><code data-claire-semantic="cpp">int const maVariable;</code></pre><p id="r-343331" data-claire-element-id="343331">Cette déclaration peut vous sembler étonnante. Vous avez certainement appris, via le tuto de M@teo21 par exemple, qu'une constante se déclarait :</p><pre id="r-343332" data-claire-element-id="343332"><code data-claire-semantic="cpp">const int maVariable;</code></pre><p id="r-343333" data-claire-element-id="343333">Cela n'est pas tout à fait exact. En fait, la règle générale est que le mot-clé <code data-claire-semantic="cpp">const</code> s'applique à ce qui se trouve directement à sa gauche ou, s'il n'y a rien qui le précède dans la déclaration à ce qui se trouve à sa droite. Ajoutons à cela que dans le cas d'un type composé (comme un pointeur ou un tableau), la constance est applicable exclusivement à l'élément directement à gauche (ou à droite s'il n'y a rien à gauche) et non à l'ensemble de la déclaration.</p><p id="r-343334" data-claire-element-id="343334">Pour s'en convaincre, examinons le code suivant :</p><pre id="r-343335" data-claire-element-id="343335"><code data-claire-semantic="cpp">int i, j;
+int const * p = &amp;i;
+
+*p = j; //Erreur, la valeur pointée par p est constante.
+p = &amp;j; //Correct, le pointeur p n'est pas constant</code></pre><p id="r-343336" data-claire-element-id="343336">Seule la deuxième ligne compile, ce qui corrobore bien l'affirmation faite plus haut. Pour ma part, je préfère mettre le const à gauche lorsque c'est possible pour faciliter la lecture et éviter une confusion si le lecteur ne connait pas la règle.</p><p id="r-343337" data-claire-element-id="343337">Si vous avez essayé de compiler les exemples précédents, vous vous serez aperçu que cela ne fonctionne pas. La raison est simple : une variable constante doit être initialisée lorsqu'elle est déclarée. Et c'est assez logique : en C++ si vous n'initialisez pas une variable celle-ci peut prendre n'importe quelle valeur, et comme vous ne pourrez la modifier par la suite, le résultat serait être assez hasardeux. <br/> Je me permets parfois de ne pas initialiser les variables dans les exemples pour ne conserver que ce qui a de l'importance. De votre côté n'oubliez pas d'attribuer une valeur à chaque constante que vous déclarerez.</p><div id="r-343339" data-claire-element-id="343339" data-claire-semantic="question"><p id="r-343338" data-claire-element-id="343338">Question subsidiaire : comment déclarer un pointeur constant ? Un pointeur constant sur une valeur constante ?</p></div><p id="r-343340" data-claire-element-id="343340">Si vous avez compris ce que je viens de dire, cela ne devrait poser aucun problème.</p><p id="r-343341" data-claire-element-id="343341">Voici la réponse :</p><pre id="r-343342" data-claire-element-id="343342"><code data-claire-semantic="cpp">int * const p; //Pointeur constant sur un int non constant
+const int * const q; //Pointeur constant sur un int constant</code></pre><p id="r-343343" data-claire-element-id="343343">Un pointeur constant ne peut voir l'adresse qu'il contient modifiée. A la syntaxe près, il est donc identique à une référence et l'on préfèrera systématiquement utiliser cette dernière.</p><p id="r-343344" data-claire-element-id="343344">Une dernière petite remarque pour clore ce paragraphe :</p><pre id="r-343345" data-claire-element-id="343345"><code data-claire-semantic="cpp">int&amp; const i;</code></pre><p id="r-343346" data-claire-element-id="343346">Cette déclaration est absurde. Vous le savez maintenant, ici le mot-clé <code data-claire-semantic="cpp">const</code> ne s'applique pas à int, et il est impossible de réinitialiser une référence pour en faire un alias d'une autre variable. En clair, une référence est toujours constante, c'est le type pointé qui peut l'être ou non (toutefois, par abus de langage, on désignera par « référence constante » une référence vers un type constant). <br/> La norme interdit cette syntaxe mais certains compilateurs s'ils ne sont pas bien réglés laisserons passer l'erreur. Notez qu'il est possible d'arriver à une déclaration de ce genre via l'utilisation de <code data-claire-semantic="cpp">typedef.</code> Dans ce cas on ne considère pas ça comme une erreur : un type plusieurs fois qualifié constant étant simplement constant.</p><h2 id="r-les-fonctions-constantes" data-claire-element-id="343358">Les fonctions constantes</h2><p id="r-343348" data-claire-element-id="343348">Le terme de fonction constante ne peut s'appliquer qu'à une <strong>fonction membre</strong>. Et pour cause ! Le principe d'une fonction constante est qu'elle ne modifie pas l'objet sur lequel elle est appelée.</p><p id="r-343349" data-claire-element-id="343349">Une fonction constante est définie comme ceci :</p><pre id="r-343350" data-claire-element-id="343350"><code data-claire-semantic="cpp">struct Exemple
+{
+    void bar() const 
+    {
+    }
+
+//Ou, si l'implémentation est dissociée de la déclaration : 
+    void foo() const;
+};
+
+void Exemple::foo() const 
+{
+}</code></pre><p id="r-343351" data-claire-element-id="343351">Comme pour les valeurs constantes, le mot-clé vient se placer à droite de ce qui est qualifié (le prototype) mais avant le corps de la fonction. Notez la répétition du mot-clé lorsque l'implémentation est séparée de la définition : elle est obligatoire.</p><p id="r-343352" data-claire-element-id="343352">Si votre fonction doit être virtuelle pure, la déclaration est la suivante :</p><pre id="r-343353" data-claire-element-id="343353"><code data-claire-semantic="cpp">struct Exemple
+{
+    virtual void foo() const = 0;
+};</code></pre><p id="r-343354" data-claire-element-id="343354">Pour s'assurer qu'aucune instruction exécutée dans votre code ne viendra modifier l'état de votre objet au moment de l'appel, tous les attributs utilisés dans votre fonction constante sont considérés comme étant constants. De même, la valeur pointée par le pointeur <code data-claire-semantic="cpp">this</code> sera aussi constante. En fait, c'est parce que votre objet (pointé par <code data-claire-semantic="cpp">this</code>) est considéré comme étant constant que tous ses sous-objets (ses attributs, que vous utilisez dans votre fonction) seront constants.</p><pre id="r-343355" data-claire-element-id="343355"><code data-claire-semantic="cpp">struct Exemple
+{
+    void foo() const 
+    {
+        mon_int = 0; //Erreur, mon_int est constant.
+    }
+    
+    int mon_int;
+};</code></pre><p id="r-343356" data-claire-element-id="343356">Fort heureusement, ceci ne s'applique qu'à l'objet sur lequel est appelée la fonction, et non aux paramètres, même s'ils sont du même type.</p><pre id="r-343357" data-claire-element-id="343357"><code data-claire-semantic="cpp">struct Exemple
+{
+    void foo(Exemple&amp; exemple) const
+    {
+        exemple.mon_int = 0; //Ok, mon_int appartenant à exemple n'est pas constant.
+    }
+
+    int mon_int;
+};</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros">La const-correctness expliquée aux Zéros</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/introduction-47">
+Introduction
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/elements-de-syntaxes-et-generalites">
+Éléments de syntaxes et généralités
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/l-interet-de-la-const-correctness-enfin">
+L&#039;intérêt de la const-correctness, enfin !
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/allons-plus-loin-dans-la-constance">
+Allons plus loin dans la constance !
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/const-cast-et-mutable-alterer-la-constance-d-une-variable">
+const_cast et mutable : altérer la constance d&#039;une variable
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/introduction-47">
+<span class="arrow"></span>
+<span class="next">Introduction</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/l-interet-de-la-const-correctness-enfin">
+<span class="next">L&#039;intérêt de la const-correctness, enfin !</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="L039intrtdelaconst-correctnessenfin"></a><h2>L&#039;intérêt de la const-correctness, enfin !</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/elements-de-syntaxes-et-generalites">
+<span class="arrow"></span>
+<span class="next">Éléments de syntaxes et généralités</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/allons-plus-loin-dans-la-constance">
+<span class="next">Allons plus loin dans la constance !</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-une-optimisation-bien-utile-le-passage-de-parametres-par-reference-constante" data-claire-element-id="343371">Une optimisation bien utile : le passage de paramètres par référence constante</h2><p id="r-343360" data-claire-element-id="343360">Je vous parlais d'une optimisation en introduction, nous y voilà. Imaginez un objet très lourd en mémoire. Imaginez maintenant que vous deviez le passer en paramètre d'une fonction qui ne le modifiera pas (donc pas besoin de pointeurs/références à priori). Une implémentation naïve de cette fonction pourrait être :</p><pre id="r-343361" data-claire-element-id="343361"><code data-claire-semantic="cpp">void maFonction(UneClasseAvecBeaucoupDeDonnees unObjetTresLourd)
+{
+    //Utilisation d' unObjetTresLourd
+}</code></pre><p id="r-343362" data-claire-element-id="343362">Ici, l'objet est copié en mémoire, on va se retrouver avec deux instances de notre classe très lourde alors que finalement, si nous n'avions pas écrit de fonction et mis le code directement dans le main, nous n'aurions eu besoin que d'un objet.</p><p id="r-343363" data-claire-element-id="343363">Et si nous voulions à l'intérieur de notre fonction passer cet objet à une autre fonction ? L'objet en question serait à nouveau dupliqué, multipliant ainsi les instances inutiles et consommant beaucoup plus de ressources que nécessaires.</p><p id="r-343364" data-claire-element-id="343364">C'est pour échapper à ce problème que l'on passe les objets par référence. Le principe est simplement de remplacer notre paramètre par une référence (ou un pointeur, mais c'est moins pratique) pour éviter la copie de l'objet. Notre prototype deviendrait donc :</p><pre id="r-343365" data-claire-element-id="343365"><code data-claire-semantic="cpp">void maFonction(const UneClasseAvecBeaucoupDeDonnees&amp; unObjetTresLourd);</code></pre><p id="r-343366" data-claire-element-id="343366">Au lieu de copier l'intégralité de l'objet, on se contente de créer une référence (très légère) qui pointe dessus et qui s'utilisera de la même façon. Bien entendu, comme notre objet n'est pas sensé être modifié par la fonction nous déclarons notre référence comme étant constante. <br/> De manière générale, on préfèrera toujours passer un objet par référence constante plutôt que par copie, même si le gain semble minime. C'est l'exception qui confirme la fameuse First Rule of Program Optimization (Don't do it !).</p><aside id="r-343368" data-claire-element-id="343368" data-claire-semantic="warning"><p id="r-343367" data-claire-element-id="343367">Attention, tout cela ne s'applique qu'aux objets, c'est-à-dire aux instances d'une classe, et non aux types fondamentaux (int, char, double...) !<br/> Ceux-là sont déjà suffisamment légers pour que l'on se permette de les passer systématiquement par copie.<br/> Ne m'écrivez surtout pas une horreur comme <code data-claire-semantic="cpp">void maFonction(const bool&amp;);</code></p></aside><aside id="r-343370" data-claire-element-id="343370" data-claire-semantic="information"><p id="r-343369" data-claire-element-id="343369">Notons deux avantages supplémentaires au passage par référence : premièrement l'usage d'une référence vous permet de tirer parti du <a href="http://www.siteduzero.com/tutoriel-3-63899-le-polymorphisme-i.html">polymorphisme d'inclusion</a> et secondement il vous autorise à passer en paramètre de vos fonctions des objets à <a href="http://www.siteduzero.com/tutoriel-3-8943-retour-sur-l-heritage.html#ss_part_3">sémantiques d'entité </a>qui sont par définition non copiables. <br/> Maintenant vous n'avez plus aucune excuse pour ne pas implémenter vos sémantiques correctement ;)</p></aside><h2 id="r-references-contre-references-constantes-un-choix-pas-si-anodin" data-claire-element-id="343386">Références contre références constantes, un choix pas si anodin</h2><p id="r-343372" data-claire-element-id="343372">Utiliser des références pour alléger les appels de fonction c'est bien beau, mais certains trouveront encore à me dire que sans les const qui se promènent le prototype serait plus lisible. Un commentaire indiquant qu'on ne touchera pas à l'état de l'objet pointé et hop on aura un code plus clair et tout aussi efficace.</p><p id="r-343373" data-claire-element-id="343373">J'aimerai que cela soit aussi simple, malheureusement si vous tentez l'expérience, vous allez vite vous retrouver confronté à des ennuis. <br/> Faisons l'essai avec un cas récurrent, celui de la surcharge des opérateurs. Reprenons par exemple une classe définie dans le tuto sur la surcharge des opérateurs :</p><pre id="r-343374" data-claire-element-id="343374"><code data-claire-semantic="cpp">class Duree
+{
+    public:
+        explicit Duree(int heures = 0, int minutes = 0, int secondes = 0) : my_time(heures*3600 + minutes*60 + secondes) {}
+
+    private:
+        friend Duree operator+(Duree&amp;,Duree&amp;); //Essayons avec des références non constantes
+        unsigned int my_time;
+};</code></pre><p id="r-343375" data-claire-element-id="343375">Je l'ai un peu simplifiée mais elle joue le même rôle.</p><p id="r-343376" data-claire-element-id="343376">Définissons maintenant l'opérateur d'addition et testons voir s'il fonctionne.</p><pre id="r-343377" data-claire-element-id="343377"><code data-claire-semantic="cpp">Duree operator+(Duree&amp; lhs, Duree&amp; rhs) //Normalement on ne définit pas exactement cet opérateur de cette manière mais je me le permet ici par souci de simplicité.
+{
+    Duree tmp;
+    tmp.my_time = lhs.my_time + rhs.my_time;
+    return tmp;
+}
+
+int main()
+{
+    Duree d1(1,56,10), d2(2,3,50);
+    Duree d3 = d1+d2;
+}</code></pre><p id="r-343378" data-claire-element-id="343378">Jusqu'ici pas de problème, mais le gros intérêt de la surcharge des opérateurs c'est de pouvoir chainer les opérations. Essayons :</p><pre id="r-343379" data-claire-element-id="343379"><code data-claire-semantic="cpp">Duree d4 = d1 + d2 + d3;</code></pre><p id="r-343380" data-claire-element-id="343380">Et là, c'est le drame. Le compilateur nous sort une erreur incompréhensible du genre :</p><aside id="r-343382" data-claire-element-id="343382" data-claire-semantic="error"><p id="r-343381" data-claire-element-id="343381">error: no match for ‘operator+’ in ‘operator+((* &amp; d1), (* &amp; d2)) + d3’|</p></aside><p id="r-343383" data-claire-element-id="343383">Que s'est-t-il passé ? Eh bien, cher ami zéro, nous venons d'avoir la preuve que <code data-claire-semantic="cpp">const</code> n'est pas qu'un accessoire pour le développeur C++.</p><p id="r-343384" data-claire-element-id="343384">La raison de notre erreur est la suivante : une référence non constante ne peux pas être initialisée par un objet temporaire. Or c'est précisément ce que doit renvoyer l'opérateur d'addition. <br/> Dans notre cas, le résultat de d1 + d2 est calculé en premier et l'objet récupéré, qui est temporaire (appelons le d5) est passé en paramètre de l'opération suivante : d5 + d3.<br/> Nous n'avons d'autre choix que d'ajouter <code data-claire-semantic="cpp">const</code> pour transformer nos références en références constantes qui, elles, peuvent être initialisées avec un objet temporaire.</p><p id="r-343385" data-claire-element-id="343385">Compilez (n'oubliez pas de changer la déclaration friend dans la classe), ça marche, notre problème est résolu et à l'avenir vous utiliserez des références constantes dans vos prototypes ;) -</p><h2 id="r-const-fait-des-vagues" data-claire-element-id="343398">const fait des vagues</h2><p id="r-343387" data-claire-element-id="343387">Supposons, et c'est légitime, que nous voulions afficher notre classe Duree. Ajoutons donc une fonction membre comme le ferait la plupart des zéros :</p><pre id="r-343388" data-claire-element-id="343388"><code data-claire-semantic="cpp">class Duree
+{
+    public:
+        explicit Duree(int heures = 0, int minutes = 0, int secondes = 0) : my_time(heures*3600 + minutes*60 + secondes) {}
+        void afficher() //Être SRP-correct ou ne pas l'être ? --private-joke
+        {
+            std::cout &lt;&lt; my_time / 3600 &lt;&lt; &quot;h&quot; &lt;&lt; my_time % 3600 / 60 &lt;&lt; &quot;m&quot; &lt;&lt; my_time % 60 &lt;&lt; &quot;s&quot;;
+        }
+
+    private:
+        friend Duree operator+(const Duree&amp;,const Duree&amp;);
+        unsigned int my_time;
+};</code></pre><p id="r-343389" data-claire-element-id="343389">Notre classe devrait maintenant ressembler à cela.</p><p id="r-343390" data-claire-element-id="343390">Essayons maintenant de créer une fonction tout ce qu'il y a de plus normale, prenant un objet de type Duree en paramètre et qui appellerait finalement la fonction Duree::afficher().</p><pre id="r-343391" data-claire-element-id="343391"><code data-claire-semantic="cpp">void maFonction(const Duree&amp; duree) //Vous aviez pensé à la référence constante n'est-ce pas ? ;)
+{
+    //Du code ...
+    duree.afficher();
+}</code></pre><p id="r-343392" data-claire-element-id="343392">Comme vous pouvez vous en douter, cela ne va pas fonctionner. L'objet duree est constant, on ne peut pas appeler une de ses fonctions membres comme cela.</p><p id="r-343393" data-claire-element-id="343393">La réponse à ce problème est évidemment notre mot-clé favori : <code data-claire-semantic="cpp">const</code>. Vous vous souvenez des fonctions constantes ? Le mot-clé const à la fin du prototype nous indique que la fonction ne modifie pas l'objet qui l'appelle, et cette information est valable également pour le compilateur ! <br/> Ce dernier sait dans ce cas que la fonction est inoffensive et peut en accorder l'utilisation par un objet constant.</p><p id="r-343394" data-claire-element-id="343394">Corrigeons donc notre fonction et compilons :</p><pre id="r-343395" data-claire-element-id="343395"><code data-claire-semantic="cpp">class Duree
+{
+    public:
+        explicit Duree(int heures = 0, int minutes = 0, int secondes = 0) : my_time(heures*3600 + minutes*60 + secondes) {}
+        void afficher() const 
+        {
+            std::cout &lt;&lt; my_time / 3600 &lt;&lt; &quot;h&quot; &lt;&lt; my_time % 3600 / 60 &lt;&lt; &quot;m&quot; &lt;&lt; my_time % 60 &lt;&lt; &quot;s&quot;;
+        }
+
+    private:
+        friend Duree operator+(const Duree&amp;,const Duree&amp;);
+        unsigned int my_time;
+};
+
+void maFonction(const Duree&amp; duree)
+{
+    duree.afficher();
+}</code></pre><p id="r-343396" data-claire-element-id="343396">Ça fonctionne, nous avons surmonté la dernière difficulté (si l'on peut dire) introduite par la const-correctness :) .</p><p id="r-343397" data-claire-element-id="343397">Vous avez pu le remarquer à travers ces exemples, ajouter <code data-claire-semantic="cpp">const</code> en un point de votre code a des répercussions sur le tout le reste, c'est pourquoi il est important de commencer à produire du code const-correct dès le début d'un projet. Dans le cas contraire vous allez devoir reprendre une grande partie de ce qui a déjà été fait et vous heurter à de nombreuses erreurs de compilation qui vont se déclarer en cascade et vous noyer sous la masse de corrections à apporter (c'est du vécu). Je ne le répèterais jamais assez, utilisez le mot-clé <code data-claire-semantic="cpp">const</code> autant que possible.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros">La const-correctness expliquée aux Zéros</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/introduction-47">
+Introduction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/elements-de-syntaxes-et-generalites">
+Éléments de syntaxes et généralités
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/l-interet-de-la-const-correctness-enfin">
+L&#039;intérêt de la const-correctness, enfin !
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/allons-plus-loin-dans-la-constance">
+Allons plus loin dans la constance !
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/const-cast-et-mutable-alterer-la-constance-d-une-variable">
+const_cast et mutable : altérer la constance d&#039;une variable
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/elements-de-syntaxes-et-generalites">
+<span class="arrow"></span>
+<span class="next">Éléments de syntaxes et généralités</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/allons-plus-loin-dans-la-constance">
+<span class="next">Allons plus loin dans la constance !</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Allonsplusloindanslaconstance"></a><h2>Allons plus loin dans la constance !</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/l-interet-de-la-const-correctness-enfin">
+<span class="arrow"></span>
+<span class="next">L&#039;intérêt de la const-correctness, enfin !</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/const-cast-et-mutable-alterer-la-constance-d-une-variable">
+<span class="next">const_cast et mutable : altérer la constance d&#039;une variable</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-343400" data-claire-element-id="343400">Arrivés à ce stade, nous avons déjà vu l'essentiel de ce qui touche à la const-correctness. Normalement vous devriez pouvoir écrire un code const-correct qui fera l'admiration de vos proches (ne rêvons pas trop non plus). Pourtant nous n'avons pas fini de parler de ce détail que vous avez pu trouver parfaitement anodin à vos débuts.</p><h2 id="r-utilisez-const-autant-que-possible-mais-pas-trop" data-claire-element-id="343416">Utilisez const autant que possible, mais pas trop.</h2><p id="r-343401" data-claire-element-id="343401">Comme toutes les bonnes choses (à part le Logiciel Libre évidemment ;) ), il ne faut pas abuser de <code data-claire-semantic="cpp">const</code> ! <br/> Voici un exemple relativement fréquent d'un emploi absolument inutile de ce mot-clé :</p><pre id="r-343402" data-claire-element-id="343402"><code data-claire-semantic="cpp">void maFonction(const int);</code></pre><p id="r-343403" data-claire-element-id="343403">Même si nous n'allons pas modifier le paramètre dans la fonction, l'utilisateur n'en a que faire, puisque vous ne récupérez qu'une copie. Dans ce cas, vous avez pris la peine d'écrire 5 caractères de trop, qui alourdissent votre prototype et n'apportent rien sémantiquement. <br/> En bref, pour les types fondamentaux contentez-vous d'une copie non constante (si vous avez pensé « il manque la référence » c'est qu'il faut que vous relisiez la note à la fin du paragraphe sur le passage par référence constante ;) ).</p><p id="r-343404" data-claire-element-id="343404">Autre emploi contestable de const :</p><pre id="r-343405" data-claire-element-id="343405"><code data-claire-semantic="cpp">class Exemple 
+{
+    public : 
+        const int get() const {return my_int;}
+    private : 
+        int my_int;
+        
+};</code></pre><p id="r-343406" data-claire-element-id="343406">Bien entendu la fonction doit être constante, seul le retour est concerné. Ici l'intérêt du <code data-claire-semantic="cpp">const</code> est également nul. Le retour n'est pas une référence ni un pointeur, donc l'utilisateur ne pourrait de toutes façons pas modifier l'état de l'objet (mon compilateur a même la gentillesse de me prévenir que le qualificateur n'a aucun effet dans ce cas).</p><p id="r-343407" data-claire-element-id="343407">La situation est presque identique dans le cas d'objets, à ceci près qu'un retour constant permet d'éviter l'absurdité sémantique suivante :</p><pre id="r-343408" data-claire-element-id="343408"><code data-claire-semantic="cpp">class Exemple
+{
+    public :
+        std::string get() const {return my_str;}
+    private :
+        std::string my_str;
+
+};
+
+int main()
+{
+    Exemple e;
+    e.get() = &quot;gné ?&quot;;
+}</code></pre><p id="r-343409" data-claire-element-id="343409">Ce code compile sans problème. A vous de juger si cela vaut la peine d'ajouter un <code data-claire-semantic="cpp">const</code>.</p><p id="r-343410" data-claire-element-id="343410">Dernier cas, peut-être plus problématique.</p><pre id="r-343411" data-claire-element-id="343411"><code data-claire-semantic="cpp">class Exemple
+{
+    public :
+        const std::string&amp; get() const {return my_str;}
+    private :
+        std::string my_str;
+};
+
+//Ou encore
+const Exemple&amp; foo(const Exemple&amp; e)
+{
+    //Du code 
+    return e;
+}</code></pre><p id="r-343412" data-claire-element-id="343412">Je vous ai promis de ne pas rentrer dans des détails d'optimisation, alors pour faire simple : renvoyez une copie, personne ne vous en voudra. De toutes façons le compilateur optimise le retour la majeure partie du temps, alors n'alourdissez pas le prototype de vos fonctions inutilement.</p><p id="r-343413" data-claire-element-id="343413">Un cas dangereux (et donc à bannir) :</p><pre id="r-343414" data-claire-element-id="343414"><code data-claire-semantic="cpp">const Exemple&amp; foo()
+{
+    return Exemple();
+}</code></pre><p id="r-343415" data-claire-element-id="343415">Ici votre compilateur devrait vous avertir : vous renvoyez une référence constante sur un objet qui est détruit à la fin de la portée (oui, ce n'est pas la variable créée par l'instruction Exemple() qui est renvoyée, seulement une référence dessus). Autrement dit vous allez manipuler un objet qui n'existe plus. Je vous laisse imaginer les conséquences.</p><h2 id="r-constance-et-typage" data-claire-element-id="343433">Constance et typage</h2><p id="r-343417" data-claire-element-id="343417">Vous l'avez peut-être deviné, je vous le confirme : utiliser <code data-claire-semantic="cpp">const</code> modifie le type de vos variables.<br/> Plus clairement, pour un type <code data-claire-semantic="cpp">T</code> donné, <code data-claire-semantic="cpp">const T</code> est d'un type différent. <br/> Mais quelque chose devrait alors vous interpeler. Reprenons un des premiers exemples de cet article :</p><pre id="r-343418" data-claire-element-id="343418"><code data-claire-semantic="cpp">int i = 0, j = 1;
+int const * p = &amp;i;
+
+*p = j;
+p = &amp;j;</code></pre><p id="r-343419" data-claire-element-id="343419">Ici nous faisons pointer notre pointeur sur un <code data-claire-semantic="cpp">int</code> constant sur un <code data-claire-semantic="cpp">int</code>... non constant.</p><p id="r-343420" data-claire-element-id="343420">C'est une opération que vous avez sans doute fait sans vous apercevoir, mais si le typage du C++ était plus fort, cette opération ne serait pas acceptée. <br/> En C++ le transtypage d'un pointeur sur un type non constant à un pointeur sur un type constant est implicite, ce qui veut dire que vous n'avez pas à vous en préoccuper. En revanche l'opération inverse n'est pas permise ! Il est impossible d'initialiser directement un pointeur ou une référence sur un type non constant avec un pointeur sur un type constant. Dans le cas inverse vous pourriez modifier l'objet constant comme s'il ne l'était pas. ^^</p><p id="r-343421" data-claire-element-id="343421">Dans ce cas, pourquoi peut-on le faire lorsqu'il s'agit de types non composés ? Tout simplement parce qu'une copie est créée dans ce cas. En réalité peu importe que la variable à copier soit ou non constante, elle n'est qu'un modèle et ne sera pas modifiée. Elle peut donc être systématiquement considérée comme étant constante, ce qui est le type le plus restrictif.</p><p id="r-343422" data-claire-element-id="343422">Une question pour vous : quelle est la condition pour que soit correcte la surcharge d'une fonction ? <br/> La réponse est : que les types de paramètres soient différents. <br/> On pourrait donc s'attendre à pouvoir surcharger une fonction attendant une variable d'un type T non constant avec une version attendant un T constant. Et bien non. En fait, la surcharge n'est possible que dans le cas de types composés (pointeurs, références, tableaux...).</p><pre id="r-343423" data-claire-element-id="343423"><code data-claire-semantic="cpp">void foo(const std::string&amp;){std::cout &lt;&lt; &quot;Je prends une référence constante en paramètre&quot; &lt;&lt; std::endl;}
+void foo(std::string&amp;)      {std::cout &lt;&lt; &quot;Je prends une référence non constante en paramètre&quot; &lt;&lt; std::endl;}
+//Essayez de retirer les références : si ça compile, changez de compilateur.
+
+int main()
+{
+    std::string ex = &quot;&quot;;
+    foo(&quot;ex&quot;);
+    foo(ex);
+}</code></pre><p id="r-343424" data-claire-element-id="343424">Comment le compilateur procède-t-il pour déterminer quelle fonction sera appelée ? La règle est simple : si cela est possible, la version de la fonction prenant en paramètre une référence non constante sera appelée. Dans le cas contraire c'est la version prenant une référence constante qui sera appelée.<br/> Dans notre cas :</p><pre id="r-343425" data-claire-element-id="343425"><code data-claire-semantic="console">Je prends une référence constante en paramètre
+Je prends une référence non constante en paramètre</code></pre><p id="r-343426" data-claire-element-id="343426">Notez qu'il n'est pas possible de jouer avec la constance des pointeurs, seulement avec le type pointé. Autrement dit, dans le cas d'une surcharge, un pointeur constant sur T (n'importe quel type) sera considéré équivalent à un pointeur non constant sur T.</p><p id="r-343427" data-claire-element-id="343427">Autre conséquence de cette différence de types : une erreur peut survenir lorsque vous utilisez des <a href="http://www.siteduzero.com/tutoriel-3-8965-c-notions-avancees.html#part_209329">classes templates</a>. Par exemple, un test d'égalité de types statique (qui vérifie à la compilation si deux types sont égaux, si si ça peut avoir de l'intérêt) échouerait si les paramètres passés étaient <code data-claire-semantic="cpp">int</code> et <code data-claire-semantic="cpp">const int</code>. <br/> Je vous le dit parce que cela m'est déjà arrivé mais c'est assez rare, rassurez-vous. ;) <br/> Si jamais vous ne trouvez pas l'origine d'une erreur de compilation en utilisant une classe template, vérifiez la const-correctness de votre code.</p><p id="r-343428" data-claire-element-id="343428">En revanche, toujours avec les templates, il y a une erreur dont vous n'avez pas à vous soucier, c'est l'accumulation de <code data-claire-semantic="cpp">const</code> :</p><pre id="r-343429" data-claire-element-id="343429"><code data-claire-semantic="cpp">template&lt;typename T&gt;
+void foo(const T);
+
+int main()
+{
+    const int i;
+    foo(i);
+}</code></pre><p id="r-343430" data-claire-element-id="343430">Comme nous l'avons dit précédemment, nous sommes autorisés à accumuler autant de <code data-claire-semantic="cpp">const</code> que nous voulons sur un seul type, le résultat sera toujours le même : un type constant.</p><p id="r-343431" data-claire-element-id="343431">Dernière petite chose, en manipulant des paramètres templates vous pouvez recevoir des classes comme des types fondamentaux. <br/> Quid alors d'un passage de paramètres dont le type dépends d'un template ? <br/> Choisirez-vous le passage par référence constante ou par copie ? <br/> En règle général mon conseil est de choisir la référence constante. Vous n'êtes jamais à l'abri de l'utilisation d'une classe extrêmement lourde, et le passage d'un <code data-claire-semantic="cpp">bool</code> par référence constante sera toujours moins dommageable que la copie d'un <code data-claire-semantic="cpp">std::array&lt;int, 10000&gt;</code>.</p><p id="r-343432" data-claire-element-id="343432">Si vous désirez quand même faire un choix plus précis, sachez qu'une bibliothèque de boost (<a href="http://www.boost.org/doc/libs/1_45_0/libs/utility/call_traits.htm">call_traits</a>) le fait pour vous, tout en réglant quelques autres menus problèmes. Mais souvenez-vous de ce que Donald Knuth vous dirait : « Early optimization is the root of much evil ».</p><h2 id="r-quelques-details-sur-les-objets-constants" data-claire-element-id="343450">Quelques détails sur les objets constants</h2><p id="r-343434" data-claire-element-id="343434">Revenons si vous le voulez bien sur le cas des objets constants. Il y a quelques petits détails que je voudrais aborder. Ceux-ci n'ont pas une grande importance mais tant qu'à faire essayons d'être exhaustifs sur le sujet.</p><p id="r-343435" data-claire-element-id="343435">Comme vous le savez, un objet dont la classe ne définit aucun constructeur est si possible construit à l'aide d'un constructeur trivial par défaut lorsqu'on l'instancie. Ceci n'est pas le cas pour un objet constant.</p><pre id="r-343436" data-claire-element-id="343436"><code data-claire-semantic="cpp">struct Exemple
+{
+};
+
+int main()
+{
+    const Exemple e; //Erreur ! Exemple n'a pas de constructeur
+    Exemple f; //Ok, appel au constructeur trivial
+}</code></pre><p id="r-343437" data-claire-element-id="343437">La raison à cela est qu'une variable constante doit obligatoirement être initialisée à la construction. Or, dans ce cas-là, l'appel au constructeur par défaut n'est pas une initialisation. D'ailleurs, si vous rajoutez des attributs à notre classe Exemple, vous verrez que le constructeur par défaut ne les initialise pas.</p><p id="r-343438" data-claire-element-id="343438">Pour conclure, retenez qu'il faut toujours initialiser explicitement une valeur constante, à moins qu'il ne s'agisse d'une instance d'une classe pour laquelle est défini un constructeur par défaut.</p><p id="r-343439" data-claire-element-id="343439">Les objets constants doivent donc nécessairement être initialisés à la construction. Cela vaut aussi pour les attributs constants, et la seule manière que nous avons d'initialiser un sous-objet à sa construction, c'est dans la liste d'initialisation de l'objet englobant :</p><pre id="r-343440" data-claire-element-id="343440"><code data-claire-semantic="cpp">struct Exemple
+{
+    const int i;
+    Exemple(int x) : i(x) //Seul moyen d'initialiser un attribut constant 
+    {
+    }
+};</code></pre><p id="r-343441" data-claire-element-id="343441">Petite exception : les attributs statiques constants. Comme il est impossible de passer par la liste d'initialisation, il va falloir recourir à une autre syntaxe.</p><pre id="r-343442" data-claire-element-id="343442"><code data-claire-semantic="cpp">struct Exemple
+{
+    static const int mon_attribut_statique;
+};
+
+const int Exemple::mon_attribut_statique = 0;</code></pre><p id="r-343443" data-claire-element-id="343443">Vous connaissez sans doute cette syntaxe, elle est identique à celle permettant d'initialiser un attribut statique non constant. Seulement cette fois vous ne pouvez pas vous en passer.</p><p id="r-343444" data-claire-element-id="343444">Deuxième point à aborder : vous vous souvenez qu'un objet constant étend sa constance à tous ses sous-objets. Ceci ne vaut pas pour les objets pointés par les pointeurs ou références membres. Un exemple sera sans doute plus parlant :</p><pre id="r-343445" data-claire-element-id="343445"><code data-claire-semantic="cpp">struct Exemple
+{
+    int* ptr; //Cela vaut aussi pour une référence
+    void foo() const {*ptr = 0;} //OK...
+};</code></pre><p id="r-343446" data-claire-element-id="343446">Cela est un peu contre-intuitif, je vous l'accorde, mais pas complètement absurde. Le but d'un pointeur est en effet de référencer une autre variable. Cette dernière n'appartient donc pas à l'objet qui contient le pointeur, et la constance ne s'étend pas jusqu'à elle.</p><p id="r-343447" data-claire-element-id="343447">Dernière chose, bien utile pour les conteneurs : il est possible de surcharger une fonction membre en proposant une version constante et une version non constante prenant des paramètres de même type ! Voyons plutôt :</p><pre id="r-343448" data-claire-element-id="343448"><code data-claire-semantic="cpp">#include &lt;string&gt;
+#include &lt;iostream&gt;
+
+class Exemple
+{
+    public :
+        int get() const
+        {
+            return mon_attribut;
+        }
+
+        int&amp; get() //Je vous rappelle que le type de retour n'est pas discriminant pour déterminer si la surcharge est possible.
+        {
+            return mon_attribut;
+        }
+
+    private :
+        int mon_attribut;
+};
+
+void afficher(const Exemple&amp; e)
+{
+    std::cout &lt;&lt; e.get() &lt;&lt; std::endl;
+    // Notez que dans cette fonction, la ligne suivante ne compilerait pas, bien que la variable renvoyée par get soit une copie :
+    // e.get() = 1; // Erreur
+    //
+    // En revanche, comme indiqué précédement, si get renvoyait un std::string, ceci compilerait
+    // e.get() = &quot;gné&quot;; // Ok
+    //
+    // Toutefois, e.mon_attribut ne serait pas modifié.
+}
+
+int main()
+{
+    Exemple exemple; //Mon objet n'est pas initialisé souvenez-vous. mon_attribut peut potentiellement avoir n'importe quelle valeur.
+    exemple.get() = 1; //Syntaxe étrange, mais remplacez get par l'opérateur d'indexation (operator[])... Ça y est, vous y êtes ?
+    afficher(exemple);
+}</code></pre><p id="r-343449" data-claire-element-id="343449">En pratique, je vous déconseille fortement ce type de code (renvoyer une référence sur un attribut) qui brise complètement l'encapsulation de votre classe. Notez comme pour la surcharge des paramètres que le compilateur appellera en priorité la version non constante de la fonction.<br/> Je pense que vous saisissez l'intérêt de cette surcharge : vous pouvez ainsi proposer des services différents selon que l'objet sur lequel cette fonction sera appelé est ou non constant. Exemple : un accès en lecture dans le cas d'un conteneur constant (c'est donc quelque chose qu'il faudra systématiquement faire dans ce cas).</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros">La const-correctness expliquée aux Zéros</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/introduction-47">
+Introduction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/elements-de-syntaxes-et-generalites">
+Éléments de syntaxes et généralités
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/l-interet-de-la-const-correctness-enfin">
+L&#039;intérêt de la const-correctness, enfin !
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/allons-plus-loin-dans-la-constance">
+Allons plus loin dans la constance !
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/const-cast-et-mutable-alterer-la-constance-d-une-variable">
+const_cast et mutable : altérer la constance d&#039;une variable
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/l-interet-de-la-const-correctness-enfin">
+<span class="arrow"></span>
+<span class="next">L&#039;intérêt de la const-correctness, enfin !</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/const-cast-et-mutable-alterer-la-constance-d-une-variable">
+<span class="next">const_cast et mutable : altérer la constance d&#039;une variable</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="const_castetmutablealtrerlaconstanced039unevariable"></a><h2>const_cast et mutable : altérer la constance d&#039;une variable</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/allons-plus-loin-dans-la-constance">
+<span class="arrow"></span>
+<span class="next">Allons plus loin dans la constance !</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-const-cast-les-origines-du-mal" data-claire-element-id="343471">const_cast : les origines du mal</h2><aside id="r-343453" data-claire-element-id="343453" data-claire-semantic="error"><p id="r-343452" data-claire-element-id="343452">Attention ! Utiliser <code data-claire-semantic="cpp">const_cast</code> c'est <strong>mal</strong>.</p></aside><p id="r-343454" data-claire-element-id="343454">Je caricature un peu, mais c'est pour que vous compreniez bien qu'utiliser <code data-claire-semantic="cpp">const_cast</code> ne se fait pas à la légère. Il n'y a en effet que très peu d'occasions où cela est justifié.</p><p id="r-343455" data-claire-element-id="343455">Commençons par le commencement. <code data-claire-semantic="cpp">const_cast</code> est un opérateur de conversion qui permet de modifier la cv-qualification d'une variable.</p><div id="r-343457" data-claire-element-id="343457" data-claire-semantic="question"><p id="r-343456" data-claire-element-id="343456">La sivi quoi ? o_O</p></div><p id="r-343458" data-claire-element-id="343458">En C++ les mots-clés <code data-claire-semantic="cpp">const</code> et <code data-claire-semantic="cpp">volatile</code> sont appelés des <strong>cv-qualifiers</strong>. Nous n'entrerons pas dans le détail de l'utilité de <code data-claire-semantic="cpp">volatile</code>, sachez simplement que d'un point de vue syntaxique, ce qualificateur se comporte exactement comme <code data-claire-semantic="cpp">const</code>.<br/> Tout type faisant intervenir un de ces mots-clés est dit <strong>cv-qualified</strong>. Plus précisément, il peut être <strong>const-qualified</strong>, <strong>volatile-qualified</strong> ou même <strong>const-volatile-qualified</strong>. S'il ne rentre dans aucune de ces catégories, c'est qu'il est <strong>cv-unqualified</strong>.</p><p id="r-343459" data-claire-element-id="343459">Généralisons ce que nous avons vu à propos du typage : un type cv-qualified est différent d'un cv-unqualified et il est même différent d'un type qui n'est pas cv-qualifié de la même façon. La conséquence en est qu'un pointeur ou une référence sur un type d'une certaine cv-qualification ne peut pointer sur un type doté d'une cv-qualification différente (à l'exception près de la conversion implicite indiquée précédemment).</p><p id="r-343460" data-claire-element-id="343460">Ça va vous suivez ? ;) Si les termes techniques vous embrouillent, ne vous inquiétez pas, il n'est pas absolument nécessaire de retenir tout cela. Je vous le donne surtout à titre informatif, et pour que nous parlions la même langue dans la suite du tutoriel.</p><p id="r-343461" data-claire-element-id="343461"><code data-claire-semantic="cpp">const_cast</code> permet d'outrepasser la limitation citée précédemment en transformant un pointeur (ou une référence) sur un type cv-qualified en un pointeur sur un type qui n'a pas la même cv-qualification (<strong>cv_cast</strong> aurait été un nom plus approprié ;) ).</p><p id="r-343462" data-claire-element-id="343462">Pourquoi est-ce mal ? <code data-claire-semantic="cpp">const_cast</code> permet d'outrepasser la constance d'une variable, or le mot-clé <code data-claire-semantic="cpp">const</code> n'est pas là pour faire joli. Si quelqu'un déclare une valeur constante c'est pour une bonne raison. La modifier c'est prendre le risque d'altérer significativement le fonctionnement de l'application. Si quelqu'un vous passe un objet par référence constante, il s'attend à ce que celui-ci ne soit pas modifié. Si vous le faites, c'est l'utilisateur de votre fonction qui va se retrouver avec des erreurs dont il ne pourra déterminer la source.</p><p id="r-343463" data-claire-element-id="343463">La syntaxe de l'opérateur pour un type T est celle-ci :</p><pre id="r-343464" data-claire-element-id="343464"><code data-claire-semantic="cpp">const T i;
+T* j = const_cast&lt;T*&gt;(&amp;i);
+T&amp; k = const_cast&lt;T&amp;&gt;(i);</code></pre><p id="r-343465" data-claire-element-id="343465">Si vous utilisez un <a href="http://cpp.developpez.com/faq/cpp/?page=divers#DIVERS_pod">type POD</a>, le compilateur va sans doute optimiser sauvagement votre code et remplacer à la compilation la valeur contenue dans i là où la variable a été utilisée. Du coup vous ne vous retrouverez pas avec le résultat attendu (ici i ne sera pas réellement modifiée, ouf). En revanche ça ne sera pas le cas si vous utilisez un type non POD, et là tous les excès sont permis. <br/> Rappelons au cas où que l'opération inverse est transparente et ne justifie pas l'usage de <code data-claire-semantic="cpp">const_cast</code>.</p><p id="r-343466" data-claire-element-id="343466">Il n'y a que quelques cas dans lequel l'usage de <code data-claire-semantic="cpp">const_cast</code> est justifié. L'un, rare, est celui où, produisant du code const-correct (ce que vous allez faire maintenant n'est-ce pas ?) vous devez utiliser une bibliothèque qui n'est pas const-correct et qui vous demande des choses aussi absurdes que de lui passer des pointeurs ou références sur des variables non constantes qu'elle ne va pas modifier. <br/> Mon conseil personnel serait plutôt de vous orienter vers un code véritablement écrit en C++ mais on n'a pas toujours le choix.</p><p id="r-343467" data-claire-element-id="343467">Un autre cas, plus raisonnable est celui de l'écriture de deux versions de la même fonction : constante et non constante. Ici, <code data-claire-semantic="cpp">const_cast</code> peut être utilisé de manière propre (c'est-à-dire dans un cadre limité et sans risque) pour éviter la duplication de code (réécrire deux fois la même fonction).</p><pre id="r-343468" data-claire-element-id="343468"><code data-claire-semantic="cpp">struct Exemple
+{
+    public :
+        Exemple(int i) : my_int(i) {}
+        inline int get() const {return const_cast&lt;Exemple*&gt;(this)-&gt;get();}
+        inline int&amp; get() {return my_int;}
+
+    private :
+        int my_int;
+};</code></pre><p id="r-343469" data-claire-element-id="343469">Dans cet exemple, le <code data-claire-semantic="cpp">const_cast</code> ne posera jamais problème puisque nous sommes certains que l'état de l'objet ne sera pas modifié dans le processus. La référence sur l'attribut est en effet copiée avant d'être renvoyée à l'utilisateur de la classe.</p><p id="r-343470" data-claire-element-id="343470">En un mot comme en cent, faites très attention à ce que vous faites avec <code data-claire-semantic="cpp">const_cast</code> (en tout cas ne l'utilisez pas pour outrepasser la constance d'une variable).</p><h2 id="r-mutable-un-objet-constant-dont-l-etat-varie" data-claire-element-id="343485">mutable : un objet constant dont l'état varie ?</h2><p id="r-343472" data-claire-element-id="343472">Le mot-clé <code data-claire-semantic="cpp">mutable</code> permet de définir une variable membre d'une classe dont la valeur pourra changer même si l'objet qui le contient est constant. A priori l'intérêt peut sembler nul, et le mot-clé à reléguer aux oubliettes avec <code data-claire-semantic="cpp">const_cast</code>. Ce n'est pas tout à fait exact, mais il est vrai que l'emploi de mutable doit être l'exception et jamais la règle.</p><p id="r-343473" data-claire-element-id="343473">Un peu de vocabulaire : le standard définit le mot-clé <code data-claire-semantic="cpp">mutable</code> sous le terme de <strong>storage-class-specifier</strong> (ce que l'on peut traduire littéralement par « spécificateur de classe de stockage »). <br/> Il ne peut être appliqué qu'à une variable non constante et sans autre spécificateur de stockage (qui sont <strong>static</strong>, <strong>thread_local</strong>, <code data-claire-semantic="cpp">extern</code> et <code data-claire-semantic="cpp">register</code>). <br/> Dans le cas d'un type composé, il s'applique là où cela est possible. En revanche il ne peut être utilisé pour qualifier un pointeur constant, même pointant sur une variable non constante.</p><p id="r-343474" data-claire-element-id="343474">Pour la syntaxe, mettez-le en début de déclaration. Contrairement à <code data-claire-semantic="cpp">const</code> sa position n'a pas d'importance.</p><p id="r-343475" data-claire-element-id="343475">Un petit exemple pour résumer tout ça.</p><pre id="r-343476" data-claire-element-id="343476"><code data-claire-semantic="cpp">struct Exemple
+{
+    mutable int i;              //Ok
+    mutable int* p;             //Ok, le pointeur comme l'entier pointé seront mutables
+    mutable const int* q;       //Ok, seul le pointeur est mutable
+    mutable const int* const r; //Erreur
+    mutable int* const s;       //Erreur
+    mutable int&amp; t;             //Ok
+    mutable const int&amp; u;       //Passe sur mon compilateur mais absurde
+};</code></pre><p id="r-343477" data-claire-element-id="343477">Très bien, mais quel est l'intérêt de <code data-claire-semantic="cpp">mutable</code> ?</p><p id="r-343478" data-claire-element-id="343478">En fait, le C++ privilégie la constance sémantique (le sens du code) des variables plutôt que leur constance physique (la représentation en mémoire de la variable). <br/> Un objet constant doit apparaître immuable pour l'utilisateur mais il ne l'est pas nécessairement. Un exemple fréquent lorsque l'on aborde ce mot-clé est celui du <a href="http://en.wikipedia.org/wiki/Cache">caching</a>. <br/> Supposons qu'un de vos objets ai une fonction constante renvoyant le résultat d'un calcul assez lourd. Pour limiter un peu les dégâts, vous aimeriez pouvoir ne refaire ce calcul que lorsque ses paramètres sont modifiés mais sans perdre le caractère constant de votre fonction. Cela est possible en utilisant une variable <code data-claire-semantic="cpp">mutable</code> dans laquelle vous stockerez le résultat calculé. Pour l'utilisateur, le changement est transparent, seule la vitesse d'exécution peut varier.</p><p id="r-343479" data-claire-element-id="343479">D'autres applications de mutable peuvent être le <a href="http://en.wikipedia.org/wiki/Reference_counting">comptage de références</a> et la <a href="http://en.wikipedia.org/wiki/Data_synchronization">synchronisation de données</a>.</p><p id="r-343480" data-claire-element-id="343480">Souvenez-vous toutefois que l'utilisation de mutable n'est pas souvent justifiée. N'y recourrez que lorsque vous êtes certains que cela ne vient pas briser la const-correctness de votre code en autorisant des objets constants à utiliser des fonctions et des attributs auxquels il ne devrait pas recourir.</p><p id="r-343481" data-claire-element-id="343481">Nous voilà au terme de cet article. J'espère que vous en avez apprécié la lecture et qu'il vous aura convaincu de l'intérêt de la const-correctness tout en vous donnant les outils pour la mettre en place facilement. N'oubliez pas le plus important : habituez-vous à utiliser const au maximum sans que cela ne devienne absurde et vous écrirez rapidement du code const-correct sans vous en apercevoir ;) .</p><p id="r-343482" data-claire-element-id="343482">Si vous relevez une erreur, une imprécision, un manque ou tout simplement que vous avez un commentaire à faire ou une question à poser sur ce que j'ai écrit, n'hésitez pas à m'en faire part.</p><p id="r-343483" data-claire-element-id="343483">Je remercie à ce propos <a href="http://www.siteduzero.com/membres-294-36008.html">Freedom</a>, <a href="http://www.siteduzero.com/membres-294-45328.html">lmghs</a> et <a href="http://www.siteduzero.com/membres-294-146351.html">boli</a> pour leur relecture attentive et leurs remarques pertinentes sur l'ensemble du tutoriel.</p><p id="r-343484" data-claire-element-id="343484">Sources :<br/><a href="http://en.wikipedia.org/wiki/Const-correctness">http://en.wikipedia.org/wiki/Const-correctness</a><br/><a href="http://www.parashift.com/c++-faq-lite/const-correctness.html">http://www.parashift.com/c++-faq-lite/ [...] rectness.html</a><br/><a href="http://www.gotw.ca/gotw/006.htm">http://www.gotw.ca/gotw/006.htm</a> (Voir également le #81 cité en introduction pour les optimisations liés à const)<br/> Et bien entendu le C++ International Standard !</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros">La const-correctness expliquée aux Zéros</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/introduction-47">
+Introduction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/elements-de-syntaxes-et-generalites">
+Éléments de syntaxes et généralités
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/l-interet-de-la-const-correctness-enfin">
+L&#039;intérêt de la const-correctness, enfin !
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/allons-plus-loin-dans-la-constance">
+Allons plus loin dans la constance !
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/const-cast-et-mutable-alterer-la-constance-d-une-variable">
+const_cast et mutable : altérer la constance d&#039;une variable
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-const-correctness-expliquee-aux-zeros/allons-plus-loin-dans-la-constance">
+<span class="arrow"></span>
+<span class="next">Allons plus loin dans la constance !</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/la-const-correctness-expliquee-aux-zeros.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 02:54:39 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/la-const-correctness-expliquee-aux-zeros.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:38:20 GMT -->
+</html>

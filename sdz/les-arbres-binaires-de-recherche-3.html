@@ -1,0 +1,238 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/les-arbres-binaires-de-recherche-3.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 09:09:02 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/les-arbres-binaires-de-recherche-3.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:37:23 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Les arbres binaires de recherche</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/les-arbres-binaires-de-recherche-3.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Les arbres binaires de recherche</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Lesarbresbinairesderecherche">Les arbres binaires de recherche</a><br/><a href="#Lesarbresbinairesderecherche">Les arbres binaires de recherche</a><br/><a href="#TriparABRalgorithmesetOCaml">Tri par ABR, algorithmes et OCaml</a><br/><a href="#Complexitdesalgorithmes">Complexité des algorithmes</a><br/></div>
+<a name="Lesarbresbinairesderecherche"></a><h2>Les arbres binaires de recherche</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-arbres-binaires-de-recherche-3/les-arbres-binaires-de-recherche-2">
+<span class="next">Les arbres binaires de recherche</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-526625" data-claire-element-id="526625">Le but de ce tutoriel est de vous faire découvrir toute la puissance des arbres binaires de recherche (souvent abrégé &quot;ABR&quot;) par le biais de l'étude et de l'implémentation d'un algorithme de tri : le tri par ABR. Ce tri est un algorithme de tri simple, original et efficace. Moins connu que ses homologues tels que le tri par tas ou le tri fusion, il reste néanmoins un tri &quot;rapide&quot;, avec une complexité au meilleur des cas et une complexité moyenne en O(n*log n). Il se base entièrement sur les propriétés des ABR.</p><p id="r-526626" data-claire-element-id="526626">Durant l'implémentation de ce tri, nous allons donc découvrir les algorithmes fondamentaux pour la manipulation des ABR. Tous n'entrent pas en jeu dans le tri par ABR, c'est pourquoi certains seront présentés à part.</p>
+</div><a name="Lesarbresbinairesderecherche"></a><h2>Les arbres binaires de recherche</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-arbres-binaires-de-recherche-3/tri-par-abr-algorithmes-et-ocaml">
+<span class="next">Tri par ABR, algorithmes et OCaml</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h3 id="r-les-arbres-1" data-claire-element-id="526631">Les arbres</h3><p id="r-526627" data-claire-element-id="526627">Un arbre est une structure de données très particulière. Il en existe de différents types (notez que quand on parle d'arbre, on est encore dans le général). Cette structure de données a été inventé dans le but de représenter des données identiques liées. Chaque donnée est liée à aucune ou plusieurs autre(s) donnée(s) du même type. Il ne peut y avoir de &quot;boucle&quot;, ce qui en fait une spécialisation des <a href="http://fr.wikipedia.org/wiki/Théorie_des_graphes">graphes</a>. Certains l'auront compris : c'est une structure de données récursive.</p><p id="r-526628" data-claire-element-id="526628">Comme le nom l'indique, la structure de données de l'arbre peut être modélisée par un arbre dont chaque séparation représente un &quot;noeud&quot;, autrement dit un élément de l'arbre. On utilisera la plupart du temps une représentation en arbre renversé mais ce n'est pas une généralité. Le premier élément est appelé &quot;racine&quot; de l'arbre. Chaque élément est appelé, comme dit, &quot;noeud&quot; de l'arbre. Les éléments terminaux, donc qui ne possèdent pas d'élements sous-jacents &quot;fils&quot;, sont dits &quot;feuilles&quot;.</p><p id="r-526629" data-claire-element-id="526629">Une définition plus &quot;fonctionnelle&quot; de l'arbre serait de considérer cette dernière structure de données comme un élément lié à zéro ou plusieurs sous-arbre(s) ou rien. On peut très facilement décrire ce type de structure, très utilisé, en nous servant de la BNF (<a href="http://fr.wikipedia.org/wiki/Forme_de_Backus-Naur">Backus-Naur form</a>). On obtient ainsi une définition rigoureuse et juste :</p><pre id="r-526630" data-claire-element-id="526630"><code>arbre ::= ε | elem (arbre)*
+elem ::= int | char | float | bool | ...</code></pre><h3 id="r-les-arbres-binaires" data-claire-element-id="526636">Les arbres binaires</h3><p id="r-526632" data-claire-element-id="526633"><a href="medias/uploads.siteduzero.com_files_163001_164000_163325.png"><img id="r-526633" data-claire-element-id="526632" src="medias/uploads.siteduzero.com_thb_163001_164000_163325.png" alt="Image utilisateur"/></a>Un arbre est une structure de données encore assez générale. Nous pouvons spécialiser cette structure en définissant des règles d'organisation. Le nombre de fils éventuels de chaque élément peut-être une caractérisation d'un type d'arbre. Une liste chaînée est, par définition, un arbre dont chaque élément possède au plus un fils. Les arbres dont chaque élément possède au plus deux fils sont appelés arbre binaire. Il s'agit du type d'arbre le plus connu et le plus utilisé.</p><p id="r-526634" data-claire-element-id="526634">On retrouve les arbres binaires un peu partout. Grâce à leur puissance, ils sont utilisés par de nombreux algorithmes. L'une des spécialisations certainement la plus connue des arbres binaires est le tas (<em>heap</em> en anglais, image à droite). Nous n'allons pas approfondir cette notion ici. En deux mots, il s'agit simplement d'un arbre binaire suivant la règle suivante : chaque élément est inférieur à son parent. Le tas est utilisé dans l'algorithme du tri par tas, par exemple. La définition la plus intuitive de l'arbre binaire serait :</p><pre id="r-526635" data-claire-element-id="526635"><code>arbre ::= ε | elem (arbre) arbre</code></pre><h3 id="r-les-arbres-binaires-de-recherche-1" data-claire-element-id="526642">Les arbres binaires de recherche</h3><p id="r-526637" data-claire-element-id="526638"><a href="medias/uploads.siteduzero.com_files_163001_164000_163506.png"><img id="r-526638" data-claire-element-id="526637" src="medias/uploads.siteduzero.com_thb_163001_164000_163506.png" alt="Image utilisateur"/></a>Il n'y a pas que le tas. Une autre spécialisation de l'arbre binaire est également très connu : l'arbre binaire de recherche (ABR). Ce type d'arbre binaire permet une représentation structurée d'un ensemble d'éléments tout en permettant une recherche de valeur en complexité au meilleur des cas et en complexité moyenne logarithmique O(log(n)), pour n étant le nombre d'éléments de l'ABR. On utilise beaucoup ce type de structure en informatique.</p><p id="r-526639" data-claire-element-id="526639">L'arbre binaire de recherche est encore plus rigoureux qu'un tas dans sa définition, qui est la suivante : on considère un élément de l'arbre ; tous les éléments du sous-arbre gauche lui seront inférieurs tandis que tous les éléments du sous-arbre droit lui seront supérieurs. Le cas de l'égalité peut-être traité de la manière qui vous arrange le plus. Ce principe s'applique récursivement à chaque élément. Chaque sous-arbre est donc aussi un ABR. l'ABR permet donc une représentation plus &quot;ordonnée&quot; que le tas, ce qui fait toute la puissance de ce type d'arbre binaire.</p><p id="r-526640" data-claire-element-id="526640">Pour la recherche d'une valeur, vous y voyez déjà plus clair : il nous suffit d'effectuer un parcours récursif de l'arbre en commençant par la racine. Si la valeur recherchée est inférieure à la racine, alors elle est située dans le sous-arbre à gauche, sinon, elle est située dans le sous-arbre droit. En une comparaison, on élimine, dans le meilleur des cas et en moyenne, la moitié des valeurs. Nous allons détailler d'avantage cet algorithme par la suite.</p><p id="r-526641" data-claire-element-id="526641">Nous reviendrons sur les détails algorithmiques des opérations pouvant être effectuées sur les ABR par la suite. Le plus intéressant réside sans doute dans le fait qu'en parcourant un ABR en profondeur dans l'ordre infixe (arbre gauche -&gt; élément en cours -&gt; arbre droit), on récupère les éléments dans un ordre trié !</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-arbres-binaires-de-recherche-3">Les arbres binaires de recherche</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-arbres-binaires-de-recherche-3/les-arbres-binaires-de-recherche-2">
+Les arbres binaires de recherche
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-arbres-binaires-de-recherche-3/tri-par-abr-algorithmes-et-ocaml">
+Tri par ABR, algorithmes et OCaml
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-arbres-binaires-de-recherche-3/complexite-des-algorithmes">
+Complexité des algorithmes
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-arbres-binaires-de-recherche-3/tri-par-abr-algorithmes-et-ocaml">
+<span class="next">Tri par ABR, algorithmes et OCaml</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="TriparABRalgorithmesetOCaml"></a><h2>Tri par ABR, algorithmes et OCaml</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-arbres-binaires-de-recherche-3/les-arbres-binaires-de-recherche-2">
+<span class="arrow"></span>
+<span class="next">Les arbres binaires de recherche</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-arbres-binaires-de-recherche-3/complexite-des-algorithmes">
+<span class="next">Complexité des algorithmes</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-526644" data-claire-element-id="526644">Le principe du tri par ABR est on ne peut plus simple. Si l'on sait créer ainsi que manipuler les arbres binaires de recherche, il est très intuitif : il vient tout seul. Nous pouvons décomposer l'algorithme en deux autres algorithmes sous-jacents : la construction d'un ABR à partir d'une suite d'éléments et le parcours en profondeur dans l'ordre infixe de cet ABR. Nous allons procéder très simplement : nous allons implémenter les différents algorithmes dans un langage fonctionnel : OCaml. Après ces implémentations, nous verrons comment assembler les différents morceaux pour former un tout : le tri par ABR. La &quot;suite d'éléments&quot; sera une liste.</p><p id="r-526645" data-claire-element-id="526645">Cette partie vous fait donc découvrir les algorithmes indispensables et récurrents quand l'on manipule les ABR (c'est le but). Les algorithmes qui n'entrent pas en action dans le tri par ABR seront présentés à la fin de cette sous-partie.</p><p id="r-526646" data-claire-element-id="526646">Le choix d'OCaml pour ce tutoriel n'est de loin pas un hasard. Étant un langage fonctionnel (un des plus connus), il permet de se concentrer essentiellement sur l'algorithmique d'un programme plutôt que sur ses détails trop techniques. De plus, même si vous ne programmez pas en OCaml, la sémantique vous en dit assez, ce qui vous permettra de traduire les codes donnés dans le langage de programmation de votre choix. OCaml est un langage élégant et si l'on s'y prend bien, il permet de produire des codes très concis. Afin de vous simplifier la compréhension encore d'avantage, les algorithmes seront décortiqués et les codes expliqués.</p><h3 id="r-definition-d-un-type-l-arbre-binaire" data-claire-element-id="526651">Définition d'un type : l'arbre binaire</h3><p id="r-526647" data-claire-element-id="526647">La première étape de l'implémentation consiste à définir ce qu'est réellement un arbre binaire. Il faut expliquer à OCaml comment il doit structurer cela. À nous ensuite de lui appliquer des algorithmes pour faire de lui un ABR.</p><p id="r-526648" data-claire-element-id="526648">L'arbre binaire est un type récursif. En effet, chaque élément est lié à deux autres arbres (ou &quot;sous-arbres&quot;). On peut faire un parallèle avec l'arbre unaire, autrement dit la liste, qui se définit de cette manière : une liste est soit la liste vide [], soit un élément suivi d'une liste. La définition d'un arbre binaire vient donc par elle-même : un arbre binaire est soit rien (ε), soit un élément suivi par deux arbres binaires (c'est ce que nous avons vu avec les règles BNF).</p><pre id="r-526649" data-claire-element-id="526649"><code data-claire-semantic="ocaml">type arbre =
+| Vd | Nd of arbre * int * arbre</code></pre><p id="r-526650" data-claire-element-id="526650">Deux choses : remarquez que j'ai choisi le type int (entier) en tant que type des éléments de l'arbre binaire. On aurait très bien pu en choisir un autre (n'importe quel type qui puisse se comparer). Un solution polymorphe est possible aussi, mais nous n'en parlerons pas ici. Ensuite, pour les abréviations, nous avons Vd pour &quot;Vide&quot; et Nd pour &quot;noeud&quot;. Dans notre définition OCaml, qui est juste, un &quot;Noeud&quot; est donc un entier succédant un arbre et précédent un autre arbre.</p><h3 id="r-construire-un-abr-a-partir-d-une-liste-insertions-d-elements-dans-un-abr" data-claire-element-id="526656">Construire un ABR à partir d'une liste (insertions d'éléments dans un ABR)</h3><p id="r-526652" data-claire-element-id="526652">Le premier algorithme fondamental à connaître sur les ABR est justement la construction d'un ABR à partir d'une liste. L'idée est d'itérer sur la liste en insérant chaque élément dans l'arbre binaire à sa bonne place de telle sorte que l'arbre binaire soit toujours un ABR.</p><p id="r-526653" data-claire-element-id="526653">L'algorithme d'insertion d'une valeur dans l'ABR est simple (on part de la racine de l'arbre). On possède une valeur v que l'on souhaiterait insérer dans l'ABR. Si l'élément en cours n'existe pas, on insère v à cet emplacement. Sinon, on compare v à l'élément en cours. S'il a une valeur supérieure, on l'insère dans le sous-arbre droit, sinon, on l'insère dans le sous-arbre gauche (récursivité). En appliquant cet algorithme à chaque élément de la liste (donc en insérant chaque élément dans l'ABR résultant de la précédente insertion), l'arbre binaire de recherche prend forme petit à petit. Cet algorithme récursif très simple permet donc de passer sans grands efforts d'une liste à un ABR !</p><pre id="r-526654" data-claire-element-id="526654"><code data-claire-semantic="ocaml">let rec construire_arbre l =
+  let rec inserer v = function
+  | Vd -&gt; Nd (Vd, v, Vd)
+  | Nd (fg, r, fd) -&gt;
+    if v &lt; r then Nd (inserer v fg, r, fd)
+    else Nd (fg, r, inserer v fd)
+  in match l with [] -&gt; Vd
+  | t::q -&gt; inserer t (construire_arbre q)</code></pre><p id="r-526655" data-claire-element-id="526655">Avec l'explication précédente, ce code OCaml devient donc tout à fait logique. La fonction récursive construire_arbre itère sur la liste passée en paramètre et arrête les appels récursifs une fois qu'il ne reste plus que la liste vide [] (cela signifie que l'on est arrivé à la fin). Grâce à la pile d'appel, chaque élément est ensuite (donc seulement après !) inséré dans l'arbre binaire de recherche, dans l'ordre inverse. En effet, ici, le dernier élément de la liste est inséré en premier, il représentera la racine de l'ABR. Au final, la précédente fonction renverra donc un ABR contenant tous les éléments de la liste passée en paramètre.</p><h3 id="r-parcourir-un-abr-en-profondeur" data-claire-element-id="526661">Parcourir un ABR en profondeur</h3><p id="r-526657" data-claire-element-id="526657">Une fois notre arbre binaire de recherche construit, nous allons devoir le parcourir de telle sorte qu'on récupère tous les éléments dans un ordre trié. Les règles d'organisation des ABR nous permettent justement de faire cela très facilement et ce grâce à la récursivité (encore une fois).</p><p id="r-526658" data-claire-element-id="526658">On ne vous demande pas de l'inventer, quoique que c'est logique : l'algorithme de parcours de l'ABR à utiliser ici est le parcours en profondeur dans l'ordre infixe. L'idée de cet algorithme est la suivante (on part de la racine) : On considère un élément. On parcourt le sous-arbre gauche, on récupère l'élément en cours, on parcourt le sous-arbre droit. &quot;Infixe&quot; signifie que l'on récupère l'élément en cours entre les deux &quot;sous-parcours&quot;. On arrête les appels récursifs dès que l'arbre en cours vaut Vd (vide). Cet algorithme permet donc une récupération ordonnée des différents éléments. L'algorithme peut se reformuler simplement de la manière suivante : on récupère les éléments inférieurs à l'élément en cours, on récupère l'élément en cours, on récupère les éléments supérieurs (ou égaux) à l'élément en cours.</p><pre id="r-526659" data-claire-element-id="526659"><code data-claire-semantic="ocaml">let rec parcourir = function
+| Vd -&gt; []
+| Nd (fg, r, fd) -&gt; (parcourir fg) @ r::(parcourir fd)</code></pre><p id="r-526660" data-claire-element-id="526660">En OCaml, c'est très intuitif : on traduit simplement en code ce que l'on a écrit précédemment. Au final, la fonction récursive parcourir (qui prend en paramètre l'ABR) renvoie une liste de tous les éléments récupérés dans l'ordre de récupération, c'est à dire dans un ordre trié.</p><h3 id="r-assemblons-les-morceaux-le-tri-par-abr" data-claire-element-id="526666">Assemblons les morceaux : le tri par ABR !</h3><p id="r-526662" data-claire-element-id="526662">Nous sommes maintenant capable de créer un arbre binaire de recherche à partir d'une liste quelconque, même si cette dernière n'est pas triée. Nous savons aussi parcourir un ABR en temps linéaire en récupérant tous les éléments dans un ordre trié. L'idée du tri par ABR vient donc toute seule : on part d'une liste dans un ordre quelconque, on construit un ABR à partir de cette liste puis on récupère la liste triée à partir de l'ABR.</p><pre id="r-526663" data-claire-element-id="526663"><code data-claire-semantic="ocaml">let tri_abr liste =
+  parcourir (construire_arbre liste)</code></pre><p id="r-526664" data-claire-element-id="526664">En OCaml, il nous suffit de combiner les fonctions : on envoie à la fonction parcourir l'arbre binaire de recherche créé par la fonction construire_arbre à partir de la liste passée en paramètre de cette dernière fonction. Le retour de la fonction tri_abr est donc la liste triée. Le résultat est concluant :</p><pre id="r-526665" data-claire-element-id="526665"><code data-claire-semantic="ocaml"># tri_abr [6; 7; 3; 2; 8; 1; 4; 0; 9; 5] ;;
+- : int list = [0; 1; 2; 3; 4; 5; 6; 7; 8; 9]</code></pre><h3 id="r-autres-algorithmes" data-claire-element-id="526674">Autres algorithmes</h3><p id="r-526667" data-claire-element-id="526667">Certains algorithmes fondamentaux dans la manipulation des arbres binaires de recherche n'apparaissent pas dans le tri par ABR. Comme je souhaite tout de même vous en présenter quelques uns, je les détaille à part ici. Je complèterai au fur et à mesure.</p><ul id="r-526670" data-claire-element-id="526670"><li id="r-526669" data-claire-element-id="526669"><p id="r-526668" data-claire-element-id="526668"><strong>Chercher un élément dans un ABR</strong></p></li></ul><p id="r-526671" data-claire-element-id="526671">La recherche d'un élément dans un arbre binaire est un procédé récursif très simple. Il fonctionne à peu près comme l'insertion d'un élément : par éliminations d'un sous-arbre à chaque appel récursif. La plupart des algorithmes de recherche de ce type renvoient un booléen nous informant si la valeur est contenue dans l'ABR ou non. Dans notre exemple, nous allons renvoyer une liste. Cette liste stocke le chemin à suivre en partant de la racine pour atteindre l'élément recherché. Nous utiliserons une liste de char. Pour cette construction du &quot;chemin&quot;, nous devons distinguer deux cas : soit on va à gauche (c'est à dire dans le sous-arbre gauche), soit on va à droite. On modélise ceci respectivement avec les lettres 'g' et 'd'. Voilà comment nous allons procéder (on part de la racine) : on compare l'élément recherché à l'élément en cours. Si il y a égalité, on renvoie la liste vide [] (on ne va ni à gauche, ni à droite). Si l'élément recherché est inférieur, on &quot;va&quot; à droite (on renvoie donc 'd' suivi de l'appel récursif de la fonction de recherche sur le sous-arbre droit), sinon, on renvoie 'g' suivi de l'appel récursif de la fonction de recherche sur le sous-arbre gauche. Si l'on tombe sur l'arbre vide Vd, c'est que l'élément recherché n'est pas dans l'ABR, on finalise donc la liste avec 'f'::[].</p><pre id="r-526672" data-claire-element-id="526672"><code data-claire-semantic="ocaml">let rec search n = function
+| Vd -&gt; 'f'::[]
+| Nd (fg, r, fd) -&gt;
+  if n = r then []
+  else if n &lt; r then 'g'::search n fg
+  else 'd'::search n fd</code></pre><p id="r-526673" data-claire-element-id="526673">Le résultat final est amusant : on obtient une suite de caractère nous permettant de parcourir l'ABR et de retrouver la valeur recherchée.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-arbres-binaires-de-recherche-3">Les arbres binaires de recherche</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-arbres-binaires-de-recherche-3/les-arbres-binaires-de-recherche-2">
+Les arbres binaires de recherche
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-arbres-binaires-de-recherche-3/tri-par-abr-algorithmes-et-ocaml">
+Tri par ABR, algorithmes et OCaml
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-arbres-binaires-de-recherche-3/complexite-des-algorithmes">
+Complexité des algorithmes
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-arbres-binaires-de-recherche-3/les-arbres-binaires-de-recherche-2">
+<span class="arrow"></span>
+<span class="next">Les arbres binaires de recherche</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-arbres-binaires-de-recherche-3/complexite-des-algorithmes">
+<span class="next">Complexité des algorithmes</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Complexitdesalgorithmes"></a><h2>Complexité des algorithmes</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-arbres-binaires-de-recherche-3/tri-par-abr-algorithmes-et-ocaml">
+<span class="arrow"></span>
+<span class="next">Tri par ABR, algorithmes et OCaml</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-526676" data-claire-element-id="526676">La complexité d'un algorithme évalue son nombre d'opérations en fonction de la taille de l'entrée. Dans le cas d'un algorithme de tri, la taille de l'entrée est la taille de la structure à trier (n éléments, par exemple). Les meilleurs algorithmes de tri font en moyenne (ou tout le temps) n*log(n) opérations. On utilisera la notation de Landau, c'est à dire O(n*log(n)). D'une manière générale, la complexité nous donne une idée sur les performances d'un algorithme et sur l'évolution de ces dernières en fonction de la taille de l'entrée.</p><h3 id="r-construction-d-un-abr-a-partir-d-une-liste-insertions-d-elements-dans-un-abr" data-claire-element-id="526678">Construction d'un ABR à partir d'une liste (insertions d'éléments dans un ABR)</h3><p id="r-526677" data-claire-element-id="526677">La construction d'un ABR à partir d'une liste est le résultat de l'application de l'algorithme d'insertion d'une valeur dans un ABR à chaque élément de la liste. Il faut donc d'abord se pencher sur cet algorithme d'insertion. Réfléchissons. On suppose que dans le meilleur cas et en moyenne, on élimine une moitié d'arbre à chaque comparaison jusqu'à tomber sur un emplacement libre. Pour simplifier, on va dire que l'arbre comporte autant de nœuds que d'éléments à insérer. Si l'on élimine à chaque itération la moitié des valeurs de l'arbre, on doit se poser la question : combien de fois doit-on diviser n par deux jusqu'à tomber sur 1 ? Il s'agit d'une fonction : la fonction logarithme (en base 2 ici). L'algorithme d'insertion est donc en O(log(n)) (on dit qu'il s'agit d'une complexité logarithmique). Pour insérer chaque élément dans l'arbre, on a donc logiquement du O(n*log(n)). On parle d'une complexité quasi-linéaire. Dans le pire des cas, l'arbre est totalement balancé d'un coté et on obtient une liste chaînée. Pour l'insertion, cela impose donc un parcours de tous les éléments et une complexité pour l'insertion en O(n). La construction de l'ABR se fera donc en O(n²), appelée complexité quadratique.</p><h3 id="r-parcours-en-profondeur-d-un-abr" data-claire-element-id="526680">Parcours en profondeur d'un ABR</h3><p id="r-526679" data-claire-element-id="526679">Ici, c'est assez simple. Avec un parcours en profondeur, on visite chaque élément de l'arbre une et une seule fois. L'algorithme est donc en O(n) s'il y a n éléments composant l'ABR. D'ailleurs, sur n'importe quel arbre, un parcours en profondeur sera toujours en O(n). On parle cette fois-ci d'une complexité linéaire. Il n'y a pas de pire des cas.</p><h3 id="r-le-tri-par-abr" data-claire-element-id="526682">Le tri par ABR</h3><p id="r-526681" data-claire-element-id="526681">Le tri par ABR est de le résultat de la combinaison entre l'algorithme de construction d'un ABR à partir d'une liste dans un ordre quelconque et l'algorithme du parcours en profondeur infixe (récupérant les valeurs dans un ordre trié). Les deux algorithmes se succédant, on obtient une complexité globale qui est la somme de la complexité des deux algorithmes. On a donc à peu près du O(n*log(n) + n), ce que l'on simplifie en O(n*log(n)). Dans le monde des algorithmes du tri basés sur les comparaisons, on ne peut pas faire mieux. La complexité quasi-linéaire est donc une complexité optimale et le tri par ABR possède cette complexité en moyenne et dans le meilleur des cas. Dans le pire des cas, on a du O(n²+n) ou tout simplement du O(n²), il ne devient alors guère mieux qu'un tri par sélection. By the way, on évitera d'utiliser le tri par ABR en pratique parce qu'il a une complexité mémoire en O(n) (le tri par tas, quant à lui, peut être implémenté en place).</p><h3 id="r-la-recherche-d-un-element-dans-un-abr" data-claire-element-id="526688">La recherche d'un élément dans un ABR</h3><p id="r-526683" data-claire-element-id="526683">Pour cet algorithme de recherche, on va pouvoir se baser sur ce qui a été dit sur l'algorithme d'insertion d'un élément dans un ABR. L'idée de cet algorithme-ci est de comparer l'élément cherché à l'élément en cours. On distingue quatre cas possibles : soit l'élément est plus petit (on appelle récursivement la fonction de recherche sur le sous-arbre gauche), soit l'élément est égal (on renvoie true), soit l'élément est plus grand (on appelle récursivement la fonction de recherche sur le sous-arbre droit) ou soit l'élément en cours n'existe pas (on renvoie false). Encore une fois, on élimine, en moyenne et dans le meilleur des cas, la moitié des valeurs. On a donc un algorithme en O(log(n)). Dans le pire des cas, c'est comme pour l'insertion, on se retrouve avec du O(n).</p><p id="r-526684" data-claire-element-id="526684">C'est déjà fini. Comme vous avez pu le constater, les arbres binaires de recherche sont des arbres très puissants, permettant un stockage ordonné et logique des données. Cette structure permet l'application d'algorithme souvent en complexité logarithmique (insertion, recherche, etc.), ce que ne permettent pas les tableaux par exemple. De plus, cette structure permet la réalisation d'un tri quasi-intuitif et en O(n*log n) au meilleur des cas et en complexité moyenne : le tri par ABR.</p><p id="r-526685" data-claire-element-id="526685">Il est possible d'obtenir un tri en O(n*log n) dans tous les cas. Nous avons vu que le tri par ABR est quadratique (en O(n²)) dans le pire des cas, quand l'entrée est déjà triée. Cela vient du fait que l'arbre est alors en peigne. La solution à ce problème pourrait être la suivante : appliquer un équilibrage de l'arbre à chaque insertion, à l'aide des algorithmes de rotation. Je vous recommande chaudement de lire les articles suivants : <a href="http://fr.wikipedia.org/wiki/Arbre_AVL">Les arbres AVL</a> et <a href="http://fr.wikipedia.org/wiki/Arbre_bicolore">les arbres rouge-noir</a>.</p><p id="r-526686" data-claire-element-id="526686">Je remercie <a href="http://www.siteduzero.com/membres-294-51570.html">Xavinou</a> et <a href="http://www.siteduzero.com/membres-294-38654.html">Xeroth</a> pour leur relecture attentive ainsi que tous ceux qui ont participé à l'amélioration du tutoriel.</p><p id="r-526687" data-claire-element-id="526687">ShareMan</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-arbres-binaires-de-recherche-3">Les arbres binaires de recherche</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-arbres-binaires-de-recherche-3/les-arbres-binaires-de-recherche-2">
+Les arbres binaires de recherche
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-arbres-binaires-de-recherche-3/tri-par-abr-algorithmes-et-ocaml">
+Tri par ABR, algorithmes et OCaml
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-arbres-binaires-de-recherche-3/complexite-des-algorithmes">
+Complexité des algorithmes
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-arbres-binaires-de-recherche-3/tri-par-abr-algorithmes-et-ocaml">
+<span class="arrow"></span>
+<span class="next">Tri par ABR, algorithmes et OCaml</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/les-arbres-binaires-de-recherche-3.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 09:09:06 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/les-arbres-binaires-de-recherche-3.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:37:24 GMT -->
+</html>

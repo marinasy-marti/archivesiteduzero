@@ -1,0 +1,496 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/des-widgets-en-3d-avec-qt.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 23:50:49 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/des-widgets-en-3d-avec-qt.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:12:24 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Des widgets en 3D avec Qt</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/des-widgets-en-3d-avec-qt.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Des widgets en 3D avec Qt</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Deswidgetsen3DavecQt">Des widgets en 3D avec Qt</a><br/><a href="#Insrerdeswidgetsdansunescne">Insérer des widgets dans une scène</a><br/><a href="#LestransformationsavecQTransform">Les transformations avec QTransform</a><br/><a href="#Deswidgetsen3D">Des widgets en 3D !</a><br/><a href="#Pourallerplusloingestiondelacamra">Pour aller plus loin : gestion de la caméra</a><br/></div>
+<a name="Deswidgetsen3DavecQt"></a><h2>Des widgets en 3D avec Qt</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/des-widgets-en-3d-avec-qt/inserer-des-widgets-dans-une-scene">
+<span class="next">Insérer des widgets dans une scène</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-352544" data-claire-element-id="352544">Vous utilisez Qt pour réaliser des interfaces graphiques et vous vous êtes déjà demandé s'il était possible d'afficher des formes ou des widgets en leur donnant un aspect 3D sans l'aide d'une bibliothèque extérieure ? Ce tutoriel est fait pour vous.</p><p id="r-352545" data-claire-element-id="352545">En effet, je vais vous expliquer comment utiliser la classe QGraphicsItem, qui permet de façon générale d'intégrer des objets dans une scène 2D mais aussi de leur donner un aspect 3D, moyennant quelques astuces. Attention toutefois, je ne parlerai pas de la méthode permettant de se promener dans la scène comme dans un jeu vidéo : Qt n'est pas vraiment conçu pour ça, même s'il est possible de le faire avec de bonnes connaissances (voir le lien à la fin de ce tutoriel).</p><p id="r-352546" data-claire-element-id="352546">J'aborderai donc l'intégration d'objets dans une scène en deux dimensions grâce à Qt, avant de vous montrer comment simuler la profondeur afin de donner une impression de 3D à ces objets.</p><aside id="r-352548" data-claire-element-id="352548" data-claire-semantic="information"><p id="r-352547" data-claire-element-id="352547">Dans ce tutoriel, le mot « objet » désignera toute instance d'une classe dérivée de QGraphicsItem. Qt fournit en effet suffisamment de classes pour pouvoir représenter toutes sortes de choses dans une scène, et je ne voulais pas utiliser de terme trop spécifique justement pour ne pas oublier ce détail. ^^</p></aside>
+</div><a name="Insrerdeswidgetsdansunescne"></a><h2>Insérer des widgets dans une scène</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/des-widgets-en-3d-avec-qt/les-transformations-avec-qtransform">
+<span class="next">Les transformations avec QTransform</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-quelques-classes-utiles" data-claire-element-id="352559">Quelques classes utiles</h2><p id="r-352549" data-claire-element-id="352549">Afin de visualiser des widgets (et plus généralement des objets graphiques) dans une scène, il faut commencer par en créer une qui va contenir tout ce beau monde. La classe fournie par Qt s'appelle sobrement QGraphicsScene et permet d'insérer des QGraphicsItem. La classe abstraite QGraphicsItem, assez générique, représente tout ce qui est affichable dans une QGraphicsScene. On trouve notamment un nombre important de classes permettant de gérer des polygones, des textes, des QPixmap et... des widgets !</p><p id="r-352550" data-claire-element-id="352550">En effet, la classe héritée QGraphicsProxyWidget est particulièrement adaptée à l'insertion des widgets dans une QGraphicsScene. Il suffit de créer votre QGraphicsProxyWidget, de lui attacher le widget que vous désirez intégrer à la scène puis de l'y intégrer en tant qu'objet. Vous manipulez donc votre widget à travers le proxy, tout ceci étant transparent une fois que le proxy et le widget sont attachés. Il est de plus tout à fait possible d'intégrer des widgets complexes, comme une QTabWidget, qui contient lui-même d'autres widgets...</p><aside id="r-352552" data-claire-element-id="352552" data-claire-semantic="information"><p id="r-352551" data-claire-element-id="352551">Dans les exemples, j'appliquerai les notions de ce tutoriel à des widgets car c'est leur intégration qui m'a poussé à utiliser ces classes. Cependant, les méthodes utilisées sont pour la plupart héritées de QGraphicsItem, vous pourrez donc les adapter à d'autres objets que des widgets.</p></aside><p id="r-352553" data-claire-element-id="352553">Enfin, comme la scène n'est pas un widget, il faut aussi créer une vue avec la classe QGraphicsView, qui permet d'afficher le contenu de notre scène.<br/> Sans plus attendre, commençons par créer notre première scène, avec un bouton au milieu.</p><pre id="r-352554" data-claire-element-id="352554"><code data-claire-semantic="cpp">#include &lt;QApplication&gt;
+#include &lt;QtGui&gt;
+
+int main(int argc, char *argv[])
+{
+    QApplication app(argc, argv);
+
+    QPushButton *bouton = new QPushButton(&quot;Mon bouton entre en scène !&quot;);
+    QGraphicsScene scene;
+    QGraphicsProxyWidget *proxy = new QGraphicsProxyWidget();
+    proxy-&gt;setWidget(bouton);
+    scene.addItem(proxy);
+
+    QGraphicsView view(&amp;scene);
+    view.show();
+
+    return app.exec();
+}</code></pre><figure id="r-352556" data-claire-element-id="352557"><img id="r-352555" data-claire-element-id="352555" src="medias/uploads.siteduzero.com_files_237001_238000_237879.jpg" alt="Image utilisateur"/></figure><p id="r-352558" data-claire-element-id="352558">Ce code devrait vous afficher un joli bouton au milieu d'un écran blanc. Vous venez d'intégrer votre premier widget dans une scène ! Avouez-le, ce n'était pas si difficile ! :p</p><h2 id="r-deplacer-les-objets-dans-la-scene" data-claire-element-id="352589">Déplacer les objets dans la scène</h2><p id="r-352560" data-claire-element-id="352560">Une fois le widget intégré à la scène à travers notre proxy, Qt nous offre un grand nombre de méthodes pour modifier son positionnement.</p><h3 id="r-les-coordonnees" data-claire-element-id="352562">Les coordonnées</h3><p id="r-352561" data-claire-element-id="352561">Si les systèmes de coordonnées 2D ne vous sont pas familiers, sachez que l'axe X est l'axe horizontal orienté vers la droite, et que l'axe Y est l'axe vertical orienté vers le bas. A priori, si vous avez déjà un peu manipulé Qt ou la SDL par exemple, vous devriez vous y retrouver. ^^</p><h3 id="r-translation-3" data-claire-element-id="352574">Translation</h3><p id="r-352563" data-claire-element-id="352563">La fonction setPos() de QGraphicsItem prend deux paramètres, dx et dy, qui sont les déplacements relatifs respectivement sur l'axe X et l'axe Y de la scène, paramètres qui deviendront alors les nouvelles coordonnées de notre objet. À savoir qu'une méthode surchargée existe, prenant en paramètre un QPointF. À vous de voir laquelle vous préférez. Il est aussi possible d'appeler la fonction move(), qui ajoute le déplacement sur les deux axes à la position actuelle de l'objet. Essayons tout de suite de déplacer notre objet dans la scène :</p><pre id="r-352564" data-claire-element-id="352564"><code data-claire-semantic="cpp">#include &lt;QApplication&gt;
+#include &lt;QtGui&gt;
+
+int main(int argc, char *argv[])
+{
+    QApplication app(argc, argv);
+
+    QPushButton *bouton = new QPushButton(&quot;Mon bouton entre en scène !&quot;);
+    QGraphicsScene scene;
+    QGraphicsProxyWidget *proxy = new QGraphicsProxyWidget();
+    proxy-&gt;setWidget(bouton);
+    scene.addItem(proxy);
+
+    proxy-&gt;setPos(150, 200);
+
+    QGraphicsView view(&amp;scene);
+    view.show();
+
+    return app.exec();
+}</code></pre><aside id="r-352566" data-claire-element-id="352566" data-claire-semantic="warning"><p id="r-352565" data-claire-element-id="352565">Eh, mon widget n'a pas bougé d'un iota par rapport à tout à l'heure !</p></aside><p id="r-352567" data-claire-element-id="352567">En effet, c'est une des particularités de la QGraphicsScene qui m'a un peu perturbé au début. En fait, par défaut, la scène s'arrange toujours pour placer vos objets au milieu de la vue. C'est un peu embêtant si l'on veut voir du mouvement là-dedans. :euh:</p><p id="r-352568" data-claire-element-id="352568">Heureusement, il est possible de définir la zone de la scène que l'on désire voir à l'écran. Ajoutez cette ligne après la création de la scène :</p><pre id="r-352569" data-claire-element-id="352569"><code data-claire-semantic="cpp">scene.setSceneRect(-150, -150, 300, 300)</code></pre><p id="r-352570" data-claire-element-id="352570">Les deux premiers nombres sont les coordonnées du point qui doit être placé dans le coin supérieur gauche de la vue (ici, (-150, -150)). Les deux nombres suivants sont la largeur et la hauteur de la scène que je désire afficher. Ainsi, comme le point (-150, -150) est le coin supérieur gauche de ma fenêtre, je vais retrouver l'origine de la scène au centre de l'écran. Si vous relancez votre code avec et sans le déplacement du bouton, vous devriez voir cette fois-ci une différence de position.</p><figure id="r-352572" data-claire-element-id="352573"><img id="r-352571" data-claire-element-id="352571" src="medias/uploads.siteduzero.com_files_237001_238000_237878.jpg" alt="Image utilisateur"/></figure><h3 id="r-rotation-11" data-claire-element-id="352581">Rotation</h3><p id="r-352575" data-claire-element-id="352575">Afin d'appliquer une rotation à l'objet, il suffit d'utiliser la méthode setRotation(), pour laquelle vous devrez fournir l'angle de rotation en degrés. Un angle positif tourne l'objet dans le sens des aiguilles d'une montre, un angle négatif le tourne dans le sens inverse.</p><p id="r-352576" data-claire-element-id="352576">Par exemple :</p><pre id="r-352577" data-claire-element-id="352577"><code data-claire-semantic="cpp">proxy-&gt;setRotation(45);</code></pre><figure id="r-352579" data-claire-element-id="352580"><img id="r-352578" data-claire-element-id="352578" src="medias/uploads.siteduzero.com_files_237001_238000_237880.jpg" alt="Image utilisateur"/></figure><h3 id="r-mise-a-l-echelle-1" data-claire-element-id="352588">Mise à l'échelle</h3><p id="r-352582" data-claire-element-id="352582">Enfin, la méthode setScale() vous permet d'augmenter ou de diminuer la taille prise par l'objet dans la scène. Un nombre supérieur à 1 agrandit l'image, tandis qu'un nombre compris entre 0 et 1 la réduit. Cette fonction prend aussi en compte les nombres négatifs, ce qui permet d'effectuer une symétrie de l'image en plus de modifier sa taille.</p><p id="r-352583" data-claire-element-id="352583">Ces opérations de base sont en gros le minimum vital pour pouvoir gérer vos objets dans la scène 2D.<br/> Je parle ici de scène 2D puisque, si vous avez bien suivi mes explications, je n'ai parlé que de deux axes pour la translation, et uniquement d'une rotation autour de l'axe perpendiculaire à votre écran. En effet, un QGraphicsItem est bien affiché en deux dimensions dans la scène et ne prend pas directement la profondeur en paramètre.</p><div id="r-352585" data-claire-element-id="352585" data-claire-semantic="question"><p id="r-352584" data-claire-element-id="352584">Attends, on n'était pas censés pouvoir manipuler des widgets en 3D ?</p></div><p id="r-352586" data-claire-element-id="352586">C'est bien sûr l'objectif de ce tutoriel. Mais avant cela je voulais vous présenter la manipulation en deux dimensions, parce que ça pourra toujours vous servir. Et puis il fallait bien que vous compreniez pourquoi dans les parties suivantes j'utilise un nouvel objet pour faire mes transformations !</p><p id="r-352587" data-claire-element-id="352587">Avant de donner pour de bon de la profondeur à notre scène, il va falloir passer un peu de temps sur des aspects mathématiques. Rassurez-vous, ce ne sera pas long, et en plus Qt nous donne tous les outils nécessaires pour limiter les calculs à faire. ;)</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/des-widgets-en-3d-avec-qt">Des widgets en 3D avec Qt</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/des-widgets-en-3d-avec-qt/inserer-des-widgets-dans-une-scene">
+Insérer des widgets dans une scène
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/des-widgets-en-3d-avec-qt/les-transformations-avec-qtransform">
+Les transformations avec QTransform
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/des-widgets-en-3d-avec-qt/des-widgets-en-3d">
+Des widgets en 3D !
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/des-widgets-en-3d-avec-qt/pour-aller-plus-loin-gestion-de-la-camera">
+Pour aller plus loin : gestion de la caméra
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/des-widgets-en-3d-avec-qt/les-transformations-avec-qtransform">
+<span class="next">Les transformations avec QTransform</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="LestransformationsavecQTransform"></a><h2>Les transformations avec QTransform</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/des-widgets-en-3d-avec-qt/inserer-des-widgets-dans-une-scene">
+<span class="arrow"></span>
+<span class="next">Insérer des widgets dans une scène</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/des-widgets-en-3d-avec-qt/des-widgets-en-3d">
+<span class="next">Des widgets en 3D !</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-352591" data-claire-element-id="352591">On a vu que les QGraphicsItem proposaient diverses méthodes pour déplacer, tourner ou agrandir les widgets insérés. Seulement, tout cela n'a pas vraiment l'air d'avoir la profondeur qu'on attend d'une scène 3D. Pour cela, on va utiliser une nouvelle classe de Qt, la classe QTransform.</p><p id="r-352592" data-claire-element-id="352592">Si vous avez travaillé un peu les mathématiques dans vos études supérieures, ce qui suit devrait vous être familier. Sinon ne vous inquiétez pas, Qt s'occupe de tous les calculs pour vous, comme d'habitude. :-°</p><h2 id="r-utiliser-un-qtransform-avec-un-qgraphicsitem" data-claire-element-id="352617">Utiliser un QTransform avec un QGraphicsItem</h2><p id="r-352593" data-claire-element-id="352593">Un QTransform représente un objet mathématique appelé matrice, que l'on peut représenter dans notre cas comme un tableau comportant trois lignes et trois colonnes et contenant toutes les informations nécessaires pour effectuer des modifications sur les coordonnées d'un objet dans l'espace.</p><p id="r-352594" data-claire-element-id="352594">Voici comment on représente généralement une matrice :</p><figure id="r-352596" data-claire-element-id="352597"><img id="r-352595" data-claire-element-id="352595" src="medias/uploads.siteduzero.com_files_238001_239000_238833.jpg" alt="Image utilisateur"/></figure><div id="r-352599" data-claire-element-id="352599" data-claire-semantic="question"><p id="r-352598" data-claire-element-id="352598">Mais comment je fais moi pour savoir comment je vais remplir ton tableau ? Ça fait quand même neuf nombres à trouver tout seul, je les devine comment ?</p></div><p id="r-352600" data-claire-element-id="352600">Ne vous inquiétez pas : comme je vous le disais, Qt s'occupe de toute la partie mathématique en proposant des fonctions vous permettant de générer et modifier ces matrices.<br/> Comme un exemple vaut mieux qu'un long discours, voici tout de suite comment réaliser une translation avec un QTransform :</p><pre id="r-352601" data-claire-element-id="352601"><code data-claire-semantic="cpp">#include &lt;QApplication&gt;
+#include &lt;QtGui&gt;
+
+int main(int argc, char *argv[])
+{
+    QApplication app(argc, argv);
+
+    QPushButton *bouton = new QPushButton(&quot;Mon bouton entre en scène !&quot;);
+
+    QGraphicsScene scene;
+    scene.setSceneRect(-150 , -150, 300, 300);
+
+    QGraphicsProxyWidget *proxy = new QGraphicsProxyWidget();
+    proxy-&gt;setWidget(bouton);
+    scene.addItem(proxy);
+
+    QTransform matrix;
+    matrix.translate(150, 200)
+    proxy-&gt;setTransform(matrix);
+
+
+    QGraphicsView view(&amp;scene);
+    view.show();
+
+    return app.exec();
+}</code></pre><p id="r-352602" data-claire-element-id="352602">Comme précédemment, j'ai juste eu à renseigner les valeurs de mon vecteur déplacement et Qt a généré tout seul la matrice correspondante.</p><p id="r-352603" data-claire-element-id="352603">Exécutez ce code et vous verrez... la même chose que tout à l'heure ! Oui, en l'occurence, le résultat est le même lorsque l'on regarde notre fenêtre. Le widget s'est bien déplacé de 150 pixels vers la droite et de 200 pixels vers le bas.</p><p id="r-352604" data-claire-element-id="352604">De même, vous pouvez générer des rotations et des agrandissements à l'aide des méthodes rotate() et scale() de la classe QTransform.</p><div id="r-352606" data-claire-element-id="352606" data-claire-semantic="question"><p id="r-352605" data-claire-element-id="352605">Donc les QTransform servent à la même chose qu'avant, sauf que je dois instancier une classe en plus pour m'en servir. C'est un peu inutile !</p></div><p id="r-352607" data-claire-element-id="352607">En fait, c'est un peu plus compliqué que cela. Il faut plutôt voir les QTransform comme un moyen de faire des transformations composées en une seule opération. Bien sûr, les QTransform permettent aussi d'effectuer les opérations de base, dont les trois que nous avons vues plus haut. Simplement, leur usage est différent.</p><p id="r-352608" data-claire-element-id="352608">Par exemple, les modifications effectuées par un QTransform ne sont récupérables que par la méthode transform() du QGraphicsItem modifié. Cela veut dire que les coordonnées de l'objet, auxquelles on pouvait accéder par QGraphicsItem::x() et QGraphicsItem::y(), n'ont pas été modifiées, et valent toujours 0 !</p><pre id="r-352609" data-claire-element-id="352609"><code data-claire-semantic="cpp">QTransform matrix;
+matrix.translate(150, 200);
+proxy-&gt;setTransform(matrix);
+
+matrix = QTransfrom().translate(proxy-&gt;x(), proxy-&gt;y())
+proxy-&gt;setTransform(matrix);</code></pre><p id="r-352610" data-claire-element-id="352610">Si vous remplacez le code surligné précédemment par ces lignes, vous vous rendrez compte que votre widget n'a pas bougé de l'origine. En effet, la dernière transformation étant celle qui prend en compte les paramètres x() et y() de notre proxy, il est revenu à sa position (0, 0).</p><p id="r-352611" data-claire-element-id="352611">De plus, il ne faut pas confondre les transformations effectuées avec les méthodes fournies par QGraphicsItem que je vous ai présentées par exemple et les transformations passant par un QTransform. En effet, les deux méthodes ne sont pas directement compatibles, à moins de faire toute une gymnastique informatique, et comme on est très feignants on va éviter ça. ^^</p><p id="r-352612" data-claire-element-id="352612">Pour l'exemple, essayez de déplacer votre objet vers la droite avec la méthode setPos(), puis de le replacer à la verticale de l'origine de la scène en passant par le QTransform.<br/> Plutôt que de prendre en compte la dernière transformation demandée et de se contenter de descendre l'objet, vous voyez que votre programme l'a placé en bas ET à droite. C'est parce que la méthode setPos() à déplacé votre objet vers la droite, puis que QTransform l'a affiché à la verticale de cette nouvelle position.</p><p id="r-352613" data-claire-element-id="352613">Avant d'aller plus loin et de voir comment utiliser les QTransform de façon optimale, mon conseil est le suivant.</p><aside id="r-352615" data-claire-element-id="352615" data-claire-semantic="information"><p id="r-352614" data-claire-element-id="352614">L'utilisation des QTransform doit se faire sans celle des méthodes de transformation de la classe QGraphicsItem, afin d'éviter que les déplacements ne s'additionnent entre eux, ce qui devient vite ingérable.</p></aside><p id="r-352616" data-claire-element-id="352616">Le QTransform a donc plus pour but de modifier la façon dont est affiché l'objet plutôt que de modifier l'objet lui-même.<br/> C'est pour cette raison que lorsque j'utilise les QGraphicsItem dans mes applications et que je veux utiliser la classe QTransform, je crée des classes dérivées de QGraphicsItem dans lesquelles je stocke les paramètres dont j'ai besoin, comme la position, la rotation, l'échelle, etc., qui servent ensuite à créer ma matrice.</p><h2 id="r-composer-les-matrices" data-claire-element-id="352641">Composer les matrices</h2><h3 id="r-un-outil-bien-pratique" data-claire-element-id="352627">Un outil bien pratique</h3><p id="r-352618" data-claire-element-id="352618">Maintenant qu'on a vu comment utiliser les matrices avec les objets de la scène, voyons pourquoi j'ai introduit cette nouvelle notion : c'est un outil très puissant, souvent utilisé lorsque l'on travaille en trois dimensions.</p><p id="r-352619" data-claire-element-id="352619">Une matrice (et donc ici un QTransform) ne se limite pas à effectuer une seule opération à la fois. Elle peut en effet contenir les informations nécessaires pour effectuer à la fois une rotation, une translation et une mise à l'échelle ! Il ne suffira plus que d'appliquer la matrice à l'objet et le tour est joué.</p><p id="r-352620" data-claire-element-id="352620">Mathématiquement, la composition de matrices s'obtient en les multipliant entre elles, pour donner une nouvelle matrice qui contient les deux transformations. Cependant, Qt permet de faire ces transformations directement <em>via</em> des méthodes de la classe QTransform.</p><p id="r-352621" data-claire-element-id="352621">Par exemple, si je veux créer une matrice de rotation puis que je veux rajouter une translation, je vais écrire ceci :</p><pre id="r-352622" data-claire-element-id="352622"><code data-claire-semantic="cpp">QTransform matrix;
+matrix.rotate(30, Qt::YAxis);
+matrix = translate(20, 15);</code></pre><p id="r-352623" data-claire-element-id="352623">Il est aussi possible d'utiliser directement la multiplication pour composer vos matrices. Cependant il faut faire attention à l'ordre des calcul. La matrice la plus à gauche dans la multiplication correspond à la transformation effectuée en dernier. Les QTransform tiennent compte de cela, l'utilisation des méthodes rotate() et translate() place la matrice paramètre au début du calcul, et non à la fin. Par exemple, voici deux lignes de code qui effectuent le même calcul :</p><pre id="r-352624" data-claire-element-id="352624"><code data-claire-semantic="cpp">matrix.rotate(30, Qt::YAxis);
+matrix = QTransform::rotate(30, Qt::Axis) * matrix;</code></pre><p id="r-352625" data-claire-element-id="352625">Par conséquent, soyez encore plus prudent dans le choix de l'ordre de vos lignes de code.<br/> Si vous utilisez les multiplications directement, placez vos matrices dans l'ordre inverse dans lequel vous devez faire vos transformations. Si vous utilisez les méthodes fournies par Qt, vous devrez les écrire dans l'ordre normal, ce qui est plus intuitif. Mais je me devais de vous préciser rapidement le fonctionnement, pour votre culture. :p</p><p id="r-352626" data-claire-element-id="352626">Je n'ai plus qu'à appliquer la matrice à mon objet situé dans la scène pour que ces deux transformations soient prises en compte.</p><h3 id="r-une-question-d-ordre" data-claire-element-id="352640">Une question d'ordre</h3><p id="r-352628" data-claire-element-id="352628">Sachez maintenant que lorsque vous voudrez composer vos transformations, il faudra les agencer dans un ordre précis.</p><p id="r-352629" data-claire-element-id="352629">En effet, les deux codes suivants donneront deux matrices (et donc deux transformations) différentes :</p><pre id="r-352630" data-claire-element-id="352630"><code data-claire-semantic="cpp">QTransform matrix;
+matrix.translate(10, 10);
+matrix.rotate(45, Qt::YAxis);</code></pre><pre id="r-352631" data-claire-element-id="352631"><code data-claire-semantic="cpp">QTransform matrix;
+matrix.rotate(45, Qt::YAxis);
+matrix.translate(10, 10);</code></pre><p id="r-352632" data-claire-element-id="352632">Avec mon premier code, j'ai déplacé mon objet avant de le faire tourner autour de l'origine ; dans le second, je l'ai déplacé après l'avoir fait tourner autour de l'origine.</p><p id="r-352633" data-claire-element-id="352633">Dans le premier cas, la transformation finale pourrait se schématiser ainsi :</p><figure id="r-352635" data-claire-element-id="352636"><img id="r-352634" data-claire-element-id="352634" src="medias/uploads.siteduzero.com_files_237001_238000_237968.jpg" alt="Image utilisateur"/></figure><p id="r-352637" data-claire-element-id="352637">L'objet a parcouru le chemin en pointillés et ne se trouve ainsi plus dans le plan (x, y) ! L'autre cas en revanche correspond bien à ce qu'on attend intuitivement, c'est-à-dire un objet situé dans le plan (x, y) mais qui a tourné sur lui-même.</p><p id="r-352638" data-claire-element-id="352638">Ainsi, pour placer un objet dans la scène, il est plus judicieux d'effectuer d'abord la rotation suivant l'angle voulu, puis le déplacement. La seconde solution est donc celle vous devriez utiliser.</p><p id="r-352639" data-claire-element-id="352639">Maintenant que ces règles sont établies, voyons ce que l'on va pouvoir afficher à l'écran !</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/des-widgets-en-3d-avec-qt">Des widgets en 3D avec Qt</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/des-widgets-en-3d-avec-qt/inserer-des-widgets-dans-une-scene">
+Insérer des widgets dans une scène
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/des-widgets-en-3d-avec-qt/les-transformations-avec-qtransform">
+Les transformations avec QTransform
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/des-widgets-en-3d-avec-qt/des-widgets-en-3d">
+Des widgets en 3D !
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/des-widgets-en-3d-avec-qt/pour-aller-plus-loin-gestion-de-la-camera">
+Pour aller plus loin : gestion de la caméra
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/des-widgets-en-3d-avec-qt/inserer-des-widgets-dans-une-scene">
+<span class="arrow"></span>
+<span class="next">Insérer des widgets dans une scène</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/des-widgets-en-3d-avec-qt/des-widgets-en-3d">
+<span class="next">Des widgets en 3D !</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Deswidgetsen3D"></a><h2>Des widgets en 3D !</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/des-widgets-en-3d-avec-qt/les-transformations-avec-qtransform">
+<span class="arrow"></span>
+<span class="next">Les transformations avec QTransform</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/des-widgets-en-3d-avec-qt/pour-aller-plus-loin-gestion-de-la-camera">
+<span class="next">Pour aller plus loin : gestion de la caméra</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-que-la-rotation-soit" data-claire-element-id="352653">Que la rotation soit</h2><p id="r-352643" data-claire-element-id="352643">Nous allons tout d'abord voir comment faire faire à nos widgets des rotations autour d'un axe vertical. Un petit tour dans la doc et hop hop hop, je trouve que la méthode rotate() de QTransform, qui prend en paramètre un angle en degrés, correspond tout à fait à mes besoins !</p><aside id="r-352645" data-claire-element-id="352645" data-claire-semantic="warning"><p id="r-352644" data-claire-element-id="352644">Il vaut mieux utiliser un widget plus « carré » et plus gros qu'un QPushButton pour voir la perspective, vous risquez d'être déçus sinon. ^^</p></aside><p id="r-352646" data-claire-element-id="352646">Voyons ce que ça va donner avec un QWebView par exemple (n'oubliez pas d'ajouter la ligne <code data-claire-semantic="console">QT += webkit</code> à votre fichier .pro).</p><pre id="r-352647" data-claire-element-id="352647"><code data-claire-semantic="cpp">#include &lt;QApplication&gt;
+#include &lt;QtGui&gt;
+#include &lt;QWebView&gt;
+
+int main(int argc, char *argv[])
+{
+    QApplication app(argc, argv);
+
+    QWebView *web = new QWebView();
+    web-&gt;load(QUrl(&quot;http://www.siteduzero.com&quot;));
+    web-&gt;show();
+
+    QGraphicsScene scene;
+    scene.setSceneRect(0 , 0, 1000, 800);
+
+    QGraphicsProxyWidget *proxy = new QGraphicsProxyWidget();
+    proxy-&gt;setWidget(web);
+    scene.addItem(proxy);
+
+    QTransform matrix;
+    matrix.rotate(45, Qt::YAxis);
+    proxy-&gt;setTransform(matrix);
+
+    QGraphicsView view(&amp;scene);
+    view.show();
+
+    view.setWindowTitle(&quot;Ma première scène&quot;);
+    return app.exec();
+}</code></pre><p id="r-352648" data-claire-element-id="352648">Compilez ça et ô miracle, la rotation fut vous avez une jolie perspective sur votre widget, dont les fonctionnalités sont toujours utilisables ! Un QTextEdit continuera à être éditable dans l'espace, une QWebView continuera à charger les pages demandées, etc. Bien sûr, on peut se contenter de formes géométriques plus basiques, mais il est bon de savoir que cela fonctionne avec tous les widgets. (Vous pouvez essayer d'intégrer zNavigo, je vous assure que ca marche aussi. ;) )</p><p id="r-352649" data-claire-element-id="352649">Je vous présente donc le SdZ vu... de profil. ^^</p><figure id="r-352651" data-claire-element-id="352652"><img id="r-352650" data-claire-element-id="352650" src="medias/uploads.siteduzero.com_files_238001_239000_238832.jpg" alt="Image utilisateur"/></figure><h2 id="r-et-que-ca-bouge" data-claire-element-id="352672">Et que ça bouge !</h2><p id="r-352654" data-claire-element-id="352654">Maintenant, nous pouvons ajouter un peu d'interaction à notre scène, en permettant à notre vision de bouger par rapport aux objets. Pour cela je vais créer une classe spéciale héritée de QGraphicsProxyWidget qui va contenir les informations dont je souhaite garder la trace : orientation, position, échelle...</p><p id="r-352655" data-claire-element-id="352655">Voici le <em>header</em> de la classe que je vous propose :</p><pre id="r-352656" data-claire-element-id="352656"><code data-claire-semantic="cpp">#include &lt;QGraphicsProxyWidget&gt;
+
+class MyProxy : public QGraphicsProxyWidget
+{
+public:
+    MyProxy();
+
+    qreal rotationY();
+    void setRotationY(qreal rotation);
+
+    QPointF center();
+
+private:
+    qreal m_rotationY; // enregistre la rotation autour de l'axe Y
+
+    QPointF m_center; // contient la position du centre du widget
+}</code></pre><p id="r-352657" data-claire-element-id="352657">Puis nous allons créer une classe dérivée de QGraphicsScene pour gérer les événements de la souris. Je vous laisse créer la classe tout seul, il suffit de réimplémenter la méthode mouseMoveEvent(), appelée en cas de déplacement de la souris.</p><p id="r-352658" data-claire-element-id="352658">Nous allons par exemple demander d'effectuer une rotation autour de l'axe Y lorsque la souris est déplacée latéralement et que le clic gauche est enfoncé.</p><pre id="r-352659" data-claire-element-id="352659"><code data-claire-semantic="cpp">void MyScene::mouseMoveEvent(QGraphicsSceneMouseEvent*e)
+{
+    if(e-&gt;buttons() &amp; Qt::LeftButton)
+    {
+        QPointF delta(e-&gt;scenePos() - e-&gt;lastScenePos());
+        qreal rotation = delta().x();
+        m_proxy-&gt;setRotationY(rotation);
+		
+        QTransfrom matrix;
+        matrix.rotate(rotation);
+        m_proxy.setTransform(matrix);
+    }
+}</code></pre><p id="r-352660" data-claire-element-id="352660">Il faut bien penser à remplacer vos déclarations de scene et proxy dans le main par MyScene et MyProxy, sinon évidemment ça ne fonctionnera pas !</p><p id="r-352661" data-claire-element-id="352661">Maintenant, lorsque vous déplacez la souris avec le clic gauche enfoncé, votre widget devrait se mettre à tourner verticalement autour de l'origine de la scène.</p><div id="r-352663" data-claire-element-id="352663" data-claire-semantic="question"><p id="r-352662" data-claire-element-id="352662">Attends, mon widget tourne autour de son côté gauche, moi je veux qu'il tourne sur lui-même !</p></div><p id="r-352664" data-claire-element-id="352664">En effet, la rotation du widget s'effectue par rapport à l'origine de la scène (c'est la raison pour laquelle l'ordre des transformations est important). Par conséquent, pour remédier à ce problème, il faut déplacer le widget pour que son centre se situe au point (0, 0) !</p><p id="r-352665" data-claire-element-id="352665">Reprenons notre scène avec la QWebView. Le déplacement à effectuer est représenté par le schéma ci-dessous : pour que la rotation s'effectue par rapport au centre du widget, il faut ramener ce centre à l'origine de la scène. C'est donc le déplacement représenté par la flèche rouge qui va nous permettre de réaliser cela.</p><figure id="r-352667" data-claire-element-id="352668"><img id="r-352666" data-claire-element-id="352666" src="medias/uploads.siteduzero.com_files_238001_239000_238835.jpg" alt="Image utilisateur"/></figure><p id="r-352669" data-claire-element-id="352669">A priori, vous devriez savoir faire ça tout seul. Il suffit de composer notre matrice d'une translation supplémentaire pour déplacer notre widget vers la gauche et en haut, sur une longueur respective de la moitié de la largeur et la moitié de la hauteur (avec un signe négatif, car on va vers la gauche et vers le haut). Vous pouvez récupérer la taille de vos widgets avec les méthodes proxy-&gt;widget()-&gt;width() et proxy-&gt;widget()-&gt;height() et les ajouter comme attributs de votre classe MyProxy pour ne plus avoir à les rechercher. Si vous n'y arrivez pas, jetez un coup d'œil à l'exemple à la fin du paragraphe suivant, qui effectue le centrage du widget.</p><aside id="r-352671" data-claire-element-id="352671" data-claire-semantic="warning"><p id="r-352670" data-claire-element-id="352670">Pensez à déplacer l'origine de la scène au centre de la fenêtre avec QGraphicsScene::setSceneRect() si ce n'est déjà fait, ou votre widget sera coupé par le bord de l'écran à cause de ce décalage.</p></aside><h2 id="r-gerer-plusieurs-transformations-differentes" data-claire-element-id="352689">Gérer plusieurs transformations différentes</h2><div id="r-352674" data-claire-element-id="352674" data-claire-semantic="question"><p id="r-352673" data-claire-element-id="352673">Tout ça c'est bien beau, mais comment va-t-on faire lorsque l'on se retrouve avec des widgets comportant plusieurs transformations, on va devoir appliquer la matrice à chaque intervention de l'utilisateur ?</p></div><p id="r-352675" data-claire-element-id="352675">On pourrait envisager ça, mais ça ne serait pas judicieux. D'une part parce qu'il faudrait recalculer la matrice de chaque objet à chaque fois qu'un événement est enregistré, d'autre part parce qu'on risquerait d'intervertir deux transformations, ce qui donnerait un résultat... inattendu.</p><p id="r-352676" data-claire-element-id="352676">Souvenez-vous, nous avons créé une classe spécialement pour enregistrer toutes les transformations subies par notre objet (pour l'instant sa position et son orientation actuelle).</p><p id="r-352677" data-claire-element-id="352677">L'idée est donc d'enregistrer toutes les modifications apportées à l'objet dans les attributs de celui-ci puis, à intervalles réguliers, d'appliquer un QTransform à l'objet qui va le placer là où il est censé être au moment du rafraîchissement.</p><p id="r-352678" data-claire-element-id="352678">Pour cela, on va utiliser un QTimer, qui s'occupera d'appeler notre fonction de mise à jour de la scène à intervalles réguliers. On peut le créer dans le constructeur de notre scène :</p><pre id="r-352679" data-claire-element-id="352679"><code data-claire-semantic="cpp">QTimer *timer = new QTimer(this);
+timer-&gt;setInterval(30);
+connect(timer, SIGNAL(timeout()), this, SLOT(updateScene()));
+timer-&gt;start();</code></pre><p id="r-352680" data-claire-element-id="352680">Ensuite, pour pouvoir gérer plusieurs objets, on va ajouter un attribut à la classe MyScene, qui va contenir des pointeurs sur tous les objets de la scène. Sachez qu'il existe la fonction QGraphicsScene::items() qui permet de faire ce que je vais vous montrer, mais elle retourne des QGraphicsItem, d'où le besoin de faire un cast. C'est toujours possible mais je n'aime pas beaucoup cette méthode, voici donc comment je me suis débrouillé :</p><pre id="r-352681" data-claire-element-id="352681"><code data-claire-semantic="cpp">QList&lt;MyProxy *&gt; m_objets;</code></pre><p id="r-352682" data-claire-element-id="352682">Pour ajouter un objet à la liste c'est très simple, vous pouvez utiliser l'opérateur de flux &lt;&lt;.</p><pre id="r-352683" data-claire-element-id="352683"><code data-claire-semantic="cpp">MyProxy *proxy;
+// ...
+m_objets &lt;&lt; proxy;</code></pre><p id="r-352684" data-claire-element-id="352684">Dans updateScene(), vous pouvez donc facilement parcourir tous les objets de la scène.</p><pre id="r-352685" data-claire-element-id="352685"><code data-claire-semantic="cpp">void MyScene::updateScene()
+{
+    foreach (MyProxy *item, m_widgets)
+    {   
+        placeItem(item);
+    }
+}</code></pre><p id="r-352686" data-claire-element-id="352686">Voici la fonction placeObjet(), qui s'occupe de créer la matrice de transformation et de l'appliquer à notre objet. Attention à l'ordre des transformations !</p><pre id="r-352687" data-claire-element-id="352687"><code data-claire-semantic="cpp">void MyScene::placeObjet(MyProxy *objet)
+{
+    QTransform m;
+    // rotation de l'objet
+    m.rotate(item-&gt;rotationY(), Qt::YAxis);
+    // positionnement du widget dans la scène
+    m.translate(objet-&gt;center().x(), objet-&gt;center().y());
+    // centrage du widget
+    m.translate(-objet-&gt;largeur(), -objet-&gt;hauteur());
+
+    objet-&gt;setTransform(m);
+}</code></pre><p id="r-352688" data-claire-element-id="352688">Vous pouvez donc maintenant essayer de faire tourner votre widget et de le déplacer avec le clavier !</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/des-widgets-en-3d-avec-qt">Des widgets en 3D avec Qt</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/des-widgets-en-3d-avec-qt/inserer-des-widgets-dans-une-scene">
+Insérer des widgets dans une scène
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/des-widgets-en-3d-avec-qt/les-transformations-avec-qtransform">
+Les transformations avec QTransform
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/des-widgets-en-3d-avec-qt/des-widgets-en-3d">
+Des widgets en 3D !
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/des-widgets-en-3d-avec-qt/pour-aller-plus-loin-gestion-de-la-camera">
+Pour aller plus loin : gestion de la caméra
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/des-widgets-en-3d-avec-qt/les-transformations-avec-qtransform">
+<span class="arrow"></span>
+<span class="next">Les transformations avec QTransform</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/des-widgets-en-3d-avec-qt/pour-aller-plus-loin-gestion-de-la-camera">
+<span class="next">Pour aller plus loin : gestion de la caméra</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Pourallerplusloingestiondelacamra"></a><h2>Pour aller plus loin : gestion de la caméra</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/des-widgets-en-3d-avec-qt/des-widgets-en-3d">
+<span class="arrow"></span>
+<span class="next">Des widgets en 3D !</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-la-camera-reprenons-a-l-envers" data-claire-element-id="352696">La caméra : reprenons à l'envers !</h2><p id="r-352691" data-claire-element-id="352691">Je vous ai déjà dit que l'ordre dans lequel vous composez vos transformations était important. Ça le devient encore plus si vous voulez gérer une caméra dans l'espace !</p><p id="r-352692" data-claire-element-id="352692">Prenons un exemple. Considérons la tourelle d'un tank dans la scène. Pour la placer correctement, vous allez devoir lui appliquer sa rotation par rapport au tank, puis la rotation du tank par rapport à la scène, puis enfin la translation qui la positionnera à l'endroit voulu.<br/> Si maintenant vous voulez placer une caméra (votre point de vue) dans la scène, que se passe-t-il ? Dans ce cas, si vous tournez sur vous-même, <strong>vous voyez le monde 3D entier qui tourne autour de votre position</strong>. La rotation de la caméra doit donc être appliquée après sa translation !</p><aside id="r-352694" data-claire-element-id="352694" data-claire-semantic="warning"><p id="r-352693" data-claire-element-id="352693">Autant vous prévenir tout de suite, cet exemple ne vous permettra pas de tourner sur vous-même et de vous déplacer dans l'espace, mais plutôt de déplacer tous les objets de la scène d'un coup ou bien de tous les faire tourner devant vous. La construction des matrices utilisées dans les jeux vidéo, par exemple pour afficher correctement la scène devant la caméra, n'est pas évidente à faire à la main et dépasse le cadre de ce tutoriel.</p></aside><p id="r-352695" data-claire-element-id="352695">Voyons donc tout de suite concrètement comment on peut <em>donner l'impression</em> que l'on se déplace dans la scène.</p><h2 id="r-creer-une-camera" data-claire-element-id="352708">Créer une caméra</h2><p id="r-352697" data-claire-element-id="352697">Déterminons tout de suite de quelles informations nous allons principalement avoir besoin pour notre caméra : position dans la scène et orientation, tout comme les objets de notre scène.</p><pre id="r-352698" data-claire-element-id="352698"><code data-claire-semantic="cpp">#include &lt;QPointF&gt;
+
+class Camera
+{
+public:
+    Camera();
+    
+    QPointF pos();
+    qreal zpos();
+    qreal rotationY();
+
+    void setPos(QPointF pos);
+    void setZPos(qreal pos);
+    void setRotationY(qreal angle);
+
+private:
+    QPointF m_pos;
+    qreal m_zpos;
+    qreal m_rotationY;
+
+
+};</code></pre><p id="r-352699" data-claire-element-id="352699">Je vous laisse deviner le contenu du fichier Camera.cpp, il ne s'agit que de getters et de setters, rien de bien sorcier.</p><p id="r-352700" data-claire-element-id="352700">Vous remarquerez aussi que j'ai ajouté un attribut m_zpos à la caméra.<br/> C'est en fait une astuce que je voulais vous montrer et qui permettra de donner l'impression que l'on déplace celle-ci vers l'avant où l'arrière. Nous verrons comment faire lors de l'implémentation dans la scène. Sachez simplement que la valeur de cet attribut est modifiée lors de l'appui d'une touche, par exemple des flèches haut et bas ou bien la molette de la souris, au choix.</p><p id="r-352701" data-claire-element-id="352701">Ainsi, il n'y a pas grand chose de plus à implémenter pour avoir une caméra de base. Notez qu'ici je ne considère qu'une rotation par rapport à l'axe Y, mais libre à vous d'ajouter les deux autres axes si vous le voulez.</p><p id="r-352702" data-claire-element-id="352702">L'avantage d'utiliser un objet caméra dans cette scène, c'est que vous n'avez que les paramètres de ladite caméra à modifier lorsque vous la tournez ou la déplacez, plutôt que de redéplacer tous les objets un par un.</p><p id="r-352703" data-claire-element-id="352703">Il suffit maintenant d'ajouter un attribut caméra dans la classe MyScene, et de modifier la fonction placeItem() comme suit :</p><pre id="r-352704" data-claire-element-id="352704"><code data-claire-semantic="cpp">void MyScene::placeObjet(MyProxy *objet)
+{
+    QTransform m;
+    m.translate(objet-&gt;center().x(), objet-&gt;center().y());
+    m.translate(-objet-&gt;largeur(), -objet-&gt;hauteur());
+
+    // ajout des transformations liées à la position de la caméra
+    m.translate(-m_camera.pos().x(), -m_camera.pos().y());
+    m *= QTransform().rotate(m_camera.yaw(), Qt::YAxis);
+
+    // simulation du déplacement suivant Z
+    qreal scale = m_camera.zpos();
+    m *= QTransform().scale(scale, scale);
+
+    item-&gt;setTransform(m);
+}</code></pre><p id="r-352705" data-claire-element-id="352705">Enfin vous remarquez l'utilisation de la fonction QTransform::scale() qui a un paramètre dépendant de l'attribut m_zpos de ma caméra. En effet, si je considère que lorsque ma position en Z augmente je me rapproche de la scène, alors cela revient à voir les objets dans la scène en plus gros... donc à les agrandir ! Ici j'ai fait une implémentation assez basique pour que vous compreniez le principe, on peut cependant affiner le comportement en ajoutant des coefficients multiplicateurs pour gagner en précision.</p><p id="r-352706" data-claire-element-id="352706">Voilà ! J'espère que les classes QGraphics**** de Qt vous paraissent plus familières et que vous avez une idée du genre de scènes qu'il est possible de réaliser.<br/> Bien sûr, les notions présentées ici ne vous permettent pas de coder le prochain Half Life, mais après tout, il y a d'autres bibliothèques pour cela. :D</p><p id="r-352707" data-claire-element-id="352707">Voici pour terminer un lien vers un post trouvé sur les Qt Labs Blogs, où l'on peut voir une vidéo d'un développeur qui s'est amusé à prouver qu'il était possible de faire un <em>Wolfenstein-like</em> avec les QGraphisItem. Vous pourrez d'ailleurs aller jeter un coup d'œil à son code, qui m'a beaucoup aidé pour comprendre le fonctionnement de toutes ces classes. C'est par <a href="http://labs.trolltech.com/blogs/2008/12/02/widgets-enter-the-third-dimension-wolfenqt/">ici</a>.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/des-widgets-en-3d-avec-qt">Des widgets en 3D avec Qt</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/des-widgets-en-3d-avec-qt/inserer-des-widgets-dans-une-scene">
+Insérer des widgets dans une scène
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/des-widgets-en-3d-avec-qt/les-transformations-avec-qtransform">
+Les transformations avec QTransform
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/des-widgets-en-3d-avec-qt/des-widgets-en-3d">
+Des widgets en 3D !
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/des-widgets-en-3d-avec-qt/pour-aller-plus-loin-gestion-de-la-camera">
+Pour aller plus loin : gestion de la caméra
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/des-widgets-en-3d-avec-qt/des-widgets-en-3d">
+<span class="arrow"></span>
+<span class="next">Des widgets en 3D !</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/des-widgets-en-3d-avec-qt.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 23:50:53 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/des-widgets-en-3d-avec-qt.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:12:25 GMT -->
+</html>

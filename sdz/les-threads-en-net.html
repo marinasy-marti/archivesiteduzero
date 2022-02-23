@@ -1,0 +1,1024 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/les-threads-en-net.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 08:15:18 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/les-threads-en-net.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:27:53 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Les Threads en .NET</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/les-threads-en-net.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Les Threads en .NET</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#LesThreadsen.NET">Les Threads en .NET</a><br/><a href="#Lesbasesdesdelegates">Les bases des delegates</a><br/><a href="#Lesthreads">Les threads</a><br/><a href="#LesthreadsaveclesWindowsForms">Les threads avec les Windows Forms</a><br/></div>
+<a name="LesThreadsen.NET"></a><h2>Les Threads en .NET</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-threads-en-net/les-bases-des-delegates">
+<span class="next">Les bases des delegates</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-393425" data-claire-element-id="393425">Il existe en .NET quelques créatures qui se cachent dans le noir. Parmi celles-ci sont les threads, les fonctions lambda et les delegates. N'ayez craintes chers Zéros, voici un tutoriel qui répondra à vos attentes en ce qui concerne les threads.</p><p id="r-393426" data-claire-element-id="393426">Par contre, l'étude de cette discipline requiert également une bonne connaissance du C#. Nous verrons également au passage les delegates, références sur des méthodes.</p><p id="r-393427" data-claire-element-id="393427">Je vous le dis maintenant, ce n'est pas un sujet des plus faciles, mais cela permet de nombreuses améliorations de vos applications, notamment pour leur permettre de communiquer en réseau, mais aussi de rendre fluide certaines opérations lourdes en traitement sans bloquer votre application !</p><aside id="r-393429" data-claire-element-id="393429" data-claire-semantic="warning"><p id="r-393428" data-claire-element-id="393428">Cours pour zéros avertis seulement ! Si vous ne connaissez pas le C#, ce tutoriel n'est pas pour vous.</p></aside><aside id="r-393431" data-claire-element-id="393431" data-claire-semantic="information"><p id="r-393430" data-claire-element-id="393430">Si vous désirez suivre le cours en VB.NET, je vous conseille d'utiliser un traducteur C# -&gt; VB.NET afin de traduire les exemples. ;)</p></aside>
+</div><a name="Lesbasesdesdelegates"></a><h2>Les bases des delegates</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-threads-en-net/les-threads-3">
+<span class="next">Les threads</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-les-delegates-une-reference-en-la-matiere-1" data-claire-element-id="393438">Les delegates, une référence en la matière !</h2><h3 id="r-qu-est-ce-qu-un-delegate-1" data-claire-element-id="393435">Qu'est-ce qu'un delegate ?</h3><p id="r-393432" data-claire-element-id="393432">Un delegate est un concept abstrait du C#. Jusqu'à maintenant, une variable pouvait contenir de nombreuses choses. On traite, par exemple, les objets comme des variables. Elles permettent aussi de mettre en mémoire des données, comme du texte, des nombres entiers ou flottants, des booléens. Ces cas ne sont que des exemples.</p><p id="r-393433" data-claire-element-id="393433">Un delegate est en fait une variable un peu spéciale... Elle ne sert qu'à donner une <strong>référence vers une méthode ou fonction</strong>. Elle est donc de type référence, comme un objet !</p><p id="r-393434" data-claire-element-id="393434">L'utilité sera bien évidemment d'envoyer ces delegates en paramètres ! Pensez-y, une méthode générique unique pourrait s'occuper de lancer un nombre infini d'opérations déterminées par vos bons soins. Ne vous en faites pas si ce concept est abstrait pour le moment. Comprenez seulement qu'on peut drastiquement augmenter la réutilisation du code avec cet outil. N'est-ce pas le grand but de la POO que de réutiliser le code ?</p><h3 id="r-comment-on-fait-un-delegate-ca-parait-complique" data-claire-element-id="393437">Comment on fait un delegate ? Ça paraît compliqué...</h3><p id="r-393436" data-claire-element-id="393436">Oui, ça paraît compliqué aux premiers abords, mais ça devient vite facile. Allez, on s'y lance !</p><h2 id="r-partis-pour-la-gloire-1" data-claire-element-id="393477">Partis pour la gloire !</h2><p id="r-393439" data-claire-element-id="393439">Je vais commencer par vous donner un exemple bien simple, un cas que vous utilisez toujours lorsque vous programmez en C# !</p><pre id="r-393440" data-claire-element-id="393440"><code data-claire-semantic="csharp">using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace TestThread
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            bool resultat = Test(&quot;Ceci est un test qui est négatif !&quot;);
+            bool res2 = Test(&quot;Positif&quot;);
+        }
+
+        static public bool Test(string test)
+        {
+            return test.Length &lt; 15;
+        }
+    }
+}</code></pre><aside id="r-393442" data-claire-element-id="393442" data-claire-semantic="warning"><p id="r-393441" data-claire-element-id="393441">Une fonction est un bloc de traitements qui retourne un résultat, et la méthode ne fait que des traitements sans rien retourner. Pour alléger le texte, d'ici la fin de ce tutoriel, j'appellerai toute fonction ou méthode des méthodes, indifféremment de leur traitement.</p></aside><p id="r-393443" data-claire-element-id="393443">On voit clairement une situation très usuelle ici. Vous appelez <strong>Test</strong> deux fois à partir du <strong>Main</strong>. Ce qui se passera, c'est que lorsque viendra le temps d'exécuter ce code, .NET lancera la méthode <strong>Test</strong> afin de donner un résultat à la variable <em>resultat</em>. On fait alors un appel de la méthode.</p><p id="r-393444" data-claire-element-id="393444">Je vais immédiatement déclarer un delegate pour la même situation, comme ça, vous verrez de quoi il en retourne.</p><pre id="r-393445" data-claire-element-id="393445"><code data-claire-semantic="csharp">using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace TestThread
+{
+    class Program
+    {
+        //Mon delegate aura exactement la même signature que ma méthode !
+        delegate bool PremierDelegate(string i);
+
+        static void Main(string[] args)
+        {
+            //Je crée une variable a qui contiendra la méthode Test.
+            PremierDelegate a = new PremierDelegate(Test);
+
+            //Au lieu d'appeler Test, je vais appeler a, ce qui me donnera le
+            //même résultat !
+            bool resultat = a(&quot;Ceci est un test qui est négatif !&quot;);
+            bool res2 = a(&quot;Positif&quot;);
+        }
+
+        static public bool Test(string test)
+        {
+            return test.Length &lt; 15;
+        }
+    }
+}</code></pre><p id="r-393446" data-claire-element-id="393446">Bon, dans cet exemple, l'utilisation d'un delegate est carrément inutile, mais ils deviendront rapidement indispensables, surtout lors de la programmation réseau.</p><p id="r-393447" data-claire-element-id="393447">Une autre utilisation très fréquente des <em>delegates</em> est la <strong>gestion des événements</strong> ! Quand vous vous abonnez à un <em>événement</em>, vous refilez tout simplement une méthode à une liste de delegate. Quand on <strong>invoque</strong> un événement, on appelle toutes les méthodes abonnées. Les événements peuvent faire l'objet d'un autre tutoriel et dépassent les objectifs de ce tutoriel. Si vous voulez plus d'informations, veuillez visiter le site de <a href="http://msdn.microsoft.com/fr-fr/library/system.eventargs(v=VS.80).aspx">MSDN</a> en attendant.</p><aside id="r-393449" data-claire-element-id="393449" data-claire-semantic="information"><p id="r-393448" data-claire-element-id="393448">Dans cet exemple, je me réfère au concept de signature d'une méthode. Je vais prendre quelques minutes pour vous expliquer.</p></aside><h3 id="r-les-signatures-de-methodes-1" data-claire-element-id="393462">Les signatures de méthodes</h3><p id="r-393450" data-claire-element-id="393450">Toute méthode possède une signature. Une signature de méthode, comme dans le monde réel, sert à identifier une méthode de façon unique. Si vous avez déjà fait de la programmation, peut-être avez-vous déjà vu ce concept.</p><p id="r-393451" data-claire-element-id="393451">La signature de méthode résout le problème des noms uniques dans le cas de surcharge d'une méthode. Dans les langages autorisant la surcharge de méthode, on se réfère à la signature plutôt qu'au nom de la méthode pour l'appeler. Pour chaque méthode doit correspondre une signature différente des autres. Je vais vous faire un cours en accéléré, donc je vous invite à vous référer à la documentation de MSDN ou alors au Forum du Site du Zéro si vous avez de plus amples questions.</p><p id="r-393452" data-claire-element-id="393452">Donc, la signature d'une méthode contient les informations suivantes :</p><ul id="r-393457" data-claire-element-id="393457"><li id="r-393454" data-claire-element-id="393454"><p id="r-393453" data-claire-element-id="393453">L'identificateur de la méthode</p></li><li id="r-393456" data-claire-element-id="393456"><p id="r-393455" data-claire-element-id="393455">La séquence des types de la liste des paramètres</p></li></ul><aside id="r-393459" data-claire-element-id="393459" data-claire-semantic="warning"><p id="r-393458" data-claire-element-id="393458">Le type de retour ne fait pas partie de la signature ! En effet, ce qui est important de retenir est le Nom de la méthode et les paramètres dans l'ordre.</p></aside><p id="r-393460" data-claire-element-id="393460">Ce qui fait que notre méthode <code data-claire-semantic="csharp">static public int Test(string test)</code> a la signature suivante : <code data-claire-semantic="csharp">Test(string);</code></p><p id="r-393461" data-claire-element-id="393461">La <em><strong>définition</strong></em> d'un delegate est un peu différente. Le nom de la méthode et des paramètres sont inutiles. Ce qui compte c'est le type de retour et l'ordre des paramètres selon leur type (pas leur nom). Ainsi, un delegate ne pourra référer qu'une méthode possédant la même <em><strong>définition</strong></em>.</p><h3 id="r-l-autopsie-d-un-delegate-1" data-claire-element-id="393476">L'autopsie d'un delegate !</h3><p id="r-393463" data-claire-element-id="393463">Analysons maintenant comment créer ce fameux <em>delegate</em>. Tout d'abord, sachez que le rôle principal d'un <em>delegate</em> est de passer, croyez-le ou non, une méthode en paramètre à une autre méthode. On peut alors aisément imaginer la flexibilité d'un code en permettant à une méthode générique d'appeler une méthode passée en paramètre et d'en afficher le résultat, peu importe les opérations à effectuer. Nous verrons un exemple un peu plus tard. Pour le moment, voici la définition d'un <em>delegate</em> :</p><p id="r-393464" data-claire-element-id="393464">[Attribut][Modificateur d'accès]delegatetypeRetourNomDuDelegate (paramètres)</p><aside id="r-393466" data-claire-element-id="393466" data-claire-semantic="information"><p id="r-393465" data-claire-element-id="393465">Les cases entourés de crochets sont optionnels. Un <strong>attribut</strong>, par exemple, sert à injecter des <em>meta-données </em>récupérables à l'exécution du programme. Cela dépasse le cadre de ce cours, mais vous pouvez vous rabattre sur <a href="http://msdn.microsoft.com/fr-fr/library/aa664611(v=VS.71).aspx">MSDN</a> pour plus d'explications. Les <strong>modificateurs d'accès</strong>, quant à eux, sont une notion qui devrait vous être connue. Il s'agit de modifier l'accès à l'aide des mots clés <strong>public</strong>, <strong>private</strong>, <strong>protected</strong>, <strong>internal</strong>, etc.</p></aside><p id="r-393467" data-claire-element-id="393467">Voici un exemple :</p><figure id="r-393469" data-claire-element-id="393470"><img id="r-393468" data-claire-element-id="393468" src="medias/uploads.siteduzero.com_files_237001_238000_237692.png" alt="Structure d'un delegate"/></figure><p id="r-393471" data-claire-element-id="393471">Je parlais un peu plus haut de la définition d'un <strong>delegate</strong>. Il faut bien la lui donner cette définition ! On fait généralement cela dans le même espace où l'on déclare les <em>variables globales</em>. Vous verrez dans l'exemple qui suit. Ensuite, on utilise le <em>delegate</em> comme un <strong>objet</strong>. On peut alors l'utiliser dans les <strong>paramètres</strong> ou ailleurs si nécéssaire. Ce sera plus clair pour vous avec l'exemple qui suit :</p><pre id="r-393472" data-claire-element-id="393472"><code data-claire-semantic="csharp">using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace TestThread
+{
+    class Program
+    {
+
+        delegate int Calcul(int i1, int i2);
+
+        static void Main(string[] args)
+        {
+            //Affichage de la console.
+            Console.WriteLine(&quot;Test de delegate&quot;);
+            Console.WriteLine(&quot;----------------------&quot;);
+
+            //On passe à la méthode Afficher la méthode à lancer et les arguments.
+            Afficher(Add, 25, 19);
+            Afficher(Sub, 52, 17);
+            Afficher(Mul, 10, 12);
+            Afficher(Div, 325, 5);
+            
+            //On ne ferme pas la console immédiatement.
+            Console.ReadKey();
+        }
+           
+             //On fait une méthode générale qui prendra le delegate en paramètre.
+        static void Afficher(Calcul calcul, int i, int j)
+        {
+            Console.WriteLine(&quot;{0} {1} {2} = {3}&quot;, i, calcul.Method.Name,
+                j, calcul(i, j));
+        }
+
+        //Méthodes très simples qui ont toutes un type de retour et des paramètres identiques.
+        static int Add(int i, int j) { return i + j; }
+        static int Sub(int i, int j) { return i - j; }
+        static int Mul(int i, int j) { return i * j; }
+        static int Div(int i, int j) { return i / j; }
+    }
+}</code></pre><p id="r-393473" data-claire-element-id="393473">C'est pas du chinois, mais c'est pas simple, hein ? En effet, ça arrache une grimace la première fois qu'on voit ça, mais en fait, c'est très simple. Comme toutes nos méthodes répondent à la même <em><strong>définition</strong></em> que notre <em>delegate</em>, nous sommes en mesure de toutes les utiliser à l'aide du même. C'est un peu comme de dire qu'un <em>int</em> peut égaler 0 ou bien 12154, car les deux répondent à la même définition, soit être un entier entre <strong>int.Min</strong> et <strong>int.Max</strong>.</p><p id="r-393474" data-claire-element-id="393474">Ce code, bien que simple est très puissant. Si je voulais ajouter l'opération modulo, il serait TRÈS TRÈS simple de le faire, vous ne trouvez pas ?</p><p id="r-393475" data-claire-element-id="393475">Cela conclut notre introduction aux <em>delegates</em>. Il y en a plus que ça à savoir et à comprendre, mais si vous maîtrisez cette partie, c'est excellent. Si vous ne maîtrisez pas bien, je vous recommande de la relire ! Si vous avez fait du C ou du C++, cette fonctionnalité ressemble étrangement aux pointeurs sur fonction. Lorsque l'on fera de la programmation réseau, ces <em>delegates</em> devriendront essentiels ! Courage, c'était vraiment le plus difficile ...</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-threads-en-net">Les Threads en .NET</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-threads-en-net/les-bases-des-delegates">
+Les bases des delegates
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-threads-en-net/les-threads-3">
+Les threads
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-threads-en-net/les-threads-avec-les-windows-forms">
+Les threads avec les Windows Forms
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-threads-en-net/les-threads-3">
+<span class="next">Les threads</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lesthreads"></a><h2>Les threads</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-threads-en-net/les-bases-des-delegates">
+<span class="arrow"></span>
+<span class="next">Les bases des delegates</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-threads-en-net/les-threads-avec-les-windows-forms">
+<span class="next">Les threads avec les Windows Forms</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-un-peu-d-histoire-14" data-claire-element-id="393482">Un peu d'histoire</h2><p id="r-393479" data-claire-element-id="393479">On parle beaucoup de threads ces temps-ci. Les nouveaux processeurs sont des puces conçues afin d'optimiser le traitement de plusieurs threads simultanés. Il y a quelques années, à l'ère du Pentium 4, on ne cessait d'augmenter la fréquence d'horloge afin d'optimiser la vitesse d'un seul coeur. Chaque thread avait un numéro et attendait son tour afin d'être traité.</p><p id="r-393480" data-claire-element-id="393480">Ne vous méprenez pas, cela n'a pas changé, mais les processeurs ont commencé à les traiter simultanément, d'abord avec la technologie HT sur les derniers Pentium 4, puis à l'aide de multiples coeurs avec les Core 2 Duo / Quad. Maintenant, il s'agit d'un mélange des deux, soit de multiples coeurs qui appliquent chacun une technologie HT, comme dans le Core i7 d'Intel. Pardonnez-moi, mais je connais très mal les processeurs AMD, étant un utilisateur d'Intel majoritairement :D .</p><p id="r-393481" data-claire-element-id="393481">Cela explique un peu l'évolution de la technique de traitement des threads, mais je ne vous ai toujours pas expliqué comment fonctionne le multi-task en Windows.</p><h2 id="r-le-multi-task-en-windows-1" data-claire-element-id="393487">Le multi-task en Windows</h2><p id="r-393483" data-claire-element-id="393483">Un ordinateur, ça ne sait faire qu'une seule chose à la fois !</p><p id="r-393484" data-claire-element-id="393484">Windows, comme tout bon SE actuel se sert d'une méthode particulière afin de simuler un multi-task. En effet, un processeur ne sait que faire une chose à la fois. La technique est bien simple, il s'agit de créer un système de jeton et de le passer à chaque processus pour un certain temps selon leur priorité.</p><p id="r-393485" data-claire-element-id="393485">En ce moment même, vous utilisez votre navigateur préféré pour visiter le site du Zéro, mais cela n'empêche pas votre ordinateur de vaquer à d'autres occupations. Par exemple, vous êtes peut-être en train de copier un fichier, ou même juste en train d'avoir 3 fenêtres ouvertes sur le Bureau en ce moment. Windows doit rafraîchir leur contenu à toutes les x millisecondes afin de créer un sentiment de fluidité chez l'utilisateur.</p><p id="r-393486" data-claire-element-id="393486">Donc, suivant cet exemple, Windows aura un jeton à accorder à votre navigateur web pour tant de temps, puis suspendra ses calculs et opérations et donnera le jeton à un autre traitement. Lorsqu'il reviendra au navigateur, celui-ci sera autorisé à continuer ses opérations. Comme ça, tout le monde est content, mais surtout l'utilisateur qui désire ouvrir Google Chrome en même temps que MSN et Word, ainsi que Visual Studio 2010. Ne riez pas, c'est pas mal le scénario actuel de mon PC en ce moment... Tout ça pour dire qu'on commence la section sur les threads pour de vrai !</p><h2 id="r-les-threads-enfin-1" data-claire-element-id="393531">Les threads, enfin !</h2><p id="r-393488" data-claire-element-id="393488">Les threads sont des exécutions que l'on sépare de l'exécution principale pour les raisons suivantes :</p><ul id="r-393495" data-claire-element-id="393495"><li id="r-393490" data-claire-element-id="393490"><p id="r-393489" data-claire-element-id="393489">Tâche exigeante (gros calculs, gros traitements, etc)...</p></li><li id="r-393492" data-claire-element-id="393492"><p id="r-393491" data-claire-element-id="393491">Tâche détachée (impression, recherche, etc)...</p></li><li id="r-393494" data-claire-element-id="393494"><p id="r-393493" data-claire-element-id="393493">Tâche bloquante (ça sent le réseau ici !)...</p></li></ul><p id="r-393496" data-claire-element-id="393496">Créer un thread dans ces cas est utile afin de créer un certain parallélisme dans les exécutions.</p><aside id="r-393498" data-claire-element-id="393498" data-claire-semantic="warning"><p id="r-393497" data-claire-element-id="393497">Les threads rendent un code beaucoup plus complexe, non seulement à l'écriture, mais aussi au débogage ! Oh là là, que de frustration passées à programmer avec les threads. Cela dit, ils apportent énormément de puissance à une application ! Cette complexité vient du fait que le système de jeton est imprévisible ! Par exemple, il pourrait passer 3 secondes sur un thread A, mais 2 secondes sur un thread B. Bien-sûr, on ne parle pas de secondes ici, mais bien de nano-secondes. Un autre point frustrant sera que lors du déboggage, vous pourriez vous retrouver dans une méthode complètement différente de celle qui vous intéresse en un clin d'oeil, justement à cause que le système de jeton a changé de thread et vous a projeté dans la méthode qu'il exécute au moment même.</p></aside><h3 id="r-le-cas-des-taches-bloquantes-1" data-claire-element-id="393500">Le cas des tâches bloquantes...</h3><p id="r-393499" data-claire-element-id="393499">Une application Windows Forms est amenée à se rafraîchir assez fréquemment. Lors de grosses opérations ou d'opérations synchrones qui bloquent, tout le temps de calcul est alloué à ces tâches et non plus au rafraîchissement. Après un certain temps, Windows déclare l'application comme &quot;Ne répondant plus&quot;. Si vous planifiez de distribuer votre application, ce comportement est inacceptable, vous en conviendrez. C'est dans ce type de cas qu'on utilisera les threads. Imaginez afficher une belle animation sur un <em>Splash Screen</em> alors que les ressources sont en chargement en arrière plan.</p><h3 id="r-les-differents-types-de-thread-1" data-claire-element-id="393510">Les différents types de thread</h3><p id="r-393501" data-claire-element-id="393501">Il est possible de créer deux types de threads, bien que cela revienne au même. Lors de l'instanciation de la classe <code data-claire-semantic="csharp">Thread</code>, il est possible de garder la référence de l'objet, ou de la laisse flotter. Si on ne la récupère pas, on appellera ce thread &quot;indépendant&quot;. Il sera créé, puis lancé immédiatement. Comme on ne gardera pas la référence, on ne pourra pas contrôler ce thread du tout. Il fera ce qu'il a à faire, sans que l'on puisse intervenir (sauf en utilisant quelques primitives de synchronisation que nous verrons plus tard).</p><p id="r-393502" data-claire-element-id="393502">Voici comment déclarer un thread indépendant :</p><pre id="r-393503" data-claire-element-id="393503"><code data-claire-semantic="csharp">new Thread(fonction).Start();</code></pre><aside id="r-393505" data-claire-element-id="393505" data-claire-semantic="information"><p id="r-393504" data-claire-element-id="393504">Puisqu'il n'y a pas d'opérateur d'affectation ( = ), on laisse partir la référence. Lorsque le thread se terminera, le Garbage Collector passera en arrière et se débarrassera de l'objet pour nous.</p></aside><p id="r-393506" data-claire-element-id="393506">Le type dépendant est beaucoup plus fréquent. Il s'agit de garder la référence sur l'objet afin de pouvoir l'analyser, le tester, l'influencer. Vous connaissez déjà tous comment le créer, mais pour la forme, voici un exemple :</p><pre id="r-393507" data-claire-element-id="393507"><code data-claire-semantic="csharp">Thread nomThread = new Thread(fonction);</code></pre><aside id="r-393509" data-claire-element-id="393509" data-claire-semantic="warning"><p id="r-393508" data-claire-element-id="393508">Cela peut porter à confusion, mais tous les threads d'une même application sont appelés <em>Processus</em> dans l'environnement Windows.Ceci provient du fait que Windows désire grouper tous les threads appartenant à une application au cas où ça tournerait mal. Cependant, le système de jeton mentionné ci-haut fonctionne au niveau des threads lui-même, et pas des processus. Cela signifie également que de mettre fin au thread principal met en effet fin aux threads enfants, indépendants ou dépendants, car on détruit carrément le processus et les threads qui le composent.</p></aside><h3 id="r-comment-lancer-le-thread-1" data-claire-element-id="393527">Comment lancer le thread ?</h3><p id="r-393511" data-claire-element-id="393511">Tout d'abord, assurez-vous d'utilisez l'espace de nom (vous savez, les <em>using</em> tout en haut de votre fichier .cs) <code data-claire-semantic="csharp">using System.Threading;</code>.</p><p id="r-393512" data-claire-element-id="393512">Déclarer un nouveau thread va comme suit :</p><pre id="r-393513" data-claire-element-id="393513"><code data-claire-semantic="csharp">using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading;
+
+namespace TestThread
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            //On initialise l'object Thread en lui passant la méthode
+            //à exécuter dans le nouveau thread. Ça vous rappelle pas
+            //certains delegates ça ?
+            Thread th = new Thread(Afficher);
+
+            //Un thread, ça ne part pas tout seul. Il faut lui indiquer de
+            //commencer l'exécution.
+            th.Start();
+
+            Console.ReadKey();
+        }
+
+        static void Afficher()
+        {
+            //Code tout bête qui affiche la lettre A 1000 fois.
+            for (int i = 0; i &lt; 1000; i++)
+            {
+                Console.Write(&quot;A&quot;);
+            }
+        }
+    }
+}</code></pre><p id="r-393514" data-claire-element-id="393514">Ce code fonctionne bien dans le cas où on n'a aucun paramètre à passer. Il est un peu plus compliqué d'en passer, mais on s'en sort, vous verrez.</p><pre id="r-393515" data-claire-element-id="393515"><code data-claire-semantic="csharp">using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading;
+
+namespace TestThread
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            //Il faut créer un objet ParameterizedThreadStart dans le constructeur
+            //du thread afin de passer un paramètre.
+            Thread th = new Thread(new ParameterizedThreadStart(Afficher));
+
+            Thread th2 = new Thread(new ParameterizedThreadStart(Afficher));
+
+            //Lorsqu'on exécute le thread, on lui donne son paramètre de type Object.
+            th.Start(&quot;A&quot;);
+
+            th2.Start(&quot;B&quot;);
+
+            Console.ReadKey();
+        }
+
+        //La méthode prend en paramètre un et un seul paramètre de type Object.
+        static void Afficher(object texte)
+        {
+            for (int i = 0; i &lt; 10000; i++)
+            {
+                //On écrit le texte passer en paramètre. N'oubliez pas de le caster 
+                //car il s'agit d'un type Object, pas String.
+                Console.Write((string)texte);
+            }
+            Console.WriteLine(&quot;&lt;------------Thread {0} terminé-----------&gt;&quot;, (string)texte);
+        }
+    }
+}</code></pre><aside id="r-393517" data-claire-element-id="393517" data-claire-semantic="error"><p id="r-393516" data-claire-element-id="393516">Attention, la plus fréquente source d'erreur lors de l'utilisation de ce genre de thread est le paramètre. En effet, ce type de <strong>delegate</strong> a sa propre définition et il requiert un seul et unique paramètre qui sera de type <em>object</em>. Faîtes bien attention à <strong>transtyper (cast)</strong> vos variables correctement !</p></aside><p id="r-393518" data-claire-element-id="393518">Cet exemple est parfait pour vous montrer comment les threads sont imprévisibles, et c'est ce qui les rend compliqués ! Je vous montre le résultat chez moi.</p><figure id="r-393520" data-claire-element-id="393521"><img id="r-393519" data-claire-element-id="393519" src="../../user.oc-static.com/files/242001_243000/242452.png" alt="Aléatoire 1"/></figure><p id="r-393522" data-claire-element-id="393522"><em>C'est pas bien beau tout ça. Je suis sûr que chez vous, c'est tout-à-fait différent. Même si je ne fais que le redémarrer, ce sera différent ! La leçon à retenir ici est que les threads sont imprévisibles, comme je l'ai expliqué plus haut. Pour preuve, j'ai relancé le même processus un peu plus tard, et voici le résultat :</em></p><figure id="r-393524" data-claire-element-id="393525"><img id="r-393523" data-claire-element-id="393523" src="../../user.oc-static.com/files/242001_243000/242454.gif" alt="Aléatoire 2"/></figure><p id="r-393526" data-claire-element-id="393526"><em>On voit très bien que dans ce cas-ci, le Thread B a terminé en premier, ce qui prouve que le même code peut générer des résultats différents d'une exécution à l'autre, s'il est codé avec des threads !</em></p><h3 id="r-cas-particuliers-3" data-claire-element-id="393530">Cas particuliers</h3><p id="r-393528" data-claire-element-id="393528">Même si un thread s'exécute en deçà de votre programme principal, il reste que la méthode qu'il exécute fait partie de la classe à laquelle la méthode appartient. Cela signifie que l'accès aux variables globales et membres de votre classe lui seront accessibles sans problème.</p><p id="r-393529" data-claire-element-id="393529">Là où le problème se pose, c'est lorsque plusieurs threads devront accéder à la même variable, y faire des changements et des tests. Imaginez que votre thread A accède aux variables <strong>nominateur</strong>et <strong>dénominateur</strong> qui sont globales (à proscrire, mais bon). Le thread A a le temps de faire quelques tests, à savoir vérifier si le dénominateur n'est pas égal à zéro avant de procéder à une division. Tous les tests passent, mais juste au moment où le thread arrive pour effectuer l'opération, le thread B s'empare du jeton. Le thread B est chargé de réinitialiser le dénominateur à 0, et c'est ce qu'il fait. À ce moment là, le jeton revient au thread A qui tente d'effectuer la division. Oops, ça plante... C'est ce qu'on appelle un problème de synchronisation. Je ne vais pas vous mentir, ces problèmes sont rares. Il faut vraiment que vous soyez malchanceux. Il reste cependant important de bien synchroniser ses threads, surtout si l'on aspire à commercialiser le produit. Ainsi, plusieurs structures de synchronisation existent, et nous allons en survoler quelques unes.</p><h2 id="r-les-mecanismes-de-synchronisation-1" data-claire-element-id="393591">Les mécanismes de synchronisation</h2><h3 id="r-les-variables-de-controle-1" data-claire-element-id="393546">Les variables de contrôle</h3><p id="r-393532" data-claire-element-id="393532">Il peut sembler que les variables de contrôle soient un concept très poussé, mais pas du tout ! Il s'agit bêtement d'une variable globale que seul le thread principal modifiera et que les threads enfants contrôleront. Ce concept est particulièrement efficace dans le cas où le thread effectue une boucle infinie. Encore un fois, ça sent la programmation réseau ici. Je vous illustre le concept à l'aide d'un bête exemple.</p><pre id="r-393533" data-claire-element-id="393533"><code data-claire-semantic="csharp">using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading;
+
+namespace VarControle
+{
+    class Program
+    {
+        //Quelques variables à portée globale.
+        private static bool _quitter = false;
+        private static int _identificateur = 0;
+
+        static void Main(string[] args)
+        {
+            Console.Title = &quot;Variables de contrôle&quot;;
+
+            //On crée un tableau de threads.
+            Thread[] threads = new Thread[5];
+
+            //On itère à travers le tableau afin de créer et lancer les threads.
+            for(int i = 0; i&lt; threads.Length; i++)
+            {
+                //Création et lancement des threads.
+                threads[i] = new Thread(OperThread);
+                threads[i].Start();
+
+                //On laisse passer 500ms entre les création de thread.
+                Thread.Sleep(500);
+            }
+
+            //On demande à ce que tous les threads quittent.
+            _quitter = true;
+
+            Console.ReadKey();
+        }
+
+        static void OperThread()
+        {
+            //On donne au thread un identificateur unique.
+            int id = ++_identificateur;
+
+            Console.WriteLine(&quot;Début du thread {0}&quot;, id);
+
+            while (!_quitter)
+            {
+                //On fait des choses ici tant qu'on ne désire pas quitter...
+                Console.WriteLine(&quot;Thread {0} a le contrôle&quot;, id);
+
+                //On met le thread en état de sommeil pour 1000ms / 1s.
+                Thread.Sleep(1000);
+            }
+
+            Console.WriteLine(&quot;Thread {0} terminé&quot;, id);
+        }
+    }
+}</code></pre><p id="r-393534" data-claire-element-id="393534">Voici le résultat :</p><figure id="r-393536" data-claire-element-id="393537"><img id="r-393535" data-claire-element-id="393535" src="../../user.oc-static.com/files/315001_316000/315027.gif" alt="Image utilisateur"/></figure><aside id="r-393539" data-claire-element-id="393539" data-claire-semantic="information"><p id="r-393538" data-claire-element-id="393538">Ce qu'il faut comprendre de cet exemple, c'est que les variables de contrôle sont une bonne méthode afin d'influencer le comportement d'un thread, mais généralement seulement lorsque celui-ci est en boucle. Aussi, il est TRÈS important de retenir que seul le thread principal doit modifier la valeur de cette variable. Sinon, on pourrait retrouver des threads à toutes les sauces. Imaginez qu'à chaque itération, la boucle change la valeur de la variable de contrôle. On ne sait pas quand ou comment cela se produira et les problèmes feraient probablement vite leur apparition. Somme toute, il s'agit d'une bonne méthode à ne pas utiliser à outrance.</p></aside><div id="r-393541" data-claire-element-id="393541" data-claire-semantic="question"><p id="r-393540" data-claire-element-id="393540">Avez-vous remarqué un bout de code qui ne vous semblait pas thread-safe ? Si oui, vous comprendrez certainement l'utilité du prochain mécanisme de synchronisation.</p></div><p id="r-393542" data-claire-element-id="393542"></p><div id="r-393545" data-claire-element-id="393545"><pre id="r-393543" data-claire-element-id="393543"><code data-claire-semantic="csharp">//On donne au thread un identificateur unique.
+int id = ++_identificateur;</code></pre><p id="r-393544" data-claire-element-id="393544">Ce bout de code n'est pas thread-safe, car on ne sait pas si un autre processus pourrait prendre le contrôle au mauvais moment. Si l'ordre de lancement est très important, cette ligne pourrait ne pas s'exécuter à temps.</p></div><h3 id="r-le-lock-1" data-claire-element-id="393562">Le lock</h3><p id="r-393547" data-claire-element-id="393547">L'instruction <em>lock</em> permet de verrouiller efficacement une ressource tant et aussi longtemps qu'un bloc d'instruction est en cours. Cela signifie que si d'autres threads tentent d'accéder à la même ressource en même temps, ils ne pourront pas. Cela ne signifie pas qu'ils planteront et se termineront, mais plutôt qu'ils passeront le jeton à un autre thread et attendront patiemment leur tour afin d'accéder à cette ressource.</p><p id="r-393548" data-claire-element-id="393548">Voici un bel exemple :</p><pre id="r-393549" data-claire-element-id="393549"><code data-claire-semantic="csharp">using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading;
+
+namespace Lock
+{
+    class Program
+    {
+        //Variable témoin du lock.
+        private static Object _lock = new Object();
+
+        //Sert à initialiser des valeurs pseudos-aléatoires.
+        private static Random _rand = new Random((int)DateTime.Now.Ticks);
+
+        //Variable de contrôle.
+        private static bool _quitter = false;
+
+        //Variables globales étant affectées par les threads.
+        private static int _nominateur;
+        private static int _denominateur;
+
+        static void Main(string[] args)
+        {
+            Console.Title = &quot;Démonstration des lock&quot;;
+
+            //On crée les threads.
+            Thread init = new Thread(Initialiser);
+            init.Start();
+
+            Thread reinit = new Thread(Reinitialiser);
+            reinit.Start();
+
+            Thread div = new Thread(Diviser);
+            div.Start();
+
+            //On les laisse travailler pendant 3 seconde.
+            Thread.Sleep(3000);
+            //Puis on leur demande de quitter.
+            _quitter = true;
+
+            Console.ReadKey();
+        }
+
+        private static void Initialiser()
+        {
+            //Boucle infinie contrôlée.
+            while (!_quitter)
+            {
+                //On verouille l'accès aux variables tant que l'on a pas terminé.
+                lock (_lock)
+                {
+                    //Initialisation des valeurs.
+                    _nominateur = _rand.Next(20);
+                    _denominateur = _rand.Next(2, 30);
+                }
+
+                //On recommence dans 250ms.
+                Thread.Sleep(250);
+            }
+        }
+
+        private static void Reinitialiser()
+        {
+            //Boucle infinie contrôlée.
+            while (!_quitter)
+            {
+                //On verouille l'accès aux variables tant que l'on a pas terminé.
+                lock (_lock)
+                {
+                    //Réinitialisation des valeurs.
+                    _nominateur = 0;
+                    _denominateur = 0;
+                }
+
+                //On recommence dans 300ms.
+                Thread.Sleep(300);
+            }
+        }
+
+        private static void Diviser()
+        {
+            //Boucle infinie contrôlée.
+            while (!_quitter)
+            {
+                //On verouille pendant les opérations.
+                lock (_lock)
+                {
+                    //Erreur si le dénominateur est nul.
+                    if (_denominateur == 0)
+                        Console.WriteLine(&quot;Division par 0&quot;);
+                    else
+                    {
+                        Console.WriteLine(&quot;{0} / {1} = {2}&quot;, _nominateur, _denominateur, _nominateur / (double)_denominateur);
+                    }
+                }
+
+                //On recommence dans 275ms.
+                Thread.Sleep(275);
+            }
+        }
+    }
+}</code></pre><p id="r-393550" data-claire-element-id="393550">Résultat :</p><figure id="r-393552" data-claire-element-id="393553"><img id="r-393551" data-claire-element-id="393551" src="../../user.oc-static.com/files/315001_316000/315042.gif" alt="Image utilisateur"/></figure><aside id="r-393555" data-claire-element-id="393555" data-claire-semantic="information"><p id="r-393554" data-claire-element-id="393554">C'est bien comique parce que lorsque je vous ai préparé cet exemple, l'erreur dont je vous ai mentionné plus tôt s'est produite. Je n'avais alors pas englobé mon test du dénominateur dans l'instruction lock, ce qui a permis au thread en charge de réinitialiser les valeurs d'embarquer. Cela a produit une erreur de type NaN (Non-Numérique). Malheureusement, sur le coup, je n'ai pas fait de capture d'écran, et j'ai donc essayé de reproduire l'erreur, mais sans succès. C'est donc vous dire qu'avec les threads, il faut tout prévoir dès le départ, car l'apparition d'une erreur peut être un heureux (ou malheureux) hasard !</p></aside><p id="r-393556" data-claire-element-id="393556">Donc, dans cet exemple, on voit que tout est bien protégé. Aucun thread ne peut venir interférer avec les autres. Remarquez la création d'une instance d'un objet de type <code data-claire-semantic="csharp">Object</code> à la ligne 12. Cela est notre témoin de verrouillage. En réalité, n'importe quel objet qui se passe en référence peut servir de témoin de verrouillage. Comme nous avons travaillé avec des <code data-claire-semantic="csharp">int</code> dans cet exemple et que ce type est passé par valeur, nous avons eu à créer cette variable.</p><p id="r-393557" data-claire-element-id="393557">Voici un exemple où une variable témoin est inutile :</p><pre id="r-393558" data-claire-element-id="393558"><code data-claire-semantic="csharp">using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading;
+
+namespace lockEx
+{
+    class Program
+    {
+        static List&lt;string&gt; liste = new List&lt;string&gt;();
+
+        static void Main(string[] args)
+        {
+            for (int i = 0; i &lt; 6; i++)
+                new Thread(Ajouter).Start();
+        }
+
+        static void Ajouter()
+        {
+            lock(liste)
+                liste.Add(&quot;abc&quot;);
+        }
+    }
+}</code></pre><p id="r-393559" data-claire-element-id="393559">Ici, on utilisera donc l'objet <code data-claire-semantic="csharp">liste</code> qui se passe par référence, et qui est donc acceptable.</p><aside id="r-393561" data-claire-element-id="393561" data-claire-semantic="information"><p id="r-393560" data-claire-element-id="393560">Il est possible de créer un <code data-claire-semantic="csharp">lock</code> en lui spécifiant un nom de type <code data-claire-semantic="csharp">string</code>. Cependant, Microsoft ne le recommande pas, car cette notation pourrait amener de la confusion. N'oubliez pas non plus qu'il est possible de faire de multiples <code data-claire-semantic="csharp">lock</code> qui ne protègent pas les mêmes ressources (indépendants les uns des autres). Il suffit de changer la variable témoin pour accommoder la situation.</p></aside><h3 id="r-les-mutex-2" data-claire-element-id="393569">Les Mutex</h3><p id="r-393563" data-claire-element-id="393563">Les Mutex sont excessivement similaires aux <code data-claire-semantic="csharp">lock</code>. Cependant, si vous désirez créer de nombreuses sections critiques indépendantes, les Mutex ont l'avantage d'être sous forme d'objets plutôt que d'instructions. Un petit exemple vous éclaira sur l'utilisation des Mutex.</p><pre id="r-393564" data-claire-element-id="393564"><code data-claire-semantic="csharp">using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading;
+
+namespace MutexEx
+{
+    class Program
+    {
+        private const int TAILLE_TABLEAU = 2;
+
+        //On crée les Mutex.
+        private static Mutex _muxMultiplier = new Mutex();
+        private static Mutex _muxDiviser = new Mutex();
+
+        //On crée les tableaux de valeurs.
+        private static int[] _valDiv = new int[TAILLE_TABLEAU];
+        private static int[] _valMul = new int[TAILLE_TABLEAU];
+
+        //Objet Random et variable de contrôle.
+        private static Random _rand = new Random((int)DateTime.Now.Ticks);
+        private static bool _quitter = false;
+
+        static void Main(string[] args)
+        {
+            Console.Title = &quot;Exemple de Mutex&quot;;
+
+            //On crée et on démarre les threads.
+            Thread init = new Thread(Initialiser);
+            init.Start();
+
+            Thread mul = new Thread(Multiplier);
+            mul.Start();
+
+            Thread div = new Thread(Diviser);
+            div.Start();
+
+            //On laisse les threads fonctionner un peu...
+            Thread.Sleep(3000);
+            //On demande à ce que les opérations se terminent.
+            _quitter = true;
+
+            Console.ReadKey();
+        }
+
+        private static void Initialiser()
+        {
+            while (!_quitter)
+            {
+                //On demande au thread d'attendre jusqu'à ce qu'il ait le contrôle sur les Mutex.
+                _muxMultiplier.WaitOne();
+                _muxDiviser.WaitOne();
+
+                for (int i = 0; i &lt; TAILLE_TABLEAU; i++)
+                {
+                    //On assigne au tableau de nouvelles valeurs.
+                    _valMul[i] = _rand.Next(2, 20);
+                    _valDiv[i] = _rand.Next(2, 20);
+                }
+
+                Console.WriteLine(&quot;Nouvelles valeurs !&quot;);
+
+                //On relâche les Mutex
+                _muxDiviser.ReleaseMutex();
+                _muxMultiplier.ReleaseMutex();
+
+                //On tombe endormi pour 100ms.
+                Thread.Sleep(100);
+            }
+        }
+
+        private static void Multiplier()
+        {
+            while (!_quitter)
+            {
+                //On demande le Mutex de multiplication.
+                _muxMultiplier.WaitOne();
+
+                //On multiplie.
+                Console.WriteLine(&quot;{0} x {1} = {2}&quot;, _valMul[0], _valMul[1], _valMul[0] * _valMul[1]);
+
+                //On relâche le Mutex.
+                _muxMultiplier.ReleaseMutex();
+
+                //On tombe endormi pour 200ms.
+                Thread.Sleep(200);
+            }
+        }
+
+        private static void Diviser()
+        {
+            while (!_quitter)
+            {
+                //On demande le Mutex de division.
+                _muxDiviser.WaitOne();
+
+                //On divise.
+                Console.WriteLine(&quot;{0} / {1} = {2}&quot;, _valDiv[0], _valDiv[1], _valDiv[0] * _valDiv[1]);
+
+                //On relâche le Mutex de Division.
+                _muxDiviser.ReleaseMutex();
+
+                //On tombe endormi pour 200ms.
+                Thread.Sleep(200);
+            }
+        }
+    }
+}</code></pre><figure id="r-393566" data-claire-element-id="393567"><img id="r-393565" data-claire-element-id="393565" src="../../user.oc-static.com/files/315001_316000/315065.gif" alt="Image utilisateur"/></figure><p id="r-393568" data-claire-element-id="393568">Si vous avez fait un peu de programmation en Win32 (langage C), vous pouvez voir la lignée directe des Mutex du .NET et des <code data-claire-semantic="c">CRITICAL_SECTION</code> du Win32. Sinon, vous voyez que les Mutex ont la même fonction que l'instruction <code data-claire-semantic="csharp">lock</code> en un peu plus verbeux. Je tiens cependant à vous avertir que de ne pas relâcher un Mutex peut faire planter votre application, donc faîtes attention à cela.</p><h3 id="r-semaphoreslim-1" data-claire-element-id="393576">SemaphoreSlim</h3><p id="r-393570" data-claire-element-id="393570">Le SemaphoreSlim sert à contrôler l'accès d'une ressource limitée. Jusqu'à maintenant, les mécanismes de synchronisation dont nous avons parlé ont surtout servi à limiter une ressource à un accès mutuellement exclusif entre des threads concurrents. Quant est-il si l'on veut partager une ressource, mais à travers plusieurs threads simultanément ? Cependant, on aimerait garder un nombre maximal d'accès concurrent à la ressource. Les sémaphores existent pour cette raison. En C# .NET, il existe deux types de sémaphores. Le classique <code data-claire-semantic="csharp">Semaphore</code> et le <code data-claire-semantic="csharp">SemaphoreSlim</code>. La différence provient de la complexité de l'objet et des mécanismes internes. Le Semaphore utilise un wrapper autour de l'objet Semaphore du Win32 et rend donc disponible ses fonctionnalités en .NET. Le SemaphoreSlim, lui, est plutôt utilisé lors de courtes durées d'attente et utilise les mécanismes propres au CLR.</p><p id="r-393571" data-claire-element-id="393571">Je ne montrerai que le SemaphoreSlim, les deux se ressemblant beaucoup. Cependant, le SemaphoreSlim reste le plus facile et le plus léger à implémenter. Pour plus d'information sur la différence, veuillez lire cet article sur <a href="http://msdn.microsoft.com/fr-fr/library/z6zx288a.aspx">MSDN</a>. Peu importe la version qui est choisi, vous pouvez voir les Sémaphores comme un &quot;doorman&quot; dans une boîte de nuit. La place à l'intérieur est limitée et le doorman devra contrôler l'accès à la ressource.</p><pre id="r-393572" data-claire-element-id="393572"><code data-claire-semantic="csharp">using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading;
+
+namespace SemaphoreSlimEx
+{
+    class Program
+    {
+        //Déclaration du SemaphoreSlim qui prendra en paramètre le nombre de places disponibles.
+        static SemaphoreSlim doorman = new SemaphoreSlim(3);
+
+        static void Main(string[] args)
+        {
+            Console.Title = &quot;Exemple de SemaphoreSlim&quot;;
+
+            //Création des threads.
+            for (int i = 0; i &lt; 10; i++)
+                new Thread(Entrer).Start(i);
+            Console.ReadKey();
+        }
+
+        static void Entrer(object n)
+        {
+            Console.WriteLine(&quot;La personne #{0} veut entrer&quot;, n);
+
+            //Le doorman attendra qu'il y ait de la place.
+            doorman.Wait();
+            Console.WriteLine(&quot;#{0} vient d'entrer dans le bar&quot;, n);
+            Thread.Sleep((int)n * 1000);
+            Console.WriteLine(&quot;#{0} a quitté le building !&quot;, n);
+
+            //Le doorman peut maintenant faire entrer quelqu'un d'autre.
+            doorman.Release();
+        }
+    }
+}</code></pre><figure id="r-393574" data-claire-element-id="393575"><img id="r-393573" data-claire-element-id="393573" src="../../user.oc-static.com/files/315001_316000/315076.gif" alt="Image utilisateur"/></figure><h3 id="r-le-join-1" data-claire-element-id="393580">Le <em>Join()</em></h3><p id="r-393577" data-claire-element-id="393577">C'est le dernier mécanisme de synchronisation dont je parlerai. Il s'agit très simplement d'attendre la fin d'un autre thread afin de continuer le thread dans lequel le <em>Join()</em> est défini. Cela en fait une méthode bloquante qui pourrait vous causer des problèmes en Windows Forms.</p><p id="r-393578" data-claire-element-id="393578">Petit exemple :</p><pre id="r-393579" data-claire-element-id="393579"><code data-claire-semantic="csharp">using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading;
+
+namespace TestThread
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Thread th = new Thread(new ParameterizedThreadStart(Afficher));
+
+            Thread th2 = new Thread(new ParameterizedThreadStart(Afficher));
+
+            th.Start(&quot;A&quot;);
+
+            //On attend la fin du thread A avant de commencer le thread B.
+            th.Join();
+
+            th2.Start(&quot;B&quot;);
+
+            Console.ReadKey();
+        }
+
+        static void Afficher(object texte)
+        {
+            for (int i = 0; i &lt; 10000; i++)
+            {
+                Console.Write((string) texte);
+            }
+        }
+    }
+}</code></pre><h3 id="r-le-abort-1" data-claire-element-id="393590">Le <em>Abort()</em></h3><p id="r-393581" data-claire-element-id="393581">Bon, après avoir vu comment bien synchroniser ses threads, voyons ce que vous ne devez <strong>PAS</strong> faire !!! :pirate:</p><pre id="r-393582" data-claire-element-id="393582"><code data-claire-semantic="csharp">using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading;
+
+namespace ThreadStop
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Thread thread = new Thread(Test);
+
+            thread.Start();
+            Thread.Sleep(100);
+
+            //On tue le processus. À NE PAS FAIRE !
+            thread.Abort();
+
+            Console.ReadKey();
+        }
+
+        public static void Test()
+        {
+            for(int i = 0; i &lt; 10000; i++)
+                Console.WriteLine(i);
+        }
+    }
+}</code></pre><aside id="r-393584" data-claire-element-id="393584" data-claire-semantic="error"><p id="r-393583" data-claire-element-id="393583">Aux premiers abords, cela semble assez facile à faire, et semble sans grandes conséquences. En fait, vous avez probablement raison dans cet exemple. Cependant, ne prenez pas l'habitude de faire terminer vos threads si abruptement, car il se pourrait que cela vous cause des erreurs éventuellement. En effet, vous ne fermez pas votre ordinateur en débranchant la prise du mur, n'est-ce pas ? ( o_O N'est-ce pas ?). C'est le même principe ici. Si vous étiez en train de faire quelque chose de vraiment important, et que le thread principal choisirait ce moment pour arrêter le thread, l'application en entier pourrait devenir instable et planter. Puisqu'on ne veut pas cela, il vaut mieux utiliser le <em>Join()</em> et une variable de contrôle, comme dans l'exemple suivant :</p></aside><pre id="r-393585" data-claire-element-id="393585"><code data-claire-semantic="csharp">using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading;
+
+namespace ThreadStop
+{
+    class Program
+    {
+        private static bool _continuer = true;
+
+        static void Main(string[] args)
+        {
+            Thread thread = new Thread(Test);
+
+            thread.Start();
+            Thread.Sleep(100);
+
+            //On demande au thread de s'arrêter au prochain passage d'un moment qui semble naturel.
+            _continuer = false;
+
+            //On attend que le thread se termine.
+            thread.Join();
+
+            Console.ReadKey();
+        }
+
+        public static void Test()
+        {
+            //On fait 10 000 itérations, tant et aussi longtemps que l'on peut continuer (variable de contrôle).
+            for(int i = 0; i &lt; 10000 &amp;&amp; _continuer; i++)
+                Console.WriteLine(i);
+        }
+    }
+}</code></pre><p id="r-393586" data-claire-element-id="393586">Et voilà, on se sent toujours mieux quand on fait quelque chose de bien, non ? Comme ça, si le thread a besoin de temps pour bien terminer ses opérations (appeler quelques <em>Dispose()</em>, ou fermer des connexions TCP), il le pourra. Utilisez donc les <em>Join()</em> et pas les <em>Abort()</em>. Les <em>Abort()</em>, c'est mal :diable: ...</p><aside id="r-393588" data-claire-element-id="393588" data-claire-semantic="information"><p id="r-393587" data-claire-element-id="393587">Lorsque vous fermez l'application, Windows tend à simplement appeler <em>Abort()</em> sur les threads en fonction. Ce comportement est hérité du Win32 dont le .NET recouvre à l'aide de <em>wrappers</em> (il s'agit d'une longue histoire, croyez-moi). C'est aussi pourquoi on évitera autant que possible l'usage de threads indépendants, car ils sont moins contrôlables. Prévoyez donc attendre les threads actifs lorsque vous quitter votre application, car comme nous l'avons dit, les <em>Abort()</em>, c'est mal. Quoique avec le Garbage Collector de .NET....NON, NON, C'EST MAL !</p></aside><p id="r-393589" data-claire-element-id="393589">Nous sommes maintenant prêts à aborder le sujet du multi-tâche en Windows Forms ! Je vous montrerai comment éviter que cela ne vire en catastrophe, ne craignez rien.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-threads-en-net">Les Threads en .NET</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-threads-en-net/les-bases-des-delegates">
+Les bases des delegates
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-threads-en-net/les-threads-3">
+Les threads
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-threads-en-net/les-threads-avec-les-windows-forms">
+Les threads avec les Windows Forms
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-threads-en-net/les-bases-des-delegates">
+<span class="arrow"></span>
+<span class="next">Les bases des delegates</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-threads-en-net/les-threads-avec-les-windows-forms">
+<span class="next">Les threads avec les Windows Forms</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="LesthreadsaveclesWindowsForms"></a><h2>Les threads avec les Windows Forms</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-threads-en-net/les-threads-3">
+<span class="arrow"></span>
+<span class="next">Les threads</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-393593" data-claire-element-id="393593">Lorsque viendra le temps de faire du réseau, il sera important de respecter la sécurité interne des ressources. Il sera très souvent intéressant de modifier un objet <strong>Windows Forms</strong> avec les données issues d'un autre thread. C'est notamment le cas en réseau, si on fait un programme de <em>ch@t</em>, par exemple.</p><p id="r-393594" data-claire-element-id="393594">Rappelez-vous, un peu plus haut, quand je vous ai dit qu'un thread, même s'il est séparé, a accès aux membres de sa classe ? Je ne vous ai pas menti. Mais dans le cas des objets Windows Forms, ceux-ci ne sont pas bâties <strong>thread-safe</strong> et donc que .NET limite leurs possibilités en multi-thread. Cela signifie que, malheureusement, vous ne pourrez accéder à leurs propriétés qu'en lecture seule si vous ne faîtes pas parti du même thread. Je vous donne un exemple :</p><p id="r-393595" data-claire-element-id="393595">J'ai construit une Windows Forms très simple n'ayant que deux éléments :</p><ul id="r-393600" data-claire-element-id="393600"><li id="r-393597" data-claire-element-id="393597"><p id="r-393596" data-claire-element-id="393596">Une ProgressBar</p></li><li id="r-393599" data-claire-element-id="393599"><p id="r-393598" data-claire-element-id="393598">Un Bouton</p></li></ul><figure id="r-393602" data-claire-element-id="393603"><img id="r-393601" data-claire-element-id="393601" src="../../user.oc-static.com/files/242001_243000/242455.gif" alt="Image utilisateur"/></figure><p id="r-393604" data-claire-element-id="393604">J'ai ajouté le code suivant dans le fichier <em>Form1.cs</em>.</p><pre id="r-393605" data-claire-element-id="393605"><code data-claire-semantic="csharp">using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
+using System.Threading;
+
+namespace ThreadWForms
+{
+    public partial class Form1 : Form
+    {
+        private Random rand = new Random((int)DateTime.Now.Ticks);
+
+        private int[] tableau = new int[100000000];
+
+        public Form1()
+        {
+            InitializeComponent();
+
+            //On génère un tableau d'entiers aléatoires.
+            for (int i = 0; i &lt; tableau.Length; i++)
+            {
+                tableau[i] = rand.Next(50000);   //...Boucle très simple, avec méthode Random très simple.
+            }
+        }
+
+        public void Selection()
+        {
+            //On va simplement compter les nombres du tableau inférieurs à 500.
+            int total = 0;
+
+            for (int i = 0; i &lt; tableau.Length; i++)
+            {
+                if (tableau[i] &lt; 500)
+                {
+                    total++;
+                }
+
+                //Puis, on incrémente le ProgressBar.
+                pgbThread.Value = (int)(i / (double)tableau.Length * 100);
+            }
+        }
+
+        private void btnLancer_Click(object sender, EventArgs e)
+        {
+            //On crée le thread.
+            Thread t1 = new Thread(new ThreadStart(Selection));
+
+            //Puis on le lance !
+            t1.Start();
+        }
+    }
+}</code></pre><aside id="r-393607" data-claire-element-id="393607" data-claire-semantic="error"><p id="r-393606" data-claire-element-id="393606">Ce code n'est pas bon, bien que logique. Cela produira cette erreur :</p></aside><figure id="r-393609" data-claire-element-id="393610"><img id="r-393608" data-claire-element-id="393608" src="../../user.oc-static.com/files/242001_243000/242456.gif" alt="Image utilisateur"/></figure><p id="r-393611" data-claire-element-id="393611">Alors, je vous l'avais pas dit que ça ne marcherait pas ? Il existe heureusement une façon bien simple de contrer ce problème, et c'est de passer par les <em>delegates </em>! En effet, car si ceux-ci peuvent être passés en paramètres, il peuvent aussi servir à exécuter des opérations sur un thread différent !</p><pre id="r-393612" data-claire-element-id="393612"><code data-claire-semantic="csharp">using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
+using System.Threading;
+
+namespace ThreadWForms
+{
+    public partial class Form1 : Form
+    {
+        private Random rand = new Random((int)DateTime.Now.Ticks);
+
+        private int[] tableau = new int[500000];
+
+        //On crée notre delagate.
+        public delegate void MontrerProgres(int valeur);
+
+        bool termine = true;
+
+        public Form1()
+        {
+            InitializeComponent();
+
+            //On génère un tableau d'entiers aléatoires.
+            for (int i = 0; i &lt; tableau.Length; i++)
+            {
+                tableau[i] = rand.Next(50000);   //...Boucle très simple, avec méthode Random très simple.
+            }
+        }
+
+        public void Selection()
+        {
+            //On va simplement compter les nombres du tableau inférieurs à 500.
+            int total = 0;
+
+            for (int i = 0; i &lt; tableau.Length; i++)
+            {
+                if (tableau[i] &lt; 500)
+                {
+                    total++;
+                }
+
+                //Puis, on incrémente le ProgressBar.
+                int valeur = (int)(i / (double)tableau.Length * 100);
+
+                //On achète la paix, on entoure notre Invoke d'un try...catch !
+                try
+                {
+                    //On invoque le delegate pour qu'il effectue la tâche sur le temps
+                    //de l'autre thread.
+                    Invoke((MontrerProgres)Progres, valeur);
+                }
+                catch (Exception ex) { return; }
+            }
+
+            termine = true;
+        }
+
+        private void btnLancer_Click(object sender, EventArgs e)
+        {
+            //Petite sécurité pour éviter plusieurs threads en même temps.
+            if (termine)
+            {
+                //On crée le thread.
+                Thread t1 = new Thread(new ThreadStart(Selection));
+
+                termine = false;
+
+                //Puis on le lance !
+                t1.Start();
+            }
+        }
+
+        public void Progres(int valeur)
+        {
+            //On met la valeur dans le contrôle Windows Forms.
+            pgbThread.Value = valeur;
+        }
+    }
+}</code></pre><p id="r-393613" data-claire-element-id="393613">Petites explications : Un <em>Invoke</em> sert à demander à l'autre thread de s'occuper d'une action dans un moment libre. C'est l'équivalent d'envoyer un email à un webmestre pour qu'il corrige une erreur sur sa page web. Le webmestre, dès qu'il le pourra, s'occupera de corriger l'erreur. Il s'agit du même principe ! Cela permet de contourner le manque <em>thread-safe</em> des contrôles Windows Forms, car c'est le thread propriétaire qui finit par effectuer l'action.</p><p id="r-393614" data-claire-element-id="393614">Aussi, vous avez peut-être fait la grimace en apercevant la ligne 55. Il y a un cast d'un delegate juste avant le nom de la méthode. Cela évite d'avoir à créer un delegate. Je pourrais très bien remplacer cette ligne par ceci : <code data-claire-semantic="csharp">Invoke(new MontrerProgres(Progres), valeur);</code>.</p><h2 id="r-backgroundworker" data-claire-element-id="393625">BackgroundWorker</h2><p id="r-393615" data-claire-element-id="393615">La classe BackgroundWorker fournit un environnement d'exécution multitâche très sécuritaire, mais un peu limité à mon goût. Cependant, je vais quand même vous montrer comment l'utiliser. L'objet BackgroundWorker se trouve dans la barre d'outils dans la catégorie Composants. Il s'agit d'un petit objet pas très personnalisable qui possède très peu de paramètres et d’évènements. Je vous montre par un exemple comment l'utiliser. J'ai fait un simple projet Windows Forms dans Visual Studio qui comporte une ProgressBar et un bouton de départ, tout comme l'exemple précédent.</p><figure id="r-393617" data-claire-element-id="393618"><img id="r-393616" data-claire-element-id="393616" src="../../user.oc-static.com/files/315001_316000/315089.gif" alt="Image utilisateur"/></figure><pre id="r-393619" data-claire-element-id="393619"><code data-claire-semantic="csharp">using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
+using System.Threading;
+
+namespace Background_WorkerEx
+{
+    public partial class Form1 : Form
+    {
+        private bool _etat = false;
+
+        public Form1()
+        {
+            InitializeComponent();
+
+            //On demande à ce que le BackgroundWorker supporte le rapport de progrès et l'annulation.
+            bwProgress.WorkerReportsProgress = true;
+            bwProgress.WorkerSupportsCancellation = true;
+
+            //On abonne le BackgroundWorker aux évenements requis.
+            bwProgress.DoWork+=new DoWorkEventHandler(bwProgress_DoWork);
+            bwProgress.ProgressChanged+=new ProgressChangedEventHandler(bwProgress_ProgressChanged);
+            bwProgress.RunWorkerCompleted+=new RunWorkerCompletedEventHandler(bwProgress_RunWorkerCompleted);
+        }
+
+        private void bwProgress_DoWork(object sender, DoWorkEventArgs e)
+        {
+            int i = 0;
+
+            //Tant et aussi longtemps que la barre n'a pas atteint le 100% et qu'on
+            //ne demande pas à annuler...
+            while (i &lt; 100 &amp;&amp; !bwProgress.CancellationPending)
+            {
+                //On attend 150ms.
+                Thread.Sleep(150);
+
+                //On retrouve la valeur la plus petite entre 100 et i + 3.
+                i = Math.Min(100, i + 3);
+
+                //On rapporte le progrès fait.
+                bwProgress.ReportProgress(i);
+            }
+        }
+
+        private void btnStart_Click(object sender, EventArgs e)
+        {
+            //Le bouton joue le rôle de démarrage comme d'annulation selon la situation.
+            if (!_etat)
+            {
+                bwProgress.RunWorkerAsync();
+                btnStart.Text = &quot;Annuler&quot;;
+            }
+            else
+            {
+                bwProgress.CancelAsync();
+                btnStart.Text = &quot;Démarrer&quot;;
+            }
+
+            _etat = !_etat;
+        }
+
+        private void bwProgress_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            //On fait avancer la ProgressBar.
+            pgProgress.Value = e.ProgressPercentage;
+        }
+
+        private void bwProgress_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            //Lorsque c'est terminé, on affiche un message indiquant la fin de l'activité.
+            MessageBox.Show(&quot;Le BackgroundWorker a terminé&quot;);
+        }
+    }
+}</code></pre><aside id="r-393621" data-claire-element-id="393621" data-claire-semantic="warning"><p id="r-393620" data-claire-element-id="393620">Tout ce qui a été défini dans le constructeur du formulaire aurait pu être mis dans le Designer graphique. Je l'ai mis là pour vous montrer quelles propriétés et évènements ont été affectés.</p></aside><p id="r-393622" data-claire-element-id="393622">Donc avec le BackgroundWorker, le multi-tâche en Windows Forms devient très facile comme vous pouvez le voir. Tous les évènements appelés seront exécutés dans le thread principal, éliminant ainsi l'utilisation de la commande <code data-claire-semantic="csharp">Invoke</code>. Magique n'est-ce pas :magicien: ?</p><p id="r-393623" data-claire-element-id="393623">Cela conclut ce tutoriel. Il y a plusieurs parties des threads et des delegates que je n'ai pas couvert parce que je ne les considère pas nécéssaires. Allez faire un tour du côté de MSDN pour plus d'explications et d'exemples ! Je vous met sur quelques pistes, comme la programmation réseau, les méthodes anonymes et les impressions en threads séparés.</p><p id="r-393624" data-claire-element-id="393624">Il n'y a jamais de fin à ce que le .NET peut faire ! Les threads n'étaient que la pointe du iceberg. Visitez MSDN si vous désirez plus d'information et si vous vous posez une question sans réponse, je vous rappelle qu'il y a un Forum sur le Site du Zéro pour demander.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-threads-en-net">Les Threads en .NET</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-threads-en-net/les-bases-des-delegates">
+Les bases des delegates
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-threads-en-net/les-threads-3">
+Les threads
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-threads-en-net/les-threads-avec-les-windows-forms">
+Les threads avec les Windows Forms
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-threads-en-net/les-threads-3">
+<span class="arrow"></span>
+<span class="next">Les threads</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/les-threads-en-net.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 08:15:18 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/les-threads-en-net.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:27:56 GMT -->
+</html>

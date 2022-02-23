@@ -1,0 +1,779 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/le-protocole-http-avec-qtnetwork.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 00:01:07 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/le-protocole-http-avec-qtnetwork.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:15:31 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Le protocole HTTP avec QtNetwork</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/le-protocole-http-avec-qtnetwork.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Le protocole HTTP avec QtNetwork</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#LeprotocoleHTTPavecQtNetwork">Le protocole HTTP avec QtNetwork</a><br/><a href="#Avantdecommencer...">Avant de commencer ...</a><br/><a href="#Letlchargementdesdonnesavecget">Le téléchargement des données avec get()</a><br/><a href="#L039envoidedonnesavecpost">L&#039;envoi de données avec post()</a><br/><a href="#Lagestiondesen-ttesheaders">La gestion des en-têtes (headers)</a><br/><a href="#L039envoidefichier">L&#039;envoi de fichier</a><br/><a href="#Utilisationd039unProxy">Utilisation d&#039;un Proxy</a><br/></div>
+<a name="LeprotocoleHTTPavecQtNetwork"></a><h2>Le protocole HTTP avec QtNetwork</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/avant-de-commencer-27">
+<span class="next">Avant de commencer ...</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-565496" data-claire-element-id="565496">Qui n'a jamais rêvé de faire une fonction &quot;Mise à jour&quot; à son programme ? Qui n'a jamais voulu envoyer des messages sur le net avec son programme ? Toutes les questions que vous vous posez sur le protocole HTTP avec Qt trouveront réponses dans ce tutoriel ! (Ces questions sont assez récurrentes, et d'ailleurs ça m'a pris tellement de temps de comprendre ce système que je me suis dit &quot;Quand j'y arrive, je fais un tuto dessus !&quot; :D ).</p><p id="r-565497" data-claire-element-id="565497">Alors, qu'attendez vous ?</p>
+</div><a name="Avantdecommencer..."></a><h2>Avant de commencer ...</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/le-telechargement-des-donnees-avec-get">
+<span class="next">Le téléchargement des données avec get()</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-565498" data-claire-element-id="565498">Avant tout, mettons les choses au point.<br/> Nous allons utiliser plusieurs bibliothèques du Framework Qt, il va donc falloir faire les inclusions nécessaires.</p><p id="r-565499" data-claire-element-id="565499">Les bibliothèques que nous allons utiliser nécessitent ces inclusions :</p><pre id="r-565500" data-claire-element-id="565500"><code data-claire-semantic="cpp">#include &lt;QNetworkReply&gt;
+#include &lt;QNetworkAccessManager&gt;
+#include &lt;QNetworkRequest&gt;
+#include &lt;QUrl&gt;</code></pre><p id="r-565501" data-claire-element-id="565501">Notez que l'on peut, pour travailler avec le réseau, directement inclure :</p><pre id="r-565502" data-claire-element-id="565502"><code data-claire-semantic="cpp">#include &lt;QtNetwork&gt;</code></pre><p id="r-565503" data-claire-element-id="565503"><a href="http://doc.trolltech.com/4.6/qtnetwork.html">Toutes les bibliothèques travaillant sur le réseau</a> seront donc incluses, ce qui évitera d'en oublier si vous faites autre chose en plus de l'exemple de ce tutoriel.</p><p id="r-565504" data-claire-element-id="565504">Mais ce n'est pas tout. Pour travailler sur le réseau, il faut modifier le .pro généré avec la commande :</p><pre id="r-565505" data-claire-element-id="565505"><code data-claire-semantic="console">qmake -project</code></pre><p id="r-565506" data-claire-element-id="565506">Dans votre fichier .pro, vous devez ajouter la ligne suivante :</p><pre id="r-565507" data-claire-element-id="565507"><code>QT += network</code></pre><p id="r-565508" data-claire-element-id="565508">Enfin, si vous utilisez les bibliothèques dynamiques de Qt (ce qui est normalement le cas), vous devez ajouter <strong>QtNetwork4.dll</strong> dans votre dossier qui contiendra votre exécutable, sous peine d'obtenir une affreuse erreur à la ...</p><aside id="r-565510" data-claire-element-id="565510" data-claire-semantic="error"><p id="r-565509" data-claire-element-id="565509">Cette application n'a pas pu démarrer car QNetwork4.dll est introuvable. La réinstallation de cette application peut corriger le problème.</p></aside><p id="r-565511" data-claire-element-id="565511">Vous trouverez cette bibliothèque, comme toutes les autres, dans le répertoire bin du dossier d'installation de Qt, soit par défaut <em>C:\Qt\4.x.x\bin</em> .</p><aside id="r-565513" data-claire-element-id="565513" data-claire-semantic="warning"><p id="r-565512" data-claire-element-id="565512">Avis aux expérimentés : si vous vous êtes déjà renseigné sur le sujet, il est possible que l'on vous ai conseillé d'utiliser QHttp pour les transferts HTTP. Malheureusement, cette classe est devenue obsolète et n'est plus supportée. On préfèrera donc utiliser ses équivalent QNetworkReply et QNetworkAccessManager.</p></aside><p id="r-565514" data-claire-element-id="565514"><em>- Includes ? <br/> - Prêtes !<br/> - QMake ? <br/> - Prêt !<br/> - .Pro ?<br/> - Prêt !<br/> - DLLs ?<br/> - Prêtes !<br/> - On est bon, paré au décollage ?</em></p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork">Le protocole HTTP avec QtNetwork</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/avant-de-commencer-27">
+Avant de commencer ...
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/le-telechargement-des-donnees-avec-get">
+Le téléchargement des données avec get()
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/l-envoi-de-donnees-avec-post">
+L&#039;envoi de données avec post()
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/la-gestion-des-en-tetes-headers">
+La gestion des en-têtes (headers)
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/l-envoi-de-fichier">
+L&#039;envoi de fichier
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/utilisation-d-un-proxy">
+Utilisation d&#039;un Proxy
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/le-telechargement-des-donnees-avec-get">
+<span class="next">Le téléchargement des données avec get()</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Letlchargementdesdonnesavecget"></a><h2>Le téléchargement des données avec get()</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/avant-de-commencer-27">
+<span class="arrow"></span>
+<span class="next">Avant de commencer ...</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/l-envoi-de-donnees-avec-post">
+<span class="next">L&#039;envoi de données avec post()</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-565516" data-claire-element-id="565516">C'est parti !<br/> Le but de cette partie va être de réaliser un utilitaire de téléchargement : l'utilisateur rentre une URL, appuie sur un bouton, voit une barre de téléchargement qui défile et hop, le fichier arrive !</p><p id="r-565517" data-claire-element-id="565517">Nous allons tout d'abord nous mettre d'accord sur le projet de départ, j'ai réalisé une petite interface très simple :</p><figure id="r-565519" data-claire-element-id="565520"><img id="r-565518" data-claire-element-id="565518" src="medias/uploads.siteduzero.com_files_220001_221000_220271.png" alt="Image utilisateur"/></figure><p id="r-565521" data-claire-element-id="565521">Vous remarquerez le titre du projet très original :p .</p><p id="r-565522" data-claire-element-id="565522">Voici donc les fichiers de départ :</p><h3 id="r-main-cpp-15" data-claire-element-id="565524">main.cpp</h3><pre id="r-565523" data-claire-element-id="565523"><code data-claire-semantic="cpp">#include &lt;QApplication&gt;
+#include &quot;FenPrincipale.h&quot;
+
+int main(int argc, char* argv[])
+{
+    QApplication app(argc, argv);
+
+    FenPrincipale fenetre;
+    fenetre.show();
+
+    return app.exec();
+}</code></pre><h3 id="r-fenprincipale-h-2" data-claire-element-id="565526">FenPrincipale.h</h3><pre id="r-565525" data-claire-element-id="565525"><code data-claire-semantic="cpp">#ifndef HEADER_FENPRINCIPALE
+#define HEADER_FENPRINCIPALE
+
+#include &lt;QtGui&gt;
+
+class FenPrincipale : public QWidget
+{
+    Q_OBJECT
+
+
+    public:
+        FenPrincipale();
+
+    private slots:
+
+    private:
+    QVBoxLayout *verticalLayout;
+    QHBoxLayout *horizontalLayout;
+    QLabel *label;
+    QLineEdit *urlEdit;
+    QPushButton *demarrerTelechargement;
+    QProgressBar *progression;
+    bool erreurTrouvee = false; //Variable qui nous permet de savoir s'il y a eu une erreur ou non.
+
+};
+
+#endif</code></pre><h3 id="r-fenprincipale-cpp-2" data-claire-element-id="565552">FenPrincipale.cpp</h3><pre id="r-565527" data-claire-element-id="565527"><code data-claire-semantic="cpp">#include &quot;FenPrincipale.h&quot;
+
+FenPrincipale::FenPrincipale()
+{
+    //On donne une taille par défaut à la fenêtre
+    resize(228, 112);
+    setWindowTitle(&quot;zDownloader&quot;);
+
+    //On définit les layouts
+    verticalLayout = new QVBoxLayout(this);
+    horizontalLayout = new QHBoxLayout();
+
+    label = new QLabel(this);
+    label-&gt;setText(&quot;URL :&quot;);
+    horizontalLayout-&gt;addWidget(label);
+
+    //Le lineEdit qui contient l'URL entrée par le visiteur
+    urlEdit = new QLineEdit(this);
+    horizontalLayout-&gt;addWidget(urlEdit);
+
+    verticalLayout-&gt;addLayout(horizontalLayout);
+
+    demarrerTelechargement = new QPushButton(this);
+    demarrerTelechargement-&gt;setText(&quot;Télécharger&quot;);
+    verticalLayout-&gt;addWidget(demarrerTelechargement);
+
+    progression = new QProgressBar(this);
+    progression-&gt;setValue(0);
+    verticalLayout-&gt;addWidget(progression);
+
+}</code></pre><p id="r-565528" data-claire-element-id="565528">On attaque les choses sérieuses, que diable :diable: !<br/> Bon, tout d'abord, on sait que tout va se passer lors du clic sur le bouton.<br/> Nous allons donc faire un slot <strong>telechargement()</strong> que nous allons connecter à notre signal de clic !</p><p id="r-565529" data-claire-element-id="565529">Ajoutons donc cette ligne dans le constructeur :</p><pre id="r-565530" data-claire-element-id="565530"><code data-claire-semantic="cpp">connect(demarrerTelechargement, SIGNAL(clicked()), this, SLOT(telechargement()));</code></pre><p id="r-565531" data-claire-element-id="565531">Je vous laisse définir ce slot <strong>telechargement()</strong> qui renvoie un simple type void.</p><aside id="r-565533" data-claire-element-id="565533" data-claire-semantic="information"><p id="r-565532" data-claire-element-id="565532">Tant qu'on est là, on va tout de suite se protéger des petits malins qui vont appuyer plusieurs fois sur le bouton téléchargement alors qu'il est en cours... tout simplement en désactivant le bouton une fois qu'il est enfoncé en ajoutant ceci dans le slot telechargement() :</p></aside><pre id="r-565534" data-claire-element-id="565534"><code data-claire-semantic="cpp">demarrerTelechargement-&gt;setEnabled(false);</code></pre><p id="r-565535" data-claire-element-id="565535">Attaquons nous aux choses sérieuses :pirate: :<br/> Tout d'abord, nous devons créer une requête. Nous allons donc utiliser la classe QNetworkRequest pour cela.</p><p id="r-565536" data-claire-element-id="565536">La classe QNetworkRequest prend comme paramètre une constante QUrl, c'est à dire une Url.</p><p id="r-565537" data-claire-element-id="565537">Nous allons donc procéder de cette manière :</p><pre id="r-565538" data-claire-element-id="565538"><code data-claire-semantic="cpp">const QUrl url = QUrl(urlEdit-&gt;text()); //On récupère l'URL entrée par l'utilisateur.
+const QNetworkRequest requete(url); //On crée notre requête</code></pre><p id="r-565539" data-claire-element-id="565539">Tout ceci bien évidemment dans le slot telechargement();</p><p id="r-565540" data-claire-element-id="565540">Nous devons à présent créer un QNetworkAccessManager. Dans votre code final, vous n'aurez pas l'impression que cette classe sert à grand chose, car elle apparait dans 1 ligne seulement. Mais c'est en fait elle qui gère toute la requête et l'accès au réseau !<br/> C'est le QNetworkAccessManager qui possède la méthode get(), qui va nous permettre de télécharger le contenu de notre fameuse URL. Cette méthode renvoie un QNetworkReply, la classe qui va nous permettre de traiter toutes nos données, c'est la &quot;réponse du serveur&quot;. Nous allons utiliser un pointeur pour pouvoir traiter les données sans problèmes de portée.<br/> Récapitulation :</p><pre id="r-565541" data-claire-element-id="565541"><code data-claire-semantic="cpp">QNetworkAccessManager *m = new QNetworkAccessManager; //On crée le QNetworkAccessManager qui va traiter la requête
+
+/*Ensuite, on utilise la méthode get() pour télécharger le contenu de notre requête.
+On récupère un pointeur de QNetworkReply.*/
+QNetworkReply *r = m-&gt;get(requete);</code></pre><p id="r-565542" data-claire-element-id="565542">A présent, il va falloir connecter 3 signaux de QNetworkReply pour pouvoir traiter :</p><ul id="r-565549" data-claire-element-id="565549"><li id="r-565544" data-claire-element-id="565544"><p id="r-565543" data-claire-element-id="565543">L'enregistrement dans un fichier (finished)</p></li><li id="r-565546" data-claire-element-id="565546"><p id="r-565545" data-claire-element-id="565545">La barre de progression (downloadProgress)</p></li><li id="r-565548" data-claire-element-id="565548"><p id="r-565547" data-claire-element-id="565547">La gestion des erreurs (error)</p></li></ul><p id="r-565550" data-claire-element-id="565550">Nous allons donc créer ces trois slots et utiliser ces connect :</p><pre id="r-565551" data-claire-element-id="565551"><code data-claire-semantic="cpp">connect(r, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(messageErreur(QNetworkReply::NetworkError)));
+connect(r, SIGNAL(finished()), this, SLOT(enregistrer()));
+connect(r, SIGNAL(downloadProgress(qint64, qint64)), this, SLOT(progressionTelechargement(qint64, qint64) ));</code></pre><h3 id="r-le-slot-enregistrer" data-claire-element-id="565559">Le slot enregistrer()</h3><p id="r-565553" data-claire-element-id="565553">Commençons par le plus important : enregistrer notre fichier.<br/> Une fois que le slot est appelé, nous avons besoin de récupérer le contenu de notre QNetworkReply.<br/> Qt intègre une fonction qui permet ainsi la récupération du &quot;sender&quot; :</p><pre id="r-565554" data-claire-element-id="565554"><code data-claire-semantic="cpp">QNetworkReply *r = qobject_cast&lt;QNetworkReply*&gt;(sender());</code></pre><p id="r-565555" data-claire-element-id="565555">Nous récupérons ainsi la fameuse réponse du serveur.</p><p id="r-565556" data-claire-element-id="565556">Tout d'abord, il faut ouvrir le fichier à enregistrer, puis mettre le contenu de la réponse du serveur en entier.</p><p id="r-565557" data-claire-element-id="565557">Procédons donc de cette manière :</p><pre id="r-565558" data-claire-element-id="565558"><code data-claire-semantic="cpp">void FenPrincipale::enregistrer()
+{
+	//On vérifie qu'il n'y a pas eu d'erreur.
+	if(!erreurTrouvee)
+	{
+		QNetworkReply *r = qobject_cast&lt;QNetworkReply*&gt;(sender()); //On récupère la réponse du serveur
+		QFile f(&quot;fichier.txt&quot;); //On ouvre le fichier
+
+		if ( f.open(QIODevice::WriteOnly) )
+		{
+			f.write(r-&gt;readAll()); ////On lit la réponse du serveur que l'on met dans un fichier
+			f.close(); //On ferme le fichier
+			r-&gt;deleteLater(); //IMPORTANT : on emploie la fonction deleteLater() pour supprimer la réponse du serveur.
+			//Si vous ne le faites pas, vous risquez des fuites de mémoire ou autre.
+			
+			//On indique que tout s'est bien passé
+			QMessageBox::information(this, &quot;Fin de téléchargement&quot;, &quot;Téléchargement terminé !&quot;); 
+		}
+		close(); //On ferme le programme
+	}
+}</code></pre><h3 id="r-le-slot-progressiontelechargement" data-claire-element-id="565570">Le slot progressionTelechargement()</h3><p id="r-565560" data-claire-element-id="565560">A présent, quelque chose de bien plus simple, la barre de progression.<br/> On a vu que le signal downloadProgress a deux paramètres qui sont tous deux des qint64.<br/> Le premier correspond au nombre de bytes reçus et le second contient le nombre de bytes totaux.</p><p id="r-565561" data-claire-element-id="565561">Nous allons donc utiliser les méthodes setValue() et setRange() de notre barre de progression. Mais avant cela, une petite mise au point.</p><aside id="r-565563" data-claire-element-id="565563" data-claire-semantic="error"><p id="r-565562" data-claire-element-id="565562">Beaucoup de gens pensent à tort que setValue() est la valeur en pourcentages de la barre de progression, ce qui est faux. Ou plutôt c'est partiellement faux.</p></aside><p id="r-565564" data-claire-element-id="565564">Pour calculer le pourcentage, la barre de progression utilise deux valeurs : la valeur et le total, soit respectivement setValue() et setRange(). Pour calculer le pourcentage, il faut calculer le pourcentage de la valeur par rapport au total, ce qui revient à faire : <br/>\frac{value}{range} imes 100<br/> Pour obtenir une valeur en pourcentages.<br/> Par exemple, si on a un téléchargement de 2000 octets et qu'on en a reçu 1000, on va calculer (1000/2000)*100 = 0,5*100 = 50. 50%, soit la moitié de notre téléchargement !</p><div id="r-565566" data-claire-element-id="565566" data-claire-semantic="question"><p id="r-565565" data-claire-element-id="565565">Mais alors, pourquoi les gens pensent que setValue() est la valeur en pourcentages ?</p></div><p id="r-565567" data-claire-element-id="565567">C'est tout simplement que le range par défaut d'une barre de progression est à 100, ce qui fait que la valeur en pourcentages est égale à (value/100)*100 = value, ce qui peut prêter à confusion, je vous l'accorde :p</p><p id="r-565568" data-claire-element-id="565568">Nous allons donc faire un slot basique qui prend en paramètres qint64 bytesRecus et qint64 bytesTotal.<br/> Ah oui, aussi, il faut vérifier que le serveur envoie l'information bytesTotal, ce qui n'est pas toujours le cas ... Nous allons donc devoir vérifier que bytesTotal est différent de -1, la valeur reçue par QNetworkReply quand le serveur n'envoie pas cette information.</p><pre id="r-565569" data-claire-element-id="565569"><code data-claire-semantic="cpp">void FenPrincipale::progressionTelechargement(qint64 bytesReceived, qint64 bytesTotal)
+{
+    if (bytesTotal != -1)
+    {
+        progression-&gt;setRange(0, bytesTotal);
+        progression-&gt;setValue(bytesReceived);
+    }
+}</code></pre><h3 id="r-le-slot-messageerreur" data-claire-element-id="565578">Le slot messageErreur()</h3><p id="r-565571" data-claire-element-id="565571">L'importantissime slot ! C'est lui qui va nous permettre de prévenir l'utilisateur en cas d'échec du téléchargement (fichier inconnu, connexion mauvaise, erreur de DNS...</p><p id="r-565572" data-claire-element-id="565572">Nous allons donc tout d'abord récupérer comme la dernière fois le sender() QNetworkReply.</p><pre id="r-565573" data-claire-element-id="565573"><code data-claire-semantic="cpp">QNetworkReply *r = qobject_cast&lt;QNetworkReply*&gt;(sender());</code></pre><p id="r-565574" data-claire-element-id="565574">Ensuite, nous affichons une erreur critique à l'utilisateur pour lui montrer qu'il s'est passé un petit problème ... et nous nous servons de la méthode errorString() pour afficher l'erreur, et enfin nous n'avons plus qu'a fermer la fenêtre :</p><pre id="r-565575" data-claire-element-id="565575"><code data-claire-semantic="cpp">void FenPrincipale::messageErreur(QNetworkReply::NetworkError)
+{
+    erreurTrouvee = true; //On indique qu'il y a eu une erreur au slot enregistrer
+    QNetworkReply *r = qobject_cast&lt;QNetworkReply*&gt;(sender());
+    QMessageBox::critical(this, &quot;Erreur&quot;, &quot;Erreur lors du chargement. Vérifiez votre connexion internet ou réessayez plus tard &lt;br /&gt;&lt;br /&gt; Code de l'erreur : &lt;br /&gt;&lt;em&gt;&quot; + r-&gt;errorString() + &quot;&lt;/em&gt;&quot;);
+    close();
+}</code></pre><p id="r-565576" data-claire-element-id="565576">Et voilà, c'est fini !<br/> Vous avez un magnifique zDownloader devant vos yeux ébahis !</p><p id="r-565577" data-claire-element-id="565577"><a href="http://serialtueur.free.fr/sdz/zdownloader.zip">Télécharger zDownloader<br/> (Code source + Exécutable)</a></p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork">Le protocole HTTP avec QtNetwork</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/avant-de-commencer-27">
+Avant de commencer ...
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/le-telechargement-des-donnees-avec-get">
+Le téléchargement des données avec get()
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/l-envoi-de-donnees-avec-post">
+L&#039;envoi de données avec post()
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/la-gestion-des-en-tetes-headers">
+La gestion des en-têtes (headers)
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/l-envoi-de-fichier">
+L&#039;envoi de fichier
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/utilisation-d-un-proxy">
+Utilisation d&#039;un Proxy
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/avant-de-commencer-27">
+<span class="arrow"></span>
+<span class="next">Avant de commencer ...</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/l-envoi-de-donnees-avec-post">
+<span class="next">L&#039;envoi de données avec post()</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="L039envoidedonnesavecpost"></a><h2>L&#039;envoi de données avec post()</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/le-telechargement-des-donnees-avec-get">
+<span class="arrow"></span>
+<span class="next">Le téléchargement des données avec get()</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/la-gestion-des-en-tetes-headers">
+<span class="next">La gestion des en-têtes (headers)</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-565580" data-claire-element-id="565580">Dans cette partie nous allons procéder autrement. Maintenant que vous avez acquis de bonnes bases dans la gestion du protocole HTTP, nous allons pouvoir nous concentrer sur la théorie. Cette partie se séparera en une partie théorique et un &quot;TP&quot; guidé.<br/> On est partis !</p><h2 id="r-theorie-envoi-de-donnees-avec-post" data-claire-element-id="565617">Théorie : envoi de données avec post()</h2><p id="r-565581" data-claire-element-id="565581">Tout d'abord, nous allons voir plus en détail certains éléments.<br/> L'envoi de données au serveur peut se faire via 3 méthodes principales :</p><ul id="r-565588" data-claire-element-id="565588"><li id="r-565583" data-claire-element-id="565583"><p id="r-565582" data-claire-element-id="565582">POST : quand vous remplissez un formulaire sur un site web, que vous postez un message sur un forum, ... ;</p></li><li id="r-565585" data-claire-element-id="565585"><p id="r-565584" data-claire-element-id="565584">GET : Ce sont les variables que vous pouvez trouver dans une URL, par exemple <a href="http://siteduzero.com/index.php">http://siteduzero.com/index.php</a>?variable=contenu ;</p></li><li id="r-565587" data-claire-element-id="565587"><p id="r-565586" data-claire-element-id="565586">HEADER : Envoie toutes les informations du client (cookies, id de session php, page d'où l'on provient, langue, navigateur, ...).</p></li></ul><aside id="r-565590" data-claire-element-id="565590" data-claire-semantic="error"><p id="r-565589" data-claire-element-id="565589">Vous ne DEVEZ PAS confondre la méthode de QNetworkAccessManager get(); qui sert à récupérer le contenu d'une page et le GET du protocole HTTP qui est, tout comme POST, un moyen de transmettre des variables de page en page.</p></aside><div id="r-565592" data-claire-element-id="565592" data-claire-semantic="question"><p id="r-565591" data-claire-element-id="565591">C'est bien beau , mais comment on fait tout ça avec Qt ?</p></div><p id="r-565593" data-claire-element-id="565593">J'y viens, j'y viens :p .</p><h3 id="r-transmettre-une-variable-avec-get" data-claire-element-id="565598">Transmettre une variable avec GET</h3><p id="r-565594" data-claire-element-id="565594">GET est une variable transmise par l'URL. Il vous suffit donc de modifier votre QUrl en y ajoutant :<br/><code>?var1=contenu1&amp;var2=contenu2</code>.</p><div id="r-565596" data-claire-element-id="565596" data-claire-semantic="question"><p id="r-565595" data-claire-element-id="565595">Euh attends, j'utilise post() ou get() ?</p></div><p id="r-565597" data-claire-element-id="565597">Très bonne question. Et bien, dans le cas de GET, les variables transmises dans l'URL, on s'en moque. Tout dépend de l'usage que vous en faites :<br/> Soit vous voulez récupérer le contenu d'une page à laquelle vous avez transmis une variable et vous utilisez get(), soit vous voulez envoyer des données POST avec vos données GET et vous utilisez post().</p><h3 id="r-transmettre-des-variables-avec-post" data-claire-element-id="565616">Transmettre des variables avec POST</h3><p id="r-565599" data-claire-element-id="565599">C'est là que ça se complique.<br/> Reprenons les lignes de tout à l'heure, voulez vous ?</p><pre id="r-565600" data-claire-element-id="565600"><code data-claire-semantic="cpp">const QNetworkRequest requete(&quot;http://siteduzero.com/index.php&quot;);
+QNetworkAccessManager *m = new QNetworkAccessManager;
+QNetworkReply *r = m-&gt;get(requete);</code></pre><p id="r-565601" data-claire-element-id="565601">Si vous avez bien suivi, si nous voulons transmettre en GET une variable <strong>machin</strong> qui a pour valeur <strong>truc</strong> à cette page, nous allons faire <code data-claire-semantic="cpp">const QNetworkRequest requete(&quot;http://siteduzero.com/index.php?machin=truc&quot;); </code>.</p><p id="r-565602" data-claire-element-id="565602">Pour envoyer les données avec post, nous allons devoir nous servir de la fonction post() de QNetworkAccessManager.<br/> Reprenons la ligne suivante :</p><pre id="r-565603" data-claire-element-id="565603"><code data-claire-semantic="cpp">QNetworkReply *r = m-&gt;get(requete);</code></pre><p id="r-565604" data-claire-element-id="565604">Nous allons remplacer get() par post(). La fonction post() prend un paramètre supplémentaire, un QByteArray qui contient les données à envoyer. La syntaxe est la même que pour GET, mis à part le point d'interrogation qu'on enlève :</p><pre id="r-565605" data-claire-element-id="565605"><code data-claire-semantic="cpp">QNetworkReply *r = m-&gt;post(requete, &quot;variable1=valeur1&amp;variable2=valeur2&quot;);</code></pre><p id="r-565606" data-claire-element-id="565606">Simple n'est ce pas ? :-° <br/> Donc, résumons : Je veux envoyer à la page <a href="http://siteduzero.com/index.php">http://siteduzero.com/index.php</a> les valeurs suivantes :</p><ul id="r-565613" data-claire-element-id="565613"><li id="r-565608" data-claire-element-id="565608"><p id="r-565607" data-claire-element-id="565607">Variable1 contenant Valeur1 en GET ;</p></li><li id="r-565610" data-claire-element-id="565610"><p id="r-565609" data-claire-element-id="565609">Variable2 contenant Valeur2 en POST ;</p></li><li id="r-565612" data-claire-element-id="565612"><p id="r-565611" data-claire-element-id="565611">Variable3 contenant Valeur3 en POST ;</p></li></ul><pre id="r-565614" data-claire-element-id="565614"><code data-claire-semantic="cpp">const QUrl url = QUrl(&quot;http://siteduzero.com/index.php?Variable1=Valeur1&quot;);
+const QNetworkRequest requete(url);
+QNetworkAccessManager *m = new QNetworkAccessManager;
+QNetworkReply *r = m-&gt;post(requete, &quot;Variable2=Valeur2&amp;Variable3=Valeur3&quot;);</code></pre><p id="r-565615" data-claire-element-id="565615">C'est bon, vous suivez toujours ? <br/> Allez, on peut passer au ...</p><h2 id="r-tp-un-livre-d-or-en-ligne" data-claire-element-id="565653">TP : Un livre d'or en ligne.</h2><p id="r-565618" data-claire-element-id="565618">L'objectif de ce TP va être de poster un message ici : <a href="http://serialtueur.free.fr/sdz/post.php">http://serialtueur.free.fr/sdz/post.php</a></p><p id="r-565619" data-claire-element-id="565619">Comme c'est expliqué, vous devez envoyer 3 variables au serveur pour qu'il accepte votre requête et enregistre votre message :</p><ul id="r-565626" data-claire-element-id="565626"><li id="r-565621" data-claire-element-id="565621"><p id="r-565620" data-claire-element-id="565620">Une variable GET nommée &quot;password&quot; ayant pour valeur &quot;42&quot;.</p></li><li id="r-565623" data-claire-element-id="565623"><p id="r-565622" data-claire-element-id="565622">Une variable POST nommée &quot;text&quot; ayant pour valeur le texte à envoyer (compris entre 1 et 200 caractères).</p></li><li id="r-565625" data-claire-element-id="565625"><p id="r-565624" data-claire-element-id="565624">Une variable POST nommée &quot;pseudo&quot; ayant pour valeur le pseudo qui envoie le texte (compris entre 1 et 20 caractères).</p></li></ul><p id="r-565627" data-claire-element-id="565627">Comme je suis de bonne humeur et que je sais que vous n'apprécieriez pas que je vous largue tout seul dans la nature, je vais vous donner l'interface que j'ai préparée pour vous :</p><h3 id="r-main-cpp-16" data-claire-element-id="565629">main.cpp</h3><pre id="r-565628" data-claire-element-id="565628"><code data-claire-semantic="cpp">#include &lt;QApplication&gt;
+#include &quot;FenPrincipale.h&quot;
+
+int main(int argc, char* argv[])
+{
+    QApplication app(argc, argv);
+
+    FenPrincipale fenetre;
+    fenetre.show();
+
+    return app.exec();
+}</code></pre><h3 id="r-fenprincipale-h-3" data-claire-element-id="565631">FenPrincipale.h</h3><pre id="r-565630" data-claire-element-id="565630"><code data-claire-semantic="cpp">#ifndef HEADER_FENPRINCIPALE
+#define HEADER_FENPRINCIPALE
+
+#include &lt;QtGui&gt;
+#include &lt;QtNetwork&gt;
+#include &lt;QNetworkReply&gt;
+#include &lt;QNetworkRequest&gt;
+#include &lt;QNetworkAccessManager&gt;
+
+class FenPrincipale : public QWidget
+{
+    Q_OBJECT
+
+
+    public:
+        FenPrincipale();
+
+    private slots:
+
+    private:
+    QVBoxLayout *verticalLayout;
+    QFormLayout *formLayout;
+    QLabel *label;
+    QLineEdit *pseudoEdit;
+    QLabel *label_2;
+    QLineEdit *textEdit;
+    QPushButton *boutonEnvoyer;
+    QProgressBar *progression;
+
+};
+
+#endif</code></pre><h3 id="r-fenprincipale-cpp-3" data-claire-element-id="565646">FenPrincipale.cpp</h3><pre id="r-565632" data-claire-element-id="565632"><code data-claire-semantic="cpp">#include &quot;FenPrincipale.h&quot;
+
+FenPrincipale::FenPrincipale()
+{
+    resize(212, 123);
+    setWindowTitle(&quot;zPosteur&quot;);
+
+    verticalLayout = new QVBoxLayout(this);
+    formLayout = new QFormLayout();
+
+    label = new QLabel(this);
+    label-&gt;setText(&quot;Pseudo :&quot;);
+    formLayout-&gt;setWidget(0, QFormLayout::LabelRole, label);
+
+    pseudoEdit = new QLineEdit(this);
+    pseudoEdit-&gt;setMaxLength(20);
+    formLayout-&gt;setWidget(0, QFormLayout::FieldRole, pseudoEdit);
+
+    label_2 = new QLabel(this);
+    label_2-&gt;setText(&quot;Message :&quot;);
+    formLayout-&gt;setWidget(1, QFormLayout::LabelRole, label_2);
+
+    textEdit = new QLineEdit(this);
+    textEdit-&gt;setMaxLength(200);
+    formLayout-&gt;setWidget(1, QFormLayout::FieldRole, textEdit);
+    verticalLayout-&gt;addLayout(formLayout);
+
+    boutonEnvoyer = new QPushButton(this);
+    boutonEnvoyer-&gt;setText(&quot;Envoyer !&quot;);
+    verticalLayout-&gt;addWidget(boutonEnvoyer);
+
+    progression = new QProgressBar(this);
+    progression-&gt;setValue(0);
+    verticalLayout-&gt;addWidget(progression);
+
+    connect(boutonEnvoyer, SIGNAL(clicked()), this, SLOT(envoi()));
+}</code></pre><p id="r-565633" data-claire-element-id="565633">UI à domicile j'écoute ? :soleil: <br/> Et voilà, votre interface est toute prête, toute jolie :)</p><figure id="r-565635" data-claire-element-id="565636"><img id="r-565634" data-claire-element-id="565634" src="medias/uploads.siteduzero.com_files_220001_221000_220525.png" alt="Image utilisateur"/></figure><p id="r-565637" data-claire-element-id="565637">Vous n'avez plus qu'a remplir les trous ! Elle est pas belle la vie ?<br/> Quelques indications supplémentaires :</p><ul id="r-565644" data-claire-element-id="565644"><li id="r-565639" data-claire-element-id="565639"><p id="r-565638" data-claire-element-id="565638">Les trois signaux finished(), error() et downloadProgress() restent identiques, arrangez vous pour leur donner un contenu plus approprié</p></li><li id="r-565641" data-claire-element-id="565641"><p id="r-565640" data-claire-element-id="565640">Si vous avez du mal a écrire les données dans un QByteArray pour post(), il existe la méthode monstring.toLatin1() qui permet de convertir un QString en QByteArray</p></li><li id="r-565643" data-claire-element-id="565643"><p id="r-565642" data-claire-element-id="565642">N'oubliez pas que 42 est la réponse. C'est aussi le mot de passe, en l'occurence :)</p></li></ul><p id="r-565645" data-claire-element-id="565645"><em>Allez, bossez bien ...<br/> Un chamallow au premier qui arrive à poster !</em></p><h3 id="r-correction-197" data-claire-element-id="565652">CORRECTION !</h3><p id="r-565647" data-claire-element-id="565647">Voici ma correction, il y avait sûrement mieux à faire mais c'est déjà ça ...</p><p id="r-565648" data-claire-element-id="565648"></p><div id="r-565650" data-claire-element-id="565650"><pre id="r-565649" data-claire-element-id="565649"><code data-claire-semantic="cpp">void FenPrincipale::envoi()
+{
+    boutonEnvoyer-&gt;setEnabled(false);
+    const QUrl url = QUrl(&quot;http://serialtueur.free.fr/sdz/post.php?password=42&quot;);
+    const QNetworkRequest requete(url); //On crée notre requête
+    QString donnees = &quot;text=&quot; + textEdit-&gt;text() + &quot;&amp;pseudo=&quot; + pseudoEdit-&gt;text();
+
+    QNetworkAccessManager *m = new QNetworkAccessManager;
+    QNetworkReply *r = m-&gt;post(requete, donnees.toLatin1());
+    connect(r, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(messageErreur(QNetworkReply::NetworkError)));
+    connect(r, SIGNAL(finished()), this, SLOT(fin()));
+    connect(r, SIGNAL(downloadProgress(qint64, qint64)), this, SLOT(progressionEnvoi(qint64, qint64) ));
+}
+
+void FenPrincipale::fin()
+{
+	QMessageBox::information(this, &quot;Fin de post&quot;, &quot;L'envoi de données par POST a été effectué avec succès !&quot;);
+	close();
+}
+
+void FenPrincipale::messageErreur(QNetworkReply::NetworkError)
+{
+    QNetworkReply *r = qobject_cast&lt;QNetworkReply*&gt;(sender());
+    QMessageBox::critical(this, &quot;Erreur&quot;, &quot;Erreur lors du chargement. Vérifiez votre connexion internet ou réessayez plus tard &lt;br /&gt;&lt;br /&gt; Code de l'erreur : &lt;br /&gt;&lt;em&gt;&quot; + r-&gt;errorString() + &quot;&lt;/em&gt;&quot;);
+    close();
+}
+
+void FenPrincipale::progressionEnvoi(qint64 bytesReceived, qint64 bytesTotal)
+{
+    if (bytesTotal != -1)
+    {
+        progression-&gt;setRange(0, bytesTotal);
+        progression-&gt;setValue(bytesReceived);
+    }
+}</code></pre></div><p id="r-565651" data-claire-element-id="565651"><em>(Eh ! Psst ! Vous là, oui vous ! Je vous ai vu ! On en regarde pas la correction avant d'avoir fini !)</em><br/> Alors, ça commence à rentrer ?</p><h2 id="r-idees-d-ameliorations-pour-s-entrainer-encore-un-peu" data-claire-element-id="565665">Idées d'améliorations (pour s'entrainer encore un peu)</h2><p id="r-565654" data-claire-element-id="565654">Voici quelques idées que j'ai eu pour vous :</p><ul id="r-565663" data-claire-element-id="565663"><li id="r-565656" data-claire-element-id="565656"><p id="r-565655" data-claire-element-id="565655">Améliorer l'interface, créer des champs pour choisir l'URL, détailler les données envoyées, ...</p></li><li id="r-565658" data-claire-element-id="565658"><p id="r-565657" data-claire-element-id="565657">Tester votre programme sur certains sites (attention à l'abus :colere2: )</p></li><li id="r-565660" data-claire-element-id="565660"><p id="r-565659" data-claire-element-id="565659">Fusionner les programmes 1 et 2 pour faire de votre programme un véritable chat en ligne en récupérant les messages envoyés par les autres utilisateurs, en les mettant dans un QTextEdit et créer un champ pour ajouter des messages (ma page en ligne est ouvert à tout flood :p ). Tenez, d'ailleurs, quand on <a href="http://serialtueur.free.fr/sdz/post.php?messages=1">envoie une variable &quot;messages&quot; valant 1 à ma page en GET</a>, seuls les messages sont affichés... pratique ça ;)</p></li><li id="r-565662" data-claire-element-id="565662"><p id="r-565661" data-claire-element-id="565661">...</p></li></ul><p id="r-565664" data-claire-element-id="565664"><a href="http://serialtueur.free.fr/sdz/zposteur.zip">Télécharger zPosteur<br/> (Code source + Exécutable)</a></p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork">Le protocole HTTP avec QtNetwork</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/avant-de-commencer-27">
+Avant de commencer ...
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/le-telechargement-des-donnees-avec-get">
+Le téléchargement des données avec get()
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/l-envoi-de-donnees-avec-post">
+L&#039;envoi de données avec post()
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/la-gestion-des-en-tetes-headers">
+La gestion des en-têtes (headers)
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/l-envoi-de-fichier">
+L&#039;envoi de fichier
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/utilisation-d-un-proxy">
+Utilisation d&#039;un Proxy
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/le-telechargement-des-donnees-avec-get">
+<span class="arrow"></span>
+<span class="next">Le téléchargement des données avec get()</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/la-gestion-des-en-tetes-headers">
+<span class="next">La gestion des en-têtes (headers)</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lagestiondesen-ttesheaders"></a><h2>La gestion des en-têtes (headers)</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/l-envoi-de-donnees-avec-post">
+<span class="arrow"></span>
+<span class="next">L&#039;envoi de données avec post()</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/l-envoi-de-fichier">
+<span class="next">L&#039;envoi de fichier</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-565667" data-claire-element-id="565667">Une en-tête, ou <em>header</em>, qu'est-ce que c'est au juste ?<br/> C'est une information qu'envoie votre navigateur, par exemple, à la page qu'il reçoit. C'est comme ça que l'on peut connaitre votre navigateur, votre système d'exploitation, l'URL d'où vous provenez, votre couleur de pyjama...<br/>Je fais une petite fixette sur les pyjamas, faites pas attention... :p</p><p id="r-565668" data-claire-element-id="565668">Pour vous donner un exemple concret, voici les headers envoyés au site du zéro quand on affiche la page d'accueil :</p><figure id="r-565670" data-claire-element-id="565671"><img id="r-565669" data-claire-element-id="565669" src="medias/uploads.siteduzero.com_files_222001_223000_222453.png" alt="Image utilisateur"/></figure><p id="r-565672" data-claire-element-id="565672">Nous pouvons nous attarder un peu sur quelques uns de ces headers :</p><ul id="r-565685" data-claire-element-id="565685"><li id="r-565674" data-claire-element-id="565674"><p id="r-565673" data-claire-element-id="565673"><strong>Host</strong> est l'adresse du serveur que vous visitez ;</p></li><li id="r-565676" data-claire-element-id="565676"><p id="r-565675" data-claire-element-id="565675"><strong>User-Agent</strong> contient les informations de votre client : Windows, Firefox... ;</p></li><li id="r-565678" data-claire-element-id="565678"><p id="r-565677" data-claire-element-id="565677"><strong>Accept-Langage</strong> : Langues acceptées par le navigateur, permet à certains sites dynamiques d'adapter leur contenu en fonction de votre langue par défaut ;</p></li><li id="r-565680" data-claire-element-id="565680"><p id="r-565679" data-claire-element-id="565679"><strong>Accept-Charset</strong> contient les encodages de caractères acceptés ;</p></li><li id="r-565682" data-claire-element-id="565682"><p id="r-565681" data-claire-element-id="565681"><strong>Cookie</strong> : C'est un ensemble de variables que vous envoyez à votre serveur. Il contient par exemple votre pseudo, votre mot de passe, ou encore votre <a href="http://fr.wikipedia.org/wiki/Session_(informatique)">ID de session</a>. En fait, il contient tout ce qu'il faut au serveur pour valider votre authentification sur le serveur.</p></li><li id="r-565684" data-claire-element-id="565684"><p id="r-565683" data-claire-element-id="565683"><strong>Referer</strong> contient l'adresse qui vous a amené jusqu'ici. Moi par exemple, j'étais sur le forum quand j'ai cliqué sur la page d'accueil.</p></li></ul><h2 id="r-utilisation-des-headers-avec-setrawheader" data-claire-element-id="565695">Utilisation des headers avec setRawHeader()</h2><p id="r-565686" data-claire-element-id="565686">Vous vous rappelez de notre petit code théorique de la dernière fois ?</p><pre id="r-565687" data-claire-element-id="565687"><code data-claire-semantic="cpp">const QUrl url = QUrl(&quot;http://siteduzero.com/index.php?Variable1=Valeur1&quot;);
+const QNetworkRequest requete(url);
+QNetworkAccessManager *m = new QNetworkAccessManager;
+QNetworkReply *r = m-&gt;post(requete, &quot;Variable2=Valeur2&amp;Variable3=Valeur3&quot;);</code></pre><p id="r-565688" data-claire-element-id="565688">Vous ne le trouvez pas bien pauvre, ce QNetworkRequest ? On ne lui donne qu'une URL, c'était bien la peine de créer une classe pour ça...<br/> Eh bien, nous allons agrémenter notre code de quelques petits headers grâce à la méthode setRawHeader() :) .<br/> Imaginons que je sois fier au point de dire que je poste depuis le grand, beau et fort zPoster, que ma langue maternelle est le zero-language et que je proviens de Saint Locdu le Trou.</p><p id="r-565689" data-claire-element-id="565689">Voilà ce que ça donnerait :</p><pre id="r-565690" data-claire-element-id="565690"><code data-claire-semantic="cpp">const QUrl url = QUrl(&quot;http://siteduzero.com/index.php?Variable1=Valeur1&quot;);
+const QNetworkRequest requete(url);
+requete.setRawHeader(&quot;User-Agent&quot;, &quot;zPoster&quot;);
+requete.setRawHeader(&quot;Accept-Language&quot;, &quot;zero-language&quot;);
+requete.setRawHeader(&quot;Referer&quot;, &quot;St Locdu le Trou&quot;);
+QNetworkAccessManager *m = new QNetworkAccessManager;
+QNetworkReply *r = m-&gt;post(requete, &quot;Variable2=Valeur2&amp;Variable3=Valeur3&quot;);</code></pre><p id="r-565691" data-claire-element-id="565691">Vous avez compris ? On utilise la méthode setRawHeader() à laquelle on passe le premier paramètre &quot;Nom du header&quot; et le second &quot;Contenu du header&quot;.</p><aside id="r-565693" data-claire-element-id="565693" data-claire-semantic="warning"><p id="r-565692" data-claire-element-id="565692">Faites quand même attention à ne pas envoyer n'importe quoi, certains de ces paramètres sont vitaux pour que le serveur comprenne votre requête :p !</p></aside><p id="r-565694" data-claire-element-id="565694">Je pense que, sur ce, vous devriez être capable de vous débrouiller seuls dans le monde vicieux des headers :diable: .<br/> Bonne chance !</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork">Le protocole HTTP avec QtNetwork</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/avant-de-commencer-27">
+Avant de commencer ...
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/le-telechargement-des-donnees-avec-get">
+Le téléchargement des données avec get()
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/l-envoi-de-donnees-avec-post">
+L&#039;envoi de données avec post()
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/la-gestion-des-en-tetes-headers">
+La gestion des en-têtes (headers)
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/l-envoi-de-fichier">
+L&#039;envoi de fichier
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/utilisation-d-un-proxy">
+Utilisation d&#039;un Proxy
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/l-envoi-de-donnees-avec-post">
+<span class="arrow"></span>
+<span class="next">L&#039;envoi de données avec post()</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/l-envoi-de-fichier">
+<span class="next">L&#039;envoi de fichier</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="L039envoidefichier"></a><h2>L&#039;envoi de fichier</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/la-gestion-des-en-tetes-headers">
+<span class="arrow"></span>
+<span class="next">La gestion des en-têtes (headers)</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/utilisation-d-un-proxy">
+<span class="next">Utilisation d&#039;un Proxy</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-565697" data-claire-element-id="565697">Alors, tout d'abord, j'espère que vous avez bien assimilé les parties précédentes, parce que l'envoi de fichier, c'est pas de la tarte :-° ... Qui a dit &quot;tarte&quot; ?</p><p id="r-565698" data-claire-element-id="565698">Nous allons tout d'abord analyser ce qu'il se passe quand on envoie un fichier basique via un formulaire.<br/> Voilà ce qui est envoyé au serveur :</p><h3 id="r-donnees-envoyees-par-post" data-claire-element-id="565714">Données envoyées par POST</h3><p id="r-565699" data-claire-element-id="565699">Tout d'abord, par POST, on envoie le contenu du fichier précédé de quelques en-têtes :</p><pre id="r-565700" data-claire-element-id="565700"><code>--87142694621188\r\n
+Content-Disposition: form-data; name=&quot;upload&quot;; filename=&quot;image.jpg&quot;;\r\n
+Content-Type: image/jpeg\r\n
+\r\n
+contenu du fichier\r\n
+--87142694621188--\r\n</code></pre><p id="r-565701" data-claire-element-id="565701">Analysons un peu ceci :<br/> Tout d'abord, le serveur a besoin d'une &quot;limite&quot; appelée <strong>boundary</strong>, qui a pour but de délimiter le contenu du fichier. Cette limite ne doit pas être contenue dans le fichier, sinon le serveur va penser que le fichier s'arrête à cet endroit. C'est pourquoi, afin de limiter les risques de plantage, on choisira plutôt un grand nombre aléatoire.<br/> Ici, le boundary est donc 87142694621188.</p><p id="r-565702" data-claire-element-id="565702">La ligne suivante : <br/><code>Content-Disposition: form-data; name=&quot;upload&quot;; filename=&quot;image.jpg&quot;; </code> sert à spécifier certains attributs du fichier envoyé :</p><ul id="r-565709" data-claire-element-id="565709"><li id="r-565704" data-claire-element-id="565704"><p id="r-565703" data-claire-element-id="565703"><em>form-data</em> signifie que le fichier a été envoyé comme avec un formulaire ;</p></li><li id="r-565706" data-claire-element-id="565706"><p id="r-565705" data-claire-element-id="565705"><em>name=&quot;upload&quot;</em> est le nom du champ <code data-claire-semantic="html">&lt;input&gt; </code> qui a été utilisé pour envoyer le fichier ;</p></li><li id="r-565708" data-claire-element-id="565708"><p id="r-565707" data-claire-element-id="565707"><em>filename=&quot;image.jpg&quot;</em> contient le nom du fichier envoyé.</p></li></ul><p id="r-565710" data-claire-element-id="565710"><strong>Content-Type</strong> contient tout simplement <a href="http://fr.wikipedia.org/wiki/Type_MIME">le Type MIME</a> du fichier envoyé.</p><p id="r-565711" data-claire-element-id="565711">Il y a ensuite un saut de ligne, et le contenu direct du fichier. Si c'est un fichier texte, il y aura donc marqué quelque chose comme &quot;Bonjour, je suis un zéro !&quot;. Si c'est une image, vous vous retrouverez plus avec des données binaires brutes parfaitement illisibles pour un être humain.</p><p id="r-565712" data-claire-element-id="565712">A la limite, ça vous vous en fichez, c'est votre programme qui marquera tout ceci à votre place ;)</p><p id="r-565713" data-claire-element-id="565713">On voit ensuite un nouveau saut de ligne, puis le boundary encadré par 4 traits : --87142694621188-- , qui indique que le fichier s'arrête.</p><h3 id="r-donnees-envoyees-dans-les-headers" data-claire-element-id="565735">Données envoyées dans les headers</h3><p id="r-565715" data-claire-element-id="565715">Eh oui, ce n'est pas fini !<br/> Nous devons encore ajouter deux headers qui vont permettre au serveur de s'y retrouver un peu plus dans nos requêtes.</p><p id="r-565716" data-claire-element-id="565716">Tout d'abord, pour qu'il comprenne du premier coup ce qu'on veut lui envoyer, il va falloir créer un header <strong>Content-Type</strong>, qui va contenir ceci :</p><pre id="r-565717" data-claire-element-id="565717"><code>multipart/form-data; boundary=87142694621188</code></pre><p id="r-565718" data-claire-element-id="565718">.<br/> On indique ainsi qu'on envoie n'importe quel type de données grâce à un formulaire POST, et on donne directement le boundary au serveur.</p><p id="r-565719" data-claire-element-id="565719">Ensuite, pour qu'il sache directement à quoi il doit s'attendre, on va devoir lui donner la taille de ce qu'on lui envoie, on va créer un header <strong>Content-Length</strong> qui va contenir la valeur numérique correspondant à la taille de ce qu'on lui envoie avec POST.</p><p id="r-565720" data-claire-element-id="565720">C'est bon, vous suivez toujours ?</p><h2 id="r-application-a-qt" data-claire-element-id="565734">Application à Qt</h2><p id="r-565721" data-claire-element-id="565721">Nous allons d'abord commencer par créer toutes nos variables de base :</p><pre id="r-565722" data-claire-element-id="565722"><code data-claire-semantic="cpp">const QUrl url = QUrl(&quot;http://monsupersite.com/index.php&quot;);
+const QNetworkRequest requete(url);
+QNetworkAccessManager *m = new QNetworkAccessManager;
+
+/* On crée le boundary.
+Libre à vous de lui donner ensuite une valeur aléatoire
+pour s'assurer qu'il ne se trouve pas dans le fichier. */
+QByteArray boundary = &quot;87142694621188&quot;;
+
+// On ouvre notre fichier à envoyer
+QFile file( &quot;image.jpg&quot; );
+file.open( QIODevice::ReadOnly );</code></pre><p id="r-565723" data-claire-element-id="565723">Tout est en place. A présent, nous allons donc créer la variable que nous allons passer en paramètre à post(), en respectant point par point la syntaxe vue plus haut.</p><pre id="r-565724" data-claire-element-id="565724"><code data-claire-semantic="cpp">QByteArray data = &quot;--&quot; + boundary + &quot;\r\n&quot;;
+data += &quot;Content-Disposition: form-data; name=\&quot;upload\&quot;; filename=\&quot;image.jpg\&quot;;\r\n&quot;;
+data += &quot;Content-Type: image/jpeg\r\n\r\n&quot; + file.readAll() + &quot;\r\n&quot;;
+data += &quot;--&quot; + boundary + &quot;--\r\n&quot;;</code></pre><p id="r-565725" data-claire-element-id="565725">Nous créons ensuite les headers Content-Type et Content-Length :</p><pre id="r-565726" data-claire-element-id="565726"><code data-claire-semantic="cpp">requete.setRawHeader(&quot;Content-Type&quot;, &quot;multipart/form-data; boundary=&quot; + boundary);
+requete.setRawHeader(&quot;Content-Length&quot;, QString::number(data.size()).toAscii());</code></pre><p id="r-565727" data-claire-element-id="565727">Et nous n'avons plus qu'a envoyer notre requête au serveur !</p><pre id="r-565728" data-claire-element-id="565728"><code data-claire-semantic="cpp">QNetworkReply *r = m-&gt;post(requete, data);</code></pre><aside id="r-565730" data-claire-element-id="565730" data-claire-semantic="information"><p id="r-565729" data-claire-element-id="565729">Pour information, quand on envoie quelque chose au serveur, le signal n'est plus downloadProgress() mais uploadProgress() afin de connaitre la progression de l'envoi du fichier.</p></aside><p id="r-565731" data-claire-element-id="565731">Et voilà, vous avez fini ! Si vous êtes arrivés à suivre jusqu'ici, je peux vous garantir que vous pouvez être fier de vous.</p><aside id="r-565733" data-claire-element-id="565733" data-claire-semantic="information"><p id="r-565732" data-claire-element-id="565732">Cette partie ne comporte pas de TP. L'explication est simple : un serveur d'envoi d'image demande trop de ressources et de matériel afin qu'il puisse être mis en place uniquement pour ce TP. J'avais essayé de faire un TP sur un site d'hébergement déjà existant, mais celui-ci a mis en place un captcha. Afin de ne pas avoir à mettre à jour ce cours constamment selon les aléas des hébergeurs, je ne propose pas cette partie. Vous pouvez néanmoins me contacter par MP si vous souhaitez mettre une partie de vos ressources à la disposition de ce TP.</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork">Le protocole HTTP avec QtNetwork</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/avant-de-commencer-27">
+Avant de commencer ...
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/le-telechargement-des-donnees-avec-get">
+Le téléchargement des données avec get()
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/l-envoi-de-donnees-avec-post">
+L&#039;envoi de données avec post()
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/la-gestion-des-en-tetes-headers">
+La gestion des en-têtes (headers)
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/l-envoi-de-fichier">
+L&#039;envoi de fichier
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/utilisation-d-un-proxy">
+Utilisation d&#039;un Proxy
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/la-gestion-des-en-tetes-headers">
+<span class="arrow"></span>
+<span class="next">La gestion des en-têtes (headers)</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/utilisation-d-un-proxy">
+<span class="next">Utilisation d&#039;un Proxy</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Utilisationd039unProxy"></a><h2>Utilisation d&#039;un Proxy</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/l-envoi-de-fichier">
+<span class="arrow"></span>
+<span class="next">L&#039;envoi de fichier</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<div id="r-565738" data-claire-element-id="565738" data-claire-semantic="question"><p id="r-565737" data-claire-element-id="565737">C'est quoi un &quot;proxy&quot; ?</p></div><p id="r-565739" data-claire-element-id="565739">Il s'agit d'un serveur qui va exécuter pour nous la requête. Dans la plupart des cas, on utilise un proxy pour cacher notre adresse IP. Ce serveur est donc une sorte d'intermédiaire entre notre programme et le serveur sur lequel on exécute la requête.<br/> Vous pouvez trouver une liste de proxies sur des sites comme <a href="http://www.free-proxy.fr/">http://www.free-proxy.fr/</a> ou encore <a href="http://www.proxygratuit.fr/">http://www.proxygratuit.fr/</a> .</p><p id="r-565740" data-claire-element-id="565740">Nous allons donc tout d'abord créer un objet de type QNetworkProxy :</p><pre id="r-565741" data-claire-element-id="565741"><code data-claire-semantic="cpp">QNetworkProxy proxy;</code></pre><p id="r-565742" data-claire-element-id="565742">Nous allons ensuite avoir besoin des renseignements suivants :</p><ul id="r-565753" data-claire-element-id="565753"><li id="r-565744" data-claire-element-id="565744"><p id="r-565743" data-claire-element-id="565743">Type de proxy ;</p></li><li id="r-565746" data-claire-element-id="565746"><p id="r-565745" data-claire-element-id="565745">Adresse &quot;host&quot; du proxy ;</p></li><li id="r-565748" data-claire-element-id="565748"><p id="r-565747" data-claire-element-id="565747">Port utilisé pour le proxy ;</p></li><li id="r-565750" data-claire-element-id="565750"><p id="r-565749" data-claire-element-id="565749">Nom d'utilisateur du proxy (facultatif) ;</p></li><li id="r-565752" data-claire-element-id="565752"><p id="r-565751" data-claire-element-id="565751">Mot de passe du proxy (facultatif).</p></li></ul><p id="r-565754" data-claire-element-id="565754">Le type de proxy est à choisir dans la liste suivante :<br/> NoProxy, DefaultProxy, Socks5Proxy, HttpProxy, HttpCachingProxy et FtpCachingProxy.</p><p id="r-565755" data-claire-element-id="565755">Par exemple, comme nous utilisons le protocole HTTP dans ce tutoriel, nous allons plutôt utiliser HttpProxy.</p><p id="r-565756" data-claire-element-id="565756">Nous allons donc donner ces caractéristiques à notre proxy :</p><pre id="r-565757" data-claire-element-id="565757"><code data-claire-semantic="cpp">QNetworkProxy proxy;
+proxy.setType(QNetworkProxy::HttpProxy); //Type de proxy
+proxy.setHostName(&quot;proxy.com&quot;); //&quot;Host&quot; du proxy
+proxy.setPort(1080); //Port du proxy
+proxy.setUser(&quot;username&quot;); //Facultatif
+proxy.setPassword(&quot;password&quot;); //Facultatif</code></pre><p id="r-565758" data-claire-element-id="565758">Vous avez à présent deux possibilités pour utiliser votre proxy :</p><h3 id="r-appliquer-votre-proxy-a-une-requete" data-claire-element-id="565761">Appliquer votre proxy à une requête</h3><p id="r-565759" data-claire-element-id="565759">Pour appliquer votre proxy à une requête en particulier, vous devez utiliser la méthode setProxy() de QNetworkAccessManager :</p><pre id="r-565760" data-claire-element-id="565760"><code data-claire-semantic="cpp">QNetworkAccessManager *m = new QNetworkAccessManager;
+m-&gt;setProxy (proxy);</code></pre><h3 id="r-utiliser-votre-proxy-pour-l-ensemble-des-requetes-de-votre-programme" data-claire-element-id="565767">Utiliser votre proxy pour l'ensemble des requêtes de votre programme</h3><p id="r-565762" data-claire-element-id="565762">Si vous souhaitez que chacune des requêtes que vous effectuez utilisent votre proxy, il faut que vous procédiez ainsi :</p><pre id="r-565763" data-claire-element-id="565763"><code data-claire-semantic="cpp">QNetworkProxy::setApplicationProxy (proxy);</code></pre><p id="r-565764" data-claire-element-id="565764">Et voilà, vous savez maintenant utiliser un proxy dans votre application ! :)</p><p id="r-565765" data-claire-element-id="565765">Alors, ce tutoriel vous a plu ? J'espère en tout cas avoir réussi a réaliser quelque chose de clair et compréhensible pour toutes les personnes qui se sont demandées un jour comment utiliser ce fameux protocole HTTP dans ses applications les plus simples. Merci à tous de m'avoir lu, et a bientôt pour un nouveau cours !</p><p id="r-565766" data-claire-element-id="565766"><em>Je tiens à remercier Alp, Amnell, minirop, niark74 et alexisdm qui ont répondu à toutes mes questions quand j'en avais besoin.</em></p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork">Le protocole HTTP avec QtNetwork</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/avant-de-commencer-27">
+Avant de commencer ...
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/le-telechargement-des-donnees-avec-get">
+Le téléchargement des données avec get()
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/l-envoi-de-donnees-avec-post">
+L&#039;envoi de données avec post()
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/la-gestion-des-en-tetes-headers">
+La gestion des en-têtes (headers)
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/l-envoi-de-fichier">
+L&#039;envoi de fichier
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/utilisation-d-un-proxy">
+Utilisation d&#039;un Proxy
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-protocole-http-avec-qtnetwork/l-envoi-de-fichier">
+<span class="arrow"></span>
+<span class="next">L&#039;envoi de fichier</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/le-protocole-http-avec-qtnetwork.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 00:01:08 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/le-protocole-http-avec-qtnetwork.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:15:32 GMT -->
+</html>

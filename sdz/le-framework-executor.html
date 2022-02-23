@@ -1,0 +1,799 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/le-framework-executor.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 02:45:26 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/le-framework-executor.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:36:47 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Le framework Executor</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/le-framework-executor.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Le framework Executor</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#LeframeworkExecutor">Le framework Executor</a><br/><a href="#Unpetitrappel">Un petit rappel</a><br/><a href="#Lesbases">Les bases</a><br/><a href="#Lespoolsdethreads">Les pools de threads</a><br/><a href="#CallableltVgtetFutureltVgt">Callable&lt;V&gt; et Future&lt;V&gt;</a><br/><a href="#Unpeudestructuredansnosprogrammes">Un peu de structure dans nos programmes</a><br/></div>
+<a name="LeframeworkExecutor"></a><h2>Le framework Executor</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/un-petit-rappel">
+<span class="next">Un petit rappel</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-543875" data-claire-element-id="543875">Bonjour à tous,</p><p id="r-543876" data-claire-element-id="543876">Tout d'abord, sachez que la programmation concurrente est un sujet très vaste et souvent complexe, rempli de pièges et de comportements tous plus étranges les uns que les autres :diable: .</p><p id="r-543877" data-claire-element-id="543877">Dans son big-tuto, Cysboy a introduit <a href="http://www.siteduzero.com/tutoriel-3-10516-les-threads.html">les threads</a> et a illustré leur complexité. Je ne vais pas aborder ici les moyens d'assurer la thread-safety (le fait qu'un objet se comporte correctement quand plusieurs threads y accèdent), cela fera peut-être l'objet d'un futur tutoriel. Pour en revenir aux threads, JAVA 5 a introduit un nouveau moyen d'exécuter les tâches en parallèles : le framework Executor.</p><p id="r-543878" data-claire-element-id="543878">Je ne vais pas vous l'expliquer en intégralité, mais vous devriez être à même d'en comprendre les grandes lignes.</p><aside id="r-543880" data-claire-element-id="543880" data-claire-semantic="warning"><p id="r-543879" data-claire-element-id="543879">Je pars du principe que vous avez déjà une certaine pratique de Java et que vous avez déjà entendu le mot thread. Si les collections, les génériques et la programmation Java en général vous sont complètement étrangers, commencez par le tutoriel de Cysboy.</p></aside><p id="r-543881" data-claire-element-id="543881">Sans plus attendre amis zéros, voyons ce que nous réserve le framework Executor.</p>
+</div><a name="Unpetitrappel"></a><h2>Un petit rappel</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/les-bases-31">
+<span class="next">Les bases</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-l-utilisation-des-threads" data-claire-element-id="543894">L'utilisation des threads</h2><p id="r-543882" data-claire-element-id="543882">Les threads sont omniprésents dans les programmes java. Votre JVM (Java Virtual Machine), qui se charge d'exécuter votre programme, va créer des threads à votre insu : les threads qui s'occupent des opérations de nettoyage de la mémoire et le thread d'exécution principal de votre programme.<br/> Je profite également de ce court rappel sur les threads pour préciser certaines choses :</p><ul id="r-543887" data-claire-element-id="543887"><li id="r-543884" data-claire-element-id="543884"><p id="r-543883" data-claire-element-id="543883">L'ordre d'exécution des threads n'est pas garanti. J'entends par là que, à code équivalent, l'ordre d'éxecution des threads peut changer.</p></li><li id="r-543886" data-claire-element-id="543886"><p id="r-543885" data-claire-element-id="543885">Je vois souvent les débutants se poser des questions quand à l'utilité de l'encapsulation ou l'utilisation du mot-clé final dans le code. Je ne vous dirai que ceci : <a href="http://www.siteduzero.com/tutoriel-3-11167-les-classes-partie-1-2.html#ss_part_2">l'encapsulation</a> et les objets immuables sont vos meilleurs alliés pour vous en sortir dans un environnement multi-threads en java (ceci étant un tuto sur java je n'élargirais pas le débat à d'autres langages). Je vous précise au passage que l'encapsulation n'a que très rarement un impact sur les performances mais c'est un autre débat.</p></li></ul><p id="r-543888" data-claire-element-id="543888">Je ne doute pas une seule seconde que les threads n'ont absolument aucun secret pour vous mais juste pour vous rafraichir la mémoire, généralement on créé un thread de cette façon :</p><p id="r-543889" data-claire-element-id="543889">On implémente l'interface java.lang.Runnable</p><pre id="r-543890" data-claire-element-id="543890"><code data-claire-semantic="java">public class MonRunnable implements Runnable {
+
+	@Override
+	public void run(){
+		System.out.println(&quot;Travail à effectuer&quot;);
+	}
+
+}</code></pre><p id="r-543891" data-claire-element-id="543891">et on l'enveloppe dans un thread :</p><pre id="r-543892" data-claire-element-id="543892"><code data-claire-semantic="java">public class Main {
+
+	public static void main(String[] args){
+
+		//On créer notre thread avec notre tache à executer
+		Thread t = new Thread(new MonRunnable());
+		//On lance le thread
+		t.start();
+	}
+}</code></pre><p id="r-543893" data-claire-element-id="543893">Je sais, vous le saviez déjà.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/le-framework-executor">Le framework Executor</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/un-petit-rappel">
+Un petit rappel
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/les-bases-31">
+Les bases
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/les-pools-de-threads">
+Les pools de threads
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/callable-v-et-future-v">
+Callable&lt;V&gt; et Future&lt;V&gt;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/un-peu-de-structure-dans-nos-programmes">
+Un peu de structure dans nos programmes
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/les-bases-31">
+<span class="next">Les bases</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lesbases"></a><h2>Les bases</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/un-petit-rappel">
+<span class="arrow"></span>
+<span class="next">Un petit rappel</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/les-pools-de-threads">
+<span class="next">Les pools de threads</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-un-peu-d-histoire-17" data-claire-element-id="543908">Un peu d'histoire</h2><p id="r-543896" data-claire-element-id="543896">Nous sommes en 2004, Java 5 (Tiger) viens de sortir. Comme toutes les versions, celle-ci apporte sont lots de nouveautés dont l'auto-boxing, auto-unboxing, les génériques et la nouvelle API de concurrence. Désignée sous le doux nom de JSR 166 (<a href="http://www.jcp.org/en/jsr/detail?id=166">http://www.jcp.org/en/jsr/detail?id=166</a>) et conçu sous la direction (il n'était pas le seul bien sur) de <strong>Doug Lea</strong>, enseignant à l'université d'état d'Oswego aux Etats-Unis, cette JSR introduit, entre autres choses, un nouveau framework d'éxecution des tâches connu sous le nom de Framework Executor.<br/> 6 ans plus tard, Executor semble peu connu voir totalement ignoré dans le programme des universités.</p><p id="r-543897" data-claire-element-id="543897">L'idée d'Executor et des autres outils présents dans le package <strong>java.util.concurrent</strong>, est de pouvoir choisir <em>facilement</em> la politique d'exécution de nos tâches.</p><p id="r-543898" data-claire-element-id="543898">Qu'est-ce qu'une politique d'exécution ? Et bien c'est relativement simple. La politique d'exécution répond globalement à 3 questions :</p><ul id="r-543905" data-claire-element-id="543905"><li id="r-543900" data-claire-element-id="543900"><p id="r-543899" data-claire-element-id="543899">Quelles tâches vont être exécutées ?</p></li><li id="r-543902" data-claire-element-id="543902"><p id="r-543901" data-claire-element-id="543901">Dans quel ordre ?</p></li><li id="r-543904" data-claire-element-id="543904"><p id="r-543903" data-claire-element-id="543903">Combien de ses tâches peut on exécuter en parallèle ?</p></li></ul><p id="r-543906" data-claire-element-id="543906">Avant Java 5, c'était aux développeurs d’implémenter les classes nécessaire à la politique qu'ils souhaitaient mettre en place (Files d'exécutions, pool de threads...).</p><p id="r-543907" data-claire-element-id="543907">Ceci étant dit, explorons Executor. :pirate:</p><h2 id="r-les-base-du-framework-executor" data-claire-element-id="543946">Les base du framework Executor</h2><p id="r-543909" data-claire-element-id="543909">Autant le dire tout de suite : <strong>vous ne manipulez plus les threads directement !</strong></p><p id="r-543910" data-claire-element-id="543910">L'abstraction de base que vous allez utiliser est l'interface <strong>Executor</strong>.</p><pre id="r-543911" data-claire-element-id="543911"><code data-claire-semantic="java">public interface Executor {
+
+	void execute(Runnable command);
+}</code></pre><p id="r-543912" data-claire-element-id="543912">J'aimerais ici faire un petit aparté sur les interfaces. Comme l'a très bien expliqué Cysboy dans son tutoriel les interfaces permettent de créer des super-types et donc de permettre un polymorphisme. De ces deux choses découlent le principal intérêt des interfaces, <strong>le découplage</strong>.</p><p id="r-543913" data-claire-element-id="543913">Je m'explique :<br/> Une interface A décrit un certain nombres d'opérations</p><pre id="r-543914" data-claire-element-id="543914"><code data-claire-semantic="java">public interface A {
+
+     void methodeA();
+     void methodeB();
+}</code></pre><p id="r-543915" data-claire-element-id="543915">On veut, qelle que soit la classe qui implémente A, faire un traitement particulier. Vous pouvez sans problème écrire une méthode qui prend en paramètre une interface, car vous savez quelles méthodes seront implémentées dans les classes qui implémentent votre interface. Si la classe qui implémente l'interface <em><strong>A</strong></em> change (pour une autre classe d'implémentation plus adaptée par exemple), la méthode <em><strong>execute</strong></em> (voir exemple ci-après) n'aura pas besoin d'être changée. C'est la raison pour laquelle on utilise des interfaces.</p><pre id="r-543916" data-claire-element-id="543916"><code data-claire-semantic="java">public class Execution {
+
+     public void execute(A a) {
+
+          a.methodeA();
+          a.methodeB();
+     }
+}</code></pre><p id="r-543917" data-claire-element-id="543917">Créer un framework basé sur les interfaces permet donc une grande souplesse dans l'exécution des tâches. Vous pourrez exécuter n'importe quelle tâche qui implémentent Runnable.</p><p id="r-543918" data-claire-element-id="543918">Comme dit précédemment, les executors exécutent tout comme les threads, des Runnables. Nous allons reprendre l'exemple précédent en utilisant Executor cette fois :</p><p id="r-543919" data-claire-element-id="543919">Au lieu de créer un thread avec new Thread(...), nous allons utiliser Executor qui fournit une méthode pour produire le même effet : la méthode newSingleThreadExecutor().</p><pre id="r-543920" data-claire-element-id="543920"><code data-claire-semantic="java">public class Main {
+
+	public static void main(String[] args) {
+
+		Executor executor = Executors.newSingleThreadExecutor();
+		executor.execute(new MonRunnable());
+	}
+
+}</code></pre><p id="r-543921" data-claire-element-id="543921">Il y a 3 interfaces à connaitre :</p><ul id="r-543928" data-claire-element-id="543928"><li id="r-543923" data-claire-element-id="543923"><p id="r-543922" data-claire-element-id="543922"><strong>Executor</strong> : Pour l'exécution des &quot;Runnables&quot;</p></li><li id="r-543925" data-claire-element-id="543925"><p id="r-543924" data-claire-element-id="543924"><strong>ExecutorService</strong> : Pour l'exécution des tâches &quot;Runnables&quot; et &quot;Callables&quot;(les Callables seront expliqués par la suite)</p></li><li id="r-543927" data-claire-element-id="543927"><p id="r-543926" data-claire-element-id="543926"><strong>ScheduledExecutorService</strong> : Pour l'exécution des tâches périodiques (qui se répète dans le temps) et différée (la tâche doit commencer dans 60 secondes par exemple)</p></li></ul><p id="r-543929" data-claire-element-id="543929">La relation entre ces interfaces est la suivante :</p><figure id="r-543931" data-claire-element-id="543932"><img id="r-543930" data-claire-element-id="543930" src="medias/uploads.siteduzero.com_files_315001_316000_315389.png" alt="Image utilisateur"/></figure><aside id="r-543934" data-claire-element-id="543934" data-claire-semantic="information"><p id="r-543933" data-claire-element-id="543933">Pour les zéros un peu allergique à l'UML :-° : ScheduledExecutorService hérite de ExecutorService, et ExecutorService hérite de Executor.</p></aside><p id="r-543935" data-claire-element-id="543935">Cependant vous le savez, on n'instancie pas une interface. Pour créer les bons objets nous allons nous en remettre à une seule classe : <strong>Executors</strong>. Notez bien Executor<strong>s</strong>; C'est une classe qui contient toutes les méthodes statiques nécessaire à la création d'objets du framework Executor.</p><p id="r-543936" data-claire-element-id="543936">Dans l'exemple précédent j'ai utilisé cette classe :</p><pre id="r-543937" data-claire-element-id="543937"><code data-claire-semantic="java">public class Main {
+
+	public static void main(String[] args) {
+
+		Executor executor = Executors.newSingleThreadExecutor();
+		executor.execute(new MonRunnable());
+	}
+}</code></pre><p id="r-543938" data-claire-element-id="543938">La méthode <strong><em>newSingleThreadExecutor();</em></strong> renvoie un executor mono-thread. Je vous rappelle que vous ne manipulez pas les threads directement.</p><p id="r-543939" data-claire-element-id="543939">Executor contient plusieurs fabriques qui ne renvoient que des executors mono-thread :</p><ul id="r-543944" data-claire-element-id="543944"><li id="r-543941" data-claire-element-id="543941"><p id="r-543940" data-claire-element-id="543940">Executors.<em><strong>newSingleThreadExecutor()</strong></em> : Executor mono-thread classique</p></li><li id="r-543943" data-claire-element-id="543943"><p id="r-543942" data-claire-element-id="543942">Executors.<em><strong>newSingleThreadScheduledExecutor()</strong></em> : Executor mono-thread pour les tâches périodiques</p></li></ul><p id="r-543945" data-claire-element-id="543945">Nous verrons les autres méthodes par la suite.</p><h2 id="r-exemple-164" data-claire-element-id="543954">Exemple</h2><p id="r-543947" data-claire-element-id="543947">Précedemment je vous ai montré le <em><strong>newSingleThreadExecutor()</strong></em> donc je vais vous montrer le <strong><em>newSingleThreadScheduledExecutor()</em></strong>.</p><aside id="r-543949" data-claire-element-id="543949" data-claire-semantic="information"><p id="r-543948" data-claire-element-id="543948">Pour information pour faire des tâches périodiques avec des threads on utilisait les &quot;TimerTask&quot; et la classe utilitaire &quot;Timer&quot;. Cependant Timer ne s'appuyait que sur le temps absolu (de votre horloge système) qui risquait d'être changée, alors que Executor ne s’appuie que sur le temps relatif.</p></aside><p id="r-543950" data-claire-element-id="543950">Ceci étant dit, sans plus attendre voici un exemple de tâche exécuté toutes les secondes.</p><pre id="r-543951" data-claire-element-id="543951"><code data-claire-semantic="java">public class Main {
+
+	public static void main(String[] args){
+
+		ScheduledExecutorService execute = Executors.newSingleThreadScheduledExecutor();
+		
+		//Execute MonRunnable toutes les secondes
+		execute.scheduleAtFixedRate(new MonRunnable(), 0, 1, TimeUnit.SECONDS);
+	}
+
+}</code></pre><p id="r-543952" data-claire-element-id="543952">L’énumération <strong>TimeUnit</strong> apporte une plus grande clarté au code. Cela évite d'avoir à écrire le temps en milli-secondes, ce qui est illisible arrivé à un certain point.</p><p id="r-543953" data-claire-element-id="543953">Simple non ? :zorro:</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/le-framework-executor">Le framework Executor</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/un-petit-rappel">
+Un petit rappel
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/les-bases-31">
+Les bases
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/les-pools-de-threads">
+Les pools de threads
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/callable-v-et-future-v">
+Callable&lt;V&gt; et Future&lt;V&gt;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/un-peu-de-structure-dans-nos-programmes">
+Un peu de structure dans nos programmes
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/un-petit-rappel">
+<span class="arrow"></span>
+<span class="next">Un petit rappel</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/les-pools-de-threads">
+<span class="next">Les pools de threads</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lespoolsdethreads"></a><h2>Les pools de threads</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/les-bases-31">
+<span class="arrow"></span>
+<span class="next">Les bases</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/callable-v-et-future-v">
+<span class="next">Callable&lt;V&gt; et Future&lt;V&gt;</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<div id="r-543957" data-claire-element-id="543957" data-claire-semantic="question"><p id="r-543956" data-claire-element-id="543956">Bon les exécutions mono-thread c'est bien gentil mais je ne veux pas attendre qu'une tâche se termine avant de faire la suivante moi ! Il est où le parallélisme sinon ...</p></div><p id="r-543958" data-claire-element-id="543958">Merci de poser la question :lol:</p><p id="r-543959" data-claire-element-id="543959">Comme vous avez sans doute pu le voir si vous développez dans un IDE (hé oui dans le bloc note il n'y a pas d'auto-complétion), la classe <strong>Executors</strong> possède des méthodes aux noms un peu étrange : <em><strong>newFixedThreadPool()</strong></em>, <em><strong>newScheduledThreadPool()</strong></em>, <em><strong>newCachedThreadPool()</strong></em>...</p><p id="r-543960" data-claire-element-id="543960">Si vous ne savez pas ce qu'est un pool d'objets, et bien pour simplifier disons que c'est une collection d'objets créés et initialisés puis mis en mémoire. On les utilise quand le coût de création et d'initialisation d'un objet est assez important. Le fait de mettre certains objets en mémoire peut augmenter les performances dans certain cas mais je ne vais pas rentrer dans les détails de la performance en java.</p><p id="r-543961" data-claire-element-id="543961">Les tailles des pools de threads ne sont pratiquement jamais codées en dur. La taille des pools dépend en effet des ressources. Passer de 3 à 100 processeurs n'est pas négligeable et le programme doit prendre en compte ces changements.</p><p id="r-543962" data-claire-element-id="543962">Il existe une méthode pour récupérer dynamiquement le nombre de processeurs disponibles:</p><pre id="r-543963" data-claire-element-id="543963"><code data-claire-semantic="java">int proc = Runtime.getRuntime().availableProcessors();</code></pre><p id="r-543964" data-claire-element-id="543964">Bref, revenons à notre Executors.</p><p id="r-543965" data-claire-element-id="543965">Le but ici est de ne pas utiliser le même thread pour toutes les tâches mais d'utiliser un thread différent pour chacune. Donc il n'y a plus besoin d'attendre qu'une tâche soit finie pour exécuter la suivante.<br/> Allons-y pas à pas, nous allons commencer par modifier la classe MonRunnable pour observer dans quel thread on se trouve.</p><p id="r-543966" data-claire-element-id="543966">La nouvelle classe Runnable :</p><pre id="r-543967" data-claire-element-id="543967"><code data-claire-semantic="java">public class MonRunnable implements Runnable {
+
+	@Override
+	public void run() {
+
+		try {	
+			//On simule un traitement long en mettant en pause le Thread pendant 4 secondes
+			Thread.sleep(4000);
+			//On affiche le nom du thread où on se trouve
+			System.out.println(&quot;Execution dans le thread &quot; + Thread.currentThread().getName());
+		} 
+		catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+
+}</code></pre><p id="r-543968" data-claire-element-id="543968">Nous allons tout d'abord l'exécuter en <strong>mono-thread</strong>, c'est à dire un thread pour toutes nos tâches.</p><pre id="r-543969" data-claire-element-id="543969"><code data-claire-semantic="java">public class Main {
+
+	public static void main(String[] args) {
+
+		//La liste qui va stocker les taches à effectuer
+		List&lt;Runnable&gt; runnables = new ArrayList&lt;Runnable&gt;();
+		
+		//On créer 4 taches (instance de MonRunnable)
+		runnables.add(new MonRunnable());
+		runnables.add(new MonRunnable());
+		runnables.add(new MonRunnable());
+		runnables.add(new MonRunnable());
+		
+		//Notre executor mono-thread
+		ExecutorService execute = Executors.newSingleThreadExecutor();
+		
+		//La méthode qui se charge de l'exécution des tâches
+		executeRunnables(execute, runnables);
+		
+	}
+	
+	public static void executeRunnables(final ExecutorService service, List&lt;Runnable&gt; runnables){
+
+		for(Runnable r : runnables){
+			service.execute(r);
+		}
+		//On ferme l'executor une fois les taches finies
+		//En effet shutdown va attendre la fin d'exécution des tâches
+		service.shutdown();
+	}
+
+}</code></pre><p id="r-543970" data-claire-element-id="543970">Résultat à l'exécution:</p><figure id="r-543972" data-claire-element-id="543973"><img id="r-543971" data-claire-element-id="543971" src="medias/uploads.siteduzero.com_files_315001_316000_315387.png" alt="Image utilisateur"/></figure><p id="r-543974" data-claire-element-id="543974">Modifions le code pour utiliser un pool de threads : chaque thread est lancé en parallèle et exécute la tâche qui lui est dédiée. (j'ai commenté le code pour que vous compreniez).</p><pre id="r-543975" data-claire-element-id="543975"><code data-claire-semantic="java">public class Main {
+	
+	public static void main(String[] args){
+
+		List&lt;Runnable&gt; runnables = new ArrayList&lt;Runnable&gt;();
+		
+		runnables.add(new MonRunnable());
+		runnables.add(new MonRunnable());
+		runnables.add(new MonRunnable());
+		runnables.add(new MonRunnable());
+		
+		//Cette fois on créer un pool de 10 threads maximum
+		ExecutorService execute = Executors.newFixedThreadPool(10);
+		
+		executeRunnables(execute, runnables);
+	}
+	
+	public static void executeRunnables(final ExecutorService service, List&lt;Runnable&gt; runnables){
+                //On exécute chaque &quot;Runnable&quot; de la liste &quot;runnables&quot;
+		for(Runnable r : runnables){
+
+			service.execute(r);
+		}
+		service.shutdown();
+	}
+
+}</code></pre><p id="r-543976" data-claire-element-id="543976">Résultat à l'exécution :</p><figure id="r-543978" data-claire-element-id="543979"><img id="r-543977" data-claire-element-id="543977" src="medias/uploads.siteduzero.com_files_315001_316000_315388.png" alt="Image utilisateur"/></figure><p id="r-543980" data-claire-element-id="543980"><strong>Executor facilite grandement l'exécution de tâches en parallèles.</strong></p><aside id="r-543982" data-claire-element-id="543982" data-claire-semantic="information"><p id="r-543981" data-claire-element-id="543981">Si tous les threads du pool sont occupés les tâches sont placées dans une file d'attente jusqu'à ce qu'un thread soit libre.</p></aside><h3 id="r-un-exemple-un-peu-plus-parlant" data-claire-element-id="543988">Un exemple un peu plus parlant</h3><p id="r-543983" data-claire-element-id="543983">Les pools de threads sont généralement utilisés pour exécuter des tâches <strong>homogènes et indépendantes</strong>. Les serveurs qui traitent des requêtes sont un excellent exemple d'utilisation. Les clients qui se connectent au serveur sont indépendants et le traitement est toujours le même.</p><p id="r-543984" data-claire-element-id="543984">Je vous renvoie au cours de SoftDeath &quot;<a href="http://www.siteduzero.com/tutoriel-3-173544-introduction-aux-sockets.html">Introduction aux sockets</a>&quot;, pour bien comprendre cet exemple.</p><p id="r-543985" data-claire-element-id="543985">Nous allons donc mettre en place un simple serveur multi-threads qui va traiter les connexions entrantes dans un thread différent. Mais au lieu de créer un thread manuellement à chaque connexion et donc gérer son cycle de vie manuellement, nous allons utiliser un pool de threads qui va faire une taille bien définie pour être sur de contrôler le nombre de threads créés.</p><pre id="r-543986" data-claire-element-id="543986"><code data-claire-semantic="java">public class ServerLauncher 
+{
+	
+	public static void main(String[] args){
+
+                //On se sert d'un pool de thread pour limiter le nombre de threads
+                //en mémoire
+		final ExecutorService service = Executors.newFixedThreadPool(100);
+		
+		ServerSocket serverSocket = null;
+		try {
+
+			serverSocket = new ServerSocket(10000);
+			int i = 0;
+			while (true) {
+
+				try {
+					final Socket socket = serverSocket.accept();
+                                        //On traite la requète via notre executor
+					service.execute(new Runnable(){
+
+						@Override
+						public void run() {
+							traitementRequete(socket);
+						}
+					});
+				} 
+				catch (IOException e) {
+			              e.printStackTrace();
+				}
+			}
+		} 
+		catch (IOException e) {
+		     e.printStackTrace();
+		} 
+		finally {
+			try {
+			     serverSocket.close();
+			} 
+			catch (IOException e) {
+			     e.printStackTrace();
+			}
+		}
+	}
+
+}</code></pre><p id="r-543987" data-claire-element-id="543987">Le traitement des requêtes dans un pool permet de contrôler le nombre de threads créés. <strong>La création illimitée de threads est toujours dangereuse.</strong></p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/le-framework-executor">Le framework Executor</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/un-petit-rappel">
+Un petit rappel
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/les-bases-31">
+Les bases
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/les-pools-de-threads">
+Les pools de threads
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/callable-v-et-future-v">
+Callable&lt;V&gt; et Future&lt;V&gt;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/un-peu-de-structure-dans-nos-programmes">
+Un peu de structure dans nos programmes
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/les-bases-31">
+<span class="arrow"></span>
+<span class="next">Les bases</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/callable-v-et-future-v">
+<span class="next">Callable&lt;V&gt; et Future&lt;V&gt;</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="CallableltVgtetFutureltVgt"></a><h2>Callable&lt;V&gt; et Future&lt;V&gt;</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/les-pools-de-threads">
+<span class="arrow"></span>
+<span class="next">Les pools de threads</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/un-peu-de-structure-dans-nos-programmes">
+<span class="next">Un peu de structure dans nos programmes</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-543990" data-claire-element-id="543990">Maintenant que vous savez comment exécuter des tâches j'aimerais attirer votre attention sur l'interface java.lang.Runnable.<br/> Pour rappel voici l'interface Runnable :</p><pre id="r-543991" data-claire-element-id="543991"><code data-claire-semantic="java">public interface Runnable {
+
+	public void run();
+}</code></pre><p id="r-543992" data-claire-element-id="543992">Cette interface souffre de deux limitations:</p><ul id="r-543997" data-claire-element-id="543997"><li id="r-543994" data-claire-element-id="543994"><p id="r-543993" data-claire-element-id="543993"><strong>La méthode run() ne peut renvoyer aucune valeur</strong>(void)</p></li><li id="r-543996" data-claire-element-id="543996"><p id="r-543995" data-claire-element-id="543995"><strong>Vous ne pouvez lancer aucune exception</strong></p></li></ul><p id="r-543998" data-claire-element-id="543998">Pour pallier à ces deux problèmes, une nouvelle interface a été développée: <strong>Callable&lt;V&gt;</strong> (java.util.concurrent.Callable)</p><pre id="r-543999" data-claire-element-id="543999"><code data-claire-semantic="java">public interface Callable&lt;V&gt; {
+
+	public V call() throws Exception;
+}</code></pre><p id="r-544000" data-claire-element-id="544000">Vous pouvez ainsi renvoyer le résultat d'un calcul qui s'est déroulé dans la fonction call() sans avoir à créer une variable globale, ou à passer en paramètre un objet pour stocker le résultat.</p><p id="r-544001" data-claire-element-id="544001">L'exemple suivant est effectivement inutile, mais illustre bien l'implémentation de Callable&lt;V&gt;.</p><pre id="r-544002" data-claire-element-id="544002"><code data-claire-semantic="java">public class MonCallable implements Callable&lt;Integer&gt; {
+
+	@Override
+	public Integer call() throws Exception	{
+
+		try {
+			Thread.sleep(4000);
+			//Traitement....
+			System.out.println(&quot;Dans le Callable&quot;);
+		}
+		catch(InterruptedException e){
+			throw new Exception(&quot;Thread interrompu ; cause &quot; + e.getMessage());
+		}
+		return 3;//On peut retourner une valeur
+	}
+}</code></pre><p id="r-544003" data-claire-element-id="544003">De la même manière que les &quot;Runnables&quot;, vous pouvez utiliser les Executors pour soumettre des Callables. Cependant, nous n'utiliserons pas la méthode <strong>EXECUTE</strong> mais <strong>SUBMIT</strong>.</p><pre id="r-544004" data-claire-element-id="544004"><code data-claire-semantic="java">public class Main {
+
+	public static void main(String[] args) {
+
+		ExecutorService execute = Executors.newSingleThreadExecutor();	
+		execute.submit(new MonCallable());
+		
+		System.out.println(&quot;Apres submit&quot;);
+		
+		execute.shutdown();
+	}
+	
+}</code></pre><aside id="r-544006" data-claire-element-id="544006" data-claire-semantic="warning"><p id="r-544005" data-claire-element-id="544005">Je vous rappelle que les opérations sont asynchrones, donc à l'exécution &quot;Apres submit&quot; va s'afficher avant &quot;Dans le Callable&quot;</p></aside><div id="r-544008" data-claire-element-id="544008" data-claire-semantic="question"><p id="r-544007" data-claire-element-id="544007">Je veux récupérer le résultat du Callable à un instant précis je fais comment ? J'utilise la méthode join() des threads, c'est ça ?</p></div><p id="r-544009" data-claire-element-id="544009">Heureusement que vous êtes la pour posez les questions :lol: <br/> Et bien non en fait, la methode submit(Callable&lt;V&gt; callable); renvoie un objet Future&lt;V&gt;.</p><div id="r-544011" data-claire-element-id="544011" data-claire-semantic="question"><p id="r-544010" data-claire-element-id="544010">Qu'est-ce-que c'est que ce truc ?? o_O</p></div><p id="r-544012" data-claire-element-id="544012">Un <strong>Future&lt;V&gt;</strong> représente le cycle de vie d'une tâche. <strong>Future&lt;V&gt;</strong> est bien sûr une interface et <em><strong>submit</strong></em> renvoie un objet qui implémente cette interface; En l’occurrence <strong>FutureTask</strong>. Rien que pour vous zéros, voici l'interface <strong>Future&lt;V&gt;</strong> :</p><pre id="r-544013" data-claire-element-id="544013"><code data-claire-semantic="java">public interface Future&lt;V&gt; {
+
+	boolean cancel(boolean mayInterruptIfRunning);
+	boolean isCancelled();
+	boolean isDone();
+	V get() throws InterruptedException, ExecutionException,
+			CancellationException;
+	V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException,
+			CancellationException, TimeoutException;
+}</code></pre><p id="r-544014" data-claire-element-id="544014">Revenons à ma votre question. Future&lt;V&gt; possède une méthode bien pratique<strong> get()</strong> qui permet de récupérer le résultat enveloppé dans l'objet FutureTask. On s'en sert de la façon suivante :</p><pre id="r-544015" data-claire-element-id="544015"><code data-claire-semantic="java">public class Main {
+
+	public static void main(String[] args) {
+
+		ExecutorService execute = Executors.newSingleThreadExecutor();
+		//On récupère un objet Future&lt;V&gt;	
+		Future&lt;Integer&gt; future = execute.submit(new MonCallable());
+		
+		try {
+			//future.get() est bloquant, l'exécution attend le resultat
+			//et on l'affiche dans la console.
+			System.out.println(&quot;Resultat du Callable &quot; + future.get());
+		} 
+		catch (InterruptedException e) {
+			e.printStackTrace();
+		} 
+                catch (ExecutionException e) {
+			e.printStackTrace();
+		}
+		System.out.println(&quot;Apres submit&quot;);
+		
+		execute.shutdown();
+	}
+}</code></pre><p id="r-544016" data-claire-element-id="544016">Résultat de l'exécution :</p><figure id="r-544018" data-claire-element-id="544019"><img id="r-544017" data-claire-element-id="544017" src="medias/uploads.siteduzero.com_files_315001_316000_315386.png" alt="Image utilisateur"/></figure><p id="r-544020" data-claire-element-id="544020">Callable est une abstraction bien supérieure à Runnable. Outre le fait de pouvoir renvoyer des résultats qui ne nous sert parfois à rien, le fait de pouvoir lever des exceptions n'est pas à prendre à la légère.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/le-framework-executor">Le framework Executor</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/un-petit-rappel">
+Un petit rappel
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/les-bases-31">
+Les bases
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/les-pools-de-threads">
+Les pools de threads
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/callable-v-et-future-v">
+Callable&lt;V&gt; et Future&lt;V&gt;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/un-peu-de-structure-dans-nos-programmes">
+Un peu de structure dans nos programmes
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/les-pools-de-threads">
+<span class="arrow"></span>
+<span class="next">Les pools de threads</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/un-peu-de-structure-dans-nos-programmes">
+<span class="next">Un peu de structure dans nos programmes</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Unpeudestructuredansnosprogrammes"></a><h2>Un peu de structure dans nos programmes</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/callable-v-et-future-v">
+<span class="arrow"></span>
+<span class="next">Callable&lt;V&gt; et Future&lt;V&gt;</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-544022" data-claire-element-id="544022">En matière d'architecture logicielle on en apprend tous les jours. Les experts de la JSR 166 nous apportent des solutions efficaces ce qui nous évitent de chercher des solutions à des problèmes complexes. Comprenez moi bien, je ne vous empêche pas d'implémenter vos propres solutions et je vous encourage à comprendre et à réfléchir à de nouvelles possibilités, mais pour le bien de votre application utilisez plutôt celles présentes dans le JDK. Pour les applications concurrentes les solutions ne manquent pas comme le service de terminaison.</p><h2 id="r-le-service-de-terminaison" data-claire-element-id="544051">Le service de terminaison</h2><p id="r-544023" data-claire-element-id="544023">Un service de terminaison répond à la problématique suivante : Comment récupérer les résultats d'un grand nombre de tâches correctement et quand ils sont disponibles ? En réalité il y a plusieurs façon, plus ou moins bonnes, de le faire mais Executor nous en fournit une très efficace : <strong>CompletionService</strong>. <strong>CompletionService</strong> utilise les files, c'est à dire le <strong>modèle producteurs-consommateurs</strong>. C'est un modèle assez simple, les producteurs créent les tâches et les soumettent à une file, les consommateurs retirent la première tâche et l'exécute libérant ainsi une nouvelle place dans la file pour une tâche future.<br/><strong>CompletionService</strong> permet de récupérer un résultat dès qu'il est disponible, on obtient alors une meilleure réactivité de l'application.</p><p id="r-544024" data-claire-element-id="544024">CompletionService est une interface et sa classe d'implémentation, présente dans le JDK et que nous allons utiliser ici, est <strong>ExecutorCompletionService</strong>.</p><p id="r-544025" data-claire-element-id="544025">L'approche est la suivante:</p><p id="r-544026" data-claire-element-id="544026">Nous allons récupérer une liste de tâches à exécuter et nous allons traiter les résultats quand ceux-ci sont disponibles. Dans un premier temps, il faut créer les tâches qui vont être exécutées.<br/> Pour simuler un calcul long, nous allons utiliser Thread.sleep(), la tâche prendra en paramètres un entier qui correspondra au nombre de secondes pendant lesquelles le thread sera &quot;endormi&quot;.</p><pre id="r-544027" data-claire-element-id="544027"><code data-claire-semantic="java">public class Task implements Callable&lt;Integer&gt; {
+
+	private final int sleepTime;
+	
+	public Task(int n) {
+		sleepTime = n;
+	}
+
+	@Override
+	public Integer call() throws Exception {
+
+		Thread.sleep(1000 * sleepTime);
+		return sleepTime;
+	}
+
+}</code></pre><p id="r-544028" data-claire-element-id="544028">Vous pouvez imaginer que dans la fonction call() se trouve en réalité un calcul très important qui va prendre plus ou moins de temps en fonction de l'entier passé en paramètre.<br/> A présent que notre classe représentant une tâche est déclarée, nous allons créer plusieurs de ces tâches puis les exécuter.</p><pre id="r-544029" data-claire-element-id="544029"><code data-claire-semantic="java">public class TestTask {
+
+	public static void main(String[] args) {
+
+                //Notre liste qui va contenir toutes les tâches
+		List&lt;Callable&lt;Integer&gt;&gt; taches = new ArrayList&lt;Callable&lt;Integer&gt;&gt;();
+		
+                //On créé 4 tâches avec un paramètre pour le 
+                //Thread.sleep() différent.
+		Callable&lt;Integer&gt; tache1 = new Task(1);
+		Callable&lt;Integer&gt; tache2 = new Task(5);
+		Callable&lt;Integer&gt; tache3 = new Task(10);
+		Callable&lt;Integer&gt; tache4 = new Task(2);
+		
+                //On ajoute ces taches à la liste
+		taches.add(tache1);
+		taches.add(tache2);
+		taches.add(tache3);
+		taches.add(tache4);
+		
+                //On instancie un executor contenant 10 threads pour pouvoir
+                //exécuter nos actions en parallèles
+		ExecutorService executor = Executors.newFixedThreadPool(10);
+
+	}
+}</code></pre><p id="r-544030" data-claire-element-id="544030">Jusque là rien de nouveau. Si cela vous parait flou, revenez en arrière dans le tutoriel avant de continuer.<br/> Nous avons donc nos tâches et notre executor qui va traiter ces tâches. C'est ici que nous allons introduire notre service de terminaison : <strong>ExecutorCompletionService</strong>.<br/> Le constructeur de cette classe est très simple : il prend en paramètre un <em><strong>Executor</strong></em>.</p><pre id="r-544031" data-claire-element-id="544031"><code data-claire-semantic="java">//Le type entre les chevrons dépend du type de vos Callables.
+//Si vous avez créé des Callable&lt;String&gt; alors vous instancierez un
+//CompletionService&lt;String&gt;.
+CompletionService&lt;Integer&gt; completionService = new ExecutorCompletionService&lt;Integer&gt;(executor);</code></pre><p id="r-544032" data-claire-element-id="544032">Nous allons déclarer une méthode <em><strong>résoudre</strong></em> qui va se charger d'exécuter les tâches à travers notre service de terminaison.<br/> Pour l'instant, votre méthode devrait ressembler à ça:</p><pre id="r-544033" data-claire-element-id="544033"><code data-claire-semantic="java">public static void main(String[] args) {
+
+		List&lt;Callable&lt;Integer&gt;&gt; taches = new ArrayList&lt;Callable&lt;Integer&gt;&gt;();
+		
+		Callable&lt;Integer&gt; tache1 = new Task(1);
+		Callable&lt;Integer&gt; tache2 = new Task(5);
+		Callable&lt;Integer&gt; tache3 = new Task(10);
+		Callable&lt;Integer&gt; tache4 = new Task(2);
+		
+		taches.add(tache1);
+		taches.add(tache2);
+		taches.add(tache3);
+		taches.add(tache4);
+		
+		ExecutorService executor = Executors.newFixedThreadPool(10);
+		
+		resoudre(executor, taches);
+	}
+
+	public static void resoudre(final ExecutorService executor, List&lt;Callable&lt;Integer&gt;&gt; taches) {
+
+		//Le service de terminaison
+		CompletionService&lt;Integer&gt; completionService = new ExecutorCompletionService&lt;Integer&gt;(executor);
+         }
+}</code></pre><p id="r-544034" data-claire-element-id="544034">Le service de terminaison contient plusieurs méthodes, mais nous n'allons en utiliser que deux. La première <strong>SUBMIT</strong>, qui comme vous l'aurez sûrement deviné, prend en paramètre un Callable&lt;V&gt; et va lancer votre tâche. La seconde est <strong>TAKE</strong>.<br/> La méthode <strong>take()</strong> va en fait vous permettre d'attendre qu'un résultat soit prêt pour l'utiliser. En d'autres mots, quand une tâche s'achève, son résultat est mis dans une file d'attente. La méthode <strong>take() va récupérer le premier résultat disponible dans cette file, puis va le supprimer</strong>. Ainsi un nouvel appel à <strong>take()</strong> vous renverra le résultat suivant.</p><p id="r-544035" data-claire-element-id="544035">Si vous vous souvenez bien, la méthode submit d'un executor renvoie un Future&lt;V&gt;. Et bien celle de CompletionService fait de même.</p><p id="r-544036" data-claire-element-id="544036">Commençons par le submit :</p><pre id="r-544037" data-claire-element-id="544037"><code data-claire-semantic="java">//une liste de Future pour récupérer les résultats
+List&lt;Future&lt;Integer&gt;&gt; futures = new ArrayList&lt;Future&lt;Integer&gt;&gt;();
+		
+Integer res = null;
+try
+{
+     //On soumet toutes les tâches à l'executor
+     for(Callable&lt;Integer&gt; t : taches){
+          futures.add(completionService.submit(t));
+     }
+}
+catch(Exception e){}</code></pre><p id="r-544038" data-claire-element-id="544038">De cette façon toutes les tâches sont lancées dans l'executor <em>via</em> notre service de terminaison. Maintenant se pose le problème de la récupération des résultats quand ceux-ci sont disponibles. La première approche consiste à faire une boucle sur la liste de Future&lt;V&gt; et en utilisant la méthode get() récupérer le résultat. Cela fonctionne, mais vous ne récupérez pas le résultat au moment où il est disponible. Votre appel à get() va attendre le résultat du Future&lt;V&gt; en cours mais d'autres tâches pourront être terminées pendant ce temps.<br/> Le service de terminaison règle cette question. Comme dit précédemment, à l'aide de <strong>take()</strong> vous récupérerez le premier résultat disponible.</p><pre id="r-544039" data-claire-element-id="544039"><code data-claire-semantic="java">for (int i = 0; i &lt; taches.size(); ++i) 
+{
+     try {
+
+          //On récupère le premier résultat disponible
+          //sous la forme d'un Future avec take(). Puis l'appel
+          //à get() nous donne le résultat du Callable.
+          res = completionService.take().get();
+          if (res != null) {
+
+               //On affiche le résultat de la tâche
+               System.out.println(res);
+          }
+     } 
+     catch(ExecutionException ignore) {}
+}</code></pre><p id="r-544040" data-claire-element-id="544040">Je vous remet le code global pour ceux qui auraient un peu de mal ;)</p><pre id="r-544041" data-claire-element-id="544041"><code data-claire-semantic="java">public class TestTask {
+
+	public static void main(String[] args) {
+
+		List&lt;Callable&lt;Integer&gt;&gt; taches = new ArrayList&lt;Callable&lt;Integer&gt;&gt;();
+		
+		Callable&lt;Integer&gt; tache1 = new Task(1);
+		Callable&lt;Integer&gt; tache2 = new Task(5);
+		Callable&lt;Integer&gt; tache3 = new Task(10);
+		Callable&lt;Integer&gt; tache4 = new Task(2);
+		
+		taches.add(tache1);
+		taches.add(tache2);
+		taches.add(tache3);
+		taches.add(tache4);
+		
+		ExecutorService executor = Executors.newFixedThreadPool(10);
+		
+		resoudre(executor, taches);
+	}
+	
+	public static void resoudre(final ExecutorService executor, List&lt;Callable&lt;Integer&gt;&gt; taches){
+
+		//Le service de terminaison
+		CompletionService&lt;Integer&gt; completionService = new ExecutorCompletionService&lt;Integer&gt;(executor);
+		
+		//une liste de Future pour récupérer les résultats
+		List&lt;Future&lt;Integer&gt;&gt; futures = new ArrayList&lt;Future&lt;Integer&gt;&gt;();
+		
+		Integer res = null;
+		try {
+			//On soumet toutes les tâches à l'executor
+			for(Callable&lt;Integer&gt; t : taches){
+			     futures.add(completionService.submit(t));
+			}
+			
+			for (int i = 0; i &lt; taches.size(); ++i) {
+
+                              try {
+
+                	           //On récupère le premier résultat disponible
+                	           //sous la forme d'un Future avec take(). Puis l'appel
+                	           //à get() nous donne le résultat du Callable.
+                                   res = completionService.take().get();
+                                   if (res != null) {
+
+                    	                //On affiche le resultat de la tâche
+                                        System.out.println(res);
+                                   }
+                              } 
+                              catch(ExecutionException ignore) {}
+                         }
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+		finally {
+			executor.shutdown();
+		}
+	}
+}</code></pre><p id="r-544042" data-claire-element-id="544042">Vous devriez voir affichez les tâches dès quelles sont terminées. (C'est à dire à l'affichage &quot;1&quot; &quot;2&quot; &quot;5&quot; &quot;10&quot;)</p><p id="r-544043" data-claire-element-id="544043">Ce genre de méthode est très efficace et faire la même chose avec des threads nécessite une certaine maitrise. Mais les outils existent, alors autant s'en servir.</p><p id="r-544044" data-claire-element-id="544044">Le framework Executor permet de s'affranchir avantageusement des threads et des Timers. Il nous permet aussi de disposer de pools de threads efficaces, ce genre d'implémentation n'étant pas vraiment à la portée des débutants. L'organisation des tâches dans un service de terminaison permet de manipuler avec une grande facilité les résultats de tâches exécutées en parallèles.</p><div id="r-544046" data-claire-element-id="544046" data-claire-semantic="question"><p id="r-544045" data-claire-element-id="544045">Mais t'as pas parleé des verrous et des classes thread-safe ?</p></div><p id="r-544047" data-claire-element-id="544047">Je sais, et pour une bonne raison. En effet en parlant de la thread-safety dans ce cours j'aurais été très long et vous seriez passé à coté du framework Executor.</p><p id="r-544048" data-claire-element-id="544048">Un conseil donc pour finir :</p><aside id="r-544050" data-claire-element-id="544050" data-claire-semantic="information"><p id="r-544049" data-claire-element-id="544049">Privilégiez les Executors aux threads classiques</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/le-framework-executor">Le framework Executor</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/un-petit-rappel">
+Un petit rappel
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/les-bases-31">
+Les bases
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/les-pools-de-threads">
+Les pools de threads
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/callable-v-et-future-v">
+Callable&lt;V&gt; et Future&lt;V&gt;
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/un-peu-de-structure-dans-nos-programmes">
+Un peu de structure dans nos programmes
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-framework-executor/callable-v-et-future-v">
+<span class="arrow"></span>
+<span class="next">Callable&lt;V&gt; et Future&lt;V&gt;</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/le-framework-executor.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 02:45:27 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/le-framework-executor.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:36:48 GMT -->
+</html>

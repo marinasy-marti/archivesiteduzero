@@ -1,0 +1,617 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/empecher-le-telechargement-direct-de-fichiers.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 08:09:05 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/empecher-le-telechargement-direct-de-fichiers.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:27:09 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Empêcher le téléchargement direct de fichiers</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Empêcher le téléchargement direct de fichiers</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Empcherletlchargementdirectdefichiers">Empêcher le téléchargement direct de fichiers</a><br/><a href="#Lapagedetlchargement">La page de téléchargement</a><br/><a href="#Protgeonsnosfichiers">Protégeons nos fichiers</a><br/><a href="#Passeroutrelaprotection">Passer outre la protection</a><br/><a href="#Forcerletlchargementdesfichiers">Forcer le téléchargement des fichiers</a><br/><a href="#Unefailleparticulirementdangereuse">Une faille particulièrement dangereuse</a><br/></div>
+<a name="Empcherletlchargementdirectdefichiers"></a><h2>Empêcher le téléchargement direct de fichiers</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/la-page-de-telechargement">
+<span class="next">La page de téléchargement</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-551995" data-claire-element-id="551995">Bonjour à toutes et à tous ! :)</p><p id="r-551996" data-claire-element-id="551996">Si vous êtes ici, c'est que vous avez un site internet sur lequel se trouvent des fichiers dont vous voulez maîtriser le téléchargement. Beaucoup de sites disposent d'une page qui vous donne accès aux fichiers que vous souhaitez télécharger ; le plus souvent, elle ne fait que vous rediriger vers le fichier ciblé à coups de :</p><pre id="r-551997" data-claire-element-id="551997"><code data-claire-semantic="html+php">&lt;?php header('Location: http://www.monsite.com/fichiers/le_fichier_a_telecharger'); ?&gt;</code></pre><p id="r-551998" data-claire-element-id="551998">et permet à l'administrateur, par exemple, de compter le nombre de fois qu'il a été téléchargé <em>via</em> une base de données ou un fichier texte. Une telle redirection présente un inconvénient majeur : le lien direct vers le fichier est révélé à l'utilisateur, qui peut donc le télécharger sans passer par la page de votre site prévue à cet effet. Ce qui fausse toutes vos statistiques et conduit même au « vol de fichiers », c'est-à-dire que d'autres administrateurs peuvent rendre publics les liens directs de vos fichiers sans que leurs utilisateurs ne sachent qu'ils sont hébergés sur votre site ! Malgré le trafic ainsi généré, ces personnes ne visitent pas votre site.</p><p id="r-551999" data-claire-element-id="551999">Heureusement, ce tutoriel vous apprendra une méthode efficace pour résoudre ce problème et vous épargnera, je l'espère, de mauvaises surprises.</p>
+</div><a name="Lapagedetlchargement"></a><h2>La page de téléchargement</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/protegeons-nos-fichiers">
+<span class="next">Protégeons nos fichiers</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-552000" data-claire-element-id="552000">Avant de commencer à sécuriser quoi que ce soit, nous allons voir à quoi ressemble notre page de téléchargement — ou devrais-je dire nos pages —, car nous allons prendre l'habitude de séparer les différents fichiers afin de ne pas mélanger PHP et HTML.</p><p id="r-552001" data-claire-element-id="552001">Voici donc notre page <code>telecharger.php</code> :</p><pre id="r-552002" data-claire-element-id="552002"><code data-claire-semantic="html+php">&lt;?php
+// Si l'utilisateur a demandé le téléchargement d'un fichier
+if(!empty($_GET['fichier']))
+ // On lance le téléchargement du fichier
+else
+    require('erreur.php');
+?&gt;</code></pre><p id="r-552003" data-claire-element-id="552003">Ici, rien de bien compliqué : nous vérifions seulement si le téléchargement a été demandé <em>via</em> une variable <code>$_GET</code><code>[</code><code>'fichier'</code><code>]</code>. Si oui, nous le lançons (nous verrons comment par la suite) ; sinon, nous afficherons un message prévenant l'utilisateur qu'il n'a demandé le téléchargement d'aucun fichier.</p><p id="r-552004" data-claire-element-id="552004">Afin de faire quelque chose d'à peu près propre, ledit message sera inclus dans une page, que nous pourrions nommer <code>erreur.php</code>, grâce à la fonction <a href="http://php.net/manual/fr/function.require.php">require()</a> :</p><pre id="r-552005" data-claire-element-id="552005"><code data-claire-semantic="html+php">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+ &lt;head&gt;
+  &lt;title&gt;Téléchargement d'un fichier&lt;/title&gt;
+ &lt;/head&gt;
+ &lt;body&gt;
+  &lt;p&gt;
+   Désolé, ce fichier n'existe pas.
+  &lt;/p&gt;
+ &lt;/body&gt;
+&lt;/html&gt;</code></pre><p id="r-552006" data-claire-element-id="552006">La partie qui nous intéresse est celle dans le cas où l'on souhaite télécharger un fichier, donc quand la variable <code>$_GET</code><code>[</code><code>'fichier'</code><code>]</code> n'est pas nulle, dans le fichier <code>telecharger.php</code>.</p><p id="r-552007" data-claire-element-id="552007">Avant, la méthode consistait à rediriger directement l'utilisateur sur le fichier qu'il avait demandé. En imaginant que le dossier qui contient tous vos fichiers à télécharger ait pour nom fichiers et qu'il se trouve à la racine, nous aurions fait quelque chose de ce type :</p><pre id="r-552008" data-claire-element-id="552008"><code data-claire-semantic="html+php">&lt;?php
+if(!empty($_GET['fichier']))
+{
+ $chemin = 'fichiers/' . $_GET['fichier'];
+ if(file_exists($chemin))
+  header('Location: http://monsite.com/' . $chemin); 
+ else
+  require('erreur.php');
+}
+else
+ require('erreur.php');
+?&gt;</code></pre><aside id="r-552010" data-claire-element-id="552010" data-claire-semantic="information"><p id="r-552009" data-claire-element-id="552009">Nous venons d'utiliser la fonction <a href="http://www.php.net/manual/fr/function.file-exists.php">file_exists()</a>, qui vérifie que le fichier existe bien avant d'en faire quoi que ce soit.</p></aside><p id="r-552011" data-claire-element-id="552011">Ainsi, dans le cas où un fichier <code>test.txt</code>, par exemple, se trouverait dans le dossier des fichiers (fichiers/), nous aurions seulement à donner à l'utilisateur le lien <a href="http://www.monsite.com/telecharger.php?fichier=test.txt">http://www.monsite.com/telecharger.php?fichier=test.txt</a> pour qu'il puisse le télécharger (ou du moins l'ouvrir, dans le cas de notre fichier texte). Nous pourrions donc, pour reprendre l'exemple du début, rajouter un compteur afin de connaître le nombre de fois qu'il a été téléchargé.</p><pre id="r-552012" data-claire-element-id="552012"><code data-claire-semantic="html+php">&lt;?php
+if(!empty($_GET['fichier']))
+{
+ $chemin = 'fichiers/' . $_GET['fichier'];
+ if(file_exists($chemin))
+ {
+  // On incrémente le nombre de fois que le fichier a été téléchargé !
+  incrementer_compteur($chemin); // C'est cette fonction qui va s'en occuper !
+  header('Location: http://monsite.com/' . $chemin);
+ }
+ else
+  require('erreur.php');
+}
+else
+ require('erreur.php');
+?&gt;</code></pre><p id="r-552013" data-claire-element-id="552013">Cependant, cette méthode ne résout pas le problème du vol de fichiers puisqu'elle communique à l'utilisateur le lien direct vers le fichier qu'il souhaite télécharger. Il lui sera non seulement possible d'y accéder de nouveau sans passer par la page de téléchargement, mais votre compteur ne vous sera plus d'aucune utilité. Nous allons voir tout de suite comment empêcher cela.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers">Empêcher le téléchargement direct de fichiers</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/la-page-de-telechargement">
+La page de téléchargement
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/protegeons-nos-fichiers">
+Protégeons nos fichiers
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/passer-outre-la-protection">
+Passer outre la protection
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/forcer-le-telechargement-des-fichiers">
+Forcer le téléchargement des fichiers
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/une-faille-particulierement-dangereuse">
+Une faille particulièrement dangereuse
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/protegeons-nos-fichiers">
+<span class="next">Protégeons nos fichiers</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Protgeonsnosfichiers"></a><h2>Protégeons nos fichiers</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/la-page-de-telechargement">
+<span class="arrow"></span>
+<span class="next">La page de téléchargement</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/passer-outre-la-protection">
+<span class="next">Passer outre la protection</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-552015" data-claire-element-id="552015">Il est temps de vous expliquer comment protéger nos fichiers. Et là, le PHP ne pourra malheureusement rien pour nous : la protection des fichiers concerne directement le serveur. Pour lui donner des instructions, il faut modifier le <strong>.htaccess</strong>.</p><p id="r-552016" data-claire-element-id="552016">Je ne vous expliquerai pas le fonctionnement d'un fichier .htaccess, ni même ne rentrerai dans les détails de ce qu'il est possible de faire grâce à lui, puisque <a href="http://www.siteduzero.com/tutoriel-3-35126-le-htaccess-et-ses-fonctionnalites.html">d'autres l'ont fait avant moi</a>. Je vais simplement vous dire en quoi il nous sera utile. Pour faire court, une des possibilités du .htaccess est d'empêcher l'accès à des dossiers entiers avec ce petit bout de texte :</p><pre id="r-552017" data-claire-element-id="552017"><code data-claire-semantic="apache">Deny From All</code></pre><p id="r-552018" data-claire-element-id="552018">En ajoutant ce code à un fichier texte nommé .htaccess et en plaçant ce dernier dans le dossier de votre choix, vous tomberez sur une jolie erreur 403 : <em>Forbidden</em> (ce qui signifie « Interdit », pour les anglophobes) si vous essayez d'atteindre un élément présent dans ce dossier ou dans un de ses sous-dossiers.</p><pre id="r-552019" data-claire-element-id="552019"><code data-claire-semantic="console">Forbidden
+
+You don't have permission to access [chemin du fichier] on this server.</code></pre><p id="r-552020" data-claire-element-id="552020">Youhouhou, c'est exactement ce que nous voulions ! Maintenant, si ces vilains fraudeurs veulent accéder directement aux fichiers, ils ne le pourront plus.</p><div id="r-552022" data-claire-element-id="552022" data-claire-semantic="question"><p id="r-552021" data-claire-element-id="552021">C'est génial ! Mais… Euh… La page de téléchargement ne fonctionne plus… C'est normal ?!</p></div><p id="r-552023" data-claire-element-id="552023">Bien sûr, notre page ne fait que rediriger l'utilisateur vers le fichier qui va bien. Donc, si nous empêchons l'accès à ces fichiers, il ne pourra pas non plus les télécharger en passant par notre page. Ce qui n'est pas sans poser problème, n'est-ce pas ? :p Heureusement, le but de ce tutoriel est de vous expliquer comment contourner cette protection.</p><aside id="r-552025" data-claire-element-id="552025" data-claire-semantic="warning"><p id="r-552024" data-claire-element-id="552024">Je préfère que les choses soient claires. TOUS les fichiers qui se trouvent dans le même dossier que le .htaccess, ainsi que les fichiers situés dans d'éventuels sous-dossiers, seront inaccessibles.<br/> Par conséquent, il est primordial de n'y placer aucun fichier PHP. Ces dossiers doivent uniquement contenir les fichiers que vos utilisateurs sont autorisés à télécharger.</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers">Empêcher le téléchargement direct de fichiers</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/la-page-de-telechargement">
+La page de téléchargement
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/protegeons-nos-fichiers">
+Protégeons nos fichiers
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/passer-outre-la-protection">
+Passer outre la protection
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/forcer-le-telechargement-des-fichiers">
+Forcer le téléchargement des fichiers
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/une-faille-particulierement-dangereuse">
+Une faille particulièrement dangereuse
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/la-page-de-telechargement">
+<span class="arrow"></span>
+<span class="next">La page de téléchargement</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/passer-outre-la-protection">
+<span class="next">Passer outre la protection</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Passeroutrelaprotection"></a><h2>Passer outre la protection</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/protegeons-nos-fichiers">
+<span class="arrow"></span>
+<span class="next">Protégeons nos fichiers</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/forcer-le-telechargement-des-fichiers">
+<span class="next">Forcer le téléchargement des fichiers</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-552027" data-claire-element-id="552027">Tel est notre but : faire en sorte de garder la protection .htaccess tout en autorisant le téléchargement grâce à notre page. Pour cela, vous devez savoir que les fonctions PHP se servant de fichiers ne prennent pas en compte les protections appliquées par un .htaccess. Ainsi, il est possible d'ouvrir, de modifier, voire de supprimer un fichier censé être protégé par ce même .htaccess.</p><p id="r-552028" data-claire-element-id="552028">Là où ça nous arrange, c'est qu'il existe une fonction <a href="http://php.net/manual/fr/function.readfile.php">readfile()</a> qui permet, comme le dit la documentation, de lire un fichier et de l'envoyer dans le <em>buffer</em> de sortie. On ne redirige donc plus vers le fichier, on prend carrément son contenu !</p><p id="r-552029" data-claire-element-id="552029">En reprenant le code précédent, nous pouvons donc remplacer le <a href="http://php.net/manual/fr/function.header.php">header()</a> (la redirection) par ceci :</p><pre id="r-552030" data-claire-element-id="552030"><code data-claire-semantic="html+php">&lt;?php
+if(!empty($_GET['fichier']))
+{
+ $chemin = 'fichiers/' . $_GET['fichier'];
+ if(file_exists($chemin))
+  readfile($chemin);
+ else
+  require('erreur.php');
+}
+?&gt;</code></pre><div id="r-552032" data-claire-element-id="552032" data-claire-semantic="question"><p id="r-552031" data-claire-element-id="552031">Super ! Mais… Euh… Quand j'essaye de télécharger une image, de nombreux symboles bizarres s'affichent. C'est normal ?!</p></div><p id="r-552033" data-claire-element-id="552033">Encore une fois, oui, c'est tout à fait normal. Vous avez déjà tenté d'ouvrir une image avec le bloc-notes ? Eh bien, cela devrait donner la même chose ! En effet, <a href="http://www.php.net/manual/fr/function.readfile.php">readfile()</a> ne fait que lire le contenu du fichier et ne cherche pas à l'afficher en fonction de son type.</p><p id="r-552034" data-claire-element-id="552034">Cela dit, malgré le .htaccess, le contenu de notre fichier est bien lu et affiché. La solution que nous allons employer pour ne plus afficher le contenu du fichier est d'en forcer le téléchargement.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers">Empêcher le téléchargement direct de fichiers</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/la-page-de-telechargement">
+La page de téléchargement
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/protegeons-nos-fichiers">
+Protégeons nos fichiers
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/passer-outre-la-protection">
+Passer outre la protection
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/forcer-le-telechargement-des-fichiers">
+Forcer le téléchargement des fichiers
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/une-faille-particulierement-dangereuse">
+Une faille particulièrement dangereuse
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/protegeons-nos-fichiers">
+<span class="arrow"></span>
+<span class="next">Protégeons nos fichiers</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/forcer-le-telechargement-des-fichiers">
+<span class="next">Forcer le téléchargement des fichiers</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Forcerletlchargementdesfichiers"></a><h2>Forcer le téléchargement des fichiers</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/passer-outre-la-protection">
+<span class="arrow"></span>
+<span class="next">Passer outre la protection</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/une-faille-particulierement-dangereuse">
+<span class="next">Une faille particulièrement dangereuse</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-552036" data-claire-element-id="552036">Voici une petite astuce très pratique pour forcer le téléchargement de n'importe quel fichier, astuce qui pourra d'ailleurs résoudre le problème précédent.</p><p id="r-552037" data-claire-element-id="552037">Vous avez dû remarquer à plusieurs reprises que, quelle que soit la technique utilisée, sécurisée ou non, tous les fichiers qui peuvent être ouverts par le navigateur le sont effectivement — à condition, bien entendu, de ne pas avoir modifié la configuration du navigateur. Donc, en temps normal, plutôt que de télécharger un fichier au format texte ou XML, une image, un PDF et beaucoup d'autres, votre navigateur l'ouvrira. Vous pouvez ensuite télécharger le fichier en question grâce à un clic droit puis à « Enregistrer sous », mais ce n'est vraiment pas pratique.</p><p id="r-552038" data-claire-element-id="552038">Néanmoins, il est possible, avec les en-têtes HTTP, de forcer la main aux navigateurs et de les obliger à télécharger ledit fichier avec ces quelques lignes :</p><pre id="r-552039" data-claire-element-id="552039"><code data-claire-semantic="html+php">&lt;?php
+header('Content-Description: File Transfer');
+header('Content-Type: application/octet-stream');
+header('Content-Disposition: attachment; filename=' . basename($chemin));
+header('Content-Transfer-Encoding: binary');
+header('Expires: 0');
+header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+header('Pragma: public');
+header('Content-Length: ' . filesize($chemin));
+readfile($chemin);
+exit;
+?&gt;</code></pre><aside id="r-552041" data-claire-element-id="552041" data-claire-semantic="information"><p id="r-552040" data-claire-element-id="552040">Ce code est extrait de la documentation PHP de la fonction <a href="http://fr2.php.net/readfile#example-2043">readfile()</a> et n'a subi qu'une simple modification. En effet, la gestion de la <a href="http://www.siteduzero.com/tutoriel-3-38102-la-tamporisation-de-sortie-en-php.html">tamporisation</a> de sortie est devenue inutile dans notre cas.</p></aside><p id="r-552042" data-claire-element-id="552042">Ne vous inquiétez pas, je ne vais pas vous laisser avec ce code sans aucune explication.</p><p id="r-552043" data-claire-element-id="552043">Pour commencer, notons qu'il y a beaucoup d'appels à la fonction <a href="http://www.php.net/manual/fr/function.header.php">header()</a>. Nous l'avons vu au début de ce cours, cette fonction assure une redirection (vers un fichier par exemple) si elle est utilisée avec <code>'Location: [adresse de redirection]'</code>. Elle permet en réalité bien plus que cela, notamment de modifier l'en-tête HTTP reçu par le navigateur. Ainsi, vous pourrez facilement lui dire qu'il s'agit d'un fichier à télécharger et l'obliger à l'interpréter comme tel.</p><p id="r-552044" data-claire-element-id="552044">Voici maintenant le détail de chacun de ces <a href="http://www.php.net/manual/fr/function.header.php">header()</a> :</p><ul id="r-552057" data-claire-element-id="552057"><li id="r-552046" data-claire-element-id="552046"><p id="r-552045" data-claire-element-id="552045"><strong>Ligne 2</strong> : spécifie au navigateur que les données qu'il va recevoir doivent être considérées comme un fichier à télécharger.</p></li><li id="r-552048" data-claire-element-id="552048"><p id="r-552047" data-claire-element-id="552047"><strong>Ligne 3</strong> : indique que le flux de données qui va suivre est de type « flux d'octet ». Comme n'importe quel fichier peut être considéré ainsi, il n'est pas nécessaire d'en connaître le <a href="http://fr.wikipedia.org/wiki/MIME">type MIME</a> exact (qui diffère en fonction de l'extension).</p></li><li id="r-552050" data-claire-element-id="552050"><p id="r-552049" data-claire-element-id="552049"><strong>Ligne 4</strong> : attribue un nom au fichier. Par conséquent, le nom qui apparaîtra dans la <em>popup</em> de téléchargement sera celui indiqué après <code>filename=</code>.</p></li><li id="r-552052" data-claire-element-id="552052"><p id="r-552051" data-claire-element-id="552051"><strong>Ligne 5</strong> : précise que le fichier à traiter devra être envoyé en binaire. En d'autres termes, les données seront conservées telles quelles afin d'éviter les problèmes d'encodage et de « transformation » non voulus.</p></li><li id="r-552054" data-claire-element-id="552054"><p id="r-552053" data-claire-element-id="552053"><strong>Lignes 6 à 8</strong> : ces lignes ordonnent au navigateur de ne pas mettre les fichiers en cache pour que le téléchargement soit déclenché à chaque fois.</p></li><li id="r-552056" data-claire-element-id="552056"><p id="r-552055" data-claire-element-id="552055"><strong>Ligne 9</strong> : donne au navigateur la taille du fichier, sans laquelle il ne pourrait afficher correctement la barre de progression ni donner le pourcentage déjà téléchargé — et encore moins estimer le temps restant.</p></li></ul><p id="r-552058" data-claire-element-id="552058">Pour aller un peu plus loin avec les en-têtes HTTP, vous trouverez d'autres informations sur <a href="http://www.commentcamarche.net/contents/internet/http.php3">ce site</a>.</p><p id="r-552059" data-claire-element-id="552059">En ce qui concerne les fonctions PHP maintenant : <a href="http://php.net/manual/fr/function.basename.php">basename()</a> permet, à partir d'un chemin, de récupérer uniquement le nom d'un fichier ; <a href="http://www.php.net/manual/fr/function.filesize.php">filesize()</a> (les anglophones l'auront déjà deviné) en indique la taille. Quant à la fonction <a href="http://www.php.net/manual/fr/function.exit.php">exit()</a>, qui clôt cette série d'appels, elle sert à stopper l'exécution du <em>script</em> pour ne pas rajouter de données à la suite du fichier sous peine de le corrompre. De plus, il est inutile de charger le reste d'une page qui ne sera, en théorie, pas visible.</p><p id="r-552060" data-claire-element-id="552060">Pour continuer à garder un code clair et propre, nous allons créer une fonction, appelée <a href="http://www.php.net/manual/fr/function.readfile.php">readfile()</a>, à la seule fin d'envoyer le <em>header</em> personnalisé et même de faire la vérification.</p><p id="r-552061" data-claire-element-id="552061">Vous devez certainement déjà posséder un fichier <code>fonctions.php</code> dans lequel vous mettez toutes les fonctions de votre site. Il vous suffit de lui ajouter la fonction suivante :</p><pre id="r-552062" data-claire-element-id="552062"><code data-claire-semantic="html+php">&lt;?php
+function telecharger_fichier($fichier)
+{
+ $chemin = 'fichiers/' . $fichier;
+ if(file_exists($chemin))
+ {
+  header('Content-Description: File Transfer');
+  header('Content-Type: application/octet-stream');
+  header('Content-Disposition: attachment; filename=' . basename($chemin));
+  header('Content-Transfer-Encoding: binary');
+  header('Expires: 0');
+  header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+  header('Pragma: public');
+  header('Content-Length: ' . filesize($chemin));
+  readfile($chemin);
+  exit;  
+ }
+ else
+  require('erreur.php');
+}
+?&gt;</code></pre><aside id="r-552068" data-claire-element-id="552068" data-claire-semantic="information"><p id="r-552063" data-claire-element-id="552063">Si vous voulez faire en sorte d'afficher les images plutôt que d'obliger l'utilisateur à les télécharger, vous pouvez modifier cette fonction comme ceci :</p><p id="r-552064" data-claire-element-id="552064"></p><div id="r-552066" data-claire-element-id="552066"><pre id="r-552065" data-claire-element-id="552065"><code data-claire-semantic="html+php">&lt;?php
+function telecharger_fichier($fichier)
+{
+ $chemin = 'fichiers/' . $fichier;
+ $images_ext = array('jpg', 'jpeg', 'png', 'bmp', 'gif');
+ if(file_exists($chemin))
+ {
+  $image_format = substr(strrchr($chemin, '.'), 1);
+  if(in_array($image_format, $images_ext))
+   header('Content-Type: image/' . $image_format);
+  else
+  {
+   header('Content-Description: File Transfer');
+   header('Content-Type: application/octet-stream');
+   header('Content-Disposition: attachment; filename=' . basename($chemin));
+   header('Content-Transfer-Encoding: binary');
+   header('Expires: 0');
+   header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+   header('Pragma: public');
+   header('Content-Length: ' . filesize($chemin));
+  }
+  readfile($chemin);
+  exit;  
+ }
+ else
+  require('erreur.php');
+}
+?&gt;</code></pre></div><p id="r-552067" data-claire-element-id="552067">Le principe de cette méthode est d'interdire l'accès direct à vos images (clic droit → « Afficher l'image ») tout en permettant leur affichage. Par contre, vu que c'est du bonus, je n'expliquerai pas en détail les rajouts. S'il y a quelque chose que vous ne comprenez pas, faites-le-moi savoir par MP ou dans les commentaires. Sinon, la <a href="http://php.net/">documentation</a> est toujours là pour vous aider. ;)</p></aside><p id="r-552069" data-claire-element-id="552069">Ce qui nous amène à la modification suivante de notre fichier <code>telecharger.php</code> :</p><pre id="r-552070" data-claire-element-id="552070"><code data-claire-semantic="html+php">&lt;?php
+if(!empty($_GET['fichier']))
+{
+ // N'oubliez pas d'inclure le fichier qui contient notre fonction !
+ include('fonctions.php');
+ // On appelle la fonction qu'on a créée juste avant !
+ telecharger_fichier($_GET['fichier']);
+}
+else
+ require('erreur.php');
+?&gt;</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers">Empêcher le téléchargement direct de fichiers</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/la-page-de-telechargement">
+La page de téléchargement
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/protegeons-nos-fichiers">
+Protégeons nos fichiers
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/passer-outre-la-protection">
+Passer outre la protection
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/forcer-le-telechargement-des-fichiers">
+Forcer le téléchargement des fichiers
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/une-faille-particulierement-dangereuse">
+Une faille particulièrement dangereuse
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/passer-outre-la-protection">
+<span class="arrow"></span>
+<span class="next">Passer outre la protection</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/une-faille-particulierement-dangereuse">
+<span class="next">Une faille particulièrement dangereuse</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Unefailleparticulirementdangereuse"></a><h2>Une faille particulièrement dangereuse</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/forcer-le-telechargement-des-fichiers">
+<span class="arrow"></span>
+<span class="next">Forcer le téléchargement des fichiers</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-552072" data-claire-element-id="552072">Nous avons désormais un <em>script</em> qui fonctionne très bien. Malheureusement, et vous ne vous en êtes peut-être pas rendu compte, il possède une énorme faille…</p><p id="r-552073" data-claire-element-id="552073">Oui, imaginez qu'un utilisateur malveillant décide de se rendre sur cette page : <a href="http://www.monsite.com/telecharger.php?fichier=../index.php">http://www.monsite.com/telecharger.php [...] =../index.php</a>, il sera alors en mesure de télécharger directement le contenu de votre page d'accueil. Pire, avec cette technique, l'ensemble des fichiers de votre site sera à sa disposition et, pour peu qu'il connaisse sa structure, il pourra faire une copie complète de votre site comme s'il avait accès à votre FTP. Il n'aurait plus qu'à récupérer les identifiants de votre base de données (que vous avez forcément stockés dans l'un de vos fichiers PHP) pour finir de voler votre site en entier ! :waw:</p><p id="r-552074" data-claire-element-id="552074">Vous ne pensiez pas qu'un petit <em>script</em> comme celui-là se révélerait aussi dangereux, n'est-ce pas ? C'est pourquoi il est important de se prémunir contre cette faille. Heureusement, je vous propose une solution permettant de pallier ce problème.</p><p id="r-552075" data-claire-element-id="552075">La première chose à faire est d'empêcher le visiteur d'utiliser le <em>slash</em> (<strong>/</strong>). Ainsi, il ne pourra pas retourner en arrière ou naviguer dans les dossiers à sa guise.</p><div id="r-552077" data-claire-element-id="552077" data-claire-semantic="question"><p id="r-552076" data-claire-element-id="552076">Oui, mais attends ! Si je fais ça, je ne pourrais plus classer les fichiers téléchargeables qui se trouvent dans le dossier fichiers/ à l'intérieur de sous-dossiers. Tous les fichiers téléchargeables ne doivent-ils pas se trouver à la racine du dossier fichiers/ ?!</p></div><p id="r-552078" data-claire-element-id="552078">Pas nécessairement. C'est à vous et à vous seul de définir les règles, et vous pouvez très bien choisir de rajouter des variables GET qui détermineront dans quel sous-dossier le fichier demandé se trouve.</p><p id="r-552079" data-claire-element-id="552079">Un petit exemple avec ce lien : <a href="http://www.monsite.com/telecharger.php?fichier=texte.txt&amp;dossier=1">http://www.monsite.com/telecharger.php [...] txt&amp;dossier=1</a>. Il suffit de faire en sorte que l'identifiant <strong>1</strong> corresponde à un dossier particulier pour la variable <code>$_GET</code><code>[</code><code>'dossier'</code><code>]</code>. Nous pourrions organiser les dossiers de la façon suivante :</p><ul id="r-552090" data-claire-element-id="552090"><li id="r-552081" data-claire-element-id="552081"><p id="r-552080" data-claire-element-id="552080"><strong>1</strong> = <em>fichiers/jeux/</em> ;</p></li><li id="r-552083" data-claire-element-id="552083"><p id="r-552082" data-claire-element-id="552082"><strong>2</strong> = <em>fichiers/musiques/</em> ;</p></li><li id="r-552085" data-claire-element-id="552085"><p id="r-552084" data-claire-element-id="552084"><strong>3</strong> = <em>fichiers/videos/</em> ;</p></li><li id="r-552087" data-claire-element-id="552087"><p id="r-552086" data-claire-element-id="552086"><strong>4</strong> = <em>fichiers/images/</em> ;</p></li><li id="r-552089" data-claire-element-id="552089"><p id="r-552088" data-claire-element-id="552088">etc.</p></li></ul><p id="r-552091" data-claire-element-id="552091">Ce qui, en programmation, donnerait ceci :</p><pre id="r-552092" data-claire-element-id="552092"><code data-claire-semantic="html+php">&lt;?php
+function id_dossier($id)
+{
+ $dossier_base = 'fichiers/';
+ switch($id)
+ {
+  case 1:
+   $dossier_base .= 'jeux/';
+   break;
+  case 2:
+   $dossier_base .= 'musiques/';
+   break;
+  case 3:
+   $dossier_base .= 'videos/';
+   break;
+  case 4:
+   $dossier_base .= 'images/';
+   break;
+  default:
+   break;
+ }
+ return $dossier_base;
+}
+?&gt;</code></pre><p id="r-552093" data-claire-element-id="552093">Mais ce n'est pas tout… Même si l'on bouche cette faille, il en reste une : quoi qu'il arrive, il y aura toujours dans votre dossier des fichiers qui ne seront pas destinés au téléchargement. C'est par exemple le cas pour notre .htaccess, qui devra forcément se trouver à cet endroit, et pour tous les fichiers cachés dont les noms commencent par un point. Il faut donc vérifier également qu'il n'y a pas de point au début du nom du fichier.</p><p id="r-552094" data-claire-element-id="552094">Pour ce faire, nous allons utiliser la fonction <a href="http://www.php.net/manual/fr/function.strpos.php">strpos()</a> qui permet de récupérer la position d'un caractère (ou de plusieurs caractères dans notre cas) dans une chaîne.</p><div id="r-552096" data-claire-element-id="552096" data-claire-semantic="question"><p id="r-552095" data-claire-element-id="552095">La position d'un caractère dans une chaîne ? À quoi cela va-t-il nous servir ?</p></div><p id="r-552097" data-claire-element-id="552097">À une seule chose : vérifier qu'il y a ou non des caractères que nous voulons interdire. Si les caractères en question ne sont pas trouvés, la fonction renverra <em>FALSE</em>.</p><p id="r-552098" data-claire-element-id="552098">Ça, c'était pour le <em>slash</em>. Pour le point, en revanche, récupérer la position du caractère va nous être utile. Non, il n'est pas interdit de mettre un point dans le nom d'un fichier, surtout si vous décidez de laisser l'extension. Par contre, nous ne voulons surtout pas que ce point se trouve au début du nom du fichier ; nous vérifierons donc la position du point.</p><p id="r-552099" data-claire-element-id="552099">En sachant tout cela, notre fichier de fonctions sera modifié de cette façon :</p><pre id="r-552100" data-claire-element-id="552100"><code data-claire-semantic="html+php">&lt;?php
+function id_dossier($id)
+{
+    $dossier_base = 'fichiers/';
+    switch($id)
+ {
+  case 1:
+   $dossier_base .= 'jeux/';
+   break;
+  case 2:
+   $dossier_base .= 'musiques/';
+   break;
+  case 3:
+   $dossier_base .= 'videos/';
+   break;
+  case 4:
+   $dossier_base .= 'images/';
+   break;
+  default:
+   break;
+ }
+ return $dossier_base;
+}
+
+function telecharger_fichier($fichier, $id = 0)
+{
+ $chemin = id_dossier($id) . $fichier;
+ if(file_exists($chemin) &amp;&amp; strpos($fichier, '/') === FALSE &amp;&amp; strpos($fichier, '.') !== 0)
+ {
+  header('Content-Description: File Transfer');
+  header('Content-Type: application/octet-stream');
+  header('Content-Disposition: attachment; filename='. basename($chemin));
+  header('Content-Transfer-Encoding: binary');
+  header('Expires: 0');
+  header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+  header('Pragma: public');
+  header('Content-Length: ' . filesize($chemin));
+  readfile($chemin);
+  exit;  
+ }
+ else
+  require('erreur.php');
+}
+?&gt;</code></pre><aside id="r-552102" data-claire-element-id="552102" data-claire-semantic="information"><p id="r-552101" data-claire-element-id="552101">Ne vous inquiétez pas, je ne me suis pas trompé en mettant trois signes « égal ». L'opérateur === signifie « égal et de même type » et, ici, la condition est nécessaire à notre vérification, car <em>0 == FALSE</em> mais <em>0 !== FALSE</em> !</p></aside><p id="r-552103" data-claire-element-id="552103">Nous nous assurons ainsi que l'utilisateur ne pourra pas naviguer à l'extérieur du dossier dans lequel se trouvent tous les fichiers à télécharger.</p><aside id="r-552105" data-claire-element-id="552105" data-claire-semantic="warning"><p id="r-552104" data-claire-element-id="552104">Vous ne devez donc pas — j'insiste encore sur ce point — placer dans ce dossier des fichiers qui ne sont pas censés être téléchargés, comme des fichiers PHP. Une bonne fois pour toutes : le dossier fichiers/ ne doit contenir que les fichiers que vos utilisateurs sont autorisés à télécharger !</p></aside><p id="r-552106" data-claire-element-id="552106">De ces changements découle une modification minime de notre fichier <code>telecharger.php</code> afin de prendre en compte l'identifiant du dossier :</p><pre id="r-552107" data-claire-element-id="552107"><code data-claire-semantic="html+php">&lt;?php
+if(!empty($_GET['fichier']))
+{
+ // N'oubliez pas d'inclure le fichier qui contient notre fonction !
+ include('fonctions.php');
+ // On appelle la fonction qu'on a créée juste avant !
+ telecharger_fichier($_GET['fichier'], $_GET['dossier']);
+}
+else
+ require('erreur.php');
+?&gt;</code></pre><p id="r-552108" data-claire-element-id="552108">La suite va vous présenter une autre solution un peu plus aboutie (à noter qu'elle reste néanmoins complémentaire de la première). Cela veut dire qu'il est hautement préférable d'appliquer cette solution en plus, et vous allez tout de suite comprendre pourquoi.</p><p id="r-552109" data-claire-element-id="552109">Comme je l'ai dit au début de ce cours, sur de nombreux sites, les fichiers à télécharger sont gérés par une base de données. Par conséquent, chaque fichier est lié à des informations comme un nom (plus joli que le nom du fichier), une description, un compteur, etc. Ainsi, il vous suffirait de vérifier que le fichier que veut télécharger l'utilisateur figure bien dans la base de données. Dans le cas contraire, le téléchargement n'est pas lancé.</p><p id="r-552110" data-claire-element-id="552110">Cette solution peut ne pas suffire lorsque vous permettez le téléchargement de fichiers PHP (pour des tutoriels par exemple) et que ces derniers portent, parfois, le même nom que ceux qui se trouvent sur votre site. Dans ce cas-là, il est important de vérifier que le fichier que le visiteur souhaite télécharger se trouve dans le bon dossier. C'est précisément ce que nous venons de faire. :D</p><p id="r-552111" data-claire-element-id="552111">Ce qui donne sous forme de code :</p><pre id="r-552112" data-claire-element-id="552112"><code data-claire-semantic="html+php">&lt;?php
+/* 
+On imagine que la connexion se fait avec PDO et que l'objet
+PDO se trouve dans la variable du nom de $pdo
+*/
+$nom_fichier = $pdo-&gt;quote($_GET['fichier']);
+$sql = $pdo-&gt;query(&quot;SELECT COUNT(nom_fichier) FROM fichiers WHERE nom_fichier = '$nom_fichier'&quot;);
+if(file_exists($chemin) &amp;&amp; strpos($fichier, '/') === FALSE &amp;&amp; strpos($fichier, '.') !== 0 &amp;&amp;
+ $sql-&gt;fetchColumn() &gt; 0)
+{
+ // Appel de la fonction pour télécharger le fichier
+}
+?&gt;</code></pre><p id="r-552113" data-claire-element-id="552113">Il ne s'agit là que d'un exemple qui ne fonctionnera qu'à deux conditions. Premièrement, que vous vous soyez connecté avec PDO en stockant l'objet PDO dans la variable qui répond au doux nom de $pdo ; deuxièmement, que vous possédiez une table de votre base de données, nommée fichiers, qui comporte une colonne <em>nom_fichier</em> et où sont stockés tous les fichiers téléchargeables.</p><p id="r-552114" data-claire-element-id="552114">Pfiou, ça en fait des conditions ! ^^</p><p id="r-552115" data-claire-element-id="552115">Quoi qu'il en soit, je pense que vous avez compris que cet exemple vous permet uniquement de comprendre le concept. À vous de l'adapter au fonctionnement de votre site.</p><p id="r-552116" data-claire-element-id="552116">Ouf, vos fichiers sont maintenant à l'abri de ces méchants voleurs ! :pirate:</p><p id="r-552117" data-claire-element-id="552117">Vous pouvez désormais vous concentrer sur des applications concrètes se servant de cette protection. Nous avons vu le cas du compteur de téléchargement, mais d'autres horizons s'offrent à vous : instaurer un système de téléchargement payant, avec un nombre limité de téléchargements ; ou encore empêcher tout téléchargement pendant une plage d'heures définie pour éviter une surcharge du serveur. Et encore beaucoup d'autres choses que je vous laisse imaginer !</p><p id="r-552118" data-claire-element-id="552118">En tout cas, voilà, ce tutoriel est fini. Il était court (même très court), mais j'espère qu'il vous aura été aussi utile qu'à moi. D'ailleurs, je souhaite faire quelques remerciements. En effet, ce cours a été fait après que j'ai posé une question sur le forum et à laquelle deux personnes ont apporté de très bonnes réponses : <a href="http://www.siteduzero.com/membres-294-60833.html">maxima</a> et <a href="http://www.siteduzero.com/membres-294-18535.html">orklah</a>. Merci à eux, donc, sans qui je n'aurais certainement rien fait et serait resté, tout comme vous, dans l'ignorance. Ah, c'est beau le partage ! :D</p><p id="r-552119" data-claire-element-id="552119">J'aimerais remercier une autre personne : <a href="http://www.siteduzero.com/membres-294-4732.html">Kyle Katarn</a>, qui, en plus de m'avoir mis au courant de l'énorme faille, m'a donné beaucoup de conseils tant sur le fond que sur la forme pour faire de ce tutoriel ce qu'il est aujourd'hui. Merci encore ! :)</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers">Empêcher le téléchargement direct de fichiers</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/la-page-de-telechargement">
+La page de téléchargement
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/protegeons-nos-fichiers">
+Protégeons nos fichiers
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/passer-outre-la-protection">
+Passer outre la protection
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/forcer-le-telechargement-des-fichiers">
+Forcer le téléchargement des fichiers
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/une-faille-particulierement-dangereuse">
+Une faille particulièrement dangereuse
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers/forcer-le-telechargement-des-fichiers">
+<span class="arrow"></span>
+<span class="next">Forcer le téléchargement des fichiers</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/empecher-le-telechargement-direct-de-fichiers.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 08:09:05 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/empecher-le-telechargement-direct-de-fichiers.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:27:09 GMT -->
+</html>

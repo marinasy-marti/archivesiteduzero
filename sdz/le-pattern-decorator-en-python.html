@@ -1,0 +1,863 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/le-pattern-decorator-en-python.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 20:03:19 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/le-pattern-decorator-en-python.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 03:45:13 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Le pattern Decorator en Python</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/le-pattern-decorator-en-python.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Le pattern Decorator en Python</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#LepatternDecoratorenPython">Le pattern Decorator en Python</a><br/><a href="#Introduction">Introduction</a><br/><a href="#Notrecasd039tudeleMacD039halal">Notre cas d&#039;étude : le MacD&#039;halal</a><br/><a href="#Premiersjets">Premiers jets</a><br/><a href="#Decoratorlarescousse">Decorator à la rescousse !</a><br/><a href="#DecoratoretlesdcorateursenPython">Decorator et les décorateurs en Python</a><br/></div>
+<a name="LepatternDecoratorenPython"></a><h2>Le pattern Decorator en Python</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/introduction-51">
+<span class="next">Introduction</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-373628" data-claire-element-id="373628"><em>« La Programmation Orientée Objet, c'est bien joli, mais ça me fait passer deux fois plus de temps à réfléchir qu'à coder ! »</em></p><p id="r-373629" data-claire-element-id="373629">C'est fou le nombre de gens qui pensent cela… Et pourtant, s'ils savaient comme ils ont tort ! En effet, pour faire de la « belle » POO, il ne faut pas réfléchir deux fois plus que ce que l'on code… Ce devrait plutôt être <strong>cinq</strong> fois plus !</p><p id="r-373630" data-claire-element-id="373630">Cela peut sembler paradoxal, voire rébarbatif, mais c'est pourtant le reflet d'une réalité solide. La POO, ce n'est pas simplement la création d'une collection de classes liées entre elles par l'héritage ou l'encapsulation. Ces notions, dont la compréhension est extrêmement importante, ne sont que la « matière première » de la POO, un peu comme l'argile du potier. La véritable programmation objet, c'est l'art qui consiste à utiliser ces notions pour créer des programmes de qualité, facilement maintenables, dont les composants sont extensibles et réutilisables à souhait.</p><p id="r-373631" data-claire-element-id="373631">Ainsi, de la même manière que pour la pratique d'un art, pratiquer la POO demande d'acquérir un <em>savoir-faire</em>, ce qui nécessite de passer beaucoup de temps à réfléchir, analyser, s'entraîner, et accumuler de l'expérience.</p><p id="r-373632" data-claire-element-id="373632">Heureusement pour nous, l'expérience, ça peut se transmettre pour accélérer le processus. C'est d'ailleurs, comme nous allons le voir, ce qui a motivé la naissance des <em>design patterns</em>.</p><p id="r-373633" data-claire-element-id="373633">Dans ce tutoriel, nous allons étudier le <em>design pattern</em> Decorator, et son utilisation dans le langage Python. Cela va nous permettre de réfléchir sur plusieurs pratiques, bonnes et mauvaises, et de découvrir des pistes de réflexion que vous pourrez suivre afin de progresser dans votre pratique de la POO.</p><p id="r-373634" data-claire-element-id="373634">Pour suivre ce tutoriel, vous aurez besoin :</p><ul id="r-373641" data-claire-element-id="373641"><li id="r-373636" data-claire-element-id="373636"><p id="r-373635" data-claire-element-id="373635">de connaître le langage Python,</p></li><li id="r-373638" data-claire-element-id="373638"><p id="r-373637" data-claire-element-id="373637">d'avoir appris la POO en Python, et, de préférence, de l'avoir pratiquée,</p></li><li id="r-373640" data-claire-element-id="373640"><p id="r-373639" data-claire-element-id="373639">d'avoir le goût du travail bien fait. :p</p></li></ul><p id="r-373642" data-claire-element-id="373642">Les codes d'exemple de ce tutoriel ont été réalisés avec Python 3.</p>
+</div><a name="Introduction"></a><h2>Introduction</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/notre-cas-d-etude-le-macd-halal">
+<span class="next">Notre cas d&#039;étude : le MacD&#039;halal</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-qu-est-ce-qu-un-programme-de-qualite" data-claire-element-id="373646">Qu'est-ce qu'un programme de qualité ?</h2><p id="r-373643" data-claire-element-id="373643">Je suis sûr que si j'effectuais un sondage ouvert auprès de plein de personnes différentes (développeurs, utilisateurs, éditeurs…), j'obtiendrais des tonnes de réponses uniques à cette question. Néanmoins, l'expérience prouve qu'il est possible de tracer, dans les grandes lignes, plusieurs caractéristiques générales qui différencient un programme quelconque d'un bon programme, et je vais me permettre de les résumer grossièrement. Un programme de qualité, c'est avant tout un programme :</p><p id="r-373644" data-claire-element-id="373644">1. qui fait exactement <strong>ce que l'utilisateur attend de lui</strong> ;<br/> 2. dont le code est facile à <strong>comprendre</strong> et à <strong>maintenir</strong> ;<br/> 3. dont le code est facile à <strong>faire évoluer</strong> et à <strong>réutiliser</strong>.</p><p id="r-373645" data-claire-element-id="373645">Dans ce tutoriel, étant donné que nous allons parler de programmation et de conception orientée objet, nous allons surtout nous pencher sur les deux derniers aspects.</p><h2 id="r-pourquoi-est-ce-si-difficile-de-concevoir-un-programme-de-qualite" data-claire-element-id="373649">Pourquoi est-ce si difficile de concevoir un programme de qualité ?</h2><p id="r-373647" data-claire-element-id="373647">S'il devait n'exister qu'une seule vérité constante sur le développement d'applications, avec laquelle tout programmeur est amené un jour ou l'autre à se battre, ce serait certainement <strong>le changement</strong>. En effet, quel que soit le temps que vous passerez à réfléchir avec application sur le <em>design</em> d'un programme, celui-ci sera toujours, un jour ou l'autre, amené à être modifié, pour satisfaire les nouveaux besoins d'un client, pour ajouter la fonctionnalité à laquelle vous venez de penser vous-même, ou, plus généralement, pour que votre projet puisse continuer à vivre.</p><p id="r-373648" data-claire-element-id="373648">C'est le fait de savoir <em>gérer</em>, voire <em>anticiper</em> ce changement, qui est difficile. Heureusement, des générations de développeurs et de concepteurs avant nous se sont déjà penchés sur la question, et nous disposons aujourd'hui, en tant que développeurs, de méthodes et d'outils pour nous y aider. Parmi eux se trouvent <strong>les grands principes de la POO</strong>, et <strong>les <em>design patterns</em></strong>.</p><h2 id="r-les-design-patterns-c-est-quoi" data-claire-element-id="373665">Les <em>design patterns</em>, c'est quoi ?</h2><p id="r-373650" data-claire-element-id="373650">Lorsque l'on doit concevoir une application permettant de répondre à une problématique donnée, il n'est pas rare que l'on puisse reconnaître des structures semblables à ce que l'on a déjà fait par le passé.</p><p id="r-373651" data-claire-element-id="373651">D'ailleurs, cela a certainement déjà dû vous arriver. Ne vous êtes-vous jamais surpris à penser quelque chose comme : « <em>tiens, si j'organise mes objets de cette manière, je vais avoir le même soucis que quand j'ai développé tel projet le mois dernier</em> », et adapter votre architecture en sachant que de cette façon, vous évitez de reproduire un problème que vous avez déjà résolu dans un autre contexte ?</p><p id="r-373652" data-claire-element-id="373652">Ces <strong>structures redondantes</strong>, vous vous doutez bien que vous n'êtes pas le premier à les découvrir… De nombreux développeurs avant nous les ont déjà rencontrées. Certains d'entre eux les ont même étudiées et, mieux encore, ils les ont partagées afin de permettre aux autres développeurs de gagner du temps le jour où ils rencontreront eux-mêmes un problème de conception similaire. On appelle ces structures des <em><strong>design patterns</strong></em> (en français, des <em>patrons de conception</em>).</p><p id="r-373653" data-claire-element-id="373653">Historiquement, l'étude des « <em>design patterns</em> » est née dans les années 1990, et a été popularisée en 1994, avec le livre remarquable du « <a href="http://c2.com/cgi/wiki?GangOfFour">Gang of Four</a> » (le « gang des quatre ») intitulé <a href="http://c2.com/cgi/wiki?DesignPatternsBook"><em>Design Patterns: Elements of Reusable Object-Oriented Software</em></a>. Cet ouvrage recense de nombreux <em>patterns</em> reconnus et éprouvés par les développeurs, et en explique le fonctionnement, les intérêts, les domaines d'applications, et les limites : en un mot comme en cent, c'est la bible des patrons de conception.</p><p id="r-373654" data-claire-element-id="373654">Pour résumer l'idée, un patron de conception :</p><ul id="r-373663" data-claire-element-id="373663"><li id="r-373656" data-claire-element-id="373656"><p id="r-373655" data-claire-element-id="373655">est <strong>une solution générique</strong> pour un problème de conception particulier ;</p></li><li id="r-373658" data-claire-element-id="373658"><p id="r-373657" data-claire-element-id="373657">porte <strong>un nom</strong>, ce qui permet aux développeurs qui sont à l'aise avec les <em>design patterns</em> de communiquer leurs idées de manière plus efficace ;</p></li><li id="r-373660" data-claire-element-id="373660"><p id="r-373659" data-claire-element-id="373659">est <strong>un outil</strong> servant à rendre un programme plus facile à maintenir et à faire évoluer ;</p></li><li id="r-373662" data-claire-element-id="373662"><p id="r-373661" data-claire-element-id="373661">est le fruit de <strong>l'expérience</strong> de programmeurs qui ont été amenés à régler un même problème dans des contextes différents, et non une solution théorique.</p></li></ul><p id="r-373664" data-claire-element-id="373664">Dans ce tutoriel, nous allons étudier un patron de conception particulier, le « Decorator » (en français, Décorateur). J'utiliserai de préférence son nom anglophone, car, comme je viens de le dire, le nom d'un patron de conception permet aux développeurs de savoir qu'ils parlent bien de la même chose : les communautés de développeurs s'exprimant le plus souvent en anglais, il est préférable de retenir les patterns sous leur nom originel, plutôt que leur traduction.</p><h2 id="r-le-pattern-decorator-1" data-claire-element-id="373679">Le <em>pattern</em> Decorator</h2><p id="r-373666" data-claire-element-id="373666">Le Decorator est l'un des patrons de conception les plus simples à comprendre et à mettre en œuvre, mais aussi l'un des plus formateurs.</p><p id="r-373667" data-claire-element-id="373667">Non content de résoudre un problème de conception fréquent (que nous allons voir dans un instant), il a aussi le mérite d'attirer l'attention des débutants sur le piège qui consiste à penser que l'héritage est la « réponse par défaut » à tous les problèmes en POO. Qui plus est, pour nous, pythonistes, il a une résonance particulière, étant donné que Python propose une syntaxe pour utiliser des <em>décorateurs statiques</em> de manière élégante. Bien que différent du patron de conception du même nom, ce système repose sur un principe assez proche.</p><p id="r-373668" data-claire-element-id="373668">Les buts de ce tutoriel sont donc multiples :</p><ul id="r-373677" data-claire-element-id="373677"><li id="r-373670" data-claire-element-id="373670"><p id="r-373669" data-claire-element-id="373669">découvrir un <em>design pattern</em> (peut-être votre premier…), qui vous sera probablement utile à l'avenir, et vous montrer la puissance de ce genre de solution ;</p></li><li id="r-373672" data-claire-element-id="373672"><p id="r-373671" data-claire-element-id="373671">initier une réflexion un peu plus approfondie sur les rôles de l'héritage et de l'encapsulation en POO ;</p></li><li id="r-373674" data-claire-element-id="373674"><p id="r-373673" data-claire-element-id="373673">(re-)découvrir ensemble plusieurs grands principes de la POO ;</p></li><li id="r-373676" data-claire-element-id="373676"><p id="r-373675" data-claire-element-id="373675">avoir une vision plus globale du principe de décoration, qui est implémenté dans votre langage de programmation préféré.</p></li></ul><p id="r-373678" data-claire-element-id="373678">Dans la prochaine partie, nous allons définir un cas « plus ou moins concret », où le Décorateur prend toute sa valeur, et qui nous servira d'exemple tout le long de ce tutoriel.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python">Le pattern Decorator en Python</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/introduction-51">
+Introduction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/notre-cas-d-etude-le-macd-halal">
+Notre cas d&#039;étude : le MacD&#039;halal
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/premiers-jets">
+Premiers jets
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/decorator-a-la-rescousse">
+Decorator à la rescousse !
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/decorator-et-les-decorateurs-en-python">
+Decorator et les décorateurs en Python
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/notre-cas-d-etude-le-macd-halal">
+<span class="next">Notre cas d&#039;étude : le MacD&#039;halal</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Notrecasd039tudeleMacD039halal"></a><h2>Notre cas d&#039;étude : le MacD&#039;halal</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/introduction-51">
+<span class="arrow"></span>
+<span class="next">Introduction</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/premiers-jets">
+<span class="next">Premiers jets</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-mise-en-situation-1" data-claire-element-id="373689">Mise en situation</h2><figure id="r-373682" data-claire-element-id="373683"><img id="r-373681" data-claire-element-id="373681" src="medias/uploads.siteduzero.com_files_270001_271000_270658.jpg" alt="bêêêê"/></figure><p id="r-373684" data-claire-element-id="373684">Vous êtes chargé de développer une application pour le compte du gérant d'un petit restaurant qui vend des kebabs et autres sandwiches dits &quot;de spécialité turque&quot;. Celui-ci souhaite faire décoller son business en créant une franchise, sous laquelle il pourra ouvrir plusieurs autres restaurants identiques, placés à des lieux stratégiques dans Paris, voire, à terme, dans toute la France.</p><p id="r-373685" data-claire-element-id="373685">L'image de marque que le gérant veut donner à sa clientèle est celle d'un établissement « à la carte », où tous les sandwiches vendus sont personnalisables (avec leurs prix modifiés en conséquence) : par exemple, si un client commande un kebab &quot;sans oignon&quot;, il bénéficiera d'une légère réduction sur le prix de son sandwich, pour lui donner le sentiment qu'il ne paye « que ce qu'il mange ». Il en va de même pour les suppléments que le client décide d'ajouter à son sandwich : le supplément se répercute par une légère augmentation du prix.</p><p id="r-373686" data-claire-element-id="373686">Par ailleurs, il n'est pas impossible qu'un site internet soit créé, de manière à mettre en place, dans les prochaines années, un service de livraison à domicile, ou que des bornes de commande rapide par carte bleue soient installées dans les restaurants afin de gérer de manière plus fluide l'affluence de clients pendant les heures de pointe.</p><p id="r-373687" data-claire-element-id="373687">Votre mission, si vous l'acceptez, est de créer un logiciel de gestion des commandes pour ce restaurateur. Le programme sera chargé de gérer la prise de commandes et communiquer avec une interface pour que les vendeurs puissent, en quelques touches sur un écran tactile, sélectionner un sandwich et le personnaliser selon la demande du client, afin que le prix soit calculé automatiquement.</p><p id="r-373688" data-claire-element-id="373688">Évidemment, le cœur de ce programme aura aussi des chances d'être repris à l'avenir par un service web pour prendre les commandes de livraison à domicile ou par l'interface des bornes de commande rapide : il faut donc que son architecture soit suffisamment souple pour qu'elle puisse être adaptée simplement le jour où cela deviendra nécessaire.</p><h2 id="r-portee-de-notre-etude" data-claire-element-id="373715">Portée de notre étude</h2><p id="r-373690" data-claire-element-id="373690">Bien évidemment, nous n'allons pas créer un service web ou une interface pour écran tactile dans ce tutoriel : tout ce qui nous intéresse aujourd'hui, c'est <strong>le cœur du programme</strong>, la logique qui tourne derrière l'interface. Plus précisément, l'aspect qui nous intéresse dans ce tutoriel, c'est comment nous allons modéliser nos kebabs afin que l'on puisse les personnaliser facilement pour le client.</p><p id="r-373691" data-claire-element-id="373691">Cette personnalisation, ici, se traduit par l'ajout ou le retrait de certains ingrédients dans le sandwich. Pour l'instant, nous allons nous concentrer sur un seul type de sandwich, le kebab. On pourra donc, par exemple, avoir des kebabs :</p><ul id="r-373712" data-claire-element-id="373712"><li id="r-373693" data-claire-element-id="373693"><p id="r-373692" data-claire-element-id="373692">sans oignon,</p></li><li id="r-373695" data-claire-element-id="373695"><p id="r-373694" data-claire-element-id="373694">sans salade,</p></li><li id="r-373697" data-claire-element-id="373697"><p id="r-373696" data-claire-element-id="373696">sans tomate,</p></li><li id="r-373699" data-claire-element-id="373699"><p id="r-373698" data-claire-element-id="373698">avec de la viande de poulet au lieu du mouton,</p></li><li id="r-373701" data-claire-element-id="373701"><p id="r-373700" data-claire-element-id="373700">avec supplément fromage,</p></li><li id="r-373703" data-claire-element-id="373703"><p id="r-373702" data-claire-element-id="373702">avec supplément oignon,</p></li><li id="r-373705" data-claire-element-id="373705"><p id="r-373704" data-claire-element-id="373704">avec supplément salade,</p></li><li id="r-373707" data-claire-element-id="373707"><p id="r-373706" data-claire-element-id="373706">avec supplément tomate,</p></li><li id="r-373709" data-claire-element-id="373709"><p id="r-373708" data-claire-element-id="373708">avec supplément viande,</p></li><li id="r-373711" data-claire-element-id="373711"><p id="r-373710" data-claire-element-id="373710">...</p></li></ul><p id="r-373713" data-claire-element-id="373713">ainsi que toutes les combinaisons imaginables entre ces diverses possibilités. Le but recherché, c'est une manière de créer simplement ces sandwiches, et d'afficher dans la console leur prix ainsi que leur composition (comme sur un ticket de caisse, en fait).</p><p id="r-373714" data-claire-element-id="373714">Comme nous allons le voir dans la prochaine partie, tout se joue à la conception.</p><h2 id="r-avant-d-aller-plus-loin" data-claire-element-id="373717">Avant d'aller plus loin…</h2><p id="r-373716" data-claire-element-id="373716">Faites-moi plaisir : prenez le temps de réfléchir à la façon dont vous vous y prendriez, sans plus d'information que ce que je viens de vous donner, pour modéliser des kebabs personnalisables. Si vous réfléchissez de manière autonome avant de lire la suite, vous découvrirez seul les problèmes qui se posent à la conception (ou au moins une partie d'entre eux), et vous retiendrez à coup sûr plus d'informations utiles de ce tutoriel. ;)</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python">Le pattern Decorator en Python</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/introduction-51">
+Introduction
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/notre-cas-d-etude-le-macd-halal">
+Notre cas d&#039;étude : le MacD&#039;halal
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/premiers-jets">
+Premiers jets
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/decorator-a-la-rescousse">
+Decorator à la rescousse !
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/decorator-et-les-decorateurs-en-python">
+Decorator et les décorateurs en Python
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/introduction-51">
+<span class="arrow"></span>
+<span class="next">Introduction</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/premiers-jets">
+<span class="next">Premiers jets</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Premiersjets"></a><h2>Premiers jets</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/notre-cas-d-etude-le-macd-halal">
+<span class="arrow"></span>
+<span class="next">Notre cas d&#039;étude : le MacD&#039;halal</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/decorator-a-la-rescousse">
+<span class="next">Decorator à la rescousse !</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-373719" data-claire-element-id="373719">Dans cette partie, nous allons chercher ensemble le meilleur moyen de modéliser ce problème. <br/> Pour ce faire, nous allons procéder par itérations, c'est-à-dire que l'on va commencer par une modélisation naïve que nous allons corriger chaque fois que l'on constatera un problème.</p><h2 id="r-un-kebab-simple" data-claire-element-id="373727">Un kebab simple</h2><p id="r-373720" data-claire-element-id="373720">Commençons déjà par créer notre classe <code>Kebab</code>. Un kebab simple est composé de salade, de tomates, d'oignons, de viande de mouton et de sauce, et il est accompagné de frites. Il a un prix et peut afficher sa composition. Voici une première implémentation possible :</p><pre id="r-373721" data-claire-element-id="373721"><code data-claire-semantic="python">PRIX_BASE = 3.8
+PRIX_SALADE = 0.2
+PRIX_TOMATES = 0.2
+PRIX_OIGNONS = 0.3
+PRIX_FRITES = 0.5
+
+class Kebab:
+    def __init__(self, sauce):
+        self.sauce = sauce
+        self.base = PRIX_BASE
+        self.salade = PRIX_SALADE
+        self.tomates = PRIX_TOMATES
+        self.oignons = PRIX_OIGNONS
+        self.frites = PRIX_FRITES
+
+    @property
+    def prix(self):
+        return (self.base + self.salade + self.tomates + self.oignons +
+                self.frites)
+
+    def __str__(self):
+        return 'Kebab'
+
+    def __repr__(self):
+        s = 'Kebab ({0}) ;'.format(self.prix)
+        for it in self.__dict__.items():
+            s +=' {0} ({1}) '.format(*it)
+        return s</code></pre><p id="r-373722" data-claire-element-id="373722">Notre classe <code>Kebab</code> ne contient que quatre méthodes.<br/> Dans le constructeur (<code>__init__</code>), on initialise les prix des ingrédients. Ceci se fait à partir de valeurs déclarées dans des constantes globales. Dans le cas réel, il y aurait peut-être besoin de récupérer ces valeurs sur une base de données, mais cela dépasse la portée de ce tutoriel.</p><p id="r-373723" data-claire-element-id="373723">La méthode <code>prix</code> définit une propriété du même nom : si vous n'êtes pas à l'aise avec cette notation, vous pourrez en apprendre plus sur <a href="http://docs.python.org/library/functions.html#property">cette page</a> de la documentation de Python. Clairement, elle calcule le prix du kebab en fonction de celui de ses ingrédients.</p><p id="r-373724" data-claire-element-id="373724">Enfin les méthodes <code>__repr__</code> et <code>__str__</code> permettent d'afficher l'objet sous forme de chaîne de caractères. C'est grâce à ces méthodes que nous allons contrôler le bon fonctionnement de notre programme.</p><p id="r-373725" data-claire-element-id="373725">Voici un exemple d'utilisation :</p><pre id="r-373726" data-claire-element-id="373726"><code data-claire-semantic="pycon">&gt;&gt;&gt; a = Kebab('ketchup')
+&gt;&gt;&gt; print(a)
+Kebab
+&gt;&gt;&gt; a
+Kebab (5.0) : salade (0.2)  oignons (0.3)  frites (0.5)  tomates (0.2)  base (3.8)  sauce (ketchup)</code></pre><h2 id="r-utilisons-l-heritage" data-claire-element-id="373771">Utilisons l'héritage !</h2><p id="r-373728" data-claire-element-id="373728">Une première idée que l'on peut explorer, pour modéliser la personnalisation de nos sandwiches, est d'utiliser simplement l'héritage. En effet, on peut partir du constat qu'un « kebab sans oignon » EST UN kebab. La relation <strong>EST UN</strong> étant traduite le plus souvent en POO par l'héritage, il suffit de dire que la classe <code>KebabSansOignon</code> dérive de la classe <code>Kebab</code>.</p><p id="r-373729" data-claire-element-id="373729">Bien ! Partons sur cette idée.</p><pre id="r-373730" data-claire-element-id="373730"><code data-claire-semantic="python">class KebabSansOignon(Kebab):
+    def __init__(self, sauce):
+        super().__init__(sauce)
+        self.oignons = 0        # Pas d'oignon
+
+    def __str__(self):
+        return 'Kebab sans oignon'</code></pre><p id="r-373731" data-claire-element-id="373731">Comme vous pouvez le constater, il nous a suffi de décréter que le prix des oignons dans ce kebab tombait à 0. Voici un exemple :</p><pre id="r-373732" data-claire-element-id="373732"><code data-claire-semantic="pycon">&gt;&gt;&gt; a = KebabSansOignon('ketchup')
+&gt;&gt;&gt; print(a)
+Kebab sans oignon
+&gt;&gt;&gt; a
+Kebab (4.7) : salade (0.2)  oignons (0)  frites (0.5)  tomates (0.2)  base (3.8)  sauce (ketchup)</code></pre><p id="r-373733" data-claire-element-id="373733">On remarquera que le prix du kebab a diminué de 30 centimes, c'est bien le comportement que l'on attendait.</p><p id="r-373734" data-claire-element-id="373734">Pour l'instant, l'architecture très simple de notre application ressemble à ceci :</p><figure id="r-373736" data-claire-element-id="373737"><img id="r-373735" data-claire-element-id="373735" src="medias/imgur.com_ytRli.png" alt="Image utilisateur"/></figure><p id="r-373738" data-claire-element-id="373738">Bien ! Puisque cette méthode fonctionne jusqu'ici, implémentons une seconde modification : le supplément fromage.</p><pre id="r-373739" data-claire-element-id="373739"><code data-claire-semantic="python">PRIX_FROMAGE = 0.5
+
+class KebabSuppFromage(Kebab):
+    def __init__(self, sauce):
+        super().__init__(sauce)
+        self.fromage = PRIX_FROMAGE
+        
+    @property
+    def prix(self):
+        return super().prix + self.fromage
+
+    def __str__(self):
+        return 'Kebab suppl. fromage'</code></pre><p id="r-373740" data-claire-element-id="373740">Jusqu'ici tout va bien, la preuve :</p><pre id="r-373741" data-claire-element-id="373741"><code data-claire-semantic="pycon">&gt;&gt;&gt; a = KebabSuppFromage(&quot;ketchup&quot;)
+&gt;&gt;&gt; print(a)
+Kebab suppl. fromage
+&gt;&gt;&gt; a
+Kebab (5.5) : salade (0.2)  oignons (0.3)  frites (0.5)  fromage (0.5)  tomates (0.2)  base (3.8)  sauce (ketchup)</code></pre><p id="r-373742" data-claire-element-id="373742">Et notre architecture donne maintenant :</p><figure id="r-373744" data-claire-element-id="373745"><img id="r-373743" data-claire-element-id="373743" src="medias/imgur.com_V2lnN.png" alt="Image utilisateur"/></figure><aside id="r-373747" data-claire-element-id="373747" data-claire-semantic="error"><p id="r-373746" data-claire-element-id="373746"><strong>Mais ne voyez-vous pas (au moins) un problème se dessiner à l'horizon ?</strong></p></aside><ul id="r-373752" data-claire-element-id="373752"><li id="r-373749" data-claire-element-id="373749"><p id="r-373748" data-claire-element-id="373748">Que va t'il se passer lorsque nous voudrons définir un « kebab sans oignon avec supplément fromage » ?</p></li><li id="r-373751" data-claire-element-id="373751"><p id="r-373750" data-claire-element-id="373750">À quoi ressemblera notre architecture lorsque l'on aura défini toutes les modifications possibles ?</p></li></ul><p id="r-373753" data-claire-element-id="373753">Bien, répondons à ces questions dans l'ordre (mais j'espère que vous y avez réfléchi).<br/> D'abord, si l'on veut définir un « kebab sans oignon avec supplément fromage », on est obligé, si l'on veut suivre notre logique, de dire que c'EST UN « kebab sans oignon » ET UN « kebab avec supplément fromage », ce qui nous donne le schéma suivant :</p><figure id="r-373755" data-claire-element-id="373756"><img id="r-373754" data-claire-element-id="373754" src="medias/imgur.com_4rd18.png" alt="Image utilisateur"/></figure><p id="r-373757" data-claire-element-id="373757">Si vous ne le savez pas encore, ceci est une architecture en diamant, et c'est le cas par excellence que l'on cherche à éviter lorsque l'on touche à l'héritage multiple, car cela introduit de très gros risques de bugs et de comportements indéterminés. Dans le cas présent, cela peut encore se gérer, étant donné que nos objets sont très simples, mais le problème reste que notre conception de base nous force à utiliser l'héritage multiple, que chacun d'entre vous devrait considérer comme <strong>dangereux</strong>.</p><p id="r-373758" data-claire-element-id="373758">D'une manière générale, je vous rappelle la règle d'or :</p><aside id="r-373760" data-claire-element-id="373760" data-claire-semantic="information"><p id="r-373759" data-claire-element-id="373759">« <strong>Si vous PENSEZ avoir besoin de l'héritage multiple, c'est probablement une mauvaise idée. Si vous SAVEZ que vous avez besoin de l'héritage multiple, alors c'est sûrement la seule solution.</strong> »</p></aside><p id="r-373761" data-claire-element-id="373761">Au cas où vous ne seriez pas encore convaincu que nous avons là un gros problème de conception, essayons de répondre à la seconde question, et envisageons l'intégration des autres personnalisations possibles pour nos kebabs. Personnellement, j'ai eu la flemme de dessiner tout le schéma, mais voici ce que cela donne après quelques ajouts seulement :</p><figure id="r-373763" data-claire-element-id="373764"><img id="r-373762" data-claire-element-id="373762" src="medias/imgur.com_UHFc1.png" alt="Image utilisateur"/></figure><p id="r-373765" data-claire-element-id="373765">Le schéma parle de lui-même, n'est-ce pas ?</p><p id="r-373766" data-claire-element-id="373766">On se retrouve avec un nombre de classes qui croît de manière exponentielle chaque fois que l'on veut introduire une nouvelle personnalisation. Il est évident que ce genre de programme finit très vite par être <strong>extrêmement complexe</strong>, <strong>non maintenable</strong> et <strong>impossible à faire évoluer</strong>.</p><div id="r-373768" data-claire-element-id="373768" data-claire-semantic="question"><p id="r-373767" data-claire-element-id="373767">Que retenir de notre échec ?</p></div><p id="r-373769" data-claire-element-id="373769">Cet exemple montre que, si l'héritage est le moyen « classique » de modifier légèrement le comportement d'une classe, ce n'est pas pour autant la réponse par défaut à tous nos problèmes. Il y a des cas où la modification du comportement des classes est, en soi, une caractéristique du programme, un comportement naturel, attendu, et surtout, fréquent. Dans ces cas typiques, où un objet peut voir son comportement subir de nombreuses petites modifications, utiliser l'héritage peut amener à définir de bien trop nombreuses classes, et n'est pas la démarche appropriée.</p><p id="r-373770" data-claire-element-id="373770">Bon, il est maintenant clairement établi que l'on ne peut pas utiliser l'héritage (du moins, pas de cette façon) pour répondre à notre problème. Essayons autre chose.</p><h2 id="r-un-kebab-intelligent" data-claire-element-id="373781">Un kebab intelligent</h2><p id="r-373772" data-claire-element-id="373772">Le problème de la solution précédente est qu'elle multiplie le nombre de classes avec chaque modification. Une réflexion légitime serait de se dire « <em>Eh bien ! S'il faut éviter de multiplier les classes, on n'a qu'à gérer les personnalisations directement dans la classe <code>Kebab</code>.</em> ».</p><p id="r-373773" data-claire-element-id="373773">Cela semble une bonne idée. Essayons.</p><p id="r-373774" data-claire-element-id="373774">Il semble clair que nous ne pouvons pas définir tous les ingrédients et leurs quantités comme des membres de notre classe Kebab (ils seraient un peu trop nombreux), voici une proposition d'implémentation permettant de gérer simplement les ingrédients :</p><pre id="r-373775" data-claire-element-id="373775"><code data-claire-semantic="python">from collections import namedtuple
+
+PRIX_BASE = 3.0
+PRIX_MOUTON = 0.8
+PRIX_POULET = 1.0
+PRIX_SALADE = 0.2
+PRIX_TOMATES = 0.2
+PRIX_OIGNONS = 0.3
+PRIX_FRITES = 0.5
+PRIX_FROMAGE = 0.5
+
+Ingredient = namedtuple('Ingredient', 'prix quantite')
+
+class Kebab:
+    def __init__(self, sauce):
+        self.type_sauce = sauce
+        self.type_viande = 'mouton'
+        self.base = PRIX_BASE
+
+        self._ing = dict()
+
+        self._ing['viande'] = Ingredient(PRIX_MOUTON, 1)
+        self._ing['salade'] = Ingredient(PRIX_SALADE, 1)
+        self._ing['tomates'] = Ingredient(PRIX_TOMATES, 1)
+        self._ing['oignons'] = Ingredient(PRIX_OIGNONS, 1)
+        self._ing['frites'] = Ingredient(PRIX_FRITES, 1)
+        self._ing['fromage'] = Ingredient(PRIX_FROMAGE, 0)
+
+    @property
+    def prix(self):
+        return self.base + sum(i.prix*i.quantite for i in self._ing.values())
+
+    def __str__(self):
+        s = &quot;Kebab ({0:.2f}) sauce {1}&quot;.format(self.prix, self.type_sauce)
+        if self.type_viande != &quot;mouton&quot;:
+            s += &quot;, au {0}&quot;.format(self.type_viande)
+        for elt in self._ing:
+            qte = self._ing[elt].quantite
+            if qte &gt; 0:
+                s += &quot;, {0}x {1}&quot;.format(qte, elt)
+            else:
+                s += &quot;, sans {0}&quot;.format(elt)
+        return s
+
+    def sans(self, ingredient):
+        if ingredient in self._ing:
+            prix, _ = self._ing[ingredient]
+            self._ing[ingredient] = Ingredient(prix, 0)
+
+    def supp(self, ingredient):
+        if ingredient in self._ing:
+            prix, qte = self._ing[ingredient]
+            self._ing[ingredient] = Ingredient(prix, qte+1)
+
+    def poulet(self):
+        self.type_viande = 'poulet'
+        _, qte = self._ing['viande']
+        self._ing['viande'] = Ingredient(PRIX_POULET, qte)</code></pre><p id="r-373776" data-claire-element-id="373776">Pour résumer l'idée : la classe <code>Kebab</code> encapsule un dictionnaire, qui à chaque nom d'ingrédient associe une quantité ainsi qu'un prix de base. Elle définit 3 méthodes supplémentaires : <code>sans</code> pour ôter un ingrédient, <code>supp</code> pour ajouter un supplément, et, <code>poulet</code> (cette méthode devrait vous mettre la puce à l'oreille), pour changer le type de viande utilisé.</p><p id="r-373777" data-claire-element-id="373777">Voici un exemple d'utilisation :</p><pre id="r-373778" data-claire-element-id="373778"><code data-claire-semantic="pycon">&gt;&gt;&gt; a = Kebab(&quot;harissa&quot;)
+&gt;&gt;&gt; print(a)
+Kebab (5.00) sauce harissa, 1x viande, 1x salade, 1x oignons, 1x frites, sans fromage, 1x tomates
+&gt;&gt;&gt; a.sans('oignons')
+&gt;&gt;&gt; print(a)
+Kebab (4.70) sauce harissa, 1x viande, 1x salade, sans oignons, 1x frites, sans fromage, 1x tomates
+&gt;&gt;&gt; a.supp('fromage')
+&gt;&gt;&gt; print(a)
+Kebab (5.20) sauce harissa, 1x viande, 1x salade, sans oignons, 1x frites, 1x fromage, 1x tomates
+&gt;&gt;&gt; a.supp('viande')
+&gt;&gt;&gt; print(a)
+Kebab (6.00) sauce harissa, 2x viande, 1x salade, sans oignons, 1x frites, 1x fromage, 1x tomates
+&gt;&gt;&gt; a.poulet()
+&gt;&gt;&gt; print(a)
+Kebab (6.40) sauce harissa, au poulet, 2x viande, 1x salade, sans oignons, 1x frites, 1x fromage, 1x tomates</code></pre><p id="r-373779" data-claire-element-id="373779">Comme vous le voyez, ça fonctionne plutôt bien : chaque modification se répercute sur le prix du kebab, et tout cela est mis en œuvre grâce à relativement peu de code. Qui plus est, nous n'avons eu qu'une seule classe à implémenter pour arriver à nos fins, ce qui rend notre architecture la plus simple possible.</p><p id="r-373780" data-claire-element-id="373780">Il est clair que cette conception est beaucoup plus efficace que la précédente. Cependant, elle souffre encore de plusieurs défauts qui la rendent difficile à faire évoluer. C'est ce que l'on va essayer d'identifier ensemble.</p><h2 id="r-quand-le-patron-a-une-nouvelle-idee" data-claire-element-id="373806">Quand le patron a une nouvelle idée…</h2><p id="r-373782" data-claire-element-id="373782">Imaginons que le patron ait l'idée d'ajouter de nouvelles personnalisations possibles pour un kebab. Par exemple : l'utilisation de pain pita au lieu du pain normal, l'utilisation de viande de dinde au lieu du mouton ou du poulet, ou bien de nouveaux ingrédients en supplément, mettons les « épices du chef ». Que se passerait-il au niveau de notre classe <code>Kebab</code> ?</p><p id="r-373783" data-claire-element-id="373783">Voyons un peu.</p><ul id="r-373797" data-claire-element-id="373797"><li id="r-373785" data-claire-element-id="373785"><p id="r-373784" data-claire-element-id="373784">Pour ajouter un nouveau type de viande dans les choix possibles, nous serions obligés de créer une nouvelle méthode <code>dinde</code> dans la classe Kebab.</p></li><li id="r-373787" data-claire-element-id="373787"><p id="r-373786" data-claire-element-id="373786">Pour ajouter un nouvel ingrédient, nous serions obligés d'ajouter un champ <code>&quot;epices du chef&quot;</code> dans le dictionnaire <code>_ing</code> et d'initialiser sa quantité à 0.</p></li><li id="r-373796" data-claire-element-id="373796"><p id="r-373788" data-claire-element-id="373788">Pour ajouter le choix du type de pain utilisé, nous serions obligés :</p><ul id="r-373795" data-claire-element-id="373795"><li id="r-373790" data-claire-element-id="373790"><p id="r-373789" data-claire-element-id="373789">d'ajouter un membre <code>type_pain</code>,</p></li><li id="r-373792" data-claire-element-id="373792"><p id="r-373791" data-claire-element-id="373791">d'ajouter un champ <code>&quot;pain&quot;</code> dans le dictionnaire <code>_ing</code>,</p></li><li id="r-373794" data-claire-element-id="373794"><p id="r-373793" data-claire-element-id="373793">d'ajouter une méthode <code>pain_pita</code>.</p></li></ul></li></ul><p id="r-373798" data-claire-element-id="373798">En bref, notre classe <code>Kebab</code> doit tout savoir des personnalisations possibles : si on veut faire évoluer l'application, nous sommes obligés d'accumuler des modifications dans cette classe, ce qui risque, avec le temps, de la rendre très lourde et illisible. En bref, cela viole le grand principe « <em>Open-Closed</em> » (ou « principe d'ouverture-fermeture ») de la POO.</p><p id="r-373799" data-claire-element-id="373799">Pour ceux qui ne le connaîtraient pas encore, je vous rappelle l'énoncé (très zen) de ce principe :</p><p id="r-373800" data-claire-element-id="373800"><em>Oooohhhhhhmmm…</em></p><aside id="r-373802" data-claire-element-id="373802" data-claire-semantic="information"><p id="r-373801" data-claire-element-id="373801"><strong>« Une classe doit être FERMÉE à la modification, mais OUVERTE à l'extension. »</strong></p></aside><p id="r-373803" data-claire-element-id="373803"><em>Amen.</em></p><p id="r-373804" data-claire-element-id="373804">Cela se justifie très simplement : modifier une classe ou une méthode, c'est risquer d'introduire des bugs ou des effets de bord. Seulement une application étant constamment sujette au changement, il faut quand même que nos classes soient réutilisables, même lors d'une évolution de l'application. En bref : <em>nos classes doivent être définies une bonne fois pour toutes, de telle manière qu'il est facile de les faire évoluer sans les modifier, même dans des cas qui n'étaient pas prévus à la base</em>.</p><p id="r-373805" data-claire-element-id="373805">Ici, ce n'est pas le cas. Notre nouvelle implémentation, quoique bien meilleure que la précédente, est encore insuffisante : elle marche, mais ne peut pas évoluer facilement. Notre problème de conception est donc un peu plus ardu que prévu… Je pense qu'il est temps maintenant de faire appel à un <em>design pattern</em>.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python">Le pattern Decorator en Python</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/introduction-51">
+Introduction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/notre-cas-d-etude-le-macd-halal">
+Notre cas d&#039;étude : le MacD&#039;halal
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/premiers-jets">
+Premiers jets
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/decorator-a-la-rescousse">
+Decorator à la rescousse !
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/decorator-et-les-decorateurs-en-python">
+Decorator et les décorateurs en Python
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/notre-cas-d-etude-le-macd-halal">
+<span class="arrow"></span>
+<span class="next">Notre cas d&#039;étude : le MacD&#039;halal</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/decorator-a-la-rescousse">
+<span class="next">Decorator à la rescousse !</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Decoratorlarescousse"></a><h2>Decorator à la rescousse !</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/premiers-jets">
+<span class="arrow"></span>
+<span class="next">Premiers jets</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/decorator-et-les-decorateurs-en-python">
+<span class="next">Decorator et les décorateurs en Python</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-architecture-generale-du-pattern-decorator" data-claire-element-id="373817">Architecture générale du pattern Decorator</h2><p id="r-373808" data-claire-element-id="373808">Un beau dessin valant parfois mieux qu'un long discours, examinons ensemble le schéma du Decorator tel qu'il est défini dans <a href="http://c2.com/cgi/wiki?DesignPatternsBook">le livre du « Gang of Four »</a>.</p><figure id="r-373810" data-claire-element-id="373811"><img id="r-373809" data-claire-element-id="373809" src="medias/imgur.com_poWnY.png" alt="Image utilisateur"/></figure><p id="r-373812" data-claire-element-id="373812">Ce schéma paraît bien compliqué à première vue. Si vous avez du mal à comprendre le fonctionnement qu'il décrit, ne vous inquiétez pas, nous allons voir tout cela ensemble.</p><p id="r-373813" data-claire-element-id="373813">Dans ce schéma, nous avons une classe principale, le <code>Composant</code> abstrait, qui définit l'interface publique de plusieurs <code>ComposantConcret</code>s. Dans notre cas, le <code>Composant</code> se traduirait par une classe <code>Sandwich</code>, dont dérivent en particulier le <code>Kebab</code>, ainsi que d'autres sandwiches &quot;de base&quot;, mettons le <code>Cheeseburger</code>, par exemple. En clair, le comportement de base des sandwiches est défini dans une classe de plus haut niveau que le <code>Kebab</code>, et chacune des implémentations concrètes précise le comportement du <code>Sandwich</code>. Jusqu'ici, c'est l'expression la plus pure de l'héritage.</p><p id="r-373814" data-claire-element-id="373814">Là où le Decorator se démarque, c'est au niveau de la classe <code>Decorateur</code>. Dans le schéma générique, on définit une interface <code>Decorateur</code> d'où vont dériver de multiples implémentations différentes. Ce qui caractérise ces objets, c'est que non seulement, ils héritent (directement ou non) de l'interface publique de <code>Composant</code>, mais qu'en plus, ils <strong>encapsulent</strong> un <code>Composant</code> (ou une classe concrète dérivée) afin d'en modifier le comportement ou l'état. Sachant qu'un <code>Decorateur</code> EST UN <code>Composant</code>, cela veut dire qu'un <code>Decorateur</code> peut envelopper indifféremment un <code>ComposantConcret</code> ou un autre <code>Decorateur</code>. Vous en comprenez l'intérêt ?</p><p id="r-373815" data-claire-element-id="373815">Dans notre cas, les implémentations concrètes de <code>DecorateurSandwich</code> pourront être <code>Supplement</code> (pour ajouter un ingrédient), <code>ModPain</code> (pour utiliser du pain pita au lieu du pain normal, par exemple), <code>ModViande</code> (pour remplacer le mouton par du poulet), ou <code>RetraitIngredient</code> (pour avoir un kebab « sans oignon »). Étant donné que les décorateurs peuvent s'envelopper les uns les autres, cela va nous permettre de créer toutes les combinaisons de modifications possibles et imaginables, avec très peu d'objets. ;)</p><p id="r-373816" data-claire-element-id="373816">Une remarque importante, c'est que les décorateurs ne sont pas vraiment obligés de tous hériter d'une classe <code>Decorateur</code>. En effet : dans le cas où nos objets sont simples (comme ici), on peut sans crainte créer des décorateurs qui héritent directement de <code>Composant</code>. Cependant, pour cette fois, nous allons respecter scrupuleusement le schéma. ;)</p><h2 id="r-application-du-decorator-a-notre-probleme" data-claire-element-id="373878">Application du Decorator à notre problème</h2><p id="r-373818" data-claire-element-id="373818">Bien ! Les explications que je vous ai données au paragraphe précédent peuvent être résumées dans le schéma suivant :</p><figure id="r-373820" data-claire-element-id="373821"><img id="r-373819" data-claire-element-id="373819" src="medias/imgur.com_DKpwg.png" alt="Image utilisateur"/></figure><p id="r-373822" data-claire-element-id="373822">Voyons comment ceci peut se traduire en code.</p><p id="r-373823" data-claire-element-id="373823">D'abord, la classe <code>Sandwich</code> de base :</p><pre id="r-373824" data-claire-element-id="373824"><code data-claire-semantic="python">from collections import namedtuple
+
+Ingredient = namedtuple('Ingredient', 'prix qte')
+
+class Sandwich:
+    def __init__(self, sauce):
+        self.sauce = sauce
+        self._ing = dict()
+
+    @property
+    def prix(self):
+        return sum(i.prix * i.qte for i in self._ing.values())
+
+    def __repr__(self):
+        return &quot;Sandwich sauce {0}&quot;.format(self.sauce)
+
+    def __str__(self):
+        s = repr(self)
+        for key, it in self._ing.items():
+            s += &quot;\n {1.qte:&gt;2}x {0:&lt;15}{2:&gt;5.2f} €&quot;.format(key, it, it.prix * it.qte)
+        s += &quot;\nTotal               {:&gt;5.2f} €&quot;.format(self.prix)
+        return s</code></pre><p id="r-373825" data-claire-element-id="373825">Un sandwich est caractérisé par sa sauce, ainsi que la liste de ses ingrédients. La somme des <code>prix × quantite</code> des ingrédients constitue le prix du sandwich. Enfin, deux méthodes utilitaires sont créées, l'une pour décrire le sandwich, et l'autre pour donner le détail du prix.</p><p id="r-373826" data-claire-element-id="373826">Voyons maintenant le <code>Kebab</code> :</p><pre id="r-373827" data-claire-element-id="373827"><code data-claire-semantic="python">class Kebab(Sandwich):
+    def __init__(self, sauce):
+        super().__init__(sauce)
+        self._ing['base'] = Ingredient(PRIX_BASE, 1)
+        self._ing['salade'] = Ingredient(PRIX_SALADE, 1)
+        self._ing['tomates'] = Ingredient(PRIX_TOMATES, 1)
+        self._ing['oignons'] = Ingredient(PRIX_OIGNONS, 1)
+        self._ing['frites'] = Ingredient(PRIX_FRITES, 1)
+
+    def __repr__(self):
+        return &quot;Kebab sauce {0}&quot;.format(self.sauce)</code></pre><p id="r-373828" data-claire-element-id="373828">Comme vous le voyez, on se contente de dériver la classe <code>Sandwich</code> et de préciser ses ingrédients (la 'base' représente le pain normal et le mouton).</p><p id="r-373829" data-claire-element-id="373829">Commençons par tester cette partie du code :</p><pre id="r-373830" data-claire-element-id="373830"><code data-claire-semantic="pycon">&gt;&gt;&gt; print(Kebab(&quot;harissa&quot;))
+Kebab sauce harissa
+  1x tomates         0.20 €
+  1x salade          0.20 €
+  1x base            3.00 €
+  1x oignons         0.30 €
+  1x frites          0.50 €
+Total                4.20 €</code></pre><p id="r-373831" data-claire-element-id="373831">Bien. Tout fonctionne.</p><p id="r-373832" data-claire-element-id="373832">Créons maintenant notre classe <code>DecorateurSandwich</code>. Attention les yeux, cette classe est très très compliquée !</p><pre id="r-373833" data-claire-element-id="373833"><code data-claire-semantic="python">class DecorateurSandwich(Sandwich):
+    def __init__(self, sandwich):
+        super().__init__(sandwich.sauce)
+        self.sandwich = sandwich
+        self._ing = sandwich._ing</code></pre><p id="r-373834" data-claire-element-id="373834">Ça fait peur, hein ? :D</p><p id="r-373835" data-claire-element-id="373835">Cette classe remplit le rôle minimal du décorateur</p><ul id="r-373840" data-claire-element-id="373840"><li id="r-373837" data-claire-element-id="373837"><p id="r-373836" data-claire-element-id="373836">elle <strong>encapsule</strong> un <code>Sandwich</code> dont le comportement est destiné à être modifié.</p></li><li id="r-373839" data-claire-element-id="373839"><p id="r-373838" data-claire-element-id="373838">elle <strong>se fait passer pour</strong> le <code>Sandwich</code> décoré, de telle manière que le code qui utilisera ce décorateur aura l'impression de traiter directement le <code>Sandwich</code> et n'y verra que du feu. :ninja:</p></li></ul><p id="r-373841" data-claire-element-id="373841">C'est pour gérer le second aspect que l'on récupère une référence du membre <code>_ing</code> (le dictionnaire d'ingrédients) du sandwich décoré dans le membre <code>_ing</code> du décorateur : en modifiant les ingrédients du <code>DecorateurSandwich</code> on modifiera directement les ingrédients du <code>Sandwich</code> décoré. ;)</p><p id="r-373842" data-claire-element-id="373842">Essayons maintenant de modéliser un premier décorateur : le retrait d'ingrédients.</p><pre id="r-373843" data-claire-element-id="373843"><code data-claire-semantic="python">class RetraitIngredient(DecorateurSandwich):
+    def __init__(self, sandwich, ingredient):
+        super().__init__(sandwich)
+        # suppression de l'ingrédient voulu
+        self.retrait = None
+        if ingredient in self._ing:
+            del self._ing[ingredient]
+            self.retrait = ingredient
+
+    def __repr__(self):
+        r = repr(self.sandwich)
+        # Ajout de la mention &quot;sans X&quot; si un ingrédient 
+        # a bien été retiré
+        if self.retrait is not None:
+            r += &quot;, sans {0}&quot;.format(self.retrait)
+        return r</code></pre><p id="r-373844" data-claire-element-id="373844">Comme vous le voyez, c'est extrêmement simple. Une fois que le constructeur de la classe mère <code>DecorateurSandwich</code> a été appelé, on n'a plus qu'à travailler sur les membres de notre classe exactement comme si l'on modifiait le sandwich décoré de l'intérieur.</p><p id="r-373845" data-claire-element-id="373845">Regardez le résultat.</p><pre id="r-373846" data-claire-element-id="373846"><code data-claire-semantic="pycon">&gt;&gt;&gt; a = Kebab(&quot;harissa&quot;)
+&gt;&gt;&gt; print(a)
+Kebab sauce harissa
+  1x tomates         0.20 €
+  1x salade          0.20 €
+  1x base            3.00 €
+  1x oignons         0.30 €
+  1x frites          0.50 €
+Total                4.20 €
+&gt;&gt;&gt; a = RetraitIngredient(a, &quot;oignons&quot;) # retrait d'un ingrédient
+&gt;&gt;&gt; print(a)
+Kebab sauce harissa, sans oignons
+  1x tomates         0.20 €
+  1x salade          0.20 €
+  1x base            3.00 €
+  1x frites          0.50 €
+Total                3.90 €
+&gt;&gt;&gt; a = RetraitIngredient(a, &quot;champignons&quot;) # retrait d'un ingrédient inexistant
+&gt;&gt;&gt; print(a) # aucun effet
+Kebab sauce harissa, sans oignons
+  1x tomates         0.20 €
+  1x salade          0.20 €
+  1x base            3.00 €
+  1x frites          0.50 €
+Total                3.90 €
+&gt;&gt;&gt; a = RetraitIngredient(a, &quot;frites&quot;) # retrait d'un nouvel ingrédient
+&gt;&gt;&gt; print(a)
+Kebab sauce harissa, sans oignons, sans frites
+  1x tomates         0.20 €
+  1x salade          0.20 €
+  1x base            3.00 €
+Total                3.40 €</code></pre><p id="r-373847" data-claire-element-id="373847">Magique, non ?<br/> On peut d'ailleurs créer quelques fonctions utilitaires pour alléger la syntaxe :</p><pre id="r-373848" data-claire-element-id="373848"><code data-claire-semantic="python">def sans_oignon(sandwich):
+    return RetraitIngredient(sandwich, 'oignons')
+
+def sans_frite(sandwich):
+    return RetraitIngredient(sandwich, 'frites')
+
+def sans_salade(sandwich):
+    return RetraitIngredient(sandwich, 'salade')
+
+def sans_tomate(sandwich):
+    return RetraitIngredient(sandwich, 'tomates')</code></pre><p id="r-373849" data-claire-element-id="373849">Ce qui peut nous permettre de faire quelque chose comme :</p><pre id="r-373850" data-claire-element-id="373850"><code data-claire-semantic="pycon">&gt;&gt;&gt; a = sans_frite(sans_oignon(sans_tomate(Kebab(&quot;ketchup&quot;))))
+&gt;&gt;&gt; print(a)
+Kebab sauce ketchup, sans tomates, sans oignons, sans frites 
+  1x salade          0.20 €
+  1x base            3.00 €
+Total                3.20 €</code></pre><p id="r-373851" data-claire-element-id="373851">Vous devriez commencer à sentir la puissance des décorateurs, maintenant. ;)</p><p id="r-373852" data-claire-element-id="373852">Poursuivons et essayons d'implémenter le <code>Supplement</code>.</p><pre id="r-373853" data-claire-element-id="373853"><code data-claire-semantic="python">class Supplement(DecorateurSandwich):
+    def __init__(self, sandwich, ingredient, prix):
+        super().__init__(sandwich)
+        # ajout de l'ingrédient voulu
+        prix, qte = self._ing.get(ingredient, Ingredient(prix, 0))
+        self.ajout = ingredient 
+        self._ing[ingredient] = Ingredient(prix, qte+1)
+
+    def __repr__(self):
+        r = repr(self.sandwich)
+        s = &quot;, supplément {0}&quot;.format(self.ajout)
+        if s not in r:
+            r += s
+        return r
+
+def supp_fromage(sandwich):
+    return Supplement(sandwich, 'fromage', PRIX_FROMAGE)
+ 
+def supp_oignon(sandwich):
+    return Supplement(sandwich, 'oignons', PRIX_OIGNONS)</code></pre><p id="r-373854" data-claire-element-id="373854">Aucune réelle difficulté, si ce n'est qu'il faut faire attention à ne pas se répéter dans le libellé lorsque l'on applique plusieurs suppléments identiques. Remarquez l'utilisation de la méthode <code>get</code> du dictionnaire <code>_ing</code> qui permet de récupérer une valeur par défaut si aucun élément du dictionnaire ne correspond à la clé donnée.</p><p id="r-373855" data-claire-element-id="373855">Voyons le résultat :</p><pre id="r-373856" data-claire-element-id="373856"><code data-claire-semantic="pycon">&gt;&gt;&gt; a = supp_fromage(supp_oignon(supp_fromage(Kebab(&quot;ketchup&quot;))))
+&gt;&gt;&gt; print(a)
+Kebab sauce ketchup, supplément fromage, supplément oignons
+  1x salade          0.20 €
+  2x oignons         0.60 €
+  1x frites          0.50 €
+  2x fromage         1.00 € 
+  1x tomates         0.20 €
+  1x base            3.00 €
+Total                5.50 €</code></pre><p id="r-373857" data-claire-element-id="373857">Comme vous le constatez, on applique un double supplément fromage et un simple supplément oignon à notre Kebab. Le libellé reste lisible, et toutes les modifications sont prises en compte dans le prix.</p><p id="r-373858" data-claire-element-id="373858">Il ne reste plus que deux décorateurs à créer : le modificateur de viande, et le modificateur de pain. Ces deux classes sont tellement semblables que l'on pourrait même les réunir en une seule classe. Cependant, utiliser deux classes séparées permet de s'assurer plus simplement que l'on n'effectue pas plusieurs fois une même modification (si le client décide de changer la viande pour &quot;poulet&quot;, &quot;oh puis non en fait dinde&quot;, il n'a pas à payer deux fois la modification).</p><pre id="r-373859" data-claire-element-id="373859"><code data-claire-semantic="python">class ModViande(DecorateurSandwich):
+    def __init__(self, sandwich, viande):
+        super().__init__(sandwich)
+        self.viande = viande
+        self.deja_fait = &quot;mod viande&quot; in self._ing
+        if not self.deja_fait:
+            self._ing[&quot;mod viande&quot;] = Ingredient(PRIX_MOD_VIANDE, 1)
+
+    def __repr__(self):
+        s = &quot; mod viande {0}&quot;.format(self.viande)
+        r = repr(self.sandwich).split(',')
+        if not self.deja_fait:
+            r.append(s)
+        else:
+            for idx, elt in enumerate(r):
+                if &quot;mod viande&quot; in elt:
+                    r[idx] = s
+                    break
+        return ','.join(r)
+
+
+class ModPain(DecorateurSandwich):
+    def __init__(self, sandwich, pain):
+        super().__init__(sandwich)
+        self.pain = pain
+        self.deja_fait = &quot;mod pain&quot; in self._ing
+        if not self.deja_fait:
+            self._ing[&quot;mod pain&quot;] = Ingredient(PRIX_MOD_PAIN, 1)
+
+    def __repr__(self):
+        s = &quot; pain {0}&quot;.format(self.pain)
+        r = repr(self.sandwich).split(',')
+        if not self.deja_fait:
+            r.append(s)
+        else:
+            for idx, elt in enumerate(r):
+                if &quot;pain&quot; in elt:
+                    r[idx] = s
+                    break
+        return ','.join(r)
+
+
+def mod_poulet(sandwich):
+    return ModViande(sandwich, 'poulet')
+
+def mod_dinde(sandwich):
+    return ModViande(sandwich, 'dinde')
+
+def mod_pita(sandwich):
+    return ModPain(sandwich, 'pita')</code></pre><p id="r-373860" data-claire-element-id="373860">Et voilà le résultat :</p><pre id="r-373861" data-claire-element-id="373861"><code data-claire-semantic="pycon">&gt;&gt;&gt; a = mod_dinde(mod_pita(Kebab(&quot;ketchup&quot;)))
+&gt;&gt;&gt; print(a)
+Kebab sauce ketchup, pain pita, mod viande dinde
+  1x mod viande      0.20 €
+  1x salade          0.20 €
+  1x oignons         0.30 €
+  1x frites          0.50 €
+  1x tomates         0.20 €
+  1x base            3.00 €
+  1x mod pain        0.20 €
+Total                4.60 €
+&gt;&gt;&gt; a = mod_poulet(a)
+&gt;&gt;&gt; print(a)
+Kebab sauce ketchup, pain pita, mod viande poulet
+  1x mod viande      0.20 €
+  1x salade          0.20 €
+  1x oignons         0.30 €
+  1x frites          0.50 €
+  1x tomates         0.20 €
+  1x base            3.00 €
+  1x mod pain        0.20 €
+Total                4.60 €</code></pre><p id="r-373862" data-claire-element-id="373862">Comme vous pouvez le voir, le libellé du sandwich a bien mémorisé la deuxième modification pour la viande, mais le prix n'a heureusement pas été affecté. ;)</p><p id="r-373863" data-claire-element-id="373863">Voilà, nous avons terminé d'implémenter les personnalisations prévues par le cahier des charges initial. Testons un peu la bestiole et commandons un « kebab mayo/harissa, avec pain pita, au poulet, avec supplément fromage et sans oignon » :</p><pre id="r-373864" data-claire-element-id="373864"><code data-claire-semantic="pycon">&gt;&gt;&gt; a = sans_oignon(supp_fromage(mod_poulet(mod_pita(Kebab(&quot;mayo/harissa&quot;)))))
+&gt;&gt;&gt; print(a)
+Kebab sauce mayo/harissa, pain pita, mod viande poulet, supplément fromage, sans oignons
+  1x mod viande      0.20 €
+  1x salade          0.20 €
+  1x frites          0.50 €
+  1x fromage         0.50 €
+  1x tomates         0.20 €
+  1x base            3.00 €
+  1x mod pain        0.20 €
+Total                4.80 €</code></pre><p id="r-373865" data-claire-element-id="373865">Bon appétit ! :D</p><p id="r-373866" data-claire-element-id="373866">Prenons un peu de recul :</p><ul id="r-373875" data-claire-element-id="373875"><li id="r-373868" data-claire-element-id="373868"><p id="r-373867" data-claire-element-id="373867">Toutes les modifications que nous avons prévues sont modélisées par une classe.</p></li><li id="r-373870" data-claire-element-id="373870"><p id="r-373869" data-claire-element-id="373869">Nous n'avons pas eu besoin de créer trop de classes (une par type de modification).</p></li><li id="r-373872" data-claire-element-id="373872"><p id="r-373871" data-claire-element-id="373871">Nos classes <code>Sandwich</code> et <code>Kebab</code> n'ont été définies qu'une fois et une seule, et nous n'avons pas eu besoin d'y retoucher.</p></li><li id="r-373874" data-claire-element-id="373874"><p id="r-373873" data-claire-element-id="373873">La syntaxe des modifications est ridiculement simple à utiliser.</p></li></ul><p id="r-373876" data-claire-element-id="373876">On est bien loin de notre explosion combinatoire du premier jet, et de la classe &quot;qui-fait-tout, qui-sait tout&quot; du second essai.</p><p id="r-373877" data-claire-element-id="373877">Avouez qu'il s'agit là d'une solution puissante et élégante !<br/> Mais le meilleur reste à venir, <em>vous n'avez encore rien vu…</em> :p</p><h2 id="r-quand-le-patron-a-encore-une-nouvelle-idee" data-claire-element-id="373905">Quand le patron a (encore) une nouvelle idée…</h2><p id="r-373879" data-claire-element-id="373879">Pour bien mesurer la puissance réelle du Decorator, faites-moi le plaisir de réfléchir aux questions suivantes. Vous devriez vous émerveiller devant la simplicité des réponses. ;)</p><ul id="r-373886" data-claire-element-id="373886"><li id="r-373881" data-claire-element-id="373881"><p id="r-373880" data-claire-element-id="373880"><em>Imaginons que le patron décide d'ajouter un nouvel ingrédient possible en supplément (les épices du chef), comment feriez-vous pour gérer cela dans le code ?</em></p></li><li id="r-373883" data-claire-element-id="373883"><p id="r-373882" data-claire-element-id="373882"><em>Comment vous y prendriez-vous pour rendre la sauce personnalisable de manière dynamique (c'est-à-dire APRÈS la création du <code>Sandwich</code>) ?</em></p></li><li id="r-373885" data-claire-element-id="373885"><p id="r-373884" data-claire-element-id="373884"><em>Nous n'avons pas encore défini le sandwich <code>Cheeseburger</code>. Comment l'implémenteriez-vous ? Que remarquez-vous, par rapport aux décorateurs que nous avons déjà définis ?</em></p></li></ul><p id="r-373887" data-claire-element-id="373887">Bien, prenons ces questions dans l'ordre.</p><p id="r-373888" data-claire-element-id="373888">Si le patron voulait ajouter un nouvel ingrédient possible en supplément, nous n'aurions pas besoin de modifier une classe : il nous suffirait de connaître son prix, et d'utiliser le décorateur <code>Supplement</code> pour l'ajouter à un sandwich. Pour faire simple, il suffirait en fait de créer une petite fonction :</p><pre id="r-373889" data-claire-element-id="373889"><code data-claire-semantic="python">PRIX_EPICES = 0.1
+def supp_epices(sandwich):
+    return Supplement(sandwich, 'épices du chef', PRIX_EPICES)</code></pre><p id="r-373890" data-claire-element-id="373890">Vérifions :</p><pre id="r-373891" data-claire-element-id="373891"><code data-claire-semantic="pycon">&gt;&gt;&gt; a = supp_epices(Kebab(&quot;harissa&quot;))
+&gt;&gt;&gt; print(a)
+Kebab sauce harissa, supplément épices du chef
+  1x épices du chef  0.10 €
+  1x salade          0.20 €
+  1x oignons         0.30 €
+  1x frites          0.50 €
+  1x tomates         0.20 €
+  1x base            3.00 €
+Total                4.30 €</code></pre><p id="r-373892" data-claire-element-id="373892">Sans problème ! :soleil: <br/> Aucun code à modifier, seulement une petite fonction rajoutée.</p><p id="r-373893" data-claire-element-id="373893">Maintenant, si l'on voulait modifier dynamiquement la sauce d'un Kebab, qu'aurions-nous besoin de faire ?</p><p id="r-373894" data-claire-element-id="373894">Un nouveau décorateur, vous êtes sûr ?</p><pre id="r-373895" data-claire-element-id="373895"><code data-claire-semantic="pycon">&gt;&gt;&gt; a = Kebab('harissa')
+&gt;&gt;&gt; print(a)
+Kebab sauce harissa
+  1x tomates         0.20 €
+  1x salade          0.20 €
+  1x base            3.00 €
+  1x oignons         0.30 €
+  1x frites          0.50 €
+Total                4.20 €
+&gt;&gt;&gt; a.sauce = 'ketchup'
+&gt;&gt;&gt; print(a)
+Kebab sauce ketchup
+  1x tomates         0.20 €
+  1x salade          0.20 €
+  1x base            3.00 €
+  1x oignons         0.30 €
+  1x frites          0.50 €
+Total                4.20 €</code></pre><p id="r-373896" data-claire-element-id="373896">C'était une question piège. :diable:</p><p id="r-373897" data-claire-element-id="373897">Le décorateur n'est pas la réponse à toutes les modifications dynamiques d'un objet ! Si la classe <code>Sandwich</code> a un membre <code>sauce</code> modifiable sans répercussion sur le prix, il est inutile de créer une nouvelle classe : le comportement est déjà implémenté. Souvenez-vous : le décorateur sert à <strong>modifier le comportement</strong> d'une classe. Autrement dit, il sert à rendre une classe capable de faire quelque chose de légèrement différent que ce que ses méthodes actuelles lui permettent de faire.</p><p id="r-373898" data-claire-element-id="373898">Bien ! Créons un <code>Cheeseburger</code>, maintenant. Ce n'est pas tellement différent d'un <code>Kebab</code>, en fait. Regardez, seule la composition change :</p><pre id="r-373899" data-claire-element-id="373899"><code data-claire-semantic="python">class Cheeseburger(Sandwich):
+    def __init__(self, sauce):
+        super().__init__(sauce)
+        self._ing['base'] = Ingredient(PRIX_BASE_CHEESE, 1)
+        self._ing['steak'] = Ingredient(PRIX_STEAK, 1)
+        self._ing['salade'] = Ingredient(PRIX_SALADE, 1)
+        self._ing['tomates'] = Ingredient(PRIX_TOMATES, 1)
+        self._ing['oignons'] = Ingredient(PRIX_OIGNONS, 1)
+        self._ing['fromage'] = Ingredient(PRIX_FROMAGE, 2)
+        self._ing['cornichons'] = Ingredient(PRIX_CORNICHONS, 1)
+
+    def __repr__(self):
+        return &quot;Cheeseburger sauce {0}&quot;.format(self.sauce)</code></pre><p id="r-373900" data-claire-element-id="373900">Et puis, pour la peine, essayons directement de faire un cheeseburger sans oignon. :p</p><pre id="r-373901" data-claire-element-id="373901"><code data-claire-semantic="pycon">&gt;&gt;&gt; a = sans_oignon(Cheeseburger('ketchup/mayo'))
+&gt;&gt;&gt; print(a)
+Cheeseburger sauce ketchup/mayo, sans oignons
+  1x cornichons      0.10 €
+  1x salade          0.20 €
+  2x fromage         1.00 €
+  1x tomates         0.20 €
+  1x base            2.00 €
+  1x steak           0.50 €
+Total                4.00 €</code></pre><p id="r-373902" data-claire-element-id="373902">Parfait ! Non seulement c'est très simple, mais en plus, les décorateurs que l'on avait créés pour le <code>Kebab</code> fonctionnent AUSSI avec le <code>Cheeseburger</code> (dans la limite du bon sens, bien sûr : je n'ai jamais vu de « Cheeseburger pain pita » personnellement :D).</p><p id="r-373903" data-claire-element-id="373903">Cela signifie que notre application peut être étendue non seulement en créant de nouveaux décorateurs, mais aussi en créant de nouvelles sous-classes de <code>Sandwich</code> qui seront automatiquement compatibles avec les décorateurs existants. Et tout ça, sans jamais modifier ne serait-ce qu'un caractère des classes et fonctions que nous avons déjà écrites.</p><p id="r-373904" data-claire-element-id="373904">La grande classe ! :soleil:</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python">Le pattern Decorator en Python</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/introduction-51">
+Introduction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/notre-cas-d-etude-le-macd-halal">
+Notre cas d&#039;étude : le MacD&#039;halal
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/premiers-jets">
+Premiers jets
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/decorator-a-la-rescousse">
+Decorator à la rescousse !
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/decorator-et-les-decorateurs-en-python">
+Decorator et les décorateurs en Python
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/premiers-jets">
+<span class="arrow"></span>
+<span class="next">Premiers jets</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/decorator-et-les-decorateurs-en-python">
+<span class="next">Decorator et les décorateurs en Python</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="DecoratoretlesdcorateursenPython"></a><h2>Decorator et les décorateurs en Python</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/decorator-a-la-rescousse">
+<span class="arrow"></span>
+<span class="next">Decorator à la rescousse !</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-rappel-sur-les-decorateurs-de-python" data-claire-element-id="373929">Rappel sur les décorateurs de Python</h2><p id="r-373907" data-claire-element-id="373907">Comme vous le savez probablement, Python possède une syntaxe permettant de « décorer » des fonctions ou des classes, de manière élégante. Nous l'avons d'ailleurs utilisée dans ce tutoriel. Regardez la méthode <code>prix</code> de la classe <code>Sandwich</code>.</p><pre id="r-373908" data-claire-element-id="373908"><code data-claire-semantic="python">class Sandwich:
+    # …
+    @property
+    def prix():
+        # définition de la méthode
+    # …</code></pre><p id="r-373909" data-claire-element-id="373909">Le <code data-claire-semantic="python">@property </code> signifie que l'on a décoré la méthode <code>prix</code> de manière à en faire une propriété.<br/> Cette syntaxe revient exactement à faire la chose suivante :</p><pre id="r-373910" data-claire-element-id="373910"><code data-claire-semantic="python">class Sandwich:
+    # …
+    def prix():
+        # définition de la méthode
+    
+    prix = property(prix)
+    # …</code></pre><p id="r-373911" data-claire-element-id="373911">Le premier exemple est simplement <em>beaucoup plus lisible</em> que le second, et c'est ce qui fait tout l'intérêt de cette syntaxe.</p><p id="r-373912" data-claire-element-id="373912">Maintenant, cassons tout de suite le mythe : ces décorateurs Python, ce sont le plus souvent de simples fonctions. En fait, le seul pré-requis pour qu'un objet puisse utiliser la syntaxe &quot;<code data-claire-semantic="python">@truc </code>&quot;, c'est qu'il soit « <em>appelable</em> » (<em>callable</em> en anglais), c'est-à-dire qu'il réagisse à l'opérateur <code>()</code>, avec un seul argument, et qu'il retourne une valeur. Cela veut dire que certaines classes peuvent être utilisées avec cette syntaxe. Mais cela dépasse un peu la portée de ce tutoriel.</p><p id="r-373913" data-claire-element-id="373913">Je ne vais pas vous faire tout un cours sur la décoration de fonctions en Python (<a href="http://www.siteduzero.com/tutoriel-3-323958-les-decorateurs.html">le tutoriel de prolixe et 6prien</a> le fait déjà très bien), mais je pense qu'un petit rappel, pour faire la connexion avec la suite, s'impose.</p><p id="r-373914" data-claire-element-id="373914">L'utilisation la plus classique de ces décorateurs consiste à <strong>modifier le comportement</strong> d'une fonction, de manière transparente (c'est-à-dire que le code appelant a vraiment l'impression d'utiliser la fonction qu'il appelle, et pas un décorateur).</p><p id="r-373915" data-claire-element-id="373915">Voici un exemple d'utilisation typique : nous allons créer un décorateur de fonction qui, à chaque appel de la fonction décorée, va afficher sa valeur de retour dans la console.</p><pre id="r-373916" data-claire-element-id="373916"><code data-claire-semantic="python">def log_console(fonction):
+    # On définit une fonction &quot;usurpatrice&quot; qui se fera passer pour
+    # la fonction décorée.
+    def fct_usurpatrice(*args, **kwargs):
+        # on appelle la fonction décorée avec les arguments que 
+        # l'utilisateur voulait lui passer à la base
+        # et on stocke le résultat.
+        resultat = fonction(*args, **kwargs)
+        # comportement ajouté : on affiche le résultat
+        print('Appel de {0}: {1}'.format(fonction.__name__, resultat))
+        # on retourne le résultat : l'utilisateur n'y voit que du feu
+        return resultat
+    # Maintenant, on retourne la fonction &quot;usurpatrice&quot;.
+    return fct_usurpatrice</code></pre><p id="r-373917" data-claire-element-id="373917">Bien, maintenant, appliquons-le, pas à pas.<br/> Créons d'abord une fonction toute bête :</p><pre id="r-373918" data-claire-element-id="373918"><code data-claire-semantic="python">def addition(a, b):
+    return a + b</code></pre><p id="r-373919" data-claire-element-id="373919">Maintenant, appliquons-lui notre décorateur, et stockons le résultat dans une autre variable :</p><pre id="r-373920" data-claire-element-id="373920"><code data-claire-semantic="pycon">&gt;&gt;&gt; add_decoree = log_console(addition)
+&gt;&gt;&gt; add_decoree
+&lt;function fct_usurpatrice at 0x953f96c&gt;</code></pre><p id="r-373921" data-claire-element-id="373921">Voilà qui est intéressant : <code>add_decoree</code> est une fonction, et c'est la fonction que nous avons définie dans le décorateur ! Maintenant, si on l'appelle, cela donne ce qui suit :</p><pre id="r-373922" data-claire-element-id="373922"><code data-claire-semantic="pycon">&gt;&gt;&gt; add_decoree(2, 2)
+Appel de addition: 4       # fct_usurpatrice affiche le résultat de la fonction &quot;addition&quot;
+4                          # le résultat est ensuite retourné</code></pre><p id="r-373923" data-claire-element-id="373923">Maintenant, pourquoi avoir appelé la fonction <code>fct_usurpatrice</code> ? Eh bien, regardons ce qui se passe lorsque l'on décore la fonction <code>addition</code> avec la syntaxe prévue à cet effet.</p><pre id="r-373924" data-claire-element-id="373924"><code data-claire-semantic="python">@log_console
+def addition(a, b):
+    return a+b</code></pre><p id="r-373925" data-claire-element-id="373925">À quoi correspond maintenant le symbole <code>addition</code> ?</p><pre id="r-373926" data-claire-element-id="373926"><code data-claire-semantic="pycon">&gt;&gt;&gt; addition
+&lt;function fct_usurpatrice at 0x885e96c&gt;
+&gt;&gt;&gt; addition(3, 2)
+Appel de addition: 5
+5</code></pre><p id="r-373927" data-claire-element-id="373927">Tout simplement ! Le décorateur a remplacé la fonction de base, il a « usurpé son identité ». Cependant, la fonction usurpatrice reproduit le comportement de la fonction décorée. C'est ce qui fait que tout est « silencieux » dans ce processus. On a simplement ajouté un comportement à cette fonction, sans modifier son code ni altérer son comportement existant.</p><p id="r-373928" data-claire-element-id="373928">Je pense que vous faites maintenant le rapprochement avec ce que nous avons fait tout le long de ce tutoriel, non ? ;)</p><h2 id="r-decoration-statique-ou-dynamique" data-claire-element-id="373937">Décoration statique ou dynamique</h2><p id="r-373930" data-claire-element-id="373930">Réfléchissons : quelle est la différence entre la décoration permise par la syntaxe de Python, et la décoration d'objets telle que nous l'avons pratiquée avec nos sandwiches ?</p><p id="r-373931" data-claire-element-id="373931">Est-ce que c'est que dans un cas, nous avons décoré des fonctions, et dans l'autre des objets ?</p><p id="r-373932" data-claire-element-id="373932">Pas tout à fait. En soi, une fonction est un objet comme un autre : on peut les assigner à une variable, les passer à d'autres fonctions, et même leur ajouter des attributs si ça nous chante ! Alors c'est quoi, la différence ?</p><p id="r-373933" data-claire-element-id="373933">Examinons la question sous un autre angle : pourquoi ne pourrait-on pas utiliser la syntaxe en <code data-claire-semantic="python">@truc </code> dans l'exemple de nos sandwiches ?</p><p id="r-373934" data-claire-element-id="373934"><em>Parce que la syntaxe en <code data-claire-semantic="python">@truc </code> sert à décorer une fonction ou une classe de façon définitive</em> : toutes les instances de la fonction ou de la classe seront-elles aussi décorées. Autrement dit, la syntaxe en <code data-claire-semantic="python">@truc </code> est une décoration <strong>statique</strong>.</p><p id="r-373935" data-claire-element-id="373935">Dans notre étude de cas, nous avions besoin de décorer les objets suivant les goûts du client : ces modifications sont par nature imprévisibles, il faut qu'elles soient faites de manière <strong>dynamique</strong>, à l'exécution, et sur des objets (des instances) plutôt que sur des classes. <br/> La voilà, la différence. ;)</p><p id="r-373936" data-claire-element-id="373936">Par contre, dans les deux cas, le principe de décoration est exactement le même : il s'agit d'<strong>envelopper</strong> l'objet (ou la fonction, ou la classe) décoré(e) pour <strong>modifier légèrement son comportement</strong>, tout <strong>en se faisant passer pour</strong> lui(elle).</p><h2 id="r-juste-pour-rigoler-decorons-nos-decorateurs-pour-les-rendre-plus-jolis" data-claire-element-id="373964">Juste pour rigoler : décorons nos décorateurs pour les rendre plus jolis !</h2><figure id="r-373939" data-claire-element-id="373940"><img id="r-373938" data-claire-element-id="373938" src="medias/i.imgur.com_XGyEh.jpg" alt="Image utilisateur"/></figure><p id="r-373941" data-claire-element-id="373941">Ce paragraphe, totalement facultatif, est là à titre ludique, « pour le fun ». Nous allons tenter d'utiliser les décorateurs en <code>@truc</code> de Python pour rendre notre application un peu plus <em>sexy</em> à utiliser (sans en modifier le code, bien évidemment). D'ailleurs, j'en profite pour remercier <a href="http://www.siteduzero.com/membres-294-67116.html">ordiclic</a> pour m'en avoir inspiré l'idée. ;)</p><p id="r-373942" data-claire-element-id="373942">Reprenons donc notre application, et regardons bien la syntaxe utilisée pour définir notre kebab « mayo/harissa, avec pain pita, au poulet, avec supplément fromage et sans oignon » :</p><pre id="r-373943" data-claire-element-id="373943"><code data-claire-semantic="pycon">&gt;&gt;&gt; a = sans_oignon(supp_fromage(mod_poulet(mod_pita(Kebab(&quot;mayo/harissa&quot;)))))
+&gt;&gt;&gt; print(a)
+Kebab sauce mayo/harissa, pain pita, mod viande poulet, supplément fromage, sans oignons
+  1x mod viande      0.20 €
+  1x salade          0.20 €
+  1x frites          0.50 €
+  1x fromage         0.50 €
+  1x tomates         0.20 €
+  1x base            3.00 €
+  1x mod pain        0.20 €
+Total                4.80 €</code></pre><p id="r-373944" data-claire-element-id="373944">Bien que cela fonctionne très bien, il faut quand même avouer qu'en suivant la PEP-8, cette syntaxe n'est pas très jolie à regarder : on est obligé d'écrire les décorateurs dans l'ordre inverse de leur application, et tous les appels de fonction sont imbriqués les uns dans les autres.</p><p id="r-373945" data-claire-element-id="373945">Ce qui serait sympa, ce serait que l'on puisse obtenir le même résultat avec la syntaxe suivante :</p><pre id="r-373946" data-claire-element-id="373946"><code data-claire-semantic="pycon">&gt;&gt;&gt; a = Kebab(&quot;mayo/harissa&quot;) &lt;&lt; sans_oignon &lt;&lt; supp_fromage &lt;&lt; mod_poulet &lt;&lt; mod_pita</code></pre><p id="r-373947" data-claire-element-id="373947">Commençons par réfléchir sur un cas « simple ». Essayons de faire en sorte que la syntaxe suivante :</p><pre id="r-373948" data-claire-element-id="373948"><code data-claire-semantic="python">a = Kebab(&quot;mayo/harissa&quot;) &lt;&lt; sans_oignon</code></pre><p id="r-373949" data-claire-element-id="373949">devienne équivalente à cela :</p><pre id="r-373950" data-claire-element-id="373950"><code data-claire-semantic="python">a = sans_oignon(Kebab(&quot;mayo/harissa&quot;))</code></pre><p id="r-373951" data-claire-element-id="373951">A priori, il suffit de surcharger l'opérateur <code>&lt;&lt;</code> de la classe <code>Kebab</code>. Dans <a href="http://docs.python.org/reference/datamodel.html">la documentation de Python</a> on pourra se rendre compte que la syntaxe <code>a &lt;&lt; b</code> est interprétée comme <code>a.__lshift__(b)</code>.</p><p id="r-373952" data-claire-element-id="373952">On peut donc essayer de faire notre surcharge d'opérateur en mode « <em>monkey patching</em> », comme ceci :</p><pre id="r-373953" data-claire-element-id="373953"><code data-claire-semantic="pycon">&gt;&gt;&gt; applique = lambda objet, fonction: fonction(objet)
+&gt;&gt;&gt; Kebab.__lshift__ = applique # surcharge de l'opérateur &quot;&lt;&lt;&quot;
+&gt;&gt;&gt; a = Kebab(&quot;mayo/harissa&quot;) &lt;&lt; sans_oignon
+&gt;&gt;&gt; print(a)
+Kebab sauce mayo/harissa, sans oignons
+  1x tomates         0.20 €
+  1x salade          0.20 €
+  1x base            3.00 €
+  1x frites          0.50 €
+Total                3.90 €</code></pre><p id="r-373954" data-claire-element-id="373954">Eurêka ! Notre Kebab est devenu « joliment décorable » grâce à une simple surcharge de fonction.</p><p id="r-373955" data-claire-element-id="373955">Étape suivante : plutôt que de faire ce « <em>monkey patching</em> » de manière explicite, pourquoi n'essayerions-nous pas de créer un décorateur statique qui ferait la même chose ?</p><p id="r-373956" data-claire-element-id="373956">Cela devrait être faisable. Il suffit que notre décorateur prenne une classe en argument (comme <code>Kebab</code>), surcharge sa méthode <code>__lshift__</code>, puis retourne la classe ainsi modifiée.</p><pre id="r-373957" data-claire-element-id="373957"><code data-claire-semantic="python">def decorable(cls):
+    cls.__lshift__ = lambda objet, fonction: fonction(objet)
+    return cls</code></pre><p id="r-373958" data-claire-element-id="373958">Et puis tant qu'à faire, si on appliquait directement ce décorateur à la classe <code>Sandwich</code> ?</p><pre id="r-373959" data-claire-element-id="373959"><code data-claire-semantic="python">@decorable
+class Sandwich:
+    # …</code></pre><p id="r-373960" data-claire-element-id="373960">Ah mais attendez, si on a surchargé la classe <code>Sandwich</code> ça veut dire que tous nos <code>DecorateurSandwich</code>s concrets sont aussi surchargés, puisqu'ils en héritent !</p><p id="r-373961" data-claire-element-id="373961">Allez, soyons fous, et faisons directement le test de la mort :</p><pre id="r-373962" data-claire-element-id="373962"><code data-claire-semantic="pycon">&gt;&gt;&gt; a = Cheeseburger('ketchup/mayo') &lt;&lt; sans_oignon &lt;&lt; supp_fromage
+&gt;&gt;&gt; print(a)
+Cheeseburger sauce ketchup/mayo, sans oignons, supplément fromage
+  1x cornichons      0.10 €
+  1x salade          0.20 €
+  3x fromage         1.50 €
+  1x tomates         0.20 €
+  1x base            2.00 €
+  1x steak           0.50 €
+Total                4.50 €</code></pre><p id="r-373963" data-claire-element-id="373963">Magique ! :magicien:</p><h2 id="r-les-idees-a-emporter" data-claire-element-id="373986">Les idées « à emporter »</h2><p id="r-373965" data-claire-element-id="373965">Il est temps maintenant de récapituler tout ce que nous avons appris dans ce tutoriel.</p><ul id="r-373982" data-claire-element-id="373982"><li id="r-373967" data-claire-element-id="373967"><p id="r-373966" data-claire-element-id="373966">Un <em>design pattern</em> est <strong>une solution générique</strong> à un problème de conception donné. Chaque <em>design pattern</em> porte <strong>un nom</strong> pour faciliter la communication entre développeurs.</p></li><li id="r-373969" data-claire-element-id="373969"><p id="r-373968" data-claire-element-id="373968">Il ne faut pas utiliser systématiquement l'héritage pour modifier le comportement d'une classe : il existe des cas où cela transforme une application en cauchemar pour les développeurs.</p></li><li id="r-373971" data-claire-element-id="373971"><p id="r-373970" data-claire-element-id="373970">« Si vous <strong>pensez</strong> avoir besoin de l'héritage multiple, alors c'est probablement une mauvaise idée. Si vous <strong>savez</strong> que vous avez besoin de l'héritage multiple, alors c'est sûrement la seule solution ».</p></li><li id="r-373973" data-claire-element-id="373973"><p id="r-373972" data-claire-element-id="373972">Le principe d'ouverture-fermeture : « Une classe doit être <strong>fermée à la modification</strong>, mais <strong>ouverte à l'extension</strong> ».</p></li><li id="r-373975" data-claire-element-id="373975"><p id="r-373974" data-claire-element-id="373974">Le <em>pattern</em> Decorator consiste à créer des classes qui <strong>encapsulent et héritent</strong> de la même interface publique que les objets qu'elles enveloppent.</p></li><li id="r-373977" data-claire-element-id="373977"><p id="r-373976" data-claire-element-id="373976">La décoration consiste à <strong>envelopper</strong> un objet pour en <strong>modifier légèrement</strong> le comportement, tout <strong>en se faisant passer</strong> pour lui.</p></li><li id="r-373979" data-claire-element-id="373979"><p id="r-373978" data-claire-element-id="373978">La syntaxe <code data-claire-semantic="python">@truc </code> de Python permet une décoration <strong>statique</strong>, alors que le <em>pattern</em> Decorator décrit une décoration <strong>dynamique</strong>.</p></li><li id="r-373981" data-claire-element-id="373981"><p id="r-373980" data-claire-element-id="373980">La surcharge d'opérateurs <em>via</em> un décorateur statique de classe, c'est sexy. :-°</p></li></ul><p id="r-373983" data-claire-element-id="373983">Nous arrivons à la fin de ce tutoriel. J'espère qu'il vous aura fait réfléchir et découvrir de nouvelles choses. Je vous remercie d'avoir pris le temps de le lire.</p><p id="r-373984" data-claire-element-id="373984">À bientôt pour de nouvelles aventures !</p><p id="r-373985" data-claire-element-id="373985"><strong>Remerciements</strong> : <br/> Merci à <a href="http://www.siteduzero.com/membres-294-61892.html">Pwasson</a> pour ses illustrations.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python">Le pattern Decorator en Python</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/introduction-51">
+Introduction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/notre-cas-d-etude-le-macd-halal">
+Notre cas d&#039;étude : le MacD&#039;halal
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/premiers-jets">
+Premiers jets
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/decorator-a-la-rescousse">
+Decorator à la rescousse !
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/decorator-et-les-decorateurs-en-python">
+Decorator et les décorateurs en Python
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-pattern-decorator-en-python/decorator-a-la-rescousse">
+<span class="arrow"></span>
+<span class="next">Decorator à la rescousse !</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/le-pattern-decorator-en-python.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 20:03:23 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/le-pattern-decorator-en-python.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 03:45:15 GMT -->
+</html>

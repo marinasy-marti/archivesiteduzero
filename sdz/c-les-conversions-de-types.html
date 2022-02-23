@@ -1,0 +1,394 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/c-les-conversions-de-types.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 11:16:55 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/c-les-conversions-de-types.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:49:05 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : [C++] Les conversions de types</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/c-les-conversions-de-types.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : [C++] Les conversions de types</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#CLesconversionsdetypes">[C++] Les conversions de types</a><br/><a href="#Introduction">Introduction</a><br/><a href="#static_castetreinterpret_cast">static_cast et reinterpret_cast</a><br/><a href="#Lescastdepointeurssurconstante">Les cast de pointeurs sur constante</a><br/><a href="#Lescastdynamiques">Les cast dynamiques</a><br/></div>
+<a name="CLesconversionsdetypes"></a><h2>[C++] Les conversions de types</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/c-les-conversions-de-types/introduction-46">
+<span class="next">Introduction</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-335883" data-claire-element-id="335883">Le langage C++ possède ses mots-clefs propres à lui qui nous permettent de caster des variables ou des objets.<br/> Concrètement, un cast est une conversion de types. Dans ce tutoriel, nous allons voir comment mettre en œuvre les différents types de cast en C++.</p><p id="r-335884" data-claire-element-id="335884">Je n'entre volontairement pas dans certains détails trop techniques. Je présente la chose de manière globale. Si vous souhaitez aller encore plus loin, on trouve les informations supplémentaires à la pelle sur internet.</p>
+</div><a name="Introduction"></a><h2>Introduction</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/c-les-conversions-de-types/static-cast-et-reinterpret-cast">
+<span class="next">static_cast et reinterpret_cast</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-335885" data-claire-element-id="335885">Dans ce cours, vous allez apprendre la bonne méthode pour convertir des types d'objets en C++. Quand je dis &quot;objet&quot;, je sous-entends variable, pointeur, référence, etc. Il arrive fréquemment qu'on ait à faire ce genre de choses et heureusement pour nous, c'est simple ; il suffit d'être rigoureux et d'utiliser le bon cast en fonction de notre besoin.</p><p id="r-335886" data-claire-element-id="335886">On peut distinguer quatre types de conversion possibles et réalisables en C++ :</p><ul id="r-335895" data-claire-element-id="335895"><li id="r-335888" data-claire-element-id="335888"><p id="r-335887" data-claire-element-id="335887">La conversion <strong>statique</strong> de types;</p></li><li id="r-335890" data-claire-element-id="335890"><p id="r-335889" data-claire-element-id="335889">La totale <strong>ré-interprétation</strong> des données d'un type vers un autre;</p></li><li id="r-335892" data-claire-element-id="335892"><p id="r-335891" data-claire-element-id="335891">La &quot;conversion&quot; d'un pointeur (ou référence) <strong>constant(e)</strong> vers un pointeur (ou référence) non-constant(e);</p></li><li id="r-335894" data-claire-element-id="335894"><p id="r-335893" data-claire-element-id="335893">La conversion de types <strong>dynamique</strong>.</p></li></ul><p id="r-335896" data-claire-element-id="335896">Notez que l'on parle de &quot;dynamisme&quot; en C++ pour qualifier une action réalisée pendant l'exécution de votre programme. Une conversion de types dynamique est donc une conversion qui va s'effectuer pendant l'exécution de votre programme et non par le compilateur comme c'est le cas pour les trois autres cast existants.</p><p id="r-335897" data-claire-element-id="335897">La conversion de types dynamique s'effectuant donc pendant l'exécution du code, on peut tomber sur une erreur d'implémentation et si cette erreur se produit, une exception est lancée : std::bad_cast. On va donc facilement pouvoir gérer une erreur de ce type (au passage, je vous conseille d'avoir lu le tutoriel de Nanoc sur <a href="http://www.siteduzero.com/tutoriel-3-35679-la-gestion-des-exceptions.html">la gestion des exceptions</a>).</p><p id="r-335898" data-claire-element-id="335898">Il est également important de savoir qu'un pointeur (ou une référence) constant(e) n'est pas un pointeur ou une référence dont on ne peut modifier la valeur mais dont l'élément pointé ne peut être modifié en passant par ce pointeur (ou cette référence). Cela peut porter à confusion mais c'est très simple au fond, retenez juste que le mot-clef const n'a pas la même signification utilisé pour un objet que utilisé pour un pointeur ou une référence. ;)</p><p id="r-335899" data-claire-element-id="335899">Vous noterez que dans la liste que je vous ai dressée au-dessus, j'ai volontairement marqué des mots en rouge pour qu'ils ressortent bien. En effet, je voulais porter votre attention sur ces mots-là car ils ont un lien direct avec les mots-clefs associés. C'est très simple, on a respectivement les mots-clefs suivants :</p><ul id="r-335908" data-claire-element-id="335908"><li id="r-335901" data-claire-element-id="335901"><p id="r-335900" data-claire-element-id="335900"><strong>static_cast</strong></p></li><li id="r-335903" data-claire-element-id="335903"><p id="r-335902" data-claire-element-id="335902"><strong>reinterpret_cast</strong></p></li><li id="r-335905" data-claire-element-id="335905"><p id="r-335904" data-claire-element-id="335904"><strong>const_cast</strong></p></li><li id="r-335907" data-claire-element-id="335907"><p id="r-335906" data-claire-element-id="335906"><strong>dynamic_cast</strong></p></li></ul><p id="r-335909" data-claire-element-id="335909">Nous allons sans plus tarder voir de quoi il s'agit réellement et comment mettre en œuvre ces cast de manière simple et sûre dans un programme. J'illustrerai mes propos avec des exemples concrets pour vous donner une idée.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/c-les-conversions-de-types">[C++] Les conversions de types</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/c-les-conversions-de-types/introduction-46">
+Introduction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-les-conversions-de-types/static-cast-et-reinterpret-cast">
+static_cast et reinterpret_cast
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-les-conversions-de-types/les-cast-de-pointeurs-sur-constante">
+Les cast de pointeurs sur constante
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-les-conversions-de-types/les-cast-dynamiques">
+Les cast dynamiques
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/c-les-conversions-de-types/static-cast-et-reinterpret-cast">
+<span class="next">static_cast et reinterpret_cast</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="static_castetreinterpret_cast"></a><h2>static_cast et reinterpret_cast</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/c-les-conversions-de-types/introduction-46">
+<span class="arrow"></span>
+<span class="next">Introduction</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/c-les-conversions-de-types/les-cast-de-pointeurs-sur-constante">
+<span class="next">Les cast de pointeurs sur constante</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-335911" data-claire-element-id="335911">Ici, nous allons nous intéresser au type de cast le plus simple et le plus rencontré, static_cast, et à un autre type de cast tout aussi intéressant, reinterpret_cast.</p><h2 id="r-le-cast-statique" data-claire-element-id="335925">Le cast &quot;statique&quot;</h2><p id="r-335912" data-claire-element-id="335912">Le mot-clef associé à ce type de cast est <code data-claire-semantic="cpp">static_cast </code>, évidement.</p><p id="r-335913" data-claire-element-id="335913">Il s'agit ici souvent d'expliciter une conversion de types implicite qui peut avoir lieu quand on essaye de copier le contenu d'une variable d'un type de la même famille que le type de la variable de destination. C'est donc très simple : static_cast permet de caster des types de même famille. Après, il faut savoir ce que l'on entend par &quot;famille&quot;.</p><p id="r-335914" data-claire-element-id="335914">C'est encore très simple : les pointeurs forment une famille, les références une autre, etc. Par contre, il existe bien sûr certaines conversions entre types de même famille (comme de double* vers float* par exemple) qui ne sont pas réalisables avec un simple static_cast, mais nous allons voir cela dans un second temps. Des cast comme long vers int ou void* vers double* sont des exemples qui nécessitent l'utilisation d'un static_cast (la plupart du temps, c'est juste une question de rigueur ^^ ).</p><p id="r-335915" data-claire-element-id="335915">Pour l'exemple, voici un code qui <strong>ne compile pas</strong> :</p><pre id="r-335916" data-claire-element-id="335916"><code data-claire-semantic="cpp">void* vp;
+long* lp = vp;</code></pre><p id="r-335917" data-claire-element-id="335917">La solution est bien sûr d'appliquer un static_cast. Cela se fait de la manière suivante :</p><pre id="r-335918" data-claire-element-id="335918"><code data-claire-semantic="cpp">long* lp = static_cast&lt;long*&gt;(vp);</code></pre><p id="r-335919" data-claire-element-id="335919">On indique le type de destination entre &quot;&lt;&gt;&quot; suivi de la variable à caster <strong>entre parenthèses</strong>.</p><aside id="r-335921" data-claire-element-id="335921" data-claire-semantic="warning"><p id="r-335920" data-claire-element-id="335920">On ne devrait jamais avoir à utiliser void* en C++ mais c'est juste pour l'exemple.</p></aside><p id="r-335922" data-claire-element-id="335922">Voici un autre exemple où une conversion implicite suffirait mais où un compilateur bien réglé cracherait au moins un warning sans static_cast :</p><pre id="r-335923" data-claire-element-id="335923"><code data-claire-semantic="cpp">double d;
+float f = static_cast&lt;float&gt;(d);</code></pre><p id="r-335924" data-claire-element-id="335924">C'est donc enfantin. Pensez à expliciter vos conversions implicites en utilisant static_cast, c'est une très bonne pratique et un programmeur qui lira votre code aura toutes les chances de comprendre plus vite ce que vous essayez de faire et surtout il sait que vous savez ce que vous faites.</p><h2 id="r-la-re-interpretation-des-donnees" data-claire-element-id="335939">La ré-interprétation des données</h2><p id="r-335926" data-claire-element-id="335926">Le cast de type static_cast est déjà fort pratique mais n'est pas assez puissant pour régler toutes les situations. Par exemple, avec un static_cast, il est impossible de convertir un double* vers un float*. La solution serait de ré-interpréter les données stockées par les pointeurs. En gros, on devrait pouvoir récupérer la valeur hexadécimale stockée par la variable double* et la considérer comme l'adresse d'une variable float.</p><p id="r-335927" data-claire-element-id="335927">Ce genre de pratique est tout à fait réalisable en C++ mais cette fois, on utilisera le mot-clef <code data-claire-semantic="cpp">reinterpret_cast </code>. Pour l'exemple de conversion double* vers float*, on procédera donc de la manière suivante :</p><pre id="r-335928" data-claire-element-id="335928"><code data-claire-semantic="cpp">double* dp;
+float* fp = reinterpret_cast&lt;float*&gt;(dp);</code></pre><p id="r-335929" data-claire-element-id="335929">Ce code compile sans problème et fait exactement ce à quoi on s'attend. Mais reinterpret_cast ne se limite pas aux types de même famille. Il est possible de réaliser des cast entre certains types de familles différentes et cela peut parfois s'avérer très pratique.</p><p id="r-335930" data-claire-element-id="335930">Imaginons que vous souhaitez réaliser un programme qui demande à l'utilisateur une adresse mémoire et lui affiche le contenu de la case demandée. Comment allez-vous procéder ? Si l'on ne connait pas reinterpret_cast, c'est très difficilement réalisable. Pour ceux qui y auraient pensé, non, std::cin ne fonctionne pas sur les pointeurs ; par contre, std::cin fonctionne sur les int ! La solution, vous l'aurez deviné, est de demander une valeur hexadécimale à l'utilisateur, de la stocker dans une variable de type int puis de ré-interpréter la donnée comme étant une adresse mémoire. :)</p><p id="r-335931" data-claire-element-id="335931">Le code peut donc ressembler à ceci :</p><pre id="r-335932" data-claire-element-id="335932"><code data-claire-semantic="cpp">int i;
+std::cout &lt;&lt; &quot;Adresse : &quot;;
+std::cin &gt;&gt; std::hex &gt;&gt; i &gt;&gt; std::dec;
+std::cout &lt;&lt; &quot;Contenu : &quot; &lt;&lt; *(reinterpret_cast&lt;int*&gt;(i));</code></pre><p id="r-335933" data-claire-element-id="335933">Et ce code compile sans problème ! On va même le tester en prenant un exemple de variable que l'on aura auparavant initialisée afin que l'on puisse bien se rendre compte que le code fonctionne :</p><pre id="r-335934" data-claire-element-id="335934"><code data-claire-semantic="cpp">int var = 67;
+std::cout &lt;&lt; &quot;Exemple d'adresse : &quot; &lt;&lt; &amp;var &lt;&lt; std::endl;
+int i;
+std::cout &lt;&lt; &quot;Adresse : &quot;;
+std::cin &gt;&gt; std::hex &gt;&gt; i &gt;&gt; std::dec;
+std::cout &lt;&lt; &quot;Contenu : &quot; &lt;&lt; *(reinterpret_cast&lt;int*&gt;(i));</code></pre><p id="r-335935" data-claire-element-id="335935">On crée une variable var et on lui donne la valeur 67. On affiche son adresse. Maintenant, vous vous attendez à retrouvez la valeur 67 en saisissant l'adresse affichée à l'écran, et effectivement :</p><pre id="r-335936" data-claire-element-id="335936"><code>Exemple d'adresse : 0x22ff44
+Adresse : 0x22ff44
+Contenu : 67</code></pre><p id="r-335937" data-claire-element-id="335937">Ça fonctionne comme on le souhaite. Comme vous le voyez, reinterpret_cast est très simple et pratique.</p><p id="r-335938" data-claire-element-id="335938">Nous allons sans plus tarder nous attaquer à un cast un peu plus particulier, const_cast !</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/c-les-conversions-de-types">[C++] Les conversions de types</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-les-conversions-de-types/introduction-46">
+Introduction
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/c-les-conversions-de-types/static-cast-et-reinterpret-cast">
+static_cast et reinterpret_cast
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-les-conversions-de-types/les-cast-de-pointeurs-sur-constante">
+Les cast de pointeurs sur constante
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-les-conversions-de-types/les-cast-dynamiques">
+Les cast dynamiques
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/c-les-conversions-de-types/introduction-46">
+<span class="arrow"></span>
+<span class="next">Introduction</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/c-les-conversions-de-types/les-cast-de-pointeurs-sur-constante">
+<span class="next">Les cast de pointeurs sur constante</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lescastdepointeurssurconstante"></a><h2>Les cast de pointeurs sur constante</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/c-les-conversions-de-types/static-cast-et-reinterpret-cast">
+<span class="arrow"></span>
+<span class="next">static_cast et reinterpret_cast</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/c-les-conversions-de-types/les-cast-dynamiques">
+<span class="next">Les cast dynamiques</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-335941" data-claire-element-id="335941">En ce qui concerne le titre de cette sous-partie, j'inclus les références dans le terme de pointeur.</p><p id="r-335942" data-claire-element-id="335942">Pour vous expliquer ce qu'est réellement <code data-claire-semantic="cpp">const_cast </code> et à quoi cela va nous servir, je vais partir d'un exemple concret : vous étiez tous déjà dans la situation dans laquelle vous avez un pointeur (ou une référence) sur constante et vous ne pouvez pas modifier l'élément pointé (car celui-ci est protégé par le const). Par exemple, le code suivant ne compile pas :</p><pre id="r-335943" data-claire-element-id="335943"><code data-claire-semantic="cpp">int i = 65;
+const int&amp; r_i = i;
+r_i = 75;</code></pre><p id="r-335944" data-claire-element-id="335944">En effet, la référence r_i est déclarée &quot;sur constante&quot;, donc il n'y a pas moyen de modifier i en passant par r_i. Il est donc également impossible d'assigner le contenu de cette référence à une référence du même type mais non-&quot;sur constante&quot; :</p><pre id="r-335945" data-claire-element-id="335945"><code data-claire-semantic="cpp">int i = 65;
+const int&amp; r_i = i;
+int&amp; r_i2 = r_i;</code></pre><p id="r-335946" data-claire-element-id="335946">Cela constitue naturellement une sécurité et c'est très pratique dans certain cas de pouvoir ainsi empêcher le programmeur de toucher à certaines choses (c'est fait pour ça, const).</p><p id="r-335947" data-claire-element-id="335947">Mais... il existe bien une solution pour cracker cette sécurité, c'est le fameux const_cast !</p><aside id="r-335949" data-claire-element-id="335949" data-claire-semantic="warning"><p id="r-335948" data-claire-element-id="335948">const_cast est à utiliser avec modération et seulement s'il n'y a pas d'autres solutions alternatives. :o</p></aside><p id="r-335950" data-claire-element-id="335950">Avec le précédent code, on applique le const_cast au moment de l'affectation du contenu de r_i à r_i2 et ce de la manière suivante :</p><pre id="r-335951" data-claire-element-id="335951"><code data-claire-semantic="cpp">int i = 65;
+const int&amp; r_i = i;
+int&amp; r_i2 = const_cast&lt;int&amp;&gt;(r_i);</code></pre><p id="r-335952" data-claire-element-id="335952">En résumé, ce type de cast permet de supprimer les attributs const ou volatile (mais pour ce dernier point, cela peut se faire implicitement).</p><p id="r-335953" data-claire-element-id="335953">const_cast ne fonctionne que sur des pointeurs ou des références et n'est pas fait pour modifier la valeur d'une variable constante d'un type d'une autre famille ; de toute manière, cela ne compilerait pas. Mais comme dit, on ne devrait jamais avoir à utiliser const_cast dans un programme à moins de savoir exactement ce que l'on fait. En effet, cela peut devenir dangereux.</p><p id="r-335954" data-claire-element-id="335954">Je vais prendre pour exemple la méthode std::string::c_str() qui retourne un pointeur sur constante de type const char* sur la chaîne de caractères stockée par l'objet std::string en mémoire vive. Avec un const_cast, il est donc possible de modifier cette chaîne sans passer par l'instance de std::string et donc toutes les autres informations relatives à cette chaîne stockées dans l'objet perdront leur signification et on peut aboutir à un bug dans votre programme. Prudence donc.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/c-les-conversions-de-types">[C++] Les conversions de types</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-les-conversions-de-types/introduction-46">
+Introduction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-les-conversions-de-types/static-cast-et-reinterpret-cast">
+static_cast et reinterpret_cast
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/c-les-conversions-de-types/les-cast-de-pointeurs-sur-constante">
+Les cast de pointeurs sur constante
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-les-conversions-de-types/les-cast-dynamiques">
+Les cast dynamiques
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/c-les-conversions-de-types/static-cast-et-reinterpret-cast">
+<span class="arrow"></span>
+<span class="next">static_cast et reinterpret_cast</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/c-les-conversions-de-types/les-cast-dynamiques">
+<span class="next">Les cast dynamiques</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lescastdynamiques"></a><h2>Les cast dynamiques</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/c-les-conversions-de-types/les-cast-de-pointeurs-sur-constante">
+<span class="arrow"></span>
+<span class="next">Les cast de pointeurs sur constante</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-335956" data-claire-element-id="335956">Les cast dynamiques sont des conversions de types s'effectuant pendant l'exécution du programme (cela n'étant pas fait à la compilation). Il s'agit toujours de types personnalisés (qu'on va donc devoir définir à l'aide des classes). Le mot-clef associé à ce type de cast est dynamic_cast. Le fonctionnement est un petit peu plus délicat que celui des autres cast mais si vous faites bien attention, vous n'aurez aucune peine à comprendre ! Encore une fois, ce cast ne concerne que les références ou les pointeurs.</p><p id="r-335957" data-claire-element-id="335957">Sans vouloir me lancer directement dans les grosses explications, je vais partir d'un exemple pour vous aider à comprendre :</p><p id="r-335958" data-claire-element-id="335958">Je dispose d'une classe mère <strong>polygone</strong> et d'une classe dérivée <strong>carre</strong> (carré). <strong>carre</strong> hérite donc de <strong>polygone</strong> car tout carré est un polygone. Supposons que je dispose d'une référence sur un objet <strong>carre</strong> et que j'aimerais considérer ce carré comme un polygone en copiant cette référence vers une référence sur un <strong>polygone</strong>. C'est possible car <strong>un carré est un polygone</strong> et on fait cela précisement avec un dynamic_cast ! ^^</p><p id="r-335959" data-claire-element-id="335959">Voici un code pour illustrer mes propos :</p><pre id="r-335960" data-claire-element-id="335960"><code data-claire-semantic="cpp">#include &lt;iostream&gt;
+
+class polygone
+{
+    public :
+    virtual void f() {}
+};
+
+class carre : public polygone {};
+
+int main()
+{
+    carre monCarre;
+    carre&amp; r_carre = monCarre;
+
+    try {
+        polygone&amp; r_polygone = dynamic_cast&lt;polygone&amp;&gt;(r_carre);
+    }
+    catch (const std::exception&amp; e)
+    {
+        std::cerr &lt;&lt; e.what();
+    }
+    return EXIT_SUCCESS;
+}</code></pre><p id="r-335961" data-claire-element-id="335961">Pour une question de polymorphisme, il faut que la classe mère possède au moins une fonction virtuelle (je vous conseille de lire les tutoriels de Nanoc sur le polymorphisme <a href="http://www.siteduzero.com/tutoriel-3-63899-le-polymorphisme-i.html">ici</a> et <a href="http://www.siteduzero.com/tutoriel-3-63892-le-polymorphisme-ii.html">là</a>). Si vous compilez le précédent code, vous vous rendrez compte qu'il fonctionne sans embrouille, aucune exception n'est lancée.</p><p id="r-335962" data-claire-element-id="335962">Par contre, si vous essayez d'inverser les types (donc si vous remplacez carre par polygone et inversement), vous vous retrouvez avec une belle exception std::bad_cast car <strong>un polygone n'est pas forcément un carré</strong> et donc on ne peut pas considérer tout polygone comme étant un carré. En programmation, tout est donc affaire de logique. ^^ Vous noterez qu'il est également impossible de caster avec un dynamic_cast entre deux classes dérivant d'une même classe (un pentagone n'est pas un carré).</p><p id="r-335963" data-claire-element-id="335963">Mais si je reprends le précédent code, j'aurais très bien pu faire :</p><pre id="r-335964" data-claire-element-id="335964"><code data-claire-semantic="cpp">int main()
+{
+    carre monCarre;
+    polygone&amp; r_polygone = monCarre;
+
+    try {
+        carre&amp; r_carre = dynamic_cast&lt;carre&amp;&gt;(r_polygone);
+    }
+    catch (const std::exception&amp; e)
+    {
+        std::cerr &lt;&lt; e.what();
+    }
+    return EXIT_SUCCESS;
+}</code></pre><p id="r-335965" data-claire-element-id="335965">Vous vous attendez à ce qu'une exception std::bad_cast soit lancée mais... non ! En effet, on utilise bien dynamic_cast d'une classe mère vers une classe fille mais le secret réside dans l'affectation d'un objet de type carre à la référence de type polygone&amp;, c'est la seule condition pour que cela fonctionne et la logique reste la même : dès le début du programme, on sait que le polygone &quot;pointé&quot; par r_polygone est un carré donc un cast vers une référence sur un carre est possible. ;)</p><p id="r-335966" data-claire-element-id="335966">Dans la même optique, il est également possible de caster d'une classe (A) vers une autre classe (B) si les deux classes ont une fille en commun (C) et si l'on a instancié la référence sur A à caster vers B&amp; avec un objet de type C. Cela parait difficile, mais c'est très simple et ça reste logique. Supposons que je possède une classe <strong>losange</strong> (A) et une classe <strong>rectangle</strong> (B) ainsi qu'une classe <strong>carre</strong> (carré, C) qui hérite de losange et de rectangle (un carré est un losange et un rectangle). On peut très bien créer une référence sur losange à partir d'un objet carre puis, par la suite, considérer cette référence comme une référence sur un rectangle puisqu'on sait que c'est un carré (et donc un rectangle).</p><p id="r-335967" data-claire-element-id="335967">Voici un code d'exemple qui illustre assez bien ce concept :</p><pre id="r-335968" data-claire-element-id="335968"><code data-claire-semantic="cpp">#include &lt;iostream&gt;
+
+class losange
+{
+    public :
+    virtual void f() {}
+};
+
+class rectangle
+{
+    public :
+    virtual void f() {}
+};
+
+class carre :
+    public losange, public rectangle {};
+
+int main()
+{
+    carre monCarre;
+    losange&amp; r_losange = monCarre;
+
+    try {
+        rectangle&amp; r_rectangle = dynamic_cast&lt;rectangle&amp;&gt;(r_losange);
+    }
+    catch (const std::exception&amp; e)
+    {
+        std::cerr &lt;&lt; e.what();
+    }
+    return EXIT_SUCCESS;
+}</code></pre><p id="r-335969" data-claire-element-id="335969">Cette pratique porte un nom, c'est le cross-casting. <em>Un losange n'est un rectangle que si c'est un carré</em>.</p><p id="r-335970" data-claire-element-id="335970">Les cast en bon C++ sont souvent méconnus des débutants et c'est très dommage car on peut faire beaucoup avec ! J'espère donc avoir été le plus clair possible en vous ayant enseigné un nouveau concept du C++. :)</p><p id="r-335971" data-claire-element-id="335971">Je remercie <a href="http://www.siteduzero.com/membres-294-51570.html">Xavinou</a> pour sa relecture attentive ainsi que <a href="http://www.siteduzero.com/membres-294-49110.html">Nanoc</a> et <a href="http://www.siteduzero.com/membres-294-19108.html">Alp</a> pour leurs remarques toujours pertinentes.</p><p id="r-335972" data-claire-element-id="335972">Bon codage !</p><p id="r-335973" data-claire-element-id="335973">ShareMan</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/c-les-conversions-de-types">[C++] Les conversions de types</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-les-conversions-de-types/introduction-46">
+Introduction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-les-conversions-de-types/static-cast-et-reinterpret-cast">
+static_cast et reinterpret_cast
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-les-conversions-de-types/les-cast-de-pointeurs-sur-constante">
+Les cast de pointeurs sur constante
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/c-les-conversions-de-types/les-cast-dynamiques">
+Les cast dynamiques
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/c-les-conversions-de-types/les-cast-de-pointeurs-sur-constante">
+<span class="arrow"></span>
+<span class="next">Les cast de pointeurs sur constante</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/c-les-conversions-de-types.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 11:16:55 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/c-les-conversions-de-types.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:49:05 GMT -->
+</html>

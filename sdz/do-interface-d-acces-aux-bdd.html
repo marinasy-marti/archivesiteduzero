@@ -1,0 +1,593 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/do-interface-d-acces-aux-bdd.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 02:11:59 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/do-interface-d-acces-aux-bdd.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:31:24 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : PDO : Interface d&#039;accès aux BDD</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/pdo-interface-d-acces-aux-bdd.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : PDO : Interface d&#039;accès aux BDD</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#PDOInterfaced039accsauxBDD">PDO : Interface d&#039;accès aux BDD</a><br/><a href="#Prsentation">Présentation</a><br/><a href="#Activation-PhpWindows">Activation - Php Windows</a><br/><a href="#Connexioncrationetgestiond039erreur">Connexion : création et gestion d&#039;erreur</a><br/><a href="#Mthodesexecetquery">Méthodes : exec et query</a><br/><a href="#Mthodeprepare">Méthode : prepare</a><br/><a href="#Scurisersanspasserpardesrequtesprpares">Sécuriser sans passer par des requêtes préparées</a><br/></div>
+<a name="PDOInterfaced039accsauxBDD"></a><h2>PDO : Interface d&#039;accès aux BDD</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/presentation-174">
+<span class="next">Présentation</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-681289" data-claire-element-id="681289">Ce tutoriel a pour but de vous présenter cette interface parue avec PHP 5 qui vise à utiliser des bases de données sans avoir à s'occuper du <a href="http://fr.wikipedia.org/wiki/SGBD">SGBD</a> utilisé derrière.<br/> Ainsi, il est tout à fait possible de faire un code qui marchera avec MySQL mais aussi avec Oracle, ODBC, etc.</p><p id="r-681290" data-claire-element-id="681290">On peut donc dire sans trop de risques que c'est l'avenir pour se connecter aux BDD avec PHP, un au revoir à mysql_query &amp; co. ? <strong>Oui</strong>.</p><p id="r-681291" data-claire-element-id="681291">Vous trouverez ci-dessous une présentation de PDO, son activation et des exemples d'utilisation pour certaines des méthodes fournies par cette extension.</p>
+</div><a name="Prsentation"></a><h2>Présentation</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/activation-php-windows">
+<span class="next">Activation - Php Windows</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-681292" data-claire-element-id="681292">PDO (<em><strong>P</strong>HP <strong>D</strong>ata <strong>O</strong>bjects</em>) vise à permettre la création d'un code comportant des accès aux BDD en faisant abstraction du moteur de SGBD utilisé.<br/> C'est une interface qui, à ce titre, permet aux codeurs l'utilisant de travailler sans avoir à trop se poser de questions par la suite... Enfin ceci dans l'idéal, car malheureusement cela dépend de certains détails que je vais développer.</p><div id="r-681294" data-claire-element-id="681294" data-claire-semantic="question"><p id="r-681293" data-claire-element-id="681293">Oui, mais alors quels sont-ils ces problèmes ?</p></div><p id="r-681295" data-claire-element-id="681295">Les problèmes, ou devrais-je dire LE problème (car finalement c'est du même problème que découlent tous les autres) concerne le respect des standards. Chaque SGBD a sa façon d'interpréter les standards et chaque SGBD dans sa façon de voir les choses essaye plus ou moins de s'y conformer, sans parler de tout ce qui peut être ajouté aux standards. Finalement, avec ces différents points, on se retrouve avec un tas de possibilités différentes de requêtes pour une même action.</p><div id="r-681297" data-claire-element-id="681297" data-claire-semantic="question"><p id="r-681296" data-claire-element-id="681296">Concrètement, ça veut dire quoi ?</p></div><p id="r-681298" data-claire-element-id="681298">Concrètement pour le développeur, ceci engendre le fait que selon le SGBD, des requêtes devront être réécrites spécifiquement.</p><div id="r-681300" data-claire-element-id="681300" data-claire-semantic="question"><p id="r-681299" data-claire-element-id="681299">Mais alors c'est nul, ton truc ?</p></div><p id="r-681301" data-claire-element-id="681301">Pas vraiment, car s'il est vrai que certaines requêtes devront être réécrites spécifiquement, beaucoup -de par le mécanisme qui sous-tend PDO- resteront valables ; en fait, l'intérêt de PDO n'est pas là mais que le code n'aura plus à être réécrit : c'est là l'avantage majeur de PDO.</p><p id="r-681302" data-claire-element-id="681302">Un autre avantage pour les familiers de la programmation orientée objet sous PHP 5, qui concerne les exceptions : PDO s'en sert. :)</p><p id="r-681303" data-claire-element-id="681303">Enfin, il faut signaler qu'à partir de PHP 6, c'est le système par défaut activé pour se connecter à une base de données, il est donc nécessaire de commencer à réécrire une partie de ses applications dans ce sens afin de préparer l'avenir (pas mal d'hébergeurs ont PHP 5 avec PDO et le <em>driver</em> pour MySQL installé donc n'hésitez pas à utiliser massivement PDO :) ).</p><p id="r-681304" data-claire-element-id="681304"><strong>Avantages de PDO</strong> :</p><ul id="r-681311" data-claire-element-id="681311"><li id="r-681306" data-claire-element-id="681306"><p id="r-681305" data-claire-element-id="681305"><em>interface pour SGBD</em> : plus besoin de s'occuper de savoir quelle SGBD est derrière (en théorie) ;</p></li><li id="r-681308" data-claire-element-id="681308"><p id="r-681307" data-claire-element-id="681307"><em>orienté objet</em> : les objets PDO et PDOStatement peuvent être étendus, il est donc tout à fait possible de personnaliser et remodeler une partie du comportement initial ;</p></li><li id="r-681310" data-claire-element-id="681310"><p id="r-681309" data-claire-element-id="681309"><em>exception</em> : les objets de l'interface PDO utilisent des exceptions, il est donc tout à fait possible d'intégrer facilement un système de gestion des erreurs.</p></li></ul>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd">PDO : Interface d&#039;accès aux BDD</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/presentation-174">
+Présentation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/activation-php-windows">
+Activation - Php Windows
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/connexion-creation-et-gestion-d-erreur">
+Connexion : création et gestion d&#039;erreur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/methodes-exec-et-query">
+Méthodes : exec et query
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/methode-prepare">
+Méthode : prepare
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/securiser-sans-passer-par-des-requetes-preparees">
+Sécuriser sans passer par des requêtes préparées
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/activation-php-windows">
+<span class="next">Activation - Php Windows</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Activation-PhpWindows"></a><h2>Activation - Php Windows</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/presentation-174">
+<span class="arrow"></span>
+<span class="next">Présentation</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/connexion-creation-et-gestion-d-erreur">
+<span class="next">Connexion : création et gestion d&#039;erreur</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-681313" data-claire-element-id="681313">Avec PHP 5, cette extension n'est pas activée par défaut.</p><p id="r-681314" data-claire-element-id="681314">Afin de remédier au problème, ouvrez le '<em>php.ini</em>' que vous utilisez pour PHP 5 puis rendez-vous dans la partie où vous avez la liste des extensions. Faites une recherche sur '<em>; Windows Extensions</em>', vous devriez y arriver directement.<br/> Bien : maintenant, vérifiez que vous avez la ligne suivante :</p><pre id="r-681315" data-claire-element-id="681315"><code>;extension=php_pdo.dll</code></pre><p id="r-681316" data-claire-element-id="681316">Si c'est le cas, décommentez la ligne afin d'avoir :</p><pre id="r-681317" data-claire-element-id="681317"><code>extension=php_pdo.dll</code></pre><p id="r-681318" data-claire-element-id="681318">Sinon, rajoutez la ligne à la main.</p><p id="r-681319" data-claire-element-id="681319">Vous venez donc d'activer PDO mais cela n'est pas suffisant : maintenant, il vous faut activer le <em>driver</em> correspondant au type de BDD que vous souhaitez utiliser.<br/> Pour cela rien de plus simple : imaginons que vous vouliez activer MySQL, rajoutez pour cela la ligne suivante (ou activez-la si elle est présente) :</p><pre id="r-681320" data-claire-element-id="681320"><code>extension=php_pdo_mysql.dll</code></pre><p id="r-681321" data-claire-element-id="681321">Bien, enregistrez, relancez le serveur et vous voilà prêts à travailler avec l'extension PDO qui utilise MySQL. :)</p><div id="r-681323" data-claire-element-id="681323" data-claire-semantic="question"><p id="r-681322" data-claire-element-id="681322">Ouais, c'est cool mais moi, je n'utilise pas MySQL... :colere2:</p></div><p id="r-681324" data-claire-element-id="681324">Ce n'est pas un problème : pour savoir si votre SGBD peut être utilisé et activé, allez dans le répertoire d'extensions de PHP '<em>Ext</em>' et regardez les fichiers portant l'extension <em>.dll</em> et commençant par : <em>php_pdo_</em>*.<br/> Si vous trouvez votre bonheur, il ne vous reste plus qu'à activer l'extension.<br/> Ainsi, si vous ne voulez pas MySQL :</p><pre id="r-681325" data-claire-element-id="681325"><code>extension=php_pdo_mysql.dll</code></pre><p id="r-681326" data-claire-element-id="681326">mais plutôt Oracle :</p><pre id="r-681327" data-claire-element-id="681327"><code>extension=php_pdo_odbc.dll</code></pre><p id="r-681328" data-claire-element-id="681328">Vous pouvez trouver le tableau de correspondance des DLL avec le SGBD sur la <a href="http://fr.php.net/manual/fr/pdo.drivers.php">documentation officielle</a>.</p><p id="r-681329" data-claire-element-id="681329"><strong><em>Drivers</em></strong> : tout comme les <em>drivers</em> logiciels, ils permettent d'implémenter le système de la BDD avec ses spécifications, c'est ceci qui permettra que tout fonctionne.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd">PDO : Interface d&#039;accès aux BDD</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/presentation-174">
+Présentation
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/activation-php-windows">
+Activation - Php Windows
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/connexion-creation-et-gestion-d-erreur">
+Connexion : création et gestion d&#039;erreur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/methodes-exec-et-query">
+Méthodes : exec et query
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/methode-prepare">
+Méthode : prepare
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/securiser-sans-passer-par-des-requetes-preparees">
+Sécuriser sans passer par des requêtes préparées
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/presentation-174">
+<span class="arrow"></span>
+<span class="next">Présentation</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/connexion-creation-et-gestion-d-erreur">
+<span class="next">Connexion : création et gestion d&#039;erreur</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Connexioncrationetgestiond039erreur"></a><h2>Connexion : création et gestion d&#039;erreur</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/activation-php-windows">
+<span class="arrow"></span>
+<span class="next">Activation - Php Windows</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/methodes-exec-et-query">
+<span class="next">Méthodes : exec et query</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-681331" data-claire-element-id="681331">Si vous êtes ici, c'est que normalement vous avez activé les extensions nécessaires au bon fonctionnement de PDO.</p><aside id="r-681333" data-claire-element-id="681333" data-claire-semantic="warning"><p id="r-681332" data-claire-element-id="681332">Tous les exemples qui seront traités à partir d'ici utiliseront MySQL comme SGBD (php_pdo_mysql.dll à activer si cela n'est pas fait) ; par la suite, rien ne vous empêche d'utiliser autre chose, la forme sera toujours la même (seuls les paramètres de connexion peuvent varier d'un SGBD à l'autre, tout comme les requêtes).</p></aside><p id="r-681334" data-claire-element-id="681334">Création d'une connexion :</p><pre id="r-681335" data-claire-element-id="681335"><code data-claire-semantic="html+php">&lt;?php
+$PARAM_hote='localhost'; // le chemin vers le serveur
+$PARAM_port='3306';
+$PARAM_nom_bd='sdz'; // le nom de votre base de données
+$PARAM_utilisateur='root'; // nom d'utilisateur pour se connecter
+$PARAM_mot_passe=''; // mot de passe de l'utilisateur pour se connecter
+$connexion = new PDO('mysql:host='.$PARAM_hote.';port='.$PARAM_port.';dbname='.$PARAM_nom_bd, $PARAM_utilisateur, $PARAM_mot_passe);
+?&gt;</code></pre><p id="r-681336" data-claire-element-id="681336">Comme vous le voyez, ceci se fait très simplement, vous indiquez comme d'habitude les paramètres et ça marche.</p><aside id="r-681338" data-claire-element-id="681338" data-claire-semantic="warning"><p id="r-681337" data-claire-element-id="681337">Si vous tentez une connexion via un code similaire à celui-ci, et qu'une erreur se produit, vous verrez que l'erreur affichée expose le DSN. Il est nécessaire d'utiliser un gestionnaire d'erreur, même simple. Ceci n'est pas difficile, et présenté juste à la suite.</p></aside><div id="r-681340" data-claire-element-id="681340" data-claire-semantic="question"><p id="r-681339" data-claire-element-id="681339">Oui mais moi j'ai une erreur, comment je fais ?</p></div><p id="r-681341" data-claire-element-id="681341">Vous pouvez avoir une erreur pour plusieurs raisons ; vous avez donné de mauvais paramètres, ou vous avez spécifié des paramètres qui ne correspondent pas au <em>driver</em> que vous souhaitez utiliser.<br/> Afin de savoir d'où vient le problème, le mieux est encore d'afficher 'proprement' les erreurs qui peuvent apparaître.</p><pre id="r-681342" data-claire-element-id="681342"><code data-claire-semantic="html+php">&lt;?php
+try
+{
+        $connexion = new PDO('mysql:host='.$PARAM_hote.';dbname='.$PARAM_nom_bd, $PARAM_utilisateur, $PARAM_mot_passe);
+}
+ 
+catch(Exception $e)
+{
+        echo 'Erreur : '.$e-&gt;getMessage().'&lt;br /&gt;';
+        echo 'N° : '.$e-&gt;getCode();
+}
+?&gt;</code></pre><p id="r-681343" data-claire-element-id="681343">Vous aurez alors l'affichage de l'erreur, le catch est chargé d'intercepter une éventuelle erreur apparue dans le try : vous pouvez donc très bien mettre un arrêt du script comme ceci :</p><pre id="r-681344" data-claire-element-id="681344"><code data-claire-semantic="html+php">&lt;?php
+try
+{
+        $connexion = new PDO('mysql:host='.$PARAM_hote.';dbname='.$PARAM_nom_bd, $PARAM_utilisateur, $PARAM_mot_passe);
+}
+ 
+catch(Exception $e)
+{
+        echo 'Une erreur est survenue !';
+        die();
+}
+?&gt;</code></pre><p id="r-681345" data-claire-element-id="681345">Vous pouvez mettre un traitement de l'erreur comme vous voulez.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd">PDO : Interface d&#039;accès aux BDD</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/presentation-174">
+Présentation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/activation-php-windows">
+Activation - Php Windows
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/connexion-creation-et-gestion-d-erreur">
+Connexion : création et gestion d&#039;erreur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/methodes-exec-et-query">
+Méthodes : exec et query
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/methode-prepare">
+Méthode : prepare
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/securiser-sans-passer-par-des-requetes-preparees">
+Sécuriser sans passer par des requêtes préparées
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/activation-php-windows">
+<span class="arrow"></span>
+<span class="next">Activation - Php Windows</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/methodes-exec-et-query">
+<span class="next">Méthodes : exec et query</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Mthodesexecetquery"></a><h2>Méthodes : exec et query</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/connexion-creation-et-gestion-d-erreur">
+<span class="arrow"></span>
+<span class="next">Connexion : création et gestion d&#039;erreur</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/methode-prepare">
+<span class="next">Méthode : prepare</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-681347" data-claire-element-id="681347">PDO fait la distinction entre deux familles de requêtes : ceci est un peu déroutant au début, mais finalement assez simple quand on en a compris le principe et l'intérêt.<br/> Comme vous le savez, il est possible sur une BDD de récupérer des informations, mais aussi d'effectuer des changements (qui peuvent prendre la forme d'ajout, suppression ou modification).</p><p id="r-681348" data-claire-element-id="681348">Si vous souhaitez récupérer une information (SELECT), vous devrez alors utiliser 'query' ; si c'est pour un apporter des changements (INSERT, UPDATE, DELETE) à la BDD, vous devrez utiliser 'exec'.</p><div id="r-681350" data-claire-element-id="681350" data-claire-semantic="question"><p id="r-681349" data-claire-element-id="681349">Hum, je ne comprends pas trop !</p></div><p id="r-681351" data-claire-element-id="681351">A ce stade, si vous n'avez pas compris, ce n'est pas grave, je vais détailler tout ça par des exemples. Ces exemples étant fictifs, vous devrez les adapter avec vos propres tables. :)</p><p id="r-681352" data-claire-element-id="681352">Utilisation de la méthode : <strong>exec</strong><br/> Supposons que nous souhaitons modifier le mot de passe des membres :</p><pre id="r-681353" data-claire-element-id="681353"><code data-claire-semantic="html+php">&lt;?php
+$connexion = new PDO(&quot;mysql:host=$PARAM_hote;dbname=$PARAM_nom_bd&quot;, $PARAM_utilisateur, $PARAM_mot_passe); // connexion à la BDD
+ 
+$connexion-&gt;exec(&quot;UPDATE membres SET mot_pass='toto'&quot;); // on modifie le mot de passe de tous les utilisateurs (oui, ça n'a aucun intérêt mais c'est pour l'exemple)
+?&gt;</code></pre><p id="r-681354" data-claire-element-id="681354">A ce stade, la modification a bien eu lieu mais ceci peut ne pas être suffisant.<br/> Imaginons que nous souhaitons savoir le nombre de lignes qui ont été affectées par ce changement, nous aurons alors ceci :</p><pre id="r-681355" data-claire-element-id="681355"><code data-claire-semantic="html+php">&lt;?php
+// création d'une connexion
+ 
+$nombre_changement=$connexion-&gt;exec(&quot;UPDATE membres SET mot_pass='toto'&quot;); // on modifie le mot de passe de tous les utilisateurs (oui, ça n'a aucun intérêt mais c'est pour l'exemple)
+echo &quot;La requête à modifié : $nombre_changement lignes.&quot;;
+?&gt;</code></pre><p id="r-681356" data-claire-element-id="681356">Comme vous le voyez c'est très simple. :)</p><p id="r-681357" data-claire-element-id="681357">Utilisation de la méthode : <strong>query</strong><br/> Imaginons que nous souhaitons connaître tous les membres :</p><pre id="r-681358" data-claire-element-id="681358"><code data-claire-semantic="html+php">&lt;?php
+$connexion = new PDO(&quot;mysql:host=$PARAM_hote;dbname=$PARAM_nom_bd&quot;, $PARAM_utilisateur, $PARAM_mot_passe); // connexion à la BDD
+ 
+$resultats=$connexion-&gt;query(&quot;SELECT membre FROM membres ORDER BY membre ASC&quot;); // on va chercher tous les membres de la table qu'on trie par ordre croissant
+$resultats-&gt;setFetchMode(PDO::FETCH_OBJ); // on dit qu'on veut que le résultat soit récupérable sous forme d'objet
+while( $ligne = $resultats-&gt;fetch() ) // on récupère la liste des membres
+{
+        echo 'Utilisateur : '.$ligne-&gt;membre.'&lt;br /&gt;'; // on affiche les membres
+}
+$resultats-&gt;closeCursor(); // on ferme le curseur des résultats
+?&gt;</code></pre><p id="r-681359" data-claire-element-id="681359">Comme vous le voyez, ça ressemble sensiblement à ce qui se fait habituellement, avec cependant deux détails que je me dois de soulever.</p><p id="r-681360" data-claire-element-id="681360">Le premier point concerne le 'setFetchMode' qui permet d'indiquer sous quel format on souhaite récupérer les résultats de la requête précédente. Il existe plusieurs méthodes qui sont les suivantes : PDO::FETCH_ASSOC, PDO::FETCH_BOTH, PDO::FETCH_OBJ, etc., le mieux étant encore de lire la documentation pour savoir lequel vous préférerez utiliser. Personnellement étant un habitué du mysql_fetch_object, j'ai une préférence pour celui-ci (dans l'exemple) qui permet une lecture claire. :) <br/> Toujours concernant le mode, sachez qu'il existe une méthode plus courte d'écriture pour spécifier le mode, en le spécifiant directement dans fetch(), ce qui donne :</p><pre id="r-681361" data-claire-element-id="681361"><code data-claire-semantic="html+php">&lt;?php
+$ligne = $resultats-&gt;fetch(PDO::FETCH_OBJ)
+?&gt;</code></pre><p id="r-681362" data-claire-element-id="681362">Je vous conseille vivement de toujours indiquer une méthode (sous cette forme), ce qui permet une relecture du code plus claire par vous, ou toute personne passant derrière vous.</p><p id="r-681363" data-claire-element-id="681363">Le second point de remarque concerne closeCursor : il permet de fermer le curseur associé à un jeu de résultats, il doit donc être fermé une fois que vous avez fini de récupérer les résultats, et également être fermé avant toute autre requête.<br/> Il vous est donc fortement conseillé de le mettre, sinon vous risquez des erreurs.</p><p id="r-681364" data-claire-element-id="681364">A remarquer qu'en cas d'erreur de la requête, le résultat ne sera pas un objet mais un booléen valant false (cette erreur étant alors soit due à une mauvaise requête, soit à un curseur qui n'a pas été fermé).</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd">PDO : Interface d&#039;accès aux BDD</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/presentation-174">
+Présentation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/activation-php-windows">
+Activation - Php Windows
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/connexion-creation-et-gestion-d-erreur">
+Connexion : création et gestion d&#039;erreur
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/methodes-exec-et-query">
+Méthodes : exec et query
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/methode-prepare">
+Méthode : prepare
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/securiser-sans-passer-par-des-requetes-preparees">
+Sécuriser sans passer par des requêtes préparées
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/connexion-creation-et-gestion-d-erreur">
+<span class="arrow"></span>
+<span class="next">Connexion : création et gestion d&#039;erreur</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/methode-prepare">
+<span class="next">Méthode : prepare</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Mthodeprepare"></a><h2>Méthode : prepare</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/methodes-exec-et-query">
+<span class="arrow"></span>
+<span class="next">Méthodes : exec et query</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/securiser-sans-passer-par-des-requetes-preparees">
+<span class="next">Sécuriser sans passer par des requêtes préparées</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-681366" data-claire-element-id="681366">Ceux qui connaissent les requêtes préparées et / ou qui ont lu mon tuto là-dessus en verront tout de suite l'intérêt ; aux autres : n'hésitez pas à aller lire le tuto sur les <a href="http://www.siteduzero.com/tuto-3-4404-1-mysql-requete-preparee.html">requêtes préparées</a>, et à revenir.</p><p id="r-681367" data-claire-element-id="681367">Cette méthode prépare une requête SQL à être exécutée en offrant la possibilité de mettre des marqueurs qui seront substitués lors de l'exécution.<br/> Il existe deux types de marqueurs qui sont respectivement <strong>?</strong> et les marqueurs nominatifs. Ces marqueurs ne sont pas mélangeables : donc pour une même requête, il faut choisir l'une ou l'autre des options.</p><p id="r-681368" data-claire-element-id="681368">Avantages de cette méthode :</p><ul id="r-681373" data-claire-element-id="681373"><li id="r-681370" data-claire-element-id="681370"><p id="r-681369" data-claire-element-id="681369">optimisation des performances pour des requêtes appelées plusieurs fois ;</p></li><li id="r-681372" data-claire-element-id="681372"><p id="r-681371" data-claire-element-id="681371">protection des injections SQL (plus besoin de le faire manuellement) ;</p></li></ul><p id="r-681374" data-claire-element-id="681374">Exemple de cette méthode sans marqueur :<br/> Imaginons que nous voulons récupérer la liste des membres.</p><pre id="r-681375" data-claire-element-id="681375"><code data-claire-semantic="html+php">&lt;?php
+// ouverture d'une connexion ...
+ 
+$requete_prepare_1=$connexion-&gt;prepare(&quot;SELECT identifiant FROM membres&quot;); // on prépare notre requête
+$requete_prepare_1-&gt;execute();
+while($lignes=$requete_prepare_1-&gt;fetch(PDO::FETCH_OBJ))
+{
+        echo $lignes-&gt;identifiant.'&lt;br /&gt;';
+}
+?&gt;</code></pre><p id="r-681376" data-claire-element-id="681376">Comme on peut le voir, c'est très simple.</p><p id="r-681377" data-claire-element-id="681377">Exemple de cette méthode avec marqueur nominatif :<br/> Imaginons maintenant que nous voulons un identifiant bien précis.</p><pre id="r-681378" data-claire-element-id="681378"><code data-claire-semantic="html+php">&lt;?php
+// ouverture d'une connexion ...
+ 
+$requete_prepare_1=$connexion-&gt;prepare(&quot;SELECT identifiant FROM membres WHERE ID_membre = :id&quot;); // on prépare notre requête
+$requete_prepare_1-&gt;execute(array( 'id' =&gt; 1 ));
+$lignes=$requete_prepare_1-&gt;fetch(PDO::FETCH_OBJ);
+echo $lignes-&gt;identifiant.'&lt;br /&gt;';
+?&gt;</code></pre><p id="r-681379" data-claire-element-id="681379">Il est possible d'avoir plus de marqueurs : dans ce cas, il faut les rajouter dans la requête et dans execute, le tableau contiendra autant de clés et de valeurs qu'il y a de marqueurs dans la requête préparée.</p><p id="r-681380" data-claire-element-id="681380">Exemple de cette méthode avec marqueur <strong>?</strong> :<br/> Nous voulons toujours notre identifiant unique.</p><pre id="r-681381" data-claire-element-id="681381"><code data-claire-semantic="html+php">&lt;?php
+// ouverture d'une connexion ...
+ 
+$requete_prepare_1=$connexion-&gt;prepare(&quot;SELECT identifiant FROM membres WHERE ID_membre = ? &quot;); // on prépare notre requête
+$requete_prepare_1-&gt;execute(array( 1 ));
+$lignes=$requete_prepare_1-&gt;fetch(PDO::FETCH_OBJ);
+echo $lignes-&gt;identifiant.'&lt;br /&gt;';
+?&gt;</code></pre><p id="r-681382" data-claire-element-id="681382">Comme vous le voyez, c'est encore plus simple.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd">PDO : Interface d&#039;accès aux BDD</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/presentation-174">
+Présentation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/activation-php-windows">
+Activation - Php Windows
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/connexion-creation-et-gestion-d-erreur">
+Connexion : création et gestion d&#039;erreur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/methodes-exec-et-query">
+Méthodes : exec et query
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/methode-prepare">
+Méthode : prepare
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/securiser-sans-passer-par-des-requetes-preparees">
+Sécuriser sans passer par des requêtes préparées
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/methodes-exec-et-query">
+<span class="arrow"></span>
+<span class="next">Méthodes : exec et query</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/securiser-sans-passer-par-des-requetes-preparees">
+<span class="next">Sécuriser sans passer par des requêtes préparées</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Scurisersanspasserpardesrequtesprpares"></a><h2>Sécuriser sans passer par des requêtes préparées</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/methode-prepare">
+<span class="arrow"></span>
+<span class="next">Méthode : prepare</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-681384" data-claire-element-id="681384">Comme nous l'avons vu précédemment, il est possible de préparer une requête, ce qui va la sécuriser de facto.<br/> Cependant certains usages (soit par facilité, soit par certaines limitations imposées par des requêtes) nécessitent de passer par des requêtes non préparées, dans ce cas, on est en droit de vouloir que la requête soit sécurisée.</p><p id="r-681385" data-claire-element-id="681385">Pour faire cela, rien de plus simple, il existe la méthode <em>quote</em>. Cette méthode s'utilise directement avec la ressource de connexion.</p><p id="r-681386" data-claire-element-id="681386">Exemple :</p><pre id="r-681387" data-claire-element-id="681387"><code data-claire-semantic="html+php">&lt;?php
+$RessourceDeConnection = new PDO(...); // ouverture d'une connection
+$RessourceDeConnection-&gt;query(&quot;SELECT id_membre FROM membres WHERE nom = &quot;.$RessourceDeConnection-&gt;quote($nom, PDO::PARAM_STR));
+?&gt;</code></pre><p id="r-681388" data-claire-element-id="681388">Ici nous ouvrons une nouvelle connexion, ensuite nous faisons une requête de type SELECT avec la méthode query prévue à cet effet.<br/> Remarquez que pour appeler le nom, nous utilisons directement la ressource de connexion à laquelle nous ajoutons la méthode <em>quote</em>, en premier argument on met la valeur qui devra être protégée et en deuxième argument (qui est optionnel), on met le type de valeur à protéger.</p><p id="r-681389" data-claire-element-id="681389">Valeurs possibles pour le deuxième argument :<br/> - <strong>PDO::PARAM_STR</strong> : pour une chaîne de caractères ;<br/> - <strong>PDO::PARAM_INT</strong> : pour le type 'integer' de SQL ;<br/> - <strong>PDO::PARAM_NULL</strong> : pour le type NULL de SQL ;<br/> - <strong>PDO::PARAM_BOOL</strong> : pour un booléen ;<br/> - <strong>PDO::PARAM_LOB</strong> : pour le type 'objet large' de SQL.</p><aside id="r-681391" data-claire-element-id="681391" data-claire-semantic="warning"><p id="r-681390" data-claire-element-id="681390">Attention, lorsque vous utilisez cette méthode, n'englobez aucune valeur avec '' (pour une chaîne de caractère), la méthode se chargera de le faire pour vous si c'est nécessaire.</p></aside><p id="r-681392" data-claire-element-id="681392">Par défaut, si vous ne spécifiez pas de deuxième argument, la valeur PDO::PARAM_STR sera utilisée.</p><p id="r-681393" data-claire-element-id="681393">Comme vous le voyez cette méthode est facile à utiliser. Cependant en terme de performances, elle est un peu moins rapide.</p><p id="r-681394" data-claire-element-id="681394">Finalement, la conclusion de tout ceci est que l'extension PDO est vraiment très pratique, et que même si elle demande un peu d'apprentissage, elle permettra à terme de ne plus avoir à modifier un code mais seulement les requêtes dans le cas éventuel où il y ait besoin d'une adaptation.</p><p id="r-681395" data-claire-element-id="681395">Bref, PDO, mangez-en : c'est bon.</p><p id="r-681396" data-claire-element-id="681396">La documentation officielle est disponible ici : <a href="http://fr.php.net/pdo">http://fr.php.net/pdo</a>.</p><p id="r-681397" data-claire-element-id="681397">Remerciements à :</p><figure id="r-681399" data-claire-element-id="681400"><img id="r-681398" data-claire-element-id="681398" src="../../www.zcorrecteurs.fr/ext/badge.png" alt="Image utilisateur"/></figure>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd">PDO : Interface d&#039;accès aux BDD</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/presentation-174">
+Présentation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/activation-php-windows">
+Activation - Php Windows
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/connexion-creation-et-gestion-d-erreur">
+Connexion : création et gestion d&#039;erreur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/methodes-exec-et-query">
+Méthodes : exec et query
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/methode-prepare">
+Méthode : prepare
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/securiser-sans-passer-par-des-requetes-preparees">
+Sécuriser sans passer par des requêtes préparées
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/pdo-interface-d-acces-aux-bdd/methode-prepare">
+<span class="arrow"></span>
+<span class="next">Méthode : prepare</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/do-interface-d-acces-aux-bdd.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 02:11:59 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/do-interface-d-acces-aux-bdd.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:31:25 GMT -->
+</html>

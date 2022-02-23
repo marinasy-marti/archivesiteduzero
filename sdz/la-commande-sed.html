@@ -1,0 +1,371 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/la-commande-sed.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 07:13:10 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/la-commande-sed.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:18:01 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : La commande sed</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/la-commande-sed.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : La commande sed</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Lacommandesed">La commande sed</a><br/><a href="#Prsentation">Présentation</a><br/><a href="#Premierspas">Premiers pas</a><br/><a href="#Utilisationavance">Utilisation avancée</a><br/><a href="#MiniFAQ">Mini FAQ</a><br/></div>
+<a name="Lacommandesed"></a><h2>La commande sed</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-commande-sed/presentation-118">
+<span class="next">Présentation</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-438850" data-claire-element-id="438850">Bonjour amis linuxiens, :)</p><p id="r-438851" data-claire-element-id="438851">Aujourd'hui, je vais vous présenter une commande ma foi fort utile, et très puissante : j'ai nommé la commande <code data-claire-semantic="console">sed</code>.</p><p id="r-438852" data-claire-element-id="438852">Comme tous ses cousins du monde UNIX, le mot <strong>sed</strong> a une signification: comprenez &quot;éditeur de flux&quot; <em>(Stream EDitor)</em>. Cet outil vous permettra de manipuler vos fichiers textes de façon automatique, de rendre vos scripts (beaucoup) plus puissants, etc.</p><p id="r-438853" data-claire-element-id="438853">Pourquoi je prends la peine d'écrire un tuto sur le sujet, alors que le manuel existe ? Eh bien, je croyais comme vous et ai essayé d'apprendre à me servir de <strong>sed</strong> en lisant le manuel: croyez-moi, j'ai plus perdu de temps qu'autre chose. :-° <br/> Bref, cette commande étant assez complexe, je trouve qu'un tuto n'est vraiment pas de trop pour apprendre à s'en servir. ;)</p><p id="r-438854" data-claire-element-id="438854">Ce tuto est principalement destiné aux personnes familières avec la ligne de commande. De plus, pour profiter pleinement des possibilités offertes par <strong>sed</strong>, il vaut mieux savoir ce que c'est qu'une <strong><a href="http://fr.wikipedia.org/wiki/Expression_rationnelle">regex</a></strong>, c'est pourquoi une connaissance du principe des regex est requise pour bien comprendre ce tuto.</p>
+</div><a name="Prsentation"></a><h2>Présentation</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-commande-sed/premiers-pas-14">
+<span class="next">Premiers pas</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-438855" data-claire-element-id="438855">Avant de commencer, il est fondamental de bien comprendre le fonctionnement de <strong>sed</strong>. C'est ce qui nous permettra d'en connaitre les limites, savoir ce que l'on peut faire et ne pas faire avec, à quoi est-il adapté, etc.</p><p id="r-438856" data-claire-element-id="438856">En premier lieu, il faut retenir que <strong>sed</strong> fonctionne en mode «flux», c'est-à-dire que le flux en entrée (fichier ou autre) est traité ligne par ligne. Ceci garantit de bonnes performances, ainsi qu'une utilisation réduite en mémoire, mais empêche certains types d'utilisations. Donc, à vous de voir si l'utilisation de sed correspond à votre problème ou non.<br/> Retenez bien ce point, nous y reviendrons en détail plus loin.</p><p id="r-438857" data-claire-element-id="438857">Ensuite, il convient de noter deux façons d'utiliser <strong>sed</strong> :</p><ul id="r-438862" data-claire-element-id="438862"><li id="r-438859" data-claire-element-id="438859"><p id="r-438858" data-claire-element-id="438858">La méthode &quot;classique&quot;, qui consiste à appliquer la commande sur le flux d'entrée, et récupérer le flux de sortie. Par exemple, on applique sed sur un fichier, et on redirige la sortie sur un autre fichier.</p></li><li id="r-438861" data-claire-element-id="438861"><p id="r-438860" data-claire-element-id="438860">La méthode &quot;directe&quot;, avec l'option <code data-claire-semantic="console">sed -i</code>, qui applique la commande directement sur le fichier passé en entrée.</p></li></ul><p id="r-438863" data-claire-element-id="438863">Nous verrons ensemble des exemples d'utilisation avec la première méthode (traitement d'un fichier passé en entrée et affichage à l'écran).</p><p id="r-438864" data-claire-element-id="438864">Jetons à présent un coup d'oeil au synopsis :</p><p id="r-438865" data-claire-element-id="438865"><cite>Citation : MAN page</cite></p><blockquote id="r-438867" data-claire-element-id="438867"><p id="r-438866" data-claire-element-id="438866">sed [OPTION]... {script-only-if-no-other-script} [input-file]...</p></blockquote><p id="r-438868" data-claire-element-id="438868">Comme vous pouvez le voir, en plus des options et du flux d'entrée, <strong>sed</strong> reçoit un script. Ce script contiendra toutes les actions à exécuter sur le flux d'entrée.</p><p id="r-438869" data-claire-element-id="438869">Notez qu'il existe là encore deux manières de passer un script à sed :</p><ul id="r-438874" data-claire-element-id="438874"><li id="r-438871" data-claire-element-id="438871"><p id="r-438870" data-claire-element-id="438870">On peut écrire le script directement dans la ligne de commande, avec l'option <code data-claire-semantic="console">sed -e</code>. On séparera les commandes avec des point-virgules.<br/> C'est la façon &quot;uniligne&quot;, souvent très pratique.</p></li><li id="r-438873" data-claire-element-id="438873"><p id="r-438872" data-claire-element-id="438872">On peut passer à sed un fichier externe (par exemple <em>myscript.sed</em>) contenant le script, avec <code data-claire-semantic="console">sed -f script-file</code>. Cela assure une meilleure lisibilité pour les gros scripts, et permet aussi de réutiliser un script.</p></li></ul><p id="r-438875" data-claire-element-id="438875">Écrire un script pour <strong>sed</strong> peut devenir assez technique, et c'est seulement en pratiquant que vous arriverez à tirer plein parti de toute la puissance de ce dernier. Aussi, nous allons passer tout de suite à la pratique.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/la-commande-sed">La commande sed</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/la-commande-sed/presentation-118">
+Présentation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-commande-sed/premiers-pas-14">
+Premiers pas
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-commande-sed/utilisation-avancee-2">
+Utilisation avancée
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-commande-sed/mini-faq">
+Mini FAQ
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-commande-sed/premiers-pas-14">
+<span class="next">Premiers pas</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Premierspas"></a><h2>Premiers pas</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-commande-sed/presentation-118">
+<span class="arrow"></span>
+<span class="next">Présentation</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-commande-sed/utilisation-avancee-2">
+<span class="next">Utilisation avancée</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-438877" data-claire-element-id="438877">Commençons par créer un fichier de texte quelconque.</p><pre id="r-438878" data-claire-element-id="438878"><code>Bonjour,
+
+Ceci est un fichier de test.
+Ici la ligne numéro 4.
+
+# ceci pourrait être un commentaire
+Ici la ligne numéro 7.
+
+Au revoir</code></pre><p id="r-438879" data-claire-element-id="438879">Enregistrez ce fichier sous <em>test.txt</em>, puis placez vous dans son répertoire.</p><p id="r-438880" data-claire-element-id="438880">Nous allons faire nos premiers tests en affichant les résultats de sed dans la console.</p><p id="r-438881" data-claire-element-id="438881">Lancez : <code data-claire-semantic="console">sed '' test.txt</code></p><pre id="r-438882" data-claire-element-id="438882"><code data-claire-semantic="console">$ sed '' test.txt
+Bonjour,
+
+Ceci est un fichier de test.
+Ici la ligne numéro 4.
+
+# ceci pourrait être un commentaire
+Ici la ligne numéro 7.
+
+Au revoir</code></pre><p id="r-438883" data-claire-element-id="438883">Vous pouvez voir que sed lancé avec un script vide renvoie simplement le contenu du fichier.</p><h2 id="r-adressage-1" data-claire-element-id="438904">Adressage</h2><h3 id="r-adressage-par-ligne" data-claire-element-id="438892">Adressage par ligne</h3><p id="r-438884" data-claire-element-id="438884">Lancez : <code data-claire-semantic="console">sed -e '4d; 7d' test.txt</code></p><pre id="r-438885" data-claire-element-id="438885"><code data-claire-semantic="console">$ sed -e '4 d; 7 d' test.txt
+Bonjour,
+
+Ceci est un fichier de test.
+
+# ceci pourrait être un commentaire
+
+Au revoir</code></pre><p id="r-438886" data-claire-element-id="438886">Ici, nous utilisons l'adressage par ligne. La commande d <em>(delete)</em> indique que l'on va supprimer la ligne.</p><aside id="r-438888" data-claire-element-id="438888" data-claire-semantic="information"><p id="r-438887" data-claire-element-id="438887">L'option -e permet de passer plusieurs commandes à la suite. Je pense que c'est une bonne habitude de l'ajouter de façon systématique.</p></aside><p id="r-438889" data-claire-element-id="438889">On peut aussi utiliser l'adressage par intervalle, comme ceci : <code data-claire-semantic="console">sed '4,7 d' test.txt</code></p><p id="r-438890" data-claire-element-id="438890">Cette commande va effacer toutes les lignes comprises entre la ligne 4 et la ligne 7.</p><pre id="r-438891" data-claire-element-id="438891"><code data-claire-semantic="console">$ sed '4,7 d' test.txt
+Bonjour,
+
+Ceci est un fichier de test.
+
+Au revoir</code></pre><h3 id="r-adressage-par-motif" data-claire-element-id="438903">Adressage par motif</h3><p id="r-438893" data-claire-element-id="438893">On peut aussi utiliser des regex pour appliquer la commandes sur toutes les lignes ou le motif est trouvé. On décrit un motif comme ceci : <code>/regex/</code></p><p id="r-438894" data-claire-element-id="438894">Exemple : <code data-claire-semantic="console">sed '/^#/ d' test.txt</code> supprimera toutes les lignes commençant par une dièse (le ^ est un métacaractère signifiant début de ligne).</p><pre id="r-438895" data-claire-element-id="438895"><code data-claire-semantic="console">$ sed '/^#/d' test.txt
+Bonjour,
+
+Ceci est un fichier de test.
+Ici la ligne numéro 4.
+
+Ici la ligne numéro 7.
+
+Au revoir</code></pre><p id="r-438896" data-claire-element-id="438896">Là encore, on peut utiliser une intervalle avec : <code>/motif1/,/motif2/</code><br/><code data-claire-semantic="console">sed '/^Bonjour/,/^Au revoir/d' test.txt</code> supprimera toutes les lignes comprises entre 'Bonjour' et 'Au revoir', donc tout le fichier.</p><p id="r-438897" data-claire-element-id="438897">Dans le cas d'adressage par intervalle entre deux motifs, sed va répéter les commandes passées pour cet intervalle à chaque fois que l'intervalle est trouvé.</p><aside id="r-438899" data-claire-element-id="438899" data-claire-semantic="warning"><p id="r-438898" data-claire-element-id="438898">Si seul /motif1/ est présent, sed va appliquer le script sur tout ce qu'il trouvera après jusqu'à la fin du flux d'entrée.</p></aside><p id="r-438900" data-claire-element-id="438900">On peut très bien aussi utiliser un adressage mixte, comme : <code data-claire-semantic="console">sed '/^#/,7 d' test.txt</code> ou <code data-claire-semantic="console">sed '4,/^#/ d' test.txt</code>. Je vous laisse deviner ce que font ces commandes...</p><aside id="r-438902" data-claire-element-id="438902" data-claire-semantic="information"><p id="r-438901" data-claire-element-id="438901">Ici, nous avons utilisé la commande d <em>(delete)</em>, qui accepte l'adressage simple et l'adressage par intervalle. Certaines commandes ne fonctionnent que sur adresse simple, voire n'utilisent pas les adresses. Il faudra toujours vérifier si la commande employée est compatible avec le mode d'adressage choisi.</p></aside><h2 id="r-mode-silencieux" data-claire-element-id="438910">Mode silencieux</h2><p id="r-438905" data-claire-element-id="438905">Il existe une autre façon d'utiliser sed, particulièrement intéressante. C'est l'utilisation en mode &quot;silencieux&quot;, c'est-à-dire que sed ne doit afficher par défaut aucune ligne. Seules les lignes intéressantes seront affichées, avec la commande p <em>(print)</em>. Pour passer en mode &quot;silencieux&quot;, il faut utiliser l'option <code data-claire-semantic="console">sed -n</code></p><p id="r-438906" data-claire-element-id="438906">Lancez : <code data-claire-semantic="console">sed -n '/Ici/p' test.txt</code></p><pre id="r-438907" data-claire-element-id="438907"><code data-claire-semantic="console">$ sed -n '/Ici/p' test.txt
+Ici la ligne numéro 4.
+Ici la ligne numéro 7.</code></pre><aside id="r-438909" data-claire-element-id="438909" data-claire-semantic="information"><p id="r-438908" data-claire-element-id="438908">A noter que la négation d'adresse est possible. Ainsi, cette commande produira exactement le même résultat : <br/><code data-claire-semantic="console">sed '/Ici/!d' test.txt</code></p></aside><h2 id="r-substitution-translitteration" data-claire-element-id="438923">Substitution, translittération</h2><h3 id="r-substitution-2" data-claire-element-id="438918">Substitution</h3><p id="r-438911" data-claire-element-id="438911">Bien évidemment, sed permet de remplacer du texte avec des regex. On peut utiliser la syntaxe habituelle, ou la syntaxe étendue avec <code data-claire-semantic="console">sed -r</code>.</p><p id="r-438912" data-claire-element-id="438912">La substitution s'écrit comme ceci : <code>s/motif/substitut/</code><br/> Par défaut, elle s'effectue sur la première occurrence du motif, sauf si on lui ajoute l'option g comme ceci : <code>s/motif/substitut/g</code><br/> On peut aussi choisir l'occurrence voulue, avec par exemple <code>s/motif/substitut/2</code> pour la deuxième occurrence.</p><aside id="r-438914" data-claire-element-id="438914" data-claire-semantic="warning"><p id="r-438913" data-claire-element-id="438913">Si le motif est une regex, le substitut n'en est pas une. Il accepte quand même le métacaractère <code>&amp;</code>, ainsi que les références arrières telles que <code>\1</code> (de 1 à 9).</p></aside><p id="r-438915" data-claire-element-id="438915">Quelques exemples :</p><p id="r-438916" data-claire-element-id="438916">- <code data-claire-semantic="console">sed -re 's/^# *//' fichier</code> décommente les lignes commentées (commençant par une dièse), et supprime les espaces en début de ligne (le * est un métacaractère signifiant 0 ou plus).</p><p id="r-438917" data-claire-element-id="438917">- <code data-claire-semantic="console">sed -re 's/ /    /g' fichier</code> remplace les tabulations par 4 espaces.</p><h3 id="r-translitteration" data-claire-element-id="438922">Translittération</h3><p id="r-438919" data-claire-element-id="438919">La translittération permet d'échanger certains caractères avec d'autres caractères.</p><p id="r-438920" data-claire-element-id="438920">On l'écrit comme ceci : <code>y/liste1/liste2/</code>.<br/> Par exemple, pour supprimer les accents sur les e dans notre fichier <em>test.txt</em>, on fera <code data-claire-semantic="console">sed -re 'y/éèê/eee/' test.txt</code></p><pre id="r-438921" data-claire-element-id="438921"><code data-claire-semantic="console">$ sed -re 'y/éèê/eee/' test.txt
+Bonjour,
+
+Ceci est un fichier de test.
+Ici la ligne numero 4.
+
+# ceci pourrait etre un commentaire
+Ici la ligne numero 7.
+
+Au revoir</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/la-commande-sed">La commande sed</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-commande-sed/presentation-118">
+Présentation
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/la-commande-sed/premiers-pas-14">
+Premiers pas
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-commande-sed/utilisation-avancee-2">
+Utilisation avancée
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-commande-sed/mini-faq">
+Mini FAQ
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-commande-sed/presentation-118">
+<span class="arrow"></span>
+<span class="next">Présentation</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-commande-sed/utilisation-avancee-2">
+<span class="next">Utilisation avancée</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Utilisationavance"></a><h2>Utilisation avancée</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-commande-sed/premiers-pas-14">
+<span class="arrow"></span>
+<span class="next">Premiers pas</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-commande-sed/mini-faq">
+<span class="next">Mini FAQ</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-commandes-groupees" data-claire-element-id="438928">Commandes groupées</h2><p id="r-438925" data-claire-element-id="438925">Sed permet de grouper les commandes avec des accolades. Cela permet de faire plus de choses dans une même commande (et de se rendre compte des limites de l'uniligne, même si nous allons continuer avec :-° ).</p><p id="r-438926" data-claire-element-id="438926">On peut ainsi faire des trucs comme :<br/><code data-claire-semantic="console">sed -e '/motif_1/ {commande1; commande2} ; /motif_2/ {commande1; commande2; /sous_motif/ {commande1; commande2} }'</code></p><p id="r-438927" data-claire-element-id="438927">Je n'ai pas d'exemple intéressant à vous fournir pour l'instant, nous verrons des exemples plus loin.</p><h2 id="r-utilisation-multiligne" data-claire-element-id="438957">Utilisation multiligne</h2><p id="r-438929" data-claire-element-id="438929">Un des inconvénients principaux pour l'instant est l'impossibilité de travailler sur plus d'une ligne à la fois.</p><p id="r-438930" data-claire-element-id="438930">Pour peu que nous restions raisonnables (c'est-à-dire dans l'optique du traitement ligne par ligne), sed nous propose une commande afin de permettre de travailler sur plusieurs lignes :) . Mais auparavant, un peu de théorie sur le fonctionnement interne de sed s'impose.</p><h3 id="r-theorie-13" data-claire-element-id="438945">Théorie</h3><p id="r-438931" data-claire-element-id="438931">On pourrait résumer la manière dont sed travaille ainsi :</p><ul id="r-438940" data-claire-element-id="438940"><li id="r-438933" data-claire-element-id="438933"><p id="r-438932" data-claire-element-id="438932">Lecture d'une ligne sur le flux d'entrée, et stockage dans l'espace de travail.</p></li><li id="r-438935" data-claire-element-id="438935"><p id="r-438934" data-claire-element-id="438934">Traitement : exécute séquentiellement les commandes reçues sur l'espace de travail.</p></li><li id="r-438937" data-claire-element-id="438937"><p id="r-438936" data-claire-element-id="438936">Envoie la ligne au flux de sortie stdout.</p></li><li id="r-438939" data-claire-element-id="438939"><p id="r-438938" data-claire-element-id="438938">Passe à la ligne suivante...</p></li></ul><p id="r-438941" data-claire-element-id="438941">Cette notion d'espace de travail est importante. Par exemple, la regex <code>/$/</code> représente la fin de l'espace de travail, et non la fin de la ligne courante (<code></code> ). Cela aura un impact dans nos traitements sur plusieurs lignes.</p><p id="r-438942" data-claire-element-id="438942">La ligne lue est stockée sans le caractère de fin de ligne, et envoyée au flux de sortie en ajoutant un caractère de fin de ligne. Ce qui fait par exemple que ce script ne fonctionnera pas :</p><pre id="r-438943" data-claire-element-id="438943"><code data-claire-semantic="console">$ sed 's/\n//' test.txt
+Bonjour,
+
+Ceci est un fichier de test.
+Ici la ligne numéro 4.
+
+# ceci pourrait être un commentaire
+Ici la ligne numéro 7.
+
+Au revoir</code></pre><p id="r-438944" data-claire-element-id="438944">Nous avons essayé ici de supprimer les fins de ligne, mais la manière dont fonctionne sed ne nous permet pas de procéder de la sorte.</p><h3 id="r-la-commande-n" data-claire-element-id="438952">La commande N</h3><p id="r-438946" data-claire-element-id="438946">La solution est d'insérer une ligne supplémentaire dans l'espace de travail. Cette ligne sera ajoutée à la suite d'un caractère de fin de ligne, ce qui va nous autoriser à faire du traitement multiligne.</p><p id="r-438947" data-claire-element-id="438947">Il existe une commande pour cela : la commande N.</p><p id="r-438948" data-claire-element-id="438948">Maintenant, attention, ce n'est pas tout. Si nous faisons par exemple : <code data-claire-semantic="console">sed -e 'N; s/ //' test.txt</code>, on obtiendra</p><pre id="r-438949" data-claire-element-id="438949"><code data-claire-semantic="console">$ sed -e 'N; s/\n//' test.txt
+Bonjour,
+Ceci est un fichier de test.Ici la ligne numéro 4.
+# ceci pourrait être un commentaire
+Ici la ligne numéro 7.
+Au revoir</code></pre><p id="r-438950" data-claire-element-id="438950">Une fin de ligne sur deux a été supprimée, ce qui est normal. ;)</p><p id="r-438951" data-claire-element-id="438951">Rappelez-vous, sed applique le traitement puis recommence, donc il charge une ligne, charge la seconde, supprime le caractère <code></code> (fin de ligne) trouvé, affiche la sortie (ce qui a pour effet de vider l'espace de travail), puis recommence...</p><h3 id="r-la-commande-d" data-claire-element-id="438956">La commande D</h3><p id="r-438953" data-claire-element-id="438953">La commande d <em>(delete)</em> dispose aussi d'un équivalent spécialisé pour le traitement multiligne : c'est la commande D, qui efface le contenu de l'espace de travail jusqu'au premier caractère <code></code> trouvé. S'il reste des données dans l'espace de travail, sed va relancer son traitement dessus. Sinon, une nouvelle ligne sera chargée.</p><p id="r-438954" data-claire-element-id="438954"><strong>Exemple d'utilisation :</strong> si l'on veut par exemple supprimer les lignes vides d'un fichier, on ne peut pas le faire comme ceci : <code data-claire-semantic="console">sed -re '/^$/ {N; s/ //}' fichier</code>, à cause de la particularité évoquée ci-dessus. En effet, si nous avons plusieurs lignes vides à la suite, certaines vont rester.</p><p id="r-438955" data-claire-element-id="438955">On pourra par contre le faire comme cela : <code data-claire-semantic="console">sed -re '/^$/ {N; D}' fichier</code></p><h2 id="r-labels-et-branchements" data-claire-element-id="438970">Labels et branchements</h2><p id="r-438958" data-claire-element-id="438958">Une autre fonctionnalité importante et qui ajoute énormément de puissance à sed est la possibilité de branchement dans le script. Il est possible en effet de revenir en arrière dans le script, en créant des labels.</p><p id="r-438959" data-claire-element-id="438959">Un label s'écrit <code>:label</code>.</p><aside id="r-438961" data-claire-element-id="438961" data-claire-semantic="warning"><p id="r-438960" data-claire-element-id="438960">Les : font partie du label, ce sont eux qui indiquent que le mot est un label.</p></aside><h3 id="r-exemple-concret-d-utilisation-1" data-claire-element-id="438969">Exemple concret d'utilisation</h3><p id="r-438962" data-claire-element-id="438962">Supposons que vous ayez devant vous un fichier HTML, et que vous voulez supprimer toutes les balises qu'il contient et ne garder que le texte.</p><div id="r-438964" data-claire-element-id="438964" data-claire-semantic="question"><p id="r-438963" data-claire-element-id="438963">Pourquoi on ne peut pas faire <code data-claire-semantic="console">sed -re 's/&lt;[^&gt;]*&gt;//g' fichier.html</code> ?</p></div><p id="r-438965" data-claire-element-id="438965">Ce script est très bien, mais le problème est que si vous avez des balises sur plusieurs lignes, votre truc ne va pas marcher...</p><p id="r-438966" data-claire-element-id="438966">Ce qu'il faudrait, c'est de vérifier à la fin de chaque traitement s'il ne reste pas une balise ouverte, et si c'est le cas pouvoir charger une nouvelle ligne dans l'espace de travail <strong>et relancer le traitement</strong>.</p><p id="r-438967" data-claire-element-id="438967">Pour faire cela, il y a la commande b <em>(branch)</em>. :)</p><p id="r-438968" data-claire-element-id="438968">Voici un script qui marche même avec des balises sur plusieurs lignes : <code data-claire-semantic="console">sed -re ':start s/&lt;[^&gt;]*&gt;//g; /&lt;/ {N; b start}' fichier.html</code></p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/la-commande-sed">La commande sed</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-commande-sed/presentation-118">
+Présentation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-commande-sed/premiers-pas-14">
+Premiers pas
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/la-commande-sed/utilisation-avancee-2">
+Utilisation avancée
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-commande-sed/mini-faq">
+Mini FAQ
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-commande-sed/premiers-pas-14">
+<span class="arrow"></span>
+<span class="next">Premiers pas</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-commande-sed/mini-faq">
+<span class="next">Mini FAQ</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="MiniFAQ"></a><h2>Mini FAQ</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-commande-sed/utilisation-avancee-2">
+<span class="arrow"></span>
+<span class="next">Utilisation avancée</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<div id="r-438973" data-claire-element-id="438973" data-claire-semantic="question"><p id="r-438972" data-claire-element-id="438972">La commande sed existe elle sous Windows ?</p></div><p id="r-438974" data-claire-element-id="438974">En principe non (c'est-à-dire que Windows n'est pas fourni d'office avec). Mais on peut très bien utiliser <a href="http://gnuwin32.sourceforge.net/packages/sed.htm">GNU sed sous Windows</a>. Néanmoins, la syntaxe à utiliser dépendra alors de l'interpréteur de commandes, notamment avec les guillemets...</p><div id="r-438976" data-claire-element-id="438976" data-claire-semantic="question"><p id="r-438975" data-claire-element-id="438975">Au secours, mon script plante pour une raison incompréhensible !?</p></div><p id="r-438977" data-claire-element-id="438977">Attention, certaines options/commandes ne marchent pas avec tous les sed.<br/> Attention aussi à l'ordre dans lequel vous passez les options.<br/> Enfin, vous pouvez toujours demander de l'aide sur un forum dédié (ou non).</p><div id="r-438979" data-claire-element-id="438979" data-claire-semantic="question"><p id="r-438978" data-claire-element-id="438978">Ou puis-je me documenter sur sed ?</p></div><p id="r-438980" data-claire-element-id="438980">Personnellement, je vous conseille <a href="http://www.commentcamarche.net/faq/9536-sed-introduction-a-sed-part-i">cet excellent tuto</a> avec lequel j'ai appris et dont je me suis inspiré pour ce tuto.<br/> Et voici encore <a href="http://sed.sourceforge.net/sed1line_fr.html">une bonne source</a> de réflexion et d'inspiration.</p><p id="r-438981" data-claire-element-id="438981">Voilà, ce tutoriel arrive à sa fin.</p><p id="r-438982" data-claire-element-id="438982">Ce tuto est loin d'être exhaustif (je pense qu'il faudrait un livre ^^ ), il ne présente pas toutes les commandes ni toutes les possibilités offertes par <strong>sed</strong>. Le but était surtout de vous faire découvrir et expérimenter un petit peu ce formidable outil.</p><p id="r-438983" data-claire-element-id="438983">J'espère que vous avez bien suivi et pourrez désormais profiter de toute la puissance de <strong>sed</strong>.</p><p id="r-438984" data-claire-element-id="438984">@+</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/la-commande-sed">La commande sed</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-commande-sed/presentation-118">
+Présentation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-commande-sed/premiers-pas-14">
+Premiers pas
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-commande-sed/utilisation-avancee-2">
+Utilisation avancée
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/la-commande-sed/mini-faq">
+Mini FAQ
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-commande-sed/utilisation-avancee-2">
+<span class="arrow"></span>
+<span class="next">Utilisation avancée</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/la-commande-sed.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 07:13:10 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/la-commande-sed.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:18:02 GMT -->
+</html>

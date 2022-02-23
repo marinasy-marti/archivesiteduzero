@@ -1,0 +1,1249 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/les-tests-unitaires-en-java.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 03:59:46 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/les-tests-unitaires-en-java.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:46:46 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Les tests unitaires en Java</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/les-tests-unitaires-en-java.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Les tests unitaires en Java</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#LestestsunitairesenJava">Les tests unitaires en Java</a><br/><a href="#Dfinitionsetutilit">Définitions et utilité</a><br/><a href="#Miseenpratique">Mise en pratique</a><br/><a href="#Lacouvertureducode">La couverture du code</a><br/><a href="#Testerproprementlagestionducontexte">Tester proprement : la gestion du contexte</a><br/><a href="#Lesmocks">Les mocks</a><br/><a href="#Lesproblmesdestests">Les problèmes des tests</a><br/></div>
+<a name="LestestsunitairesenJava"></a><h2>Les tests unitaires en Java</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/definitions-et-utilite">
+<span class="next">Définitions et utilité</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-449145" data-claire-element-id="449145">Bonjour à tous,</p><p id="r-449146" data-claire-element-id="449146">Ceci est mon premier tutoriel, tous les commentaires sont les bienvenus. Je vais vous parler des tests unitaires en Java. Nous allons voir d'abord un peu de théorie sur les tests puis nous verrons comment en créer avec JUnit. Enfin nous verrons comment évaluer la couverture de nos tests.</p>
+</div><a name="Dfinitionsetutilit"></a><h2>Définitions et utilité</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/mise-en-pratique-12">
+<span class="next">Mise en pratique</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-449147" data-claire-element-id="449147">Vous qui programmez en java depuis un moment déjà, je suis sûr qu'il vous est déjà arrivé d'avoir un bug dans votre programme et de ne pas savoir d'où il venait. Votre algorithmes est juste, votre cascade d'appel de méthode, d'instanciation d'objet marchent, il n'y a pas d'exception qui apparaît. Et pourtant. Pourtant ça ne marche pas. Votre code fait mille lignes ou plus, il est complexe et une méthode au moins bug. Vous ne savez pas laquelle.<br/> Les tests sont faits pour cela. Ils vont vous aider à définir où est le problème.<br/> Il existe plusieurs types de tests :</p><ul id="r-449154" data-claire-element-id="449154"><li id="r-449149" data-claire-element-id="449149"><p id="r-449148" data-claire-element-id="449148">Les tests d'intégration : le programme créé s'intègre-t-il bien dans son environnement d'exécution ?</p></li><li id="r-449151" data-claire-element-id="449151"><p id="r-449150" data-claire-element-id="449150">Les tests d'acceptation : l'utilisateur final accepte-t-il le logiciel ?</p></li><li id="r-449153" data-claire-element-id="449153"><p id="r-449152" data-claire-element-id="449152">Les tests unitaires : destinés à tester une unité du logiciel.</p></li></ul><p id="r-449155" data-claire-element-id="449155">Ce sont ces derniers qui nous intéresseront et les unités que nous allons tester seront les méthodes de nos classes.</p><p id="r-449156" data-claire-element-id="449156">Voici un exemple simple : soit cette méthode <code data-claire-semantic="java">String concatene(String a, String b) {...}</code>. Nous voulons tester si elle concatène bien les deux chaînes <em>a</em> et <em>b</em>. La première méthode est de la tester dans notre programme, on appelle cette méthode dans le <em>main</em> avec deux chaînes et on affiche le résultat. Le premier qui fait un truc comme ça après avoir lu ce tuto, je le cloue.<br/> L'autre méthode consiste à créer une classe dédiée à ce test, c'est précisément le but du test unitaire. Mais voyons pourquoi la première méthode est à bannir pour de bon.</p><table id="r-449193" data-claire-element-id="449193"><thead id="r-449163" data-claire-element-id="449163"><tr id="r-449162" data-claire-element-id="449162"><th id="r-449157" data-claire-element-id="449157"></th><th id="r-449159" data-claire-element-id="449159"><p id="r-449158" data-claire-element-id="449158">test unitaire</p></th><th id="r-449161" data-claire-element-id="449161"><p id="r-449160" data-claire-element-id="449160">test perso</p></th></tr></thead><tbody id="r-449192" data-claire-element-id="449192"><tr id="r-449170" data-claire-element-id="449170"><td id="r-449165" data-claire-element-id="449165"><p id="r-449164" data-claire-element-id="449164">reproductible</p></td><td id="r-449167" data-claire-element-id="449167"><p id="r-449166" data-claire-element-id="449166">oui</p></td><td id="r-449169" data-claire-element-id="449169"><p id="r-449168" data-claire-element-id="449168">non</p></td></tr><tr id="r-449177" data-claire-element-id="449177"><td id="r-449172" data-claire-element-id="449172"><p id="r-449171" data-claire-element-id="449171">compréhensible</p></td><td id="r-449174" data-claire-element-id="449174"><p id="r-449173" data-claire-element-id="449173">oui</p></td><td id="r-449176" data-claire-element-id="449176"><p id="r-449175" data-claire-element-id="449175">non</p></td></tr><tr id="r-449184" data-claire-element-id="449184"><td id="r-449179" data-claire-element-id="449179"><p id="r-449178" data-claire-element-id="449178">documenté</p></td><td id="r-449181" data-claire-element-id="449181"><p id="r-449180" data-claire-element-id="449180">oui</p></td><td id="r-449183" data-claire-element-id="449183"><p id="r-449182" data-claire-element-id="449182">non</p></td></tr><tr id="r-449191" data-claire-element-id="449191"><td id="r-449186" data-claire-element-id="449186"><p id="r-449185" data-claire-element-id="449185">conclusion</p></td><td id="r-449188" data-claire-element-id="449188"><p id="r-449187" data-claire-element-id="449187">bon pour le service</p></td><td id="r-449190" data-claire-element-id="449190"><p id="r-449189" data-claire-element-id="449189">à bannir</p></td></tr></tbody></table><p id="r-449194" data-claire-element-id="449194">J'espère maintenant vous avoir convaincu que le test unitaire est utile. Il y a peut être encore un point qui est discutable : le temps de mise en place des tests. Tous ceux qui ont déjà eu à traiter un bug bien caché le savent, ce genre de bug est long et pénible à trouver.</p><div id="r-449196" data-claire-element-id="449196" data-claire-semantic="question"><p id="r-449195" data-claire-element-id="449195">Mais si un test est long et pénible à écrire, on ne gagne rien.</p></div><p id="r-449197" data-claire-element-id="449197">C'est vrai. Mais vous verrez qu'un test est simple à écrire dans la plupart des cas et qu'il n'est pas pénible du tout : on écrit les tests pour une seule méthode ! Pas besoin de savoir exactement ce que vaut le paramètre <em>xy</em> de la sous-classe <em>alpha</em> situé dans un autre package que celui où on est maintenant.</p><p id="r-449198" data-claire-element-id="449198">En réalité, on va créer une classe de test par classe à tester. Dans chaque classe de test, il y aura une méthode par méthode à tester. Donc en fait, pour chaque classe du logiciel, on va avoir sa sœur pour le test.</p><p id="r-449199" data-claire-element-id="449199">Mais définissons tout d'abord notre objectif. Notre objectif est de trouver un maximum de bug. Pourquoi pas tous ? Parce que ce serait trop long et trop difficile, il faudrait être sûr que dans tous les cas, si un certain nombre de préconditions sont remplies, alors un certain nombre de post-conditions le seront. Toujours. Quoiqu'il arrive. <br/> C'est parce que prouver que son logiciel est exempt de bug est trop difficile que nous allons seulement mettre en place un moyen de trouver quelques bugs (mais bien sur, si on trouve tous les bugs, on ne va pas se plaindre).<br/> Pour tester, nous allons nous baser sur deux assomptions :</p><ul id="r-449204" data-claire-element-id="449204"><li id="r-449201" data-claire-element-id="449201"><p id="r-449200" data-claire-element-id="449200">Si ça marche une fois, ça marchera les autres fois;</p></li><li id="r-449203" data-claire-element-id="449203"><p id="r-449202" data-claire-element-id="449202">Si ça marche pour quelques valeurs, ça marchera pour toutes les autres.</p></li></ul><p id="r-449205" data-claire-element-id="449205">Ces deux assomptions réduisent drastiquement le nombre de cas de test à effectuer.</p><aside id="r-449215" data-claire-element-id="449215" data-claire-semantic="information"><p id="r-449206" data-claire-element-id="449206"><strong>Définition : </strong> un cas de test est un ensemble composé de trois objets.</p><ul id="r-449213" data-claire-element-id="449213"><li id="r-449208" data-claire-element-id="449208"><p id="r-449207" data-claire-element-id="449207">Un état (ou contexte) de départ;</p></li><li id="r-449210" data-claire-element-id="449210"><p id="r-449209" data-claire-element-id="449209">Un état (ou contexte) d'arrivée;</p></li><li id="r-449212" data-claire-element-id="449212"><p id="r-449211" data-claire-element-id="449211">Un oracle, c'est à dire un outil qui va prédire l'état d'arrivée en fonction de l'état de départ et comparer le résultat théorique et le résultat pratique.</p></li></ul><p id="r-449214" data-claire-element-id="449214">Un cas de test peut donc s'appliquer à plusieurs méthodes, par exemple plusieurs classes implémentant la même interface.</p></aside><p id="r-449216" data-claire-element-id="449216">Voici (enfin) un exemple de test. Cet exemple ne respecte volontairement pas les notations que nous allons utiliser pour simplifier la chose.</p><pre id="r-449217" data-claire-element-id="449217"><code data-claire-semantic="java">public boolean concateneTest() {
+	MyString classATester = new MyString();
+	String a = &quot;salut les &quot;;
+	String b = &quot;zeros&quot;;
+	String resultatAttendu = &quot;salut les zeros&quot;;
+        String resultatObtenu = classATester.concatene(a, b);
+        if (resultatAttendu.compareTo(resultatObtenu) == 0) {
+	     return true;
+        }
+        else {
+	     return false;
+        }
+}</code></pre><p id="r-449218" data-claire-element-id="449218">Nous pouvons observer plusieurs choses de ce bout de code :</p><ul id="r-449227" data-claire-element-id="449227"><li id="r-449220" data-claire-element-id="449220"><p id="r-449219" data-claire-element-id="449219">Le test ne dit pas quelle est l'erreur, il dit seulement qu'il y en a une;</p></li><li id="r-449222" data-claire-element-id="449222"><p id="r-449221" data-claire-element-id="449221">Le test ne corrige pas l'erreur;</p></li><li id="r-449224" data-claire-element-id="449224"><p id="r-449223" data-claire-element-id="449223">Ce n'est pas parce que le test passe qu'il n'y a pas d'erreur;</p></li><li id="r-449226" data-claire-element-id="449226"><p id="r-449225" data-claire-element-id="449225">Ce n'est pas parce que vous corriger l'erreur qu'il n'y en a plus.</p></li></ul><p id="r-449228" data-claire-element-id="449228">Bon passons enfin à la pratique.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java">Les tests unitaires en Java</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/definitions-et-utilite">
+Définitions et utilité
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/mise-en-pratique-12">
+Mise en pratique
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/la-couverture-du-code">
+La couverture du code
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/tester-proprement-la-gestion-du-contexte">
+Tester proprement : la gestion du contexte
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/les-mocks">
+Les mocks
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/les-problemes-des-tests">
+Les problèmes des tests
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/mise-en-pratique-12">
+<span class="next">Mise en pratique</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Miseenpratique"></a><h2>Mise en pratique</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/definitions-et-utilite">
+<span class="arrow"></span>
+<span class="next">Définitions et utilité</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/la-couverture-du-code">
+<span class="next">La couverture du code</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-449230" data-claire-element-id="449230">Bon, nous avons vu ce qu'était un test et pourquoi en faire. Nous allons maintenant voir comment les mettre en pratique grâce à JUnit, le framework de test unitaire de Java. Bien que JUnit soit intégré à la plupart des IDE, il ne fait pas partie de la librairie standard de Java. En fait, JUnit est le framework de test unitaire qui fait partie d'un plus grand ensemble nommé XUnit. XUnit désigne tous les frameworks de test répondant à certains critères pour une multitude de langage. Il y a par exemple CUnit pour le C, CPPUnit pour le C++ ou encore PHPUnit pour PHP. Et la liste est longue.</p><p id="r-449231" data-claire-element-id="449231">Comme je ne connais pas NetBeans, je ne pourrai pas décrire les manipulations pour cet IDE. Mais ce tutoriel n'est pas à propos de la configuration d'un IDE et vous ne devriez pas avoir de problème à vous adapter. Tout ce que je montrerai, les captures d'écran et la navigation dans les menus seront donc les manipulations à faire sous Eclipse. J'utilise Eclipse Indigo, il y a peut être de petites différences avec les autres versions.</p><p id="r-449232" data-claire-element-id="449232">Comme je vous l'ai dit dans la première partie, nous allons avoir pour chaque classe à tester, sa classe sœur. Pour simplifier la <strong>maint</strong>enance du code et le packaging de notre logiciel, nous allons créer deux packages principaux : main et <strong>test</strong>. Dans <strong>main</strong>, nous mettrons toutes nos classes pour le logiciel et dans <strong>test</strong>, nos classes de test.</p><p id="r-449233" data-claire-element-id="449233">Il faut encore que je vous dise une chose à propos des tests : il y a des tests <em>boite noire (black-box)</em> et des tests <em>boite blanche (white-box)</em>. Les tests <em>boite noire</em> se font sans que le testeur ne connaisse le contenu de la méthode qu'il va tester alors que les tests <em>boite blanche</em> donne accès au contenu de la méthode à tester.<br/> Les deux ont leurs avantages et inconvénients : lorsque l'on teste en <em>boite noire</em>, on teste réellement ce que devrait faire la méthode. Lorsque l'on teste la méthode en connaissant son fonctionnement. Le risque est alors de tester le fonctionnement et d'oublier le but final de la méthode. En contre-partie, nos tests pourront être plus précis.</p><p id="r-449234" data-claire-element-id="449234">Nous allons développer une classe qui permettra de calculer le résultat d'opérations mathématiques de base. Voici l'interface de la classe :</p><pre id="r-449235" data-claire-element-id="449235"><code data-claire-semantic="java">package main;
+
+public interface Calculator {
+
+	int multiply(int a, int b);
+	int divide(int a, int b);
+	int add(int a, int b);
+	int substract(int a, int b);
+	
+}</code></pre><p id="r-449236" data-claire-element-id="449236">Cette interface est très simple, on opère seulement sur des entiers. Pas d'autres restrictions.<br/> J'ai écris cette interface en quelques minutes, juste pour vous ;) . Il y a un avantage à l'avoir écrite, en dehors du fait que programmer par interface est une bonne chose : vous qui êtes testeurs professionnels (ou le serez dans peu de temps) vous pouvez développer le test pendant que je m'occupe de l'implémentation. Certaines techniques de développement préconisent même d'écrire tous les tests avant de commencer le logiciel. Au fur et à mesure du développement, de plus en plus de tests vont réussir et lorsqu'ils réussissent tous, le logiciel est terminé. C'est la méthode de développement dite &quot;<em>test-driven</em>&quot;.</p><h2 id="r-generer-les-tests" data-claire-element-id="449260">Générer les tests</h2><p id="r-449237" data-claire-element-id="449237">Maintenant, créez un nouveau projet, copiez l'interface que je viens de vous donner dans le package <em>main</em> et créez un package <em>test</em>.<br/> Créez la classe <em>CalculatorImpl</em> qui implémente <em>Calculator</em>, générez les méthodes mais ne les remplissez pas encore, j'ai une surprise pour vous. :p <br/> Nous allons maintenant écrire nos tests. Pour cela, cliquez droit sur le package test (que vous aurez créer en faisant un nouveau projet) et faites <em>new&gt;&gt;Junit test case</em>. Nommez votre classe de test, habituellement, si vous testez la classe <em>Zeros</em>, la classe de test s'appelle <em>ZerosTest </em>ou bien <em>TestZeros</em>. Pour notre exemple, la classe à tester s'appellera <em>CalculatorImpl</em> et la classe de test sera <em>CalculatorImplTest</em>. <br/> Voici ensuite les informations pour Eclipse : nous ne voulons pas créer les méthodes <em>setUp </em>et <em>tearDown</em>, ces méthodes servent à générer le contexte dans lequel votre classe doit s'exécuter, établir les connexions à la base de donnée par exemple, laissez donc les quatre cases décochées. Cliquez ensuite sur suivant. Vous voyez alors les méthodes disponibles au test, cochez seulement celles qui sont définies dans notre classe. On imagine que les méthodes définies dans les super-classes sont déjà testées. Cliquez sur <em>terminé</em> et voici notre classe de test. Vous devriez être arrivé à cela :</p><pre id="r-449238" data-claire-element-id="449238"><code data-claire-semantic="java">package test;
+
+import static org.junit.Assert.*;
+
+import org.junit.Test;
+
+public class CalculatorImplTest {
+
+	@Test
+	public final void testMultiply() {
+		fail(&quot;Not yet implemented&quot;); // TODO
+	}
+
+	@Test
+	public final void testDivide() {
+		fail(&quot;Not yet implemented&quot;); // TODO
+	}
+
+	@Test
+	public final void testAdd() {
+		fail(&quot;Not yet implemented&quot;); // TODO
+	}
+
+	@Test
+	public final void testSubstract() {
+		fail(&quot;Not yet implemented&quot;); // TODO
+	}
+
+}</code></pre><p id="r-449239" data-claire-element-id="449239">Alors que voyons-nous ici ? Eclipse a généré pour nous quatre méthode destinées à tester les quatre méthodes de la classe <em>CalculatorImpl</em>. Bien sûr, Eclipse ne peut pas générer le contenu des tests, le code est donc seulement <code data-claire-semantic="java">fail(&quot;Not yet implemented&quot;); // TODO</code> afin de faire échouer un test non écrit. En plus l'IDE nous laisse un petit message pour nous préciser la raison de l'échec.</p><div id="r-449241" data-claire-element-id="449241" data-claire-semantic="question"><p id="r-449240" data-claire-element-id="449240">Hey ! c'est ça veut dire quoi <code data-claire-semantic="java">import static org.junit.Assert.*;</code> ? J'avais jamais vu d'import statique.</p></div><p id="r-449242" data-claire-element-id="449242">Un import statique permet de faire appel à des méthodes statiques sans préciser le nom de la classe qui définit ces méthodes. Voici un exemple avec la classe Math, si nous avons :</p><pre id="r-449243" data-claire-element-id="449243"><code data-claire-semantic="java">import static java.lang.Math.cos;
+import static java.lang.Math.PI;</code></pre><p id="r-449244" data-claire-element-id="449244">Alors ceci est valide :</p><pre id="r-449245" data-claire-element-id="449245"><code data-claire-semantic="java">double d = cos(2*PI);</code></pre><p id="r-449246" data-claire-element-id="449246">Sans les imports statiques il aurait fallu faire :</p><pre id="r-449247" data-claire-element-id="449247"><code data-claire-semantic="java">double d = Math.cos(2*Math.PI);</code></pre><p id="r-449248" data-claire-element-id="449248">Et pour cette explication sur les imports statiques, je dois un grand merci à <a href="http://www.siteduzero.com/membres-294-398731.html">Ruby Elegance</a>. Ce que j'ai écrit ici est presque un copier-coller de la discussion que nous avons eue lorsque que le tutoriel était en bêta-test.</p><p id="r-449249" data-claire-element-id="449249">Vous pouvez maintenant lancer le test en cliquant droit sur notre classe nouvellement créée, puis <em>run as</em> et <em>JUnit test</em>. Un nouvel onglet apparaît alors vous indiquant que les quatre tests ont échoués. Dans le bas de l'onglet, une raison est affichée, c'est celle qui est donnée en paramètre de la méthode <code data-claire-semantic="java">fail()</code>.<br/> Voici l'image de l'onglet qui est apparu. J'ai entouré en rouge les deux informations intéressantes.</p><figure id="r-les-tests-echouent" data-claire-element-id="449252"><img id="r-449250" data-claire-element-id="449250" src="medias/uploads.siteduzero.com_files_388001_389000_388456.png" alt="Les tests échouent"/><figcaption>Les tests échouent</figcaption></figure><p id="r-449253" data-claire-element-id="449253">Et voila ! Vous avez créé votre premier test !<br/> Nous allons maintenant l'étoffer un peu. La première chose à faire, histoire d'être un peu sérieux, c'est d'implémenter notre classe <em>CalculatorImpl</em>. <br/> Et voici ma surprise :</p><aside id="r-449255" data-claire-element-id="449255" data-claire-semantic="warning"><p id="r-449254" data-claire-element-id="449254">Pour implémenter cette interface, vous n'aurez pas le droit d'utiliser les opérateurs +, -, * et /. De cette façon, les méthodes que nous allons tester ne seront pas trop triviales. Par contre, vous pouvez utiliser ++ et --, vous pouvez utiliser les tests (==, &lt;, &gt;, ...), vous pouvez aussi utiliser l'opérateur - en tant qu'opérateur unaire, c'est à dire pour transformer 5 en -5 par exemple.</p></aside><p id="r-449256" data-claire-element-id="449256">Voici par exemple ma méthode pour l'addition, la plus simple. Je vous la donne au cas ou vous n'auriez pas d'idée. Cependant, le but de ce TP est que vous fassiez des erreurs de programmation et cette classe passe mes tests. Même s'il ne sont pas à toute épreuve, cette méthode ne devrait pas comporter de faute, je vous conseille donc de ne pas la regarder.</p><p id="r-449257" data-claire-element-id="449257"></p><div id="r-449259" data-claire-element-id="449259"><pre id="r-449258" data-claire-element-id="449258"><code data-claire-semantic="java">@Override
+public int add(int a, int b) {
+	int res = a;
+	if (b &gt; 0) {
+		while(b-- != 0) {
+                        res++;
+                }
+        }
+	else if (b &lt; 0) {
+		while(b++ != 0) {
+                        res--;
+                }
+        }
+	return res;
+}</code></pre></div><h2 id="r-remplir-les-methodes-de-test" data-claire-element-id="449308">Remplir les méthodes de test</h2><p id="r-449261" data-claire-element-id="449261">Créons donc le test qui va avec. Pour les tests, je vous autorise à utiliser tous les opérateurs que vous souhaitez. Vous avez vu que la méthode <code data-claire-semantic="java">fail()</code> fait échouer le test, nous allons donc l'utiliser à chaque fois qu'un test échoue.</p><p id="r-449262" data-claire-element-id="449262">Pour écrire un test correct, nous avons vu que nous n'allions tester que quelques valeurs puis que nous allions généraliser. Cependant, nous n'allons pas choisir ces valeurs au hasard et c'est là que réside tout l'art d'écrire un test.</p><p id="r-449263" data-claire-element-id="449263">Nous avons donc nos arguments <em>a</em> et <em>b</em>. Nous allons les additionner, à priori pas de problème. Mais nous allons quand même tester plusieurs cas spéciaux :<br/> si <em>a</em> ou <em>b</em> ou les deux est (sont) négatif(s) ou nul. Bien sûr, nous allons aussi tester s'ils sont positifs.</p><p id="r-449264" data-claire-element-id="449264">D'une manière générale, lorsque vous écrivez un test, il faut tester avec quelques valeurs standards, qui n'ont pas de signification particulière. Puis il faut tester avec les cas limites : nombres négatifs, nuls... Si vous prenez des objets, et s'ils étaient <code data-claire-semantic="java">null</code>, s'ils était une sous-classe du type demandé ? Ou bien si l'objet était mal initialisé ? Tout ceci sont des choses auxquels vous devez penser lorsque vous créez vos tests.<br/> Malgré cela, vos tests doivent restés très simples, s'ils deviennent compliqués, vous risquez d'introduire des bugs dans les tests.</p><p id="r-449265" data-claire-element-id="449265">Voici un squelette de test :</p><ol id="r-449280" data-claire-element-id="449280"><li id="r-449267" data-claire-element-id="449267"><p id="r-449266" data-claire-element-id="449266">Instancier la classe à tester T;</p></li><li id="r-449269" data-claire-element-id="449269"><p id="r-449268" data-claire-element-id="449268">Initialiser T;</p></li><li id="r-449271" data-claire-element-id="449271"><p id="r-449270" data-claire-element-id="449270">Générer les arguments pour la méthode à tester;</p></li><li id="r-449273" data-claire-element-id="449273"><p id="r-449272" data-claire-element-id="449272">Générer le résultat;</p></li><li id="r-449275" data-claire-element-id="449275"><p id="r-449274" data-claire-element-id="449274">Tester la méthode avec les arguments</p></li><li id="r-449277" data-claire-element-id="449277"><p id="r-449276" data-claire-element-id="449276">Vérifier le résultat;</p></li><li id="r-449279" data-claire-element-id="449279"><p id="r-449278" data-claire-element-id="449278">recommence depuis 3 tant qu'il y a des cas à tester.</p></li></ol><p id="r-449281" data-claire-element-id="449281">Voici mon test :</p><pre id="r-449282" data-claire-element-id="449282"><code data-claire-semantic="java">@Test
+public final void testAdd() {
+	Calculator calc = new CalculatorImpl();
+	int a, b, res;
+	a = 5; 
+        b  = 5;
+        res = a + b;
+	if (calc.add(a, b) != res) {
+		fail(&quot;a et b positif&quot;);
+        }
+	a = 0; 
+        b  = 5; 
+        res = a + b;
+	if (calc.add(a, b) != res) {
+		fail(&quot;a nul&quot;);
+        }
+	a = 5; 
+        b  = 0; 
+        res = a + b;
+	if (calc.add(a, b) != res) {
+		fail(&quot;b nul&quot;);
+        }
+	a = 0; 
+        b  = 0; 
+        res = a + b;
+	if (calc.add(a, b) != res) {
+		fail(&quot;a et b nuls&quot;);
+        }
+	a = -5; 
+        b  = 5; 
+        res = a + b;
+	if (calc.add(a, b) != res) {
+		fail(&quot;a negatif&quot;);
+        }
+	a = 5; 
+        b  = -5; 
+        res = a + b;
+	if (calc.add(a, b) != res) {
+		fail(&quot;b negatif&quot;);
+        }
+	a = -5; 
+        b  = -5; 
+        res = a + b;
+	if (calc.add(a, b) != res) {
+		fail(&quot;a et b negatif&quot;);
+        }
+}</code></pre><p id="r-449283" data-claire-element-id="449283">Il y a donc sept cas de tests avec à chaque fois <em>a</em> et <em>b</em> qui varient. On laisse un message pour savoir quel cas échoue lorsqu'il y a un échec et nous avons notre oracle : on calcule le résultat théorique d'une manière aussi sûr que possible puis on le compare grâce à un test d'égalité (ou de différence lorsqu'on veut trouver l'échec).<br/> Maintenant que notre test est écrit et que notre méthode <code data-claire-semantic="java">add(int a, int b)</code> l'est aussi, il ne reste plus qu'à exécuter le test. Là, deux choix possibles :</p><ul id="r-449288" data-claire-element-id="449288"><li id="r-449285" data-claire-element-id="449285"><p id="r-449284" data-claire-element-id="449284">Le test passe au vert, implémentez la méthode suivante et son test;</p></li><li id="r-449287" data-claire-element-id="449287"><p id="r-449286" data-claire-element-id="449286">Le test reste rouge, trouvez le bug et corrigez le.</p></li></ul><p id="r-449289" data-claire-element-id="449289">Je vais vous montrez maintenant comment gérer les exceptions. Pour cela nous allons implémenter la méthode de division. Nous allons jeter une exception si <em>b</em> vaut 0.<br/> Voici mon implémentation de la division, je vous invite encore une fois à ne pas la regarder excepté si vous n'arrivez vraiment pas à voir comment faire.</p><div id="r-449291" data-claire-element-id="449291"><pre id="r-449290" data-claire-element-id="449290"><code data-claire-semantic="java">@Override
+public int divide(int a, int b) {
+	if (b == 0) {
+		throw new ArithmeticException();
+        }
+	boolean resEstNegatif = false;
+	int res = 0;
+	if ( a &lt; 0) {
+		resEstNegatif = !resEstNegatif;
+		a = -a;
+	}
+	if ( b &lt; 0) {
+		resEstNegatif = !resEstNegatif;
+		b = -b;
+	}
+	while (a &gt; 0) {
+	        a = substract(a, b);
+		res++;
+	}
+	if (resEstNegatif) {
+		res = -res;
+        }
+	return res;
+}</code></pre></div><p id="r-449292" data-claire-element-id="449292">Voici maintenant le cas de test pour les cas où aucune exception ne devrait être jetée :</p><pre id="r-449293" data-claire-element-id="449293"><code data-claire-semantic="java">@Test
+public final void testDivide() {
+	Calculator calc = new CalculatorImpl();
+	int a, b, res;
+	a = 5; 
+        b  = 5; 
+        res = a / b;
+	if (calc.divide(a, b) != res) {
+		fail(&quot;a et b positif&quot;);
+        }
+	a = 0; 
+        b  = 5; 
+        res = a / b;
+	if (calc.divide(a, b) != res) {
+		fail(&quot;a nul&quot;);
+        }
+	a = -5; 
+        b  = 5; 
+        res = a / b;
+	if (calc.divide(a, b) != res) {
+		fail(&quot;a negatif&quot;);
+        }
+	a = 5; 
+        b  = -5; 
+        res = a / b;
+	if (calc.divide(a, b) != res) {
+		fail(&quot;b negatif&quot;);
+        }
+	a = -5; 
+        b  = -5; 
+        res = a / b;
+	if (calc.divide(a, b) != res) {
+		fail(&quot;a et b negatif&quot;);
+        }
+}</code></pre><p id="r-449294" data-claire-element-id="449294">Maintenant la partie difficile : gérer le cas où une exception devrait être lancée. Ce que nous voulons c'est dire <em>&quot;Ce bout de code doit jeter une exception. S'il ne le fait pas c'est que la méthode ne réagit pas comme elle devrait.&quot;</em> Notre test doit donc échouer si aucune exception n'est levée. Pour l'indiquer à JUnit, nous allons dire que le test attend une exception par le biais de l'annotation <code data-claire-semantic="java">@Test (expected = LaClassDeNotreException)</code> (expected signifie <em>s'attend à</em> ou <em>attend une</em>). <br/> Voici donc notre code :</p><pre id="r-449295" data-claire-element-id="449295"><code data-claire-semantic="java">@Test (expected = ArithmeticException.class)
+public final void testDivideByZero() {
+	Calculator calc = new CalculatorImpl();
+	int a, b, res;
+	a = 5; 
+        b  = 0; 
+        res = 0;
+	if (calc.divide(a, b) != res) {
+		fail(&quot;b nul&quot;);
+        }
+	a = 0; 
+        b  = 0; 
+        res = 0;
+	if (calc.divide(a, b) != res) {
+		fail(&quot;a et b nuls&quot;);
+        }
+}</code></pre><p id="r-449296" data-claire-element-id="449296">Voici maintenant tout un tas de méthodes qui vont vous permettre de faire échouer vos tests à la place de cet affreux <code data-claire-semantic="java">if(...) fail();</code>. Les développeurs de JUnit ont pensé à nous et ont créé les méthodes que voici :</p><pre id="r-449297" data-claire-element-id="449297"><code data-claire-semantic="java">assertTrue(message, condition);
+assertFalse(message, condition);
+assertEquals(message, expected, actual); //pour des objets ou des longs
+assertNotNull(message, object);
+...</code></pre><p id="r-449298" data-claire-element-id="449298">Vous trouverez ici une liste exhaustive des assertion disponible : <a href="http://junit.sourceforge.net/javadoc/org/junit/Assert.html">la doc</a>.</p><p id="r-449299" data-claire-element-id="449299">Et voici ce que ça donne pour l'un de nos tests :</p><pre id="r-449300" data-claire-element-id="449300"><code data-claire-semantic="java">@Test
+public final void testAdd() {
+	Calculator calc = new CalculatorImpl();
+	int a, b, res;
+	a = 5; 
+        b  = 5; 
+        res = a + b;
+	assertTrue(&quot;a et b positif&quot;, calc.add(a, b) == res);
+	a = 0; 
+        b  = 5; 
+        res = a + b;
+	assertTrue(&quot;a nul&quot;, calc.add(a, b) == res);
+	a = 5; 
+        b  = 0; 
+        res = a + b;
+	assertTrue(&quot;b nul&quot;, calc.add(a, b) == res);
+	a = 0; 
+        b  = 0; 
+        res = a + b;
+	assertTrue(&quot;a et b nuls&quot;, calc.add(a, b) == res);
+	a = -5; 
+        b  = 5; 
+        res = a+ b;
+	assertTrue(&quot;a negatif&quot;, calc.add(a, b) == res);
+	a = 5; 
+        b  = -5; 
+        res = a + b;
+	assertTrue(&quot;b negatif&quot;, calc.add(a, b) == res);
+	a = -5; 
+        b  = -5; 
+        res = a + b;
+	assertTrue(&quot;a et b negatif&quot;, calc.add(a, b) == res);
+}</code></pre><p id="r-449301" data-claire-element-id="449301">C'est plus court et plus concentré.</p><p id="r-449302" data-claire-element-id="449302">Voilà ! Cette fois ça y est ! Vous savez créer des tests simples grâce à JUnit. Je dis bien simple parce qu'il y a une tonne de choses que nous n'avons pas vue. Par exemple : comment générer un contexte (une connexion à une base de données), comment faire des tests aléatoires, comment tester quelque chose d'aléatoire comme la fonction rand. Cependant, ce cours n'est qu'une introduction destinée à montrer que le test n'est pas que quelque chose d'abstrait. Que ça existe bel et bien et qu'il a une utilité.</p><p id="r-449303" data-claire-element-id="449303">Voici ce que devrait vous donner l'onglet JUnit une fois que tous les tests passent au vert :</p><figure id="r-les-tests-reussissent" data-claire-element-id="449306"><img id="r-449304" data-claire-element-id="449304" src="medias/uploads.siteduzero.com_files_388001_389000_388454.png" alt="Les tests réussissent"/><figcaption>Les tests réussissent</figcaption></figure><p id="r-449307" data-claire-element-id="449307">Je vais vous montrer maintenant une dernière chose : l'évaluation de la couverture de vos tests.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java">Les tests unitaires en Java</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/definitions-et-utilite">
+Définitions et utilité
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/mise-en-pratique-12">
+Mise en pratique
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/la-couverture-du-code">
+La couverture du code
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/tester-proprement-la-gestion-du-contexte">
+Tester proprement : la gestion du contexte
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/les-mocks">
+Les mocks
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/les-problemes-des-tests">
+Les problèmes des tests
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/definitions-et-utilite">
+<span class="arrow"></span>
+<span class="next">Définitions et utilité</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/la-couverture-du-code">
+<span class="next">La couverture du code</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lacouvertureducode"></a><h2>La couverture du code</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/mise-en-pratique-12">
+<span class="arrow"></span>
+<span class="next">Mise en pratique</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/tester-proprement-la-gestion-du-contexte">
+<span class="next">Tester proprement : la gestion du contexte</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-449310" data-claire-element-id="449310">Nous avons vu comment faire des tests efficaces. Nous allons maintenant voir si ces tests couvrent bien notre code. Pour cela un plugin Eclipse existe, il existe aussi probablement un plugin pour NetBeans.</p><p id="r-449311" data-claire-element-id="449311">Pour évaluer votre code avec EclEmma, le plugin dont je vous parle, il faut tout d'abord l'installer. Aller dans Help &gt;&gt; Install New Software &gt;&gt; Add. Donner un nom (EclEmma) et une adresse (http://update.eclemma.org/). Puis faites Ok et installer le plugin. Vous devrez accepter la licence puis redémarrer Eclipse.</p><p id="r-449312" data-claire-element-id="449312">Enfin, à coté de l'icône debug, un nouvel icône est apparu : celui de EclEmma.</p><figure id="r-icone-de-eclemma" data-claire-element-id="449315"><img id="r-449313" data-claire-element-id="449313" src="medias/uploads.siteduzero.com_files_388001_389000_388450.png" alt="Icône de EclEmma"/><figcaption>Icône de EclEmma</figcaption></figure><p id="r-449316" data-claire-element-id="449316">Cliquez dessus et voyez votre code se colorer en rouge, jaune et vert. Les parties vertes sont les parties vérifiées par vos tests alors que les rouges ne l'ont pas été. Les lignes jaunes n'ont été que partiellement couvertes (une condition par exemple).<br/> EclEmma génère aussi un rapport vous détaillant quelle fraction de votre code est testée dans chaque package, dans chaque classe et même dans chaque méthode.</p><p id="r-449317" data-claire-element-id="449317">Voici à quoi ressemble un code tout vert :</p><figure id="r-code-coverage" data-claire-element-id="449320"><img id="r-449318" data-claire-element-id="449318" src="medias/uploads.siteduzero.com_files_388001_389000_388452.png" alt="Code coverage"/><figcaption>Code coverage</figcaption></figure><p id="r-449321" data-claire-element-id="449321">Et voici le rapport de couverture de code pour mes deux packages :</p><figure id="r-vue-globale-du-rapport-de-eclemma" data-claire-element-id="449324"><img id="r-449322" data-claire-element-id="449322" src="medias/uploads.siteduzero.com_files_388001_389000_388449.png" alt="Vue globale du rapport de EclEmma"/><figcaption>Vue globale du rapport de EclEmma</figcaption></figure><p id="r-449325" data-claire-element-id="449325">Les normes dépendent du domaine auquel votre logiciel est destiné mais en général on cherche à atteindre 80% de couverture de code. Bien sûr, ce chiffre est discutable. Il dépend de vos compétences, de la sensibilité de votre logiciel, des données qu'il manipule, etc. Mais c'est le chiffre qui est généralement accepté. Malheureusement, les 80% testés sont souvent les 80% les plus simples à tester et les bugs les plus graves se cachent bien sûr dans les 20% restants.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java">Les tests unitaires en Java</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/definitions-et-utilite">
+Définitions et utilité
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/mise-en-pratique-12">
+Mise en pratique
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/la-couverture-du-code">
+La couverture du code
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/tester-proprement-la-gestion-du-contexte">
+Tester proprement : la gestion du contexte
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/les-mocks">
+Les mocks
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/les-problemes-des-tests">
+Les problèmes des tests
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/mise-en-pratique-12">
+<span class="arrow"></span>
+<span class="next">Mise en pratique</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/tester-proprement-la-gestion-du-contexte">
+<span class="next">Tester proprement : la gestion du contexte</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Testerproprementlagestionducontexte"></a><h2>Tester proprement : la gestion du contexte</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/la-couverture-du-code">
+<span class="arrow"></span>
+<span class="next">La couverture du code</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/les-mocks">
+<span class="next">Les mocks</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-449327" data-claire-element-id="449327">Nous venons de voir comment créer des tests pour une classe basique. La classe <em>CalculatorImpl</em> est basique parce que :</p><ul id="r-449332" data-claire-element-id="449332"><li id="r-449329" data-claire-element-id="449329"><p id="r-449328" data-claire-element-id="449328">Elle n'a pas d'état interne;</p></li><li id="r-449331" data-claire-element-id="449331"><p id="r-449330" data-claire-element-id="449330">Toutes ses méthodes retournent directement le résultat.</p></li></ul><p id="r-449333" data-claire-element-id="449333">Nous allons maintenant tester des méthodes qui ne retournent rien avec une classe qui a un état interne bien défini. D'ailleurs, la fonction de cette classe sera d'avoir un état bien défini puisque nous allons recréer une classe de liste chaînée. Voici l'interface de notre classe à tester :</p><pre id="r-449334" data-claire-element-id="449334"><code data-claire-semantic="java">package main;
+
+public interface MyList&lt;T extends Comparable&lt;T&gt;&gt; {
+
+	void add(T e);
+	T removeAt(int pos);
+	T removeItem(T item);
+	void setAt(T item, int pos);
+	T getAt(int pos);
+	int getSize();
+	void reset();
+
+}</code></pre><p id="r-449335" data-claire-element-id="449335">Comme vous pouvez le voir, cette classe est toujours située dans le package <strong>main</strong> et sa classe de test sera dans le package <strong>test</strong>. Vous voyez aussi que certaines méthodes sont <code data-claire-semantic="java">void</code>. Nous verrons dans très peu de temps comment tester ces méthodes.</p><p id="r-449336" data-claire-element-id="449336">Le nom des méthodes devrait être suffisant pour comprendre ce qu'elles font. Une précision quand même : la méthode <em>removeItem</em> n’enlève que le premier objet égal à celui passé en paramètre.</p><p id="r-449337" data-claire-element-id="449337">Comme d'habitude, je vous conseille d'écrire vous même cette classe afin de faire des erreurs et de les corriger grâce à nos tests (c'est le but de ce tutoriel). Voici mon implémentation de cette classe au cas où.</p><div id="r-449339" data-claire-element-id="449339"><pre id="r-449338" data-claire-element-id="449338"><code data-claire-semantic="java">package main;
+
+public class MyListImpl&lt;T extends Comparable&lt;T&gt;&gt; implements MyList&lt;T&gt; {
+	
+	private Elem start;
+	private Elem current;
+	private int size;
+	
+	
+	
+	public MyListImpl() {
+		super();
+		start = null;
+		current = start;
+		size = -1;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see main.MyListInter#add(T)
+	 */
+	@Override
+	public void add(T e) {
+		Elem newElem = new Elem(e, null);
+		if(start == null) {
+			start = newElem;
+			current = start;
+		} else {
+			current.setNext(newElem);
+			current = newElem;
+		}
+		size++;
+	}
+	
+	/* (non-Javadoc)
+	 * @see main.MyListInter#removeAt(int)
+	 */
+	@Override
+	public T removeAt(int pos) {
+		if (pos &gt; size) {
+			throw new ArrayIndexOutOfBoundsException(&quot;La taille est &quot; + size + &quot;l'element &quot; + pos + &quot;n'existe donc pas&quot;);
+		}
+		Elem previous = start;
+		Elem toRemove = previous;
+		if(pos == 0) {
+			toRemove = start;
+			start.setNext(start.getNext());
+		} else {
+			while(pos-- &gt; 1) 
+				previous = previous.getNext();
+			toRemove = previous.getNext();
+			previous.setNext(toRemove.getNext());
+		}
+		size--;
+		return toRemove.getContent();
+	}
+	
+	/* (non-Javadoc)
+	 * @see main.MyListInter#removeItem(T)
+	 */
+	@Override
+	public T removeItem(T item) {
+		Elem previous = null;
+		Elem toRemove = start;
+		boolean found = false;
+		if(start != null &amp;&amp; start.getContent().equals(item)) {
+			found = true;
+			toRemove = start;
+			start.setNext(start.getNext());
+			size--;
+		}
+		else {
+			while(!found &amp;&amp; toRemove != null) {
+				previous = toRemove;
+				toRemove = toRemove.getNext();
+				if(toRemove.getContent().equals(item)) {
+					found = true;
+                                }
+			}
+			previous.setNext(toRemove.getNext());
+			size--;
+		}
+		return (toRemove == null) ? null :toRemove.getContent();
+			
+	}
+	
+	/* (non-Javadoc)
+	 * @see main.MyListInter#setAt(T, int)
+	 */
+	@Override
+	public void setAt(T item, int pos) {
+		if(pos &gt; size) {
+			throw new ArrayIndexOutOfBoundsException(&quot;La taille est &quot; + size + &quot;l'element &quot; + pos + &quot;n'existe donc pas&quot;);
+		}
+		Elem current = start;
+		while(pos-- &gt; 0) current = current.getNext();
+		current.setContent(item);
+	}
+	
+	/* (non-Javadoc)
+	 * @see main.MyListInter#getAt(int)
+	 */
+	@Override
+	public T getAt(int pos) {
+		if(pos &gt; size) {
+			throw new ArrayIndexOutOfBoundsException(&quot;La taille est &quot; + size + &quot;l'element &quot; + pos + &quot;n'existe donc pas&quot;);
+		}
+		Elem current = start;
+		while(pos-- &gt; 0) current = current.getNext();
+		return current.getContent();
+	}
+	
+	/* (non-Javadoc)
+	 * @see main.MyListInter#getSize()
+	 */
+	@Override
+	public int getSize() {
+		return size+1;
+	}
+	
+	class Elem {
+		private T content;
+		private Elem next;
+		
+		public Elem(T content, Elem next) {
+			super();
+			this.content = content;
+			this.next = next;
+		}
+		
+		public T getContent() {
+			return content;
+		}
+		
+		public Elem getNext() {
+			return next;
+		}
+		
+		public void setNext(Elem n) {
+			next = n;
+		}
+		
+		public void setContent(T c) {
+			content = c;
+		}
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see main.MyListInter#reset()
+	 */
+	@Override
+	public void reset() {
+		size = -1;
+		start  = null;
+		current = start;
+	}
+
+}</code></pre></div><aside id="r-449341" data-claire-element-id="449341" data-claire-semantic="information"><p id="r-449340" data-claire-element-id="449340">Je ne devrais peut être pas vous dire cela mais lorsque j'ai écrit cette classe, il était tard et je savais que je ferai des fautes. Je n'ai cependant pas cherché à avoir un code juste du premier coup parce que je savais que je ferai des tests derrière. Ce qui montre que les tests aident bel et bien. Cependant, vous vous doutez bien que se reposer sur des tests pour avoir un bon code n'est pas la bonne façon de faire.</p></aside><p id="r-449342" data-claire-element-id="449342">Maintenant que votre classe est prête à être testée, je vais vous demander de créer la classe de test, cette fois-ci vous laisserez Eclipse générer les méthodes suivantes :</p><pre id="r-449343" data-claire-element-id="449343"><code data-claire-semantic="java">public static void setUpBeforeClass() throws Exception
+public static void tearDownAfterClass() throws Exception
+public void setUp() throws Exception
+public void tearDown() throws Exception</code></pre><p id="r-449344" data-claire-element-id="449344">Pour qu'Eclipse les créé il faut cocher les cases correspondantes lorsque que vous générez la classe de test.</p><p id="r-449345" data-claire-element-id="449345">Vous devez obtenir ceci :</p><pre id="r-449346" data-claire-element-id="449346"><code data-claire-semantic="java">package test;
+
+import static org.junit.Assert.*;
+
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+public class SssTest {
+
+	@BeforeClass
+	public static void setUpBeforeClass() throws Exception {
+	}
+
+	@AfterClass
+	public static void tearDownAfterClass() throws Exception {
+	}
+
+	@Before
+	public void setUp() throws Exception {
+	}
+
+	@After
+	public void tearDown() throws Exception {
+	}
+
+	@Test
+	public void testMyListImpl() {
+		fail(&quot;Not yet implemented&quot;);
+	}
+
+	@Test
+	public void testAdd() {
+		fail(&quot;Not yet implemented&quot;);
+	}
+
+	@Test
+	public void testRemoveAt() {
+		fail(&quot;Not yet implemented&quot;);
+	}
+
+	@Test
+	public void testRemoveItem() {
+		fail(&quot;Not yet implemented&quot;);
+	}
+
+	@Test
+	public void testSetAt() {
+		fail(&quot;Not yet implemented&quot;);
+	}
+
+}</code></pre><p id="r-449347" data-claire-element-id="449347">Effacer les méthodes de test de <em>reset</em>, <em>getAt </em>et <em>getSize</em>. Nous avons vu comment faire des tests dans la partie précédente et le but n'est pas de vous en faire créer tant et plus.</p><p id="r-449348" data-claire-element-id="449348">Nous voyons que quatre nouvelles méthodes sont apparues. Chaque méthode est précédée d'une annotation qui a une utilité bien précise :</p><table id="r-449376" data-claire-element-id="449376"><thead id="r-449354" data-claire-element-id="449354"><tr id="r-449353" data-claire-element-id="449353"><th id="r-449350" data-claire-element-id="449350"><p id="r-449349" data-claire-element-id="449349">Annotation</p></th><th id="r-449352" data-claire-element-id="449352"><p id="r-449351" data-claire-element-id="449351">Utilité</p></th></tr></thead><tbody id="r-449375" data-claire-element-id="449375"><tr id="r-449359" data-claire-element-id="449359"><td id="r-449356" data-claire-element-id="449356"><p id="r-449355" data-claire-element-id="449355"><code data-claire-semantic="java">@BeforeClass</code></p></td><td id="r-449358" data-claire-element-id="449358"><p id="r-449357" data-claire-element-id="449357">La méthode annotée sera lancée avant le premier test.</p></td></tr><tr id="r-449364" data-claire-element-id="449364"><td id="r-449361" data-claire-element-id="449361"><p id="r-449360" data-claire-element-id="449360"><code data-claire-semantic="java">@AfterClass</code></p></td><td id="r-449363" data-claire-element-id="449363"><p id="r-449362" data-claire-element-id="449362">La méthode annotée sera lancée après le dernier test.</p></td></tr><tr id="r-449369" data-claire-element-id="449369"><td id="r-449366" data-claire-element-id="449366"><p id="r-449365" data-claire-element-id="449365"><code data-claire-semantic="java">@Before</code></p></td><td id="r-449368" data-claire-element-id="449368"><p id="r-449367" data-claire-element-id="449367">La méthode annotée sera lancée avant chaque test.</p></td></tr><tr id="r-449374" data-claire-element-id="449374"><td id="r-449371" data-claire-element-id="449371"><p id="r-449370" data-claire-element-id="449370"><code data-claire-semantic="java">@After</code></p></td><td id="r-449373" data-claire-element-id="449373"><p id="r-449372" data-claire-element-id="449372">La méthode annotée sera lancée après chaque test.</p></td></tr></tbody></table><p id="r-449377" data-claire-element-id="449377">Un test simple le montre :</p><pre id="r-449378" data-claire-element-id="449378"><code data-claire-semantic="java">@BeforeClass
+	public static void setUpBeforeClass() throws Exception {
+		System.out.println(&quot;avant tout&quot;);
+	}
+
+	@AfterClass
+	public static void tearDownAfterClass() throws Exception {
+		System.out.println(&quot;après tout&quot;);
+	}
+
+	@Before
+	public void setUp() throws Exception {
+		System.out.println(&quot;avant un test&quot;);
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		System.out.println(&quot;après un test&quot;);
+	}</code></pre><p id="r-449379" data-claire-element-id="449379">Et voici ce qui devrait s'afficher dans votre console :</p><pre id="r-449380" data-claire-element-id="449380"><code>avant tout
+avant un test
+après un test
+avant un test
+après un test
+avant un test
+après un test
+avant un test
+après un test
+avant un test
+après un test
+après tout</code></pre><div id="r-449382" data-claire-element-id="449382" data-claire-semantic="question"><p id="r-449381" data-claire-element-id="449381">Bon, c'est bien joli tout ça. Mais à quoi ça sert ?</p></div><p id="r-449383" data-claire-element-id="449383">J'allais y venir. Les méthodes appelées avant et après tous les test nous servirons à initialiser des variables et ressources communes à tous les tests et à les nettoyer à la fin. Les méthodes appelées avant et après chaque test nous servirons à initialiser la liste avant et à la remettre à zéro après.</p><p id="r-449384" data-claire-element-id="449384">Pour rendre l'exercice un peu plus intéressant, nous allons utiliser un fichier de propriétés pour configurer notre test. Ce fichier contiendra seulement deux lignes : la taille de la liste et les nombres à mettre dans cette liste. En voici un exemple :</p><pre id="r-449385" data-claire-element-id="449385"><code>taille=6
+nombre=1 2 3 4 5 6</code></pre><p id="r-449386" data-claire-element-id="449386">Pour lire le fichier de propriétés, nous allons utilisé un <code data-claire-semantic="java">FileInputStream</code> qui sera l'un des attributs de notre classe de test. Nous utiliserons aussi une instance de la classe <code data-claire-semantic="java">Properties</code>. Nous chargerons les nombres dans une liste et il nous faudra aussi un attribut pour notre liste à tester. Enfin, il nous faudra un dernier attribut pour la taille de la liste lors de l'initialisation.<br/> Tout ceci n'est peut être pas très clair pour le moment, mais je vous donne le code de la classe de test. Regardez ce qu'il fait, vous ne devriez pas avoir de mal à comprendre.</p><pre id="r-449387" data-claire-element-id="449387"><code data-claire-semantic="java">private static MyList&lt;Integer&gt; sut;  //la classe à tester
+private static int expectedSize;  // la taille à l'origine
+private static Properties prop;  // les propriétés
+private static List&lt;Integer&gt; testSet;  //les nombres que nous mettrons dans notre class
+private static FileInputStream propFile;  //le fichier de propriétés
+	
+@BeforeClass
+public static void setUpBeforeClass() throws Exception {
+	prop = new Properties();
+	testSet = new LinkedList&lt;Integer&gt;();
+	propFile = new FileInputStream(&quot;src/config.properties&quot;); //charge le fichier de propriétés
+	prop.load(propFile);
+	expectedSize = Integer.parseInt(prop.getProperty(&quot;taille&quot;)); //parse la taille
+	String numbers = prop.getProperty(&quot;nombre&quot;); //récupère les nombre à mettre dans la liste
+	for(String i : numbers.split(&quot; &quot;)) { //pour chaque nombre 
+		testSet.add(Integer.parseInt(i.trim()));  // l'enregistrer en tant que int
+        }
+        sut = new MyListImpl&lt;Integer&gt;();  // instancier la classe à tester
+}
+
+@AfterClass
+public static void tearDownAfterClass() throws Exception {
+	propFile.close();   // on ferme le fichier à la fin du test
+}
+
+@Before
+public void setUp() throws Exception {
+	for (int i : testSet) {
+		sut.add(new Integer(i));   //on ajoute les nombres au début de chaque test
+        }
+}
+
+@After
+public void tearDown() throws Exception {
+	sut.reset();  // à la fin de chaque test, on reset notre liste
+}</code></pre><p id="r-449388" data-claire-element-id="449388">Grâce aux commentaires, vous devriez comprendre ce code facilement.<br/> Et ce que vous venez de voir, c'est comment automatiser l'instanciation de vos classes ainsi que leur initialisation, leur remise à zéro. Vous avez aussi vu comment paramétrer vos tests.<br/> Si j'ai utilisé un fichier de configuration ici, ce n'est pas tellement pour paramétrer le test mais plutôt pour vous montrer que l'on peut charger et libérer des ressources externes grâce aux méthodes appelées avant et après tous les tests. C'est d'ailleurs pour cette raison que j'ai tenu à ce que le <em>FileInputStream</em> soit une variable de classe. Ce n'était pas obligatoire.</p><h3 id="r-tester-une-methode-qui-ne-retourne-rien" data-claire-element-id="449423">Tester une méthode qui ne retourne rien</h3><p id="r-449389" data-claire-element-id="449389">Tout d'abord, que font les méthodes qui ne retournent rien ? D'une manière générale, que font les méthodes ? Toutes les méthodes ont ceci de commun : soit elles retournent un résultat, elles ne font que le calculer en fonction du contexte et des arguments que vous leur passez. Soit elles modifient le contexte. Une méthode qui ne retourne pas de résultat ni ne change le contexte ne fait rien et vous devriez considérer son retrait immédiat. Une méthode peut bien sur retourner un résultat ET changer le contexte. Par exemple, les fonctions qui écrivent dans un fichier (changent le contexte) et retourne le nombre d'octet lu.</p><div id="r-449391" data-claire-element-id="449391" data-claire-semantic="question"><p id="r-449390" data-claire-element-id="449390">Et la méthode <code data-claire-semantic="java">sleep(int millisecond)</code>, c'est justement son boulot de rien faire et de nous faire perdre notre temps.</p></div><p id="r-449392" data-claire-element-id="449392">Oui, c'est vrai. Disons que faire avancer le temps est un changement de contexte plus global, mais néanmoins un changement de contexte.</p><p id="r-449393" data-claire-element-id="449393">Nous voulons donc tester des méthodes qui changent le contexte. Très bien, prenons la méthode <code data-claire-semantic="java">void add(T e)</code> de notre classe de liste. Son seul effet est d'ajouter un élément à notre liste, nous allons donc vérifier que l'élément a bien été ajouté.<br/> Vous vous souvenez que nous avons ajouté des éléments à l'initialisation de notre test dans la méthode <code data-claire-semantic="java">void setUp()</code> qui est appelée avant chacun de nos tests. Il y a deux choses à tester :</p><ul id="r-449398" data-claire-element-id="449398"><li id="r-449395" data-claire-element-id="449395"><p id="r-449394" data-claire-element-id="449394">La taille de la liste;</p></li><li id="r-449397" data-claire-element-id="449397"><p id="r-449396" data-claire-element-id="449396">La présence des éléments.</p></li></ul><p id="r-449399" data-claire-element-id="449399">Pour tester la taille de la liste, une façon simple : <em>getSize()</em>. Allons-y gaiement :</p><pre id="r-449400" data-claire-element-id="449400"><code data-claire-semantic="java">@Test
+public void testAdd() {
+	assertEquals(expectedSize, sut.getSize());
+}</code></pre><p id="r-449401" data-claire-element-id="449401">Vous avez encore en mémoire le code d'initialisation qui affecte la taille stipulée dans le fichier de configuration à <code data-claire-semantic="java">expectedSize</code>, on teste donc simplement que la taille théorique et la taille pratique soient égales.</p><div id="r-449403" data-claire-element-id="449403" data-claire-semantic="question"><p id="r-449402" data-claire-element-id="449402">Et si <code data-claire-semantic="java">getSize</code> renvoyait toujours le même nombre et qu'on ne s'en apercevait pas parce que le test est statique ? Enfin, je veux dire, on ne change pas notre fichier de configuration. Ou alors, si on le change, on n'a plus les anciens tests...</p></div><p id="r-449404" data-claire-element-id="449404">Oui c'est vrai, et félicitation tous ceux qui se seront fait cette remarque. Modifions donc un peu notre test :</p><pre id="r-449405" data-claire-element-id="449405"><code data-claire-semantic="java">@Test
+public void testAdd() {
+	assertEquals(expectedSize, sut.getSize());
+	sut.add(new Integer(8));
+	assertEquals(expectedSize+1, sut.getSize());
+}</code></pre><p id="r-449406" data-claire-element-id="449406">Ce n'est pas encore ce test qui va révolutionner le monde, mais vous avez saisi l'idée.</p><p id="r-449407" data-claire-element-id="449407">Nous allons maintenant tester la présence des éléments dans la liste. Comme nous n'avons pas de méthode <code data-claire-semantic="java">contains(T item)</code>, il va falloir trouver autre chose.</p><div id="r-449409" data-claire-element-id="449409" data-claire-semantic="question"><p id="r-449408" data-claire-element-id="449408">On ne peut pas ajouter une telle méthode dans la classe à tester ?</p></div><p id="r-449410" data-claire-element-id="449410">Non. En fait, d'une manière générale, les tests ne doivent rendre comme résultat que RÉUSSITE ou ÉCHEC. En aucun cas un test ne peut produire autre chose, et donc pas de nouvelles classes ni de modifications de celle-ci. Pourquoi ? c'est une question de séparation du code. Le test va d'un coté, le code métier de l'autre et on ne mélange pas les deux. Le destinataire (client) du logiciel ne veut pas s'encombrer de ce code. Pour lui ce sera de la maintenance en plus et de la lisibilité en moins. En plus, c'est une source de bug dont vous vous passerez bien.</p><p id="r-449411" data-claire-element-id="449411">Il nous faut donc trouver cette méthode. Il y a trois candidats :</p><ul id="r-449418" data-claire-element-id="449418"><li id="r-449413" data-claire-element-id="449413"><p id="r-449412" data-claire-element-id="449412"><code data-claire-semantic="java">T removeAt(int pos);</code></p></li><li id="r-449415" data-claire-element-id="449415"><p id="r-449414" data-claire-element-id="449414"><code data-claire-semantic="java">T removeItem(T item);</code></p></li><li id="r-449417" data-claire-element-id="449417"><p id="r-449416" data-claire-element-id="449416"><code data-claire-semantic="java">T getAt(int pos).</code></p></li></ul><p id="r-449419" data-claire-element-id="449419">J'éliminerai les méthodes <em>remove*</em> parce qu'elles changent la taille et qu'on veut éviter de changer encore l'état de notre classe. De plus, <em>removeAt</em> et <em>getAt</em> ont le même effet. <em>GetAt</em> ne change pas l'état de notre classe, ce que l'on souhaite. Utilisons donc cette méthode et nous aurons notre test complet :</p><pre id="r-449420" data-claire-element-id="449420"><code data-claire-semantic="java">@Test
+public void testAdd() {
+	assertEquals(expectedSize, sut.getSize());
+	sut.add(new Integer(8));
+	assertEquals(expectedSize+1, sut.getSize());
+	for(int i = 0; i &lt; testSet.size(); i++) {
+		assertEquals(testSet.get(i), sut.getAt(i));
+        }
+}</code></pre><p id="r-449421" data-claire-element-id="449421">Et voici un test qui nous dit si tous les éléments sont présents et au bon endroit alors que la méthode à tester ne renvoyait rien du tout.</p><p id="r-449422" data-claire-element-id="449422">Dans cette partie nous avons donc appris à automatiser la mise en place du contexte des tests et nous avons aussi vu comment faire le ménage entre chaque test. Nous avons aussi vu comment tester une méthode qui ne retournait rien. Globalement, vous êtes donc maintenant prêts à tester n'importe quelle classe.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java">Les tests unitaires en Java</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/definitions-et-utilite">
+Définitions et utilité
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/mise-en-pratique-12">
+Mise en pratique
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/la-couverture-du-code">
+La couverture du code
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/tester-proprement-la-gestion-du-contexte">
+Tester proprement : la gestion du contexte
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/les-mocks">
+Les mocks
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/les-problemes-des-tests">
+Les problèmes des tests
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/la-couverture-du-code">
+<span class="arrow"></span>
+<span class="next">La couverture du code</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/les-mocks">
+<span class="next">Les mocks</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lesmocks"></a><h2>Les mocks</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/tester-proprement-la-gestion-du-contexte">
+<span class="arrow"></span>
+<span class="next">Tester proprement : la gestion du contexte</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/les-problemes-des-tests">
+<span class="next">Les problèmes des tests</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-449425" data-claire-element-id="449425">Nous avons vu comment tester des classes individuellement. Nous avons vu que pour que le test reste simple et donc efficace, il fallait tester les classes l'une après l'autre, méthode après méthode. Mais voilà, comme vous le savez, une classe toute seule marche très rarement. Il faut qu'elle interagisse avec d'autres classes dont le comportement n'est pas forcément trivial. Et comme nous ne voulons tester les classes qu'une à la fois, nous nous retrouvons bloqués.<br/> Concrètement, la classe A a besoin de la classe B pour travailler. La classe B est testée tout comme il faut mais cependant il ne faut pas l'utiliser dans le test. Pourquoi pas ? Parce que nous voulons faire du test unitaire d'une part et que d'autre part, où s’arrête-t-on ? Pourquoi ne pas lancer toute l'application pour tester une classe ? Parce que nous savons que dans toute l'application il y a un ou plusieurs bug. Parce qu'il faudrait tester un nombre bien trop grand d'entrées. Parce que ce serait trop long. Il y a encore plein de raisons.<br/> Nous avons donc un problème. Nous ne pouvons pas tester certaines classes parce que nous ne pouvons pas instancier les classes dont elles ont besoin. <br/> C'est là qu'interviennent les mocks. Un mock est une classe qui va en simuler une autre. Je m'explique : la classe A a besoin de la classe B pour travailler. Ce n'est pas vrai. La classe A a besoin d'une classe implémentant l'interface I (souvenez-vous de l'importance de la programmation par interface) et il se trouve que la classe B implémente l'interface I. La classe B fait un travail sérieux qu'il est nécessaire de tester, on ne peut donc pas l'instancier dans le test de la classe A. Cependant, il nous faut bien passer une classe implémentant l'interface I pour tester A. C'est pour cela que nous allons créer la classe BMock qui implémente l'interface I mais qui soit si simple qu'il n'est plus la peine de la tester.</p><h3 id="r-appartee-sur-les-interfaces" data-claire-element-id="449427">Appartée sur les interfaces</h3><p id="r-449426" data-claire-element-id="449426">Nous avons vu les interfaces à deux endroits maintenant : lors de la rédaction d'un test si la classe n'est pas encore écrite et dans le cas où nous avons besoin d'un mock. La programmation par interface est une chose importante en génie logiciel, cela permet (en plus de ce que l'on vient de voir) de changer une implémentation en deux secondes et demi et passer d'une vieille classe à une version toute neuve ou bien à adapter le logiciel en fonction des besoins. Il y a encore plein de bonnes raisons.</p><h3 id="r-en-pratique-13" data-claire-element-id="449442">En pratique</h3><p id="r-449428" data-claire-element-id="449428">Comme les chapitres précédents, nous allons voir le fonctionnement des mocks dans la pratique. Les mocks étant une notion assez simple, je vais prendre un exemple aussi très simple mais qui sera réaliste. Imaginez une application en trois couches :</p><ul id="r-449435" data-claire-element-id="449435"><li id="r-449430" data-claire-element-id="449430"><p id="r-449429" data-claire-element-id="449429">Une couche d'accès aux données qui gère le pool de connexion et les requêtes;</p></li><li id="r-449432" data-claire-element-id="449432"><p id="r-449431" data-claire-element-id="449431">Une couche métier qui prend les données, leurs applique une transformation utile au <em>business</em> de l'entreprise;</p></li><li id="r-449434" data-claire-element-id="449434"><p id="r-449433" data-claire-element-id="449433">Une couche présentation, qui récupère les résultats de la couche métier et les affiche d'une manière lisible par l'homme.</p></li></ul><p id="r-449436" data-claire-element-id="449436">Ceci est une organisation très célèbre nommée <em>trois tiers</em>. Mais vous voyez immédiatement qu'il y a une forte dépendance entre une couche et la suivante. Dans une application réelle il y a des mocks pour chaque couche excepté la couche présentation. Ainsi, la couche présentation peut tourner soit avec le mock de la couche métier soit avec son implémentation et la couche métier peut travailler sur de vraies données ou sur des données contenues dans un mock. C'est d'ailleurs comme ça qu'on cache le retard : on dit qu'une fonctionnalité est implémentée alors qu'elle tourne avec un mock.</p><aside id="r-449438" data-claire-element-id="449438" data-claire-semantic="information"><p id="r-449437" data-claire-element-id="449437">Dans une architecture 3 tiers, tiers est un mot anglais signifiant partie. On peut donc avoir des applications 2 tiers (client-serveur) ou n-tiers (en général des applications 2 ou 3 tiers chaînées).<br/> Dans une architecture n-tiers, la couche <em>k </em>ne peut accéder qu'à la couche <em>k-1</em> et c'est tout ! La couche <em>k-1</em> ne peut accéder à la couche <em>k</em> que par le retour d'une méthode et deux couches séparées par une troisième ne peuvent pas communiquer directement. De plus, seule la couche présentation peut dialoguer avec le monde extérieur. Ainsi, tout est facilité : imaginez que votre base de données ne vous convienne plus, changez là et changez la couche d'accès aux données et tout marche. Vous ne voulez plus dialoguer avec des humains, changez la couche présentation, formatez les entrées-sorties en suivant le bon protocole et vous dialoguez maintenant avec r2-d2. Cool, non ?</p></aside><div id="r-449440" data-claire-element-id="449440" data-claire-semantic="question"><p id="r-449439" data-claire-element-id="449439">Bon, tu nous as dit que les mocks allaient nous sauver la vie. Mais on sait toujours pas quoi mettre dedans ?</p></div><p id="r-449441" data-claire-element-id="449441">Oui c'est vrai. Je m'égare un peu je crois. Bon, comme les mocks, c'est assez simple, on va faire quelque chose de simple. Soit deux classes : une de la couche présentation et une de la couche métier. L'une va afficher une adresse et l'autre va la chercher quelque part. Voici donc les deux interfaces.</p><h3 id="r-les-interfaces-8" data-claire-element-id="449447">Les interfaces :</h3><p id="r-449443" data-claire-element-id="449443">La première pour la classe qui va retrouver les adresses :</p><pre id="r-449444" data-claire-element-id="449444"><code data-claire-semantic="java">package main.inter;
+
+import main.implem.Address;
+
+public interface AddressFetcher {
+	Address fetchAddress(String name);
+}</code></pre><p id="r-449445" data-claire-element-id="449445">Et pour la seconde qui les affiche :</p><pre id="r-449446" data-claire-element-id="449446"><code data-claire-semantic="java">package main.inter;
+
+public interface AddressDisplayer {
+	String displayAddress();
+	void setAddressFetcher(AddressFetcher af);
+}</code></pre><h3 id="r-les-implementations-1" data-claire-element-id="449479">Les implémentations :</h3><p id="r-449448" data-claire-element-id="449448">L'afficheur d'adresse, un code très simple :</p><pre id="r-449449" data-claire-element-id="449449"><code data-claire-semantic="java">package main.implem;
+
+import main.inter.AddressDisplayer;
+import main.inter.AddressFetcher;
+
+public class AddressDisplayerImpl implements AddressDisplayer {
+
+	private AddressFetcher addressFetcher;
+	
+	@Override
+	public String displayAddress(String name) {
+		Address a = addressFetcher.fetchAddress(name);
+		String address = a.getName() + &quot;\n&quot;;
+		address += a.getNb() + &quot; &quot; + a.getStreet() + &quot;\n&quot;;
+		address += a.getZip() + &quot; &quot; + a.getTown();
+		return address;
+	}
+
+	@Override
+	public void setAddressFetcher(AddressFetcher af) {
+		this.addressFetcher = af;
+	}
+
+}</code></pre><p id="r-449450" data-claire-element-id="449450">Le chercheur d'adresse. Attention, code très compliqué :</p><pre id="r-449451" data-claire-element-id="449451"><code data-claire-semantic="java">package main.implem;
+
+import main.inter.AddressFetcher;
+
+public class AddressFetcherImpl implements AddressFetcher {
+
+	@Override
+	public Address fetchAddress(String name) {
+		/*
+		 * Du code très compliqué ici
+		 * Quelque chose de très complexe ici. Traitement pluslien à la base de donnée, etc.
+		 * */
+		return null;
+	}
+
+}</code></pre><p id="r-449452" data-claire-element-id="449452">Et enfin, la classe <em>Address</em> un peu longue alors je la mets en secret :</p><p id="r-449453" data-claire-element-id="449453"></p><div id="r-449455" data-claire-element-id="449455"><pre id="r-449454" data-claire-element-id="449454"><code data-claire-semantic="java">package main.implem;
+
+public class Address {
+	private String street;
+	private String name;
+	private int nb;
+	private int zip;
+	private String town;
+	
+	public Address(String street, String name, int nb, int zip, String town) {
+		super();
+		this.street = street;
+		this.name = name;
+		this.nb = nb;
+		this.zip = zip;
+		this.town = town;
+	}
+	
+	public String getStreet() {
+		return street;
+	}
+	public void setStreet(String street) {
+		this.street = street;
+	}
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	public int getNb() {
+		return nb;
+	}
+	public void setNb(int nb) {
+		this.nb = nb;
+	}
+	public int getZip() {
+		return zip;
+	}
+	public void setZip(int zip) {
+		this.zip = zip;
+	}
+	public String getTown() {
+		return town;
+	}
+	public void setTown(String town) {
+		this.town = town;
+	}
+	
+	
+	
+}</code></pre></div><aside id="r-449461" data-claire-element-id="449461" data-claire-semantic="warning"><p id="r-449456" data-claire-element-id="449456">Afin d'avoir un logiciel maintenable, il faut adopter une structure de package correcte. Voici la mienne :</p><figure id="r-arborescence-1" data-claire-element-id="449459"><img id="r-449457" data-claire-element-id="449457" src="medias/uploads.siteduzero.com_files_390001_391000_390063.png" alt="arborescence"/><figcaption>arborescence</figcaption></figure><p id="r-449460" data-claire-element-id="449460">Ainsi, dans mon <strong>main</strong>, je n'ai que mon logiciel, interface d'un coté, implémentation de l'autre. Dans mon package <strong>test</strong> il n'y a que les tests et dans <strong>mock</strong>, que les mocks. Lorsqu'il faudra livrer le logiciel, je ne donnerai que le package <strong>main</strong>.</p></aside><aside id="r-449463" data-claire-element-id="449463" data-claire-semantic="information"><p id="r-449462" data-claire-element-id="449462">Idéalement, dans <strong>inter </strong>et <strong>implem</strong>, je devrais avoir les packages <strong>donnees</strong>, <strong>metier </strong>et <strong>presentation</strong> mais je ne voulais pas surcharger.</p></aside><p id="r-449464" data-claire-element-id="449464">Il ne nous reste donc plus que le test et le mock.</p><div id="r-449466" data-claire-element-id="449466" data-claire-semantic="question"><p id="r-449465" data-claire-element-id="449465">Et tu ne nous as toujours pas dit ce que faisait un mock.</p></div><p id="r-449467" data-claire-element-id="449467">C'est vrai. Pour le moment, vous savez seulement que c'est une classe qui va remplacer une vraie classe pour éviter d'aller trop loin dans les dépendances. En réalité, un mock ne va faire que le strict minimum : implémenter l'interface et c'est tout. Le mock va rendre les données en dur. Vous vous souvenez les règles comme &quot;pas de magic number&quot;, ou bien &quot;utiliser des constantes&quot; ? Oubliez-les. Enfin, seulement pour les mocks.<br/> L'interface dit que la méthode <em>a</em> rend une chaîne de caractère, voici le mock correspondant :</p><pre id="r-449468" data-claire-element-id="449468"><code data-claire-semantic="java">public String a() {
+        return &quot;&quot;;
+}</code></pre><p id="r-449469" data-claire-element-id="449469">Facile, non ?</p><p id="r-449470" data-claire-element-id="449470">Voici donc enfin notre mock :</p><pre id="r-449471" data-claire-element-id="449471"><code data-claire-semantic="java">package mock;
+
+import main.implem.Address;
+import main.inter.AddressFetcher;
+
+public class AddressFetcherMock implements AddressFetcher {
+
+	@Override
+	public Address fetchAddress(String name) {
+		return new Address(&quot;Avenue champs-Elysés&quot;, &quot;Mathias Dupond&quot;, 5, 75005, &quot;Paris&quot;);
+	}
+
+}</code></pre><p id="r-449472" data-claire-element-id="449472">Vous pouvez maintenant tester notre classe comme vous le souhaitez. Voici mon test :</p><pre id="r-449473" data-claire-element-id="449473"><code data-claire-semantic="java">package test;
+
+import static org.junit.Assert.*;
+
+import main.implem.AddressDisplayerImpl;
+import main.inter.AddressDisplayer;
+import mock.AddressFetcherMock;
+
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+public class AddressDisplayerTest {
+
+	private static AddressDisplayer sut;
+	
+	@BeforeClass
+	public static void setUpBeforeClass() throws Exception {
+		sut = new AddressDisplayerImpl();
+		sut.setAddressFetcher(new AddressFetcherMock());
+	}
+	
+	@Test
+	public void testDisplayAddress() {
+		String resutlatTheorique = &quot;Mathias Dupond\n5 Avenue champs-Elysés\n75005 Paris&quot;;
+		String ResultatPratique = sut.displayAddress(&quot;Dupond&quot;);
+		assertTrue(ResultatPratique.compareTo(resutlatTheorique) == 0);
+	}
+
+}</code></pre><p id="r-449474" data-claire-element-id="449474">Et voilà, tout ça pour ça.</p><div id="r-449476" data-claire-element-id="449476" data-claire-semantic="question"><p id="r-449475" data-claire-element-id="449475">Hé mais attends. Tu nous dis qu'il faut tester avec plein d'entrées et tout et tout et là tu ne testes qu'avec un seul nom. Tu ne trouves pas qu'il y a un truc qui cloche ?</p></div><p id="r-449477" data-claire-element-id="449477">C'est vrai que ça peut sembler bizarre. Mais que teste-t-on réellement ici ? On teste seulement si l'affichage est correct, on ne cherche pas à savoir si on affiche la bonne personne (c'est le boulot de <em>AddressFetcher</em> de trouver la bonne personne), on cherche à savoir si on affiche correctement la personne X. Pour cela il nous faut une personne et on prend la première venue. Par contre, s'il y avait eu plusieurs modes d'affichage, là oui, il aurait fallu tous les tester.</p><p id="r-449478" data-claire-element-id="449478">Voilà encore une partie de terminée. Cette fois nous avons appris à rendre notre code indépendant afin de concentrer nos tests sur une seule classe à la fois comme c'était le but des tests unitaires.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java">Les tests unitaires en Java</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/definitions-et-utilite">
+Définitions et utilité
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/mise-en-pratique-12">
+Mise en pratique
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/la-couverture-du-code">
+La couverture du code
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/tester-proprement-la-gestion-du-contexte">
+Tester proprement : la gestion du contexte
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/les-mocks">
+Les mocks
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/les-problemes-des-tests">
+Les problèmes des tests
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/tester-proprement-la-gestion-du-contexte">
+<span class="arrow"></span>
+<span class="next">Tester proprement : la gestion du contexte</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/les-problemes-des-tests">
+<span class="next">Les problèmes des tests</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lesproblmesdestests"></a><h2>Les problèmes des tests</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/les-mocks">
+<span class="arrow"></span>
+<span class="next">Les mocks</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-le-test-lui-meme" data-claire-element-id="449505">Le test lui-même</h2><p id="r-449481" data-claire-element-id="449481">Un test, comme un logiciel, peut avoir des problèmes. Tout d'abord, nos tests ne sont pas exhaustifs. Il ne trouveront donc pas toutes les erreurs. Mais ce n'est pas de cela que je veux vous parler. Je veux vous parler de la mauvaise conception d'un test.</p><p id="r-449482" data-claire-element-id="449482">Nous avons vu qu'un test était composé de cinq entités :</p><ul id="r-449493" data-claire-element-id="449493"><li id="r-449484" data-claire-element-id="449484"><p id="r-449483" data-claire-element-id="449483">Les arguments;</p></li><li id="r-449486" data-claire-element-id="449486"><p id="r-449485" data-claire-element-id="449485">Le résultat;</p></li><li id="r-449488" data-claire-element-id="449488"><p id="r-449487" data-claire-element-id="449487">Un moyen de comparer les deux;</p></li><li id="r-449490" data-claire-element-id="449490"><p id="r-449489" data-claire-element-id="449489">La classe à tester;</p></li><li id="r-449492" data-claire-element-id="449492"><p id="r-449491" data-claire-element-id="449491">Le contexte dans lequel le test doit avoir lieu.</p></li></ul><p id="r-449494" data-claire-element-id="449494">Il y a autant de mauvaises conceptions qu'il y a de points dans la liste ci-dessus.</p><h3 id="r-les-arguments-4" data-claire-element-id="449496">Les arguments</h3><p id="r-449495" data-claire-element-id="449495">Vous pouvez mal les initialiser dans le cas d'arguments complexes, vous pouvez ne pas tester suffisamment de cas limites. Idéalement, il faudrait tous les tester, ce qui signifie tous les identifier. Identifier tous les cas limites peut être difficile, ils peuvent être nombreux et bien cachés.</p><h3 id="r-le-resultat-4" data-claire-element-id="449498">Le résultat</h3><p id="r-449497" data-claire-element-id="449497">Il vous faut calculer le résultat théorique de l'exécution de votre méthode. Pour notre exemple c'était facile. Mais ce n'est pas toujours le cas. D'une manière générale, la génération de l'ensemble (entrée, sortie) peut s'avérer quelque chose de difficile. Pour tester, vous pouvez vous appuyer sur d'autres logiciels qui ont fait leurs preuves, sur des théorèmes (pour notre exemple, a + b - b = a est trivial).</p><h3 id="r-l-oracle" data-claire-element-id="449500">L'oracle</h3><p id="r-449499" data-claire-element-id="449499">La chose la plus difficile peut-être. Dans notre cas très simple, un simple test d'égalité suffit. Et l'égalité entre deux entiers est très bien définie. Maintenant, l'égalité entre deux objets. Elle dépend de chaque objet. Est-ce-qu'on teste tous les champs ? Probablement pas, typiquement le champ <em>UniversalSerialID</em> ne devrait pas faire partie du test. L'exemple parfait du mauvais oracle est le test d'égalité == entre deux <em>Strings</em>.</p><h3 id="r-la-classe-6" data-claire-element-id="449502">La classe</h3><p id="r-449501" data-claire-element-id="449501">Là aussi il peut y avoir des difficultés. Une instance d'une classe est un objet ayant un état bien défini. Cet état peut bien sûr influer sur les tests (c'est même souhaitable). Mais ça signifie qu'il faut bien initialiser notre objet avant de lancer le test et aussi qu'il faut multiplier les tests par le nombre d'état significatif.</p><h3 id="r-la-methode-4" data-claire-element-id="449504">La méthode</h3><p id="r-449503" data-claire-element-id="449503">Enfin, la méthode, ce que l'on souhaite réellement tester. On peut tomber dans deux travers : être trop spécifique, ne tester que les cas limites et oublier les cas normaux (ou le contraire) ou bien ne pas être assez spécifique et passer trop de temps à écrire notre test. Le deuxième travers est le moins mauvais, mais des tests inutiles mettront trop longtemps à s'exécuter (surtout s'il s'agit d'une méthode qui prend du temps), seront plus long à écrire du coup vous serez moins productif.</p><h2 id="r-la-strategie-de-test" data-claire-element-id="449529">La stratégie de test</h2><p id="r-449506" data-claire-element-id="449506">Enfin, j'aimerai vous reparler des tests <em>boite noire</em> et des tests <em>boite blanche</em>. Voici un exemple de test <em>boite blanche :</em></p><h3 id="r-le-cas-d-un-test-boite-blanche" data-claire-element-id="449521">Le cas d'un test <em>boite blanche</em></h3><table id="r-449519" data-claire-element-id="449519"><thead id="r-449512" data-claire-element-id="449512"><tr id="r-449511" data-claire-element-id="449511"><th id="r-449508" data-claire-element-id="449508"><p id="r-449507" data-claire-element-id="449507">la méthode :</p></th><th id="r-449510" data-claire-element-id="449510"><p id="r-449509" data-claire-element-id="449509">son test :</p></th></tr></thead><tbody id="r-449518" data-claire-element-id="449518"><tr id="r-449517" data-claire-element-id="449517"><td id="r-449514" data-claire-element-id="449514"><pre id="r-449513" data-claire-element-id="449513"><code data-claire-semantic="java">/**
+* soit a un entier et b aussi compris entre 0 et b un entier sur 3 bits
+* @param a un entier
+* @param b un entier
+* @return ab
+*/
+public int xyz(int a, int b) {
+	return a*10+b;
+}</code></pre></td><td id="r-449516" data-claire-element-id="449516"><pre id="r-449515" data-claire-element-id="449515"><code data-claire-semantic="java">@Test
+public final void testXyz() {
+	CalculatorImpl calc = new CalculatorImpl();
+	int a, b, res;
+	a = 5; b  = 8; res = 58;
+	assertFalse(calc.xyz(a, b) == res);
+}</code></pre></td></tr></tbody></table><p id="r-449520" data-claire-element-id="449520">Ici le testeur a lu la méthode et il a interprété <em>return ab</em> comme la concaténation de a et b. Il s'est donc empressé de créer un cas pour ceci, il a fait exprès de le faire échouer pour que, lorsque la méthode sera corrigée, le test passe au vert. Le test n'est pas complet évidemment. Mais ce que je veux vous montrer c'est que <em>ab</em> dans la tête de celui qui a commandé la méthode c'est le produit <em>a*b</em>. Votre test ne sert donc à rien et s'il ne sert à rien c'est parce que vous nous saviez pas ce que voulait dire <em>ab</em>, vous avez regardé le code qui vous a induit en erreur. Si le test avait été <em>boite noire</em>, vous n'auriez pas vu le code, pas su ce que voulais dire <em>ab</em>, auriez demandé et vous auriez vu l'énorme erreur qu'a fait le programmeur de la méthode <em>xyz</em>.</p><h3 id="r-le-cas-d-un-test-boite-noire" data-claire-element-id="449528">Le cas d'un test <em>boite noire</em></h3><p id="r-449522" data-claire-element-id="449522">Voici maintenant un test <em>boite noire</em> pour la méthode <em>int divide(int, int)</em> que nous avons développé. Reprenons le même test :</p><pre id="r-449523" data-claire-element-id="449523"><code data-claire-semantic="java">@Test
+public final void testDivide() {
+	Calculator calc = new CalculatorImpl();
+	int a, b, res;
+	a = 5; b  = 5; res = a / b;
+	assertTrue(&quot;a et b positif&quot;, calc.divide(a, b) == res);
+	a = 0; b  = 5; res = a / b;
+	assertTrue(&quot;a nul&quot;, calc.divide(a, b) == res);
+	a = -5; b  = 5; res = a / b;
+	assertTrue(&quot;a negatif&quot;, calc.divide(a, b) == res);
+	a = 5; b  = -5; res = a / b;
+	assertTrue(&quot;b negatif&quot;, calc.divide(a, b) == res);
+	a = -5; b  = -5; res = a / b;
+	assertTrue(&quot;a et b negatif&quot;, calc.divide(a, b) == res);
+}
+
+@Test (expected = ArithmeticException.class)
+public final void testDivideByZero() {
+	Calculator calc = new CalculatorImpl();
+	int a, b, res;
+	a = 0; b  = 0; res = 0;
+	assertTrue(&quot;a et b nuls&quot;, calc.divide(a, b) == res);
+	a = 5; b  = 0; res = 0;
+	assertTrue(&quot;b nul&quot;, calc.divide(a, b) == res);
+}</code></pre><p id="r-449524" data-claire-element-id="449524">Ce test est bon, n'est-ce-pas ? C'est celui que je vous ai montré, qu'on a fait ensemble. Il est bon.</p><p id="r-449525" data-claire-element-id="449525">Voila la nouvelle implémentation de la méthode à tester :</p><pre id="r-449526" data-claire-element-id="449526"><code data-claire-semantic="java">@Override
+public int divide(int a, int b) {
+	if (b == 0) {
+        	throw new ArithmeticException();
+        }
+        if (b == 1) {
+                return b;
+        }
+	boolean resEstNegatif = false;
+	int res = 0;
+	if ( a &lt; 0) {
+		resEstNegatif = true;
+		a = -a;
+	}
+	if ( b &lt; 0) {
+		resEstNegatif = !resEstNegatif;
+		b = -b;
+	}
+	while (a &gt; 0) {
+		a = substract(a, b);
+		res++;
+	}
+	if (resEstNegatif) {
+		res = -res;
+        }
+	return res;
+}</code></pre><p id="r-449527" data-claire-element-id="449527">Les lignes 6 et 7 ont été ajoutées. Une petite optimisation du programmeur. Diviser par 1 est inutile, on retourne tout de suite le dividende. Normal quoi ! Oui mais erreur d'inattention, il a retourné le diviseur...<br/> Ce cas aurait été difficile à identifier comme cas limite et le fait de voir l'implémentation de la méthode aurait aidé.</p><h2 id="r-conclusion-46" data-claire-element-id="449557">Conclusion</h2><p id="r-449530" data-claire-element-id="449530">Faire un test n'est pas quelque chose de trivial. En général, dans une équipe de développeurs, ce ne sont pas les mêmes personnes qui testent et qui développent. L'inconvénient c'est que l'expert en base de données va développer la couche d'accès à la base de données et donc c'est quelqu'un qui ne connaît rien (j'exagère un tout petit peu) qui va la tester.<br/> Que vous choisissiez des tests <em>boite noire</em> ou <em>boite blanche</em>, il y a des avantages et des inconvénients, ça dépend de comment vous vous sentez le plus à l'aise, de votre expérience et de tout un tas d'autres facteurs.</p><p id="r-449531" data-claire-element-id="449531">Enfin, voilà une citation dont je ne connais pas l'auteur :</p><p id="r-449532" data-claire-element-id="449532"><cite>Citation : inconnu</cite></p><blockquote id="r-449534" data-claire-element-id="449534"><p id="r-449533" data-claire-element-id="449533">If you think test-first is expensive, try debug-later</p></blockquote><p id="r-449535" data-claire-element-id="449535">C'est-à-dire pour les non-anglophones :</p><p id="r-449536" data-claire-element-id="449536"><cite>Citation : inconnu</cite></p><blockquote id="r-449538" data-claire-element-id="449538"><p id="r-449537" data-claire-element-id="449537">Si vous pensez que tester en premier est coûteux, essayez donc de débugger plus tard.</p></blockquote><p id="r-449539" data-claire-element-id="449539">Ainsi que quelques principes :</p><ul id="r-449548" data-claire-element-id="449548"><li id="r-449541" data-claire-element-id="449541"><p id="r-449540" data-claire-element-id="449540">Celui qui code une classe ne devrait pas la tester, apporter une nouvelle vue à ce problème est toujours une bonne chose ;</p></li><li id="r-449543" data-claire-element-id="449543"><p id="r-449542" data-claire-element-id="449542">Testez les entrées valides mais aussi les entrées invalides. Que se passe-t-il si je donne un caractère au lieu d'un entier ? Vous voyez maintenant que le typage fort de Java est un avantage, non ?</p></li><li id="r-449545" data-claire-element-id="449545"><p id="r-449544" data-claire-element-id="449544">Partez avec un esprit de challenger ! Si vous faites des tests, c'est pour trouver le plus d'erreurs possibles, pas pour confirmer qu'il n'y en a pas ;</p></li><li id="r-449547" data-claire-element-id="449547"><p id="r-449546" data-claire-element-id="449546">Soyez sûrs du résultat théorique avant de lancer le test. Ainsi, vous éviterez le &quot;Ah, ça colle pas ? Mais c'est cohérent quand même, c'est moi qui ai dû me tromper en faisant la théorie. Modifions ce test pour qu'il passe.&quot;</p></li></ul><p id="r-449549" data-claire-element-id="449549">Voilà, ce tutoriel touche à sa fin, j'espère que vous aurez appris pleins de choses (sur les tests notamment). Il reste pleins de choses à voir, un mini-tuto ne suffit pas à tout dire, mais ceci est déjà une introduction solide je pense. Le test est une des méthodes qui feront que vos projets peuvent passer avec succès la barre des mille lignes et rester maintenables.</p><p id="r-449550" data-claire-element-id="449550">J'espère que ce tutoriel vous a plu. N'hésitez pas à laisser des commentaires pour me dire comment l'améliorer, pour me dire ce qu'il manque ou ce qui est mal dit.<br/> J'espère que vous savez maintenant à quoi servent les tests, que vous ne les voyez plus comme une perte de temps et que vous les mettrez en place.</p><p id="r-449551" data-claire-element-id="449551">Deux derniers liens :</p><ul id="r-449556" data-claire-element-id="449556"><li id="r-449553" data-claire-element-id="449553"><p id="r-449552" data-claire-element-id="449552">Le sourceforge de JUnit <a href="http://junit.sourceforge.net/">ici</a>;</p></li><li id="r-449555" data-claire-element-id="449555"><p id="r-449554" data-claire-element-id="449554">La javadoc de JUnit <a href="http://junit.sourceforge.net/javadoc/">ici</a>.</p></li></ul>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java">Les tests unitaires en Java</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/definitions-et-utilite">
+Définitions et utilité
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/mise-en-pratique-12">
+Mise en pratique
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/la-couverture-du-code">
+La couverture du code
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/tester-proprement-la-gestion-du-contexte">
+Tester proprement : la gestion du contexte
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/les-mocks">
+Les mocks
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/les-problemes-des-tests">
+Les problèmes des tests
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-tests-unitaires-en-java/les-mocks">
+<span class="arrow"></span>
+<span class="next">Les mocks</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/les-tests-unitaires-en-java.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 03:59:51 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/les-tests-unitaires-en-java.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:46:47 GMT -->
+</html>

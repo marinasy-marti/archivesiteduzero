@@ -1,0 +1,465 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/empecher-le-telechargement-direct-de-fichiers-multimedia.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 03:56:40 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/empecher-le-telechargement-direct-de-fichiers-multimedia.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:46:25 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Empêcher le téléchargement direct de fichiers multimédia</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers-multimedia.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Empêcher le téléchargement direct de fichiers multimédia</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Empcherletlchargementdirectdefichiersmultimdia">Empêcher le téléchargement direct de fichiers multimédia</a><br/><a href="#Introduction">Introduction</a><br/><a href="#Gnrationdutoken">Génération du token</a><br/><a href="#Envoidufichiermultimdia">Envoi du fichier multimédia</a><br/><a href="#Restrictiond039accs">Restriction d&#039;accès</a><br/></div>
+<a name="Empcherletlchargementdirectdefichiersmultimdia"></a><h2>Empêcher le téléchargement direct de fichiers multimédia</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers-multimedia/introduction-90">
+<span class="next">Introduction</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-567188" data-claire-element-id="567188">Bonjour à tous !</p><p id="r-567189" data-claire-element-id="567189">Dans ce tutoriel, je vais présenter une technique permettant de proposer des fichiers multimédias (musique, vidéo...) à la lecture mais en en empêchant le téléchargement direct (par l'URL).<br/> Cela peut vous être utile notamment si vous souhaitez diffuser des musiques que vous avez créées, des vidéos que vous avez filmées, etc.</p><aside id="r-567191" data-claire-element-id="567191" data-claire-semantic="warning"><p id="r-567190" data-claire-element-id="567190">La méthode présentée n'est pas infaillible : des logiciels dits d'enregistrement de flux peuvent la contourner. Cela dit, il en va de même pour de nombreux sites (y compris YouTube, Dailymotion, Facebook, Grooveshark et j'en passe) et ça reste à mes yeux quelque chose qui vaut le coup d'être mis en place.</p></aside>
+</div><a name="Introduction"></a><h2>Introduction</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers-multimedia/generation-du-token">
+<span class="next">Génération du token</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h3 id="r-outils-utilises" data-claire-element-id="567206">Outils utilisés</h3><p id="r-567192" data-claire-element-id="567192">Dans ce tutoriel, j'utiliserai la bibliothèque PDO pour l'accès à la base de données et le lecteur flash Dewplayer, simple d'utilisation et de mise en place (<a href="http://www.alsacreations.fr/dewplayer.html">téléchargement et documentation</a>).</p><aside id="r-567194" data-claire-element-id="567194" data-claire-semantic="warning"><p id="r-567193" data-claire-element-id="567193">Ce lecteur ne peut lire que les fichiers mp3. Libre à vous d'en utiliser un autre (qu'il soit en flash, en javascript...) ; le principe est le même.</p></aside><h2 id="r-le-probleme-20" data-claire-element-id="567200">Le problème</h2><p id="r-567195" data-claire-element-id="567195">Lorsque vous souhaitez rendre un fichier musical disponible à l'écoute, on obtient quelque chose comme ceci :</p><pre id="r-567196" data-claire-element-id="567196"><code data-claire-semantic="html">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;title&gt;Écouter nos créations&lt;/title&gt;
+	&lt;/head&gt;
+	&lt;body&gt;
+		&lt;!-- Le DewPlayer !--&gt;
+		&lt;object type=&quot;application/x-shockwave-flash&quot; data=&quot;dewplayer-mini.swf&quot; width=&quot;160&quot; height=&quot;20&quot; id=&quot;dewplayer&quot; name=&quot;dewplayer&quot;&gt; 
+			&lt;param name=&quot;wmode&quot; value=&quot;transparent&quot; /&gt;
+			&lt;param name=&quot;movie&quot; value=&quot;dewplayer-mini.swf&quot; /&gt; 
+			&lt;!-- Le chemin vers le fichier audio à lire est à insérer ici !--&gt;
+			&lt;param name=&quot;flashvars&quot; value=&quot;mp3=media/musique.mp3&quot; /&gt; 
+		&lt;/object&gt;
+	&lt;/body&gt;
+&lt;/html&gt;</code></pre><p id="r-567197" data-claire-element-id="567197">Bien évidemment, cela fonctionne à merveille. Seulement, n'importe quel internaute peut télécharger le fichier en écoute <em>via</em> l'URL indiquée dans le code source.<br/> On pourrait être tenté d'utiliser un htaccess, dans lequel on placerait le code suivant :</p><pre id="r-567198" data-claire-element-id="567198"><code data-claire-semantic="apache"># On interdit l'accès au fichier pour tout le monde...
+Deny from all
+#... sauf pour le serveur lui-même
+Allow from 127.0.0.1</code></pre><p id="r-567199" data-claire-element-id="567199">Le problème est que lorsqu'un client exécute la page, c'est son navigateur, <strong>avec son IP</strong>, qui demande au serveur le fichier <em>musique.mp3</em>.</p><h2 id="r-une-solution-10" data-claire-element-id="567205">Une solution</h2><p id="r-567201" data-claire-element-id="567201">La solution que je vous propose est basée sur le principe des <em>tokens</em> (<em>jeton</em>, en anglais) : en générant un token unique au sein même de la page et en redirigeant les requêtes allant vers les fichiers multimédia vers une page PHP, il nous est possible d'autoriser l'accès au fichier une seule et unique fois, lorsque le navigateur en aura besoin pour le lire.<br/> Petit schéma :</p><figure id="r-567203" data-claire-element-id="567204"><img id="r-567202" data-claire-element-id="567202" src="medias/uploads.siteduzero.com_files_360001_361000_360210.png" alt="Image utilisateur"/></figure>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers-multimedia">Empêcher le téléchargement direct de fichiers multimédia</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers-multimedia/introduction-90">
+Introduction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers-multimedia/generation-du-token">
+Génération du token
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers-multimedia/envoi-du-fichier-multimedia">
+Envoi du fichier multimédia
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers-multimedia/restriction-d-acces">
+Restriction d&#039;accès
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers-multimedia/generation-du-token">
+<span class="next">Génération du token</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Gnrationdutoken"></a><h2>Génération du token</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers-multimedia/introduction-90">
+<span class="arrow"></span>
+<span class="next">Introduction</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers-multimedia/envoi-du-fichier-multimedia">
+<span class="next">Envoi du fichier multimédia</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-567208" data-claire-element-id="567208">Il nous faut tout d'abord un token unique. Pour cela, je vous propose d'utiliser la fonction <a href="http://fr.php.net/uniqid">uniqid</a>, qui nous en générera un de 23 caractères (lire la doc pour plus d'info) :</p><pre id="r-567209" data-claire-element-id="567209"><code data-claire-semantic="html+php">&lt;?php
+// Génération du token
+$token = uniqid(rand(), true);</code></pre><p id="r-567210" data-claire-element-id="567210">Voici maintenant ce que nous allons faire :</p><ul id="r-567215" data-claire-element-id="567215"><li id="r-567212" data-claire-element-id="567212"><p id="r-567211" data-claire-element-id="567211">insérer le token généré en base de données, tout en l'associant à un fichier multimédia ;</p></li><li id="r-567214" data-claire-element-id="567214"><p id="r-567213" data-claire-element-id="567213">demander au dewplayer de lire le fichier.</p></li></ul><p id="r-567216" data-claire-element-id="567216">La table que je vous propose contient deux champs : le token et le fichier auquel il correspond. Je vous donne le SQL, à exécuter dans PhpMyAdmin par exemple.</p><p id="r-567217" data-claire-element-id="567217"></p><div id="r-567221" data-claire-element-id="567221"><pre id="r-567218" data-claire-element-id="567218"><code data-claire-semantic="sql">--
+-- Table structure for table `media_tokens`
+--
+
+CREATE TABLE IF NOT EXISTS `media_tokens` (
+  `token` varchar(23) NOT NULL,
+  `fichier` text NOT NULL,
+  UNIQUE KEY `token` (`token`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;</code></pre><aside id="r-567220" data-claire-element-id="567220" data-claire-semantic="information"><p id="r-567219" data-claire-element-id="567219">Vous remarquerez que j'ai mis le champ <em>token</em> en varchar 23 : c'est-à-dire qu'il ne pourra pas contenir plus de 23 caractères. Ce qui est logique, car un hash généré par la fonction uniqid en contient autant.</p></aside></div><p id="r-567222" data-claire-element-id="567222">Pour commencer, on va créer une instance de PDO puis insérer le token précédemment créé dans la base de données :</p><pre id="r-567223" data-claire-element-id="567223"><code data-claire-semantic="html+php">&lt;?php
+// Connexion à la base de données
+$pdo = new PDO('mysql:dbname=tests;host=localhost', 'christophe', 'thepasswordisalie');
+
+// Insertion du token dans la base de données
+$q = $pdo-&gt;exec(&quot;INSERT INTO media_tokens 
+                 SET token='$token', fichier='musique.mp3'&quot;);
+if($q === FALSE) {
+	exit('Une erreur est survenue.');
+}</code></pre><p id="r-567224" data-claire-element-id="567224">Note : j'utilise ici un fichier <em>musique.mp3</em>, que je place dans <em>media/</em>. Libre à vous de faire votre propre adaptation, bien entendu.</p><p id="r-567225" data-claire-element-id="567225">Maintenant, la question se pose : quelle URL donner au lecteur ? C'est là qu'intervient l'URL rewriting (si vous ne savez pas de quoi il s'agit, je vous invite à lire <a href="http://www.webrankinfo.com/dossiers/techniques/tutoriel-url-rewriting">ceci</a>) : nous allons rediriger toutes les URL de la forme <strong>[unToken].mp3</strong> vers la page <em>get.php</em>, qui devra recevoir en paramètre le token.</p><pre id="r-567226" data-claire-element-id="567226"><code data-claire-semantic="apache"># Activation de l'URL Rewriting
+RewriteEngine On
+
+# Règle de réécriture. Vous pouvez ajouter les extensions que vous souhaitez
+RewriteRule ^([a-zA-Z0-9]{23})\.mp3$ get.php?token=$1 [L]
+
+# Si vous voulez gérer plusieurs extensions, vous pouvez utiliser quelque chose dans le genre : 
+# RewriteRule ^([a-zA-Z0-9]{23})\.(mp3|ogg|wav|avi|etc)$ get.php?token=$1 [L]</code></pre><p id="r-567227" data-claire-element-id="567227">Nous pouvons donc indiquer l'adresse <strong>[tokenGénéré].mp3</strong> au lecteur :</p><pre id="r-567228" data-claire-element-id="567228"><code data-claire-semantic="html+php">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;title&gt;Écouter nos créations&lt;/title&gt;
+	&lt;/head&gt;
+	&lt;body&gt;
+		&lt;!-- Le DewPlayer !--&gt;
+		&lt;object type=&quot;application/x-shockwave-flash&quot; data=&quot;dewplayer-mini.swf&quot; width=&quot;160&quot; height=&quot;20&quot; id=&quot;dewplayer&quot; name=&quot;dewplayer&quot;&gt; 
+			&lt;param name=&quot;wmode&quot; value=&quot;transparent&quot; /&gt;
+			&lt;param name=&quot;movie&quot; value=&quot;dewplayer-mini.swf&quot; /&gt; 
+			&lt;!-- Le chemin vers le fichier audio à lire est à insérer ici !--&gt;
+			&lt;param name=&quot;flashvars&quot; value=&quot;mp3=&lt;?php echo $token ?&gt;.mp3&quot; /&gt; 
+		&lt;/object&gt;
+	&lt;/body&gt;
+&lt;/html&gt;</code></pre><p id="r-567229" data-claire-element-id="567229">Lorsque le navigateur chargera la page, le lecteur, quel qu'il soit, fera appel à l'URL que nous avons fait pointer vers <em>get.php</em> et exécutera donc le script en lui passant le token généré en paramètre.</p><p id="r-567230" data-claire-element-id="567230">Si le token est valide, ça voudra dire que c'est bel et bien notre page de lecture qui essaye d'accéder au fichier.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers-multimedia">Empêcher le téléchargement direct de fichiers multimédia</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers-multimedia/introduction-90">
+Introduction
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers-multimedia/generation-du-token">
+Génération du token
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers-multimedia/envoi-du-fichier-multimedia">
+Envoi du fichier multimédia
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers-multimedia/restriction-d-acces">
+Restriction d&#039;accès
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers-multimedia/introduction-90">
+<span class="arrow"></span>
+<span class="next">Introduction</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers-multimedia/envoi-du-fichier-multimedia">
+<span class="next">Envoi du fichier multimédia</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Envoidufichiermultimdia"></a><h2>Envoi du fichier multimédia</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers-multimedia/generation-du-token">
+<span class="arrow"></span>
+<span class="next">Génération du token</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers-multimedia/restriction-d-acces">
+<span class="next">Restriction d&#039;accès</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-567232" data-claire-element-id="567232">Je vous rappelle brièvement ce que le script <em>get.php</em> doit faire :</p><ol id="r-567239" data-claire-element-id="567239"><li id="r-567234" data-claire-element-id="567234"><p id="r-567233" data-claire-element-id="567233">vérifier que le token passé en paramètre est valide ;</p></li><li id="r-567236" data-claire-element-id="567236"><p id="r-567235" data-claire-element-id="567235">si c'est le cas, envoyer au lecteur le fichier correspondant grâce à la fonction <a href="http://fr.php.net/readfile">readfile</a> ;</p></li><li id="r-567238" data-claire-element-id="567238"><p id="r-567237" data-claire-element-id="567237"><strong>effacer le token de la base de données</strong>, afin qu'il ne soit plus valide et que l'on ne puisse pas accéder au fichier depuis l'URL.</p></li></ol><p id="r-567240" data-claire-element-id="567240">Tout d'abord, on va vérifier que le token a bien été passé en paramètre :</p><pre id="r-567241" data-claire-element-id="567241"><code data-claire-semantic="html+php">&lt;?php
+// Si le token n'a pas été passé en paramètre
+if(!isset($_GET['token'])) {
+	exit(); // Arrêt du script
+}	
+$token = $_GET['token'];</code></pre><p id="r-567242" data-claire-element-id="567242">Ensuite, nous allons vérifier que le token soit bien dans la base de données. Si c'est le cas, ça voudra dire qu'il est valide et que c'est en effet notre page de lecture qui veut y accéder ; sinon, qu'il ne l'est pas.</p><pre id="r-567243" data-claire-element-id="567243"><code data-claire-semantic="html+php">&lt;?php
+// Connexion à la base de données
+$pdo = new PDO('mysql:dbname=tests;host=localhost', 'christophe', 'thepasswordisalie');
+
+// Préparation de la requête
+$q = $pdo-&gt;prepare('SELECT fichier FROM media_tokens WHERE token=:token');
+$q-&gt;bindValue(':token', $_GET['token']);
+
+// Exécution !
+$q-&gt;execute();
+
+// Si le token correspond à un enregistré en base de données
+if($q-&gt;rowCount() == 1) { 
+	// Actions à exécuter quand le token est valide
+}
+else {
+	// Actions à exécuter quand il n'est pas valide
+}</code></pre><p id="r-567244" data-claire-element-id="567244">J'utilise ici le concept des requêtes préparées, plus lisibles et pratiques (les paramètres de la requête sont automatiquement sécurisés par PDO, pas besoin de s'embêter avec ça). <a href="http://www.siteduzero.com/tutoriel-3-34790-pdo-interface-d-acces-aux-bdd.html#ss_part_5">Plus d'infos</a>.</p><p id="r-567245" data-claire-element-id="567245">Dans le cas où le token est valide, il va tout d'abord nous falloir récupérer le nom du fichier qui lui est associé :</p><pre id="r-567246" data-claire-element-id="567246"><code data-claire-semantic="html+php">&lt;?php
+// Si le token correspond à un enregistré en base de données
+if($q-&gt;rowCount() == 1) { 
+	// On récupère les résultats de la requête
+	$resultat = $q-&gt;fetch();
+	$fichier = 'media/'.$resultat['fichier']; // Dans le cas où vos fichiers multimédia se trouvent dans media/
+	$extension = end(explode('.', $fichier)); // Nous en aurons besoin plus tard
+}</code></pre><p id="r-567247" data-claire-element-id="567247">Nous allons maintenant vérifier que le fichier auquel est relié le token existe bien ; si c'est le cas, on pourra supprimer le token de la base de données et envoyer le fichier au lecteur.</p><pre id="r-567248" data-claire-element-id="567248"><code data-claire-semantic="html+php">&lt;?php
+// Si le fichier existe bien et qu'il est lisible, on peut l'envoyer au lecteur
+if(file_exists($fichier) &amp;&amp; is_readable($fichier)) {
+	// On peut maintenant effacer le token qui est en base de données
+	$pdo-&gt;exec(&quot;DELETE FROM media_tokens WHERE token='&quot;.$_GET['token'].&quot;'&quot;); 
+	
+	// Envoi du fichier
+}</code></pre><p id="r-567249" data-claire-element-id="567249">Pour envoyer le fichier au lecteur, nous allons utiliser deux fonctions. <a href="http://fr.php.net/header">Header</a> nous permettra de lui indiquer ce qu'on lui envoie par le biais du header HTTP <em>Content-type</em> (fichier audio mp3, vidéo avi, etc.), et <a href="http://fr.php.net/readfile">readfile</a> d'envoyer le fichier. Le navigateur n'y verra ainsi que du feu.<br/> La fonction <em>header</em> s'utilise comme ceci :</p><pre id="r-567250" data-claire-element-id="567250"><code data-claire-semantic="html+php">&lt;?php
+// Fichier audio MP3
+header('Content-type: audio/mp3');
+
+// Fichier vidéo MPEG
+header('Content-type: video/mpeg');</code></pre><p id="r-567251" data-claire-element-id="567251">On a donc :</p><pre id="r-567252" data-claire-element-id="567252"><code data-claire-semantic="html+php">&lt;?php
+// Envoi du fichier
+header('Content-type: audio/mp3');
+readfile($fichier);
+exit();</code></pre><aside id="r-567255" data-claire-element-id="567255" data-claire-semantic="information"><p id="r-567253" data-claire-element-id="567253">Comme dit plus haut, le lecteur que j'utilise n'est compatible qu'avec les fichiers audio mp3. Pour une compatibilité avec un autre lecteur supportant d'autres types de formats et de médias, vous pouvez faire quelque chose comme :</p><pre id="r-567254" data-claire-element-id="567254"><code data-claire-semantic="html+php">&lt;?php
+$video_extensions = array('avi', 'mpeg' /* ... */);
+$audio_extensions = array('mp3', 'ogg'  /* ... */);
+
+// S'il s'agit d'une vidéo
+if(in_array($extension, $video_extensions)) {
+     header('Content-type: video/'.$extension);
+}
+// Sinon, s'il s'agit d'un fichier audio
+elseif(in_array($extension, $audio_extensions)) {
+     header('Content-type: audio/'.$extension);
+}
+readfile($fichier);</code></pre></aside><p id="r-567256" data-claire-element-id="567256">Dans le cas où le token n'est pas valide, nous pourrions ne rien faire, ou tout simplement arrêter le script, mais j'ai mieux. Je vous propose de renvoyer un petit son d'<em>erreur</em> qui aura voulu accéder au fichier par l'URL. :p</p><pre id="r-567257" data-claire-element-id="567257"><code data-claire-semantic="html+php">&lt;?php
+header('Content-type: audio/mp3');
+readfile('media/fail.mp3');
+exit();</code></pre><p id="r-567258" data-claire-element-id="567258">Vous pouvez télécharger le fichier <em>fail.mp3</em> ici : <a href="http://failsound.com/fail.mp3">http://failsound.com/fail.mp3</a>.</p><p id="r-567259" data-claire-element-id="567259">Code complet du script :</p><p id="r-567260" data-claire-element-id="567260"></p><div id="r-567262" data-claire-element-id="567262"><pre id="r-567261" data-claire-element-id="567261"><code data-claire-semantic="html+php">&lt;?php
+if(!isset($_GET['token'])) {
+	exit();
+}	
+$token = $_GET['token'];
+
+// Connexion à la base de données
+$pdo = new PDO('mysql:dbname=tests;host=localhost', 'christophe', 'thepasswordisalie');
+
+// Préparation de la requête
+$q = $pdo-&gt;prepare('SELECT fichier FROM media_tokens WHERE token=:token');
+$q-&gt;bindValue(':token', $_GET['token']);
+
+// Exécution !
+$q-&gt;execute();
+
+// Si le token correspond à un enregistré en base de données
+if($q-&gt;rowCount() == 1) { 
+	// On récupère les résultats de la requête
+	$resultat = $q-&gt;fetch();
+	$fichier = 'media/'.$resultat['fichier']; // Dans le cas où vos fichiers multimédia se trouvent dans media/
+	$extension = end(explode('.', $fichier));
+		
+	// Si le fichier existe bien et qu'il est lisible, on peut le renvoyer au navigateur
+	if(file_exists($fichier) &amp;&amp; is_readable($fichier)) {
+		// On peut maintenant effacer le token qui est en base de données
+		$pdo-&gt;exec(&quot;DELETE FROM media_tokens WHERE token='&quot;.$_GET['token'].&quot;'&quot;);
+		
+		// Ce header permet d'indiquer au navigateur quel à type de fichier il doit associer celui qu'on lui renvoie
+		header('Content-type: audio/'.$extension);
+		readfile($fichier);
+		exit();
+	}
+}
+else {
+	header('Content-type: audio/mp3');
+	readfile('media/fail.mp3');
+	exit();
+}</code></pre></div>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers-multimedia">Empêcher le téléchargement direct de fichiers multimédia</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers-multimedia/introduction-90">
+Introduction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers-multimedia/generation-du-token">
+Génération du token
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers-multimedia/envoi-du-fichier-multimedia">
+Envoi du fichier multimédia
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers-multimedia/restriction-d-acces">
+Restriction d&#039;accès
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers-multimedia/generation-du-token">
+<span class="arrow"></span>
+<span class="next">Génération du token</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers-multimedia/restriction-d-acces">
+<span class="next">Restriction d&#039;accès</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Restrictiond039accs"></a><h2>Restriction d&#039;accès</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers-multimedia/envoi-du-fichier-multimedia">
+<span class="arrow"></span>
+<span class="next">Envoi du fichier multimédia</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-567264" data-claire-element-id="567264">Il ne nous reste plus qu'une dernière chose à faire. Elle est très importante, car le système que l'on vient de coder ne serait d'aucune utilité sans elle.<br/> Nous allons interdire l'accès au répertoire contenant les fichiers multimédias à tout le monde, sauf au serveur-lui même ; comme cela, seul le script pourra y accéder.</p><pre id="r-567265" data-claire-element-id="567265"><code data-claire-semantic="apache">deny from all
+allow from 127.0.0.1</code></pre><p id="r-567266" data-claire-element-id="567266">Notez que si vous faites des tests en local, vous aurez tout de même accès au répertoire <strong>media/ </strong>car l'adresse avec laquelle votre ordinateur envoie les requêtes est 127.0.0.1 (logique, puisqu'en quelque sorte, il s'envoie des requêtes à lui-même).</p><p id="r-567267" data-claire-element-id="567267">Voilà, c'est terminé. J'espère que cette méthode vous sera utile.<br/> En cas de problème ou si vous avez une question, n'hésitez pas à poster un commentaire, je les lis tous ! :p</p><p id="r-567268" data-claire-element-id="567268">@+</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers-multimedia">Empêcher le téléchargement direct de fichiers multimédia</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers-multimedia/introduction-90">
+Introduction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers-multimedia/generation-du-token">
+Génération du token
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers-multimedia/envoi-du-fichier-multimedia">
+Envoi du fichier multimédia
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers-multimedia/restriction-d-acces">
+Restriction d&#039;accès
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/empecher-le-telechargement-direct-de-fichiers-multimedia/envoi-du-fichier-multimedia">
+<span class="arrow"></span>
+<span class="next">Envoi du fichier multimédia</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/empecher-le-telechargement-direct-de-fichiers-multimedia.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 03:56:40 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/empecher-le-telechargement-direct-de-fichiers-multimedia.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:46:26 GMT -->
+</html>

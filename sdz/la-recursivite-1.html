@@ -1,0 +1,363 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/la-recursivite-1.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 23:20:31 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/la-recursivite-1.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:04:39 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : La récursivité</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/la-recursivite-1.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : La récursivité</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Larcursivit">La récursivité</a><br/><a href="#Prsentation">Présentation</a><br/><a href="#Larcursivitplusendtail">La récursivité plus en détail</a><br/><a href="#Conceptslislarcursivit">Concepts liés à la récursivité</a><br/></div>
+<a name="Larcursivit"></a><h2>La récursivité</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-recursivite-1/presentation-117">
+<span class="next">Présentation</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-438658" data-claire-element-id="438658">La récursivité est un concept général qui peut être illustré dans (quasiment) tous les langages de programmation, et qui peut être utile dans de nombreuses situations.</p><p id="r-438659" data-claire-element-id="438659">Pour lire ce tutoriel, vous devez un peu connaître au moins un langage de programmation, et avoir bien compris le mécanisme de déclaration et d'utilisation des fonctions.</p><p id="r-438660" data-claire-element-id="438660">J'ai conçu ce tuto dans une optique &quot;progressive&quot; : le début explique l'idée de base et ne nécessite aucun prérequis (à part ceux énoncés ci-dessus), mais le tuto dans son ensemble va assez loin, et met en avant une approche &quot;abstraite&quot; qui ne sera pas forcément évidente à la première lecture.</p><p id="r-438661" data-claire-element-id="438661">Pour accompagner cette approche progressive, les différents exemples du tuto ne seront pas tous écrits dans le même langage. Les premiers exemples utiliseront le langage PHP, parce que je pense que c'est celui que le plus de zéros connaissent, mais ils seront compréhensibles même par quelqu'un qui n'aurait fait que du C. Les exemples des parties plus poussées utiliseront un langage plus adapté à la récursion, OCaml. Cependant, il ne sera pas nécessaire de connaître ce langage pour les lire, car ils resteront simples et seront (enfin j'espère) soigneusement expliqués.</p>
+</div><a name="Prsentation"></a><h2>Présentation</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-recursivite-1/la-recursivite-plus-en-detail">
+<span class="next">La récursivité plus en détail</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h3 id="r-une-fonction-qui-s-appelle-elle-meme" data-claire-element-id="438680">Une fonction qui s'appelle elle-même</h3><p id="r-438662" data-claire-element-id="438662">La définition la plus simple d'une fonction récursive est la suivante : c'est une fonction qui s'appelle elle-même. Si dans le corps (le contenu) de la fonction, vous l'utilisez elle-même, alors elle est récursive.</p><h2 id="r-la-fonction-factorielle" data-claire-element-id="438679">La fonction factorielle</h2><p id="r-438663" data-claire-element-id="438663">L'exemple habituel est la fonction factorielle. Cette fonction, provenant des mathématiques (et très utilisée dans certains domaines mathématiques) prend en entrée un entier positif, et renvoie le produit des entiers inférieurs jusqu'à 1, lui compris :<br/>fac(n) = n * (n-1) * \dots * 1</p><p id="r-438664" data-claire-element-id="438664">Par exemple la factorielle de 4 est 4 * 3 * 2 * 1 = 24 (attention, cette fonction donne très vite des résultats très grands !).</p><p id="r-438665" data-claire-element-id="438665">Voici une définition non-récursive de la fonction factorielle, en PHP :</p><pre id="r-438666" data-claire-element-id="438666"><code data-claire-semantic="html+php">&lt;?php
+function fac($n)
+{
+    $resultat = 1;
+    for ($i = 1; $i &lt;= $n; $i++)
+        $resultat *= $i;
+    return $resultat;
+}
+?&gt;</code></pre><p id="r-438667" data-claire-element-id="438667">La méthode de calcul est assez simple : on déclare une variable <code>$resultat</code>, qui contiendra à la fin le résultat (la factorielle de <code>$n</code>), et qui vaut 1 au départ.<br/> Pour chaque entier <code>$i</code> entre 1 et n, on modifie le résultat en le multipliant par l'entier. Le résultat vaudra donc 1, puis (1 * 2), puis (1 * 2 * 3), ... jusqu'à (1 * 2 * 3 * ... * $n).<br/> On pourrait se passer de la variable <code>$i</code> en diminuant à la place la variable <code>$n</code> directement (on s'arrête quand elle vaut 1) mais c'est moins clair et ça ne simplifie pas véritablement la fonction.</p><p id="r-438668" data-claire-element-id="438668">Je vais maintenant vous présenter une définition récursive de la fonction factorielle. Elle est basée sur l'idée suivante :</p><p id="r-438669" data-claire-element-id="438669">fac(n) = n * (n-1) * (n-2) * ... * 1fac(n-1) = (n-1) * (n-2) * ... * 1fac(n) = n * fac(n-1)</p><pre id="r-438670" data-claire-element-id="438670"><code data-claire-semantic="html+php">&lt;?php
+function fac($n)
+{
+    if ($n == 1) return 1;
+    return $n * fac($n - 1);
+}
+?&gt;</code></pre><p id="r-438671" data-claire-element-id="438671">Si vous avez compris l'équation au-dessus, vous verrez que le code la transcrit exactement (on dit que <code>fac(1) = 1</code>, et que <code>fac($n) = $n * fac($n-1)</code>).<br/> Si vous voulez comprendre exactement comment on arrive au résultat, vous pouvez &quot;jouer à l'interpréteur PHP&quot; : il s'agit d'exécuter mentalement ce code sur un petit exemple (par exemple 3) en suivant toutes les étapes, comme le ferait un véritable interpréteur de PHP, pour voir comment la fonction marche.</p><pre id="r-438672" data-claire-element-id="438672"><code>fac 3 :
+   3 ne vaut pas 1, donc je continue
+   j'ai besoin de fac(n-1) : je calcule fac(2) :
+       2 ne vaut pas 1, donc je continue
+       j'ai besoin de fac(n-1) : je calcule fac(1) :
+            1 vaut 1, donc fac(1) renvoie 1
+       fac(1) vaut 1, donc fac(2) renvoie 2 * fac(1) = 2 * 1 = 2
+   fac(2) vaut 2, donc fac(3) renvoie 3 * fac(2) = 3 * 2 = 6</code></pre><p id="r-438673" data-claire-element-id="438673">Comme vous pouvez le voir, en exécutant le code PHP &quot;dans ma tête&quot; j'ai dû appeler plusieurs fois la fonction <code>fac</code>, et à chaque fois j'ai interrompu le calcul en cours (d'abord celui de <code>fac(3)</code>, puis celui de <code>fac(2)</code>) pour calculer le résultat de <code>fac(n-1)</code>, avant de revenir au calcul en cours (multiplier par <code>n</code>, puis renvoyer le résultat).</p><p id="r-438674" data-claire-element-id="438674">Avec l'habitude, ce fonctionnement devient tout à fait naturel. Ce qui est intéressant, c'est que le code de la version récursive est beaucoup plus simple que l'autre (on parle souvent de &quot;fonction itérative&quot; pour les fonctions non-récursives). En plus d'être plus courte (moins de mots), la version récursive utilise moins de concepts : pas de variables temporaires, pas de boucle, etc. Une fois le problème de manque d'habitude surmonté, vous vous rendrez très vite compte que dans certains cas, les fonctions récursives sont très intéressantes.</p><p id="r-438675" data-claire-element-id="438675">L'appel <code>fac($n - 1)</code>, à la ligne 5, appelle la fonction qui est en train d'être définie. On parle d'<em>appel récursif</em>.</p><p id="r-438676" data-claire-element-id="438676">Une dernière remarque pour finir : par convention, la définition mathématique de la fonction factorielle précise que la factorielle de zéro est 1. Pour respecter cette convention, il suffit de changer le test <code>if ($n == 1)</code> en <code>if ($n == 0)</code>. Si vous n'en êtes pas convaincu, exécutez le code dans votre tête ^^</p><h3 id="r-point-de-vocabulaire" data-claire-element-id="438678">Point de vocabulaire</h3><p id="r-438677" data-claire-element-id="438677">Quand on parle des fonctions récursives, on utilise en général deux termes : <em>récursivité</em> et <em>récursion</em>. Lequel faut-il utiliser ?<br/> D'après les dictionnaires, les deux termes sont à peu près synonymes, récursivité étant plus souvent employé. Cependant, on peut faire une nuance entre les deux ; je le fais, ainsi que la plupart des programmeurs français que je connais. On considère en général que <em>récursivité</em> concerne le principe général (&quot;la récursivité c'est pratique !&quot;), alors que <em>récursion</em> désigne l'action concrète de l'appel récursif (&quot;avec cet argument, ma fonction fait 127 récursions !&quot;, &quot;la récursion de cette ligne n'est pas tail-récursive&quot;). Si vous voulez, c'est un peu la même différence qu'entre &quot;égalité&quot; et &quot;égalisation&quot;, &quot;généralité&quot; et &quot;généralisation&quot;, ou &quot;propreté&quot; et ... &quot;nettoyage&quot;. :pirate: <br/> Cette nuance, assez floue (et souple), n'est pas obligatoire ; je ne promets pas de la respecter à la lettre dans la suite du tutoriel. Cependant, ça peut toujours être pratique de pouvoir faire la différence entre deux termes un peu trop proches.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/la-recursivite-1">La récursivité</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/la-recursivite-1/presentation-117">
+Présentation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-recursivite-1/la-recursivite-plus-en-detail">
+La récursivité plus en détail
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-recursivite-1/concepts-lies-a-la-recursivite">
+Concepts liés à la récursivité
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-recursivite-1/la-recursivite-plus-en-detail">
+<span class="next">La récursivité plus en détail</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Larcursivitplusendtail"></a><h2>La récursivité plus en détail</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-recursivite-1/presentation-117">
+<span class="arrow"></span>
+<span class="next">Présentation</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-recursivite-1/concepts-lies-a-la-recursivite">
+<span class="next">Concepts liés à la récursivité</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-problemes-et-sous-problemes" data-claire-element-id="438692">Problèmes et sous-problèmes</h2><h3 id="r-pourquoi-ecrire-une-fonction-recursive" data-claire-element-id="438685">Pourquoi écrire une fonction récursive ?</h3><p id="r-438682" data-claire-element-id="438682">Un programmeur doit écrire une fonction récursive quand c'est la solution la plus adaptée à son problème. La question peut donc se reformuler ainsi : à quels problèmes les fonctions récursives sont-elles adaptées ?</p><p id="r-438683" data-claire-element-id="438683">Les fonctions que l'on code servent en général à résoudre des problèmes. Le problème que résout la fonction factorielle est « étant donné un nombre, quelle est la valeur de sa factorielle ? » (ce problème se rencontre dans certains algorithmes numériques, comme le calcul approché de fonctions).</p><p id="r-438684" data-claire-element-id="438684">Les fonctions récursives sont des fonctions qui s'appellent elles-mêmes. Elles doivent donc résoudre des problèmes qui &quot;s'appellent eux-mêmes&quot;. Dans certains d'entre eux, la solution du problème général demande la résolution de plusieurs sous-problèmes particuliers, qui sont semblables au premier problème. Par exemple, on peut dire que pour résoudre le problème « combien vaut la factorielle de 4 ? » , il faut résoudre le problème « combien vaut la factorielle de 3 ? » .</p><h3 id="r-exemple-120" data-claire-element-id="438691">Exemple</h3><p id="r-438686" data-claire-element-id="438686">Voici un exemple de problème : je dispose d'une liste de joueurs d'un jeu à deux joueurs (échecs, ping-pong, etc.), et je veux créer une liste de matches, de telle sorte que chaque joueur joue contre tous les autres joueurs une seule fois.</p><p id="r-438687" data-claire-element-id="438687">Il existe de nombreuses manières d'envisager le problème. On peut remarquer que si on a une liste de 4 joueurs, on peut résoudre le problème en connaissant une liste de matchs pour les 3 premiers joueurs seulement : on prend cette liste, et on y ajoute un match entre le quatrième joueur et chacun des trois autres. Ainsi, j'ai ramené le problème (obtenir une liste des matchs entre tous les joueurs) à un sous-problème plus simple : obtenir une liste des matchs entre tous les joueurs, sauf un.</p><p id="r-438688" data-claire-element-id="438688">Voici un algorithme en PHP permettant de résoudre ce problème de manière récursive :</p><pre id="r-438689" data-claire-element-id="438689"><code data-claire-semantic="html+php">&lt;?php
+function matches($joueurs)
+{
+    /* s'il n'y a qu'un seul joueur, on n'organise aucun match */
+    if (count($joueurs) &lt;= 1)
+        return array();
+ 
+    /* on enleve le dernier joueur de la liste, et on demande les matchs sans lui */
+    $dernier_joueur = array_pop($joueurs);
+    $matches = matches($joueurs);
+ 
+    /* on rajoute un match entre lui et tous les autres joueurs */
+    foreach ($joueurs as $autre_joueur)
+        $matches[] = array($autre_joueur, $dernier_joueur);
+ 
+    /* on le remet dans la liste des joueurs, et on renvoie la liste des matchs */
+    array_push($joueurs, $dernier_joueur);
+    return $matches;
+}
+?&gt;</code></pre><p id="r-438690" data-claire-element-id="438690">Cette méthode pour générer une liste de matchs est encore plus efficace si l'on utilise pour la liste des joueurs une structure de données plus adaptée (une liste). Vous verrez comment utiliser des listes plus tard (quand j'utiliserai un langage plus civilisé que le PHP).</p><h2 id="r-la-methode-structurelle" data-claire-element-id="438708">La méthode structurelle</h2><h3 id="r-comment-ecrire-une-fonction-recursive" data-claire-element-id="438701">Comment écrire une fonction récursive ?</h3><p id="r-438693" data-claire-element-id="438693">Une fois qu'on a repéré que le problème que l'on doit résoudre se prête bien à l'utilisation d'une fonction récursive, il ne reste plus qu'à écrire la fonction. Est-ce si simple ?</p><p id="r-438694" data-claire-element-id="438694">Écrire une fonction n'est jamais aussi simple qu'on pourrait le croire (on a toujours des surprises), mais la structure très nette des problèmes propres à la récursivité (un problème = un ou plusieurs sous-problèmes) permet de présenter une manière générale d'écrire des fonctions récursives.</p><p id="r-438695" data-claire-element-id="438695">En effet, vous avez sans doute remarqué que mes deux exemples utilisaient toujours la même structure.</p><ul id="r-438700" data-claire-element-id="438700"><li id="r-438697" data-claire-element-id="438697"><p id="r-438696" data-claire-element-id="438696">D'abord, on gère le cas <em>simple</em>, c'est-à-dire celui qui ne nécessite pas de rappeler récursivement la fonction. Pour la factorielle, c'est le cas où <code>$n</code> vaut 1 (car on sait directement que <code>fac(1) = 1</code>). Pour la liste des joueurs, c'est le cas où il y a un seul joueur (car il n'y a aucun match à organiser).</p></li><li id="r-438699" data-claire-element-id="438699"><p id="r-438698" data-claire-element-id="438698">Ensuite, on gère le ou les sous-problèmes récursifs, en rappelant la fonction récursive pour chaque sous-problème à résoudre.</p></li></ul><h3 id="r-remarque-5" data-claire-element-id="438707">Remarque</h3><p id="r-438702" data-claire-element-id="438702">Pourquoi avoir choisi de traiter le cas simple en premier ? La justification, très simple, revient très souvent en programmation, et vous pourrez l'appliquer très souvent, même en dehors de ce tutoriel : il faut commencer par ce qui est simple et court.</p><pre id="r-438703" data-claire-element-id="438703"><code data-claire-semantic="html+php">&lt;?php
+if ($condition) {
+    ...
+    ...
+    // cas compliqué
+    ...
+    ...
+} else {
+    ... // cas simple
+}
+?&gt;</code></pre><p id="r-438704" data-claire-element-id="438704">comparé à</p><pre id="r-438705" data-claire-element-id="438705"><code data-claire-semantic="html+php">&lt;?php
+if (!$condition) {
+    ... // cas simple
+} else {
+    ...
+    ...
+    // cas compliqué
+    ...
+    ...
+}
+?&gt;</code></pre><p id="r-438706" data-claire-element-id="438706">Le deuxième code est beaucoup plus agréable, car il permet de ne perdre aucun des deux cas de vue : ils sont tous les deux proches de la condition. Dans le premier code, le cas simple est perdu (le cas compliqué fait en général bien plus de lignes que ça) loin derrière le <code>if</code>, et il sera même parfois oublié.</p><h2 id="r-sous-problemes-multiples" data-claire-element-id="438743">Sous-problèmes multiples</h2><p id="r-438709" data-claire-element-id="438709">Tous les problèmes que nous avons vus jusqu'à présent se décomposaient en un cas immédiat, et un sous-problème. Parfois, il arrive qu'on doive décomposer le problème initial en <em>plusieurs</em> sous-problèmes. La récursivité est alors encore plus adaptée.</p><h3 id="r-le-pommier-enonce" data-claire-element-id="438725">Le pommier : énoncé</h3><p id="r-438710" data-claire-element-id="438710">Imaginons le problème suivant : vous grimpez dans un pommier, et vous voulez manger le plus de pommes possible. Cependant, le propriétaire du pommier a posé des règles très strictes : vous ne pouvez manger qu'une seule pomme à chaque croisement de branches, vous ne pouvez continuer dans l'arbre qu'en choisissant une seule des branches, et une fois arrivé en haut, vous devez redescendre directement, sans rien manger d'autre.</p><p id="r-438711" data-claire-element-id="438711">Voici un exemple de pommier :</p><figure id="r-438713" data-claire-element-id="438714"><img id="r-438712" data-claire-element-id="438712" src="medias/uploads.siteduzero.com_files_88001_89000_88625.png" alt="pommier : exemple"/></figure><p id="r-438715" data-claire-element-id="438715">(Je sais, je dessine trop bien. :-° )</p><p id="r-438716" data-claire-element-id="438716">Voici un exemple de parcours autorisé, qui permet de manger deux pommes :</p><figure id="r-438718" data-claire-element-id="438719"><img id="r-438717" data-claire-element-id="438717" src="medias/uploads.siteduzero.com_files_88001_89000_88626.png" alt="pommier : chemin autorisé"/></figure><p id="r-438720" data-claire-element-id="438720">Bien entendu, il existe un chemin plus intéressant, car c'est celui qui permet de manger le plus de pommes :</p><figure id="r-438722" data-claire-element-id="438723"><img id="r-438721" data-claire-element-id="438721" src="medias/uploads.siteduzero.com_files_88001_89000_88627.png" alt="pommier : meilleur chemin"/></figure><p id="r-438724" data-claire-element-id="438724">La question est la suivante : si l'on connaît le plan du pommier, combien de pommes peut-on manger au maximum, en respectant les règles ?</p><h3 id="r-decomposition-en-sous-problemes" data-claire-element-id="438733">Décomposition en sous-problèmes</h3><p id="r-438726" data-claire-element-id="438726">J'ai commencé à grimper dans l'arbre, et après avoir mangé une pomme, je m'arrête et je me demande &quot;quelle branche faut-il choisir maintenant ?&quot;</p><figure id="r-438728" data-claire-element-id="438729"><img id="r-438727" data-claire-element-id="438727" src="medias/uploads.siteduzero.com_files_88001_89000_88629.png" alt="Pommier : choix du chemin"/></figure><p id="r-438730" data-claire-element-id="438730">Voilà le sous-problème ! L'idée est la suivante : il faut choisir la branche (enfin, la sous-branche) qui permet de manger le plus de pommes, et c'est exactement le problème qu'on devait résoudre au départ !</p><p id="r-438731" data-claire-element-id="438731">On a donc trouvé une <em>décomposition du problème</em> : quand on est à un embranchement, il suffit de calculer (avec des appels récursifs) la branche qui permet de manger le plus de pommes, et d'ajouter 1 (la pomme que l'on mange à l'embranchement), pour avoir le nombre total de pommes.</p><p id="r-438732" data-claire-element-id="438732">Quel est le <em>cas simple</em> ? C'est le cas où on est en haut, il n'y a plus qu'à redescendre, et on peut donc manger 0 pomme.</p><h3 id="r-representation-d-un-arbre-en-php" data-claire-element-id="438738">Représentation d'un arbre en PHP</h3><p id="r-438734" data-claire-element-id="438734">On choisit la représentation suivante pour les arbres : chaque embranchement est représenté par un tableau (array), et la fin des branches est représentée par un tableau vide.</p><p id="r-438735" data-claire-element-id="438735">Voici un code PHP pour représenter l'arbre montré précédemment :</p><pre id="r-438736" data-claire-element-id="438736"><code data-claire-semantic="html+php">&lt;?php
+//à droite, on a un embranchement et trois feuilles
+$branche_droite = array(array(), array(), array());
+$branche_gauche = array(
+    array(),
+    array(array(), array()),
+    array()
+);
+$arbre = array($branche_gauche, $branche_droite);
+?&gt;</code></pre><p id="r-438737" data-claire-element-id="438737">Bien sûr, on peut aussi utiliser la formule compactée <code>array(array(array(), array(array(), array()), array()), array(array(), array(), array()))</code>, mais elle est <em>légèrement</em> moins lisible. On pourrait très bien échanger <code>$branche_droite</code> et <code>$branche_gauche</code> dans le premier code : l'ordre des branches n'a pas d'importance, puisqu'il ne change pas le nombre de pommes que l'on peut atteindre.</p><h3 id="r-code-final-1" data-claire-element-id="438742">Code final</h3><p id="r-438739" data-claire-element-id="438739">Voici finalement le code qui renvoie le nombre maximal de pommes :</p><pre id="r-438740" data-claire-element-id="438740"><code data-claire-semantic="html+php">&lt;?php
+function max_pommes($arbre)
+{
+    if (count($arbre) == 0) //si c'est la fin de l'arbre
+        return 0;
+ 
+    /* sinon, on recupere le maximum de max_pommes pour chaque branche */
+    $max = 0;
+    foreach($arbre as $branche) {
+        $pommes_branche = max_pommes($branche);
+        if ($max &lt; $pommes_branche) //si la branche est mieux que le max actuel
+            $max = $pommes_branche;
+    }
+    return 1 + $max; //on compte la pomme présente à l'embranchement, donc +1
+}
+?&gt;</code></pre><p id="r-438741" data-claire-element-id="438741">Vous pouvez essayer d'écrire le même algorithme de manière non-récursive, vous verrez que c'est beaucoup moins simple !</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/la-recursivite-1">La récursivité</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-recursivite-1/presentation-117">
+Présentation
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/la-recursivite-1/la-recursivite-plus-en-detail">
+La récursivité plus en détail
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-recursivite-1/concepts-lies-a-la-recursivite">
+Concepts liés à la récursivité
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-recursivite-1/presentation-117">
+<span class="arrow"></span>
+<span class="next">Présentation</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-recursivite-1/concepts-lies-a-la-recursivite">
+<span class="next">Concepts liés à la récursivité</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Conceptslislarcursivit"></a><h2>Concepts liés à la récursivité</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-recursivite-1/la-recursivite-plus-en-detail">
+<span class="arrow"></span>
+<span class="next">La récursivité plus en détail</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-438745" data-claire-element-id="438745">J'utiliserai dans cette dernière partie un langage plus adapté à la programmation récursive, nommé OCaml. Polyvalent, il est entre autres utilisé pour l'enseignement de la programmation en France, dans certaines universités, écoles d'ingénieurs ou classes préparatoires.</p><p id="r-438746" data-claire-element-id="438746">Les exemples n'utiliseront que peu de concepts de ce langage, vous pourrez donc les lire même si vous ne le connaissez pas. Les deux seules règles à connaître pour l'instant sont les suivantes :</p><ul id="r-438751" data-claire-element-id="438751"><li id="r-438748" data-claire-element-id="438748"><p id="r-438747" data-claire-element-id="438747">une fonction n'est pas déclarée par le mot-clé <code>function</code> comme en PHP, mais par le mot-clé <code>let</code>, qui sert aussi à déclarer les autres variables. Si la fonction est récursive, on ajoute après le <code>let</code> le mot-clé <code>rec</code></p></li><li id="r-438750" data-claire-element-id="438750"><p id="r-438749" data-claire-element-id="438749">on n'utilise pas la forme <code>if (...) { ... } else {... }</code> du C ou du PHP, mais simplement <code>if ... then ... else ...</code></p></li></ul><p id="r-438752" data-claire-element-id="438752">Voici par exemple une fonction factorielle codée en OCaml :</p><pre id="r-438753" data-claire-element-id="438753"><code data-claire-semantic="ocaml">let rec fac(n) =
+    if n = 0 then 1
+    else n * fac(n-1)</code></pre><p id="r-438754" data-claire-element-id="438754">La définition reprend ainsi la description mathématique : « factorielle de n vaut 1 si n = 0, et n * factorielle de (n-1) sinon » . Simple, n'est-ce pas ?</p><h2 id="r-recursion-terminale-1" data-claire-element-id="438802">Récursion terminale</h2><p id="r-438755" data-claire-element-id="438755">On entend parfois certaines personnes affirmer « la récursion, c'est plus lent que les boucles » . Dans ce paragraphe, je vais vous expliquer ce qui a motivé cet argument, et pourquoi c'est un mauvais argument.</p><h3 id="r-la-pile-d-appels" data-claire-element-id="438768">La pile d'appels</h3><p id="r-438756" data-claire-element-id="438756">Prenons un exemple de fonction récursive très simple (c'est-à-dire ici &quot;traduisible par une boucle sans aucun problème&quot;) :</p><pre id="r-438757" data-claire-element-id="438757"><code data-claire-semantic="html+php">&lt;?php
+function rebours($n)
+{
+    if ($n == 0) echo &quot;partez !\n&quot;;
+    else {
+       echo &quot;$n...\n&quot;;
+       rebours($n-1);
+    }
+}
+?&gt;</code></pre><p id="r-438758" data-claire-element-id="438758">Que fait l'interpréteur PHP, quand il doit exécuter <code>rebours(3)</code> ?</p><pre id="r-438759" data-claire-element-id="438759"><code>appel de rebours(3) :
+    3 différent de 0 -&gt; choix du else
+    echo &quot;3...&quot;
+    appel de rebours(2) :
+        2 différent de 0 -&gt; choix du else
+        echo &quot;2...&quot;
+        appel de rebours(1) :
+            1 différent de 0 -&gt; choix du else
+            echo &quot;1...&quot;
+            appel de rebours(0) :
+                0 == 0 -&gt; choix du if
+                echo &quot;partez !&quot;
+            rebours(0) terminé
+        rebours(1) terminé
+    rebours(2) terminé
+rebours(3) terminé</code></pre><p id="r-438760" data-claire-element-id="438760">Comme on a pu le voir pour la fonction factorielle, les appels récursifs se déroulant à l'intérieur de la fonction <em>s'empilent</em> : <code>rebours(3)</code> appelle <code>rebours(2)</code>, attend que <code>rebours(2)</code> se termine, puis se termine. Bien sûr, <code>rebours(2)</code> aura appelé <code>rebours(1)</code>, qui appelle lui-même <code>rebours(0)</code>, qui n'appelle personne (ouf !).</p><p id="r-438761" data-claire-element-id="438761">Il est facile de se perdre dans tous ces appels récursifs. Eh bien l'interpréteur PHP risque de se perdre aussi ! Pour s'y retrouver, il stocke dans un endroit particulier une <em>pile d'appels</em>, qui lui permet de savoir où il est dans la récursion (par exemple « tu es en train d'appeler <code>rebours(1)</code>, et quand tu auras fini, il faudra faire la suite de <code>rebours(2)</code> » .</p><p id="r-438762" data-claire-element-id="438762">Ce n'est pas un concept spécifique à PHP : quasiment tous les langages de programmation utilisent une pile d'appel pendant l'exécution des programmes. Cette pile d'appels est invisible pour le programmeur (tous les appels de fonctions, même les non récursives, utilisent cette pile d'appel), et les détails précis de son fonctionnement dépendent du langage utilisé, mais elle peut avoir une importance dans certaines situations.</p><p id="r-438763" data-claire-element-id="438763">En effet, la fonction <code>rebours</code> telle qu'elle est codée a la particularité de faire un appel pour toutes les valeurs entre <code>$n</code> (ici 3) et 1. Comme la pile d'appels stocke tous les appels, on sait qu'à un moment donné de l'exécution (par exemple au moment où elle affiche &quot;partez !&quot;), elle devra se souvenir de l'appel actuel (<code>rebours(0)</code>) mais aussi de tous les appels en cours (<code>rebours(1)</code>, <code>rebours(2)</code>, ..., <code>rebours($n)</code>), c'est-à-dire de <code>$n+1</code> appels au total.</p><p id="r-438764" data-claire-element-id="438764">Cela signifie qu'au cours de l'exécution de notre fonction, la pile d'appels va grandir, et va occuper une taille d'au moins <code>$n+1</code> (je ne précise pas exactement de quelle manière la pile d'appels se comporte, car cela dépend du langage que vous utilisez).</p><p id="r-438765" data-claire-element-id="438765">En général ce n'est pas grave (qui a peur d'avoir une liste de 4 éléments cachée dans son programme ?), mais dans certains cas cela peut devenir gênant : si vous appelez <code>rebours(1000000)</code> sur un ordinateur qui a <em>4 Ko</em> de mémoire vive, vous aurez des problèmes ! Évidemment, de tels ordinateurs n'existent plus vraiment de nos jours, mais certains interpréteurs posent une limite sur la profondeur de cette pile, et cela provoquera alors une erreur.</p><p id="r-438766" data-claire-element-id="438766">De plus, cette manipulation de la pile a un certain coût au niveau du temps d'exécution (très très faible, mais sur <code>rebours(10000000)</code>, ça se verra sans doute). La version itérative (avec une boucle <code>for</code> au lieu de la récursion) n'utilise qu'un seul appel de fonction, et n'a donc pas ce problème.</p><p id="r-438767" data-claire-element-id="438767">Voilà pourquoi certains programmeurs croient à tort que « la récursion est plus lente que l'itération » .</p><h3 id="r-la-recursion-terminale" data-claire-element-id="438778">La récursion terminale</h3><p id="r-438769" data-claire-element-id="438769">Il y a une remarque qui semble évidente à propos de &quot;l'exécution&quot; de notre programme : le tas de &quot;rebours(..) terminé !&quot;, à la fin, ne sert absolument à rien ! En effet, au moment où on l'exécute, on a en réalité fini de faire tout ce que doit faire notre fonction (on a déjà affiché &quot;partez...&quot;). Ces lignes ne sont donc là que parce que l'interpréteur se &quot;souvient&quot; que les fonctions ont été appelées, et qu'il vérifie bien qu'elles ont fini de s'exécuter.</p><p id="r-438770" data-claire-element-id="438770">Est-il possible d'éviter cette partie inutile ? La réponse est (évidemment ?) <strong>oui</strong> !</p><p id="r-438771" data-claire-element-id="438771">Pour l'éviter, l'interpréteur PHP n'aurait qu'à faire le constat suivant : dans la fonction <code>rebours($n)</code>, une fois qu'on a appelé la fonction <code>rebours($n-1)</code>, il n'y a plus rien à faire, on peut directement passer à la suite, sans vérifier ensuite que la fonction termine.</p><p id="r-438772" data-claire-element-id="438772">Ainsi, l'interpréteur pourrait se passer de la pile d'appels : actuellement, il l'utilise pour pouvoir exécuter <code>rebours($n-1)</code> en étant sûr de pouvoir continuer ensuite l'exécution de <code>rebours($n)</code>. Il pourrait tout simplement supprimer <code>rebours($n)</code> de la pile d'appel, et la remplacer directement par <code>rebours($n-1)</code>. Voici un schéma de la situation :</p><pre id="r-438773" data-claire-element-id="438773"><code>appel de rebours(3) :
+    3 différent de 0 -&gt; choix du else
+    echo &quot;3...&quot;
+    plus rien après rebours(2), on peut l'appeler directement :
+    2 différent de 0 -&gt; choix du else
+    echo &quot;2...&quot;
+    plus rien après rebours(1), on peut l'appeler directement :
+    1 différent de 0 -&gt; choix du else
+    echo &quot;1...&quot;
+    plus rien après rebours(0), on peut l'appeler directement :
+    0 == 0 -&gt; choix du if
+    echo &quot;partez !&quot;
+    rebours(0) terminé</code></pre><p id="r-438774" data-claire-element-id="438774">Comme vous pouvez le voir à l'indentation du programme, la pile d'appels ne stockerait alors plus qu'un seul élément !</p><p id="r-438775" data-claire-element-id="438775">C'est ce qu'on appelle la <em>récursion terminale</em> : quand l'appel récursif est la dernière &quot;action&quot; que fait la fonction, il est possible de remplacer l'appel actuel par l'appel récursif en question, sans augmenter la taille de la pile d'appel. On utilise souvent le terme anglais <em>tail-rec</em> pour désigner les fonctions qui ont cette particularité.</p><p id="r-438776" data-claire-element-id="438776"><strong>Et en pratique ?</strong><br/> Cette idée est bien jolie, mais ce n'est qu'une hypothèse. Est-ce que PHP connaît vraiment la récursion terminale ?<br/> La réponse est... non. Malheureusement, le PHP est un langage qui a quelques défauts, entre autres le fait d'ignorer totalement l'idée de récursion terminale. Des langages plus &quot;évolués&quot;, ou faisant plus attention aux performances, comme OCaml, mettent en oeuvre cette stratégie. La plupart des compilateurs C (quand on active les optimisations) l'appliquent aussi à leurs fonctions, elle marche donc sûrement dans vos programmes C.</p><p id="r-438777" data-claire-element-id="438777">Quand vous utilisez des langages qui supportent la tail-récursion, la fonction récursive décrite ici aura <em>exactement</em> les mêmes performances que la version itérative, avec une boucle (et inversement, la version itérative ira aussi vite que la fonction récursive :p ). Si vous utilisez un langage compilé (qui produit le code assembleur correspondant au programme, au lieu de l'exécuter directement), vous pourrez d'ailleurs sans doute vérifier que le code machine produit par le compilateur est le même (ou quasiment) pour les deux programmes.</p><h3 id="r-obtenir-des-fonctions-tail-rec" data-claire-element-id="438792">Obtenir des fonctions <em>tail-rec</em></h3><p id="r-438779" data-claire-element-id="438779">Les fonctions <em>tail-rec</em> sont donc très pratiques, mais toutes les fonctions récursives ne sont pas <em>tail-rec</em>. Ainsi, à part <code>rebours</code>, aucun des exemples que j'ai utilisés jusqu'à présent n'est naturellement <em>tail-rec</em>. Est-ce un vrai problème ? Nous allons voir que dans certains cas, il est possible de <em>transformer</em> la fonction récursive en une fonction <em>tail-rec</em>.</p><p id="r-438780" data-claire-element-id="438780">Considérons par exemple la fonction factorielle :</p><pre id="r-438781" data-claire-element-id="438781"><code data-claire-semantic="ocaml">let rec fac(n) =
+    if n = 0 then 1
+    else n * fac(n-1)</code></pre><p id="r-438782" data-claire-element-id="438782">Cette fonction n'est pas <em>tail-rec</em>, car l'appel récursif à <code>fac(n-1)</code> n'est pas la dernière chose à faire de la fonction. Il est sur la dernière ligne, mais il faut encore récupérer le résultat, et le multiplier par <code>n</code>. Si l'on essayait d'appliquer la technique de rebours (ne pas agrandir la pile d'appels), la fonction &quot;oublierait&quot; cette dernière opération, et renverrait un résultat complètement faux !</p><p id="r-438783" data-claire-element-id="438783">Il existe une méthode pour obtenir une fonction <em>tail-rec</em>, qui consiste à... changer la fonction :</p><pre id="r-438784" data-claire-element-id="438784"><code data-claire-semantic="ocaml">let rec fac(acc, n) =
+    if n = 0 then acc
+    else fac(n*acc, n-1)</code></pre><p id="r-438785" data-claire-element-id="438785">Que fait cette fonction étrange ? Elle calcule la factorielle d'un entier : <code>fac(1, n)</code> renverra bien la factorielle de <code>n</code>. Voici le déroulement de l'appel de <code>fac(1, 3)</code></p><pre id="r-438786" data-claire-element-id="438786"><code>fac(1, 3) :
+   3 ne vaut pas 0, donc je continue
+   fac(1 * 3, 2) : fac(3,2):
+   2 ne vaut pas 0, donc je continue
+   fac(3 * 2, 1) : fac(6,1) :
+   1 ne vaut pas 0, donc je continue
+   fac(6 * 1, 0) : fac(6, 0)
+   0 vaut 0, je renvoie acc : 6</code></pre><p id="r-438787" data-claire-element-id="438787">Comme vous pouvez le voir, cette fonction renvoie le bon résultat. De plus, elle est <em>tail-rec</em> (puisque l'appel <code>fac(n*acc, n-1)</code> est vraiment la dernière chose que la fonction a besoin de faire), donc l'espace utilisé par la pile d'appels est constant.</p><p id="r-438788" data-claire-element-id="438788">Il reste un problème avec cette fonction : à quoi sert le 1 ? En règle générale, il est redondant (on appelle <em>toujours</em> fac avec 1 comme premier argument, sauf dans le code de fac), et on a donc intérêt à définir une fonction qui ne demande pas cet argument supplémentaire :</p><pre id="r-438789" data-claire-element-id="438789"><code data-claire-semantic="ocaml">let fac(n) =
+    let rec fac'(acc, n) =
+       if n = 0 then acc
+       else fac'(n*acc, n-1)
+    in fac'(1, n)</code></pre><p id="r-438790" data-claire-element-id="438790">Comme vous pouvez le voir, j'ai défini une deuxième fonction <code>fac(n)</code>, qui contient la première définition (en OCaml, on peut déclarer une fonction à l'intérieur d'une fonction), et l'applique à l'argument demandé. Ainsi, on peut utiliser cette factorielle comme les autres (pas d'argument supplémentaire), et elle est aussi performante que la version itérative.</p><p id="r-438791" data-claire-element-id="438791">La transformation de la fonction factorielle que vous pouvez observer ici est l'ajout d'un <em>accumulateur</em> (d'où le nom &quot;acc&quot;), qui sert en quelque sorte de &quot;mémoire&quot; entre les différents appels de la fonction, pour pouvoir renvoyer directement le résultat au moment du dernier appel. Cette méthode est relativement courante et vous la rencontrerez peut-être dans d'autres cas. Il arrive même que l'accumulateur soit utile en tant que tel, et la fonction conservera alors cet argument supplémentaire (au lieu de le &quot;cacher&quot; dans la définition comme ici).</p><h3 id="r-que-choisir-1" data-claire-element-id="438797">Que choisir ?</h3><p id="r-438793" data-claire-element-id="438793">Les fonctions <em>tail-rec</em> sont la réponse à une question précise, « y a-t-il des différences de performances entre l'itératif et le récursif ? ». Vous savez maintenant que la réponse est « Non. » .</p><p id="r-438794" data-claire-element-id="438794">Est-ce que cela veut dire qu'il faut rendre toutes les fonctions tail-récursives ? La réponse est encore &quot;non&quot;, et ce pour deux raisons.</p><p id="r-438795" data-claire-element-id="438795">D'une part, le <em>tail-rec</em> se justifie pour des questions de <em>performances</em>. Mais il faut savoir que les performances ne sont pas le seul but que doit viser le programmeur. Dans certains cas, elles ne sont même pas vraiment importantes (par exemple, quand on interagit avec l'utilisateur, qui est mille fois plus lent à choisir un bouton à la souris que n'importe quelle factorielle récursive codée avec les pieds) ; d'ailleurs, il suffit de voir le nombre de gens qui codent dans des langages &quot;lents&quot;, comme PHP, Python ou Ruby par exemple.<br/> Bref, un autre aspect à ne pas négliger du code est la <em>lisibilité</em>. Là, l'utilisation de fonctions <em>tail-rec</em> devient plus controversée. Il y a deux cas : soit la fonction est naturellement <em>tail-récursive</em> (comme notre compte à rebours) et ça ne pose aucun problème, soit la fonction demande une transformation, et alors vous devez peser le pour et le contre avec soin : la transformation pose-t-elle des problèmes de lisibilité ? Si vous n'utilisez qu'une seule fois la fonction dans votre programme, privilégiez plutôt la lisibilité, et laissez-la &quot;non <em>tail-rec</em>&quot;. Si elle est souvent utilisée et constitue une part non négligeable du temps utilisé par votre programme (il existe des outils pour mesurer ça), choisissez la version <em>tail-rec</em>. De toute façon, de nombreux programmeurs sont habitués à reconnaître le motif &quot;accumulateur de fonction <em>tail-rec</em>&quot; (choisissez un nom clair pour l'argument accumulateur supplémentaire), et cela ne leur posera donc aucun problème.</p><p id="r-438796" data-claire-element-id="438796">D'autre part, certaines fonctions ne <em>peuvent pas</em> devenir tail-récursives. Comme nous l'avons vu, une fonction est tail-récursive quand l'appel récursif est la dernière chose effectuée par la fonction. Qu'en est-il des fonctions qui font <em>plusieurs</em> appels récursifs (notre exemple <code>max_pommes</code> par exemple) ? Eh bien c'est simple, ces fonctions ne peuvent tout simplement pas être rendues tail-récursives : seul le dernier appel pourrait être converti en appel terminal, et tous les autres appels (dans la boucle <code>for</code> de notre exemple) augmenteront la pile d'appels.<br/> Cela pose-t-il un problème fondamental ? La réponse est non. En effet, la justification de l'optimisation <em>tail-rec</em> des fonctions est d'obtenir les mêmes performances que la version itérative. Pour ce genre de fonctions (récursivité à appels multiples), il n'existe pas de version itérative équivalente qui soit aussi simple. La version récursive est donc la seule manière simple de formuler le problème, et toutes les versions itératives basées sur cet algorithme devront trouver une manière de remplacer la pile d'appels (qui stocke des informations qui nous arrangent), et leurs performances ne seront donc pas meilleures.</p><h3 id="r-conclusion-43" data-claire-element-id="438801">Conclusion</h3><p id="r-438798" data-claire-element-id="438798">La récursivité ne produit pas fondamentalement de programmes plus lents ou plus rapides que les autres. Pour les cas particuliers des fonctions récursives reproduisant le comportement d'une simple boucle, il existe une différence (la gestion de la pile d'appel) qui est réglée simplement (en utilisant des fonctions <em>tail-rec</em>). Cependant, le choix des fonctions <em>tail-rec</em> ne se justifie que dans des contextes très particuliers, et vous ne devez pas vous focaliser là-dessus : dans la pratique, on écrit généralement ses fonctions de la manière la plus simple possible, pour, à la rigueur, optimiser ensuite seulement les fonctions qui demandent le plus de temps à notre programme.</p><p id="r-438799" data-claire-element-id="438799">De manière plus générale, le choix même d'une version récursive ou itérative d'un programme doit se faire selon plusieurs critères, mais avant tout celui de la simplicité : laquelle des versions est-elle la plus facile à comprendre ? Laquelle traduit le mieux la nature du problème ? Laquelle est la plus souple, et vous permettra d'ajouter des modifications/améliorations de l'algorithme ensuite ?</p><p id="r-438800" data-claire-element-id="438800">Il est nécessaire de s'habituer aux deux styles de programmation, pour pouvoir faire un choix le plus objectif ensuite : une personne qui n'aurait fait que de l'itératif aura toujours tendance à trouver la récursion &quot;compliquée&quot;, et passera à côté d'opportunités très intéressantes, tout comme un programmeur ne faisant que de la récursion aura parfois une manière compliquée de coder ce qui se fait simplement avec une boucle.</p><h2 id="r-structures-de-donnees-recursives" data-claire-element-id="438847">Structures de données récursives</h2><p id="r-438803" data-claire-element-id="438803">Jusqu'à présent, nous avons utilisé les fonctions récursives pour traiter des <em>problèmes</em> que l'on pouvait qualifier de &quot;récursifs&quot;, puisqu'ils se décomposaient en sous-problèmes semblables au problème initial. Mais la récursivité est un concept riche, qui ne se rencontre pas qu'au niveau des problèmes, mais aussi par exemple au niveau des <em>données</em> : il existe des organisations de données &quot;récursives&quot;, c'est-à-dire dont la structure se décompose en une ou plusieurs sous-structures semblables.</p><h3 id="r-definition-d-une-liste" data-claire-element-id="438814">Définition d'une liste</h3><p id="r-438804" data-claire-element-id="438804">L'exemple le plus simple, que je vais vous présenter ici, est la <em>liste</em>. Qu'est-ce qu'une liste ? Une liste est une suite d'éléments : <code>[1; 2; 3; 4; 5]</code>, par exemple, est la liste des chiffres de 1 à 5. Les listes ont un nombre d'éléments qui peut être égal à 0 : la liste est alors vide, et on peut par exemple la noter <code>[]</code>.</p><p id="r-438805" data-claire-element-id="438805">Cependant, cette définition, sans doute claire pour un humain, n'est pas satisfaisante pour un ordinateur : en fait, on n'a rien expliqué du tout : qu'est-ce qu'une liste ? C'est une &quot;suite d'éléments&quot;. Qu'est-ce qu'une suite d'éléments ? Ben... c'est une liste !</p><p id="r-438806" data-claire-element-id="438806">Pour pouvoir expliquer le concept de liste à un ordinateur, il faut donc une définition plus concrète. La plupart des langages utilisent une définition basée sur la représentation de ces listes dans la mémoire de l'ordinateur (une valeur, et un nombre qui indique l'adresse de l'élément suivant, etc.), mais nous allons voir qu'il existe une formulation beaucoup plus simple de cette définition. Une liste est :</p><ul id="r-438811" data-claire-element-id="438811"><li id="r-438808" data-claire-element-id="438808"><p id="r-438807" data-claire-element-id="438807">soit <code>[]</code>, la liste vide ;</p></li><li id="r-438810" data-claire-element-id="438810"><p id="r-438809" data-claire-element-id="438809">soit un élément suivi d'une liste.</p></li></ul><p id="r-438812" data-claire-element-id="438812">Comme vous pouvez le voir, cette définition est simple, &quot;récursive&quot; (elle s'utilise elle-même), et complète : la liste <code>[1; 2]</code> par exemple est l'élément 1, suivi de (la liste qui est l'élément 2 suivi de la liste vide). Plus simplement, si, quand <code>a</code> est un élément et <code>b</code> est une liste, on note <code>a::b</code> pour dire « la liste qui est constituée de l'élément a suivi de la liste b » , on peut définir la liste <code>[1;2]</code> comme la liste <code>1::(2::[])</code>. Cette définition est parfaitement compréhensible par l'ordinateur, et permet de représenter n'importe quelle liste.</p><p id="r-438813" data-claire-element-id="438813">La définition que j'ai donnée vous paraît peut-être un peu étrange. Dans ce cas, vous devriez prendre un peu de temps pour bien l'assimiler, par exemple en essayant de décomposer de petites listes selon cette définition : soit la liste vide, soit un élément (quel élément ?) suivi d'une liste (quelle liste ?).</p><h3 id="r-definition-d-une-liste-en-ocaml" data-claire-element-id="438822">Définition d'une liste en OCaml</h3><p id="r-438815" data-claire-element-id="438815">Pour alléger la notation, on dira que <code>a::b::c</code> est équivalent à <code>a::(b::c)</code>; ainsi, on n'a plus besoin de parenthèses dans <code>1::(2::[])</code>, on peut écrire <code>1::2::[]</code>.</p><p id="r-438816" data-claire-element-id="438816">Comme vous l'aviez peut-être deviné, les notations que j'ai utilisées sont en fait les notations du langage OCaml : <code>[]</code> désigne la liste vide, et, si <code>a</code> est un élément et <code>b</code> une liste, on peut écrire <code>a::b</code> constituée de <code>a</code> (appelé la <em>tête</em> de la liste) suivi de <code>b</code> (la <em>queue</em> de la liste).</p><p id="r-438817" data-claire-element-id="438817">Voici par exemple le code OCaml qui déclare la liste [1;2;3] :</p><pre id="r-438818" data-claire-element-id="438818"><code data-claire-semantic="ocaml">let un_deux_trois = 1 :: 2 :: 3 :: []</code></pre><p id="r-438819" data-claire-element-id="438819">En fait, la syntaxe <code>[1; 2; 3]</code> est aussi disponible, pour alléger l'écriture, mais comme vous le verrez, nous n'en avons en général pas besoin.</p><p id="r-438820" data-claire-element-id="438820">Quand on manipulera des listes en OCaml, on utilisera trois opérations : on commence par tester si la liste est vide (par exemple <code>if li = [] then ... else ...</code>, et si elle n'est pas vide on utilise les fonctions <code>hd</code> (comme &quot;head&quot;) pour récupérer l'élément en tête de la liste, et <code>tl</code> (comme &quot;tail&quot;) pour récupérer sa queue. Il existe en fait dans le langage OCaml une méthode de manipulation bien plus jolie, mais comme le but de ce tutoriel est de présenter la récursion, et non le langage OCaml, je n'en parlerai pas. :p</p><p id="r-438821" data-claire-element-id="438821"><strong>Les langages impératifs</strong><br/> Dans les langages impératifs (C, Pascal, Java...), la méthode utilisée pour représenter des listes est un peu différente. Elle utilise des pointeurs (ou équivalent) pour &quot;chaîner&quot; entre eux les éléments de la liste. On les appelle donc souvent &quot;listes chainées&quot;. Vous pouvez par exemple lire le tutoriel concernant <a href="http://www.siteduzero.com/tuto-3-9440-1-les-listes-chainees.html">les listes chainées en C</a>.</p><h3 id="r-quelques-fonctions-utilisant-des-listes" data-claire-element-id="438831">Quelques fonctions utilisant des listes</h3><p id="r-438823" data-claire-element-id="438823">Comme les listes sont des structures de données naturellement récursives, les algorithmes manipulant des listes auront eux aussi tendance à être écrits récursivement.</p><p id="r-438824" data-claire-element-id="438824">Voyons par exemple notre premier exemple : quelle est la taille d'une liste ?<br/> La réponse (sans coder) est évidente : la liste vide est de taille 0, et si une liste est un élément suivi d'une liste, la taille de la liste globale est la taille de la liste de queue, plus un (on compte l'élément en tête).</p><p id="r-438825" data-claire-element-id="438825">Voici la formulation de cette idée en OCaml :</p><pre id="r-438826" data-claire-element-id="438826"><code data-claire-semantic="ocaml">let rec taille(liste) =
+    if liste = [] then 0
+    else 1 + taille(tl liste)</code></pre><p id="r-438827" data-claire-element-id="438827">Voici comment le calcul se déroule sur un cas particulier (on choisit [2; 3] par exemple) :<br/><code>taille(2::3::[]) = 1 + taille(3::[]) = 1 + 1 + taille([]) = 1 + 1 + 0 = 2</code></p><p id="r-438828" data-claire-element-id="438828">Voici maintenant une fonction assez amusante, qui <em>renverse</em> une liste. Par exemple elle transforme la liste [1;2] en la liste [2;1]. Pour cela, on utilise une liste qui sert d'accumulateur : on enlève la tête de la liste à renverser, et on la place au fond de l'accumulateur, avant de continuer sur la queue de la liste (dont les éléments seront placés dans l'accumulateur après le premier élément, donc à l'envers) :</p><pre id="r-438829" data-claire-element-id="438829"><code data-claire-semantic="ocaml">let renverse(liste) =
+    let rec rev(acc, li) =
+        if li = [] then acc
+        else rev(hd li::acc, tl li)
+    in rev([], liste)</code></pre><p id="r-438830" data-claire-element-id="438830">Comme vous l'aurez sûrement remarqué, la fonction <code>rev</code> est <em>tail-rec</em>. Et c'est d'ailleurs un exemple de fonction &quot;naturellement&quot; <em>tail-rec</em>, c'est-à-dire dont la formulation la plus simple utilise un accumulateur.</p><h3 id="r-idee-d-exercices" data-claire-element-id="438846">Idée d'exercices</h3><p id="r-438832" data-claire-element-id="438832">Si vous souhaitez vous exercer, les listes peuvent fournir des sujets d'entraînement très intéressants.</p><p id="r-438833" data-claire-element-id="438833">Vous pouvez commencer par définir les listes dans votre langage de prédilection (en PHP, on pourrait par exemple utiliser un tableau vide pour la liste vide, et un tableau à deux éléments pour l'élément suivi d'une liste ; en C, un tuto existe qui présente une définition utilisant des pointeurs). Pas la peine de rechercher la structure la plus efficace au niveau des performances (clairement, les tableaux imbriqués ne sont pas très efficaces en PHP), essayez d'être simple conceptuellement.</p><p id="r-438834" data-claire-element-id="438834">Ensuite, vous pourrez utiliser cette structure pour écrire les fonctions de manipulation de listes. <code>rev</code>, qui renverse une liste, est une bonne idée d'exercice. Voici quelques autres fonctions qui pourraient vous inspirer :</p><ul id="r-438843" data-claire-element-id="438843"><li id="r-438836" data-claire-element-id="438836"><p id="r-438835" data-claire-element-id="438835"><code>map</code>, qui prend en argument une liste et une fonction, et renvoie la liste des éléments auxquels on a appliqué la fonction. Par exemple <code>map plus_un [1; 5; 7]</code> renvoie <code>[2; 6; 8]</code> ;</p></li><li id="r-438838" data-claire-element-id="438838"><p id="r-438837" data-claire-element-id="438837"><code>mem</code>, qui prend un argument une valeur et une liste, et indique si la valeur se trouve dans la liste ;</p></li><li id="r-438840" data-claire-element-id="438840"><p id="r-438839" data-claire-element-id="438839"><code>append</code>, qui ajoute deux listes bout à bout : <code>append [1;2] [3;4]</code> renvoie <code>[1;2;3;4]</code> ;</p></li><li id="r-438842" data-claire-element-id="438842"><p id="r-438841" data-claire-element-id="438841"><code>sort</code>, qui trie une liste d'entiers (il existe de nombreux tris différents).</p></li></ul><p id="r-438844" data-claire-element-id="438844">La récursivité est un concept puissant, largement répandu en programmation. Comme toute présentation, mon tutoriel n'est absolument pas exhaustif, mais j'espère qu'il vous a permis de comprendre les principes de base, et peut-être quelques applications plus &quot;avancées&quot;.</p><p id="r-438845" data-claire-element-id="438845">Comme tous les sujets un peu fondamentaux de l'informatique, il se médite, et je vous encourage à faire des exercices de votre côté.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/la-recursivite-1">La récursivité</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-recursivite-1/presentation-117">
+Présentation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-recursivite-1/la-recursivite-plus-en-detail">
+La récursivité plus en détail
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/la-recursivite-1/concepts-lies-a-la-recursivite">
+Concepts liés à la récursivité
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-recursivite-1/la-recursivite-plus-en-detail">
+<span class="arrow"></span>
+<span class="next">La récursivité plus en détail</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/la-recursivite-1.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 23:20:34 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/la-recursivite-1.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:04:40 GMT -->
+</html>

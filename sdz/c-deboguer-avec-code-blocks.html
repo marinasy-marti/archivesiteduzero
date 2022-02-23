@@ -1,0 +1,331 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/c-deboguer-avec-code-blocks.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 08:32:17 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/c-deboguer-avec-code-blocks.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:32:05 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : [C++] Déboguer avec Code::Blocks</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/c-deboguer-avec-code-blocks.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : [C++] Déboguer avec Code::Blocks</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#CDbogueravecCodeBlocks">[C++] Déboguer avec Code::Blocks</a><br/><a href="#Unprogrammebienmystrieux">Un programme bien mystérieux</a><br/><a href="#Prparersoncode">Préparer son code</a><br/><a href="#Trouverlalignedel039erreur">Trouver la ligne de l&#039;erreur</a><br/><a href="#Connatrelesvaleursdesvariables">Connaître les valeurs des variables</a><br/></div>
+<a name="CDbogueravecCodeBlocks"></a><h2>[C++] Déboguer avec Code::Blocks</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/c-deboguer-avec-code-blocks/un-programme-bien-mysterieux">
+<span class="next">Un programme bien mystérieux</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-553004" data-claire-element-id="553004">Dans ce mini-tuto, vous allez apprendre à déboguer un programme. On parle de bogue (ou bug) dans un programme quand ce dernier compile mais plante lors de son exécution.</p><p id="r-553005" data-claire-element-id="553005">Ces bogues sont souvent difficiles à détecter rien qu'en lisant le code, car d'une part on ne sait pas quelle ligne cause l'erreur et on ne connaît souvent pas non plus la valeur des différentes variables au moment du plantage.</p><p id="r-553006" data-claire-element-id="553006">Heureusement, il existe des programmes appelés débogueurs, ou dévermineurs ( :) ) si on francise, qui permettent de nous aider dans nos recherches d'erreurs.</p><aside id="r-553008" data-claire-element-id="553008" data-claire-semantic="information"><p id="r-553007" data-claire-element-id="553007">Ce tutoriel peut aussi être suivi si vous ne connaissez que le C. Il ne nécessite pas la connaissance de notions particulières du C++.</p></aside><p id="r-553009" data-claire-element-id="553009">Dans ce chapitre, je vais vous présenter à l'aide d'un exemple simple le débogueur qui est inclus dans Code::Blocks.</p><aside id="r-553011" data-claire-element-id="553011" data-claire-semantic="information"><p id="r-553010" data-claire-element-id="553010">Ce tutoriel utilise Code::Blocks et le débugueur gdb qui y est intégré si vous avez téléchargé la version avec MingW. Tous les débugueurs fonctionnent sur le même principe et vous devriez pouvoir retrouver les mêmes fonctionnalités quelque soit l'environnement que vous utilisez.</p></aside>
+</div><a name="Unprogrammebienmystrieux"></a><h2>Un programme bien mystérieux</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/c-deboguer-avec-code-blocks/preparer-son-code">
+<span class="next">Préparer son code</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-un-programme-en-apparence-inoffensif" data-claire-element-id="553016">Un programme en apparence inoffensif...</h2><p id="r-553012" data-claire-element-id="553012">Pour comprendre l'utilité de cet outil merveilleux qu'est le débugueur, je vous propose de passer par un exemple.</p><p id="r-553013" data-claire-element-id="553013">Prenons par exemple le code suivant :</p><pre id="r-553014" data-claire-element-id="553014"><code data-claire-semantic="cpp">#include &lt;iostream&gt;
+using namespace std;
+
+int division(int a, int b);
+
+int main()
+{
+    for(int x(1); x&lt;10; ++x)
+    {
+        for(int y(0); y&lt;10; ++y)
+        {
+            cout &lt;&lt; division(x, y);  //Affiche le résultat de la fonction
+        }
+    }
+    return 0;
+}
+
+int division(int a, int b)
+{
+    int c = b-2;
+    int d = a / c;
+    return d;
+}</code></pre><p id="r-553015" data-claire-element-id="553015">Ce code semble, en apparence, tout à fait inoffensif.</p><h2 id="r-mais-qui-cache-bien-son-jeu" data-claire-element-id="553028">... mais qui cache bien son jeu.</h2><p id="r-553017" data-claire-element-id="553017">Pourtant, si vous le compilez et le lancez, vous obtiendrez un message d'erreur. Sous Vista, vous pourriez par exemple obtenir la fenêtre suivante :</p><figure id="r-553019" data-claire-element-id="553020"><img id="r-553018" data-claire-element-id="553018" src="medias/uploads.siteduzero.com_files_338001_339000_338455.png" alt="Message d'erreur lors de l'exécution"/></figure><p id="r-553021" data-claire-element-id="553021">Et sous Linux, en ligne de commande vous aurez plutôt ceci :</p><pre id="r-553022" data-claire-element-id="553022"><code data-claire-semantic="console">Floating point exception</code></pre><p id="r-553023" data-claire-element-id="553023">Ce message nous en dit déjà un peu plus, mais on ne sait pas d'où provient l'erreur.</p><aside id="r-553025" data-claire-element-id="553025" data-claire-semantic="information"><p id="r-553024" data-claire-element-id="553024">Le message d'erreur peut être très différent selon votre système d'exploitation.</p></aside><p id="r-553026" data-claire-element-id="553026">Pour le moment, cliquez simplement sur &quot;Fermer le programme&quot;.</p><p id="r-553027" data-claire-element-id="553027">Je vous mets au défi de trouver l'erreur dans ce programme rien qu'en lisant le code. :soleil: Les plus malins se douteront peut-être que l'erreur a lieu au moment de la division puisque c'est la seule opération potentiellement à risque si le diviseur vaut 0.</p><h2 id="r-une-mauvaise-solution" data-claire-element-id="553035">Une mauvaise solution</h2><p id="r-553029" data-claire-element-id="553029">Une idée que l'on voit parfois parmi les programmeurs débutants est d'essayer de repérer l'erreur en plaçant une ligne du type :</p><pre id="r-553030" data-claire-element-id="553030"><code data-claire-semantic="cpp">std::cout &lt;&lt; &quot;Ligne 22&quot; &lt;&lt; std::endl;</code></pre><p id="r-553031" data-claire-element-id="553031">entre chaque instruction du code source. Ceci permet effectivement de trouver la ligne où se situe l'erreur et permet aussi d'afficher la valeur des variables en faisant des lignes du type :</p><pre id="r-553032" data-claire-element-id="553032"><code data-claire-semantic="cpp">std::cout &lt;&lt; &quot;Ligne 187, La variable a vaut : &quot; &lt;&lt; a &lt;&lt; std::endl;</code></pre><p id="r-553033" data-claire-element-id="553033">Mais si vous avez énormément de lignes de code et en plus un grand nombre de variables, vous perdrez énormément de temps à faire cela. De plus si l'erreur provient d'une mauvaise manipulation de pointeurs, vous aurez beaucoup de peine à la trouver.</p><p id="r-553034" data-claire-element-id="553034"><strong>Le moyen le plus efficace passe par le débogage de son programme à l'aide d'un outil approprié.</strong></p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/c-deboguer-avec-code-blocks">[C++] Déboguer avec Code::Blocks</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/c-deboguer-avec-code-blocks/un-programme-bien-mysterieux">
+Un programme bien mystérieux
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-deboguer-avec-code-blocks/preparer-son-code">
+Préparer son code
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-deboguer-avec-code-blocks/trouver-la-ligne-de-l-erreur">
+Trouver la ligne de l&#039;erreur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-deboguer-avec-code-blocks/connaitre-les-valeurs-des-variables">
+Connaître les valeurs des variables
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/c-deboguer-avec-code-blocks/preparer-son-code">
+<span class="next">Préparer son code</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Prparersoncode"></a><h2>Préparer son code</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/c-deboguer-avec-code-blocks/un-programme-bien-mysterieux">
+<span class="arrow"></span>
+<span class="next">Un programme bien mystérieux</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/c-deboguer-avec-code-blocks/trouver-la-ligne-de-l-erreur">
+<span class="next">Trouver la ligne de l&#039;erreur</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-changer-le-programme" data-claire-element-id="553053">Changer le programme</h2><p id="r-553037" data-claire-element-id="553037">Pour déboguer un programme, il faut tout d'abord le préparer pour cela. Quand vous lancez votre programme, il n'y a aucun moyen de connaître depuis l'extérieur la valeur des variables qui sont utilisées par ce dernier. Il faut donc modifier le programme pour que le débogueur puisse avoir accès à ces valeurs.</p><div id="r-553039" data-claire-element-id="553039" data-claire-semantic="question"><p id="r-553038" data-claire-element-id="553038">Mais si on doit modifier le code source, alors autant faire des std::cout partout, ça ira plus vite !</p></div><p id="r-553040" data-claire-element-id="553040">Attention ! J'ai dit qu'il fallait modifier le programme, pas le code source. Rappelez-vous les premiers chapitres, quelle est la chose qui écrit le programme en langage machine ? :diable:</p><p id="r-553041" data-claire-element-id="553041">Le compilateur !</p><p id="r-553042" data-claire-element-id="553042">Il faut donc dire au compilateur que l'on voudra déboguer le programme qu'il compile. Il faut pour cela modifier les options de compilation.</p><p id="r-553043" data-claire-element-id="553043">Sous Code::Blocks c'est très simple, il suffit de changer la cible de compilation pour passer en mode Debug. Cela se fait au moyen du petit menu déroulant suivant :</p><figure id="r-553045" data-claire-element-id="553046"><img id="r-553044" data-claire-element-id="553044" src="medias/uploads.siteduzero.com_files_338001_339000_338458.png" alt="Image utilisateur"/></figure><p id="r-553047" data-claire-element-id="553047">Vous pouvez alors vérifier que le compilateur va bien ajouter les symboles nécessaires au déboguage en ouvrant la fenêtre <em>Project</em> -&gt; <em>Build Options</em>...</p><p id="r-553048" data-claire-element-id="553048">Vous devriez avoir une fenêtre de ce type qui s'ouvre devant vous :</p><figure id="r-553050" data-claire-element-id="553051"><img id="r-553049" data-claire-element-id="553049" src="medias/uploads.siteduzero.com_files_338001_339000_338459.png" alt="Image utilisateur"/></figure><p id="r-553052" data-claire-element-id="553052">L'important est que la ligne &quot;<strong>Produce debugging symbols [-g]</strong>&quot; soit cochée et que la ligne &quot;<strong>Strip all symbols from binary (minimizes size) [-s]</strong>&quot; ne soit pas cochée.</p><h2 id="r-recompiler-son-code" data-claire-element-id="553057">Recompiler son code</h2><p id="r-553054" data-claire-element-id="553054">Il faut alors recompiler son programme pour prendre en compte les modifications faites.</p><p id="r-553055" data-claire-element-id="553055">Je vous conseille de faire &quot;<em>Rebuild</em>&quot; (Ctrl-F11) et pas simplement &quot;<em>Build</em>&quot; pour être sûr que tous les fichiers seront bien recompilés avec les nouvelles options.</p><p id="r-553056" data-claire-element-id="553056">Tout est maintenant prêt pour passer aux choses sérieuses. :zorro:</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/c-deboguer-avec-code-blocks">[C++] Déboguer avec Code::Blocks</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-deboguer-avec-code-blocks/un-programme-bien-mysterieux">
+Un programme bien mystérieux
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/c-deboguer-avec-code-blocks/preparer-son-code">
+Préparer son code
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-deboguer-avec-code-blocks/trouver-la-ligne-de-l-erreur">
+Trouver la ligne de l&#039;erreur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-deboguer-avec-code-blocks/connaitre-les-valeurs-des-variables">
+Connaître les valeurs des variables
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/c-deboguer-avec-code-blocks/un-programme-bien-mysterieux">
+<span class="arrow"></span>
+<span class="next">Un programme bien mystérieux</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/c-deboguer-avec-code-blocks/trouver-la-ligne-de-l-erreur">
+<span class="next">Trouver la ligne de l&#039;erreur</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Trouverlalignedel039erreur"></a><h2>Trouver la ligne de l&#039;erreur</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/c-deboguer-avec-code-blocks/preparer-son-code">
+<span class="arrow"></span>
+<span class="next">Préparer son code</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/c-deboguer-avec-code-blocks/connaitre-les-valeurs-des-variables">
+<span class="next">Connaître les valeurs des variables</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-presentation-des-boutons-lies-au-debogueur" data-claire-element-id="553081">Présentation des boutons liés au débogueur</h2><p id="r-553059" data-claire-element-id="553059">Sous Code::Blocks, vous devriez avoir une petite barre d'outils que vous n'avez jamais utilisée. Il s'agit de la barre suivante :</p><figure id="r-553061" data-claire-element-id="553062"><img id="r-553060" data-claire-element-id="553060" src="medias/uploads.siteduzero.com_files_338001_339000_338461.png" alt="Image utilisateur"/></figure><p id="r-553063" data-claire-element-id="553063">Si vous ne l'avez pas, vous pouvez l'ajouter en faisant <em>View</em> -&gt; <em>Toolbars</em> -&gt; <em>Debugger</em>.</p><p id="r-553064" data-claire-element-id="553064">Cette barre est composée de 9 boutons. Je vous les présente en vitesse, nous verrons les plus utiles à votre niveau en détails plus loin dans ce chapitre.</p><ul id="r-553079" data-claire-element-id="553079"><li id="r-553066" data-claire-element-id="553066"><p id="r-553065" data-claire-element-id="553065"><strong>Debug/Continue (F8)</strong> - Exécute le programme jusqu'au point d'arrêt suivant ou jusqu'à la prochaine erreur.</p></li><li id="r-553068" data-claire-element-id="553068"><p id="r-553067" data-claire-element-id="553067"><strong>Run to cursor (F4)</strong> - Exécute le programme jusqu'à la ligne du code où se trouve la souris.</p></li><li id="r-553070" data-claire-element-id="553070"><p id="r-553069" data-claire-element-id="553069"><strong>Next line (F7)</strong> - Passe à la ligne de code suivante.</p></li><li id="r-553072" data-claire-element-id="553072"><p id="r-553071" data-claire-element-id="553071"><strong>Next instruction (Alt-F7)</strong> - Passe à l'instruction suivante.</p></li><li id="r-553074" data-claire-element-id="553074"><p id="r-553073" data-claire-element-id="553073"><strong>Step into (Ctrl-F7)</strong> - Entre dans la portée.</p></li><li id="r-553076" data-claire-element-id="553076"><p id="r-553075" data-claire-element-id="553075"><strong>Step out (Ctrl-Alt-F7)</strong> - Sort de la portée.</p></li><li id="r-553078" data-claire-element-id="553078"><p id="r-553077" data-claire-element-id="553077"><strong>Stop debugger (-)</strong> - Arrête le programme.</p></li></ul><p id="r-553080" data-claire-element-id="553080">Les deux derniers (menus déroulants) servent à choisir quelles informations vous voulez afficher.</p><h2 id="r-trouver-une-erreur" data-claire-element-id="553109">Trouver une erreur</h2><p id="r-553082" data-claire-element-id="553082">Pour trouver l'erreur, il va falloir exécuter le programme et comme on ne sait pas encore à quelle ligne se trouve le problème, nous allons lancer l'exécution jusqu'à ce qu'on arrive à une erreur. Il faut donc cliquer sur &quot;<strong>Debug/Continue</strong>&quot;.</p><p id="r-553083" data-claire-element-id="553083">Comme précédemment, le programme va planter. :p Sous Windows, j'obtiens la fenêtre suivante :</p><figure id="r-553085" data-claire-element-id="553086"><img id="r-553084" data-claire-element-id="553084" src="medias/uploads.siteduzero.com_files_338001_339000_338464.png" alt="Image utilisateur"/></figure><aside id="r-553088" data-claire-element-id="553088" data-claire-semantic="information"><p id="r-553087" data-claire-element-id="553087">À nouveau, la fenêtre sera différente selon votre OS.</p></aside><p id="r-553089" data-claire-element-id="553089">Cette fenêtre me donne déjà plusieurs informations malgré son caractère un peu hostile. Premièrement, je vois que l'erreur qui a causé le plantage est une Arithmetic exception. Cela veut dire que c'est une erreur de calcul qui s'est produite.<br/> La deuxième information importante est que le débogueur a pu garder une trace de l'erreur. De plus il nous propose de voir cette trace.<br/> Je vous invite donc à cliquer sur « Oui ». :-°</p><p id="r-553090" data-claire-element-id="553090">À ce moment là apparaît une nouvelle fenêtre.</p><figure id="r-553092" data-claire-element-id="553093"><img id="r-553091" data-claire-element-id="553091" src="medias/uploads.siteduzero.com_files_338001_339000_338467.png" alt="Pile d'appel"/></figure><p id="r-553094" data-claire-element-id="553094">Elle présente un tableau de toutes les fonctions qui sont en cours d'exécution. On parle de « pile d'appel » des fonctions.</p><p id="r-553095" data-claire-element-id="553095">Par défaut les fonctions sont classées selon leur position sur la pile. La plus haute étant la fonction dans laquelle s'est produit le plantage. La fonction directement en-dessous étant la fonction qui a appelé la fonction qui a planté. :-° Et ainsi de suite...<br/> On trouvera donc, dans les cas normaux, la fonction main à la dernière ligne du tableau, puisque c'est elle qui réalise les premiers appels de fonctions.</p><aside id="r-553097" data-claire-element-id="553097" data-claire-semantic="warning"><p id="r-553096" data-claire-element-id="553096">La pile d'appel peut être assez grande selon ce que vous avez fait dans votre programme. Ne soyez pas surpris s'il semble qu'il y a plus de fonctions que ce que vous avez écrit.</p></aside><p id="r-553098" data-claire-element-id="553098">La 3e colonne nous donne le nom de la fonction avec la valeur des arguments qu'elle a reçus. On voit par exemple ici que les paramètre qu'a reçu la fonction division lors du plantage sont <code data-claire-semantic="cpp">a=0</code> et <code data-claire-semantic="cpp">b=2</code>.</p><p id="r-553099" data-claire-element-id="553099">La 4e colonne nous donne une information précieuse, le fichier dans lequel s'est produit l'erreur. Cela semble stupide ici, mais si vous avez des dizaines de fichiers, ce n'est pas si anodin que ça.</p><p id="r-553100" data-claire-element-id="553100">Et enfin la dernière colonne nous donne la ligne où se trouvait l'ordinateur dans chacune des fonctions au moment du plantage.</p><div id="r-553102" data-claire-element-id="553102" data-claire-semantic="question"><p id="r-553101" data-claire-element-id="553101">Comment se fait-il que l'ordinateur se trouve à deux endroits différents du code ?</p></div><p id="r-553103" data-claire-element-id="553103">Il ne se situe en réalité qu'à un seul endroit. Si vous regardez le fichier source, vous verrez que la ligne 12 correspond à la ligne d'appel de la fonction <code data-claire-semantic="cpp">division()</code>. Le programme s'est donc arrêté à la ligne 12 du <code data-claire-semantic="cpp">main()</code> pendant l'appel à la fonction <code data-claire-semantic="cpp">division()</code>. Et plus précisément, à la ligne 21 de cette dernière.</p><p id="r-553104" data-claire-element-id="553104">Si vous êtes observateur, vous aurez également remarqué une petite flèche jaune dans la bordure qui indique l'endroit précis de l'erreur, comme sur l'illustration suivante :</p><figure id="r-553106" data-claire-element-id="553107"><img id="r-553105" data-claire-element-id="553105" src="medias/uploads.siteduzero.com_files_338001_339000_338468.png" alt="Image utilisateur"/></figure><p id="r-553108" data-claire-element-id="553108">La ligne 21 correspond à la ligne où se situe la division. Il nous faudrait cependant plus d'informations sur les valeurs des variables pour détecter ce qui cause l'erreur.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/c-deboguer-avec-code-blocks">[C++] Déboguer avec Code::Blocks</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-deboguer-avec-code-blocks/un-programme-bien-mysterieux">
+Un programme bien mystérieux
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-deboguer-avec-code-blocks/preparer-son-code">
+Préparer son code
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/c-deboguer-avec-code-blocks/trouver-la-ligne-de-l-erreur">
+Trouver la ligne de l&#039;erreur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-deboguer-avec-code-blocks/connaitre-les-valeurs-des-variables">
+Connaître les valeurs des variables
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/c-deboguer-avec-code-blocks/preparer-son-code">
+<span class="arrow"></span>
+<span class="next">Préparer son code</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/c-deboguer-avec-code-blocks/connaitre-les-valeurs-des-variables">
+<span class="next">Connaître les valeurs des variables</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Connatrelesvaleursdesvariables"></a><h2>Connaître les valeurs des variables</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/c-deboguer-avec-code-blocks/trouver-la-ligne-de-l-erreur">
+<span class="arrow"></span>
+<span class="next">Trouver la ligne de l&#039;erreur</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-placer-un-point-d-arret" data-claire-element-id="553126">Placer un point d'arrêt</h2><p id="r-553111" data-claire-element-id="553111">La première chose à faire est de définir un point jusqu'au quel le programme devra s'exécuter. Le mieux dans notre cas serait d'exécuter le programme jusqu'au début de la fonction <code data-claire-semantic="cpp">division()</code>.</p><p id="r-553112" data-claire-element-id="553112">Pour placer un point d'arrêt (<em>breakpoint</em>), c'est très simple. Il suffit de cliquer sur la bande grise à côté du code à l'endroit où l'on souhaite le placer. Un rond rouge devrait apparaître.</p><figure id="r-553114" data-claire-element-id="553115"><img id="r-553113" data-claire-element-id="553113" src="medias/uploads.siteduzero.com_files_338001_339000_338469.png" alt="Image utilisateur"/></figure><aside id="r-553117" data-claire-element-id="553117" data-claire-semantic="information"><p id="r-553116" data-claire-element-id="553116">On peut placer autant de points d'arrêts que l'on veut.</p></aside><p id="r-553118" data-claire-element-id="553118">Vous pouvez connaître la liste de tous les points d'arrêts de votre code source en affichant la liste des points d'arrêts. Elle se trouve dans le menu <em>Debug</em> -&gt; <em>Debugging windows</em> -&gt; <em>Breakpoints</em>.</p><p id="r-553119" data-claire-element-id="553119">On peut alors exécuter à nouveau le programme en cliquant sur &quot;<em>Debug/Continue</em>&quot; (F8). Le programme s'exécute alors jusqu'à la ligne où se situe le point rouge puis il attend.</p><aside id="r-553121" data-claire-element-id="553121" data-claire-semantic="information"><p id="r-553120" data-claire-element-id="553120">On aurait également pu placer le curseur à cette ligne et cliquer sur &quot;<em>Run to cursor</em>&quot; (F4). Le résultat aurait été le même.</p></aside><p id="r-553122" data-claire-element-id="553122">Vous pouvez en tout temps connaître le point où se situe l'ordinateur en cherchant la petite flèche jaune dans la bande grise. Comme on l'a vu précédemment.</p><figure id="r-553124" data-claire-element-id="553125"><img id="r-553123" data-claire-element-id="553123" src="medias/uploads.siteduzero.com_files_338001_339000_338472.png" alt="Image utilisateur"/></figure><h2 id="r-avancer-d-un-pas" data-claire-element-id="553132">Avancer d'un pas</h2><p id="r-553127" data-claire-element-id="553127">On peut ensuite avancer d'un pas en appuyant sur &quot;Next line&quot; (F7) ou &quot;Next instruction&quot; si vous avez plusieurs instructions sur la même ligne.</p><p id="r-553128" data-claire-element-id="553128">Vous devriez voir la petite flèche jaune avancer dans le code source et le programme s'exécuter.</p><aside id="r-553130" data-claire-element-id="553130" data-claire-semantic="warning"><p id="r-553129" data-claire-element-id="553129">Il n'y a aucun moyen de reculer, vous ne pouvez qu'avancer dans le code source.</p></aside><p id="r-553131" data-claire-element-id="553131">Si vous allez assez loin, vous allez arriver à la ligne 21 et... ne pas faire planter le programme. o_O Et c'est normal ! Souvenez-vous que le plantage survenait lorsque <code data-claire-semantic="cpp">a=0</code> et <code data-claire-semantic="cpp">b=2</code>, ce qui n'est pas le cas ici. Il faudrait pouvoir connaître &quot;<em>en live</em>&quot; la valeur des différentes variables et arguments. Et ça tombe bien, le débugueur sait faire ça.</p><h2 id="r-afficher-la-valeur-des-variables" data-claire-element-id="553151">Afficher la valeur des variables</h2><p id="r-553133" data-claire-element-id="553133">On peut connaître la valeur de toutes les variables présentes dans une portée en ouvrant la fenêtre &quot;<em>Watches</em>&quot;. Elle se trouve dans le menu <em>Debug</em>-&gt;<em>Debugging windows</em>-&gt;<em>Watches</em>.</p><p id="r-553134" data-claire-element-id="553134">Si vous vous situez au point d'arrêt, la fenêtre devrait afficher ceci :</p><figure id="r-553136" data-claire-element-id="553137"><img id="r-553135" data-claire-element-id="553135" src="medias/uploads.siteduzero.com_files_338001_339000_338474.png" alt="La fenêtre des Watches"/></figure><p id="r-553138" data-claire-element-id="553138">Vous avez en premier les deux variables déclarées dans la fonction avec leurs valeurs à ce moment-là et ensuite la valeur des arguments que la fonction a reçus. Les valeurs de <code data-claire-semantic="cpp">c</code> et <code data-claire-semantic="cpp">d</code> sont &quot;bizarres&quot; parce qu'à ce moment-là du code, elles n'ont pas encore été initialisées.</p><p id="r-553139" data-claire-element-id="553139">Si vous avancez dans le programme, toujours avec F7, vous verrez les valeurs des deux variables changer. La dernière modification s'affiche en plus en rouge de sorte que l'on puisse bien suivre ce qui se passe.</p><figure id="r-553141" data-claire-element-id="553142"><img id="r-553140" data-claire-element-id="553140" src="medias/uploads.siteduzero.com_files_338001_339000_338476.png" alt="Image utilisateur"/></figure><p id="r-553143" data-claire-element-id="553143">Cette fois, les variables ont pris des valeurs plus cohérentes. <br/> Il ne nous reste plus qu'à avancer dans le programme jusqu'à ce qu'on arrive dans la situation où <code data-claire-semantic="cpp">a=0</code> et <code data-claire-semantic="cpp">b=2</code>. Pour ce faire, vous pouvez avancer à coup de F7 jusqu'à arriver au plantage ou enlever le point d'arrêt et utiliser F8. La deuxième méthode est plus rapide puisqu'elle nous fait aller directement au point du problème. Mais il arrive parfois qu'il faille y aller pas-à-pas pour bien voir tout ce qui se passe.</p><p id="r-553144" data-claire-element-id="553144">Arrivé au stade du plantage, vous devriez pouvoir trouver la faute vous-même. La fenêtre &quot;<em>Watches</em>&quot; devrait indiquer <code data-claire-semantic="cpp">c=0</code>. Et donc le calcul de <code data-claire-semantic="cpp">d</code> va nécessiter une division par zéro.</p><p id="r-553145" data-claire-element-id="553145">Cela veut dire que la valeur <code data-claire-semantic="cpp">b=2</code> pose problème dans cette fonction. A vous de changer le code source en conséquence. C'est de toute façon un exemple bidon. ;)</p><aside id="r-553147" data-claire-element-id="553147" data-claire-semantic="warning"><p id="r-553146" data-claire-element-id="553146">Si vous modifiez le code source, vous devez recompiler le programme pour pouvoir débuguer à nouveau.</p></aside><p id="r-553148" data-claire-element-id="553148">Notre objectif est donc atteint, nous avons pu repérer la ligne qui cause un crash du programme, trouver les causes de ce plantage en observant la valeur des variables et finalement corriger cette erreur.</p><p id="r-553149" data-claire-element-id="553149">Dans ce mini-tutoriel, vous avez appris à utiliser les bases du débugueur inclus avec Code::Blocks sur un petit exemple. Cela devrait vous aider à trouver les erreurs qui pourraient apparaître dans vos propres programmes.</p><p id="r-553150" data-claire-element-id="553150">Si vous avez des questions, n'hésitez-pas à passer sur le <a href="http://www.siteduzero.com/forum-81-237-langage-c.html">forum C++</a> où les membres se feront un plaisir de vous aider.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/c-deboguer-avec-code-blocks">[C++] Déboguer avec Code::Blocks</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-deboguer-avec-code-blocks/un-programme-bien-mysterieux">
+Un programme bien mystérieux
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-deboguer-avec-code-blocks/preparer-son-code">
+Préparer son code
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-deboguer-avec-code-blocks/trouver-la-ligne-de-l-erreur">
+Trouver la ligne de l&#039;erreur
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/c-deboguer-avec-code-blocks/connaitre-les-valeurs-des-variables">
+Connaître les valeurs des variables
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/c-deboguer-avec-code-blocks/trouver-la-ligne-de-l-erreur">
+<span class="arrow"></span>
+<span class="next">Trouver la ligne de l&#039;erreur</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/c-deboguer-avec-code-blocks.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 08:32:25 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/c-deboguer-avec-code-blocks.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:32:08 GMT -->
+</html>

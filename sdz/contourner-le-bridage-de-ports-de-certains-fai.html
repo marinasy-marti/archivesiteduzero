@@ -1,0 +1,428 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/contourner-le-bridage-de-ports-de-certains-fai.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 05:50:58 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/contourner-le-bridage-de-ports-de-certains-fai.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:03:40 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Contourner le bridage de ports de certains FAI</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Contourner le bridage de ports de certains FAI</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#ContournerlebridagedeportsdecertainsFAI">Contourner le bridage de ports de certains FAI</a><br/><a href="#Commentamarche">Comment ça marche ?</a><br/><a href="#Prrequis">Prérequis</a><br/><a href="#InstallerlapasserellesousWindows">Installer la passerelle sous Windows</a><br/><a href="#InstallerlapasserellesousLinux">Installer la passerelle sous Linux</a><br/><a href="#Installerlapasserellesurunrouteur">Installer la passerelle sur un routeur</a><br/></div>
+<a name="ContournerlebridagedeportsdecertainsFAI"></a><h2>Contourner le bridage de ports de certains FAI</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/comment-ca-marche-15">
+<span class="next">Comment ça marche ?</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-384758" data-claire-element-id="384758">Certains Fournisseurs d'Accès à Internet (FAI), Free notamment, pratiquent ce que l'on appelle communément le &quot;bridage de ports&quot; : autrement dit, ils brident les communications Internet effectuées sur des ports particuliers. Ce bridage peut passer par une limitation du nombre de connexions simultanées, une limitation de bande passante sur les transferts de données réalisés sur le port en question, voire une interdiction de connexion pure et simple.</p><p id="r-384759" data-claire-element-id="384759">Ainsi, il est quasiment impossible à certains abonnés de Free de communiquer par voix en utilisant le logiciel Ventrilo. En effet, le port par défaut de la plupart des serveurs (3784) étant bridé par ce FAI, l'abonné malchanceux se retrouve avec un décalage de 30 secondes de communication dans les secondes suivant son arrivée sur le serveur.</p><p id="r-384760" data-claire-element-id="384760">Pourquoi ? Parce que Free ayant quelques problèmes de réseau, il préfère limiter la bande passante sur les ports supérieurs à 1024 pour que les applications les plus utilisées (Web, FTP, Mail...) soient prioritaires, au détriment de toutes les autres applications. Mais si cette limitation peut s'avérer judicieuse pour limiter les logiciels de Peer-To-Peer (eMule...) grands consommateurs de bande passante, il s'avère carrément injustifié et préjudiciable pour d'autres applications totalement inoffensives (ici, de la voix sur IP).</p><p id="r-384761" data-claire-element-id="384761">Fort heureusement, il est possible de mettre en oeuvre des solutions pour contourner ces limitations, c'est l'objet du présent tutoriel.</p><aside id="r-384763" data-claire-element-id="384763" data-claire-semantic="information"><p id="r-384762" data-claire-element-id="384762">Si vous avez le contrôle du serveur sur lequel vous souhaitez contourner le bridage, la solution la plus simple reste de modifier le port du serveur en question, si vos &quot;collègues&quot; sont d'accord. Nous partirons du principe que vous n'avez pas cette possibilité.</p></aside><aside id="r-384765" data-claire-element-id="384765" data-claire-semantic="warning"><p id="r-384764" data-claire-element-id="384764">La solution présentée ici ne convient pas aux applications complexes manipulant plusieurs serveurs à la fois, et aux adresses inconnues (par exemple, les logiciels de P2P). Vous devez connaître à l'avance l'adresse IP et le port du serveur sur lequel vous voulez vous connecter pour pouvoir suivre ce tutoriel.</p></aside>
+</div><a name="Commentamarche"></a><h2>Comment ça marche ?</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/prerequis-17">
+<span class="next">Prérequis</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-le-principe-15" data-claire-element-id="384778">Le principe</h2><p id="r-384766" data-claire-element-id="384766">Le bridage de la connexion s'effectue au niveau des routeurs du FAI concerné : autrement dit, lorsque des paquets transitent au niveau de ses routeurs, ceux-ci vérifient le port de destination du paquet : si celui-ci fait partie de la liste de ports à brider, le routeur appliquera des restrictions sur le transit dudit paquet.</p><aside id="r-384768" data-claire-element-id="384768" data-claire-semantic="information"><p id="r-384767" data-claire-element-id="384767">Pour des raisons d'économies techniques, la plupart des routeurs se basent uniquement sur le port de destination des paquets pris séparément. Ils ne gardent <em>à priori</em> pas trace des connexions TCP. Cela signifie que le bridage ne s'effectue que sur les paquets que vous envoyez, pas sur ceux que vous recevez.</p></aside><p id="r-384769" data-claire-element-id="384769">Prenons l'exemple de Ventrilo : vous envoyez des paquets sur le port 3784, les routeurs de votre FAI les détectent, et vous brident. Il nous faut donc communiquer avec le serveur en utilisant un autre port, qui lui ne sera pas bridé.</p><p id="r-384770" data-claire-element-id="384770">Mais, bien évidemment, tout n'est pas aussi simple : si on tente de communiquer avec le serveur Ventrilo sur le port 81 alors qu'il écoute le port 3784, ça ne fonctionnera pas (logique). La solution : <strong>utiliser un intermédiaire, une &quot;passerelle&quot; qui recevrait les paquets sur le port 81, et les renverrait au serveur sur le bon port, en se &quot;faisant passer&quot; pour vous, et qui vous retransmettrait les réponses</strong>.</p><p id="r-384771" data-claire-element-id="384771">Évidemment, cette passerelle se trouverait après les routeurs du FAI bridant, et non pas derrière (sinon ça ne servirait strictement à rien). Elle pourrait se trouver derrière un FAI concurrent, sur une machine hébergée en <em>data center</em>, ou, encore mieux, sur la machine abritant le serveur que vous essayez de contacter (en admettant que vous ayez un accès de type administrateur &quot;root&quot; dessus).</p><p id="r-384772" data-claire-element-id="384772">En termes plus techniques, on utilise en fait les mêmes technologies que celles employées sur les modems-routeurs grand public : un <a href="http://fr.wikipedia.org/wiki/NAT">NAT</a> (Network Address Translation), couplé à un <em>Masquerading</em>. Le NAT sert à rediriger les paquets reçus sur le port non bridé vers le &quot;vrai&quot; serveur, en modifiant l'adresse et le port de destination, et le Masquerading va modifier l'adresse et le port source de sorte que la passerelle &quot;se fasse passer&quot; pour vous.</p><div id="r-384774" data-claire-element-id="384774" data-claire-semantic="question"><p id="r-384773" data-claire-element-id="384773">Pourquoi la passerelle doit-elle se faire passer pour moi ? <em>A priori</em>, seul le NAT suffit, non ?</p></div><p id="r-384775" data-claire-element-id="384775">Non, pour deux raisons : la première est que la passerelle va tenter d'envoyer des paquets comportant une adresse source qui n'est pas la sienne, paquets qui seront donc rapidement jetés par les premiers routeurs par lesquels ils vont passer (parce que les routeurs sont configurés pour vérifier l'adresse source des paquets qu'ils routent, histoire d'éviter des attaques par <em>spoofing</em>) ; et même si ils arrivaient à passer, lorsque le &quot;vrai&quot; serveur enverra les réponses, votre ordinateur recevra des paquets dont l'adresse source ne correspond pas à celle de la passerelle (avec laquelle votre ordinateur &quot;croit&quot; avoir établi une connexion), et donc les ignorera.</p><aside id="r-384777" data-claire-element-id="384777" data-claire-semantic="information"><p id="r-384776" data-claire-element-id="384776">Si vous n'avez rien compris, ce n'est pas bien grave. Retenez seulement que pour pouvoir contourner le bridage d'un port, il faut se connecter à une passerelle (sur un port non bridé) qui, elle, se fera passer pour vous auprès du &quot;vrai&quot; serveur en utilisant le vrai port. C'est à peu près le même principe que celui d'un serveur proxy (mais techniquement parlant, ça n'a rien à voir).</p></aside><h2 id="r-exemple-detaille" data-claire-element-id="384823">Exemple détaillé</h2><p id="r-384779" data-claire-element-id="384779">Nous allons prendre l'exemple d'un internaute abonné chez Free, ayant comme adresse IP 1.1.1.1, et souhaitant se connecter à un serveur Ventrilo d'adresse 2.2.2.2 écoutant sur le port 3784.</p><h3 id="r-situation-classique-bridage-effectif" data-claire-element-id="384794">Situation classique (bridage effectif)</h3><ul id="r-384786" data-claire-element-id="384786"><li id="r-384781" data-claire-element-id="384781"><p id="r-384780" data-claire-element-id="384780">La machine 1.1.1.1 envoie des paquets à la machine 2.2.2.2 sur le port de destination 3784.</p></li><li id="r-384783" data-claire-element-id="384783"><p id="r-384782" data-claire-element-id="384782">Les routeurs de Free interceptent les paquets, et brident la communication.</p></li><li id="r-384785" data-claire-element-id="384785"><p id="r-384784" data-claire-element-id="384784">La machine 2.2.2.2 reçoit des paquets provenant de 1.1.1.1.</p></li></ul><ul id="r-384793" data-claire-element-id="384793"><li id="r-384788" data-claire-element-id="384788"><p id="r-384787" data-claire-element-id="384787">La machine 2.2.2.2 envoie des paquets à la machine 1.1.1.1 (réponses).</p></li><li id="r-384790" data-claire-element-id="384790"><p id="r-384789" data-claire-element-id="384789">Les routeurs de Free ne brident pas la communication (vu qu'ils ne suivent pas l'état des connexions).</p></li><li id="r-384792" data-claire-element-id="384792"><p id="r-384791" data-claire-element-id="384791">La machine 1.1.1.1 reçoit des paquets provenant de 2.2.2.2.</p></li></ul><h3 id="r-avec-une-passerelle" data-claire-element-id="384822">Avec une passerelle</h3><p id="r-384795" data-claire-element-id="384795">Imaginons que nous avons installé une passerelle sur la machine 3.3.3.3, et l'avons configurée de manière à ce qu'elle redirige les paquets entrant sur le port 81 vers la machine 2.2.2.2, port 3784.</p><ul id="r-384804" data-claire-element-id="384804"><li id="r-384797" data-claire-element-id="384797"><p id="r-384796" data-claire-element-id="384796">La machine 1.1.1.1 envoie des paquets à 3.3.3.3 sur le port 81.</p></li><li id="r-384799" data-claire-element-id="384799"><p id="r-384798" data-claire-element-id="384798">Les routeurs de Free détectent un port de destination 81, et ne brident pas la communication.</p></li><li id="r-384801" data-claire-element-id="384801"><p id="r-384800" data-claire-element-id="384800">La machine 3.3.3.3 reçoit des paquets de 1.1.1.1 sur le port de destination 81. Premièrement, elle modifie l'adresse de destination de ces paquets vers 2.2.2.2, port 3784 (NAT) ; deuxièmement, elle modifie l'adresse source des paquets en 3.3.3.3 pour passer les routeurs, et recevoir les réponses (Masquerading) ; troisièmement, elle renvoie les paquets ainsi modifiés sur le réseau.</p></li><li id="r-384803" data-claire-element-id="384803"><p id="r-384802" data-claire-element-id="384802">La machine 2.2.2.2 reçoit des paquets provenant de 3.3.3.3.</p></li></ul><ul id="r-384813" data-claire-element-id="384813"><li id="r-384806" data-claire-element-id="384806"><p id="r-384805" data-claire-element-id="384805">La machine 2.2.2.2 envoie des paquets à 3.3.3.3 (réponses)</p></li><li id="r-384808" data-claire-element-id="384808"><p id="r-384807" data-claire-element-id="384807">La machine 3.3.3.3 reçoit les paquets de 2.2.2.2. Premièrement, elle modifie l'adresse de destination de ces paquets en 1.1.1.1 ; deuxièmement, elle modifie l'adresse source des paquets en 3.3.3.3. Ces deux actions sont effectuées par le Masquerading.</p></li><li id="r-384810" data-claire-element-id="384810"><p id="r-384809" data-claire-element-id="384809">Les routeurs de Free ne brident pas la communication.</p></li><li id="r-384812" data-claire-element-id="384812"><p id="r-384811" data-claire-element-id="384811">La machine 1.1.1.1 reçoit des paquets provenant de 3.3.3.3.</p></li></ul><aside id="r-384821" data-claire-element-id="384821" data-claire-semantic="information"><p id="r-384814" data-claire-element-id="384814">Dans ce cas de figure :</p><ul id="r-384819" data-claire-element-id="384819"><li id="r-384816" data-claire-element-id="384816"><p id="r-384815" data-claire-element-id="384815">1.1.1.1 &quot;croit&quot; communiquer avec 3.3.3.3 et lui seul</p></li><li id="r-384818" data-claire-element-id="384818"><p id="r-384817" data-claire-element-id="384817">2.2.2.2 &quot;croit&quot; communiquer avec 3.3.3.3 et lui seul</p></li></ul><p id="r-384820" data-claire-element-id="384820">L'adresse IP de 1.1.1.1 est donc masquée par la passerelle.</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai">Contourner le bridage de ports de certains FAI</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/comment-ca-marche-15">
+Comment ça marche ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/prerequis-17">
+Prérequis
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/installer-la-passerelle-sous-windows">
+Installer la passerelle sous Windows
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/installer-la-passerelle-sous-linux">
+Installer la passerelle sous Linux
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/installer-la-passerelle-sur-un-routeur">
+Installer la passerelle sur un routeur
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/prerequis-17">
+<span class="next">Prérequis</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Prrequis"></a><h2>Prérequis</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/comment-ca-marche-15">
+<span class="arrow"></span>
+<span class="next">Comment ça marche ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/installer-la-passerelle-sous-windows">
+<span class="next">Installer la passerelle sous Windows</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-384825" data-claire-element-id="384825">Pour pouvoir mettre en pratique cette technique, il vous faut une passerelle. Plus cette passerelle sera géographiquement proche (&quot;réseau-parlant&quot;) du &quot;vrai&quot; serveur, plus les <em>pings</em> seront bas. Il convient de noter que tous les transferts de données passeront par là, aussi, vous serez limité par sa bande passante.</p><p id="r-384826" data-claire-element-id="384826">La passerelle peut être de deux types :</p><h3 id="r-un-ordinateur" data-claire-element-id="384829">Un ordinateur</h3><p id="r-384827" data-claire-element-id="384827">Il faut juste qu'il soit connecté à Internet, et qu'il possède les outils nécessaires à l'établissement d'un NAT avec <em>Masquerading</em>.</p><p id="r-384828" data-claire-element-id="384828">La meilleure configuration possible consiste à installer la passerelle sur la même machine que celle qui héberge le &quot;vrai&quot; serveur, auquel cas elle se renvoie les paquets à elle-même, en modifiant uniquement le port de destination, sans déperdition de performances. Bien évidemment, cela suppose que vous ayez un accès de type administrateur sur cette machine. Ceci dit, la machine d'un ami abonné chez un FAI concurrent ne bridant pas peut très bien faire l'affaire, pour peu que celui-ci accepte de se faire pomper une partie de sa bande passante par vos activités.</p><h3 id="r-un-routeur" data-claire-element-id="384836">Un routeur</h3><p id="r-384830" data-claire-element-id="384830"><em>A priori</em>, n'importe quel routeur supportant le NAT et le <em>Masquerading</em> peut servir de passerelle. La bonne nouvelle, c'est que ces deux fonctions sont présentes dans tous les modems-routeurs grand public, puisqu'elles sont indispensables pour partager un accès Internet entre plusieurs PCs.</p><p id="r-384831" data-claire-element-id="384831">Donc, si vous avez un ami abonné chez un FAI concurrent disposant de ce type de matériel, il y a de fortes chances que son modem-routeur puisse vous servir de passerelle.</p><aside id="r-384833" data-claire-element-id="384833" data-claire-semantic="warning"><p id="r-384832" data-claire-element-id="384832">Gardez à l'esprit que cet état de fait est très théorique. En effet, après avoir essayé successivement une Freebox, un modem-routeur Netgear, un Speedtouch, un D-Link, une CBox de Cegetel et un Inventel, seul l'Inventel a été capable de rerouter des paquets vers l'extérieur, alors que techniquement ils devraient tous pouvoir le faire !</p></aside><aside id="r-384835" data-claire-element-id="384835" data-claire-semantic="information"><p id="r-384834" data-claire-element-id="384834">Si vous ne voulez pas ou ne pouvez pas utiliser un modem-routeur comme passerelle, mais que vous souhaitez utiliser un ordinateur situé derrière ce modem-routeur, assurez-vous juste de rediriger correctement le port non bridé sur lequel vous souhaitez faire écouter votre passerelle.</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai">Contourner le bridage de ports de certains FAI</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/comment-ca-marche-15">
+Comment ça marche ?
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/prerequis-17">
+Prérequis
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/installer-la-passerelle-sous-windows">
+Installer la passerelle sous Windows
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/installer-la-passerelle-sous-linux">
+Installer la passerelle sous Linux
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/installer-la-passerelle-sur-un-routeur">
+Installer la passerelle sur un routeur
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/comment-ca-marche-15">
+<span class="arrow"></span>
+<span class="next">Comment ça marche ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/installer-la-passerelle-sous-windows">
+<span class="next">Installer la passerelle sous Windows</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="InstallerlapasserellesousWindows"></a><h2>Installer la passerelle sous Windows</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/prerequis-17">
+<span class="arrow"></span>
+<span class="next">Prérequis</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/installer-la-passerelle-sous-linux">
+<span class="next">Installer la passerelle sous Linux</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-384838" data-claire-element-id="384838">Autant vous prévenir tout de suite : le nombre d'outils permettant de manipuler finement le routage sous Windows est très limité, et ceux-ci sont généralement particulièrement complexes à configurer. Du coup, on ne va pas ici configurer un &quot;vrai&quot; NAT, mais utiliser un petit logiciel gratuit qui recevra le flux TCP de votre ordinateur à la passerelle, et qui le reproduira à l'identique entre la passerelle et le &quot;vrai&quot; serveur. Il s'agit de <a href="http://www.xtware.com/tcprelay/">TCPRelay</a>. En pratique, cela revient au même qu'utiliser un NAT.</p><aside id="r-384840" data-claire-element-id="384840" data-claire-semantic="information"><p id="r-384839" data-claire-element-id="384839">Curieusement, le très simpliste &quot;redirecteur de ports&quot; de Windows XP (accessible via les propriétés de la connexion réseau), refuse de &quot;rerouter&quot; des paquets vers l'extérieur, à l'instar de la plupart des modems-routeurs dits &quot;familiaux&quot;.</p></aside><aside id="r-384842" data-claire-element-id="384842" data-claire-semantic="information"><p id="r-384841" data-claire-element-id="384841">TCPRelay est un service, et à ce titre ne fonctionne que sous la série NT de Windows, c'est-à-dire Windows NT/2000/XP/2003. A ma connaissance, il n'existe aucune solution pour les utilisateurs de Windows 95/98/Me.</p></aside><aside id="r-384844" data-claire-element-id="384844" data-claire-semantic="warning"><p id="r-384843" data-claire-element-id="384843">TCPRelay ne permet pas de rediriger des communications sur le protocole UDP.</p></aside><p id="r-384845" data-claire-element-id="384845">L'installation et la configuration de TCPRelay est loin d'être &quot;user-friendly&quot;, mais elle n'est pas vraiment compliquée.</p><h2 id="r-installation-45" data-claire-element-id="384854">Installation</h2><p id="r-384846" data-claire-element-id="384846">Tout d'abord, téléchargez TCPRelay. Décompressez le fichier TCPRelay.exe dans votre répertoire de Windows.</p><p id="r-384847" data-claire-element-id="384847">Ensuite, démarrez l'invite de commandes. Pour cela, cliquez sur Démarrer, Exécuter, puis entrez &quot;cmd&quot; dans le champ de texte, et validez.</p><p id="r-384848" data-claire-element-id="384848">A l'invite, entrez la commande suivante :</p><pre id="r-384849" data-claire-element-id="384849"><code data-claire-semantic="console">tcprelay -install</code></pre><p id="r-384850" data-claire-element-id="384850">Cela devrait donner quelque chose comme ceci :</p><figure id="r-384852" data-claire-element-id="384853"><img id="r-384851" data-claire-element-id="384851" src="medias/uploads.siteduzero.com_files_8001_9000_8462.png" alt="Image utilisateur"/></figure><h2 id="r-configuration-19" data-claire-element-id="384876">Configuration</h2><p id="r-384855" data-claire-element-id="384855">Le programme ne dispose d'aucune interface graphique pour le configurer : on va devoir y aller à pleines mains dans la base de registre. C'est parti.</p><aside id="r-384857" data-claire-element-id="384857" data-claire-semantic="information"><p id="r-384856" data-claire-element-id="384856">Vous n'avez pas besoin de faire de sauvegarde de la base de registre avant de commencer : les clés que vous allez modifier ne présentent strictement aucun risque pour votre système.</p></aside><p id="r-384858" data-claire-element-id="384858">Cliquez sur Démarrer, Exécuter, entrez &quot;regedit&quot; et validez.</p><p id="r-384859" data-claire-element-id="384859">Déroulez l'arborescence jusqu'à la clé suivante :</p><pre id="r-384860" data-claire-element-id="384860"><code>HKEY_LOCAL_MACHINE\SOFTWARE\XTWare\TCPRelay</code></pre><h3 id="r-ajouter-des-redirections" data-claire-element-id="384875">Ajouter des redirections</h3><p id="r-384861" data-claire-element-id="384861">Pour ajouter des redirections, vous devez ajouter des sous-clés dans la clé TCPRelay. Une clé représente une redirection. Par exemple, si vous voulez utiliser la passerelle pour vous connecter à deux serveurs Ventrilo et un serveur VNC, vous devez ajouter 3 clés.</p><p id="r-384862" data-claire-element-id="384862">Le nom que vous donnez à chacune des clés est totalement arbitraire et ne vous sert qu'à donner des noms aux redirections. C'est dans le contenu des clés que nous allons configurer chacune des redirections. La structure utilisée est décrite dans <a href="http://www.xtware.com/tcprelay/userguide.htm">l'aide de TCPRelay</a>. Pour fabriquer une redirection, nous devons créer deux valeurs de type chaîne :</p><ul id="r-384867" data-claire-element-id="384867"><li id="r-384864" data-claire-element-id="384864"><p id="r-384863" data-claire-element-id="384863">Destination : spécifie l'adresse et le port du &quot;vrai&quot; serveur sous la forme <strong>Adresse:Port</strong>. Les adresses peuvent être des IPs ou des noms de domaine.</p></li><li id="r-384866" data-claire-element-id="384866"><p id="r-384865" data-claire-element-id="384865">Local : spécifie le port sur lequel la passerelle va attendre votre connexion pour rediriger les données, sous le format &quot;:Port&quot;.</p></li></ul><aside id="r-384869" data-claire-element-id="384869" data-claire-semantic="information"><p id="r-384868" data-claire-element-id="384868">Si vous souhaitez éviter que la passerelle soit utilisable par n'importe qui, deux directives de configuration supplémentaires permettent de limiter les adresses IP qui peuvent utiliser la passerelle. Reportez-vous à l'aide de TCPRelay pour plus d'informations.</p></aside><p id="r-384870" data-claire-element-id="384870">Voici un exemple de configuration :</p><figure id="r-384872" data-claire-element-id="384873"><img id="r-384871" data-claire-element-id="384871" src="medias/uploads.siteduzero.com_files_8001_9000_8463.png" alt="Image utilisateur"/></figure><p id="r-384874" data-claire-element-id="384874">Dans ce cas précis, la passerelle va rediriger les données arrivant sur le port 81 vers ventrilo.serveur.org, port 3784.</p><h2 id="r-demarrer-arreter-la-passerelle" data-claire-element-id="384879">Démarrer / Arrêter la passerelle</h2><p id="r-384877" data-claire-element-id="384877">Pour lancer la passerelle, vous devez aller dans les outils d'Administration (Démarrer / Paramètres / Panneau de configuration / Outils d'administration), et choisir l'outil Services.</p><p id="r-384878" data-claire-element-id="384878">Cherchez TCPRelay dans la liste, et double-cliquez dessus ; pour démarrer ou arrêter la passerelle, cliquez sur le bouton correspondant. Pour lancer la passerelle au démarrage de la machine, il vous suffit de choisir &quot;Automatique&quot; dans &quot;Type de démarrage&quot;.</p><h2 id="r-desinstaller-la-passerelle" data-claire-element-id="384883">Désinstaller la passerelle</h2><p id="r-384880" data-claire-element-id="384880">Pour désinstaller TCPRelay, retournez dans l'invite de commandes et exécutez :</p><pre id="r-384881" data-claire-element-id="384881"><code data-claire-semantic="console">tcprelay -remove</code></pre><p id="r-384882" data-claire-element-id="384882">Puis supprimez le fichier tcprelay.exe dans le répertoire de Windows.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai">Contourner le bridage de ports de certains FAI</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/comment-ca-marche-15">
+Comment ça marche ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/prerequis-17">
+Prérequis
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/installer-la-passerelle-sous-windows">
+Installer la passerelle sous Windows
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/installer-la-passerelle-sous-linux">
+Installer la passerelle sous Linux
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/installer-la-passerelle-sur-un-routeur">
+Installer la passerelle sur un routeur
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/prerequis-17">
+<span class="arrow"></span>
+<span class="next">Prérequis</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/installer-la-passerelle-sous-linux">
+<span class="next">Installer la passerelle sous Linux</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="InstallerlapasserellesousLinux"></a><h2>Installer la passerelle sous Linux</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/installer-la-passerelle-sous-windows">
+<span class="arrow"></span>
+<span class="next">Installer la passerelle sous Windows</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/installer-la-passerelle-sur-un-routeur">
+<span class="next">Installer la passerelle sur un routeur</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-384885" data-claire-element-id="384885">Contrairement à Windows, la plupart des distributions Linux livrent un <em>kernel</em> compilé avec le support d'<strong>iptables</strong>, un outil incroyablement puissant pour contrôler et manipuler tout ce qui passe sur le réseau. Le NAT et le <em>Masquerading</em> font bien entendu partie de ses multiples fonctions.</p><p id="r-384886" data-claire-element-id="384886">Toutes les manipulations exposées ici nécessitent que vous ouvriez un <em>shell Bash</em> (via SSH, Konsole ou tout autre terminal).</p><h2 id="r-verifier-la-presence-d-iptables" data-claire-element-id="384894">Vérifier la présence d'iptables</h2><p id="r-384887" data-claire-element-id="384887">Pour vérifier que votre système dispose d'<strong>iptables</strong>, exécutez la commande suivante :</p><pre id="r-384888" data-claire-element-id="384888"><code data-claire-semantic="console"># iptables</code></pre><p id="r-384889" data-claire-element-id="384889">Si tout se passe bien, le système devrait vous répondre quelque chose comme ceci :</p><pre id="r-384890" data-claire-element-id="384890"><code data-claire-semantic="console">iptables v1.3.3: no command specified
+
+Try `iptables -h' or 'iptables --help' for more information.</code></pre><p id="r-384891" data-claire-element-id="384891">Si tel n'est pas le cas, vous devez installer <strong>iptables</strong>, ce qui nécessite le plus souvent que vous recompiliez votre <em>Kernel</em> ou certains de ses modules. Cette manipulation sort du cadre de ce document, je vous invite à vous reporter à la documentation de votre distribution pour de plus amples informations à ce sujet.</p><aside id="r-384893" data-claire-element-id="384893" data-claire-semantic="error"><p id="r-384892" data-claire-element-id="384892">Même si <strong>iptables</strong> est présent, il est possible qu'il ne reconnaisse pas certaines de vos commandes. Cela signifie que certaines de ses fonctionnalités n'ont pas été compilées au niveau du <em>Kernel</em> (support du NAT et du <em>Masquerading</em>). Là encore, je vous invite à vous reporter à la documentation de votre distribution.</p></aside><h2 id="r-determiner-l-interface-reseau-connectee-a-internet" data-claire-element-id="384900">Déterminer l'interface réseau connectée à Internet</h2><p id="r-384895" data-claire-element-id="384895">Pour afficher la liste des interfaces réseau connectées à votre machine, entrez la commande suivante :</p><pre id="r-384896" data-claire-element-id="384896"><code data-claire-semantic="console"># ifconfig</code></pre><p id="r-384897" data-claire-element-id="384897">Dans la liste retournée, vous devez identifier l'interface connectée à Internet, et relever son identifiant (par exemple, eth0 ou ppp0). Elle est facile à identifier : ce doit être la seule dont l'adresse IP (&quot;inet addr&quot;) ne commence ni par 10, ni par 172.16-31, ni par 192.168.0.</p><aside id="r-384899" data-claire-element-id="384899" data-claire-semantic="warning"><p id="r-384898" data-claire-element-id="384898">Si vous êtes derrière un routeur, aucune de vos interfaces réseau n'est connectée directement à Internet. Vous devez donc effectuer la manipulation en utilisant l'interface connectée à votre réseau local, en prenant soin de rediriger le port sur lequel écoutera votre passerelle au niveau de votre routeur vers la machine Linux.</p></aside><h2 id="r-activer-l-ip-forwarding" data-claire-element-id="384907">Activer l'<em>IP Forwarding</em></h2><p id="r-384901" data-claire-element-id="384901">Avant toute chose, l'<strong>IP Forwarding</strong> doit être activé au niveau du <em>Kernel</em>, sinon celui-ci ne peut pas &quot;forwarder&quot; (rediriger) les paquets qu'on lui envoie. Voici comment l'activer :</p><pre id="r-384902" data-claire-element-id="384902"><code data-claire-semantic="console"># sysctl -w net/ipv4/ip_forward=1</code></pre><p id="r-384903" data-claire-element-id="384903">Cette commande rendra l'<strong>IP Forwarding</strong> effectif jusqu'au prochain redémarrage de la machine. Pour rendre la modification permanente, il faut ajouter (ou décommenter) la ligne suivante dans /etc/sysctl.conf :</p><pre id="r-384904" data-claire-element-id="384904"><code>net/ipv4/ip_forward=1</code></pre><aside id="r-384906" data-claire-element-id="384906" data-claire-semantic="information"><p id="r-384905" data-claire-element-id="384905">Si votre machine Linux sert de passerelle d'accès à Internet pour un réseau local &quot;de maison&quot;, l'<strong>IP Forwarding</strong> est probablement déjà activé.</p></aside><h2 id="r-activer-le-masquerading" data-claire-element-id="384914">Activer le <em>Masquerading</em></h2><p id="r-384908" data-claire-element-id="384908">Le <em>masquerading</em> s'active via la commande suivante :</p><pre id="r-384909" data-claire-element-id="384909"><code data-claire-semantic="console">iptables -t nat -A POSTROUTING -o [interface] -j MASQUERADE</code></pre><p id="r-384910" data-claire-element-id="384910">Par exemple :</p><pre id="r-384911" data-claire-element-id="384911"><code data-claire-semantic="console">iptables -t nat -A POSTROUTING -o ppp0 -j MASQUERADE</code></pre><aside id="r-384913" data-claire-element-id="384913" data-claire-semantic="information"><p id="r-384912" data-claire-element-id="384912">Si votre machine Linux sert de passerelle d'accès à Internet pour un réseau local &quot;de maison&quot;, le <em>Masquerading</em> est probablement déjà activé.</p></aside><h2 id="r-ajouter-les-regles-nat" data-claire-element-id="384923">Ajouter les règles NAT</h2><p id="r-384915" data-claire-element-id="384915">Nous pouvons maintenant entrer dans le vif du sujet, à savoir l'ajout des règles de redirection. Voici la commande à utiliser :</p><pre id="r-384916" data-claire-element-id="384916"><code data-claire-semantic="console">iptables -t nat -A PREROUTING -i [interface] -p [protocole] --dport [port d'écoute] -j DNAT --to-destination [adresse de destination]:[port de destination]</code></pre><p id="r-384917" data-claire-element-id="384917">Par exemple, toujours avec un serveur Ventrilo :</p><pre id="r-384918" data-claire-element-id="384918"><code data-claire-semantic="console">iptables -t nat -A PREROUTING -i ppp0 -p tcp --dport 81 -j DNAT --to-destination 123.456.789.123:3784</code></pre><p id="r-384919" data-claire-element-id="384919">Dans cette configuration, vous demandez à votre machine Linux de rediriger tout le trafic arrivant sur le port 81 vers 123.456.789.123, port 3784.</p><aside id="r-384921" data-claire-element-id="384921" data-claire-semantic="information"><p id="r-384920" data-claire-element-id="384920">Si vous souhaitez éviter que n'importe qui puisse se servir de la passerelle, utilisez le paramètre --source pour spécifier une adresse source.</p></aside><p id="r-384922" data-claire-element-id="384922">Vous devez utiliser cette commande autant de fois qu'il y a de serveurs à contacter.</p><h2 id="r-reconfigurer-iptables-au-demarrage" data-claire-element-id="384929">Reconfigurer iptables au démarrage</h2><p id="r-384924" data-claire-element-id="384924">Pour ajouter toutes ces règles dès le démarrage de la machine, il faut ajouter un script de démarrage. Le fonctionnement de ces scripts varie fortement entre les distributions. Celle que je vais présenter ici est conçue pour les systèmes tournant sous Linux <strong>Debian</strong>. Reportez-vous à la documentation de votre distribution pour prendre connaissance de la procédure adaptée à votre distribution.</p><p id="r-384925" data-claire-element-id="384925">Créez le fichier /etc/init.d/port-gateway :</p><pre id="r-384926" data-claire-element-id="384926"><code data-claire-semantic="bash">#! /bin/sh
+set -e
+
+# /etc/init.d/port-gateway: start ports redirections
+
+export PATH=&quot;/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin&quot;
+
+case &quot;$1&quot; in
+  start)
+        echo -n &quot;Starting ports redirections&quot;
+        # --- AJOUTEZ TOUTES LES COMMANDES IPTABLES ICI ---
+        echo &quot;.&quot;
+        ;;
+  *)
+        echo &quot;Usage: /etc/init.d/port-gateway {start}&quot;
+        exit 1
+esac
+
+exit 0</code></pre><p id="r-384927" data-claire-element-id="384927">Ensuite exécutez :</p><pre id="r-384928" data-claire-element-id="384928"><code data-claire-semantic="console"># update-rc.d port-gateway defaults</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai">Contourner le bridage de ports de certains FAI</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/comment-ca-marche-15">
+Comment ça marche ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/prerequis-17">
+Prérequis
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/installer-la-passerelle-sous-windows">
+Installer la passerelle sous Windows
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/installer-la-passerelle-sous-linux">
+Installer la passerelle sous Linux
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/installer-la-passerelle-sur-un-routeur">
+Installer la passerelle sur un routeur
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/installer-la-passerelle-sous-windows">
+<span class="arrow"></span>
+<span class="next">Installer la passerelle sous Windows</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/installer-la-passerelle-sur-un-routeur">
+<span class="next">Installer la passerelle sur un routeur</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Installerlapasserellesurunrouteur"></a><h2>Installer la passerelle sur un routeur</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/installer-la-passerelle-sous-linux">
+<span class="arrow"></span>
+<span class="next">Installer la passerelle sous Linux</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-384931" data-claire-element-id="384931">Le routeur est probablement l'équipement le plus judicieux pour installer une passerelle : ça fait partie de ses fonctions premières, et il consomme nettement moins d'électricité qu'un ordinateur laissé allumé en permanence.</p><p id="r-384932" data-claire-element-id="384932">Malheureusement, la passerelle que nous essayons d'installer ici a une caractéristique très singulière par rapport à ce pour quoi on utilise couramment un modem-routeur : on veut router des paquets arrivant de l'extérieur... vers l'extérieur.</p><p id="r-384933" data-claire-element-id="384933">Et là commence le parcours du combattant. Parce que la quasi-totalité des modems-routeurs grand public disponibles actuellement n'ont pas été conçus pour ce genre d'usage, même si en théorie ils ont toutes les technologies nécessaires pour faire ce que l'on attend d'eux ici. Ainsi, les Freebox imposent une adresse IP de destination commençant par 192.168.0 sans possibilité de la modifier, les SpeedTouch acceptent la configuration, mais le routage ne fonctionne pas, les Netgear ne permettent pas de modifier le port de destination, les D-Link non plus, et la palme revient à Cegetel avec sa CBox ne proposant que des configurations prédéfinies. Sur les routeurs de 6 marques différentes que j'ai pu tester, seul un a été capable de remplir la mission avec succès : l'<a href="http://www.inventel.com/">Inventel</a>.</p><p id="r-384934" data-claire-element-id="384934">Pour cette raison, cette partie expliquera uniquement comment configurer les routeurs d'Inventel pour qu'ils fassent office de passerelle : si vous parvenez à faire de même avec votre propre routeur, tant mieux, sinon, vous n'avez plus qu'à vous replier sur une passerelle Windows ou Linux.</p><p id="r-384935" data-claire-element-id="384935">Vous devez vous rendre sur l'interface d'administration de votre routeur, et vous diriger sur la page de configuration de la redirection de ports (ou NAT), puis remplir le formulaire proposé avec les informations suivantes :</p><ul id="r-384942" data-claire-element-id="384942"><li id="r-384937" data-claire-element-id="384937"><p id="r-384936" data-claire-element-id="384936">Port externe : le port non bridé que vous souhaitez utiliser.</p></li><li id="r-384939" data-claire-element-id="384939"><p id="r-384938" data-claire-element-id="384938">Adresse interne : d'habitude, vous y mettez l'adresse de votre ordinateur sur le réseau local, dans notre cas vous devez y mettre l'adresse du &quot;vrai&quot; serveur sur Internet.</p></li><li id="r-384941" data-claire-element-id="384941"><p id="r-384940" data-claire-element-id="384940">Port interne : il s'agit du port bridé sur lequel écoute le &quot;vrai&quot; serveur.</p></li></ul><figure id="r-384944" data-claire-element-id="384945"><img id="r-384943" data-claire-element-id="384943" src="medias/uploads.siteduzero.com_files_8001_9000_8466.jpg" alt="Image utilisateur"/></figure><p id="r-384946" data-claire-element-id="384946">Ici, le routeur est configuré pour diriger les données reçues sur le port non bridé 81 vers le &quot;vrai&quot; serveur 1.1.1.1, écoutant sur le port 3784. Une fois la redirection ajoutée, la passerelle est effective.</p><p id="r-384947" data-claire-element-id="384947">Une fois ces diverses manipulations achevées, que ce soit sous Windows, sous Linux ou sur votre routeur, la passerelle s'utilise de la même manière : vous devez spécifier au logiciel que vous souhaitez utiliser l'adresse et le port de votre passerelle en lieu et place de ceux du &quot;vrai&quot; serveur. L'ensemble est entièrement transparent.</p><p id="r-384948" data-claire-element-id="384948">Par exemple, sous Ventrilo :</p><figure id="r-384950" data-claire-element-id="384951"><img id="r-384949" data-claire-element-id="384949" src="medias/uploads.siteduzero.com_files_5001_6000_5338.png" alt="Image utilisateur"/></figure><p id="r-384952" data-claire-element-id="384952">Vous pouvez maintenant goûter aux joies du débridé ! ;)</p><p id="r-384953" data-claire-element-id="384953">Remerciements à Jambonneau, HLook, Injall, ZiPPeR, ApOph!s et Kegeruneku pour avoir accepté que leurs routeurs servent de cobaye à mes expériences, et à Ptipilou pour la zCorrection :)</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai">Contourner le bridage de ports de certains FAI</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/comment-ca-marche-15">
+Comment ça marche ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/prerequis-17">
+Prérequis
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/installer-la-passerelle-sous-windows">
+Installer la passerelle sous Windows
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/installer-la-passerelle-sous-linux">
+Installer la passerelle sous Linux
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/installer-la-passerelle-sur-un-routeur">
+Installer la passerelle sur un routeur
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/contourner-le-bridage-de-ports-de-certains-fai/installer-la-passerelle-sous-linux">
+<span class="arrow"></span>
+<span class="next">Installer la passerelle sous Linux</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/contourner-le-bridage-de-ports-de-certains-fai.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 05:51:04 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/contourner-le-bridage-de-ports-de-certains-fai.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:03:41 GMT -->
+</html>

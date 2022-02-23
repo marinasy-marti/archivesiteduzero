@@ -1,0 +1,476 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/bien-fermer-ses-threads-en-java.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 08:38:52 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/bien-fermer-ses-threads-en-java.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:33:02 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Bien fermer ses threads en Java</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/bien-fermer-ses-threads-en-java.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Bien fermer ses threads en Java</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#BienfermersesthreadsenJava">Bien fermer ses threads en Java</a><br/><a href="#MaispourquoilamthodeThread.stopest-elledprcie">Mais pourquoi la méthode Thread.stop est-elle dépréciée ?</a><br/><a href="#Unealternativelaboucleconditionnelle">Une alternative, la boucle conditionnelle</a><br/><a href="#Pouruncodebloquantl039utilisationdesinterruptions">Pour un code bloquant, l&#039;utilisation des interruptions</a><br/><a href="#L039exceptiondesInputStream">L&#039;exception des InputStream</a><br/></div>
+<a name="BienfermersesthreadsenJava"></a><h2>Bien fermer ses threads en Java</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/bien-fermer-ses-threads-en-java/mais-pourquoi-la-methode-thread-stop-est-elle-depreciee">
+<span class="next">Mais pourquoi la méthode Thread.stop est-elle dépréciée ?</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<aside id="r-415225" data-claire-element-id="415225" data-claire-semantic="warning"><p id="r-415224" data-claire-element-id="415224">Avant de commencer, je considère que si vous lisez ce tutoriel, vous avez déjà des bases en Java et que vous savez ce qu'est un <em>thread</em>. Si tel n'est pas le cas, vous pouvez toujours aller lire <a href="http://www.siteduzero.com/tutoriel-3-10601-programmation-en-java.html">le tutoriel de cysboy</a>, en particulier <a href="http://www.siteduzero.com/tutoriel-3-10516-les-threads.html">la partie sur les <em>threads</em></a>.</p></aside><p id="r-415226" data-claire-element-id="415226">Sur ce, bonjour à tous.</p><p id="r-415227" data-claire-element-id="415227">Dans cet article, nous allons traiter de la fermeture des <em>threads</em>. Si vous avez déjà programmé avec des <em>threads</em>, vous avez probablement été confrontés au problème de leur arrêt.</p><p id="r-415228" data-claire-element-id="415228">Certains, peu scrupuleux, auront tout simplement utilisé la méthode <code data-claire-semantic="java">Thread.stop </code> (pourtant dépréciée), tandis que d'autres auront fait des recherches pour essayer de les fermer de la façon la plus propre possible.</p><p id="r-415229" data-claire-element-id="415229">Nous allons donc voir pourquoi il ne faut pas utiliser cette fameuse méthode <code data-claire-semantic="java">Thread.stop </code>, et ce qu'il faut faire à la place.</p>
+</div><a name="MaispourquoilamthodeThread.stopest-elledprcie"></a><h2>Mais pourquoi la méthode Thread.stop est-elle dépréciée ?</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/bien-fermer-ses-threads-en-java/une-alternative-la-boucle-conditionnelle">
+<span class="next">Une alternative, la boucle conditionnelle</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-415230" data-claire-element-id="415230">Tout d'abord, il faut déjà comprendre ce que veut dire déprécié. Si nous passons rapidement par le dictionnaire du CNRTL, <a href="http://www.cnrtl.fr/definition/déprécié">nous trouvons</a> la définition suivante :</p><p id="r-415231" data-claire-element-id="415231"><cite>Citation : CNRTL</cite></p><blockquote id="r-415239" data-claire-element-id="415239"><ul id="r-415238" data-claire-element-id="415238"><li id="r-415233" data-claire-element-id="415233"><p id="r-415232" data-claire-element-id="415232">faire baisser la valeur de (quelque chose), diminuer sa valeur ;</p></li><li id="r-415235" data-claire-element-id="415235"><p id="r-415234" data-claire-element-id="415234">rabaisser la valeur de (quelque chose), porter des jugements défavorables sur ;</p></li><li id="r-415237" data-claire-element-id="415237"><p id="r-415236" data-claire-element-id="415236">Rabaisser (la valeur ou le mérite de) ; porter ou exprimer un jugement défavorable sur.</p></li></ul></blockquote><p id="r-415240" data-claire-element-id="415240">Ce que nous retiendrons pour notre usage informatique, est qu'une méthode dépréciée est <strong>à éviter</strong>. Si elle est dépréciée, c'est qu'il existe une alternative pour faire la même chose ou mieux.</p><p id="r-415241" data-claire-element-id="415241">Maintenant, passons aux raisons de la dépréciation. Ce n'est pas parce que la méthode est moins optimisée qu'une autre, mais bien parce qu'elle est dangereuse d'utilisation et induit des comportements aléatoires.</p><p id="r-415242" data-claire-element-id="415242">Pour expliciter cela, regardons rapidement la documentation :</p><p id="r-415243" data-claire-element-id="415243"><cite>Citation : Javadoc</cite></p><blockquote id="r-415245" data-claire-element-id="415245"><p id="r-415244" data-claire-element-id="415244"><em>Deprecated. This method is inherently unsafe. Stopping a thread with Thread.stop causes it to unlock all of the monitors that it has locked (as a natural consequence of the unchecked ThreadDeath exception propagating up the stack). If any of the objects previously protected by these monitors were in an inconsistent state, the damaged objects become visible to other threads, potentially resulting in arbitrary behavior. Many uses of stop should be replaced by code that simply modifies some variable to indicate that the target thread should stop running. The target thread should check this variable regularly, and return from its run method in an orderly fashion if the variable indicates that it is to stop running. If the target thread waits for long periods (on a condition variable, for example), the interrupt method should be used to interrupt the wait. For more information, see</em><em><a href="http://java.sun.com/j2se/1.4.2/docs/guide/misc/threadPrimitiveDeprecation.html">Why are Thread.stop, Thread.suspend and Thread.resume Deprecated?</a></em>.</p></blockquote><p id="r-415246" data-claire-element-id="415246">En résumé, cette méthode n'est pas sûre. L'utiliser pour arrêter un <em>thread</em> provoque le déverrouillage de toutes les ressources utilisées par le dit <em>thread</em>. Si une de ces ressources n'était pas dans un état stable, elle va être rendue accessible dans son état instable, ayant pour effet un comportement incontrôlable et aléatoire lors de l'usage de la ressource par d'autres <em>threads</em>. La documentation explique ensuite une méthode simple et générique d'arrêt « propre » de vos <em>threads</em>, et vous renvoie vers un lien si vous voulez en savoir plus sur le pourquoi du comment.</p><p id="r-415247" data-claire-element-id="415247">Pour mieux comprendre le problème, rien ne vaut un exemple.</p><p id="r-415248" data-claire-element-id="415248">Imaginons deux <em>threads</em> qui accèdent à un objet « Personne », l'un pour écrire, l'autre pour lire.<br/> Le code est bien fait, les deux <em>threads</em> ne peuvent accéder à l'objet en même temps. Maintenant, imaginons que l'objet « Personne » réponde à un instant « t » aux valeurs suivantes : {Prénom = Sophie, Nom = Dupond, âge = 23 ans, taille = 170 cm, salaire = 32000 ? / an}. Le premier <em>thread</em> va pour le modifier en {Jean, Durant, 2 ans, 65 cm, 0 ? / an}. Il commence sa besogne, mais au milieu de son travail, il se fait arrêter (par <code data-claire-semantic="java">Thread.stop </code>). Il se ferme et le verrou se libère. Or, il se trouve que le deuxième <em>thread</em> était justement en attente de la libération de ce verrou pour lire l'objet. Il va donc pour effectuer sa lecture, mais lit {Jean, Durant, 3 ans, 170 cm, 32000 ? / an} parce que le premier <em>thread</em> n'a pas eu le temps de finir son écriture avant d'être fermé. Les valeurs que le deuxième <em>thread</em> récupère sont erronées et surtout inexploitables ! Elles ne correspondent à personne. Il va donc travailler avec de « mauvaises » valeurs, produisant bien entendu un résultat incohérent.</p><p id="r-415249" data-claire-element-id="415249">On ne peut prédire ce que le premier <em>thread</em> aura modifié dans l'objet lors de son arrêt. C'est en ce sens que le comportement du reste du programme va devenir aléatoire. On n'a aucune idée de l'état dans lequel seront les données.</p><aside id="r-415251" data-claire-element-id="415251" data-claire-semantic="information"><p id="r-415250" data-claire-element-id="415250">Je vous ai fait un exemple avec un objet « Personne » pour faire simple, mais vous pouvez remplacer cet objet par n'importe quelle autre action ou ressource ; vous comprendrez alors que les conséquences d'un code approximatif, dont on ne contrôle pas parfaitement la portée, peuvent être désastreuses.</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/bien-fermer-ses-threads-en-java">Bien fermer ses threads en Java</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/bien-fermer-ses-threads-en-java/mais-pourquoi-la-methode-thread-stop-est-elle-depreciee">
+Mais pourquoi la méthode Thread.stop est-elle dépréciée ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/bien-fermer-ses-threads-en-java/une-alternative-la-boucle-conditionnelle">
+Une alternative, la boucle conditionnelle
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/bien-fermer-ses-threads-en-java/pour-un-code-bloquant-l-utilisation-des-interruptions">
+Pour un code bloquant, l&#039;utilisation des interruptions
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/bien-fermer-ses-threads-en-java/l-exception-des-inputstream">
+L&#039;exception des InputStream
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/bien-fermer-ses-threads-en-java/une-alternative-la-boucle-conditionnelle">
+<span class="next">Une alternative, la boucle conditionnelle</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Unealternativelaboucleconditionnelle"></a><h2>Une alternative, la boucle conditionnelle</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/bien-fermer-ses-threads-en-java/mais-pourquoi-la-methode-thread-stop-est-elle-depreciee">
+<span class="arrow"></span>
+<span class="next">Mais pourquoi la méthode Thread.stop est-elle dépréciée ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/bien-fermer-ses-threads-en-java/pour-un-code-bloquant-l-utilisation-des-interruptions">
+<span class="next">Pour un code bloquant, l&#039;utilisation des interruptions</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-415253" data-claire-element-id="415253">Maintenant que nous savons comment il ne faut pas faire, voyons comment il faut faire.<br/> Cette première solution que je vais vous présenter suffit dans une grande partie des cas. Elle est simple à mettre en œuvre et ne nécessite que très peu de code.</p><p id="r-415254" data-claire-element-id="415254">Prenons pour l'exemple un <em>thread</em> standard codé pour être arrêté avec <code data-claire-semantic="java">Thread.stop </code> :</p><pre id="r-415255" data-claire-element-id="415255"><code data-claire-semantic="java">class MonThread extends Thread {
+    public Monthread () {
+        // Mon constructeur
+    }
+
+    @Override
+    public void run() {
+        // Initialisation
+        while(true) { // Boucle infinie pour effectuer des traitements.
+            // Traitement à faire
+        }
+    }
+}</code></pre><p id="r-415256" data-claire-element-id="415256">Il suffit juste de changer et de mettre une condition dans la boucle <code data-claire-semantic="java">while(running) </code> avec <em>running</em> un booléen, et le tour est joué.</p><p id="r-415257" data-claire-element-id="415257">Pour changer la valeur de <em>running</em>, deux possibilités :</p><ul id="r-415262" data-claire-element-id="415262"><li id="r-415259" data-claire-element-id="415259"><p id="r-415258" data-claire-element-id="415258">mettre une condition dans la boucle infinie ;</p></li><li id="r-415261" data-claire-element-id="415261"><p id="r-415260" data-claire-element-id="415260">écrire une méthode.</p></li></ul><p id="r-415263" data-claire-element-id="415263">Nous obtenons finalement le code suivant :</p><pre id="r-415264" data-claire-element-id="415264"><code data-claire-semantic="java">class MonThread extends Thread {
+    protected volatile boolean running = true;
+    public Monthread () {
+        // Mon constructeur
+    }
+
+    public arret() { // Méthode 2
+        running = false;
+    }
+
+    @Override
+    public void run() {
+        // Initialisation
+        while(running) { // Boucle infinie pour effectuer des traitements.
+            // Traitement à faire
+            if (/*Condition d'arret*/) // Méthode 1
+                running = false;
+        }
+    }
+}</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/bien-fermer-ses-threads-en-java">Bien fermer ses threads en Java</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/bien-fermer-ses-threads-en-java/mais-pourquoi-la-methode-thread-stop-est-elle-depreciee">
+Mais pourquoi la méthode Thread.stop est-elle dépréciée ?
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/bien-fermer-ses-threads-en-java/une-alternative-la-boucle-conditionnelle">
+Une alternative, la boucle conditionnelle
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/bien-fermer-ses-threads-en-java/pour-un-code-bloquant-l-utilisation-des-interruptions">
+Pour un code bloquant, l&#039;utilisation des interruptions
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/bien-fermer-ses-threads-en-java/l-exception-des-inputstream">
+L&#039;exception des InputStream
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/bien-fermer-ses-threads-en-java/mais-pourquoi-la-methode-thread-stop-est-elle-depreciee">
+<span class="arrow"></span>
+<span class="next">Mais pourquoi la méthode Thread.stop est-elle dépréciée ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/bien-fermer-ses-threads-en-java/pour-un-code-bloquant-l-utilisation-des-interruptions">
+<span class="next">Pour un code bloquant, l&#039;utilisation des interruptions</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Pouruncodebloquantl039utilisationdesinterruptions"></a><h2>Pour un code bloquant, l&#039;utilisation des interruptions</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/bien-fermer-ses-threads-en-java/une-alternative-la-boucle-conditionnelle">
+<span class="arrow"></span>
+<span class="next">Une alternative, la boucle conditionnelle</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/bien-fermer-ses-threads-en-java/l-exception-des-inputstream">
+<span class="next">L&#039;exception des InputStream</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-415266" data-claire-element-id="415266">Comme on peut vite s'en rendre compte, l'utilisation du code précédent ne fonctionne que si le <em>thread</em> boucle régulièrement (puisqu'il ne remarquera la demande d'arrêt qu'au commencement de la boucle). Imaginons maintenant que le <em>thread</em> fasse de longues attentes (comme un <code data-claire-semantic="java">Thread.sleep </code> de 5 minutes, un <code data-claire-semantic="java">wait </code>, un <code data-claire-semantic="java">Thread.join </code> ou autre), il faudrait alors attendre que l'attente de ce dernier se termine avant qu'il ne se ferme. Cette option n'est bien entendu pas envisageable, c'est pourquoi il existe un mécanisme d'interruption des <em>threads</em> lorsqu'ils sont en attente. Ce mécanisme répond à l'appel de la méthode <code>Thread.interrupt</code>.</p><p id="r-415267" data-claire-element-id="415267">Passons à la pratique, car son utilisation est quelque peu délicate. Prenons pour exemple le code suivant :</p><pre id="r-415268" data-claire-element-id="415268"><code data-claire-semantic="java">public class MonThread extends Thread {
+
+    @Override
+    public void run() {
+        while(true) {
+            // Traitement
+            try {
+                Thread.sleep(100000); // Pause de 100 secondes
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt(); // Très important de réinterrompre
+                break; // Sortie de la boucle infinie
+            }
+        }
+    }
+
+    public static void main(String[] args)
+            throws InterruptedException {
+        Thread t = new MonThread();
+        t.start();
+        Thread.sleep(1000); // Attente 1 seconde avant d'interrompre
+        t.interrupt();
+    }
+}</code></pre><p id="r-415269" data-claire-element-id="415269">Lorsque le <code data-claire-semantic="java">main </code> appelle <code>t.interrupt();</code>, cela interrompt l'attente du <em>thread</em> « t » et lève l'exception <code>InterruptedException</code>. Il faut donc faire un <em>catch</em> de cette exception et la traiter comme la condition de sortie de boucle (c'est pour ça que l'on fait un <code>break;</code>).</p><aside id="r-415271" data-claire-element-id="415271" data-claire-semantic="information"><p id="r-415270" data-claire-element-id="415270">Même si le <em>thread</em> n'est pas en attente sur le code bloquant au moment de l'interruption, celui-ci va continuer jusqu'à y arriver. Lorsqu'il arrivera au code bloquant, il lèvera alors l'exception.</p></aside><p id="r-415272" data-claire-element-id="415272">Le seul morceau de code qu'il reste à expliquer est maintenant la ligne <code>Thread.currentThread().interrupt();</code>.</p><div id="r-415274" data-claire-element-id="415274" data-claire-semantic="question"><p id="r-415273" data-claire-element-id="415273">Mais pourquoi faut-il que le <em>thread</em> s'interrompe lui-même ?</p></div><p id="r-415275" data-claire-element-id="415275">Encore une fois, prenons un exemple :</p><pre id="r-415276" data-claire-element-id="415276"><code data-claire-semantic="java">public class MonThread extends Thread {
+    private static boolean correct = true;
+
+    @Override
+    public void run() {
+        while (true) {
+            // Traitement 1
+            for (int i = 0; i &lt; 10; i++) { // Boucle imbriquée
+                // Traitement 2
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException ex) {
+                    if (correct)
+                        Thread.currentThread().interrupt(); // réinterruption sur soi-même
+                    System.out.println(&quot;premier Catch&quot;);
+                    break; // Sortir de la boucle &lt;italique&gt;for&lt;/italique&gt;
+                }
+            }
+            try {
+                // Traitement 3
+                System.out.print(&quot;Devant le sleep, &quot;);
+                Thread.sleep(1000);
+                System.out.print(&quot;Derrière le sleep, &quot;);
+            } catch (InterruptedException ex) {
+                if (correct)
+                    Thread.currentThread().interrupt();
+                System.out.println(&quot;Deuxième catch&quot;);
+                break; // Sortir de la boucle &lt;italique&gt;while&lt;/italique&gt;
+            }
+        }
+        System.out.println(&quot;Fermeture du Thread&quot;);
+    }
+
+    private static void test() throws InterruptedException {
+        Thread t = new MonThread();
+        t.start();
+        Thread.sleep(2500);
+        t.interrupt();
+        t.join(); // Attente de la fermeture du &lt;italique&gt;thread&lt;/italique&gt; avant de continuer.
+        System.out.println(&quot;Fin du Thread&quot;); // Le &lt;italique&gt;thread&lt;/italique&gt; a été fermé.
+    }
+
+    public static void main(String[] args)
+            throws InterruptedException {
+        test();
+        correct = false; // Désactive la réinterruption du &lt;italique&gt;thread&lt;/italique&gt; sur lui-même.
+        test();
+    }
+}</code></pre><p id="r-415277" data-claire-element-id="415277">Si vous exécutez ce code, vous verrez qu'il ne s'arrête jamais (il ne sort pas de la boucle infinie), et on obtient la sortie suivante :</p><p id="r-415278" data-claire-element-id="415278"><cite>Citation : Résultat</cite></p><blockquote id="r-415280" data-claire-element-id="415280"><p id="r-415279" data-claire-element-id="415279">Devant le <em>sleep</em>, Derrière le <em>sleep</em>, Premier <em>catch</em><br/> Devant le <em>sleep</em>, Deuxième <em>catch</em><br/> Fermeture du <em>Thread</em><br/> Fin du <em>Thread</em><br/> Devant le <em>sleep</em>, Derrière le <em>sleep</em>, Premier <em>catch</em><br/> Devant le <em>sleep</em>, Derrière le <em>sleep</em>, Devant le <em>sleep</em>, Derrière le <em>sleep</em>, Devant le <em>sleep</em>, Derrière le <em>sleep</em>, ...</p></blockquote><p id="r-415281" data-claire-element-id="415281">On constate que si l'on relance l'interruption, celle-ci est détectée par le <code data-claire-semantic="java">sleep </code> de la boucle infinie englobante, qui donc passe dans le <em>catch</em> pour fermer le <em>thread</em> proprement. En revanche, si l'interruption n'est pas relancée, elle n'atteint pas le <code data-claire-semantic="java">sleep </code> la boucle englobante qui donc continue son exécution normalement.</p><aside id="r-415283" data-claire-element-id="415283" data-claire-semantic="warning"><p id="r-415282" data-claire-element-id="415282">On notera bien que lors de la relance de l'interruption, le « Traitement 3 » est tout de même exécuté. Ce n'est que lors du <code data-claire-semantic="java">Thread.sleep </code> que l'exception est <em>catchée</em>. Ce « Traitement 3 » permet justement d'éventuel changement pour l'intégrité des données avant la fermeture définitive du <em>thread</em>. Si vous ne voulez pas passer par ce traitement, un simple <code data-claire-semantic="java">return; </code> suffit.</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/bien-fermer-ses-threads-en-java">Bien fermer ses threads en Java</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/bien-fermer-ses-threads-en-java/mais-pourquoi-la-methode-thread-stop-est-elle-depreciee">
+Mais pourquoi la méthode Thread.stop est-elle dépréciée ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/bien-fermer-ses-threads-en-java/une-alternative-la-boucle-conditionnelle">
+Une alternative, la boucle conditionnelle
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/bien-fermer-ses-threads-en-java/pour-un-code-bloquant-l-utilisation-des-interruptions">
+Pour un code bloquant, l&#039;utilisation des interruptions
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/bien-fermer-ses-threads-en-java/l-exception-des-inputstream">
+L&#039;exception des InputStream
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/bien-fermer-ses-threads-en-java/une-alternative-la-boucle-conditionnelle">
+<span class="arrow"></span>
+<span class="next">Une alternative, la boucle conditionnelle</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/bien-fermer-ses-threads-en-java/l-exception-des-inputstream">
+<span class="next">L&#039;exception des InputStream</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="L039exceptiondesInputStream"></a><h2>L&#039;exception des InputStream</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/bien-fermer-ses-threads-en-java/pour-un-code-bloquant-l-utilisation-des-interruptions">
+<span class="arrow"></span>
+<span class="next">Pour un code bloquant, l&#039;utilisation des interruptions</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-415285" data-claire-element-id="415285">Bien sûr, tout ne pouvait être si beau et si simple, il fallait que ça ne fonctionne pas quelque part. C'est sur les lectures de flux que nous allons avoir un problème. Si votre <em>thread</em> est bloqué sur une ES, l'interruption ne fonctionnera pas. Java a prévu, pour pallier ce problème, une autre exception : <code data-claire-semantic="java">InterruptedIOException </code> qui hérite de <code data-claire-semantic="java">IOException </code>. Malheureusement, cette exception n'est pas encore bien gérée et ne fonctionne pas sur toutes les ES.</p><aside id="r-415287" data-claire-element-id="415287" data-claire-semantic="warning"><p id="r-415286" data-claire-element-id="415286">Ma source sur la mauvaise gestion des <code data-claire-semantic="java">InterruptedIOException </code> date un peu, mais je n'ai pas trouvé d'informations plus récentes. Si quelqu'un a d'autres informations sur le sujet, qu'il n'hésite pas à m'envoyer un MP.</p></aside><p id="r-415288" data-claire-element-id="415288">Le meilleur (seul) moyen pour sortir de cette attente devient donc la fermeture du flux bloquant (j'admets que ce n'est pas génial). Heureusement, la méthode <code data-claire-semantic="java">Thread.interrupt </code> n'est pas <code data-claire-semantic="java">final </code>, il est donc possible de surcharger la méthode pour fermer le flux dans l'interruption.</p><p id="r-415289" data-claire-element-id="415289">Voici un code en exemple :</p><pre id="r-415290" data-claire-element-id="415290"><code data-claire-semantic="java">import java.io.IOException;
+import java.io.InputStream;
+import java.io.InterruptedIOException;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+public class MonThread extends Thread {
+    private InputStream in;
+
+    public MonThread(InputStream in) {
+        this.in = in;
+    }
+
+    @Override
+    public void interrupt() {
+        super.interrupt();
+        try {
+            in.close(); // Fermeture du flux si l'interruption n'a pas fonctionné.
+        } catch (IOException e) {}
+    }
+
+    @Override
+    public void run() {
+        try {
+            System.out.println(&quot;Avant la lecture&quot;);
+            in.read();
+            System.out.println(&quot;Après la lecture&quot;);
+        } catch (InterruptedIOException e) { // Si l'interruption a été gérée correctement.
+            Thread.currentThread().interrupt();
+            System.out.println(&quot;Interrompu via InterruptedIOException&quot;);
+        } catch (IOException e) {
+            if (!isInterrupted()) { // Si l'exception ne vient pas d'une interruption.
+                e.printStackTrace();
+            } else { // &lt;italique&gt;Thread&lt;/italique&gt; interrompu mais &lt;italique&gt;InterruptedIOException&lt;/italique&gt; n'était pas gérée pour ce type de flux.
+                System.out.println(&quot;Interrompu&quot;);
+            }
+        }
+    }
+
+    public static void test1() // Test avec un socket
+            throws IOException, InterruptedException {
+        ServerSocket ss = new ServerSocket(4444); // Pour accepter la connexion &lt;italique&gt;socket&lt;/italique&gt;.
+        Socket socket = new Socket(&quot;localhost&quot;, 4444);
+        Thread t = new MonThread(socket.getInputStream());
+        t.start();
+        Thread.sleep(1000);
+        t.interrupt();
+        t.join();
+    }
+
+    public static void test2() // Test avec un &lt;italique&gt;PipedOutputStream&lt;/italique&gt;
+            throws IOException, InterruptedException { 
+        PipedInputStream in = new PipedInputStream(new PipedOutputStream());
+        Thread t = new MonThread(in);
+        t.start();
+        Thread.sleep(1000);
+        t.interrupt();
+        t.join();
+    }
+
+    public static void main(String[] args) throws IOException, InterruptedException {
+        test1();
+        test2();
+    }
+}</code></pre><p id="r-415291" data-claire-element-id="415291"><cite>Citation : Résultat</cite></p><blockquote id="r-415293" data-claire-element-id="415293"><p id="r-415292" data-claire-element-id="415292">Avant la lecture<br/> Interrompu<br/> Avant la lecture<br/> Interrompu via <em>InterruptedIOException</em></p></blockquote><aside id="r-415295" data-claire-element-id="415295" data-claire-semantic="information"><p id="r-415294" data-claire-element-id="415294"><code data-claire-semantic="java">Thread.isInterrupted </code> permet de savoir si le <em>thread</em> a été interrompu ou non. Ainsi, même si l'exception ne s'est pas levée parce qu'il n'y a pas de code bloquant, on sait si une interruption a été appelée.</p></aside><p id="r-415296" data-claire-element-id="415296">Étant donné que <code data-claire-semantic="java">InterruptedIOException </code> n'est pas gérée pour tous les flux, il faut s'assurer de la fermeture du <em>thread</em> avec les deux méthodes présentées. Avec les deux tests, on voit d'ailleurs que, contrairement au <code data-claire-semantic="java">pipedOutputStream </code>, les <code data-claire-semantic="java">InterruptedIOException </code> ne sont pas gérées pour les <em>sockets</em>.</p><p id="r-415297" data-claire-element-id="415297">Et voilà, j'espère que vous n'aurez plus de problèmes pour arrêter vos <em>threads</em> maintenant. En espérant vous avoir aidés, je vous souhaite une bonne continuation dans votre apprentissage du Java.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/bien-fermer-ses-threads-en-java">Bien fermer ses threads en Java</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/bien-fermer-ses-threads-en-java/mais-pourquoi-la-methode-thread-stop-est-elle-depreciee">
+Mais pourquoi la méthode Thread.stop est-elle dépréciée ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/bien-fermer-ses-threads-en-java/une-alternative-la-boucle-conditionnelle">
+Une alternative, la boucle conditionnelle
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/bien-fermer-ses-threads-en-java/pour-un-code-bloquant-l-utilisation-des-interruptions">
+Pour un code bloquant, l&#039;utilisation des interruptions
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/bien-fermer-ses-threads-en-java/l-exception-des-inputstream">
+L&#039;exception des InputStream
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/bien-fermer-ses-threads-en-java/pour-un-code-bloquant-l-utilisation-des-interruptions">
+<span class="arrow"></span>
+<span class="next">Pour un code bloquant, l&#039;utilisation des interruptions</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/bien-fermer-ses-threads-en-java.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 08:38:52 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/bien-fermer-ses-threads-en-java.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:33:02 GMT -->
+</html>

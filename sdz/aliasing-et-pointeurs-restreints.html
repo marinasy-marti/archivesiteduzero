@@ -1,0 +1,440 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/aliasing-et-pointeurs-restreints.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 19:54:45 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/aliasing-et-pointeurs-restreints.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 03:39:51 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Aliasing et pointeurs restreints</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/aliasing-et-pointeurs-restreints.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Aliasing et pointeurs restreints</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Aliasingetpointeursrestreints">Aliasing et pointeurs restreints</a><br/><a href="#Unehistoired039aliasing">Une histoire d&#039;aliasing</a><br/><a href="#Largledestrictaliasing">La règle de strict aliasing</a><br/><a href="#Lespointeursrestreints">Les pointeurs restreints</a><br/></div>
+<a name="Aliasingetpointeursrestreints"></a><h2>Aliasing et pointeurs restreints</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/aliasing-et-pointeurs-restreints/une-histoire-d-aliasing">
+<span class="next">Une histoire d&#039;aliasing</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-560599" data-claire-element-id="560599">Depuis ses débuts, le langage C pose un problème assez gênant aux compilateurs désireux d'optimiser le code, dû à son utilisation massive des pointeurs : le risque d'<em>aliasing</em> (ou « risque de chevauchement »).</p><p id="r-560600" data-claire-element-id="560600">Les normes successives ont tenté de l'atténuer à l'aide de la règle de strict <em>aliasing</em> (C89) et des pointeurs restreints (C99) ; deux concepts qui vont retenir notre attention dans ce tutoriel.</p>
+</div><a name="Unehistoired039aliasing"></a><h2>Une histoire d&#039;aliasing</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/aliasing-et-pointeurs-restreints/la-regle-de-strict-aliasing">
+<span class="next">La règle de strict aliasing</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-560601" data-claire-element-id="560601">Dans un premier temps, nous allons découvrir cette notion d'<em>aliasing</em> et voir en quoi elle complique le travail du compilateur.</p><h2 id="r-rappels-9" data-claire-element-id="560614">Rappels</h2><h3 id="r-la-notion-d-objet" data-claire-element-id="560606">La notion d'objet</h3><p id="r-560602" data-claire-element-id="560602"><cite>Citation : C11 (n1570), § 3.15 Terms, definitions, and symbols, al. 1, p. 6</cite></p><blockquote id="r-560604" data-claire-element-id="560604"><p id="r-560603" data-claire-element-id="560603">object: region of data storage in the execution environment, the contents of which can represent values.</p></blockquote><p id="r-560605" data-claire-element-id="560605">Le terme d'<strong>objet</strong>, qui sera au centre de nos discussions futures, désigne simplement une zone mémoire pouvant contenir des données.</p><h3 id="r-la-notion-de-lvalue" data-claire-element-id="560613">La notion de lvalue</h3><p id="r-560607" data-claire-element-id="560607"><cite>Citation : C11 (n1570), § 6.3.2.1 Lvalues, arrays, and function designators, al. 1, p. 54</cite></p><blockquote id="r-560609" data-claire-element-id="560609"><p id="r-560608" data-claire-element-id="560608">An lvalue is an expression that [...] designates an object [...].</p></blockquote><p id="r-560610" data-claire-element-id="560610">Une <strong>lvalue</strong> est une expression qui désigne un objet (que ce soit pour un accès ou une modification).</p><pre id="r-560611" data-claire-element-id="560611"><code data-claire-semantic="c">int i;
+int j;
+int *p;
+
+/*
+ * `p' est une lvalue car elle modifie un objet.
+ * `&amp;i' n'est pas une lvalue.
+ */
+p = &amp;i;
+
+/* `i' est une lvalue car elle modifie un objet. */
+i = 10; 
+
+/*
+ * `j' est une lvalue car elle modifie un objet.
+ * `i' est une lvalue car elle accède à un objet.
+ */
+j = i;
+
+/* `*p' est une lvalue car elle modifie un objet. */
+*p = 30;</code></pre><p id="r-560612" data-claire-element-id="560612">Gardez bien ces deux notions à l'esprit ; nous allons en avoir besoin.</p><h2 id="r-presentation-de-la-notion-d-aliasing" data-claire-element-id="560627">Présentation de la notion d'aliasing</h2><p id="r-560615" data-claire-element-id="560615">En programmation, un cas d'<strong>aliasing</strong> se produit lorsque plusieurs <em>lvalues</em> désignent le même objet ; celles-ci sont alors qualifiées d'<strong>alias</strong>.</p><aside id="r-560617" data-claire-element-id="560617" data-claire-semantic="information"><p id="r-560616" data-claire-element-id="560616">Certaines de ces situations dépassent le cadre du présent tutoriel. Pour notre part, nous nous intéresserons uniquement aux alias résultant de l'utilisation de pointeurs, car ce sont ceux qui engendrent les difficultés les plus importantes.</p></aside><p id="r-560618" data-claire-element-id="560618">Par exemple, dans le code source ci-dessous, <code data-claire-semantic="c">*p</code> est un alias de <code data-claire-semantic="c">n</code>, c'est-à-dire que toute modification de <code data-claire-semantic="c">*p</code> aura une répercussion sur la valeur de <code data-claire-semantic="c">n</code> et <em>vice versa</em>.</p><pre id="r-560619" data-claire-element-id="560619"><code data-claire-semantic="c">int n;
+int *p = &amp;n;</code></pre><p id="r-560620" data-claire-element-id="560620">Cette définition peut paraître simple, mais elle comporte aussi sa part de subtilités.</p><pre id="r-560621" data-claire-element-id="560621"><code data-claire-semantic="c">int a[2][10];
+
+int *p = a[0];
+int *q = a[1];</code></pre><p id="r-560622" data-claire-element-id="560622">On serait ici tenté de dire que les <em>lvalues</em><code data-claire-semantic="c">*p</code> et <code data-claire-semantic="c">*q</code> accèdent au même objet (le tableau <code data-claire-semantic="c">a</code>), pourtant il n'en est rien. En effet, il ne faut pas perdre de vue que la notion d'objet est étrangère à celle de type. Dès lors, un même objet peut être subdivisé en deux autres, indépendants l'un de l'autre. <code data-claire-semantic="c">*p</code> et <code data-claire-semantic="c">*q</code> ne sont donc pas des alias.</p><p id="r-560623" data-claire-element-id="560623">De la même manière, dans le code ci-dessous, <code data-claire-semantic="c">*p</code>, <code data-claire-semantic="c">*q</code>, <code data-claire-semantic="c">*r</code> et <code data-claire-semantic="c">*s</code> ne le sont pas non plus.</p><pre id="r-560624" data-claire-element-id="560624"><code data-claire-semantic="c">char a[4];
+
+char *p = a + 0;
+char *q = a + 1;
+char *r = a + 2;
+char *s = a + 3;</code></pre><p id="r-560625" data-claire-element-id="560625">Cette division fonctionne jusqu'au plus petit objet possible (à savoir un <em>bit</em> dans le cas des champs de <em>bits</em>). Ainsi, <code data-claire-semantic="c">a.i</code> n'est pas un alias de <code data-claire-semantic="c">a.j</code>.</p><pre id="r-560626" data-claire-element-id="560626"><code data-claire-semantic="c">struct s {
+	unsigned int i : 1;
+	unsigned int j : 1;
+};
+
+struct s a;</code></pre><h2 id="r-problematique-d-optimisation-du-compilateur" data-claire-element-id="560648">Problématique d'optimisation du compilateur</h2><p id="r-560628" data-claire-element-id="560628">Si les relations d'<em>aliasing</em> qui existent entre les différentes <em>lvalues</em> du programme ne sont pas préoccupantes pour le programmeur, cela l'est plus pour le compilateur, qui peut être gêné dans son travail d'optimisation.</p><h3 id="r-problemes-causes-par-les-alias-au-compilateur" data-claire-element-id="560634">Problèmes causés par les alias au compilateur</h3><p id="r-560629" data-claire-element-id="560629">Après avoir vérifié que le code source est syntaxiquement correct, le compilateur entre dans une seconde phase : celle de l'<strong>optimisation de code</strong>. Cette étape consiste simplement en la modification du code dans le but que l'exécution du programme se déroule le plus rapidement possible. Pour cela, il va prendre en compte certains éléments de l'implémentation, comme les différentes instructions dont dispose le processeur. Pour le moment, nous nous concentrerons uniquement sur une des optimisations les plus basiques : la <strong>réorganisation du code</strong>. Un exemple vaudra mieux qu'un long discours.</p><pre id="r-560630" data-claire-element-id="560630"><code data-claire-semantic="c">#include &lt;stdio.h&gt;
+
+void
+f(void)
+{
+	const int n = 5;
+	printf(&quot;%d\n&quot;, n);
+}</code></pre><p id="r-560631" data-claire-element-id="560631">Ici, force est de constater que l'instruction de la ligne 6 est inutile, puisque la variable <code data-claire-semantic="c">n</code> n'est pas modifiée. Aussi le compilateur pourra-t-il, par exemple, remplacer le code d'appel de cette fonction par un simple <code data-claire-semantic="c">printf(&quot;%d &quot;, 5)</code>.</p><p id="r-560632" data-claire-element-id="560632">Le problème dans tout cela, c'est que l'<em>aliasing</em> complique cette réorganisation. En effet, dans le code ci-dessous, on peut se dire à première vue que le compilateur pourrait supprimer la ligne 8 et remplacer l'instruction de la ligne 10. Or, si les <em>lvalues</em><code data-claire-semantic="c">*p</code> et <code data-claire-semantic="c">n</code> sont des alias, le résultat attendu est complètement différent (<code data-claire-semantic="c">10</code> en l'occurrence). Par conséquent, compte tenu du risque d'<em>aliasing</em>, le compilateur est obligé de laisser ces instructions telles quelles (ce qui peut, à long terme, ralentir l'exécution du programme).</p><pre id="r-560633" data-claire-element-id="560633"><code data-claire-semantic="c">#include &lt;stdio.h&gt;
+
+static int n;
+
+void
+f(int *p)
+{
+	n = 5;
+	*p = 10;
+	printf(&quot;%d\n&quot;, n);
+}</code></pre><h3 id="r-analyse-d-alias-par-le-compilateur" data-claire-element-id="560647">Analyse d'alias par le compilateur</h3><p id="r-560635" data-claire-element-id="560635">L'<strong>analyse d'alias</strong>, c'est-à-dire la recherche des situations d'<em>aliasing</em> dans un programme donné, est donc nécessaire pour le compilateur, afin de pouvoir déterminer quels cas peuvent permettre telle ou telle optimisation.</p><p id="r-560636" data-claire-element-id="560636">Peu importe le résultat de cette analyse (alias ou pas) : dans les deux cas, une optimisation pourra être effectuée. La seule situation problématique se produit lorsqu'on ne peut pas déterminer, lors de la compilation, les relations d'<em>aliasing</em> qui existent entre deux <em>lvalues</em>. Le compilateur est alors obligé de considérer le pire des cas : on parle d'<strong>aliasing pessimiste</strong>.</p><pre id="r-560637" data-claire-element-id="560637"><code data-claire-semantic="c">*p = 4;
+*q = 6;
+n = *p + *q;</code></pre><p id="r-560638" data-claire-element-id="560638">Avec uniquement ces informations, le compilateur se retrouve face à trois cas distincts (en supposant que <code data-claire-semantic="c">*p</code>, <code data-claire-semantic="c">*q</code> et <code data-claire-semantic="c">n</code> sont de type <code data-claire-semantic="c">int</code>) :</p><ul id="r-560645" data-claire-element-id="560645"><li id="r-560640" data-claire-element-id="560640"><p id="r-560639" data-claire-element-id="560639">si <code data-claire-semantic="c">*p</code> et <code data-claire-semantic="c">*q</code> ne sont pas des alias, alors <code data-claire-semantic="c">n = *p + *q</code> pourra être remplacé par <code data-claire-semantic="c">n = 10</code> ;</p></li><li id="r-560642" data-claire-element-id="560642"><p id="r-560641" data-claire-element-id="560641">si <code data-claire-semantic="c">*p</code> et <code data-claire-semantic="c">*q</code> sont des alias, alors <code data-claire-semantic="c">n = *p + *q</code> pourra être remplacé par <code data-claire-semantic="c">n = 12</code> ;</p></li><li id="r-560644" data-claire-element-id="560644"><p id="r-560643" data-claire-element-id="560643">si il est impossible de déterminer les relations d'<em>aliasing</em> qui existent entre <code data-claire-semantic="c">*p</code> et <code data-claire-semantic="c">*q</code>, alors le code ne pourra pas être modifié.</p></li></ul><p id="r-560646" data-claire-element-id="560646">Le compilateur se doit donc d'effectuer une analyse d'alias pertinente pour sélectionner une de ces affirmations (et, si possible, une des deux premières). Dans cette optique, beaucoup algorithmes ont été développés. Néanmoins, en pratique, la plupart sont trop lourds pour être intégrés aux compilateurs courants, si bien que ces derniers se contentent généralement d'une analyse superficielle (ce qui peut se révéler pénalisant pour les performances).</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/aliasing-et-pointeurs-restreints">Aliasing et pointeurs restreints</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/aliasing-et-pointeurs-restreints/une-histoire-d-aliasing">
+Une histoire d&#039;aliasing
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/aliasing-et-pointeurs-restreints/la-regle-de-strict-aliasing">
+La règle de strict aliasing
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/aliasing-et-pointeurs-restreints/les-pointeurs-restreints-1">
+Les pointeurs restreints
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/aliasing-et-pointeurs-restreints/la-regle-de-strict-aliasing">
+<span class="next">La règle de strict aliasing</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Largledestrictaliasing"></a><h2>La règle de strict aliasing</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/aliasing-et-pointeurs-restreints/une-histoire-d-aliasing">
+<span class="arrow"></span>
+<span class="next">Une histoire d&#039;aliasing</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/aliasing-et-pointeurs-restreints/les-pointeurs-restreints-1">
+<span class="next">Les pointeurs restreints</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-560650" data-claire-element-id="560650">Nous avons donc vu en quoi il était important pour le travail d'optimisation du compilateur de connaître les relations d'<em>aliasing</em> qui existent entre les <em>lvalues</em> du programme. Cette préoccupation a été au centre de beaucoup de critiques du langage C à ses débuts, qui lui reprochaient son imprécision dans l'analyse des pointeurs. Aussi la norme aide-t-elle l'analyse d'alias avec un premier concept : la <strong>règle de strict aliasing</strong>.</p><h2 id="r-normalisation-de-la-regle-de-strict-aliasing" data-claire-element-id="560702">Normalisation de la règle de strict aliasing</h2><p id="r-560651" data-claire-element-id="560651">Nous allons maintenant faire un petit tour d'horizon de la définition et de la normalisation de cette règle en suivant un ordre chronologique (de son inauguration dans la norme C89 à sa précision dans la norme C99).</p><h3 id="r-la-norme-c89" data-claire-element-id="560688">La norme C89</h3><p id="r-560652" data-claire-element-id="560652">C'est en 1989 que le comité de l'ANSI décida de l'instaurer, dans le but de réduire le nombre de cas d'<em>aliasing</em> pessimistes. Grâce à cela, le compilateur a pu affiner son analyse d'alias en présumant des <em>lvalues</em> comme n'étant pas des alias en fonction de leur type et de celui de l'objet qu'elles désignent.</p><aside id="r-560654" data-claire-element-id="560654" data-claire-semantic="information"><p id="r-560653" data-claire-element-id="560653">Rappelons qu'un objet n'a techniquement pas de type (ce n'est qu'une zone mémoire pouvant contenir des données). Cependant, afin de faciliter l'analyse d'alias, la norme leur en a fixé fictivement un.</p></aside><p id="r-560655" data-claire-element-id="560655">Voyons maintenant l'énoncé de la règle.</p><p id="r-560656" data-claire-element-id="560656"><cite>Citation : C89 (X3J11/88-090), § 3.3 Expressions, al. 6</cite></p><blockquote id="r-560671" data-claire-element-id="560671"><p id="r-560657" data-claire-element-id="560657">An object shall have its stored value accessed only by an lvalue that has one of the following types:</p><ul id="r-560670" data-claire-element-id="560670"><li id="r-560659" data-claire-element-id="560659"><p id="r-560658" data-claire-element-id="560658">the declared type of the object,</p></li><li id="r-560661" data-claire-element-id="560661"><p id="r-560660" data-claire-element-id="560660">a qualified version of the declared type of the object,</p></li><li id="r-560663" data-claire-element-id="560663"><p id="r-560662" data-claire-element-id="560662">a type that is the signed or unsigned type corresponding to the declared type of the object,</p></li><li id="r-560665" data-claire-element-id="560665"><p id="r-560664" data-claire-element-id="560664">a type that is the signed or unsigned type corresponding to a qualified version of the declared type of the object,</p></li><li id="r-560667" data-claire-element-id="560667"><p id="r-560666" data-claire-element-id="560666">an aggregate or union type that includes one of the aforementioned types among its members (including, recursively, a member of a subaggregate or contained union), or</p></li><li id="r-560669" data-claire-element-id="560669"><p id="r-560668" data-claire-element-id="560668">a character type.</p></li></ul></blockquote><p id="r-560672" data-claire-element-id="560672">Un objet ne peut être accédé que par une <em>lvalue</em> qui a un des types suivants :</p><ul id="r-560685" data-claire-element-id="560685"><li id="r-560674" data-claire-element-id="560674"><p id="r-560673" data-claire-element-id="560673">un type identique au type déclaré de l'objet ;</p></li><li id="r-560676" data-claire-element-id="560676"><p id="r-560675" data-claire-element-id="560675">une version qualifiée du type déclaré de l'objet ;</p></li><li id="r-560678" data-claire-element-id="560678"><p id="r-560677" data-claire-element-id="560677">un type qui est le type signé ou non signé correspondant au type déclaré de l'objet ;</p></li><li id="r-560680" data-claire-element-id="560680"><p id="r-560679" data-claire-element-id="560679">un type qui est le type signé ou non signé correspondant à une version qualifiée du type déclaré de l'objet ;</p></li><li id="r-560682" data-claire-element-id="560682"><p id="r-560681" data-claire-element-id="560681">un agrégat ou une union qui inclut un des types mentionnés ci-dessus parmi ses membres (incluant, de manière récursive, les sous-agrégats ou les sous-unions) ;</p></li><li id="r-560684" data-claire-element-id="560684"><p id="r-560683" data-claire-element-id="560683">un type caractère.</p></li></ul><p id="r-560686" data-claire-element-id="560686">La norme se base sur le <strong>type déclaré</strong> de l'objet, qui lui est attribué lors de sa définition. Par exemple, dans le code ci-dessous, deux objets sont créés, ayant respectivement comme type déclaré le type <code data-claire-semantic="c">int</code> et le type <code data-claire-semantic="c">double</code>.</p><pre id="r-560687" data-claire-element-id="560687"><code data-claire-semantic="c">int n;
+double x;</code></pre><h3 id="r-la-norme-c99" data-claire-element-id="560701">La norme C99</h3><p id="r-560689" data-claire-element-id="560689">La norme C99 a peaufiné cette règle en la rapportant, non plus au type déclaré, mais au <strong>type effectif</strong> de l'objet, une nouvelle notion qui permet de mieux gérer le cas dans lequel l'objet ne dispose pas de de type déclaré. Cela vise essentiellement les objets alloués dynamiquement, puisque ces derniers ne sont pas créés lors d'une définition, mais lors d'un appel à une fonction d'allocation.</p><p id="r-560690" data-claire-element-id="560690"><cite>Citation : C99 (n1256), § 6.5 Expressions, al. 6, pp. 67-68</cite></p><blockquote id="r-560692" data-claire-element-id="560692"><p id="r-560691" data-claire-element-id="560691">The effective type of an object for an access to its stored value is the declared type of the object, if any. If a value is stored into an object having no declared type through an lvalue having a type that is not a character type, then the type of the lvalue becomes the effective type of the object for that access and for subsequent accesses that do not modify the stored value. If a value is copied into an object having no declared type using memcpy or memmove, or is copied as an array of character type, then the effective type of the modified object for that access and for subsequent accesses that do not modify the value is the effective type of the object from which the value is copied, if it has one. For all other accesses to an object having no declared type, the effective type of the object is simply the type of the lvalue used for the access.</p></blockquote><p id="r-560693" data-claire-element-id="560693">Dans le cas où un objet n'a pas de type déclaré, son type effectif est :</p><ul id="r-560698" data-claire-element-id="560698"><li id="r-560695" data-claire-element-id="560695"><p id="r-560694" data-claire-element-id="560694">celui de la <em>lvalue</em> le désignant (accès ou modification) ;</p></li><li id="r-560697" data-claire-element-id="560697"><p id="r-560696" data-claire-element-id="560696">celui de l'objet dont le contenu y a été copié à l'aide de <code data-claire-semantic="c">memcpy</code> ou <code data-claire-semantic="c">memmove</code>.</p></li></ul><pre id="r-560699" data-claire-element-id="560699"><code data-claire-semantic="c">#include &lt;stdlib.h&gt;
+
+int *p = malloc(sizeof *p);
+
+/* 
+ * Le type de l'objet désigné par la lvalue `*p' prend le type
+ * `int'. 
+ */
+*p = 10;
+
+/* 
+ * Le type de l'objet désigné par la lvalue `*p' prend le type
+ * `unsigned int'. 
+ */
+*(unsigned int *)p = 20U;</code></pre><p id="r-560700" data-claire-element-id="560700">Pour conclure, notons que la norme C11 n'a pas changé l'énoncé de la règle.</p><h2 id="r-illustrations-de-la-regle-de-strict-aliasing" data-claire-element-id="560714">Illustrations de la règle de strict aliasing</h2><p id="r-560703" data-claire-element-id="560703">Vous devriez maintenant être au point avec la définition et la normalisation de la règle de strict <em>aliasing</em>. Pour illustrer un peu nos propos, nous étudierons tout d'abord quelques exemples et contre-exemples, puis nous verrons quel intérêt le compilateur peut tirer de tout cela.</p><h3 id="r-exemples-30" data-claire-element-id="560709">Exemples</h3><p id="r-560704" data-claire-element-id="560704">La question sera de savoir, pour chacune des lignes de code ci-dessous, si l'utilisation de l'alias créé est autorisé.</p><pre id="r-560705" data-claire-element-id="560705"><code data-claire-semantic="c">unsigned int n;
+
+/* 
+ * Correct, car la lvalue `*p' a un type qui est une version 
+ * qualifiée du type effectif de l'objet. 
+ */
+const unsigned int *p = &amp;n;
+
+/* 
+ * Incorrect, car la lvalue `*q' a un type qui n'est ni une version 
+ * qualifiée du type déclaré de l'objet, ni le type signé ou non 
+ * signé correspondant, ni un type caractère. 
+ */
+long int *q = (long int *)&amp;n;
+
+/* 
+ * Correct, car la lvalue `*r' a un type qui est le type signé 
+ * correspondant à une version qualifiée du type effectif de l'objet.
+ */
+const int *r = &amp;n;
+
+/* Correct, car la lvalue `*s' a un type caractère. */
+signed char *s = (signed char *)&amp;n;</code></pre><aside id="r-560708" data-claire-element-id="560708" data-claire-semantic="information"><p id="r-560706" data-claire-element-id="560706">Mentionnons que toutes ces règles s'appliquent uniquement lors du déférencement, ce qui autorise donc en soi l'affectation (bien que, naturellement, le champ d'action du pointeur soit par la suite réduit puisqu'il sera interdit de le déférencer).</p><pre id="r-560707" data-claire-element-id="560707"><code data-claire-semantic="c">int n;
+
+/* Correct : `p' n'est pas déférencé. */
+short int *p = (short int *)&amp;n; 
+
+/* Incorrect : `p' est déférencé. */
+*p = 10;</code></pre></aside><h3 id="r-benefices-pour-le-compilateur" data-claire-element-id="560713">Bénéfices pour le compilateur</h3><p id="r-560710" data-claire-element-id="560710">Pour le compilateur, le plus intéressant reste la conséquence de cette règle, c'est-à-dire qu'en dehors des accès autorisés mentionnés ci-dessus, deux <em>lvalues</em> ne désigneront jamais un même objet.</p><pre id="r-560711" data-claire-element-id="560711"><code data-claire-semantic="c">int n;
+long int *p = (long int *)&amp;n;
+
+*p = 20L;</code></pre><p id="r-560712" data-claire-element-id="560712">Dans cet exemple, la règle de strict <em>aliasing</em> est brisée car <code data-claire-semantic="c">*p</code> a un type qui n'est ni une version qualifiée du type déclaré de l'objet, ni le type signé ou non signé correspondant, ni un type caractère. Les <em>lvalues</em><code data-claire-semantic="c">*p</code> et <code data-claire-semantic="c">n</code> ne seront donc pas considérées comme des alias lors de la phase d'optimisation (bien qu'en vérité elles le soient). Voilà qui facilite bien l'analyse d'alias !</p><h2 id="r-parametrage-du-compilateur-gcc" data-claire-element-id="560723">Paramétrage du compilateur <code data-claire-semantic="c">gcc</code></h2><p id="r-560715" data-claire-element-id="560715">Avec le compilateur gcc, la règle de strict <em>aliasing</em> n'est activée par défaut que dans les niveaux d'optimisation. Toutefois, il est possible pour le programmeur de spécifier explicitement si il veut que son code subisse les vérifications associées, à l'aide des options <code data-claire-semantic="console">-fstrict-aliasing</code> (respect strict de la règle) et <code data-claire-semantic="console">-fno-strict-aliasing</code> (tolérance de comportements non conformes à la règle).</p><p id="r-560716" data-claire-element-id="560716">Si l'utilisation pertinente de l'option <code data-claire-semantic="console">-fno-strict-aliasing</code> peut vous paraître dangereuse, puisque le code n'est alors plus conforme à la norme, l'histoire retient que de grands noms l'ont soutenu (le noyau Linux pour ne citer que lui).</p><p id="r-560717" data-claire-element-id="560717"><code data-claire-semantic="c">gcc</code> dispose notamment d'un avertissement permettant de prévenir les situation non conformes à la règle de strict <em>aliasing</em>.</p><pre id="r-560718" data-claire-element-id="560718"><code data-claire-semantic="console">warning: dereferencing type-punned pointer will break strict-aliasing rules</code></pre><p id="r-560719" data-claire-element-id="560719">L'option permettant de gérer de tels affichages est <code data-claire-semantic="console">-Wstrict-aliasing[=n]</code>, avec <code data-claire-semantic="console">n</code> compris entre 1 et 3 (niveau 3 par défaut). Plus <code data-claire-semantic="c">n</code> est petit, plus <code data-claire-semantic="c">gcc</code> fera de vérifications (par exemple, avec <code data-claire-semantic="c">n = 1</code> ou <code data-claire-semantic="c">n = 2</code>, l'avertissement peut se déclencher même si le pointeur n'est pas déférencé). De même, le pourcentage de faux positifs et de faux négatifs dépend du niveau utilisé.</p><p id="r-560720" data-claire-element-id="560720">Par exemple, avec <code data-claire-semantic="c">gcc</code> 4.4.5, l'avertissement ne se déclare qu'aux niveaux 1 et 2 pour ce code, au niveau de l'instruction d'affectation (ligne 5).</p><pre id="r-560721" data-claire-element-id="560721"><code data-claire-semantic="c">int 
+main(void)
+{
+        unsigned int n;
+        long int *p = (long int *)&amp;n;
+	*p = 10L;
+	return 0;
+}</code></pre><p id="r-560722" data-claire-element-id="560722">Si la règle de strict <em>aliasing</em> constitue une aide réelle à l'analyse d'alias des compilateurs, il reste encore le cas des alias de type identique (ou ne différant que par le signe et/ou par le qualificateur, ainsi que celui des types caractères). Il est évident qu'on ne peut pas interdire cette pratique, qui signifierait l'abolition des pointeurs ! Mais c'est à ce moment-là que le programmeur entre en scène avec l'<em>aliasing</em> spécifié, thème qui fera l'objet de notre prochaine sous-partie.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/aliasing-et-pointeurs-restreints">Aliasing et pointeurs restreints</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/aliasing-et-pointeurs-restreints/une-histoire-d-aliasing">
+Une histoire d&#039;aliasing
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/aliasing-et-pointeurs-restreints/la-regle-de-strict-aliasing">
+La règle de strict aliasing
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/aliasing-et-pointeurs-restreints/les-pointeurs-restreints-1">
+Les pointeurs restreints
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/aliasing-et-pointeurs-restreints/une-histoire-d-aliasing">
+<span class="arrow"></span>
+<span class="next">Une histoire d&#039;aliasing</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/aliasing-et-pointeurs-restreints/les-pointeurs-restreints-1">
+<span class="next">Les pointeurs restreints</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lespointeursrestreints"></a><h2>Les pointeurs restreints</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/aliasing-et-pointeurs-restreints/la-regle-de-strict-aliasing">
+<span class="arrow"></span>
+<span class="next">La règle de strict aliasing</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-560725" data-claire-element-id="560725">Malgré cette règle, il reste donc encore quelques situations d'<em>aliasing</em> compromettantes. Comme la norme et les compilateurs ne peuvent plus faire d'hypothèses supplémentaires, c'est le programmeur lui-même qui est sollicité.</p><h2 id="r-introduction-aux-pointeurs-restreints" data-claire-element-id="560741">Introduction aux pointeurs restreints</h2><p id="r-560726" data-claire-element-id="560726">L'<em>aliasing</em> spécifié par le développeur est implémenté dans la norme C99 sous la forme de la notion de <strong>pointeur restreint</strong>. L'idée est de permettre la mise en place d'un droit exclusif d'accès sur un objet référencé par un pointeur qualifié de restreint. Ce droit ne peut être transmis qu'à des <em>lvalues</em> dérivées de ce pointeur, c'est-à-dire qui ont obtenu l'adresse de l'objet <em>via</em> celui-ci.</p><h3 id="r-le-qualificateur-restrict" data-claire-element-id="560729">Le qualificateur <code data-claire-semantic="c">restrict</code></h3><p id="r-560727" data-claire-element-id="560727">Pour déclarer un pointeur restreint, la norme C99 a mis à la disposition des programmeurs un nouveau qualificateur : <code data-claire-semantic="c">restrict</code>. Il est applicable uniquement aux pointeurs sur objet ; il doit donc être placé, lors de la déclaration, après le symbole <code data-claire-semantic="c">*</code>.</p><pre id="r-560728" data-claire-element-id="560728"><code data-claire-semantic="c">/* `p' est un pointeur restreint sur `int'. */
+int * restrict p;
+
+/* `q' est un pointeur sur pointeur restreint sur `int'. */
+int * restrict *q:
+
+/* `r' est un pointeur restreint sur pointeur sur `int'. */
+int ** restrict r;</code></pre><h3 id="r-definition-79" data-claire-element-id="560736">Définition</h3><p id="r-560730" data-claire-element-id="560730">Le passage à propos de <code data-claire-semantic="c">restrict</code> dans la norme C99 peut paraître alambiqué et tordu ; nous vous ferons donc grâce des citations. L'essentiel du fonctionnement des pointeurs restreints peut se résumer dans les deux règles suivantes.</p><ol id="r-560735" data-claire-element-id="560735"><li id="r-560732" data-claire-element-id="560732"><p id="r-560731" data-claire-element-id="560731">Il ne peut y avoir qu'un seul pointeur restreint référençant un même objet dans un même bloc.</p></li><li id="r-560734" data-claire-element-id="560734"><p id="r-560733" data-claire-element-id="560733">Une <em>lvalue</em> ne peut modifier un objet référencé par un pointeur restreint que si elle est dérivée de ce dernier.</p></li></ol><h3 id="r-quelques-exemples-20" data-claire-element-id="560740">Quelques exemples</h3><p id="r-560737" data-claire-element-id="560737">À ce stade, la définition peut vous paraître encore un peu floue, c'est pourquoi nous vous proposons quelques petits exemples.</p><pre id="r-560738" data-claire-element-id="560738"><code data-claire-semantic="c">#include &lt;stdlib.h&gt;
+
+static char * restrict r, * restrict s;
+
+void
+copy(void * restrict dst, void * restrict src, size_t n)
+{
+	/* 
+	 * Valide car `p' et `q' ne sont pas des pointeurs 
+	 * restreints. 
+	 */
+	char *p = dst;
+	char *q = src;
+
+	while (n-- != 0) {
+		/*
+	 	 * Valide car les lvalues `*p' et `*q' sont 
+	 	 * respectivement basées sur les pointeurs restreints
+  	 	 * `dst' et `src'.
+		 */
+		*p++ = *q++;
+        }
+
+	/*
+	 * Invalide car `r' et `s' sont des pointeurs restreints et 
+	 * référencent, respectivement, les mêmes objets que `dst' et
+	 * `src' dans le bloc de la fonction `copy'.
+	 */
+	*r = *s;
+}
+
+int
+main(void)
+{
+	/*
+	 * Valide car `r' et `s' référencent deux objets différents 
+	 * dans le bloc de la fonction main.
+	 */
+	r = malloc(10);
+	s = malloc(10);
+
+	/*
+	 * Valide car `dst' et `src' référencent deux objets 
+	 * différents dans le bloc de la fonction `copy'.
+	 */
+	copy(r, s, 10);
+
+	/*
+	 * Invalide car `dst' et `src' référencent le même objet dans
+	 * le bloc de la fonction `copy'.
+	 */
+	copy(r, r, 10);
+
+	/*
+	 * Invalide car `r' et `s' référencent alors le même objet 
+	 * dans le bloc de la fonction main.
+	 */
+	r = s;
+	return 0;		
+}</code></pre><p id="r-560739" data-claire-element-id="560739">Bien qu'il soit techniquement possible d'assigner des pointeurs restreints à des pointeurs non restreints, c'est une pratique déconseillée car cela peut compliquer le travail d'optimisation du compilateur.</p><h2 id="r-benefice-des-pointeurs-restreints" data-claire-element-id="560762">Bénéfice des pointeurs restreints</h2><p id="r-560742" data-claire-element-id="560742">À l'instar de la règle de strict <em>aliasing</em>, les pointeurs restreints permettent aux compilateurs d'effectuer des présomptions quant aux relations d'<em>aliasing</em> qui existent entre les pointeurs d'un même bloc. En effet, deux pointeurs restreints sont garantis de ne pas être des alias. Ainsi, c'est toute la phase d'optimisation de code qui en profite, et notamment la réorganisation du code.</p><h3 id="r-la-vectorisation" data-claire-element-id="560753">La vectorisation</h3><p id="r-560743" data-claire-element-id="560743">De plus, étant donné que le mot-clé <code data-claire-semantic="c">restrict</code> vise des pointeurs de même type, cela laisse également place à une optimisation plus poussée faisant intervenir les tableaux : la <strong>vectorisation</strong>. Cette dernière pratique consiste à effectuer des opérations sur des petits tableaux de taille fixe plutôt que sur un seul élément à la fois. Cela est possible sur la plupart des processeurs modernes, qui disposent d'instructions spécialisées travaillant sur plusieurs éléments à la fois : les <strong>instructions vectorielles</strong>.</p><aside id="r-560752" data-claire-element-id="560752" data-claire-semantic="information"><p id="r-560744" data-claire-element-id="560744">Dans les exemples suivants, nous considérerons un processeur disposant d'instructions vectorielles capables de travailler sur 128 bits, c'est-à-dire ici de 16 <code data-claire-semantic="c">char</code> ou de 4 <code data-claire-semantic="c">int</code>. Elles seront illustrées par les trois fonctions suivantes :</p><ul id="r-560751" data-claire-element-id="560751"><li id="r-560746" data-claire-element-id="560746"><p id="r-560745" data-claire-element-id="560745"><code data-claire-semantic="c">vect_cpy16</code> : copie un tableau de 16 <code data-claire-semantic="c">char</code> ;</p></li><li id="r-560748" data-claire-element-id="560748"><p id="r-560747" data-claire-element-id="560747"><code data-claire-semantic="c">vect_cpy4</code> : copie un tableau de 4 <code data-claire-semantic="c">int</code> ;</p></li><li id="r-560750" data-claire-element-id="560750"><p id="r-560749" data-claire-element-id="560749"><code data-claire-semantic="c">vect_add4</code> : additionne deux tableaux de 4 <code data-claire-semantic="c">int</code> et stocke le résultat dans le premier.</p></li></ul></aside><h3 id="r-exemple-1-8" data-claire-element-id="560757">Exemple (1)</h3><pre id="r-560754" data-claire-element-id="560754"><code data-claire-semantic="c">void
+memcpy(void * restrict dst, void * restrict src, size_t n)
+{
+	char *p = dst;
+	char *q = src;
+
+	while (n-- != 0)
+		*p++ = *q++;
+}</code></pre><p id="r-560755" data-claire-element-id="560755">Dans le code ci-dessus, la règle de strict <em>aliasing</em> est inutile car les <em>lvalues</em><code data-claire-semantic="c">*p</code> et <code data-claire-semantic="c">*q</code> sont toutes deux de type <code data-claire-semantic="c">char</code>. En revanche, elles sont basées sur un pointeur restreint et sont donc garanties de ne pas être des alias. Le compilateur pourrait donc vectoriser cette boucle, en copiant des tableaux de taille fixe plutôt que des <code data-claire-semantic="c">char</code> un par un.</p><pre id="r-560756" data-claire-element-id="560756"><code data-claire-semantic="c">void
+memcpy(void * restrict dst, void * restrict src, size_t n)
+{
+	char *p = dst;
+	char *q = src;
+	size_t i;
+
+	for (i = 0; n - i &gt;= 16; i += 16)
+		vect_cpy16(p + i, q + i);
+
+	for (; i &lt; n; ++i)
+		p[i] = q[i];
+}</code></pre><h3 id="r-exemple-2-8" data-claire-element-id="560761">Exemple (2)</h3><pre id="r-560758" data-claire-element-id="560758"><code data-claire-semantic="c">void
+vect_add(int * restrict res, int * restrict a, int * restrict b, size_t n)
+{
+	for (size_t i = 0; i &lt; n; ++i)
+		res[i] = a[i] + b[i];
+}</code></pre><p id="r-560759" data-claire-element-id="560759">De la même manière, le code ci-dessus opère sur des <em>lvalues</em> basées sur des pointeurs restreints. Ainsi, le compilateur pourrait utiliser des instructions vectorielles afin d'optimiser le code comme suit.</p><pre id="r-560760" data-claire-element-id="560760"><code data-claire-semantic="c">void
+vect_add(int * restrict res, int * restrict a, int * restrict b, size_t n)
+{
+	size_t i;
+
+	for (i = 0; n - i &gt;= 4; i += 4) {
+		vect_cpy4(res + i, a + i);
+		vect_add4(res + i, b + i);
+	}
+
+	for (; i &lt; n; ++i)
+		res[i] = a[i] + b[i];
+}</code></pre><h2 id="r-dangers-des-pointeurs-restreints" data-claire-element-id="560786">Dangers des pointeurs restreints</h2><p id="r-560763" data-claire-element-id="560763">Malgré tout, il est important de prendre des précautions lors de l'utilisation des pointeurs restreints ; ils ne doivent en effet pas être utilisés à tout-va.</p><h3 id="r-confusion-entre-appelant-et-appele" data-claire-element-id="560767">Confusion entre appelant et appelé</h3><p id="r-560764" data-claire-element-id="560764">Si deux pointeurs sont indiqués comme étant restreints mais, qu'en réalité, ils se chevauchent, le résultat est indéterminé et le code produit a de fortes chances d'être incorrect.</p><pre id="r-560765" data-claire-element-id="560765"><code data-claire-semantic="c">#include &lt;string.h&gt;
+
+void
+f(void)
+{
+        int a[8] = { 0, 0, 45, 42, 12, 89, 2, 36 };
+        /*
+         * Les deux arguments restreints de `memcpy' se chevauchent,
+         * c'est une situation de comportement indéterminé.
+         */
+        memcpy(a, a + 2, 6);
+}</code></pre><p id="r-560766" data-claire-element-id="560766">Or, nous pouvons remarquer que c'est à la fonction appelée de préciser si les arguments doivent être restreints, mais seule la fonction appelante peut contrôler si ces arguments sont conformes (le compilateur ne peut pas faire cette vérification par lui-même).</p><h3 id="r-precautions-d-utilisation" data-claire-element-id="560780">Précautions d'utilisation</h3><p id="r-560768" data-claire-element-id="560768">On distingue deux grands cas dans lesquels on peut utiliser les pointeurs restreints.</p><ul id="r-560773" data-claire-element-id="560773"><li id="r-560770" data-claire-element-id="560770"><p id="r-560769" data-claire-element-id="560769">Si l'algorithme de la fonction ne fonctionne pas ou n'a aucun sens dans le cas où les paramètres se chevauchent, alors le résultat avec les pointeurs restreints sera toujours incorrect, mais pourra avoir changé. Par exemple, le chevauchement des deux paramètres dans la fonction <code data-claire-semantic="c">fopen</code> serait complètement absurde.</p></li><li id="r-560772" data-claire-element-id="560772"><p id="r-560771" data-claire-element-id="560771">Si le principe de la fonction a un sens dans le cas où les arguments se chevauchent mais que cela est pénalisant pour les optimisations, alors il est préférable de créer deux versions de la fonction (une avec <code data-claire-semantic="c">restrict</code> et une sans), à la manière des fonctions <code data-claire-semantic="c">memcpy</code> et <code data-claire-semantic="c">memmove</code>.</p></li></ul><aside id="r-560778" data-claire-element-id="560778" data-claire-semantic="error"><p id="r-560774" data-claire-element-id="560774">Lors d'un comportement indéterminé, théoriquement, tout peut se passer. Le compilateur a donc tout à fait le droit de produire un code qui arrête brutalement le programme pour éviter de propager une éventuelle erreur. C'est pourquoi il ne faut pas oublier de prévenir l'utilisateur de ces spécifications dans la documentation de la fonction.</p><p id="r-560775" data-claire-element-id="560775"><cite>Citation : L'exemple de memcpy</cite></p><blockquote id="r-560777" data-claire-element-id="560777"><p id="r-560776" data-claire-element-id="560776">The <code data-claire-semantic="c">memcpy()</code> function copies <code data-claire-semantic="c">n</code> bytes from memory area <code data-claire-semantic="c">src</code> to memory area <code data-claire-semantic="c">dest</code>. The memory areas should not overlap. Use <code data-claire-semantic="c">memmove(3)</code> if the memory areas do overlap.</p></blockquote></aside><p id="r-560779" data-claire-element-id="560779">Au final, on peut représenter tout cela par une sorte de contrat passé entre les deux fonctions. Si il n'est pas respecté par la fonction appelante, alors la fonction appelée se réserve le droit de produire un code incorrect.</p><h3 id="r-une-optimisation-vraiment-valable" data-claire-element-id="560785">Une optimisation vraiment valable ?</h3><p id="r-560781" data-claire-element-id="560781">Il ne faut pas oublier que <code data-claire-semantic="c">restrict</code> est une simple indication et pas une obligation pour le compilateur. Aussi les détracteurs du mot-clé ont-ils souvent souligné le fait que le gain de temps octroyé par l'utilisation des pointeurs restreints n'est pas toujours très important (par exemple, les processeurs qui ne disposent pas d'instructions vectorielles ne jouiront pas de cette optimisation).</p><p id="r-560782" data-claire-element-id="560782">Nous pouvons donc légitimement nous demander si l'utilisation des pointeurs restreints est réellement rentable par rapport à l'effort de réflexion associé (qui est loin d'être négligeable). Plusieurs travaux ont conclu que ce n'était pas le cas, et déconseillent donc l'<em>aliasing</em> spécifié.</p><p id="r-560783" data-claire-element-id="560783">À vous de vous forger votre propre avis ; n'hésitez pas, dans cette optique, à construire vos propres étalonnages suivant votre utilisation du langage. En tout cas, si vous êtes prêts à fournir un effort supplémentaire pour un bénéfice, si minimal qu'il soit, vous voilà informés !</p><p id="r-560784" data-claire-element-id="560784">Ainsi, ce tutoriel touche à sa fin. Nous espérons vous avoir éclairé sur ce difficile sujet d'<em>aliasing</em> et de pointeurs restreints. La norme du langage C est, aujourd'hui encore, une des seules normes de langage de programmation qui prône l'optimisation des compilateurs, le C cherche donc toujours à prouver ses qualités en performances pures.</p><h2 id="r-liens-externes-1" data-claire-element-id="560815">Liens externes</h2><h3 id="r-alias-et-optimisation" data-claire-element-id="560793">Alias et optimisation</h3><p id="r-560787" data-claire-element-id="560792"><a href="http://en.wikipedia.org/wiki/Compiler_optimization">→ <img id="r-560788" data-claire-element-id="560787" src="medias/uploads.siteduzero.com_files_393001_394000_393566.png" alt="Image utilisateur"/> Optimisation de code par le compilateur sur Wikipédia.</a><br/><a href="http://en.wikipedia.org/wiki/Loop_optimization">→ <img id="r-560789" data-claire-element-id="560788" src="medias/uploads.siteduzero.com_files_393001_394000_393566.png" alt="Image utilisateur"/> Optimisation de boucles sur Wikipédia.</a><br/><a href="http://fr.wikipedia.org/wiki/Instruction_pipeline">→ <img id="r-560790" data-claire-element-id="560789" src="medias/uploads.siteduzero.com_files_393001_394000_393567.png" alt="Image utilisateur"/> Pipeline des instructions sur Wikipédia.</a><br/><a href="http://en.wikipedia.org/wiki/Vector_processor">→ <img id="r-560791" data-claire-element-id="560790" src="medias/uploads.siteduzero.com_files_393001_394000_393566.png" alt="Image utilisateur"/> Les processeurs vectoriels sur Wikipédia.</a><br/><a href="http://www.drdobbs.com/programming-guidelines-for-vectorizing-c/184401611">→ <img id="r-560792" data-claire-element-id="560791" src="medias/uploads.siteduzero.com_files_393001_394000_393566.png" alt="Image utilisateur"/> Guide de programmation pour la vectorisation des compilateurs C/C++.</a></p><h3 id="r-analyse-d-alias" data-claire-element-id="560798">Analyse d'alias</h3><p id="r-560794" data-claire-element-id="560797"><a href="http://en.wikipedia.org/wiki/Alias_analysis">→ <img id="r-560795" data-claire-element-id="560794" src="medias/uploads.siteduzero.com_files_393001_394000_393566.png" alt="Image utilisateur"/> Analyse d'alias sur Wikipédia.</a><br/><a href="http://www.cs.ucla.edu/~palsberg/course/purdue/cs661/F01/papers/das-pldi00.pdf">→ <img id="r-560796" data-claire-element-id="560795" src="medias/uploads.siteduzero.com_files_393001_394000_393566.png" alt="Image utilisateur"/> Exemple d'algorithme effectuant une analyse d'alias performante.</a><br/><a href="http://gcc.gnu.org/onlinedocs/gccint/Alias-analysis.html">→ <img id="r-560797" data-claire-element-id="560796" src="medias/uploads.siteduzero.com_files_393001_394000_393566.png" alt="Image utilisateur"/> L'analyse d'alias de gcc.</a></p><h3 id="r-regle-de-strict-aliasing" data-claire-element-id="560803">Règle de strict aliasing</h3><p id="r-560799" data-claire-element-id="560802"><a href="http://cellperformance.beyond3d.com/articles/2006/06/understanding-strict-aliasing.html">→ <img id="r-560800" data-claire-element-id="560799" src="medias/uploads.siteduzero.com_files_393001_394000_393566.png" alt="Image utilisateur"/> Comprendre le strict <em>aliasing</em>.</a><br/><a href="http://labs.qt.nokia.com/2011/06/10/type-punning-and-strict-aliasing/">→ <em><img id="r-560801" data-claire-element-id="560800" src="medias/uploads.siteduzero.com_files_393001_394000_393566.png" alt="Image utilisateur"/>Type-punning</em> et strict <em>aliasing</em>.</a><br/><a href="http://dbp-consulting.com/StrictAliasing.pdf">→ <img id="r-560802" data-claire-element-id="560801" src="medias/uploads.siteduzero.com_files_393001_394000_393566.png" alt="Image utilisateur"/> Comprendre le strict <em>aliasing</em> en C/C++</a>.</p><h3 id="r-parametrage-du-compilateur" data-claire-element-id="560807">Paramétrage du compilateur</h3><p id="r-560804" data-claire-element-id="560806"><a href="https://lkml.org/lkml/2003/2/26/158">→ <img id="r-560805" data-claire-element-id="560804" src="medias/uploads.siteduzero.com_files_393001_394000_393566.png" alt="Image utilisateur"/> Voir les raisons de l'utilisation de <code data-claire-semantic="console">-fno-strict-aliasing</code> dans le noyau Linux.</a><br/><a href="http://gcc.gnu.org/onlinedocs/gcc-4.7.1/gcc/Optimize-Options.html#Optimize-Options">→ <img id="r-560806" data-claire-element-id="560805" src="medias/uploads.siteduzero.com_files_393001_394000_393566.png" alt="Image utilisateur"/> Page de manuel de gcc (recherchez « -fstrict-aliasing »).</a></p><h3 id="r-les-pointeurs-restreints" data-claire-element-id="560814">Les pointeurs restreints</h3><p id="r-560808" data-claire-element-id="560813"><a href="http://blog.huoc.org/pointeurs-restrict.html">→ <img id="r-560809" data-claire-element-id="560808" src="medias/uploads.siteduzero.com_files_393001_394000_393567.png" alt="Image utilisateur"/> Le C et ses raisons : les pointeurs restreints.</a><br/><a href="http://www.lysator.liu.se/c/restrict.html">→ <img id="r-560810" data-claire-element-id="560809" src="medias/uploads.siteduzero.com_files_393001_394000_393566.png" alt="Image utilisateur"/> Les pointeurs restreints en C.</a><br/><a href="http://www.open-std.org/jtc1/sc22/wg14/www/docs/dr_294.htm">→ <img id="r-560811" data-claire-element-id="560810" src="medias/uploads.siteduzero.com_files_393001_394000_393566.png" alt="Image utilisateur"/> Defect Report #294.</a><br/><a href="http://cellperformance.beyond3d.com/articles/2006/05/demystifying-the-restrict-keyword.html">→ <img id="r-560812" data-claire-element-id="560811" src="medias/uploads.siteduzero.com_files_393001_394000_393566.png" alt="Image utilisateur"/> Démystification du mot-clé <code data-claire-semantic="c">restrict</code>.</a><br/><a href="http://www.cs.pitt.edu/~mock/papers/clei2004.pdf">→ <img id="r-560813" data-claire-element-id="560812" src="medias/uploads.siteduzero.com_files_393001_394000_393566.png" alt="Image utilisateur"/> Pourquoi l'<em>aliasing</em> spécifié est une mauvaise idée.</a></p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/aliasing-et-pointeurs-restreints">Aliasing et pointeurs restreints</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/aliasing-et-pointeurs-restreints/une-histoire-d-aliasing">
+Une histoire d&#039;aliasing
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/aliasing-et-pointeurs-restreints/la-regle-de-strict-aliasing">
+La règle de strict aliasing
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/aliasing-et-pointeurs-restreints/les-pointeurs-restreints-1">
+Les pointeurs restreints
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/aliasing-et-pointeurs-restreints/la-regle-de-strict-aliasing">
+<span class="arrow"></span>
+<span class="next">La règle de strict aliasing</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/aliasing-et-pointeurs-restreints.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 19:54:45 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/aliasing-et-pointeurs-restreints.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 03:39:52 GMT -->
+</html>

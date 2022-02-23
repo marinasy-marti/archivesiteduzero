@@ -1,0 +1,1089 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/la-verite-sur-les-tableaux-et-pointeurs-en-c.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 07:35:53 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/la-verite-sur-les-tableaux-et-pointeurs-en-c.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:23:43 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : La vérité sur les tableaux et pointeurs en C</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : La vérité sur les tableaux et pointeurs en C</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#LavritsurlestableauxetpointeursenC">La vérité sur les tableaux et pointeurs en C</a><br/><a href="#Introduction">Introduction</a><br/><a href="#Dclarationdetableauetpointeur">Déclaration de tableau et pointeur</a><br/><a href="#Lavritvraie">La vérité vraie</a><br/><a href="#sizeoftabamptabetchartabquotchainequot">sizeof tab, &amp;tab, et char tab[] = &quot;chaine&quot;</a><br/><a href="#chartabetcharP">char tab[] et char *P</a><br/><a href="#lvalueetregister">lvalue et register</a><br/><a href="#Pointeurdepointeurettableaudetableaux">Pointeur de pointeur et tableau de tableaux</a><br/><a href="#Paramtresformelscharargvvscharargv">Paramètres formels: char*argv[] vs char**argv</a><br/><a href="#C89etC99">C89 et C99</a><br/></div>
+<a name="LavritsurlestableauxetpointeursenC"></a><h2>La vérité sur les tableaux et pointeurs en C</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/introduction-61">
+<span class="next">Introduction</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-413792" data-claire-element-id="413792">Explications détaillées sur les tableaux et pointeurs en C.</p>
+</div><a name="Introduction"></a><h2>Introduction</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/declaration-de-tableau-et-pointeur">
+<span class="next">Déclaration de tableau et pointeur</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-bienvenue" data-claire-element-id="413800">Bienvenue</h2><p id="r-413793" data-claire-element-id="413793">Ainsi, tu es à la recherche de la vérité sur les tableaux et pointeurs en C?<br/> Mais laisse-moi d'abord deviner ce qui te conduit à lire ce tutoriel...</p><p id="r-413794" data-claire-element-id="413794">Peut-être as-tu présomptueusement affirmé qu'un tableau est un pointeur? Et quelqu'un qui connait la vérité t'aura dirigé ici...</p><p id="r-413795" data-claire-element-id="413795">Ou alors tu auras essayé de passer un tableau de tableaux en argument d'une fonction qui attend un pointeur de pointeur, comme ceci:</p><pre id="r-413796" data-claire-element-id="413796"><code data-claire-semantic="c">void f(int **ppint);
+
+void g(void) {
+	int tab[3][4];
+	f(tab); /* grossière erreur ! */
+}</code></pre><p id="r-413797" data-claire-element-id="413797">Et le compilateur aura émis un avertissement que tu ne comprends pas:</p><pre id="r-413798" data-claire-element-id="413798"><code data-claire-semantic="console">ex1.c: In function ‘g’:
+ex1.c:5:2: attention : passing argument 1 of ‘f’ from incompatible pointer type
+ex1.c:1:6: note: expected ‘int **’ but argument is of type ‘int (*)[4]’</code></pre><p id="r-413799" data-claire-element-id="413799">Et tu auras peut-être même fait fi de l'avertissement du compilateur :diable: , lancé ton programme, et il plante lamentablement à la première utilisation de <code data-claire-semantic="c">ppint</code> dans la fonction f...</p><h2 id="r-on-m-aurait-menti" data-claire-element-id="413817">On m'aurait menti?</h2><p id="r-413801" data-claire-element-id="413801">Oui, les tutoriels mentent, car les débutants ne pourraient pas affronter la vérité toute nue sur les tableaux et les pointeurs. :ange:</p><p id="r-413802" data-claire-element-id="413802">Mais pour commencer, revoyons ce qui est à l'origine des malentendus, c'est-à-dire le pieux mensonge enseigné aux débutants. Il est généralement écrit dans des termes ressemblant à ceux-ci: «Un tableau se comporte comme un pointeur constant sur son élément initial.»</p><p id="r-413803" data-claire-element-id="413803">Notons d'abord qu'un (bon) tutoriel ne prétendra jamais qu'un tableau <em>est</em> un pointeur, mais qu'il se <em>comporte comme</em>, ou <em>se convertit en</em>, etc. Affirmer qu'un tableau <em>est</em> un pointeur est abusif. :diable:</p><h3 id="r-recapitulation-de-ce-qui-devrait-etre-deja-connu" data-claire-element-id="413816">Récapitulation de ce qui devrait être déjà connu</h3><p id="r-413804" data-claire-element-id="413804">Revoyons en quoi «un tableau se comporte comme un pointeur constant sur son élément initial»:</p><pre id="r-413805" data-claire-element-id="413805"><code data-claire-semantic="c">#include &lt;stdio.h&gt;
+int main(void) {
+    int tab[3];
+    int *p;
+    p = tab;
+    p = tab + 2;
+    tab[1] = 5;
+    p[-1] = 6;
+    printf(&quot;hello, world\n&quot;);
+/*  tab = p; /* ne compile pas */
+    return 0;
+}</code></pre><p id="r-413806" data-claire-element-id="413806"><strong>Explications ligne par ligne</strong><br/><code data-claire-semantic="c">int tab[3];</code><br/> Un tableau de 3 <code data-claire-semantic="c">int</code> appelé <code data-claire-semantic="c">tab</code> est défini.</p><p id="r-413807" data-claire-element-id="413807"><code data-claire-semantic="c">int *p;</code><br/> Un pointeur de <code data-claire-semantic="c">int</code> appelé <code data-claire-semantic="c">p</code> est défini.</p><p id="r-413808" data-claire-element-id="413808"><code data-claire-semantic="c">p = tab;</code><br/><code data-claire-semantic="c">tab</code> se comporte comme un pointeur sur son élément initial, qui est affecté à <code data-claire-semantic="c">p</code>. Le pointeur <code data-claire-semantic="c">p</code> pointe donc sur <code data-claire-semantic="c">tab[0]</code>.</p><p id="r-413809" data-claire-element-id="413809">Essaie de deviner la suite des explications avant d'ouvrir la partie secrète qui suit...</p><div id="r-413815" data-claire-element-id="413815"><p id="r-413810" data-claire-element-id="413810"><code data-claire-semantic="c">p = tab + 2;</code><br/><code data-claire-semantic="c">tab</code> se comporte comme un pointeur sur son élément initial, <code data-claire-semantic="c">2</code> est ajouté à ce pointeur (arithmétique de pointeur), et le résultat est affecté à <code data-claire-semantic="c">p</code>. Le pointeur <code data-claire-semantic="c">p</code> pointe donc sur <code data-claire-semantic="c">tab[2]</code>.</p><p id="r-413811" data-claire-element-id="413811"><code data-claire-semantic="c">tab[1] = 5;</code><br/> L'instruction <code data-claire-semantic="c">tab[1] = 5;</code> est équivalente à <code data-claire-semantic="c">*(tab + 1) = 5;</code>, car par définition <em>T</em>[<em>N</em>] est équivalent à *((<em>T</em>)+(<em>N</em>)). <code data-claire-semantic="c">tab</code> est donc converti en un pointeur sur son élément initial, puis <code data-claire-semantic="c">1</code> est ajouté (arithmétique de pointeur), puis le pointeur résultant est déréférencé pour affecter <code data-claire-semantic="c">5</code> à l'objet pointé.</p><p id="r-413812" data-claire-element-id="413812"><code data-claire-semantic="c">p[-1] = 6;</code><br/> C'est le cas simplifié de <code data-claire-semantic="c">tab[1] = 5;</code> car p est un pointeur, il n'y a même pas besoin de conversion. À noter que malgré l'indice négatif, on pointe toujours dans le même tableau car <code data-claire-semantic="c">p</code> pointe sur <code data-claire-semantic="c">tab[2]</code>.</p><p id="r-413813" data-claire-element-id="413813"><code data-claire-semantic="c">printf(&quot;hello, world &quot;);</code><br/> La chaine <code data-claire-semantic="c">&quot;hello, world &quot;</code> est un tableau de 14 <code data-claire-semantic="c">char</code>. Ce tableau se comporte comme un pointeur sur son élément initial, soit la lettre 'h'. Ce pointeur est passé à la fonction <code data-claire-semantic="c">printf</code>, qui attend justement un pointeur de <code data-claire-semantic="c">char</code>.<br/> Eh oui, au cas où tu ne t'en serais pas rendu compte, on tombe sur une conversion de tableau en pointeur dès le <em>hello world</em>!</p><p id="r-413814" data-claire-element-id="413814"><code data-claire-semantic="c">tab = p;</code><br/> Cette ligne ne compile pas car <code data-claire-semantic="c">tab</code> est constant. Il est donc impossible d'affecter une valeur à <code data-claire-semantic="c">tab</code>.</p></div>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c">La vérité sur les tableaux et pointeurs en C</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/introduction-61">
+Introduction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/declaration-de-tableau-et-pointeur">
+Déclaration de tableau et pointeur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/la-verite-vraie">
+La vérité vraie
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/sizeof-tab-tab-et-char-tab-chaine">
+sizeof tab, &amp;tab, et char tab[] = &quot;chaine&quot;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/char-tab-et-char-p">
+char tab[] et char *P
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/lvalue-et-register">
+lvalue et register
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/pointeur-de-pointeur-et-tableau-de-tableaux">
+Pointeur de pointeur et tableau de tableaux
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/parametres-formels-char-argv-vs-char-argv">
+Paramètres formels: char*argv[] vs char**argv
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/c89-et-c99">
+C89 et C99
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/declaration-de-tableau-et-pointeur">
+<span class="next">Déclaration de tableau et pointeur</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Dclarationdetableauetpointeur"></a><h2>Déclaration de tableau et pointeur</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/introduction-61">
+<span class="arrow"></span>
+<span class="next">Introduction</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/la-verite-vraie">
+<span class="next">La vérité vraie</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-413819" data-claire-element-id="413819">Ce chapitre repasse en revue ce qui est mis en mémoire lorsqu'on déclare un tableau, et lorsqu'on déclare un pointeur. Ça devrait être connu, mais sait-on jamais. :p</p><p id="r-413820" data-claire-element-id="413820">Quand on déclare <code data-claire-semantic="c">int t1[3];</code> on obtient trois <code data-claire-semantic="c">int</code> en mémoire, et rien d'autre.<br/> Quand on déclare <code data-claire-semantic="c">int *p1;</code> on obtient un pointeur de <code data-claire-semantic="c">int</code> en mémoire, et rien d'autre.<br/> Quand on déclare <code data-claire-semantic="c">int t2[3][4];</code> on obtient trois tableaux de quatre <code data-claire-semantic="c">int</code>, soit douze <code data-claire-semantic="c">int</code> en mémoire, et rien d'autre.<br/> Quand on déclare <code data-claire-semantic="c">int **p2;</code> on obtient un pointeur de pointeur de <code data-claire-semantic="c">int</code> en mémoire, et rien d'autre.<br/> Quand on déclare <code data-claire-semantic="c">int *t3[3];</code> on obtient trois pointeurs de <code data-claire-semantic="c">int</code> en mémoire, et rien d'autre.<br/> Quand on déclare <code data-claire-semantic="c">int (*p3)[3];</code> on obtient un pointeur de tableau de 3 <code data-claire-semantic="c">int</code> en mémoire, et rien d'autre.</p><h2 id="r-initialisation-et-representation-en-memoire" data-claire-element-id="413839">Initialisation et représentation en mémoire</h2><p id="r-413821" data-claire-element-id="413821">Logiquement (si si, c'est logique, les trucs illogiques, c'est pour les derniers chapitres), on peut écrire:</p><pre id="r-413822" data-claire-element-id="413822"><code data-claire-semantic="c">int t1[3] = { 1, 2, 3 };
+int *p1 = &amp;t1[0];
+int t2[4][3] = {{1,2,3}, {4,5,6}, {7,8,9}, {10,11,12}};
+int **p2 = &amp;p1;
+int *t3[3] = { &amp;t1[1], &amp;t2[0][0], &amp;t2[1][2] };
+int (*p3)[3] = &amp;t2[3];</code></pre><p id="r-413823" data-claire-element-id="413823">Voici ce que ça pourrait donner en mémoire, avec des <code data-claire-semantic="c">int</code> de 4 bytes et des pointeurs de 8 bytes:</p><div id="r-413836" data-claire-element-id="413836"><p id="r-413824" data-claire-element-id="413824"><code data-claire-semantic="c">int t1[3] = { 1, 2, 3 };</code></p><pre id="r-413825" data-claire-element-id="413825"><code>adresses ...|8   |12  |16  |20
+données  ...|0001|0002|0003|...</code></pre><pre id="r-413826" data-claire-element-id="413826"><code data-claire-semantic="c">int *p1 = &amp;t1[0];</code></pre><pre id="r-413827" data-claire-element-id="413827"><code>adresses ...|24      |32
+données  ...|00000008|...</code></pre><pre id="r-413828" data-claire-element-id="413828"><code data-claire-semantic="c">int t2[4][3] = {{1,2,3}, {4,5,6}, {7,8,9}, {10,11,12}};</code></pre><pre id="r-413829" data-claire-element-id="413829"><code>adresses ...|32  |36  |40  |44  |48  |52  |56  |60  |64  |68  |72  |76  |80
+données  ...|0001|0002|0003|0004|0005|0006|0007|0008|0009|0010|0011|0012|...</code></pre><pre id="r-413830" data-claire-element-id="413830"><code data-claire-semantic="c">int **p2 = &amp;p1;</code></pre><pre id="r-413831" data-claire-element-id="413831"><code>adresses ...|80      |88
+données  ...|00000024|...</code></pre><pre id="r-413832" data-claire-element-id="413832"><code data-claire-semantic="c">int *t3[3] = { &amp;t1[1], &amp;t2[0][0], &amp;t2[1][2] };</code></pre><pre id="r-413833" data-claire-element-id="413833"><code>adresses ...|88      |96      |104     |112
+données  ...|00000012|00000032|00000052|...</code></pre><pre id="r-413834" data-claire-element-id="413834"><code data-claire-semantic="c">int (*p3)[3] = &amp;t2[3];</code></pre><pre id="r-413835" data-claire-element-id="413835"><code>adresses ...|112     |120
+données  ...|00000068|...</code></pre></div><p id="r-413837" data-claire-element-id="413837">Enfin, on ne peut évidemment pas écrire ce qui suit, puisqu'un tableau n'est pas un pointeur, et un pointeur n'est pas un tableau:</p><pre id="r-413838" data-claire-element-id="413838"><code data-claire-semantic="c">int t1[3] = 0;        /* FAUX */
+int *p = { 1, 2, 3 }; /* FAUX */</code></pre><h2 id="r-declarations-externes" data-claire-element-id="413848">Déclarations externes</h2><p id="r-413840" data-claire-element-id="413840">Comme un tableau n'est pas un pointeur, lorsqu'on déclare un tableau ou un pointeur sans le définir (avec le mot clé <code data-claire-semantic="c">extern</code>), il faut que la définition soit respectivement celle d'un tableau ou d'un pointeur. Sinon, apparaît un bogue qui révèle bien les différences de représention mémoire entre tableau et pointeur.</p><p id="r-413841" data-claire-element-id="413841">Observons le comportement du programme bogué suivant, composé des fichiers source main.c et text.c:</p><pre id="r-413842" data-claire-element-id="413842"><code data-claire-semantic="c">/* main.c */
+#include &lt;stdio.h&gt;
+
+extern char *p1;
+extern char tab1[];
+extern char p2[];  /* déclaration de tableau alors que p2 est défini en pointeur */
+extern char *tab2; /* déclaration de pointeur alors que tab2 est défini en tableau */
+
+int main(void) {
+	puts(p1);
+	puts(tab1);
+	puts(p2);
+	puts(tab2);
+	return 0;
+}</code></pre><pre id="r-413843" data-claire-element-id="413843"><code data-claire-semantic="c">/* text.c */
+char *p1 = &quot;p1&quot;;
+char tab1[] = &quot;tab1&quot;;
+char *p2 = &quot;p2&quot;;
+char tab2[] = &quot;tab2&quot;;</code></pre><pre id="r-413844" data-claire-element-id="413844"><code data-claire-semantic="console">$ gcc main.c text.c -Wall
+$ ./a.out
+p1
+tab1
+ÿ@
+Erreur de segmentation
+$</code></pre><p id="r-413845" data-claire-element-id="413845">Les deux premières chaines s'affichent parfaitement, comme il se doit, puisque les déclarations externes correspondent bien aux définitions.</p><p id="r-413846" data-claire-element-id="413846">Pour la troisième chaine, l'affichage est incohérent; en effet, en compilant main.c mon compilateur a cru que <code data-claire-semantic="c">p2</code> est un tableau, et a produit du langage machine qui affiche les bytes constituant ce qui est en fait un pointeur. D'où le <code data-claire-semantic="console">ÿ@</code> sur mon PC. Selon la norme C, il s'agit d'un comportement indéterminé <em>(<strong>C99 §6.2.7</strong> All declarations that refer to the same object or function shall have compatible type; otherwise, the behavior is undeﬁned.)</em></p><p id="r-413847" data-claire-element-id="413847">Enfin, le <code data-claire-semantic="c">puts(tab2)</code> crée une erreur de segmentation, car les bytes de la chaine <code data-claire-semantic="c">&quot;tab2&quot;</code> sont pris pour un pointeur, qui pointe sans surprise à une adresse invalide. Évidemment, encore un comportement indéterminé.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c">La vérité sur les tableaux et pointeurs en C</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/introduction-61">
+Introduction
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/declaration-de-tableau-et-pointeur">
+Déclaration de tableau et pointeur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/la-verite-vraie">
+La vérité vraie
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/sizeof-tab-tab-et-char-tab-chaine">
+sizeof tab, &amp;tab, et char tab[] = &quot;chaine&quot;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/char-tab-et-char-p">
+char tab[] et char *P
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/lvalue-et-register">
+lvalue et register
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/pointeur-de-pointeur-et-tableau-de-tableaux">
+Pointeur de pointeur et tableau de tableaux
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/parametres-formels-char-argv-vs-char-argv">
+Paramètres formels: char*argv[] vs char**argv
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/c89-et-c99">
+C89 et C99
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/introduction-61">
+<span class="arrow"></span>
+<span class="next">Introduction</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/la-verite-vraie">
+<span class="next">La vérité vraie</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lavritvraie"></a><h2>La vérité vraie</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/declaration-de-tableau-et-pointeur">
+<span class="arrow"></span>
+<span class="next">Déclaration de tableau et pointeur</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/sizeof-tab-tab-et-char-tab-chaine">
+<span class="next">sizeof tab, &amp;tab, et char tab[] = &quot;chaine&quot;</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-la-source-de-la-verite" data-claire-element-id="413866">La source de la vérité</h2><p id="r-413850" data-claire-element-id="413850">La vérité sur les tableaux et les pointeurs se trouve actuellement dans le chapitre <em>6.3.2.1 Lvalues, arrays, and function designators</em>, paragraphe 3, de la norme internationale <a href="http://www.open-std.org/JTC1/SC22/WG14/www/docs/n1256.pdf">ISO/IEC 9899:1999</a> (C99 pour les intimes):</p><p id="r-413851" data-claire-element-id="413851"><cite>Citation : C99</cite></p><blockquote id="r-413853" data-claire-element-id="413853"><p id="r-413852" data-claire-element-id="413852">Except when it is the operand of the <strong>sizeof</strong> operator or the unary <strong>&amp;</strong> operator, or is a string literal used to initialize an array, an expression that has type &quot;array of <em>type</em>&quot; is converted to an expression with type &quot;pointer to <em>type</em>&quot; that points to the initial element of the array object and is not an lvalue. If the array object has register storage class, the behavior is undefined.</p></blockquote><p id="r-413854" data-claire-element-id="413854">Eh oui, la vérité nue est en anglais. Ça permet d'amortir le choc. ^^ <br/> Voici une traduction:</p><p id="r-413855" data-claire-element-id="413855"><cite>Citation : C99 traduit</cite></p><blockquote id="r-413857" data-claire-element-id="413857"><p id="r-413856" data-claire-element-id="413856">Sauf quand elle est l'opérande de l'opérateur <strong>sizeof</strong> ou de l'opérateur unaire <strong>&amp;</strong>, ou est une chaine de caractères littérale utilisée pour initialiser un tableau, une expression de type &quot;tableau de <em>type</em>&quot; est convertie en une expression de type &quot;pointeur de <em>type</em>&quot; qui pointe sur l'élément initial de l'objet tableau et n'est pas une lvalue. Si le tableau est d'une classe de stockage registre, le comportement est indéterminé.</p></blockquote><p id="r-413858" data-claire-element-id="413858">Le mot clé, c'est le mot expression.<br/> Une expression n'est pas un objet en mémoire, c'est un bout de code source, comme <code data-claire-semantic="c">2+3 </code>, <code data-claire-semantic="c">&amp;i </code>, ou simplement <code data-claire-semantic="c">tab </code>.<br/> Quand il lit l'expression <code data-claire-semantic="c">2+3 </code>, le compilateur peut directement calculer le résultat: 5 (de type <code data-claire-semantic="c">int </code>).<br/> Quand il lit l'expression <code data-claire-semantic="c">&amp;i </code>, le compilateur génère les instructions machine qui calculent l'adresse de <code data-claire-semantic="c">i </code> (de type <code data-claire-semantic="c">int* </code> si <code data-claire-semantic="c">i </code> est de type <code data-claire-semantic="c">int </code>).<br/> Quand il lit l'expression <code data-claire-semantic="c">tab </code>, le compilateur génère les instructions machine qui calculent l'adresse de l'élément initial de <code data-claire-semantic="c">tab </code> (de type <code data-claire-semantic="c">int* </code> si <code data-claire-semantic="c">tab </code> est de type <code data-claire-semantic="c">int[] </code>). Sauf avec <code data-claire-semantic="c">sizeof </code>, <code data-claire-semantic="c">&amp; </code>, et <code data-claire-semantic="c">&quot;chaine d'initialisation&quot; </code>, mais c'est le chapitre suivant.</p><p id="r-413859" data-claire-element-id="413859">Enfin, je rappelle qu'une déclaration n'est pas une expression. Déclarer un tableau ne revient donc évidemment pas du tout à déclarer un pointeur. Quand on écrit <code data-claire-semantic="c">int*p,tab[3]; </code> il y a deux déclarations, mais aucune expression, donc aucune conversion. (Et le premier de classe qui lève la main pour me dire que, si, le <code data-claire-semantic="c">3 </code> tout seul dans <code data-claire-semantic="c">tab[3] </code> est une expression constante, je lui demanderai de se taire pour ne pas embrouiller les autres.)</p><p id="r-413860" data-claire-element-id="413860">Je dois encore signaler que la vérité a un peu évolué. Du temps de C89 (trouvé sur <a href="http://flash-gordon.me.uk/ansi.c.txt">http://flash-gordon.me.uk/ansi.c.txt</a>), c'était:</p><p id="r-413861" data-claire-element-id="413861"><cite>Citation : C89</cite></p><blockquote id="r-413863" data-claire-element-id="413863"><p id="r-413862" data-claire-element-id="413862">Except when it is the operand of the sizeof operator or the unary &amp; operator, or is a character string literal used to initialize an array of character type, or is a wide string literal used to initialize an array with element type compatible with wchar_t, an lvalue that has type &quot;array of type&quot; is converted to an expression that has type &quot;pointer to type&quot; that points to the initial member of the array object and is not an lvalue.</p></blockquote><p id="r-413864" data-claire-element-id="413864">En C89, ce ne sont pas toutes les expressions qui sont converties, mais seulement les <em>lvalue</em>s. Étant donné qu'un tableau est une lvalue, c'est une différence subtile qui ne se révèle que dans des cas assez tordus. Et pour ne pas décourager les lecteurs qui ont suivi jusqu'ici, je n'illustrerai cette différence qu'au dernier chapitre du tutoriel.</p><p id="r-413865" data-claire-element-id="413865">Bon, maintenant que la vérité est dévoilée, j'espère que tout est devenu beaucoup plus clair. :D Sinon, des exemples sont donnés dans la suite du tutoriel...</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c">La vérité sur les tableaux et pointeurs en C</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/introduction-61">
+Introduction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/declaration-de-tableau-et-pointeur">
+Déclaration de tableau et pointeur
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/la-verite-vraie">
+La vérité vraie
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/sizeof-tab-tab-et-char-tab-chaine">
+sizeof tab, &amp;tab, et char tab[] = &quot;chaine&quot;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/char-tab-et-char-p">
+char tab[] et char *P
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/lvalue-et-register">
+lvalue et register
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/pointeur-de-pointeur-et-tableau-de-tableaux">
+Pointeur de pointeur et tableau de tableaux
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/parametres-formels-char-argv-vs-char-argv">
+Paramètres formels: char*argv[] vs char**argv
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/c89-et-c99">
+C89 et C99
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/declaration-de-tableau-et-pointeur">
+<span class="arrow"></span>
+<span class="next">Déclaration de tableau et pointeur</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/sizeof-tab-tab-et-char-tab-chaine">
+<span class="next">sizeof tab, &amp;tab, et char tab[] = &quot;chaine&quot;</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="sizeoftabamptabetchartabquotchainequot"></a><h2>sizeof tab, &amp;tab, et char tab[] = &quot;chaine&quot;</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/la-verite-vraie">
+<span class="arrow"></span>
+<span class="next">La vérité vraie</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/char-tab-et-char-p">
+<span class="next">char tab[] et char *P</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-413868" data-claire-element-id="413868"><cite>Citation</cite></p><blockquote id="r-413870" data-claire-element-id="413870"><p id="r-413869" data-claire-element-id="413869">Sauf quand elle est l'opérande de l'opérateur <strong>sizeof</strong> ou de l'opérateur unaire <strong>&amp;</strong>, ou est une chaine de caractères littérale utilisée pour initialiser un tableau, une expression de type &quot;tableau de <em>type</em>&quot; est convertie en une expression de type &quot;pointeur de <em>type</em>&quot; qui pointe sur l'élément initial de l'objet tableau et n'est pas une lvalue.</p></blockquote><p id="r-413871" data-claire-element-id="413871">Comme revu dans l'introduction, lorsqu'une expression de type tableau est l'opérande de l'opérateur d'affectation (<code data-claire-semantic="c">p=tab </code>), d'addition (<code data-claire-semantic="c">tab+2 </code>), d'appel de fonction (<code data-claire-semantic="c">printf(&quot;hello, world &quot;) </code>), et de beaucoup d'autres opérateurs, alors elle se comporte comme un pointeur constant sur l'élément initial du tableau. En fait, il n'existe que trois cas où une expression de type tableau se comporte clairement comme un tableau. Ils sont soulignés dans l'extrait de la norme ci-dessus, et illustrés ci-dessous.</p><h2 id="r-sizeof-tab" data-claire-element-id="413879"><code data-claire-semantic="c">sizeof tab</code></h2><pre id="r-413872" data-claire-element-id="413872"><code data-claire-semantic="c">#include &lt;stdio.h&gt;
+
+int main(void)
+{
+    char tab[3];
+    char *p = tab;
+
+    printf(&quot;sizeof tab vaut %d.\n&quot;, (int)sizeof tab);
+    printf(&quot;sizeof p vaut %d.\n&quot;, (int)sizeof p);
+
+    return 0;
+}</code></pre><p id="r-413873" data-claire-element-id="413873">Ce code affiche le texte suivant sur mon système:</p><pre id="r-413874" data-claire-element-id="413874"><code data-claire-semantic="console">sizeof tab vaut 3.
+sizeof p vaut 8.</code></pre><p id="r-413875" data-claire-element-id="413875">Il se <code data-claire-semantic="c">pe</code>ut que la taille de p soit différente de 8 sur ton système (4 est une valeur courante).</p><p id="r-413876" data-claire-element-id="413876">Ce qu'il est important de constater, c'est que la taille du <code data-claire-semantic="c">tabl</code>eau tab est différente de celle du <code data-claire-semantic="c">po</code>inteur p . En effet, lorsque l'opérande de <code data-claire-semantic="c">sizeof </code> est de type tableau, alors le résultat est la taille du tableau, et pas la taille d'un pointeur sur un élément du tableau.</p><p id="r-413877" data-claire-element-id="413877">J'ai écrit <code data-claire-semantic="c">(int)sizeof tab </code> et <code data-claire-semantic="c">(int)sizeof p </code> avec conversion en <code data-claire-semantic="c">int </code>, afin de correspondre au format <code data-claire-semantic="c">&quot;%d&quot; </code> de <code data-claire-semantic="c">printf </code>. Sinon il y a un risque de bogue, car <code data-claire-semantic="c">sizeof </code> crée un entier de type <code data-claire-semantic="c">size_t </code>. Si le compilateur supporte C99, alors on peut écrire <code data-claire-semantic="c">printf(&quot;sizeof p vaut %zu. &quot;, sizeof p); </code> sans conversion.</p><p id="r-413878" data-claire-element-id="413878">On peut se demander pourquoi, une fonction <code data-claire-semantic="c">size_t my_strlen(char s[]){return sizeof s;} </code> retourne la taille d'un pointeur de <code data-claire-semantic="c">char </code>, et pas la taille du tableau contenant la chaine de caractères <code data-claire-semantic="c">s </code>. La réponse est très simple: parce que dans ce cas, <code data-claire-semantic="c">s </code>est un pointeur de <code data-claire-semantic="c">char </code>. C'est une particularité des déclarations de paramètres de fonction sur laquelle je reviendrai plus tard...</p><h2 id="r-tab" data-claire-element-id="413886"><code data-claire-semantic="c">&amp;tab</code></h2><pre id="r-413880" data-claire-element-id="413880"><code data-claire-semantic="c">int main(void)
+{
+    int tab[3];
+    int *p;
+    int **pp;
+    int (*pt)[3];
+
+    p = &amp;tab;
+    pp = &amp;tab;
+    pt = &amp;tab;
+
+    return 0;
+}</code></pre><p id="r-413881" data-claire-element-id="413881">Dans le code ci-dessus, deux des trois affectations de pointeur provoquent un avertissement de la part du compilateur:</p><pre id="r-413882" data-claire-element-id="413882"><code data-claire-semantic="console">$ gcc ex3.c 
+ex3.c: In function ‘main’:
+ex3.c:8:7: attention : assignment from incompatible pointer type
+ex3.c:9:8: attention : assignment from incompatible pointer type
+$</code></pre><p id="r-413883" data-claire-element-id="413883">Seule l'affectation <code data-claire-semantic="c">pt=&amp;tab </code> ne provoque aucun avertissement. En effet, le type de <code data-claire-semantic="c">pt </code> est le même que celui de l'expression <code data-claire-semantic="c">&amp;tab </code>: «po<code data-claire-semantic="c">inte</code>ur de tableau de 3 int », ce qui s'écrit <code data-claire-semantic="c">int(*)[3] </code> en C.</p><p id="r-413884" data-claire-element-id="413884">On remarque en particulier que le type de l'expression <code data-claire-semantic="c">&amp;tab </code> n'est pas <code data-claire-semantic="c">int** </code>. Ce serait le cas si l'expression <code data-claire-semantic="c">tab </code> était convertie en po<code data-claire-semantic="c">inte</code>ur de int (soit <code data-claire-semantic="c">int* </code>) avant l'opération unaire <code data-claire-semantic="c">&amp; </code>. Mais ce n'est pas le cas; le type de <code data-claire-semantic="c">&amp;tab </code> est donc un pointeur sur un tableau, et pas un pointeur sur un pointeur.</p><p id="r-413885" data-claire-element-id="413885">Attention à la paire de parenthèses en notant le type <code data-claire-semantic="c">int(*)[3] </code>. Si on écrit <code data-claire-semantic="c">int*[3] </code>, cela signifie «tableau de 3 po<code data-claire-semantic="c">inte</code>urs de int », car l'opérateur <code data-claire-semantic="c">* </code> a une précédence inférieure à l'opérateur <code data-claire-semantic="c">[] </code>.</p><h2 id="r-char-tab-chaine" data-claire-element-id="413890"><code data-claire-semantic="c">char tab[] = &quot;chaine&quot;</code></h2><pre id="r-413887" data-claire-element-id="413887"><code data-claire-semantic="c">int main(void)
+{
+    char *p = &quot;hello&quot;;
+    char t1[] = &quot;world&quot;;
+    char t2[] = p;            /* FAUX */
+    char t3[] = (char*)&quot;foo&quot;; /* FAUX */
+
+    return 0;
+}</code></pre><p id="r-413888" data-claire-element-id="413888">Pourquoi les initialisations de <code data-claire-semantic="c">t2 </code> et <code data-claire-semantic="c">t3 </code> ne compilent pas, alors que celle de <code data-claire-semantic="c">t1 </code> est parfaitement valable?<br/> Car un tableau ne peut pas être initialisé avec une valeur scalaire, or un pointeur est une valeur scalaire, et les initialisateurs de <code data-claire-semantic="c">t2 </code> et <code data-claire-semantic="c">t3 </code> sont des pointeurs.<br/> En revanche, la chaine <code data-claire-semantic="c">&quot;world&quot; </code> qui sert à initialiser <code data-claire-semantic="c">t1 </code> n'est pas convertie en pointeur. La chaine <code data-claire-semantic="c">&quot;world&quot; </code> est de type tableau de 6 <code data-claire-semantic="c">char </code>, et l'initialisation fait de <code data-claire-semantic="c">t1 </code> un tableau de 6 <code data-claire-semantic="c">char </code>. C'est équivalent à <code data-claire-semantic="c">char t1[]={'w','o','r','l','d',0}; </code><br/> Enfin <code data-claire-semantic="c">po</code>ur initialiser p , le tableau <code data-claire-semantic="c">&quot;hello&quot; </code> est classiquement converti en un pointeur sur son élément initial.</p><p id="r-413889" data-claire-element-id="413889">Pour être propre, il faudrait écrire <code data-claire-semantic="c">const char *p = &quot;hello&quot;; </code> mais ça compliquerait inutilement les explications.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c">La vérité sur les tableaux et pointeurs en C</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/introduction-61">
+Introduction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/declaration-de-tableau-et-pointeur">
+Déclaration de tableau et pointeur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/la-verite-vraie">
+La vérité vraie
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/sizeof-tab-tab-et-char-tab-chaine">
+sizeof tab, &amp;tab, et char tab[] = &quot;chaine&quot;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/char-tab-et-char-p">
+char tab[] et char *P
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/lvalue-et-register">
+lvalue et register
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/pointeur-de-pointeur-et-tableau-de-tableaux">
+Pointeur de pointeur et tableau de tableaux
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/parametres-formels-char-argv-vs-char-argv">
+Paramètres formels: char*argv[] vs char**argv
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/c89-et-c99">
+C89 et C99
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/la-verite-vraie">
+<span class="arrow"></span>
+<span class="next">La vérité vraie</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/char-tab-et-char-p">
+<span class="next">char tab[] et char *P</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="chartabetcharP"></a><h2>char tab[] et char *P</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/sizeof-tab-tab-et-char-tab-chaine">
+<span class="arrow"></span>
+<span class="next">sizeof tab, &amp;tab, et char tab[] = &quot;chaine&quot;</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/lvalue-et-register">
+<span class="next">lvalue et register</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-413892" data-claire-element-id="413892">Note: Cette partie est inspirée du <a href="http://www.siteduzero.com/forum-83-508979-p1-difference-entre-char-tab-et-char-tab.html#r4868011">topic <em>Différence entre char *tab et char tab[]</em> d'Arthurus</a>.</p><pre id="r-413893" data-claire-element-id="413893"><code data-claire-semantic="c">char t1[] = { 'h', 'e', 'l', 'l', 'o', 0 };
+char t2[] = &quot;hello&quot;;
+char *p = &quot;hello&quot;; /* BOF */
+
+t1[0] = 'H'; /* OK */
+t2[0] = 'H'; /* OK */
+p[0] = 'H';  /* FAUX */
+p = t1;      /* OK */
+p[0] = 'H'   /* OK */</code></pre><p id="r-413894" data-claire-element-id="413894">Comme on l'a vu précédemment, <code data-claire-semantic="c">t1</code> et <code data-claire-semantic="c">t2</code> sont des tableaux de 6 <code data-claire-semantic="c">char</code>. On peut librement changer la valeur de leurs éléments. Mais pourquoi l'instruction commentée <code data-claire-semantic="c">/* FAUX */</code> est-elle fausse, alors qu'elle compile sans avertissement ?</p><p id="r-413895" data-claire-element-id="413895">C'est faux car dans la déclaration <code data-claire-semantic="c">char *p = &quot;hello&quot;;</code> il y a deux objets en mémoire: le pointeur <code data-claire-semantic="c">p</code>, et un tableau constant anonyme qui contient la chaine <code data-claire-semantic="c">&quot;hello&quot;</code>. Les tableaux anonymes sont courants, on en trouve par exemple un dans <code data-claire-semantic="c">printf(&quot;hello, world &quot;)</code>...</p><p id="r-413896" data-claire-element-id="413896">Voilà ce qui arrive avec <code data-claire-semantic="c">char *p = &quot;hello&quot;;</code>: le compilateur crée un tableau de <code data-claire-semantic="c">char</code> statique quelque-part, et ce quelque-part peut être une zone de mémoire où les modifications sont interceptées par le système d'exploitation. Et en cas d'interception, un système comme Linux écrit «erreur de segmentation» et stoppe le programme intercepté.</p><p id="r-413897" data-claire-element-id="413897">Bien sûr, le pointeur <code data-claire-semantic="c">p</code> lui-même est modifiable, comme le montre l'expression <code data-claire-semantic="c">p = t1</code>.</p><p id="r-413898" data-claire-element-id="413898">Pourquoi ai-je commenté la déclarationde <code data-claire-semantic="c">p</code> avec <code data-claire-semantic="c">/* BOF */</code> ? Car lorsqu'on pointe vers un objet que l'on n'est pas censé modifier, il vaut mieux utiliser le mot clé <code data-claire-semantic="c">const</code> afin que le compilateur émette un message en cas de tentative de modification de l'objet pointé.</p><pre id="r-413899" data-claire-element-id="413899"><code data-claire-semantic="c">const char *p = &quot;hello&quot;;  /* bien */
+p[0] = 'H';   /* FAUX et message: erreur: assignment of read-only location ‘*p’ */</code></pre><p id="r-413900" data-claire-element-id="413900">On peut encore noter que le compilateur a le droit de réutiliser les chaines littérales. Par exemple le programme suivant ne nécessite qu'une seule chaine <code data-claire-semantic="c">&quot;hello, world &quot;</code> en mémoire:</p><pre id="r-413901" data-claire-element-id="413901"><code data-claire-semantic="c">#include &lt;stdio.h&gt;
+
+int main(void) {
+	printf(&quot;hello, world\n&quot;);
+	printf(&quot;hello, world\n&quot;);
+	printf(&quot;world\n&quot;);
+	return 0;
+}</code></pre><p id="r-413902" data-claire-element-id="413902">Accessoirement, la réutilisation signifie que si la chaine littérale n'est pas protégée contre l'écriture, la modifier peut introduire des bogues plus subtils qu'une erreur de segmentation.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c">La vérité sur les tableaux et pointeurs en C</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/introduction-61">
+Introduction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/declaration-de-tableau-et-pointeur">
+Déclaration de tableau et pointeur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/la-verite-vraie">
+La vérité vraie
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/sizeof-tab-tab-et-char-tab-chaine">
+sizeof tab, &amp;tab, et char tab[] = &quot;chaine&quot;
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/char-tab-et-char-p">
+char tab[] et char *P
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/lvalue-et-register">
+lvalue et register
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/pointeur-de-pointeur-et-tableau-de-tableaux">
+Pointeur de pointeur et tableau de tableaux
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/parametres-formels-char-argv-vs-char-argv">
+Paramètres formels: char*argv[] vs char**argv
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/c89-et-c99">
+C89 et C99
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/sizeof-tab-tab-et-char-tab-chaine">
+<span class="arrow"></span>
+<span class="next">sizeof tab, &amp;tab, et char tab[] = &quot;chaine&quot;</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/lvalue-et-register">
+<span class="next">lvalue et register</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="lvalueetregister"></a><h2>lvalue et register</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/char-tab-et-char-p">
+<span class="arrow"></span>
+<span class="next">char tab[] et char *P</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/pointeur-de-pointeur-et-tableau-de-tableaux">
+<span class="next">Pointeur de pointeur et tableau de tableaux</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-413904" data-claire-element-id="413904"><cite>Citation</cite></p><blockquote id="r-413906" data-claire-element-id="413906"><p id="r-413905" data-claire-element-id="413905">Sauf quand elle est l'opérande de l'opérateur <strong>sizeof</strong> ou de l'opérateur unaire <strong>&amp;</strong>, ou est une chaîne de caractères littérale utilisée pour initialiser un tableau, une expression de type &quot;tableau de <em>type</em>&quot; est convertie en une expression de type &quot;pointeur de <em>type</em>&quot; qui pointe sur l'élément initial de l'objet tableau et n'est pas une lvalue. Si le tableau est d'une classe de stockage registre, le comportement est indéterminé.</p></blockquote><h2 id="r-lvalue" data-claire-element-id="413911">lvalue</h2><p id="r-413907" data-claire-element-id="413907">Sous ce terme technique se cache une réalité simple: un tableau ne peut pas être affecté, autrement dit, il ne peut pas être la valeur à gauche <em>(left value)</em> d'une affectation. Et bien sûr, il ne peut pas non plus être incrémenté ni changé d'une quelconque manière.</p><p id="r-413908" data-claire-element-id="413908">Pour être tout à fait rigoureux, à la base, un tableau est une lvalue non modifiable. Et la conversion qui donne un pointeur sur l'élément initial produit une simple valeur, qui n'est pas une lvalue.</p><pre id="r-413909" data-claire-element-id="413909"><code data-claire-semantic="c">void f(void)
+{
+    int t1[3], t2[3], *p;
+    t1 = 0;  /* erreur */
+    t1 = t2; /* erreur */
+    t1++;    /* erreur */
+    ++t1;    /* erreur */
+    t1--;    /* erreur */
+    --t1;    /* erreur */
+    t1 += 1; /* erreur */
+    t1 -= 1; /* erreur */
+}</code></pre><p id="r-413910" data-claire-element-id="413910">Notons que si l'on remplace <code data-claire-semantic="c">t1 </code> par <code data-claire-semantic="c">p </code> dans chaque instruction ci-dessus, alors il n'y a plus d'erreur, car <code data-claire-semantic="c">p </code> est une lvalue modifiable.</p><h2 id="r-register-int-t-3" data-claire-element-id="413917"><code data-claire-semantic="c">register int t[3]</code></h2><p id="r-413912" data-claire-element-id="413912">Ce cas est exotique. Il faut savoir qu'un objet de classe de stockage registre n'existe pas forcément en mémoire : il peut être entièrement contenu dans un registre du processeur. Prendre l'adresse d'un objet de classe de stockage registre n'a donc pas de sens déterminé. Cela rend donc les règles de conversion de tableau en pointeur indéterminée...</p><p id="r-413913" data-claire-element-id="413913">Un petit test avec GCC donne:</p><pre id="r-413914" data-claire-element-id="413914"><code data-claire-semantic="c">/* ex.c */
+#include &lt;stdio.h&gt;
+
+int main(void)
+{
+	register int t[3] = { 1, 2, 3 };
+	printf(&quot;%d\n&quot;, (int)sizeof t);
+	printf(&quot;%d\n&quot;, t[1]);
+	return 0;
+}</code></pre><pre id="r-413915" data-claire-element-id="413915"><code data-claire-semantic="console">$ gcc ex.c -pedantic
+ex.c: In function ‘main’:
+ex.c:8:18: attention : ISO C forbids subscripting ‘register’ array
+$</code></pre><p id="r-413916" data-claire-element-id="413916">GCC est plutôt permissif, puisque sans l'option <code data-claire-semantic="console">-pedantic</code>, il compile ce source. Toutefois, selon la norme, la seule chose bien définie qu'on puisse faire avec un tableau <code data-claire-semantic="c">register </code>, c'est prendre sa taille avec <code data-claire-semantic="c">sizeof </code><em>(C99 §6.7.1.4 note 103: Thus, the only operator that can be applied to an array declared with storage-class specifier<br/> register is sizeof.)</em></p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c">La vérité sur les tableaux et pointeurs en C</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/introduction-61">
+Introduction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/declaration-de-tableau-et-pointeur">
+Déclaration de tableau et pointeur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/la-verite-vraie">
+La vérité vraie
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/sizeof-tab-tab-et-char-tab-chaine">
+sizeof tab, &amp;tab, et char tab[] = &quot;chaine&quot;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/char-tab-et-char-p">
+char tab[] et char *P
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/lvalue-et-register">
+lvalue et register
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/pointeur-de-pointeur-et-tableau-de-tableaux">
+Pointeur de pointeur et tableau de tableaux
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/parametres-formels-char-argv-vs-char-argv">
+Paramètres formels: char*argv[] vs char**argv
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/c89-et-c99">
+C89 et C99
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/char-tab-et-char-p">
+<span class="arrow"></span>
+<span class="next">char tab[] et char *P</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/pointeur-de-pointeur-et-tableau-de-tableaux">
+<span class="next">Pointeur de pointeur et tableau de tableaux</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Pointeurdepointeurettableaudetableaux"></a><h2>Pointeur de pointeur et tableau de tableaux</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/lvalue-et-register">
+<span class="arrow"></span>
+<span class="next">lvalue et register</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/parametres-formels-char-argv-vs-char-argv">
+<span class="next">Paramètres formels: char*argv[] vs char**argv</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-413919" data-claire-element-id="413919">Cette sous-partie explique en détail le bogue présenté en introduction: ce qui arrive lorsqu'on passe un tableau de tableaux à une fonction attendant un pointeur de pointeur.</p><p id="r-413920" data-claire-element-id="413920"><em>Note: Si tu veux voir des fonctions non boguées manipulant des tableaux, tableaux de tableaux, pointeurs sur tableaux, statiquement et dynamiquement, avec de jolis schémas, alors je t'invite à lire le tutoriel <a href="http://www.siteduzero.com/tutoriel-3-321485-tableaux-pointeurs-et-allocation-dynamique.html">Tableaux, pointeurs et allocation dynamique</a> d'Uknow.</em></p><p id="r-413921" data-claire-element-id="413921">Revenons à nos moutons, voici un code source bogué:</p><pre id="r-413922" data-claire-element-id="413922"><code data-claire-semantic="c">/* ex8.c */
+#include &lt;stdio.h&gt;
+
+void f(int **p, int x, int y)
+{
+	if (p[x][y] == 42)
+		puts(&quot;coucou&quot;);
+}
+
+int main(void)
+{
+	int t[2][3] = { { 0, 1, 2 }, { 3, 4, 5 } };
+	f(t, 0, 1);
+	return 0;
+}</code></pre><p id="r-413923" data-claire-element-id="413923">Compilons-le:</p><pre id="r-413924" data-claire-element-id="413924"><code data-claire-semantic="console">$ cc ex8.c 
+ex8.c: In function ‘main’:
+ex8.c:13:2: attention : passing argument 1 of ‘f’ from incompatible pointer type
+ex8.c:4:6: note: expected ‘int **’ but argument is of type ‘int (*)[3]’
+$</code></pre><p id="r-413925" data-claire-element-id="413925">Mmmh, un avertissement... soyons fou, lançons-le:</p><pre id="r-413926" data-claire-element-id="413926"><code data-claire-semantic="console">$ ./a.out
+Erreur de segmentation
+$</code></pre><p id="r-413927" data-claire-element-id="413927">D'où vient ce bon gros plantage? Quelle instruction cause une erreur de segmentation?</p><p id="r-413928" data-claire-element-id="413928">Il s'agit de <code data-claire-semantic="c">if (p[x][y] == 42) </code>. Voyons plus précisément ce qui se passe (sortez vos crayons, il va falloir prendre des notes):</p><ul id="r-413947" data-claire-element-id="413947"><li id="r-413930" data-claire-element-id="413930"><p id="r-413929" data-claire-element-id="413929">à l'appel <code data-claire-semantic="c">f(t, 0, 1) </code> on passe un pointeur sur l'élément initial de <code data-claire-semantic="c">t </code>, soit un pointeur sur t[0], qui est un tableau de 3 <code data-claire-semantic="c">int </code>. Or la fonction attend un pointeur sur un pointeur de <code data-claire-semantic="c">int </code>, pas un pointeur sur un tableau de 3 <code data-claire-semantic="c">int </code>. Ceci cause l'avertissement du compilateur.</p></li><li id="r-413932" data-claire-element-id="413932"><p id="r-413931" data-claire-element-id="413931">Arrivé dans <code data-claire-semantic="c">void f(int **p, int x, int y) </code> on a <code data-claire-semantic="c">p </code>, un pointeur de pointeur de <code data-claire-semantic="c">int </code>, qui pointe en fait sur le tableau <code data-claire-semantic="c">t[0] </code> initialisé avec <code data-claire-semantic="c">{ 0, 1, 2 } </code>.</p></li><li id="r-413934" data-claire-element-id="413934"><p id="r-413933" data-claire-element-id="413933">Quand on écrit <code data-claire-semantic="c">p[x][y] </code> (équivalent à <code data-claire-semantic="c">*(p+x)[y] </code>), l'exécutable charge d'abord <code data-claire-semantic="c">p[x] </code>.</p></li><li id="r-413936" data-claire-element-id="413936"><p id="r-413935" data-claire-element-id="413935">Je ra<code data-claire-semantic="c">pp</code>elle que si p est de type <code data-claire-semantic="c">int** </code>, alors <code data-claire-semantic="c">p[x] </code> est de type <code data-claire-semantic="c">int* </code>.</p></li><ul id="r-413946" data-claire-element-id="413946"><li id="r-413938" data-claire-element-id="413938"><p id="r-413937" data-claire-element-id="413937">Admettons que <code data-claire-semantic="c">p[0] </code> soit chargé</p></li><ul id="r-413943" data-claire-element-id="413943"><li id="r-413940" data-claire-element-id="413940"><p id="r-413939" data-claire-element-id="413939">Admettons que <code data-claire-semantic="c">sizeof(int) </code> égale <code data-claire-semantic="c">sizeof(int*) </code>, alors ce qui est chargé est le <code data-claire-semantic="c">0 </code> de <code data-claire-semantic="c">{0, 1, 2} </code>, ce qui donne le pointeur nul!</p></li><li id="r-413942" data-claire-element-id="413942"><p id="r-413941" data-claire-element-id="413941">Admettons que <code data-claire-semantic="c">sizeof(int) </code> égale la moitié de <code data-claire-semantic="c">sizeof(int*) </code>, alors ce qui est chargé est le <code data-claire-semantic="c">0 </code> et le <code data-claire-semantic="c">1 </code> de <code data-claire-semantic="c">{0, 1, 2} </code>, ce qui donne un pointeur qui a fort peu de chance d'être valide!</p></li></ul><li id="r-413945" data-claire-element-id="413945"><p id="r-413944" data-claire-element-id="413944">Admettons donc que <code data-claire-semantic="c">p[0] </code> soit nul. Alors la suite de l'évaluation de l'expression <code data-claire-semantic="c">p[x][y] </code> évalue <code data-claire-semantic="c">((int*)0)[y] </code>, soit <code data-claire-semantic="c">*(((int*)0)+y) </code>. Et le déréférencement de ce pointeur cause sans surprise une erreur de segmentation. CQFD :magicien:</p></li></ul></ul>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c">La vérité sur les tableaux et pointeurs en C</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/introduction-61">
+Introduction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/declaration-de-tableau-et-pointeur">
+Déclaration de tableau et pointeur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/la-verite-vraie">
+La vérité vraie
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/sizeof-tab-tab-et-char-tab-chaine">
+sizeof tab, &amp;tab, et char tab[] = &quot;chaine&quot;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/char-tab-et-char-p">
+char tab[] et char *P
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/lvalue-et-register">
+lvalue et register
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/pointeur-de-pointeur-et-tableau-de-tableaux">
+Pointeur de pointeur et tableau de tableaux
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/parametres-formels-char-argv-vs-char-argv">
+Paramètres formels: char*argv[] vs char**argv
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/c89-et-c99">
+C89 et C99
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/lvalue-et-register">
+<span class="arrow"></span>
+<span class="next">lvalue et register</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/parametres-formels-char-argv-vs-char-argv">
+<span class="next">Paramètres formels: char*argv[] vs char**argv</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Paramtresformelscharargvvscharargv"></a><h2>Paramètres formels: char*argv[] vs char**argv</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/pointeur-de-pointeur-et-tableau-de-tableaux">
+<span class="arrow"></span>
+<span class="next">Pointeur de pointeur et tableau de tableaux</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/c89-et-c99">
+<span class="next">C89 et C99</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-413949" data-claire-element-id="413949">Pour connaître toute la vérité sur les tableaux et les pointeurs, il faut encore connaître le cas des déclarations de paramètre de fonction. Dans ce cas, lorqu'on utilise la syntaxe de déclaration de tableau, on déclare en fait un pointeur!<br/> Il s'ensuit qu'il est impossible de déclarer un paramètre formel de type tableau.</p><p id="r-413950" data-claire-element-id="413950">Dans une déclaration de paramètre de fonction, une paire de crochets à droite de l'identificateur déclare un pointeur. S'il y a une expression constante entre les crochets, alors elle est ignorée. J'avais prévenu dans un précédent chapitre que l'on sortirait de la logique sur la fin... On dira qu'il y a des raisons historiques à ce bazar.</p><p id="r-413951" data-claire-element-id="413951">Comme démonstration, voici quatre prototypes apparemment différents pour la même fonction. On constate que le compilateur ne dit rien, car en fait ils sont tous équivalents:</p><pre id="r-413952" data-claire-element-id="413952"><code data-claire-semantic="c">/* c.c */
+void f(int *p);
+void f(int p[]);
+void f(int p[3]);
+
+void g(int *p) { f(p); }
+void f(int p[8]) { g(++p); }</code></pre><pre id="r-413953" data-claire-element-id="413953"><code data-claire-semantic="console">$ gcc -c -Wall c.c
+$</code></pre><p id="r-413954" data-claire-element-id="413954">On remarque en outre que <code data-claire-semantic="c">p</code> est bien un pointeur dans <code data-claire-semantic="c">f</code>, et l'on peut donc logiquement l'incrémenter.</p><p id="r-413955" data-claire-element-id="413955">Les déclarations bien connues<br/><code data-claire-semantic="c">int main(int argc, char *argv[])</code><br/> et<br/><code data-claire-semantic="c">int main(int argc, char **argv)</code><br/> sont donc parfaitement équivalentes.</p><p id="r-413956" data-claire-element-id="413956">Il faut ensuite noter que cette règle n'est pas récursive:</p><pre id="r-413957" data-claire-element-id="413957"><code data-claire-semantic="c">void h(int p[2][3]);
+void h(int p[][3]);
+void h(int (*p)[3]);
+/* void h(int (*p)[4]); /* incompatible */
+/* void h(int **p);     /* incompatible */
+void h(int (*)[]); /* compatible, pointeur de tableau de type incomplet */</code></pre><p id="r-413958" data-claire-element-id="413958">Le cas du tableau de type incomplet est compatible. Je pense que le type est complété par les autres déclarations. Toutefois, si cela semble le cas avec GCC, Clang rend le type incomplet en vidant le sens des précédents prototypes. On arrive un peu aux limites des compilateurs. :D</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c">La vérité sur les tableaux et pointeurs en C</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/introduction-61">
+Introduction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/declaration-de-tableau-et-pointeur">
+Déclaration de tableau et pointeur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/la-verite-vraie">
+La vérité vraie
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/sizeof-tab-tab-et-char-tab-chaine">
+sizeof tab, &amp;tab, et char tab[] = &quot;chaine&quot;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/char-tab-et-char-p">
+char tab[] et char *P
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/lvalue-et-register">
+lvalue et register
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/pointeur-de-pointeur-et-tableau-de-tableaux">
+Pointeur de pointeur et tableau de tableaux
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/parametres-formels-char-argv-vs-char-argv">
+Paramètres formels: char*argv[] vs char**argv
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/c89-et-c99">
+C89 et C99
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/pointeur-de-pointeur-et-tableau-de-tableaux">
+<span class="arrow"></span>
+<span class="next">Pointeur de pointeur et tableau de tableaux</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/c89-et-c99">
+<span class="next">C89 et C99</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="C89etC99"></a><h2>C89 et C99</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/parametres-formels-char-argv-vs-char-argv">
+<span class="arrow"></span>
+<span class="next">Paramètres formels: char*argv[] vs char**argv</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-413960" data-claire-element-id="413960">Le dernier pour la fin... La différence entre les normes C89 et C99:</p><p id="r-413961" data-claire-element-id="413961"><cite>Citation : C89</cite></p><blockquote id="r-413963" data-claire-element-id="413963"><p id="r-413962" data-claire-element-id="413962">...an lvalue that has type &quot;array of type&quot; is converted to an expression that has type &quot;pointer to type&quot;...</p></blockquote><p id="r-413964" data-claire-element-id="413964"><cite>Citation : C99</cite></p><blockquote id="r-413966" data-claire-element-id="413966"><p id="r-413965" data-claire-element-id="413965">...an expression that has type &quot;array of type&quot; is converted to an expression that has type &quot;pointer to type&quot;...</p></blockquote><p id="r-413967" data-claire-element-id="413967">Pour comprendre cette différence, il faut reprendre la définition d'une lvalue selon C89:</p><p id="r-413968" data-claire-element-id="413968"><cite>Citation : C89</cite></p><blockquote id="r-413970" data-claire-element-id="413970"><p id="r-413969" data-claire-element-id="413969">An lvalue is an expression (with an object type or an incomplete type other than void) that designates an object.</p></blockquote><p id="r-413971" data-claire-element-id="413971">Je ne connais qu'un cas où un tableau n'est pas une lvalue: lorsqu'une structure contenant un tableau est retournée par valeur par une fonction.</p><pre id="r-413972" data-claire-element-id="413972"><code data-claire-semantic="c">/* lvalue.c */
+
+#include &lt;stdio.h&gt;
+
+struct s {
+	int tab[3];
+	const char *str;
+};
+
+struct s f(void)
+{
+	struct s res = { { 1, 2, 3 }, &quot;foo&quot; };
+	return res;
+}
+
+int main(void)
+{
+	printf(&quot;%d\n&quot;, f().tab[0]);
+	printf(&quot;%c\n&quot;, f().str[0]);
+	return 0;
+}</code></pre><pre id="r-413973" data-claire-element-id="413973"><code data-claire-semantic="console">$ gcc lvalue.c -Wall -std=c89 -pedantic
+lvalue.c: In function ‘main’:
+lvalue.c:18:24: attention : ISO C90 interdit d'indicer de tableau n'étant pas membre gauche
+$ gcc lvalue.c -Wall -std=c99 -pedantic
+$ gcc lvalue.c</code></pre><p id="r-413974" data-claire-element-id="413974">Comme on le voit avec le compilateur GCC, ça ne compile pas en C89 (ou C90, c'est un peu pareil); mais ça compile en C99. Et en C89, seul le <code data-claire-semantic="c">tabl</code>eau tab pose problème, pas le pointeur <code data-claire-semantic="c">str </code>.</p><p id="r-413975" data-claire-element-id="413975">A noter que ça compile aussi sans option de compilation; c'est une des nombreuses extensions de GCC activées par défaut.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c">La vérité sur les tableaux et pointeurs en C</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/introduction-61">
+Introduction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/declaration-de-tableau-et-pointeur">
+Déclaration de tableau et pointeur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/la-verite-vraie">
+La vérité vraie
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/sizeof-tab-tab-et-char-tab-chaine">
+sizeof tab, &amp;tab, et char tab[] = &quot;chaine&quot;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/char-tab-et-char-p">
+char tab[] et char *P
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/lvalue-et-register">
+lvalue et register
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/pointeur-de-pointeur-et-tableau-de-tableaux">
+Pointeur de pointeur et tableau de tableaux
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/parametres-formels-char-argv-vs-char-argv">
+Paramètres formels: char*argv[] vs char**argv
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/c89-et-c99">
+C89 et C99
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-verite-sur-les-tableaux-et-pointeurs-en-c/parametres-formels-char-argv-vs-char-argv">
+<span class="arrow"></span>
+<span class="next">Paramètres formels: char*argv[] vs char**argv</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/la-verite-sur-les-tableaux-et-pointeurs-en-c.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 07:35:53 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/la-verite-sur-les-tableaux-et-pointeurs-en-c.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:23:43 GMT -->
+</html>

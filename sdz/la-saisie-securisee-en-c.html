@@ -1,0 +1,905 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/la-saisie-securisee-en-c.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 23:39:03 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/la-saisie-securisee-en-c.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:10:04 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : La saisie sécurisée en C++</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/la-saisie-securisee-en-c.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : La saisie sécurisée en C++</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#LasaisiescuriseenC">La saisie sécurisée en C++</a><br/><a href="#Fonctionnementdecin">Fonctionnement de cin</a><br/><a href="#Validationdel039entre">Validation de l&#039;entrée</a><br/><a href="#Lasaisiedeschanesdecaractres">La saisie des chaînes de caractères</a><br/></div>
+<a name="LasaisiescuriseenC"></a><h2>La saisie sécurisée en C++</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-saisie-securisee-en-c/fonctionnement-de-cin">
+<span class="next">Fonctionnement de cin</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-560144" data-claire-element-id="560144">Quand on débute le C++, on découvre avec émerveillement la simplicité des fonctions d'entrée/sortie par rapport au C, plus besoin de spécifier le type de la variable passée en paramètre, plus besoin de mettre des &quot;&amp;&quot; de partout.</p><p id="r-560145" data-claire-element-id="560145">Prenons par exemple le code suivant, que l'on rencontre très couramment :</p><pre id="r-560146" data-claire-element-id="560146"><code data-claire-semantic="cpp">#include &lt;iostream&gt;
+#include &lt;cstdlib&gt;
+
+using namespace std;
+
+int main()
+{
+    unsigned short int age;
+
+    cout &lt;&lt; &quot;Entrez votre age : &quot;;
+    cin &gt;&gt; age;
+
+    char nom[15];
+
+    cout &lt;&lt; &quot;Entrez votre nom : &quot;;
+    cin &gt;&gt; nom;
+
+    cout &lt;&lt; endl &lt;&lt; &quot;Bonjour &quot; &lt;&lt; nom &lt;&lt; &quot;, vous avez &quot; &lt;&lt; age &lt;&lt; &quot; ans.&quot; &lt;&lt; endl;
+
+    return EXIT_SUCCESS;
+}</code></pre><p id="r-560147" data-claire-element-id="560147">Les petits malins auront vite fait de remarquer qu'il y a quelques failles dans l'utilisation de ces méthodes. En effet, il suffit d'entrer tout sauf un nombre pour que le programme ne fonctionne plus du tout comme prévu.</p><pre id="r-560148" data-claire-element-id="560148"><code data-claire-semantic="console">Entrez votre age : n'importe
+Entrez votre nom : 
+Bonjour ╝[¼t@'@, vous avez 32509 ans</code></pre><p id="r-560149" data-claire-element-id="560149">Et là nous nous retrouvons face à non pas un, mais deux problèmes bien ennuyeux, nous n'avons ni l'âge de l'utilisateur, ni son nom :(.</p><aside id="r-560151" data-claire-element-id="560151" data-claire-semantic="warning"><p id="r-560150" data-claire-element-id="560150">Il ne faut surtout pas utiliser ce code car en plus de ces problèmes, votre programme est susceptible d'être victime d'une attaque par &quot;buffer overflow&quot;, problème que nous aborderons en troisième partie de ce tutoriel.</p></aside><p id="r-560152" data-claire-element-id="560152">A ce stade, vous avez trois possibilités :</p><ol id="r-560159" data-claire-element-id="560159"><li id="r-560154" data-claire-element-id="560154"><p id="r-560153" data-claire-element-id="560153">Arrêter de programmer.</p></li><li id="r-560156" data-claire-element-id="560156"><p id="r-560155" data-claire-element-id="560155">Arrêter d'interagir avec l'utilisateur (ce qui limiterait un peu vos programmes).</p></li><li id="r-560158" data-claire-element-id="560158"><p id="r-560157" data-claire-element-id="560157">Utiliser la saisie sécurisée afin que ce genre de désagréments ne puisse pas survenir.</p></li></ol><aside id="r-560161" data-claire-element-id="560161" data-claire-semantic="information"><p id="r-560160" data-claire-element-id="560160">Ce tutoriel ne va exploiter que les objets et fonctions fournies par la librairie standard (qui sont largement suffisantes), si vous ne comprenez pas le fonctionnement d'un code, je vous invite à vous documenter sur <a href="http://www.cplusplus.com/">cplusplus.com</a>.</p></aside>
+</div><a name="Fonctionnementdecin"></a><h2>Fonctionnement de cin</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-saisie-securisee-en-c/validation-de-l-entree">
+<span class="next">Validation de l&#039;entrée</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-560162" data-claire-element-id="560162">Bien, si vous en êtes à lire ces lignes c'est que vous avez opté pour la troisième solution, alors attaquons le sujet :pirate: .</p><p id="r-560163" data-claire-element-id="560163">Pour comprendre ce que l'on a obtenu, il faut en savoir plus sur <code data-claire-semantic="cpp">cin </code>.</p><h2 id="r-l-etat-du-flux" data-claire-element-id="560188">L'état du flux</h2><p id="r-560164" data-claire-element-id="560164"><code data-claire-semantic="cpp">cin </code> permet de manipuler l'entrée standard, qui est généralement (mais pas toujours) le clavier, il est ce que l'on appelle un flux d'entrée, quelque chose qui permet de manipuler les informations saisies par l'utilisateur. Lorsque l'on réalise une opération avec (comme par exemple <code data-claire-semantic="cpp">cin &gt;&gt; age; </code>), il extrait des informations du flux d'entrée (il les sort du flux pour les mettre dans la variable en quelques sortes).<br/> De plus, à chaque fois que l'on demande à <code data-claire-semantic="cpp">cin </code> d'extraire des données du flux, ce dernier enregistre des informations sur son état, à savoir le succès ou l'échec de l'opération d'extraction. Si tout s'est déroulé normalement, l'état sera bon, sinon le code nous indiquera la ou les erreurs survenues.</p><p id="r-560165" data-claire-element-id="560165">Voici les différentes méthodes disponibles :</p><ul id="r-560174" data-claire-element-id="560174"><li id="r-560167" data-claire-element-id="560167"><p id="r-560166" data-claire-element-id="560166"><a href="http://cplusplus.com/reference/iostream/ios/good/">good()</a> : retourne <code data-claire-semantic="cpp">true </code> si le flux est valide, <code data-claire-semantic="cpp">false </code> dans le cas contraire.</p></li><li id="r-560169" data-claire-element-id="560169"><p id="r-560168" data-claire-element-id="560168"><a href="http://cplusplus.com/reference/iostream/ios/bad/">bad()</a> : retourne <code data-claire-semantic="cpp">true </code> s'il y a eu une erreur sur le flux, <code data-claire-semantic="cpp">false </code> dans le cas contraire.</p></li><li id="r-560171" data-claire-element-id="560171"><p id="r-560170" data-claire-element-id="560170"><a href="http://cplusplus.com/reference/iostream/ios/fail/">fail()</a> : retourne <code data-claire-semantic="cpp">true </code> s'il y a eu une erreur sur le flux ou que la dernière opération a échouée, <code data-claire-semantic="cpp">false </code> dans le cas contraire. Donc si <code data-claire-semantic="cpp">bad() </code> retourne <code data-claire-semantic="cpp">true </code> alors <code data-claire-semantic="cpp">fail() </code> retourne <code data-claire-semantic="cpp">true </code> (mais si <code data-claire-semantic="cpp">bad() </code> retourne <code data-claire-semantic="cpp">false </code>, <code data-claire-semantic="cpp">fail() </code> peut retourner <code data-claire-semantic="cpp">true </code>).</p></li><li id="r-560173" data-claire-element-id="560173"><p id="r-560172" data-claire-element-id="560172"><a href="http://cplusplus.com/reference/iostream/ios/eof/">eof()</a> : retourne <code data-claire-semantic="cpp">true </code> si la fin du flux a été rencontrée lors d'une opération d'extraction (si le flux est un fichier, c'est tout a fait normal mais si le flux est l'entrée standard, c'est que l'on ne peut plus rien demander à l'utilisateur).</p></li></ul><p id="r-560175" data-claire-element-id="560175">Ceci est très pratique car on pourra savoir ce qui s'est passé lors de la dernière opération. Mais il faut aussi savoir qu'avant toute extraction, <code data-claire-semantic="cpp">cin </code> fait une vérification sur son état, s'il y a une erreur (donc si <code data-claire-semantic="cpp">good() </code> retourne <code data-claire-semantic="cpp">false </code>), alors il ne fait rien.<br/> Dans notre exemple, comme il y a eu une erreur lorsqu'on a saisi <code data-claire-semantic="console">n'importe</code> alors qu'on nous demandait un nombre, l'état de <code data-claire-semantic="cpp">cin </code> est passé à « invalide » et il ne demande rien lorsque l'on voudrait avoir le nom de l'utilisateur.</p><p id="r-560176" data-claire-element-id="560176">Pour solutionner ce problème, il suffit d'utiliser la méthode <a href="http://cplusplus.com/reference/iostream/ios/clear/">clear()</a> qui va effacer toutes les erreurs et donc permettre à <code data-claire-semantic="cpp">cin </code> de faire son boulot par la suite. Voici son prototype :</p><pre id="r-560177" data-claire-element-id="560177"><code data-claire-semantic="cpp">void clear(iostate state = goodbit);</code></pre><p id="r-560178" data-claire-element-id="560178"><code data-claire-semantic="cpp">clear() </code> permet de définir l'état d'un flux.</p><p id="r-560179" data-claire-element-id="560179">Paramètres :</p><ul id="r-560182" data-claire-element-id="560182"><li id="r-560181" data-claire-element-id="560181"><p id="r-560180" data-claire-element-id="560180"><code data-claire-semantic="cpp">state </code> : l'état à attribuer au flux, par défaut <code data-claire-semantic="cpp">goodbit </code>, soit aucune erreur.</p></li></ul><p id="r-560183" data-claire-element-id="560183">On peut donc l'utiliser dans notre programme ce qui permet de continuer à demander la saisie à l'utilisateur même après une erreur.<br/> Le code devient donc :</p><pre id="r-560184" data-claire-element-id="560184"><code data-claire-semantic="cpp">#include &lt;iostream&gt;
+#include &lt;cstdlib&gt;
+
+using namespace std;
+
+int main()
+{
+    unsigned short int age;
+
+    cout &lt;&lt; &quot;Entrez votre age : &quot;;
+    cin &gt;&gt; age;
+    cin.clear();
+
+    char nom[15];
+
+    cout &lt;&lt; &quot;Entrez votre nom : &quot;;
+    cin &gt;&gt; nom;
+    cin.clear();
+
+    cout &lt;&lt; endl &lt;&lt; &quot;Bonjour &quot; &lt;&lt; nom &lt;&lt; &quot;, vous avez &quot; &lt;&lt; age &lt;&lt; &quot; ans.&quot; &lt;&lt; endl;
+
+    return EXIT_SUCCESS;
+}</code></pre><p id="r-560185" data-claire-element-id="560185">Ce code produit la sortie suivante :</p><pre id="r-560186" data-claire-element-id="560186"><code data-claire-semantic="console">Entrez votre âge : n'importe
+Entrez votre nom : 
+Bonjour n'importe, vous avez 32509 ans.</code></pre><p id="r-560187" data-claire-element-id="560187">Encore une fois nous n'avons pas réussi à récupérer le nom de l'utilisateur, mais nous avons tout de même quelque chose de stocké dans la variable <code data-claire-semantic="cpp">nom </code>, ce que nous avons tapé lorsque le programme nous a demandé notre âge.<br/> Et pour comprendre ce qu'il s'est passé, il nous faut en savoir encore plus sur le fonctionnement de <code data-claire-semantic="cpp">cin </code>.</p><h2 id="r-une-affaire-de-buffer" data-claire-element-id="560248">Une affaire de buffer</h2><p id="r-560189" data-claire-element-id="560189">Contrairement à ce que l'on pourrait penser, lorsque l'on demande une information via l'objet <code data-claire-semantic="cpp">cin </code> , on ne demande pas à l'utilisateur de saisir quelque chose au clavier. <code data-claire-semantic="cpp">cin </code> regarde dans une zone en mémoire, où est stockée tout ce que l'utilisateur a entré pour notre programme, appelée <strong>buffer</strong>, qui représente le flux.<br/> Lorsque <code data-claire-semantic="cpp">cin </code> veut extraire une information, il regarde dans le buffer, si celui-ci n'est pas vide, il tente d'extraire les données, sinon il demande à l'utilisateur d'entrer quelque chose au clavier, qui va donc se retrouver dans le buffer, puis il tente d'extraire des données ensuite. Si l'extraction réussit, les informations extraites sont retirées du buffer et la variable est modifiée, sinon, les informations restent dans le buffer et la variable reste inchangée.</p><div id="r-560191" data-claire-element-id="560191" data-claire-semantic="question"><p id="r-560190" data-claire-element-id="560190">D'accord mais qu'est-ce que ça peut bien nous faire de savoir comment ça marche ?</p></div><p id="r-560192" data-claire-element-id="560192">Et bien maintenant que l'on sait tout ça, il faut aller faire un tour par... la documentation :D .</p><p id="r-560193" data-claire-element-id="560193">Il est clairement indiqué dans cette dernière qu'après une opération d'extraction (réussie ou non), <code data-claire-semantic="cpp">cin </code> ne supprime pas ce qui reste dans le buffer. Donc le contenu non supprimé sera alors utilisé lors de la prochaine demande d'informations à l'utilisateur.<br/> Dans notre cas, <code data-claire-semantic="cpp">cin </code> ne parvient pas à extraire un nombre du buffer pour le stocker dans la variable <code data-claire-semantic="cpp">age </code> donc il ne la modifie pas. Et lorsque l'on demande le nom de l'utilisateur, il extrait ce que contenait le buffer et le place dans la variable <code data-claire-semantic="cpp">nom </code>.</p><p id="r-560194" data-claire-element-id="560194">Pour résoudre ce problème, il nous faut vider le buffer après chaque opération d'extraction. Il existe justement une méthode permettant de vider le buffer, <a href="http://cplusplus.com/reference/iostream/istream/ignore/">ignore()</a> , dont le prototype est le suivant :</p><pre id="r-560195" data-claire-element-id="560195"><code data-claire-semantic="cpp">istream &amp;ignore(streamsize n = 1, int delim = EOF);</code></pre><p id="r-560196" data-claire-element-id="560196"><code data-claire-semantic="cpp">ignore() </code> permet d'extraire des caractères du buffer (en les ignorant). L'extraction se termine lorsque <code data-claire-semantic="cpp">n </code> caractères ont été extrais ou que le caractère <code data-claire-semantic="cpp">delim </code> est rencontré (qui est aussi extrait). La valeur retournée est une référence vers l'objet qui a utilisé la méthode.</p><p id="r-560197" data-claire-element-id="560197">Paramètres :</p><ul id="r-560202" data-claire-element-id="560202"><li id="r-560199" data-claire-element-id="560199"><p id="r-560198" data-claire-element-id="560198"><code data-claire-semantic="cpp">n </code> : le nombre de caractères à extraire. Par défaut 1 seul.</p></li><li id="r-560201" data-claire-element-id="560201"><p id="r-560200" data-claire-element-id="560200"><code data-claire-semantic="cpp">delim </code> : le caractère auquel s'arrêter s'il est rencontré. Par défaut c'est le caractère de fin de ligne.</p></li></ul><div id="r-560204" data-claire-element-id="560204" data-claire-semantic="question"><p id="r-560203" data-claire-element-id="560203">C'est bien beau mais quelle valeur on va donner à n pour être sûr que le buffer soit vidé en entier</p></div><p id="r-560205" data-claire-element-id="560205">Et bien là encore, la librairie standard a tout prévu.<br/> La classe <a href="http://cplusplus.com/reference/std/limits/numeric_limits/">numeric_limits</a> permet, entre autres, de connaitre la valeur maximale que peut prendre une variable d'un type numérique donné via la méthode statique <code data-claire-semantic="cpp">numeric_limits&lt;T&gt;::max() </code> , dont voici le prototype :</p><pre id="r-560206" data-claire-element-id="560206"><code data-claire-semantic="cpp">T max();</code></pre><p id="r-560207" data-claire-element-id="560207"><code data-claire-semantic="cpp">numeric_limits&lt;T&gt;::max() </code> retourne une variable de type <code data-claire-semantic="cpp">T </code> dont la valeur est la valeur la plus grande que puisse prendre une variable de ce type.</p><p id="r-560208" data-claire-element-id="560208">La librairie standard fournit aussi la classe <a href="http://cplusplus.com/reference/iostream/streamsize/">streamsize</a> qui représente la taille d'un flux.<br/> Pour vider entièrement notre buffer, on fera donc <code data-claire-semantic="cpp">cin.ignore(numeric_limits&lt;streamsize&gt;::max()); </code> (<code data-claire-semantic="cpp">numeric_limits&lt;streamsize&gt;::max() </code> retourne la taille maximale d'un flux, donc la taille maximale du buffer).</p><h3 id="r-premiere-approche-9" data-claire-element-id="560214">Première approche</h3><p id="r-560209" data-claire-element-id="560209">Notre programme devient donc :</p><pre id="r-560210" data-claire-element-id="560210"><code data-claire-semantic="cpp">#include &lt;iostream&gt;
+#include &lt;cstdlib&gt;
+#include &lt;limits&gt; // Permet d'avoir accès à la classe numeric_limmits
+
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    unsigned short int age;
+
+    cout &lt;&lt; &quot;Entrez votre âge : &quot;;
+    cin &gt;&gt; age;
+    cin.clear(); // Il faut quand même utiliser clear() car ignore() est une méthode d'extraction
+    cin.ignore(numeric_limits&lt;streamsize&gt;::max());
+
+    char nom[15];
+
+    cout &lt;&lt; &quot;Entrez votre nom : &quot;;
+    cin &gt;&gt; nom;
+    cin.clear(); // Il faut quand même utiliser clear() car ignore() est une méthode d'extraction
+    cin.ignore(numeric_limits&lt;streamsize&gt;::max());
+
+    cout &lt;&lt; endl &lt;&lt; &quot;Bonjour &quot; &lt;&lt; nom &lt;&lt; &quot;, vous avez &quot; &lt;&lt; age &lt;&lt; &quot; ans.&quot; &lt;&lt; endl;
+
+    return EXIT_SUCCESS;
+}</code></pre><p id="r-560211" data-claire-element-id="560211">Voici la sortie obtenue :</p><pre id="r-560212" data-claire-element-id="560212"><code data-claire-semantic="console">Entrez votre âge : n'importe
+Entrez votre nom : ooprog
+
+Bonjour ooprog, vous avez 32509 ans.</code></pre><p id="r-560213" data-claire-element-id="560213">Cette fois-ci on demande bien à l'utilisateur de saisir son nom même s'il entre un âge invalide.</p><h3 id="r-approche-plus-securitaire" data-claire-element-id="560239">Approche plus sécuritaire</h3><p id="r-560215" data-claire-element-id="560215">On pourrait se demander ce qu'il advient lorsque l'on utilise deux fois consécutivement cette méthode. Et bien essayons !</p><pre id="r-560216" data-claire-element-id="560216"><code data-claire-semantic="cpp">#include &lt;iostream&gt;
+#include &lt;cstdlib&gt;
+#include &lt;limits&gt;
+
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    unsigned short int age;
+
+    cin &gt;&gt; age;
+
+    /* Premier vidage */
+    cin.clear();
+    cin.ignore(numeric_limits&lt;streamsize&gt;::max());
+
+    /* Second vidage */
+    cin.clear();
+    cin.ignore(numeric_limits&lt;streamsize&gt;::max());
+
+    return EXIT_SUCCESS;
+}</code></pre><p id="r-560217" data-claire-element-id="560217">Résultat, le programme se met en pause. Afin d'éviter cela nous avons deux solutions :</p><ol id="r-560222" data-claire-element-id="560222"><li id="r-560219" data-claire-element-id="560219"><p id="r-560218" data-claire-element-id="560218">Faire attention quant à l'utilisation de la méthode <code>ignore()</code>.</p></li><li id="r-560221" data-claire-element-id="560221"><p id="r-560220" data-claire-element-id="560220">Faire en sorte de ne vider le buffer que lorsqu'il n'est pas vide.</p></li></ol><p id="r-560223" data-claire-element-id="560223">Il va de soi que la deuxième solution est la meilleure. Aussi nous faut-il un moyen de savoir si le buffer est vide.<br/><code data-claire-semantic="cpp">cin </code> ne dispose d'aucune méthode retournant la taille du buffer mais par contre, on peut se déplacer à l'intérieur, via la méthode <a href="http://cplusplus.com/reference/iostream/istream/seekg/">seekg()</a>, dont voici le prototype :</p><pre id="r-560224" data-claire-element-id="560224"><code data-claire-semantic="cpp">istream &amp;seekg(streamoff off, ios_base::seekdir dir);</code></pre><p id="r-560225" data-claire-element-id="560225"><code data-claire-semantic="cpp">seekg() </code> permet de se positionner dans le buffer. La valeur retournée est une référence vers l'objet qui a utilisé la méthode. De plus si l'on essaie d'aller à une position qui n'existe pas, l'état est modifié et on pourra le savoir en utilisant la méthode <code data-claire-semantic="cpp">fail() </code>.</p><p id="r-560226" data-claire-element-id="560226">Paramètres :</p><ul id="r-560231" data-claire-element-id="560231"><li id="r-560228" data-claire-element-id="560228"><p id="r-560227" data-claire-element-id="560227"><code data-claire-semantic="cpp">off </code> : la position à laquelle se rendre à partir de <code data-claire-semantic="cpp">dir </code>.</p></li><li id="r-560230" data-claire-element-id="560230"><p id="r-560229" data-claire-element-id="560229"><code data-claire-semantic="cpp">dir </code> : point de départ du déplacement, peut prendre les valeurs <code data-claire-semantic="cpp">ios::beg </code>, <code data-claire-semantic="cpp">ios::cur </code> ou <code data-claire-semantic="cpp">ios::end </code>, pour commencer respectivement à partir du début, de la position courante ou de la fin.</p></li></ul><p id="r-560232" data-claire-element-id="560232">Donc pour savoir si le buffer est vide, on pourra faire :</p><pre id="r-560233" data-claire-element-id="560233"><code data-claire-semantic="cpp">cin.seekg(0, ios::end); // On se positionne à la fin du buffer
+
+if(!cin.fail())
+{
+    /* Le buffer n'est pas vide */
+}
+
+else
+{
+    /* Le buffer est vide */
+}</code></pre><p id="r-560234" data-claire-element-id="560234">Donc pour vider notre buffer uniquement s'il est vide, on fait :</p><pre id="r-560235" data-claire-element-id="560235"><code data-claire-semantic="cpp">cin.clear();
+cin.seekg(0, ios::end);
+
+if(!cin.fail())
+{
+    cin.ignore(numeric_limits&lt;streamsize&gt;::max()); // Le flux a déjà un état valide donc inutile de faire appel à clear()
+}
+
+else
+{
+    cin.clear(); // Le flux est dans un état invalide donc on le remet en état valide
+}</code></pre><p id="r-560236" data-claire-element-id="560236">Voilà une méthode qui marche parfaitement.<br/> J'en profite pour créer une fonction qui permettra de vider le buffer.</p><pre id="r-560237" data-claire-element-id="560237"><code data-claire-semantic="cpp">void vider_buffer()
+{
+    cin.clear();
+    cin.seekg(0, ios::end);
+
+    if(!cin.fail())
+    {
+        cin.ignore(numeric_limits&lt;streamsize&gt;::max()); // Le flux a déjà un état valide donc inutile de faire appel à clear()
+    }
+
+    else
+    {
+        cin.clear(); // Le flux est dasn un état invalide donc on le remet en état valide
+    }
+}</code></pre><p id="r-560238" data-claire-element-id="560238">Maintenant que nous avons solutionné le second problème, il nous faut passer au premier, à savoir la validation des données entrées par l'utilisateur.</p><h3 id="r-petite-digression" data-claire-element-id="560247">Petite digression</h3><p id="r-560240" data-claire-element-id="560240">J'en profite pour ouvrir une petite parenthèse :<br/> Il vous est sûrement déjà arrivé de vouloir faire une pause durant votre programme, demandant à l'utilisateur d'appuyer sur entrée. Pour ce faire, vous utilisez sûrement <code data-claire-semantic="cpp">system(&quot;pause&quot;); </code>. Or, ne vous a-t-on jamais dit qu'il fallait éviter au maximum la fonction <code data-claire-semantic="cpp">system() </code> ? (et de tout façon maintenant c'est fait !).</p><div id="r-560242" data-claire-element-id="560242" data-claire-semantic="question"><p id="r-560241" data-claire-element-id="560241">Quel rapport avec ce qu'on fait ici ?</p></div><p id="r-560243" data-claire-element-id="560243">Et bien notre fonction <code data-claire-semantic="cpp">vider_buffer() </code> nous assure que le buffer est vidé après son utilisation. Donc un simple <code data-claire-semantic="cpp">cin.ignore(numeric_limits&lt;streamsize&gt;::max()); </code> va provoquer une demande d'entrée à l'utilisateur.</p><p id="r-560244" data-claire-element-id="560244">Donc voici une fonction dont vous pourrez abuser :</p><pre id="r-560245" data-claire-element-id="560245"><code data-claire-semantic="cpp">void pause()
+{
+    vider_buffer();
+
+    cin.ignore(numeric_limits&lt;streamsize&gt;::max());
+}</code></pre><p id="r-560246" data-claire-element-id="560246">Voilà la parenthèse est finie et je ne veux plus jamais voir de <code data-claire-semantic="cpp">system(&quot;pause&quot;); </code> dans vos codes !</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/la-saisie-securisee-en-c">La saisie sécurisée en C++</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/la-saisie-securisee-en-c/fonctionnement-de-cin">
+Fonctionnement de cin
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-saisie-securisee-en-c/validation-de-l-entree">
+Validation de l&#039;entrée
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-saisie-securisee-en-c/la-saisie-des-chaines-de-caracteres">
+La saisie des chaînes de caractères
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-saisie-securisee-en-c/validation-de-l-entree">
+<span class="next">Validation de l&#039;entrée</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Validationdel039entre"></a><h2>Validation de l&#039;entrée</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-saisie-securisee-en-c/fonctionnement-de-cin">
+<span class="arrow"></span>
+<span class="next">Fonctionnement de cin</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-saisie-securisee-en-c/la-saisie-des-chaines-de-caracteres">
+<span class="next">La saisie des chaînes de caractères</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-560250" data-claire-element-id="560250">Comme je vous l'ai dit plus haut, <code data-claire-semantic="cpp">cin </code> dispose de méthodes nous permettant de savoir si la dernière opération s'est bien déroulée. Et parmi celles-ci, il y a <code data-claire-semantic="cpp">fail() </code>, qui retourne <code data-claire-semantic="cpp">true </code> si une erreur s'est produite lors de la dernière opération, ce qui inclus les opération d'extraction du flux (lorsque l'on demande à l'utilisateur de saisir une information).</p><p id="r-560251" data-claire-element-id="560251">Un exemple pour illustrer cela :</p><pre id="r-560252" data-claire-element-id="560252"><code data-claire-semantic="cpp">#include &lt;iostream&gt;
+#include &lt;cstdlib&gt;
+#include &quot;fonctions_saisie.hpp&quot; // Ce fichier contient le prototype de la fonction vider_buffer()
+
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    unsigned short int age;
+
+    cout &lt;&lt; &quot;Entrez votre âge : &quot;;
+    cin &gt;&gt; age;
+
+    if(cin.eof() || cin.bad()) // S'il y a une erreur interne au flux, qui n'est pas provoqué par l'utilisateur (pour une fois...)
+    {
+        cerr &lt;&lt; &quot;Une erreur interne est survenue.&quot; &lt;&lt; endl;
+    }
+ 
+    else if(cin.fail()) // Si fail() retourne true
+    {
+        cerr &lt;&lt; &quot;Erreur, saisie incorrecte.&quot; &lt;&lt; endl;
+    }
+ 
+    vider_buffer(); // On remet cin dans un état valide et vide le buffer
+
+    return EXIT_SUCCESS;
+}</code></pre><p id="r-560253" data-claire-element-id="560253">Voici ce que l'on obtient lors de l'exécution :</p><pre id="r-560254" data-claire-element-id="560254"><code data-claire-semantic="console">Entrez votre âge : n'importe
+Erreur, saisie incorrecte.</code></pre><aside id="r-560256" data-claire-element-id="560256" data-claire-semantic="warning"><p id="r-560255" data-claire-element-id="560255">Il est important de tester <code data-claire-semantic="cpp">bad() </code> avant <code data-claire-semantic="cpp">fail() </code> car <code data-claire-semantic="cpp">fail() </code> peut retourner <code data-claire-semantic="cpp">true </code> alors qu'il n'y a eu aucune erreur de saisie.</p></aside><h2 id="r-une-solution-a-nos-problemes" data-claire-element-id="560289">Une solution à nos problèmes</h2><h3 id="r-validation-tolerante" data-claire-element-id="560268">Validation tolérante</h3><p id="r-560257" data-claire-element-id="560257">Il nous suffit juste de mettre le code dans une boucle pour nous assurer que l'utilisateur entre une information correcte (le reste du code ne change pas).</p><aside id="r-560259" data-claire-element-id="560259" data-claire-semantic="warning"><p id="r-560258" data-claire-element-id="560258">Il ne faut pas oublier de vider le buffer après chaque demande de saisie sinon on crée une boucle infinie en cas de saisie incorrecte.</p></aside><pre id="r-560260" data-claire-element-id="560260"><code data-claire-semantic="cpp">#include &lt;iostream&gt;
+#include &lt;cstdlib&gt;
+#include &quot;fonctions_saisie.hpp&quot;
+
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    unsigned short int age;
+
+    while(true) // On crée une boucle, dont on ne sortira que lorsque l'utilisateur aura entré des informations correctes
+    {
+        cout &lt;&lt; &quot;Entrez votre âge : &quot;;
+        cin &gt;&gt; age;
+
+        if(cin.eof() || cin.bad())
+        {
+            cerr &lt;&lt; &quot;Une erreur interne est survenue.&quot; &lt;&lt; endl;
+
+            if(cin.eof()) // Si c'est la fin du flux d'entrée, il faut sortir de la boucle
+            {
+                break;
+            }
+
+            vider_buffer(); // On remet cin dans un état valide et vide le buffer
+
+            continue;
+        }
+
+        else if(cin.fail())
+        {
+            cerr &lt;&lt; &quot;Erreur, saisie incorrecte.&quot; &lt;&lt; endl;
+
+            vider_buffer(); // On remet cin dans un état valide et vide le buffer
+
+            continue;
+        }
+
+        break; // On ne sort de la boucle que s'il n'y a eu aucune erreur ou que c'est la fin du flux d'entrée
+    }
+
+    cout &lt;&lt; &quot;Vous avez &quot; &lt;&lt; age &lt;&lt; &quot; ans.&quot; &lt;&lt; endl;
+
+    return EXIT_SUCCESS;
+}</code></pre><p id="r-560261" data-claire-element-id="560261">Voici ce que l'on obtient à l'exécution :</p><pre id="r-560262" data-claire-element-id="560262"><code data-claire-semantic="console">Entrez votre âge : n'importe
+Erreur, saisie incorrecte.
+Entrez votre âge : 20
+Vous avez 20 ans.</code></pre><p id="r-560263" data-claire-element-id="560263">Avant que vous ne criiez tous &quot;victoire !&quot; en coeur, j'aimerais attirer votre attention sur un petit détail. En effet, ce programme s'assure que <code data-claire-semantic="cpp">cin </code> réussi bien à extraire un nombre du buffer puis le vide, mais imaginons que l'utilisateur entre un nombre suivi par autre chose. Au lieu de spéculer sur les résultats, faisons un test :</p><pre id="r-560264" data-claire-element-id="560264"><code data-claire-semantic="console">Entrez votre âge : n'importe
+Erreur, saisie incorrecte.
+Entrez votre âge : 14a
+Vous avez 14 ans.</code></pre><aside id="r-560266" data-claire-element-id="560266" data-claire-semantic="information"><p id="r-560265" data-claire-element-id="560265">Le résultat serait le même si l'on avait entré n'importe quelle chaîne commençant par un nombre puis suivi d'un caractère autre qu'un chiffre (comme &quot;14-8&quot; ou &quot;14kjhyt=$&quot;).</p></aside><p id="r-560267" data-claire-element-id="560267">On a bien un résultat mais l'utilisateur a quand même entré quelque chose qui pourrait ne pas avoir de sens (je ne pense pas que &quot;14kjhyt=$&quot; soit une réponse pleine de sens :lol: ).</p><h3 id="r-validation-un-peu-plus-stricte" data-claire-element-id="560288">Validation un peu plus stricte</h3><p id="r-560269" data-claire-element-id="560269">Comme je l'ai dit plus haut, le code précédent s'assurait que <code data-claire-semantic="cpp">cin </code> avait réussi à extraire un nombre, sans se soucier de ce qu'il y avait après et c'est ce comportement qu'il va nous falloir changer.<br/> Heureusement pour nous, il existe une fonction permettant de savoir si la fin d'un flux a été atteinte, <code data-claire-semantic="cpp">eof() </code> mais malheureusement, pour <code data-claire-semantic="cpp">cin </code>, il n'indique pas qu'il n'y a plus de données à lire, mais la fin du flux d'entrée (qui est une erreur lors de l'exécution).</p><p id="r-560270" data-claire-element-id="560270">Peu importe, il suffit de trouver une classe de flux d'entrée dont le comportement vis à vis de <code data-claire-semantic="cpp">eof() </code> n'est pas celui de <code data-claire-semantic="cpp">cin </code> et pour cela, direction la <a href="http://cplusplus.com/reference/iostream/istream/">documentation</a> :D .<br/> Il existe donc diverses classes permettant de manipuler les flux d'entrée, les voici :</p><ul id="r-560283" data-claire-element-id="560283"><li id="r-560272" data-claire-element-id="560272"><p id="r-560271" data-claire-element-id="560271"><a href="http://cplusplus.com/reference/iostream/istream/">istream</a> : la classe d'entrée basique, dont dérivent toutes les autres. Elle permet d'extraire des données de n'importe quel flux d'entrée (<code data-claire-semantic="cpp">cin </code> est une instance de <code data-claire-semantic="cpp">istream </code> connecté au flux d'entrée standard).</p></li><li id="r-560274" data-claire-element-id="560274"><p id="r-560273" data-claire-element-id="560273"><a href="http://cplusplus.com/reference/iostream/iostream/">iostream</a> (hérite de <code data-claire-semantic="cpp">istream </code>) : est une classe permettant d'extraire, mais aussi d'écrire des données dans n'importe quel flux.</p></li><li id="r-560276" data-claire-element-id="560276"><p id="r-560275" data-claire-element-id="560275"><a href="http://cplusplus.com/reference/iostream/fstream/">fstream</a> (hérite de <code data-claire-semantic="cpp">iostream </code>) : est une classe permettant d'extraire et d'écrire des données dans un fichier.</p></li><li id="r-560278" data-claire-element-id="560278"><p id="r-560277" data-claire-element-id="560277"><a href="http://cplusplus.com/reference/iostream/stringstream/">stringstream</a> (hérite de <code data-claire-semantic="cpp">iostream </code>) : est une classe permettant d'extraire et d'écrire des données dans un objet de type <code data-claire-semantic="cpp">string </code>.</p></li><li id="r-560280" data-claire-element-id="560280"><p id="r-560279" data-claire-element-id="560279"><a href="http://cplusplus.com/reference/iostream/ifstream/">ifstream</a> (hérite de <code data-claire-semantic="cpp">istream </code>) : est une classe permettant d'extraire des données d'un fichier.</p></li><li id="r-560282" data-claire-element-id="560282"><p id="r-560281" data-claire-element-id="560281"><a href="http://cplusplus.com/reference/iostream/istringstream/">istringstream</a> (hérite de <code data-claire-semantic="cpp">istream </code>) : est une classe permettant d'extraire des données d'un objet de type <code data-claire-semantic="cpp">string </code>.</p></li></ul><p id="r-560284" data-claire-element-id="560284">Parmi toutes ces classes, il y en a deux qui pourraient nous intéresser, <code data-claire-semantic="cpp">stringstream </code> et <code data-claire-semantic="cpp">istringstream </code>. Etant donné que nous ne ferons qu'extraire des données, nous utiliserons <code data-claire-semantic="cpp">istringstream </code>.<br/> En regardant la documentation sur <code data-claire-semantic="cpp">istringstream </code>, on s'aperçoit qu'on ne peut pas extraire de données dans un objet de ce type avec <code data-claire-semantic="cpp">cin </code>, mais qu'il manipule un <code data-claire-semantic="cpp">string </code> qui lui peut être utilisé avec <code data-claire-semantic="cpp">cin </code>.</p><p id="r-560285" data-claire-element-id="560285">Il nous faut donc instancier un objet de type <code data-claire-semantic="cpp">string </code>, extraire des données de <code data-claire-semantic="cpp">cin </code> dans cet objet, instancier un objet de type <code data-claire-semantic="cpp">istringstream </code>, lui donner l'objet de type <code data-claire-semantic="cpp">string </code> et en extraire les informations.</p><p id="r-560286" data-claire-element-id="560286">Donc voici ce que nous donne cette méthode :</p><pre id="r-560287" data-claire-element-id="560287"><code data-claire-semantic="cpp">#include &lt;iostream&gt;
+#include &lt;cstdlib&gt;
+#include &lt;string&gt; // Pour pouvoir utiliser la classe string
+#include &lt;sstream&gt; // Pour pouvoir manipuler la classe istringstream
+#include &quot;fonctions_saisie.hpp&quot;
+
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    unsigned short int age;
+
+    string temp; // On crée une variable temporaire
+
+    while(true)
+    {
+        cout &lt;&lt; &quot;Entrez votre âge : &quot;;
+        cin &gt;&gt; temp;
+
+        if(cin.eof() || cin.bad())
+        {
+            cerr &lt;&lt; &quot;Une erreur interne est survenue.&quot; &lt;&lt; endl;
+
+            if(cin.eof()) // Si c'est la fin du flux d'entrée, il faut sortir de la boucle
+            {
+                break;
+            }
+
+            vider_buffer(); // On remet cin dans un état valide et vide le buffer
+
+            continue;
+        }
+
+        else if(cin.fail())
+        {
+            cerr &lt;&lt; &quot;Erreur, saisie incorrecte.&quot; &lt;&lt; endl;
+
+            vider_buffer(); // On remet cin dans un état valide et vide le buffer
+
+            continue;
+        }
+
+        vider_buffer(); // On remet cin dans un état valide et vide le buffer
+ 
+        istringstream stream(temp);
+        stream &gt;&gt; age;
+ 
+        if(stream.fail() || !stream.eof()) // Si l'on est pas arrivé à extraire les données ou que l'on a pas atteint la fin du flux
+        {
+            cerr &lt;&lt; &quot;Erreur, saisie incorrecte.&quot; &lt;&lt; endl; // L'utilisateur a fait une erreur de saisie
+        }
+ 
+        else
+        {
+            break; // Sinon on ne sort de la boucle
+        }
+    }
+
+    cout &lt;&lt; &quot;Vous avez &quot; &lt;&lt; age &lt;&lt; &quot; ans.&quot; &lt;&lt; endl;
+
+    return EXIT_SUCCESS;
+}</code></pre><h2 id="r-le-gentil-windows-et-le-mechant-linux" data-claire-element-id="560346">Le gentil Windows et le méchant Linux</h2><div id="r-560291" data-claire-element-id="560291" data-claire-semantic="question"><p id="r-560290" data-claire-element-id="560290">Heu tu ne t'es pas trompé ? C'est pas le gentil Linux et le méchant Windows ?</p></div><p id="r-560292" data-claire-element-id="560292">Et bien pour une fois, non :D !<br/> Voici la sortie que produit le programme sous Windows :</p><pre id="r-560293" data-claire-element-id="560293"><code data-claire-semantic="console">Entrez votre âge : 77228
+Erreur, saisie incorrecte.
+Entrez votre âge : -10
+Erreur, saisie incorrecte.
+Entrez votre âge : 14
+Vous avez 14 ans.</code></pre><p id="r-560294" data-claire-element-id="560294">C'est exactement le comportement attendu du programme, il demande à l'utilisateur d'entrer un entier court non signé, c'est à dire compris entre 0 et 65 535.</p><pre id="r-560295" data-claire-element-id="560295"><code data-claire-semantic="cpp">Entrez votre âge : 77228
+Erreur, saisie incorrecte.
+Entrez votre âge : -10
+Vous avez 65526 ans.</code></pre><p id="r-560296" data-claire-element-id="560296">Suivant le système d'exploitation, on a un comportement différent, ce qui est assez gênant puisque l'on voudrait que notre méthode marche tout le temps.<br/> Ce &quot;phénomène&quot; ne se produit qu'avec les types non signés ce qui, heureusement pour nous, ne concerne pas beaucoup de types, à savoir :</p><ul id="r-560307" data-claire-element-id="560307"><li id="r-560298" data-claire-element-id="560298"><p id="r-560297" data-claire-element-id="560297"><code data-claire-semantic="cpp">unsigned char </code> : caractères non signés, sur 1 octet. Ils peuvent prendre des valeurs comprises entre 0 et 255.</p></li><li id="r-560300" data-claire-element-id="560300"><p id="r-560299" data-claire-element-id="560299"><code data-claire-semantic="cpp">unsigned short int </code> : entiers non signés courts, sur 2 octets. Ils peuvent prendre des valeurs comprises entre 0 et 65 535.</p></li><li id="r-560302" data-claire-element-id="560302"><p id="r-560301" data-claire-element-id="560301"><code data-claire-semantic="cpp">unsigned int </code> : entiers non signés, sur 2 ou 4 octets (suivant si votre programme est compilé en 16 ou 32 bits). Ils peuvent prendre des valeurs comprises entre 0 et 65635 ou 4 294 967 295.</p></li><li id="r-560304" data-claire-element-id="560304"><p id="r-560303" data-claire-element-id="560303"><code data-claire-semantic="cpp">unsigned long int </code> : entiers non signés longs, sur 4 octets. Ils peuvent prendre des valeurs comprises entre 0 et 4 294 967 295.</p></li><li id="r-560306" data-claire-element-id="560306"><p id="r-560305" data-claire-element-id="560305"><code data-claire-semantic="cpp">unsigned long long int </code> : entiers non signés long long, sur 8 octets. Ils peuvent prendre des valeurs comprises entre 0 et 18 446 744 073 709 551 615.</p></li></ul><p id="r-560308" data-claire-element-id="560308">Les valeurs données ne sont pas forcément celles qui seront en vigueur sur votre système, car elles dépendent du système d'exploitation, de l'architecture de votre ordinateur et du compilateur que vous utilisez.<br/> Il est aussi à savoir que dans la norme C++, le type <code data-claire-semantic="cpp">unsigned long long int </code> est optionnel, il n'est donc peut être pas supporté avec le compilateur que vous utilisez (il est néanmoins disponible avec beaucoup de compilateurs, ce qui inclut g++ de GCC, sous Windows et Linux et Visual C++ de Microsoft).</p><div id="r-560310" data-claire-element-id="560310" data-claire-semantic="question"><p id="r-560309" data-claire-element-id="560309">D'accord, mais comment on va faire pour être sûr que l'utilisateur n'entre pas de nombres négatifs ?</p></div><p id="r-560311" data-claire-element-id="560311">La solution que je vous propose est de regarder dans l'instance de <code data-claire-semantic="cpp">string </code> que l'on utilise (la variable <code data-claire-semantic="cpp">temp </code>).<br/> Grâce à la méthode <a href="http://cplusplus.com/reference/string/string/find_first_not_of/">find_first_not_of()</a> de <code data-claire-semantic="cpp">string </code>, nous pouvons déterminer si la chaîne de caractères contient autre chose que des nombres, voici son prototype :</p><pre id="r-560312" data-claire-element-id="560312"><code data-claire-semantic="cpp">size_t find_first_not_of(const string &amp;str, size_t pos = 0);</code></pre><p id="r-560313" data-claire-element-id="560313"><code data-claire-semantic="cpp">find_first_not_of() </code> retourne la position du premier caractère qui n'est pas un de ceux donnés en paramètre. La valeur <code data-claire-semantic="cpp">string::npos </code> est retourné si aucun caractère n'est trouvé.</p><p id="r-560314" data-claire-element-id="560314">Paramètres :</p><ul id="r-560319" data-claire-element-id="560319"><li id="r-560316" data-claire-element-id="560316"><p id="r-560315" data-claire-element-id="560315"><code data-claire-semantic="cpp">str </code> : liste des caractères à trouver dans la chaîne</p></li><li id="r-560318" data-claire-element-id="560318"><p id="r-560317" data-claire-element-id="560317"><code data-claire-semantic="cpp">pos </code> : la position à partir de laquelle chercher. Par défaut 0.</p></li></ul><p id="r-560320" data-claire-element-id="560320">Voici ce que cela donne :</p><pre id="r-560321" data-claire-element-id="560321"><code data-claire-semantic="cpp">#include &lt;iostream&gt;
+#include &lt;cstdlib&gt;
+#include &lt;limits&gt;
+#include &lt;string&gt;
+#include &lt;sstream&gt;
+#include &quot;fonctions_saisie.hpp&quot;
+
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    unsigned short int age;
+
+    string temp;
+
+    while(true)
+    {
+        cout &lt;&lt; &quot;Entrez votre âge : &quot;;
+        cin &gt;&gt; temp;
+
+        if(cin.eof() || cin.bad())
+        {
+            cerr &lt;&lt; &quot;Une erreur interne est survenue.&quot; &lt;&lt; endl;
+
+            if(cin.eof())
+            {
+                break;
+            }
+
+            vider_buffer();
+
+            continue;
+        }
+
+        else if(cin.fail() || temp.find_first_not_of(&quot;0123456789&quot;) != string::npos) // S'il y a une erreur de saisie ou que l'entrée contient autre chose que des chiffres
+        {
+            cerr &lt;&lt; &quot;Erreur, saisie incorrecte.&quot; &lt;&lt; endl;
+
+            vider_buffer();
+
+            continue;
+        }
+
+        istringstream stream(temp);
+        stream &gt;&gt; age;
+
+        if(stream.fail() || !stream.eof())
+        {
+            cerr &lt;&lt; &quot;Erreur, saisie incorrecte.&quot; &lt;&lt; endl;
+        }
+
+        else
+        {
+            break;
+        }
+    }
+
+    cout &lt;&lt; &quot;Vous avez &quot; &lt;&lt; age &lt;&lt; &quot; ans.&quot; &lt;&lt; endl;
+
+    return EXIT_SUCCESS;
+}</code></pre><p id="r-560322" data-claire-element-id="560322">Voilà ce que produit ce code sous Linux :</p><pre id="r-560323" data-claire-element-id="560323"><code data-claire-semantic="console">Entrez votre âge : -10
+Erreur, saisie invalide.
+Entrez vote âge : 20
+Vous avez 20 ans.</code></pre><p id="r-560324" data-claire-element-id="560324">On a donc bien le résultat attendu sous Linux maintenant.</p><div id="r-560326" data-claire-element-id="560326" data-claire-semantic="question"><p id="r-560325" data-claire-element-id="560325">C'est génial mais ça fait beaucoup de code à copier/coller à chaque fois. Tu n'aurais pas mieux ?</p></div><p id="r-560327" data-claire-element-id="560327">Nous pouvons créer des fonctions ayant pour but de saisir différents types de variables.</p><ul id="r-560342" data-claire-element-id="560342"><li id="r-560329" data-claire-element-id="560329"><p id="r-560328" data-claire-element-id="560328"><code data-claire-semantic="cpp">saisir_short_int() </code> pour les variables de type <code data-claire-semantic="cpp">short int </code>.</p></li><li id="r-560331" data-claire-element-id="560331"><p id="r-560330" data-claire-element-id="560330"><code data-claire-semantic="cpp">saisir_unsigned_short_int() </code> pour les variables de type <code data-claire-semantic="cpp">unsigned short int </code>.</p></li><li id="r-560333" data-claire-element-id="560333"><p id="r-560332" data-claire-element-id="560332"><code data-claire-semantic="cpp">saisir_int() </code> pour les variables de type <code data-claire-semantic="cpp">int </code>.</p></li><li id="r-560335" data-claire-element-id="560335"><p id="r-560334" data-claire-element-id="560334"><code data-claire-semantic="cpp">saisir_unsigned_int() </code> pour les variables de type <code data-claire-semantic="cpp">unsigned int </code>.</p></li><li id="r-560337" data-claire-element-id="560337"><p id="r-560336" data-claire-element-id="560336">...</p></li><li id="r-560339" data-claire-element-id="560339"><p id="r-560338" data-claire-element-id="560338"><code data-claire-semantic="cpp">saisir_double() </code> pour les variables de type <code data-claire-semantic="cpp">double </code>.</p></li><li id="r-560341" data-claire-element-id="560341"><p id="r-560340" data-claire-element-id="560340"><code data-claire-semantic="cpp">saisir_string() </code> pour les variables de type <code data-claire-semantic="cpp">string </code> (eh oui, même pour ce type, il peut y avoir une erreur sur le flux).</p></li></ul><p id="r-560343" data-claire-element-id="560343">On donnerait en paramètre à ces fonctions la variable à modifier (par un passage par référence par exemple) et le message à afficher (&quot;Entrez votre âge : &quot;, &quot;Entrez le nombre d'objets à acheter : &quot;, etc). Elles retourneraient un booléen pour indiquer le succès ou l'échec de l'opération.</p><p id="r-560344" data-claire-element-id="560344">Voici deux de ces fonctions (le reste réside essentiellement en un copier/coller) :</p><pre id="r-560345" data-claire-element-id="560345"><code data-claire-semantic="cpp">bool saisir_short_int(short int &amp;variable, const string &amp;message)
+{
+    string temp;
+
+    while(true)
+    {
+        cout &lt;&lt; message;
+        cin &gt;&gt; temp;
+
+        if(cin.bad() || cin.eof())
+        {
+            cerr &lt;&lt; &quot;Une erreur interne est survenue&quot; &lt;&lt; endl;
+
+            if(cin.eof())
+            {
+                return false;
+            }
+
+            vider_buffer();
+
+            continue;
+        }
+
+        else if(cin.fail())
+        {
+            cerr &lt;&lt; &quot;Erreur, saisie incorrecte.&quot; &lt;&lt; endl;
+
+            vider_buffer();
+
+            continue;
+        }
+
+        vider_buffer();
+
+        istringstream stream(temp);
+        stream &gt;&gt; variable;
+
+        if(stream.fail() || !stream.eof())
+        {
+            cerr &lt;&lt; &quot;Erreur, saisie incorrecte.&quot; &lt;&lt; endl;
+        }
+
+        else
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool saisir_unsigned_short_int(unsigned short int &amp;variable, const string &amp;message)
+{
+    string temp;
+
+    while(true)
+    {
+        cout &lt;&lt; message;
+        cin &gt;&gt; temp;
+
+        if(cin.bad() || cin.eof())
+        {
+            cerr &lt;&lt; &quot;Une erreur interne est survenue&quot; &lt;&lt; endl;
+
+            if(cin.eof())
+            {
+                return false;
+            }
+
+            vider_buffer();
+
+            continue;
+        }
+
+        else if(cin.fail() || temp.find_first_not_of(&quot;0123456789&quot;) != string::npos)
+        {
+            cerr &lt;&lt; &quot;Erreur, saisie incorrecte.&quot; &lt;&lt; endl;
+
+            vider_buffer();
+
+            continue;
+        }
+
+        vider_buffer();
+
+        istringstream stream(temp);
+        stream &gt;&gt; variable;
+
+        if(stream.fail() || !stream.eof())
+        {
+            cerr &lt;&lt; &quot;Erreur, saisie incorrecte.&quot; &lt;&lt; endl;
+        }
+
+        else
+        {
+            return true;
+        }
+    }
+
+    return false;
+}</code></pre><h2 id="r-les-types-char-et-unsigned-char" data-claire-element-id="560362">Les types char et unsigned char</h2><p id="r-560347" data-claire-element-id="560347">Peut-être que certains auront l'idée de créer les fonctions <code data-claire-semantic="cpp">saisir_char() </code> et <code data-claire-semantic="cpp">saisir_unsigned_char() </code> de la même manière que les autres fonctions (les deux fonctions sont identiques car <code data-claire-semantic="cpp">unsigned char </code> représente un caractère, et non un nombre). Voilà ce que donne un programme utilisant une de ces deux fonctions :</p><pre id="r-560348" data-claire-element-id="560348"><code data-claire-semantic="console">Entrez un caractère : a
+Erreur, saisie incorrecte.
+Entrez un caractère : b
+Erreur, saisie incorrecte.
+Entrez un caractère : a
+Erreur, saisie incorrecte.
+...</code></pre><p id="r-560349" data-claire-element-id="560349">Le programme entre dans une boucle infinie. Après quelques tests, on s'aperçoit que c'est l'instruction <code data-claire-semantic="cpp">stream.eof() </code> qui retourne toujours <code data-claire-semantic="cpp">false </code> (et ce pour de raisons qui restent toujours obscures).<br/> Il faut donc s'affranchir de cette méthode pour ces deux types.</p><div id="r-560351" data-claire-element-id="560351" data-claire-semantic="question"><p id="r-560350" data-claire-element-id="560350">Oui, mais comment on fait étant donné qu'on en a besoin ?</p></div><p id="r-560352" data-claire-element-id="560352">Il ne faut pas perdre de vue que l'on avait utilisé <code data-claire-semantic="cpp">istringstream </code> pour pouvoir convertir une chaîne de caractères en un autre type.<br/> Mais là, ce que nous voulons, c'est simplement un caractère, et miracle nous en avons grâce à l'objet <code data-claire-semantic="cpp">temp </code> puisque c'est une chaîne de caractères.<br/> Il nous suffit de vérifier que cette chaîne ne contienne qu'un seul caractère (en plus du <code data-claire-semantic="cpp">'\0' </code>) et de prendre ce caractère via la méthode <a href="http://cplusplus.com/reference/string/string/at/">at()</a> de la classe <code data-claire-semantic="cpp">string </code> qui permet de récupérer un caractère à une position donnée.</p><p id="r-560353" data-claire-element-id="560353">Les fonctions pour ces deux types deviennent encore plus simples que les autres :</p><pre id="r-560354" data-claire-element-id="560354"><code data-claire-semantic="cpp">bool saisir_char(char &amp;variable, const string &amp;message)
+{
+    string temp;
+
+    while(true)
+    {
+        cout &lt;&lt; message;
+        cin &gt;&gt; temp;
+
+        if(cin.bad() || cin.eof())
+        {
+            cerr &lt;&lt; &quot;Une erreur interne est survenue&quot; &lt;&lt; endl;
+
+            if(cin.eof())
+            {
+                return false;
+            }
+
+            vider_buffer();
+
+            continue;
+        }
+
+        else if(cin.fail() || temp.length() != 1)
+        {
+            cerr &lt;&lt; &quot;Erreur, saisie incorrecte.&quot; &lt;&lt; endl;
+
+            vider_buffer();
+
+            continue;
+        }
+
+        vider_buffer();
+
+        variable = temp.at(0);
+
+        return true;
+    }
+
+    return false;
+}
+
+bool saisir_unsigned_char(unsigned char &amp;variable, const string &amp;message)
+{
+    char caractere;
+
+    if(saisir_char(caractere, message))
+    {
+        variable = static_cast&lt;unsigned char&gt;(caractere); // On converti le caractère en unsigned char
+
+        return true;
+    }
+
+    return false;
+}</code></pre><div id="r-560356" data-claire-element-id="560356" data-claire-semantic="question"><p id="r-560355" data-claire-element-id="560355">Et attends ! C'est quoi ce <code data-claire-semantic="cpp">static_cast&lt;unsigned char&gt;(caractere) </code> ?</p></div><p id="r-560357" data-claire-element-id="560357">Pour stocker les caractères, on utilise le type <code data-claire-semantic="cpp">char </code>, qui peut prendre des valeurs allant de -128 à 127. Chacune de ces valeur est associée à un caractère, c'est la norme ASCII. Or cette norme définit tous les caractères comme ayant une représentation entière comprise entre 0 et 127. On peut donc convertir un <code data-claire-semantic="cpp">char </code> en <code data-claire-semantic="cpp">unsigned char </code> sans avoir peur de perdre quoi que ce soit. Et pour ce faire, on utilise le casting, si vous ne savez pas ce que c'est ou que vous voulez en savoir plus, je vous suggère un tutoriel du site du zér0, <a href="http://www.siteduzero.com/tutoriel-3-100540-c-les-conversions-de-types.html">[C++] Les conversions de types</a>, de shareman.</p><p id="r-560358" data-claire-element-id="560358">Voilà qui met fin à ce tutoriel.</p><div id="r-560360" data-claire-element-id="560360" data-claire-semantic="question"><p id="r-560359" data-claire-element-id="560359">Quoi c'est pas fini ?! Pourtant, on a solutionné tous les problèmes !</p></div><p id="r-560361" data-claire-element-id="560361">Et bien non, il reste encore quelque chose à voir. Vous vous souvenez de ce que j'ai dit au début, sur une éventuelle attaque au « buffer overflow » ? Et bien nous allons voir ça tout de suite.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/la-saisie-securisee-en-c">La saisie sécurisée en C++</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-saisie-securisee-en-c/fonctionnement-de-cin">
+Fonctionnement de cin
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/la-saisie-securisee-en-c/validation-de-l-entree">
+Validation de l&#039;entrée
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-saisie-securisee-en-c/la-saisie-des-chaines-de-caracteres">
+La saisie des chaînes de caractères
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-saisie-securisee-en-c/fonctionnement-de-cin">
+<span class="arrow"></span>
+<span class="next">Fonctionnement de cin</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/la-saisie-securisee-en-c/la-saisie-des-chaines-de-caracteres">
+<span class="next">La saisie des chaînes de caractères</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lasaisiedeschanesdecaractres"></a><h2>La saisie des chaînes de caractères</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-saisie-securisee-en-c/validation-de-l-entree">
+<span class="arrow"></span>
+<span class="next">Validation de l&#039;entrée</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-560364" data-claire-element-id="560364">Cette fois je ne laisse pas le suspense planer longtemps, nous allons nous attarder sur les chaîne de caractères.<br/> En effet, jusqu'alors nous n'avons travailler qu'avec des variables numériques ou alors avec un seul caractère à la fois. Or je ne suis pas censé vous apprendre que les chaînes de caractères sont des tableaux de caractères.</p><aside id="r-560366" data-claire-element-id="560366" data-claire-semantic="information"><p id="r-560365" data-claire-element-id="560365">Certains programmeurs pensent à tort que les tableaux de caractères sont la manière de gérer les chaînes de caractères en C, et non en C++ puisqu'il y a la classe <code data-claire-semantic="cpp">string </code>. Mais je me dois de leur rappeler que <code data-claire-semantic="cpp">string </code> n'est qu'une interface permettant de manipuler les chaînes de caractères de manière plus sûre et qu'un programmeur peut être amené dans certains cas à se passer de cet outil pour les gérer de manière native, c'est-à-dire en tant que tableaux de caractères.</p></aside><aside id="r-560368" data-claire-element-id="560368" data-claire-semantic="warning"><p id="r-560367" data-claire-element-id="560367">Cela étant dit, je vous conseille d'utiliser le type <code data-claire-semantic="cpp">string </code> (ou un type équivalent, permettant de manipuler les chaînes de caractères) le plus souvent possible.</p></aside><h2 id="r-quelques-problemes-de-plus" data-claire-element-id="560392">Quelques problèmes de plus</h2><h3 id="r-une-question-d-espaces" data-claire-element-id="560375">Une question d'espaces</h3><p id="r-560369" data-claire-element-id="560369">Essayons un petit programme :soleil: :</p><pre id="r-560370" data-claire-element-id="560370"><code data-claire-semantic="cpp">#include &lt;iostream&gt;
+#include &lt;cstdlib&gt;
+
+using namespace std;
+
+int main()
+{
+    char nom[200];
+
+    cout &lt;&lt; &quot;Entrez vos nom et prénom(s) : &quot;;
+
+    cin &gt;&gt; nom;
+
+    cout &lt;&lt; &quot;Bonjour &quot; &lt;&lt; nom &lt;&lt; &quot;.&quot; &lt;&lt; endl;
+
+    return EXIT_SUCCESS;
+}</code></pre><p id="r-560371" data-claire-element-id="560371">Voici le résultat obtenu :</p><pre id="r-560372" data-claire-element-id="560372"><code data-claire-semantic="console">Entrez vos nom et prénom(s) : Pierre Dupond
+Bonjour Pierre.</code></pre><p id="r-560373" data-claire-element-id="560373">Et oui, la saisie a été tronquée.</p><p id="r-560374" data-claire-element-id="560374">La <a href="http://cplusplus.com/reference/iostream/istream/operator&amp;gt%3B&amp;gt%3B/">documentation</a> est très claire sur le sujet, l'extraction s'achète dès que le flux rencontre un espace (que ce soit un espace &quot;normal&quot; ou un retour du chariot). C'est donc le premier problème qu'il nous faudra résoudre.</p><h3 id="r-une-question-d-espace" data-claire-element-id="560391">Une question d'espace</h3><p id="r-560376" data-claire-element-id="560376">Non vous n'avez pas louché, c'est bien le même titre, à un caractère près.<br/> J'espère ne rien vous apprendre en vous disant que les chaînes de caractères sont des tableaux de caractères et que ces tableaux ont des tailles fixes, car c'est de là que va venir notre prochain problème.</p><p id="r-560377" data-claire-element-id="560377">Testons le code suivant :</p><pre id="r-560378" data-claire-element-id="560378"><code data-claire-semantic="cpp">#include &lt;iostream&gt;
+#include &lt;cstdlib&gt;
+
+using namespace std;
+
+int main()
+{
+    char nom[5];
+
+    cout &lt;&lt; &quot;Entrez votre nom : &quot;;
+    cin &gt;&gt; nom;
+
+    cout &lt;&lt; &quot;Bonjour &quot; &lt;&lt; nom &lt;&lt; &quot;.&quot; &lt;&lt; endl;
+
+    return 0;
+}</code></pre><p id="r-560379" data-claire-element-id="560379">Nous obtenons un résultat tout à fait normal a priori :</p><pre id="r-560380" data-claire-element-id="560380"><code data-claire-semantic="console">Entrez votre nom : Jacques
+Bonjour Jacques.</code></pre><p id="r-560381" data-claire-element-id="560381">Mais en réfléchissant quelques secondes, il y a quelque chose de troublant.<br/> La chaîne de caractères &quot;Jacques&quot; devrait prendre 8 cases en mémoire (les 7 caractères de &quot;Jacques&quot; et le caractère <code data-claire-semantic="cpp">'\0' </code>) or notre variable nom n'en fait que 5. Alors que s'est-il passé ?</p><p id="r-560382" data-claire-element-id="560382">Et bien <code data-claire-semantic="cpp">cin </code> a tout simplement écrit à la suite dans la mémoire, c'est à dire dans des cases mémoire n'étant pas réservées pour la variable <code data-claire-semantic="cpp">nom </code> (quel culot il a cet objet :lol: ).<br/> Cela provoque deux problèmes :</p><ol id="r-560387" data-claire-element-id="560387"><li id="r-560384" data-claire-element-id="560384"><p id="r-560383" data-claire-element-id="560383">Nous écrivons dans un emplacement peut-être utilisé par un autre programme, ce qui pourrait gêner son exécution.</p></li><li id="r-560386" data-claire-element-id="560386"><p id="r-560385" data-claire-element-id="560385">Un hacker pourrait introduire du code dans la mémoire et le faire exécuter, ce qui pourrait s'avérer très dangereux pour notre ordinateur.</p></li></ol><p id="r-560388" data-claire-element-id="560388">Il nous faudra donc résoudre ce problème aussi.</p><aside id="r-560390" data-claire-element-id="560390" data-claire-semantic="warning"><p id="r-560389" data-claire-element-id="560389">Il ne faut surtout pas utiliser ces méthodes pour traiter des chaînes de caractères, pour les raisons que je viens d'évoquer.</p></aside><h2 id="r-recuperer-une-ligne" data-claire-element-id="560465">Récupérer une ligne</h2><h3 id="r-cas-general-1" data-claire-element-id="560415">Cas général</h3><p id="r-560393" data-claire-element-id="560393">Il existe trois fonctions permettant de récupérer une ligne entière :</p><ul id="r-560400" data-claire-element-id="560400"><li id="r-560395" data-claire-element-id="560395"><p id="r-560394" data-claire-element-id="560394"><a href="http://cplusplus.com/reference/iostream/istream/get/">get()</a> : une méthode de <code data-claire-semantic="cpp">cin </code> qui permet de récupérer une ligne et de la stocker dans un tableau de caractères (<code data-claire-semantic="cpp">char * </code>)</p></li><li id="r-560397" data-claire-element-id="560397"><p id="r-560396" data-claire-element-id="560396"><a href="http://cplusplus.com/reference/iostream/istream/getline/">getline()</a> : une méthode de <code data-claire-semantic="cpp">cin </code> qui fonctionne comme <code data-claire-semantic="cpp">get() </code> sauf qu'elle supprime du flux le <code data-claire-semantic="cpp">' ' </code> final.</p></li><li id="r-560399" data-claire-element-id="560399"><p id="r-560398" data-claire-element-id="560398"><a href="http://www.cplusplus.com/reference/string/getline/">getline()</a> : une fonction qui permet de récupérer une ligne et de la stocker dans une instance de <code data-claire-semantic="cpp">string </code> (elle supprime aussi le <code data-claire-semantic="cpp">' ' </code> final).</p></li></ul><p id="r-560401" data-claire-element-id="560401">Etant donné que nos fonctions travaillent avec le type <code data-claire-semantic="cpp">string </code>, nous utiliserons <code data-claire-semantic="cpp">getline() </code>, dont voici le prototype :</p><pre id="r-560402" data-claire-element-id="560402"><code data-claire-semantic="cpp">istream &amp;getline(istream &amp;is, string &amp;str, char delim = '\n');</code></pre><p id="r-560403" data-claire-element-id="560403">Les paramètres sont :</p><ul id="r-560410" data-claire-element-id="560410"><li id="r-560405" data-claire-element-id="560405"><p id="r-560404" data-claire-element-id="560404"><code data-claire-semantic="cpp">is </code> : le flux sur lequel opérer, nous utiliserons <code data-claire-semantic="cpp">cin </code>.</p></li><li id="r-560407" data-claire-element-id="560407"><p id="r-560406" data-claire-element-id="560406"><code data-claire-semantic="cpp">str </code> : l'objet <code data-claire-semantic="cpp">string </code> à modifier.</p></li><li id="r-560409" data-claire-element-id="560409"><p id="r-560408" data-claire-element-id="560408"><code data-claire-semantic="cpp">delim </code> : le caractère délimiteur. Par défaut <code data-claire-semantic="cpp">' '</code></p></li></ul><p id="r-560411" data-claire-element-id="560411">On peut utiliser <code data-claire-semantic="cpp">getline() </code> pour toutes les saisies, cela rend la validation encore plus stricte (avant, l'utilisateur pouvait entrer &quot;27 n'importe quoi&quot; sans qu'il n'y ait d'erreur).<br/> Nos fonctions deviennent donc :</p><pre id="r-560412" data-claire-element-id="560412"><code data-claire-semantic="cpp">bool saisir_string(string &amp;variable, const string &amp;message)
+{
+    while(true)
+    {
+        cout &lt;&lt; message;
+
+        getline(cin, variable); // getline() ici est une fonction et non une méthode de la classe istream
+
+        if(cin.bad() || cin.eof())
+        {
+
+            cerr &lt;&lt; &quot;Erreur, saisie incorrecte.&quot; &lt;&lt; endl;
+
+            if(cin.eof())
+            {
+                break;
+            }
+
+            vider_buffer();
+        }
+
+        else if(cin.fail())
+        {
+            cerr &lt;&lt; &quot;Erreur, saisie incorrecte.&quot; &lt;&lt; endl;
+
+            vider_buffer();
+        }
+
+        // L'utilisation de vider_buffer() n'est plus nécessaire car getline() supprime le caractère '\n'
+
+        break;
+    }
+
+    return true;
+}
+
+bool saisir_int(int &amp;variable, const string &amp;message)
+{
+    string temp;
+
+    while(saisir_string(temp, message)) // On utilise saisir_string sur temp pour obtenir ce que l'utilisateur a entré
+    {
+        istringstream stream(temp);
+        stream &gt;&gt; variable;
+
+        if(stream.fail() || !stream.eof())
+        {
+            cerr &lt;&lt; &quot;Erreur, saisie incorreecte.&quot; &lt;&lt; endl;
+        }
+
+        else
+        {
+            return true;
+        }
+    }
+
+    return false;
+}</code></pre><p id="r-560413" data-claire-element-id="560413">Comme vous pouvez le voir, on définit une fonction <code data-claire-semantic="cpp">saisir_string() </code> qui permet de réaliser la saisie sécurisée du type <code data-claire-semantic="cpp">string </code> (car il peut y avoir un problème au niveau de <code data-claire-semantic="cpp">cin </code> lors de l'opération). On utilise ensuite cette fonction dans toutes les autres.<br/> Voilà qui résout notre premier problème, et permet une validation plus stricte :</p><pre id="r-560414" data-claire-element-id="560414"><code data-claire-semantic="console">Entrez votre âge : 28 ytg
+Erreur, saisie incorrecte.
+Entrez votre âge : 28
+Vous avez 28 ans.</code></pre><h3 id="r-cas-particulier-les-tableaux-de-caracteres" data-claire-element-id="560464">Cas particulier : les tableaux de caractères</h3><p id="r-560416" data-claire-element-id="560416">Il reste encore le problème du &quot;buffer overflow&quot;, qui ne s'applique que lorsqu'on veut stocker des informations dans un <code data-claire-semantic="cpp">char * </code>.<br/> Nous pourrions bannir ce type de variable dans nos programmes et n'utiliser que <code data-claire-semantic="cpp">string </code> mais comme je l'ai déjà noté plus haut, en C++ aussi, les chaînes de caractères sont des tableaux de caractères (et en plus, ce ne serait pas marrant :p ).</p><p id="r-560417" data-claire-element-id="560417">On a vu deux méthodes de <code data-claire-semantic="cpp">cin </code> qui permettent de saisir une ligne et de la stocker dans un tableau de <code data-claire-semantic="cpp">char </code>, <code data-claire-semantic="cpp">get() </code> et <code data-claire-semantic="cpp">getline() </code>.</p><p id="r-560418" data-claire-element-id="560418">Nous allons utiliser <code data-claire-semantic="cpp">getline() </code>, dont voici le prototype :</p><pre id="r-560419" data-claire-element-id="560419"><code data-claire-semantic="cpp">istream &amp;getline(char *s, streamsize n, char delim = '\n');</code></pre><p id="r-560420" data-claire-element-id="560420">Les paramètres sont :</p><ul id="r-560427" data-claire-element-id="560427"><li id="r-560422" data-claire-element-id="560422"><p id="r-560421" data-claire-element-id="560421"><code data-claire-semantic="cpp">s </code> : la chaîne de caractères dans laquelle stocker les données extraites.</p></li><li id="r-560424" data-claire-element-id="560424"><p id="r-560423" data-claire-element-id="560423"><code data-claire-semantic="cpp">n </code> : la taille de la chaîne de caractères.</p></li><li id="r-560426" data-claire-element-id="560426"><p id="r-560425" data-claire-element-id="560425"><code data-claire-semantic="cpp">delim </code> : le caractère auquel s'arrêter s'il est rencontré. Par défaut <code data-claire-semantic="cpp">' ' </code>.</p></li></ul><p id="r-560428" data-claire-element-id="560428">Au cas où vous demanderiez comment on va indiquer à l'utilisateur qu'il a entré trop de caractères, sâchez que <code data-claire-semantic="cpp">getline() </code> invalide <code data-claire-semantic="cpp">cin </code> si cela survient.<br/> On va donc pouvoir utiliser cette méthode pour saisir des chaînes de caractères sans risquer de dépasser la taille de notre chaîne.</p><p id="r-560429" data-claire-element-id="560429">Nous allons donc créer une nouvelle fonction <code data-claire-semantic="cpp">saisir_chaine_caracteres() </code> dont voici le prototype :</p><pre id="r-560430" data-claire-element-id="560430"><code data-claire-semantic="cpp">bool saisir_chaine_caracteres(char *chaine, const unsigned int taille_tableau, const string &amp;message);</code></pre><p id="r-560431" data-claire-element-id="560431">Cette fonction retourne <code data-claire-semantic="cpp">true </code> en cas de succès ou <code data-claire-semantic="cpp">false </code> en cas d'erreur.</p><p id="r-560432" data-claire-element-id="560432">Les paramètres sont :</p><ul id="r-560439" data-claire-element-id="560439"><li id="r-560434" data-claire-element-id="560434"><p id="r-560433" data-claire-element-id="560433"><strong>message</strong> : pointeur vers une chaîne de caractères valide.</p></li><li id="r-560436" data-claire-element-id="560436"><p id="r-560435" data-claire-element-id="560435"><strong>taille_tableau</strong> : taille du tableau de caractères.</p></li><li id="r-560438" data-claire-element-id="560438"><p id="r-560437" data-claire-element-id="560437"><strong>message</strong> : le message à afficher à l'utilisateur à chaque fois qu'il devra entrer quelque chose au clavier (une fois au minimum).</p></li></ul><div id="r-560441" data-claire-element-id="560441" data-claire-semantic="question"><p id="r-560440" data-claire-element-id="560440">Mais attends, inutile de passer la taille maximale, il y a la fonction <code data-claire-semantic="cpp">sizeof() </code> qui retourne la taille d'une variable en octet, comme un char fait 1 octet, alors <code data-claire-semantic="cpp">sizeof(chaine) </code> retourne le nombre de cases du tableau non ?</p></div><p id="r-560442" data-claire-element-id="560442">Et ben non :p .<br/><code data-claire-semantic="cpp">sizeof </code> est un <strong>opérateur</strong>, c'est à dire que la taille de l'objet que l'on lui passe en paramètre est calculée durant la compilation et non l'exécution. Donc il est incapable de donner la taille des tableaux créés dynamiquement (lors de l'exécution).</p><div id="r-560444" data-claire-element-id="560444" data-claire-semantic="question"><p id="r-560443" data-claire-element-id="560443">Il y a la fonction <code data-claire-semantic="cpp">strlen() </code> qui retourne la taille d'une chaîne de caractères, on se limite à cette taille et le tour est joué !</p></div><p id="r-560445" data-claire-element-id="560445">Et ben re non :p .<br/><code data-claire-semantic="cpp">strlen() </code> est bien une fonction mais elle ne fait que rechercher le caractère <code data-claire-semantic="cpp">'\0' </code>. Donc si on lui donne en paramètre un tableau de caractères qui ne contient pas <code data-claire-semantic="cpp">'\0' </code> (comme on le fait quand on fait <code data-claire-semantic="cpp">char nom[100]; </code> puis <code data-claire-semantic="cpp">strlen(nom); </code>), <code data-claire-semantic="cpp">strlen() </code> ne retournera pas une valeur cohérente.</p><div id="r-560447" data-claire-element-id="560447" data-claire-semantic="question"><p id="r-560446" data-claire-element-id="560446">On peut toujours supprimer l'ancien tableau et allouer un nouveau tableau avec une taille suffisante non ?</p></div><p id="r-560448" data-claire-element-id="560448">Encore non :p .<br/> Dans ce cas ce sont les tableaux créés automatiquement (durant la compilation) qui poseront problème car on ne peut pas convertir un tableau de taille x en un tableau d'une autre taille s'il est créé par le compilateur (on a une erreur lors de la compilation du genre &quot;cannot convert char[x] to char *&quot;).</p><div id="r-560450" data-claire-element-id="560450" data-claire-semantic="question"><p id="r-560449" data-claire-element-id="560449">On est donc obligé de demander la taille maximale alors ?</p></div><p id="r-560451" data-claire-element-id="560451">Exactement, et voici l'implémentation de la fonction :</p><pre id="r-560452" data-claire-element-id="560452"><code data-claire-semantic="cpp">bool saisir_chaine_caracteres(char *chaine, const unsigned int taille_tableau, const string &amp;message)
+{
+    while(true)
+    {
+        cout &lt;&lt; message;
+        cin.getline(chaine, taille_tableau);
+
+        if(cin.bad() || cin.eof())
+        {
+            cerr &lt;&lt; &quot;Une erreur interne est survenue&quot; &lt;&lt; endl;
+
+            if(cin.eof())
+            {
+                return false;
+            }
+
+            vider_buffer();
+
+            continue;
+        }
+
+        else if(cin.fail())
+        {
+            cerr &lt;&lt; &quot;Veuillez entrez au maximum &quot; &lt;&lt; (taille_tableau - 1) &lt;&lt; &quot; caractères.&quot; &lt;&lt; endl;
+
+            vider_buffer();
+
+            continue;
+        }
+
+        vider_buffer();
+
+        break;
+    }
+
+    return true;
+}</code></pre><p id="r-560453" data-claire-element-id="560453">Et voici le petit programme vu en introduction, mais utilisant nos fonctions :</p><pre id="r-560454" data-claire-element-id="560454"><code data-claire-semantic="cpp">#include &quot;fonctions_saisir.hpp&quot;
+#include &lt;iostream&gt;
+#include &lt;cstdlib&gt;
+
+using namespace std;
+
+int main()
+{
+    unsigned short int age;
+
+    saisir_unsigned_short_int(age, &quot;Entrez votre âge : &quot;);
+
+    char nom[15];
+
+    saisir_chaine_caracteres(nom, 15, &quot;Entrez vos nom et prénom(s) : &quot;);
+
+    /* Il serait préférable d'utiliser la classe string ici :
+    string nom;
+
+    saisir_string(nom, &quot;Entrez vos nom(s) et prénom(s) : &quot;);
+    */
+
+    cout &lt;&lt; &quot;Bonjour &quot; &lt;&lt; nom &lt;&lt; &quot;, vous avez &quot; &lt;&lt; age &lt;&lt; &quot; ans.&quot; &lt;&lt; endl;
+
+    return EXIT_SUCCESS;
+}</code></pre><p id="r-560455" data-claire-element-id="560455">Et le résultat :</p><pre id="r-560456" data-claire-element-id="560456"><code data-claire-semantic="console">Entrez vos nom et prénom(s) : Jean Philippe Delaunay
+Veuillez entrer au maximum 14 caractères.
+Entrez vos nom et prénom(s) : Jean Delaunay
+Entrez votre âge : 24gfh
+Erreur, saisie incorrecte.
+Entrez votre âge : 33 adfr
+Erreur, saisie incorrecte.
+Entrez votre âge : 26
+Bonjour Jean Delaunay, vous avez 26 ans.</code></pre><p id="r-560457" data-claire-element-id="560457">C'est bien le résultat attendu, les variables contiennent les informations voulues et il n'y a plus de risque de buffer overflow, victoire !</p><p id="r-560458" data-claire-element-id="560458">Nous avons vu comment sécuriser nos programmes vis-à-vis des entrées utilisateurs. Avec des méthodes similaires, vous pouvez sécuriser les entrées effectuées avec les fichiers (n'utilisez pas de boucle car vous bloqueriez votre programme). Utilisez ces fonctions pour toutes les saisies de l'utilisateur si vous voulez des programmes sûrs.</p><p id="r-560459" data-claire-element-id="560459">Si vous connaissez les fonctions templates, vous pouvez très bien créer une fonction pour la saisie sécurisée de n'importe quel type (et n'oubliez pas de créer des spécifications pour les types numériques).</p><p id="r-560460" data-claire-element-id="560460">Pour les intéressés, vous pouvez aussi télécharger une <a href="http://www.ooprog.fr/input.hpp">suite de fonctions</a> que j'ai codé qui contient tout ce qui est nécessaire pour faire de la saisie sécurisée en C++.<br/> Son utilisation est très simple :</p><pre id="r-560461" data-claire-element-id="560461"><code data-claire-semantic="cpp">#include &lt;cstdlib&gt;
+#include &quot;input.hpp&quot; // Fichier d'en-tête contenant les fonctions
+
+using namespace std;
+using namespace input; // Les fonctions sont dasn un namespace nommé input
+
+int main()
+{
+    unsigned short int age;
+
+    get(age, &quot;Entrer votre âge : &quot;); // Pour la plupart des types, on utilise get()
+
+    char nom[15];
+
+    get_string(nom, 15, &quot;Entrez votre nom : &quot;); // Seule exception, le type char *, que l'on doit manipuler avec get_string()
+
+    cout &lt;&lt; endl &lt;&lt; &quot;Bonjour &quot; &lt;&lt; nom &lt;&lt; &quot;, vous avez &quot; &lt;&lt; age &lt;&lt; &quot; ans.&quot; &lt;&lt; endl;
+
+    return EXIT_SUCCESS;
+}</code></pre><aside id="r-560463" data-claire-element-id="560463" data-claire-semantic="information"><p id="r-560462" data-claire-element-id="560462">Comme je l'ai indiqué au début de ce tutoriel, <code data-claire-semantic="cpp">cin </code> est connecté à l'entrée standard qui, la plupart du temps, est le clavier. L'utilisateur peut modifier l'entrée standard, remplaçant ainsi le clavier par un fichier. Dans ce cas, le programme ne lira que la première entrée utilisateur et ignorera toutes les autres (car <code data-claire-semantic="cpp">eof() </code> retournera <code data-claire-semantic="cpp">true </code> par la suite).</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/la-saisie-securisee-en-c">La saisie sécurisée en C++</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-saisie-securisee-en-c/fonctionnement-de-cin">
+Fonctionnement de cin
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/la-saisie-securisee-en-c/validation-de-l-entree">
+Validation de l&#039;entrée
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/la-saisie-securisee-en-c/la-saisie-des-chaines-de-caracteres">
+La saisie des chaînes de caractères
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/la-saisie-securisee-en-c/validation-de-l-entree">
+<span class="arrow"></span>
+<span class="next">Validation de l&#039;entrée</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/la-saisie-securisee-en-c.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 23:39:03 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/la-saisie-securisee-en-c.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:10:04 GMT -->
+</html>

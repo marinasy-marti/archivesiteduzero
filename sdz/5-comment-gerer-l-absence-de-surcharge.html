@@ -1,0 +1,632 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/5-comment-gerer-l-absence-de-surcharge.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 11:22:15 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/5-comment-gerer-l-absence-de-surcharge.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:49:49 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : [PHP5] Comment gérer l&#039;absence de surcharge ?</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : [PHP5] Comment gérer l&#039;absence de surcharge ?</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#PHP5Commentgrerl039absencedesurcharge">[PHP5] Comment gérer l&#039;absence de surcharge ?</a><br/><a href="#RAPPELLasurchargeenPHP5">[RAPPEL] La surcharge en PHP5</a><br/><a href="#SOLUTION1Compterlenombred039arguments">[SOLUTION 1] Compter le nombre d&#039;arguments</a><br/><a href="#SOLUTION2Passageparuntableaudeparamtres">[SOLUTION 2] Passage par un tableau de paramètres</a><br/><a href="#SOLUTION3ObjetetValidation">[SOLUTION 3] Objet et Validation</a><br/><a href="#CONCLUSIONCequ039ilfautretenir">[CONCLUSION] Ce qu&#039;il faut retenir</a><br/></div>
+<a name="PHP5Commentgrerl039absencedesurcharge"></a><h2>[PHP5] Comment gérer l&#039;absence de surcharge ?</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/rappel-la-surcharge-en-php5">
+<span class="next">[RAPPEL] La surcharge en PHP5</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-570495" data-claire-element-id="570495"><strong>[Prérequis]</strong></p><aside id="r-570501" data-claire-element-id="570501" data-claire-semantic="warning"><ul id="r-570500" data-claire-element-id="570500"><li id="r-570497" data-claire-element-id="570497"><p id="r-570496" data-claire-element-id="570496">Avoir lu le cours <strong>PHP/MySQL</strong> de<strong> M@teo21.</strong></p></li><li id="r-570499" data-claire-element-id="570499"><p id="r-570498" data-claire-element-id="570498">Avoir des connaissances en Programmation Orientée Objet.</p></li></ul></aside><p id="r-570502" data-claire-element-id="570502"><strong>Il ne s'agit pas de vous enseigner la POO de fond en comble mais de s'intéresser à un point particulier.<br/> Je vais exposer dans ce mini-tutoriel différentes approches pour outrepasser l'absence de surcharge (ici en prenant en exemple les constructeurs) en PHP5. Chacune des 2 approches a ses avantages et ses inconvénients. Votre choix doit dépendre des actions que vous allez effectuer dans la méthode et également de savoir si votre classe est bien définie ou si vous allez la modifier régulièrement.</strong></p><p id="r-570503" data-claire-element-id="570503"><strong>Précision :</strong><br/>La redéfinition d'une fonction est possible entre une classe mère et une classe fille, c'est-à-dire que l'on peut créer une fonction prenant le même nom et le même nombre de paramètres. Cependant, la surcharge est impossible dans une classe, c'est-à-dire que l'on ne peut pas créer plusieurs fonctions avec le même nom mais avec différents paramètres (tout comme il n'est pas possible de redéfinir une fonction).</p>
+</div><a name="RAPPELLasurchargeenPHP5"></a><h2>[RAPPEL] La surcharge en PHP5</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/solution-1-compter-le-nombre-d-arguments">
+<span class="next">[SOLUTION 1] Compter le nombre d&#039;arguments</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-i-les-constructeurs" data-claire-element-id="570513">I. Les constructeurs</h2><div id="r-570505" data-claire-element-id="570505" data-claire-semantic="question"><p id="r-570504" data-claire-element-id="570504">Tout d'abord, qu'est-ce qu'un constructeur en POO ?</p></div><p id="r-570506" data-claire-element-id="570506">Un constructeur est une méthode qui permet de créer une instance d'objet.<br/> En PHP5, le constructeur est défini en déclarant la <a href="http://fr2.php.net/manual/fr/language.oop5.magic.php">méthode magique</a><code data-claire-semantic="html+php">__construct() </code>.</p><pre id="r-570507" data-claire-element-id="570507"><code data-claire-semantic="html+php">&lt;?php 
+class MonObjet
+{
+    // Constructeur par __construct() == MonObjet().
+    public function __construct()
+    {
+       echo 'Je construis mon objet.';
+    }
+}
+
+$o = new MonObjet();
+?&gt;</code></pre><pre id="r-570508" data-claire-element-id="570508"><code data-claire-semantic="html">Je construis mon objet.</code></pre><aside id="r-570510" data-claire-element-id="570510" data-claire-semantic="warning"><p id="r-570509" data-claire-element-id="570509">Si votre classe hérite d'une classe mère, l'appel du constructeur de celle-ci n'est pas implicite. Il faut alors ajouter la ligne suivante pour appeler son constructeur : <code data-claire-semantic="html+php">parent::__construct()</code></p></aside><aside id="r-570512" data-claire-element-id="570512" data-claire-semantic="information"><p id="r-570511" data-claire-element-id="570511">Pour la documentation officielle sur les constructeurs (et destructeurs), c'est par <a href="http://fr2.php.net/manual/fr/language.oop5.decon.php">ici</a>.</p></aside><h2 id="r-ii-surcharger-une-methode" data-claire-element-id="570534">II. Surcharger une méthode</h2><p id="r-570514" data-claire-element-id="570514">Si par exemple on souhaite définir plusieurs constructeurs prenant différents paramètres (param1, param2, param3), <strong>on ne peut pas !</strong></p><p id="r-570515" data-claire-element-id="570515">En effet, PHP ne permet pas de déclarer plusieurs fois une fonction du même nom avec différents paramètres. On est obligé d'écrire une fonction ressemblant à celle-ci :</p><pre id="r-570516" data-claire-element-id="570516"><code data-claire-semantic="html+php">&lt;?php
+function meuh($param1,$param2,$param3,...,$paramN)
+{
+  // Action.
+}
+?&gt;</code></pre><div id="r-570518" data-claire-element-id="570518" data-claire-semantic="question"><p id="r-570517" data-claire-element-id="570517">Et si je veux uniquement les paramètres 1, 3 et 5 ?<br/><strong>Là, c'est le drame !</strong></p></div><pre id="r-570519" data-claire-element-id="570519"><code data-claire-semantic="html+php">&lt;?php
+meuh('monparam1','','monparam3','','monparam5',...,'');
+?&gt;</code></pre><p id="r-570520" data-claire-element-id="570520">Il faut alors passer tous les paramètres pour éviter une erreur !<br/> Cependant, on peut définir une valeur par défaut à chaque paramètre pour éviter de devoir tous les passer.</p><p id="r-570521" data-claire-element-id="570521"><strong>Mais à partir du moment où on a défini une valeur par défaut, tous les autres paramètres qui suivent doivent en avoir une, pour éviter un décalage et pour une question de clarté ! Par exemple, si vous avez 4 paramètres, les 2 premiers et le 4e sont obligatoires, le 3e a une valeur par défaut, alors comment savoir si on a précisé le paramètre 3 ou le paramètre 4 ?</strong></p><aside id="r-570523" data-claire-element-id="570523" data-claire-semantic="warning"><p id="r-570522" data-claire-element-id="570522">On doit d'abord mettre les paramètres essentiels (obligatoires) avant de mettre les non-essentiels.</p></aside><p id="r-570524" data-claire-element-id="570524">Cela donne le code suivant :</p><pre id="r-570525" data-claire-element-id="570525"><code data-claire-semantic="html+php">&lt;?php
+function meuh($param1,$param2 = 'valeur_par_defaut',$param3= 'valeur_par_defaut',...,$paramN = 'valeur_par_defaut')
+{
+  // Action.
+}
+?&gt;</code></pre><p id="r-570526" data-claire-element-id="570526">C'est pourquoi il faut :</p><ul id="r-570531" data-claire-element-id="570531"><li id="r-570528" data-claire-element-id="570528"><p id="r-570527" data-claire-element-id="570527">alléger au maximum la fonction ou la découper ;</p></li><li id="r-570530" data-claire-element-id="570530"><p id="r-570529" data-claire-element-id="570529">trouver une solution alternative.</p></li></ul><aside id="r-570533" data-claire-element-id="570533" data-claire-semantic="information"><p id="r-570532" data-claire-element-id="570532">Nous allons voir maintenant comment pallier à l'absence de la surcharge en PHP5.</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge">[PHP5] Comment gérer l&#039;absence de surcharge ?</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/rappel-la-surcharge-en-php5">
+[RAPPEL] La surcharge en PHP5
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/solution-1-compter-le-nombre-d-arguments">
+[SOLUTION 1] Compter le nombre d&#039;arguments
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/solution-2-passage-par-un-tableau-de-parametres">
+[SOLUTION 2] Passage par un tableau de paramètres
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/solution-3-objet-et-validation">
+[SOLUTION 3] Objet et Validation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/conclusion-ce-qu-il-faut-retenir">
+[CONCLUSION] Ce qu&#039;il faut retenir
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/solution-1-compter-le-nombre-d-arguments">
+<span class="next">[SOLUTION 1] Compter le nombre d&#039;arguments</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="SOLUTION1Compterlenombred039arguments"></a><h2>[SOLUTION 1] Compter le nombre d&#039;arguments</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/rappel-la-surcharge-en-php5">
+<span class="arrow"></span>
+<span class="next">[RAPPEL] La surcharge en PHP5</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/solution-2-passage-par-un-tableau-de-parametres">
+<span class="next">[SOLUTION 2] Passage par un tableau de paramètres</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<aside id="r-570537" data-claire-element-id="570537" data-claire-semantic="information"><p id="r-570536" data-claire-element-id="570536">Pour cette première solution, nous allons :</p></aside><ul id="r-570546" data-claire-element-id="570546"><li id="r-570539" data-claire-element-id="570539"><p id="r-570538" data-claire-element-id="570538">passer un nombre indéterminé de paramètres ;</p></li><li id="r-570541" data-claire-element-id="570541"><p id="r-570540" data-claire-element-id="570540">exécuter le code commun sans distinction de paramètres ;</p></li><li id="r-570543" data-claire-element-id="570543"><p id="r-570542" data-claire-element-id="570542">compter le nombre d'arguments envoyés au constructeur ;</p></li><li id="r-570545" data-claire-element-id="570545"><p id="r-570544" data-claire-element-id="570544">appeler une méthode en fonction du nombre de paramètres.</p></li></ul><h2 id="r-1-passer-un-nombre-indetermine-de-parametres" data-claire-element-id="570549">1) Passer un nombre indéterminé de paramètres</h2><p id="r-570547" data-claire-element-id="570547">On va donc passer à notre constructeur jusqu'à n valeurs de manière ordonnée pour être sûr d'appeler la bonne fonction avec les bons paramètres. Notre constructeur, lui, sera défini sans paramètres dans sa déclaration (mais il peut tout de même en prendre :p ).</p><pre id="r-570548" data-claire-element-id="570548"><code data-claire-semantic="html+php">&lt;?php
+class MonObjet
+{
+    public function __construct()
+    {
+        //Action(s).
+    }
+}
+
+ $o = new MonObjet('p1',$p2,array(),$p4,...); // Autant de paramètres essentiels à envoyer.
+?&gt;</code></pre><h2 id="r-2-executer-le-code-commun-a-tous-les-constructeurs-potentiels" data-claire-element-id="570552">2) Exécuter le code commun à tous les constructeurs potentiels</h2><p id="r-570550" data-claire-element-id="570550">Ensuite, avant (ou après, cela dépend de la priorité du code) d'appeler les fonctions correspondant au nombre de paramètres, on déclare les actions à exécuter.</p><pre id="r-570551" data-claire-element-id="570551"><code data-claire-semantic="html+php">&lt;?php
+class MonObjet
+{
+    public function __construct()
+    {
+        //Action(s) commune(s).
+        echo 'Je suis commun à tout le monde.';
+
+        //Action(s) spécifique(s).
+    }
+}
+?&gt;</code></pre><h2 id="r-3-compter-le-nombre-d-arguments-envoyes-au-constructeur" data-claire-element-id="570555">3) Compter le nombre d'arguments envoyés au constructeur</h2><p id="r-570553" data-claire-element-id="570553">Pour cela, on va utiliser une fonction PHP qui s'appelle <code data-claire-semantic="html+php"><a href="http://fr2.php.net/manual/fr/function.func-num-args.php">func_num_args() </a></code> et qui nous renvoie le nombre de paramètres passés au constructeur. Cette donnée doit être stockée dans une variable et non passée directement à une fonction.</p><pre id="r-570554" data-claire-element-id="570554"><code data-claire-semantic="html+php">&lt;?php
+class MonObjet
+{
+    public function __construct()
+    {
+        //Action(s) commune(s).
+        echo 'Je suis commun à tout le monde.';
+
+        //Action(s) spécifique(s).
+        $cpt = func_num_args();
+    }
+}
+?&gt;</code></pre><h2 id="r-4-faire-appel-a-la-fonction-associee-aux-nombres-de-parametres" data-claire-element-id="570559">4) Faire appel à la fonction associée aux nombres de paramètres</h2><p id="r-570556" data-claire-element-id="570556">Pour récupérer les paramètres, on fait appel à la fonction <code data-claire-semantic="html+php"><a href="http://fr2.php.net/manual/fr/function.func-get-args.php">func_get_args() </a></code> qui renvoie un tableau contenant l'ensemble des paramètres envoyés à la fonction. Ensuite, grâce à la structure de contrôle <code data-claire-semantic="html+php">switch($var) ... case </code>, on va faire appel à la fonction qui correspond à ce nombre.</p><pre id="r-570557" data-claire-element-id="570557"><code data-claire-semantic="html+php">&lt;?php
+class MonObjet
+{
+    public function __construct()
+    {
+        //Action(s) commune(s).
+        echo &quot;Je suis commun à tout le monde.&quot;;
+
+        //Action(s) spécifique(s).
+        $cpt = func_num_args();
+	$args = func_get_args();
+		
+        switch($cpt)
+        {
+            case '0':
+                //Mon action spécifique ou l'appel de ma fonction spécifique.
+		echo &quot;Je n'ai pas d'argument.&quot;;
+		$this-&gt;fonction_zero_argument();
+            break;
+
+            case '1':
+                //Mon action spécifique ou l'appel de ma fonction spécifique.
+		echo &quot;J'ai des arguments.&quot;;
+		$this-&gt;fonction_un_argument($args[0]);
+            break;
+
+            default:
+                //Mon action par défaut ou l'appel de ma fonction par défaut.
+            break;
+        }
+    }
+	
+	public function fonction_zero_argument()
+	{
+		echo &quot;Mais pourquoi je n'ai pas d'argument ?&quot;;
+	}
+	
+	public function fonction_un_argument($argument)
+	{
+		echo &quot;Jaloux ? L'argument c'est [{$argument}] :p.&quot;;
+	}
+}
+
+$o = new MonObjet();
+$o2 = new MonObjet(&quot;moi le plus fort&quot;);
+?&gt;</code></pre><pre id="r-570558" data-claire-element-id="570558"><code data-claire-semantic="html">Je suis commun à tout le monde. Je n'ai pas d'argument. Mais pourquoi je n'ai pas d'argument ?
+Je suis commun à tout le monde. J'ai des arguments. Jaloux ? L'argument c'est [moi le plus fort] :p.</code></pre><h2 id="r-pertinence-de-la-solution" data-claire-element-id="570572">Pertinence de la solution</h2><p id="r-570560" data-claire-element-id="570560">Les plus malins d'entre vous auront déjà remarqué que cette solution n'est pas utile car elle correspond exactement à la conception d'un constructeur avec le passage de l'ensemble des paramètres. De plus, l'utilisation du switch ainsi que l'appel des fonctions associées sera plus lent que d'avoir directement tout le code dans le constructeur. Ce n'est pas significatif mais il faut le savoir.</p><div id="r-570562" data-claire-element-id="570562" data-claire-semantic="question"><p id="r-570561" data-claire-element-id="570561">Pourquoi nous avoir montré cette solution si elle est équivalente à la conception basique d'un constructeur ?</p></div><aside id="r-570564" data-claire-element-id="570564" data-claire-semantic="information"><p id="r-570563" data-claire-element-id="570563">La réponse est simple : lisibilité du code (et dans la suite du tutoriel).</p></aside><ul id="r-570571" data-claire-element-id="570571"><li id="r-570566" data-claire-element-id="570566"><p id="r-570565" data-claire-element-id="570565">On n'a pas un constructeur déclaré avec n paramètres.</p></li><li id="r-570568" data-claire-element-id="570568"><p id="r-570567" data-claire-element-id="570567">Les tests sur les paramètres s'effectuent dans les fonctions appelées.</p></li><li id="r-570570" data-claire-element-id="570570"><p id="r-570569" data-claire-element-id="570569">Avec un peu plus de commentaires (normal ou phpDoc), on pourra facilement comprendre l'utilité de la fonction.</p></li></ul>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge">[PHP5] Comment gérer l&#039;absence de surcharge ?</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/rappel-la-surcharge-en-php5">
+[RAPPEL] La surcharge en PHP5
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/solution-1-compter-le-nombre-d-arguments">
+[SOLUTION 1] Compter le nombre d&#039;arguments
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/solution-2-passage-par-un-tableau-de-parametres">
+[SOLUTION 2] Passage par un tableau de paramètres
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/solution-3-objet-et-validation">
+[SOLUTION 3] Objet et Validation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/conclusion-ce-qu-il-faut-retenir">
+[CONCLUSION] Ce qu&#039;il faut retenir
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/rappel-la-surcharge-en-php5">
+<span class="arrow"></span>
+<span class="next">[RAPPEL] La surcharge en PHP5</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/solution-2-passage-par-un-tableau-de-parametres">
+<span class="next">[SOLUTION 2] Passage par un tableau de paramètres</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="SOLUTION2Passageparuntableaudeparamtres"></a><h2>[SOLUTION 2] Passage par un tableau de paramètres</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/solution-1-compter-le-nombre-d-arguments">
+<span class="arrow"></span>
+<span class="next">[SOLUTION 1] Compter le nombre d&#039;arguments</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/solution-3-objet-et-validation">
+<span class="next">[SOLUTION 3] Objet et Validation</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<aside id="r-570575" data-claire-element-id="570575" data-claire-semantic="information"><p id="r-570574" data-claire-element-id="570574">Voici grosso modo le schéma d'exécution de cette solution :</p></aside><ul id="r-570584" data-claire-element-id="570584"><li id="r-570577" data-claire-element-id="570577"><p id="r-570576" data-claire-element-id="570576">passer un tableau associatif de paramètres ;</p></li><li id="r-570579" data-claire-element-id="570579"><p id="r-570578" data-claire-element-id="570578">exécuter le code commun sans distinction de paramètres ;</p></li><li id="r-570581" data-claire-element-id="570581"><p id="r-570580" data-claire-element-id="570580">vérifier l'existence du tableau de paramètres et mettre à jour les propriétés de la classe ;</p></li><li id="r-570583" data-claire-element-id="570583"><p id="r-570582" data-claire-element-id="570582">exécuter un code particulier.</p></li></ul><h2 id="r-1-passer-un-tableau-associatif-de-parametres" data-claire-element-id="570587">1) Passer un tableau associatif de paramètres</h2><p id="r-570585" data-claire-element-id="570585">Certes, un tableau associatif, c'est embêtant à créer. <br/> Certes, ça prend de la place de l'alimenter en données. <br/> Mais vous allez en voir l'utilité d'ici la fin de cette partie.</p><pre id="r-570586" data-claire-element-id="570586"><code data-claire-semantic="html+php">&lt;?php
+class MonObjet
+{
+    // Initialiser les valeurs à vide ou à -1 selon le besoin.
+    private $nom = &quot;&quot;;
+    private $type = &quot;&quot;;
+	
+    // On peut ne pas passer de tableau de paramètres.
+    public function __construct($args = null)
+    {
+        //Action(s).
+    }
+}
+
+// Déclaration plus lisible mais équivalente à $args = array(&quot;nom&quot; =&gt; &quot;C'est mon nom&quot;, &quot;type&quot; =&gt; &quot;C'est mon type&quot;).
+$args = array();
+$args['nom'] = &quot;C'est mon nom&quot;;
+$args['type'] = &quot;C'est mon type&quot;;
+ 
+$o = new MonObjet($args);
+
+?&gt;</code></pre><h2 id="r-2-executer-le-code-commun-sans-distinction-de-parametres" data-claire-element-id="570589">2) Exécuter le code commun sans distinction de paramètres</h2><p id="r-570588" data-claire-element-id="570588">On reprend le principe de la solution 1 pour exécuter une action qui doit être effectuée sans tenir compte des paramètres et de leur valeur.</p><h2 id="r-3-verifier-l-existence-du-tableau-de-parametres-et-mettre-a-jour-les-proprietes-de-la-classe" data-claire-element-id="570593">3) Vérifier l'existence du tableau de paramètres et mettre à jour les propriétés de la classe</h2><p id="r-570590" data-claire-element-id="570590">Tout d'abord, on doit vérifier que l'argument est bien un tableau (grâce à <code data-claire-semantic="html+php"><a href="http://fr.php.net/manual/fr/function.is-array.php">is_array() </a></code>) et ensuite, si ce tableau n'est pas vide (avec <code data-claire-semantic="html+php"><a href="http://fr.php.net/manual/fr/function.empty.php">empty() </a></code>).<br/> Puis on va mettre à jour les propriétés (existantes) de notre classe.</p><pre id="r-570591" data-claire-element-id="570591"><code data-claire-semantic="html+php">&lt;?php
+class MonObjet
+{
+    // Initialiser les valeurs à vide ou à -1 selon le besoin.
+    private $nom = &quot;&quot;;
+    private $type = &quot;&quot;;
+	
+    // On peut ne pas passer de tableau de paramètres.
+    public function __construct($args = null)
+    {
+        //Action(s) commune(s)
+        echo &quot;Je suis commun à tout le monde. &lt;br /&gt;&quot;;
+
+        // Si notre paramètre est un tableau non vide.
+	if(is_array($args) &amp;&amp; !empty($args))
+	{
+	     // Alors pour chaque clé, on récupère sa valeur.
+	     foreach($args as $key =&gt; $value)
+	     {
+		// Si la propriété de la classe existe, alors on met à jour sa valeur.
+		if(isset($this-&gt;$key))	$this-&gt;$key = $value;
+	     }
+
+	     //Action(s) distincte(s) pour un paramètre.
+
+	}
+		
+        //Action(s) distincte(s).
+
+    }
+}
+
+ $args = array();
+ $args['nom'] = &quot;C'est mon nom&quot;;
+ $args['type'] = &quot;C'est mon type&quot;;
+ 
+ $o = new MonObjet($args); // Autant de paramètres essentiels à envoyer.
+ 
+ var_dump($o);
+?&gt;</code></pre><pre id="r-570592" data-claire-element-id="570592"><code data-claire-semantic="html">Je suis commun à tout le monde.
+object(MonObjet)#1 (2) { [&quot;nom:private&quot;]=&gt; string(13) &quot;C'est mon nom&quot; [&quot;type:private&quot;]=&gt; string(14) &quot;C'est mon type&quot; }</code></pre><h2 id="r-4-executer-un-code-particulier" data-claire-element-id="570600">4) Exécuter un code particulier</h2><p id="r-570594" data-claire-element-id="570594">Ensuite, on peut exécuter un code particulier ou faire appel à une fonction selon nos besoins et selon la présence et/ou la valeur d'un paramètre.</p><pre id="r-570595" data-claire-element-id="570595"><code data-claire-semantic="html+php">&lt;?php
+class MonObjet
+{
+    // Initialiser les valeurs à vide ou à -1 selon le besoin.
+    private $nom = &quot;&quot;;
+    private $type = &quot;&quot;;
+	
+    // On peut ne pas passer de tableau de paramètres.
+    public function __construct($args = null)
+    {
+        //Action(s) commune(s)
+        echo &quot;Je suis commun à tout le monde. &lt;br /&gt;&quot;;
+
+		// Si notre paramètre est un tableau non vide.
+		if(is_array($args) &amp;&amp; !empty($args))
+		{
+			// Alors pour chaque clé, on récupère sa valeur.
+			foreach($args as $key =&gt; $value)
+			{
+				// Si la propriété de la classe existe, alors on met à jour sa valeur.
+				if(isset($this-&gt;$key))	$this-&gt;$key = $value;
+			}
+
+			//Action(s) distincte(s) pour un paramètre.
+			if(!empty($args['visibilite']))
+			{
+				switch($args['visibilite'])
+				{
+					case 'public':
+						echo &quot;Je ne suis pas agoraphobe.&quot;;
+					break;
+					
+					case 'private':
+						echo &quot;J'aime pas les gens.&quot;;
+					break;
+					
+					default:
+						echo &quot;Je suis indécis.&quot;;
+					break;
+				}
+				
+				echo &quot;&lt;br /&gt;&quot;;
+			}
+		}
+		
+		//Action(s) distincte(s). 
+		if(!empty($this-&gt;type)) echo &quot;Mon type est défini et sa valeur est : [{$this-&gt;type}]&lt;br /&gt;&quot;;
+    }
+}
+
+ $args = array();
+ $args['nom'] = &quot;C'est mon nom&quot;;
+ $args['type'] = &quot;C'est mon type&quot;;
+ $args['visibilite'] = &quot;private&quot;;
+ 
+ $o = new MonObjet($args); // Autant de paramètres essentiels à envoyer.
+ 
+ var_dump($o);
+?&gt;</code></pre><pre id="r-570596" data-claire-element-id="570596"><code data-claire-semantic="html">Je suis commun à  tout le monde.
+J'aime pas les gens.
+Mon type est défini et sa valeur est : [C'est mon type]
+object(MonObjet)#1 (2) { [&quot;nom:private&quot;]=&gt; string(13) &quot;C'est mon nom&quot; [&quot;type:private&quot;]=&gt; string(14) &quot;C'est mon type&quot; }</code></pre><div id="r-570598" data-claire-element-id="570598" data-claire-semantic="question"><p id="r-570597" data-claire-element-id="570597">Pourquoi, dans le dump de mon objet, je ne vois pas la propriété <code data-claire-semantic="html+php">visibilite </code> ?</p></div><p id="r-570599" data-claire-element-id="570599">C'est simple, elle n'est pas définie donc on ne peut pas la modifier.</p><h2 id="r-pertinence-de-la-solution-1" data-claire-element-id="570605">Pertinence de la solution</h2><p id="r-570601" data-claire-element-id="570601">Cette solution est loin d'être optimisée. J'aurais pu directement déclarer l'attribut <code data-claire-semantic="html+php">$args </code> du constructeur comme étant un <code data-claire-semantic="html+php">array </code>, ce qui aurait évité le test sur le type.</p><p id="r-570602" data-claire-element-id="570602">Cependant, en levant son nez et en envisageant le chargement d'un objet sauvegardé dans une base de donnée MySQL par exemple, l'utilité de cette méthode est rapidement trouvée =&gt; <code data-claire-semantic="html+php"><a href="http://fr.php.net/fr/mysql-fetch-assoc">mysql_fetch_assoc() </a></code>.</p><p id="r-570603" data-claire-element-id="570603">En effet, si notre classe a un ensemble de propriétés ayant le même nom que ceux présents dans la table (ou modifiés par la requête), nous avons juste à récupérer le résultat par une requête MySQL et à le transformer en tableau associatif avec <code data-claire-semantic="html+php"><a href="http://fr.php.net/fr/mysql-fetch-assoc">mysql_fetch_assoc() </a></code>. Ensuite, on passe notre tableau de paramètres pour initialiser l'objet (on peut ajouter également des paramètres à ce tableau) et le tour est joué.</p><p id="r-570604" data-claire-element-id="570604">De plus, même s'il est fastidieux de construire un tableau associatif avec chaque construction d'objet, on peut rapidement voir ce qui est envoyé en paramètre à notre constructeur. De plus, cela facilite le travail de développement et de débogage (même si on peut également afficher les paramètres dans la solution 1 avec les fonctions utilisées, un tableau associatif est un peu plus lisible).</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge">[PHP5] Comment gérer l&#039;absence de surcharge ?</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/rappel-la-surcharge-en-php5">
+[RAPPEL] La surcharge en PHP5
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/solution-1-compter-le-nombre-d-arguments">
+[SOLUTION 1] Compter le nombre d&#039;arguments
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/solution-2-passage-par-un-tableau-de-parametres">
+[SOLUTION 2] Passage par un tableau de paramètres
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/solution-3-objet-et-validation">
+[SOLUTION 3] Objet et Validation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/conclusion-ce-qu-il-faut-retenir">
+[CONCLUSION] Ce qu&#039;il faut retenir
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/solution-1-compter-le-nombre-d-arguments">
+<span class="arrow"></span>
+<span class="next">[SOLUTION 1] Compter le nombre d&#039;arguments</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/solution-3-objet-et-validation">
+<span class="next">[SOLUTION 3] Objet et Validation</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="SOLUTION3ObjetetValidation"></a><h2>[SOLUTION 3] Objet et Validation</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/solution-2-passage-par-un-tableau-de-parametres">
+<span class="arrow"></span>
+<span class="next">[SOLUTION 2] Passage par un tableau de paramètres</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/conclusion-ce-qu-il-faut-retenir">
+<span class="next">[CONCLUSION] Ce qu&#039;il faut retenir</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-570607" data-claire-element-id="570607">En cours de rédaction...</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge">[PHP5] Comment gérer l&#039;absence de surcharge ?</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/rappel-la-surcharge-en-php5">
+[RAPPEL] La surcharge en PHP5
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/solution-1-compter-le-nombre-d-arguments">
+[SOLUTION 1] Compter le nombre d&#039;arguments
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/solution-2-passage-par-un-tableau-de-parametres">
+[SOLUTION 2] Passage par un tableau de paramètres
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/solution-3-objet-et-validation">
+[SOLUTION 3] Objet et Validation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/conclusion-ce-qu-il-faut-retenir">
+[CONCLUSION] Ce qu&#039;il faut retenir
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/solution-2-passage-par-un-tableau-de-parametres">
+<span class="arrow"></span>
+<span class="next">[SOLUTION 2] Passage par un tableau de paramètres</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/conclusion-ce-qu-il-faut-retenir">
+<span class="next">[CONCLUSION] Ce qu&#039;il faut retenir</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="CONCLUSIONCequ039ilfautretenir"></a><h2>[CONCLUSION] Ce qu&#039;il faut retenir</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/solution-3-objet-et-validation">
+<span class="arrow"></span>
+<span class="next">[SOLUTION 3] Objet et Validation</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-570609" data-claire-element-id="570609">Personnellement, je préfère utiliser la solution 2 avec quelques changements dans la classe.</p><p id="r-570610" data-claire-element-id="570610">Cependant, il faut adapter la solution à son besoin. Je vous conseille vivement de vous intéresser aux autres méthodes magiques pour compléter la solution 2, afin de l'améliorer largement.</p><p id="r-570611" data-claire-element-id="570611">De plus, même si dans le tutoriel on s'est intéressé principalement aux constructeurs, elle s'applique simplement pour la surcharge d'une méthode.</p><p id="r-570612" data-claire-element-id="570612">La balle est dans votre camp, prenez soin de vos claviers !</p><aside id="r-570614" data-claire-element-id="570614" data-claire-semantic="information"><p id="r-570613" data-claire-element-id="570613">J'espère que ce tutoriel vous a aidé.</p></aside><p id="r-570615" data-claire-element-id="570615"><cite>Citation</cite></p><blockquote id="r-570617" data-claire-element-id="570617"><p id="r-570616" data-claire-element-id="570616">See You Space Codeur...</p></blockquote>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge">[PHP5] Comment gérer l&#039;absence de surcharge ?</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/rappel-la-surcharge-en-php5">
+[RAPPEL] La surcharge en PHP5
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/solution-1-compter-le-nombre-d-arguments">
+[SOLUTION 1] Compter le nombre d&#039;arguments
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/solution-2-passage-par-un-tableau-de-parametres">
+[SOLUTION 2] Passage par un tableau de paramètres
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/solution-3-objet-et-validation">
+[SOLUTION 3] Objet et Validation
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/conclusion-ce-qu-il-faut-retenir">
+[CONCLUSION] Ce qu&#039;il faut retenir
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/php5-comment-gerer-l-absence-de-surcharge/solution-3-objet-et-validation">
+<span class="arrow"></span>
+<span class="next">[SOLUTION 3] Objet et Validation</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/5-comment-gerer-l-absence-de-surcharge.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 11:22:15 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/5-comment-gerer-l-absence-de-surcharge.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:49:50 GMT -->
+</html>

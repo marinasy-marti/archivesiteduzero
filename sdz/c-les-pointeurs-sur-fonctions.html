@@ -1,0 +1,453 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/c-les-pointeurs-sur-fonctions.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 08:28:27 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/c-les-pointeurs-sur-fonctions.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:31:18 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : [C++] Les pointeurs sur fonctions</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/c-les-pointeurs-sur-fonctions.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : [C++] Les pointeurs sur fonctions</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#CLespointeurssurfonctions">[C++] Les pointeurs sur fonctions</a><br/><a href="#Choisirunefonction">Choisir une fonction</a><br/><a href="#Lespointeurssurfonctions">Les pointeurs sur fonctions</a><br/><a href="#Lecasparticulierdesfonctionsmembres">Le cas particulier des fonctions membres</a><br/></div>
+<a name="CLespointeurssurfonctions"></a><h2>[C++] Les pointeurs sur fonctions</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/c-les-pointeurs-sur-fonctions/choisir-une-fonction">
+<span class="next">Choisir une fonction</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-378136" data-claire-element-id="378136">Si vous vous souvenez de votre début en C, un des premiers passages délicats a sûrement été celui de l'utilisation des pointeurs. Car la notion n'est pas toujours très intuitive. En C++, les pointeurs ont perdu un peu de leur utilité suite à l'introduction des références. Cependant, il est un domaine où les pointeurs sont irremplaçables, ce sont les pointeurs sur des fonctions.</p><p id="r-378137" data-claire-element-id="378137">Dans ce chapitre, je vais vous apprendre à créer et à utiliser des pointeurs sur des fonctions. Dans une deuxième partie, je vous montrerai quelles difficultés apparaissent quand on utilise des classes. :(</p><p id="r-378138" data-claire-element-id="378138">Dans le C++ moderne, les pointeurs de fonctions sont de moins en moins utilisés au profit des <em>foncteurs</em> (<a href="http://www.siteduzero.com/tutoriel-3-473845-iterateurs-et-foncteurs.html">que vous pouvez découvrir dans le tutoriel officiel</a>) mais comme de nombreuses bibliothèques venues du C utilisent des pointeurs de fonctions, il est parfois nécessaire de savoir les utiliser.</p>
+</div><a name="Choisirunefonction"></a><h2>Choisir une fonction</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/c-les-pointeurs-sur-fonctions/les-pointeurs-sur-fonctions">
+<span class="next">Les pointeurs sur fonctions</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-378139" data-claire-element-id="378139">Pour vous présenter concrètement l'utilité des pointeurs sur fonctions, je vais passer par un exemple.</p><h2 id="r-le-minimum-d-une-fonction" data-claire-element-id="378145">Le minimum d'une fonction</h2><p id="r-378140" data-claire-element-id="378140">Imaginons que vous ayez envie d'écrire une fonction (informatique) permettant de calculer le minimum d'une fonction (mathématique) f(x) donnée sur un intervalle [a;b]. C'est une fonctionnalité proposée par les calculatrices scientifiques un peu avancées, il est donc tout à fait légitime d'essayer d'implémenter ce genre de choses. Si l'on ne connaît pas les pointeurs sur une fonction, on serait tenté d'écrire quelque chose comme ceci:</p><pre id="r-378141" data-claire-element-id="378141"><code data-claire-semantic="cpp">#include &lt;cmath&gt;
+using namespace std;
+ 
+//Liste des fonctions &quot;calculables&quot;
+ 
+//double f(double x) { return x*x;}  
+double f(double x) { return 1/x;}
+//double f(double x) { return sqrt(x);}
+//double f(double x) { return exp(x);}
+//...
+ 
+ 
+double minimum(double a,double b)
+{
+   double min(100000);
+ 
+   for(double x=a; x&lt;b; x+= 0.01)  //On parcourt l'intervalle
+     min = min&lt; f(x)? min : f(x);  //Et si la nouvelle valeur est plus petite que l'ancienne
+                                   //On la garde
+   return min;
+}
+ 
+//..</code></pre><aside id="r-378143" data-claire-element-id="378143" data-claire-semantic="information"><p id="r-378142" data-claire-element-id="378142">L'algorithme de calcul du minimum n'est pas bien malin, mais ce n'est pas ce qui nous préoccupe ici.</p></aside><p id="r-378144" data-claire-element-id="378144">Chaque fois que l'on voudrait calculer le minimum d'une autre fonction, il faudrait dé-commenter la ligne concernée et recompiler le programme. Ceci n'est évidemment pas satisfaisant, il serait beaucoup mieux de pouvoir passer un argument à la fonction permettant de savoir de quelle fonction f(x), elle doit chercher le minimum.</p><h2 id="r-utiliser-un-type-enumere" data-claire-element-id="378150">Utiliser un type énuméré ?</h2><p id="r-378146" data-claire-element-id="378146">Il faudrait donc transmettre un élément supplémentaire à la fonction minimum. La meilleure chose à transmettre serait donc une sorte d'indice unique et la fonction pourra ainsi savoir quelle fonction mathématique utiliser. Une solution intelligente consisterait à utiliser un type énuméré et à placer un switch dans la fonction minimum, par exemple:</p><pre id="r-378147" data-claire-element-id="378147"><code data-claire-semantic="cpp">//Type énuméré représentant les fonctions calculables
+enum Fonctions{CARRE,INVERSE,RACINE,EXPONENTIELLE};
+ 
+//Liste des fonctions &quot;calculables&quot;
+ 
+double carre(double x) { return x*x;}  
+double inverse(double x) { return 1/x;}
+double racine(double x) { return sqrt(x);}
+double exponentielle(double x) { return exp(x);}
+ 
+double minimum(double a,double b,Fonctions fonction_choisie)
+{
+   double min(100000);
+ 
+    switch(fonction_choisie)
+    {
+    case CARRE:
+          for(double x=a; x&lt;b; x+= 0.01)  //On parcourt l'intervalle
+             min = min&lt; carre(x)? min : carre(x);
+          break;
+    case INVERSE:
+         for(double x=a; x&lt;b; x+= 0.01)  //On parcourt l'intervalle
+             min = min&lt; inverse(x)? min : inverse(x);
+         break;
+    //...
+    };
+ 
+    return min;
+}
+ 
+//..</code></pre><p id="r-378148" data-claire-element-id="378148">Ce code est mieux que le précédent, il n'y a plus besoin de recompiler à chaque fois que l'on veut changer la fonction à évaluer. Cependant, ce n'est toujours pas très pratique. Si l'on veut ajouter une nouvelle fonction, il faut modifier l'enum et surtout, il faut modifier le code de la fonction minimum, ce qui évidemment une très mauvaise chose. On ne devrait pas avoir à modifier la fonction minimum à chaque fois qu'on ajoute une nouvelle fonction mathématique.</p><p id="r-378149" data-claire-element-id="378149">La meilleure chose serait de pouvoir donner directement à minimum, la fonction que l'on souhaite évaluer. Et si je vous en parle, c'est que c'est faisable (vous en doutiez ? ;) ) et même de manière élégante.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/c-les-pointeurs-sur-fonctions">[C++] Les pointeurs sur fonctions</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/c-les-pointeurs-sur-fonctions/choisir-une-fonction">
+Choisir une fonction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-les-pointeurs-sur-fonctions/les-pointeurs-sur-fonctions">
+Les pointeurs sur fonctions
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-les-pointeurs-sur-fonctions/le-cas-particulier-des-fonctions-membres">
+Le cas particulier des fonctions membres
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/c-les-pointeurs-sur-fonctions/les-pointeurs-sur-fonctions">
+<span class="next">Les pointeurs sur fonctions</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lespointeurssurfonctions"></a><h2>Les pointeurs sur fonctions</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/c-les-pointeurs-sur-fonctions/choisir-une-fonction">
+<span class="arrow"></span>
+<span class="next">Choisir une fonction</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/c-les-pointeurs-sur-fonctions/le-cas-particulier-des-fonctions-membres">
+<span class="next">Le cas particulier des fonctions membres</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-378152" data-claire-element-id="378152">Comme une fonction n'est pas un objet ou une variable, il n'est pas possible de passer une fonction directement en argument à notre fonction minimum. Par contre, comme toutes les choses présentes dans un programme C++, les fonctions ont une adresse. Il est donc possible de déclarer un pointeur vers cette adresse et de passer ce pointeur à la fonction minimum.</p><h2 id="r-declarer-un-pointeur-sur-fonction" data-claire-element-id="378166">Déclarer un pointeur sur fonction</h2><p id="r-378153" data-claire-element-id="378153">Bon puisque vous êtes encore là, allons-y, déclarons un pointeur sur une fonction. La syntaxe est la suivante:</p><p id="r-378154" data-claire-element-id="378154">type_de_retour (*monPointeur) (type_argument_1,type_argument_2,...)</p><p id="r-378155" data-claire-element-id="378155">Décortiquons les 3 parties de la déclaration:</p><p id="r-378156" data-claire-element-id="378156">La première partie (en rouge) indique le type de retour de la fonction pointée, cet élément fait donc partie du &quot;type&quot; d'une fonction. Le &quot;type&quot; d'une fonction n'est donc pas uniquement constitué de la signature de la fonction.</p><p id="r-378157" data-claire-element-id="378157">La deuxième partie (en vert) est le nom que vous souhaitez donner à votre pointeur. Les parenthèses sont nécessaires afin que le compilateur sache que l'étoile est liée au nom et pas au type de retour.</p><p id="r-378158" data-claire-element-id="378158">La troisième partie (en bleu) consiste en une liste des types des arguments que la fonction pointée doit recevoir.</p><p id="r-378159" data-claire-element-id="378159">Maintenant que nous somme munis de ces quelques notions, déclarons quelques pointeurs:</p><pre id="r-378160" data-claire-element-id="378160"><code data-claire-semantic="cpp">int (*pointeur_1)(int);
+// Déclaration d'un pointeur nommé &quot;pointeur_1&quot; qui pourra pointer
+// sur des fonctions recevant un int et renvoyant un int.
+ 
+int (*pointeur_2)(int,double);
+// Déclaration d'un pointeur nommé &quot;pointeur_2&quot; qui pourra pointer
+// sur des fonctions recevant un int et un double et renvoyant un int.
+ 
+void (*pointeur_3)(double);
+// Déclaration d'un pointeur nommé &quot;pointeur_3&quot; qui pourra pointer
+// sur des fonctions recevant un double et ne renvoyant rien.
+ 
+void (*pointeur_4)();
+// Déclaration d'un pointeur nommé &quot;pointeur_4&quot; qui pourra pointer
+// sur des fonctions ne recevant rien et ne renvoyant rien non plus.</code></pre><aside id="r-378162" data-claire-element-id="378162" data-claire-semantic="warning"><p id="r-378161" data-claire-element-id="378161">int (*ptr)(int,double) n'est pas équivalent à int (*ptr)(double,int), l'ordre des arguments joue un rôle. De même void (*ptr)(double) n'est pas équivalent à void (*ptr)(int), même si les transformations de int en double sont automatiques.</p></aside><aside id="r-378164" data-claire-element-id="378164" data-claire-semantic="information"><p id="r-378163" data-claire-element-id="378163">Un pointeur sur fonction est un type comme un autre. Vous pouvez donc tout à fait créer un tableau de pointeurs sur fonctions, un std::vector&lt;&gt; de pointeurs sur fonctions ou même un pointeur sur pointeur de fonction.</p></aside><p id="r-378165" data-claire-element-id="378165">Bon c'est bien joli tout ça, mais notre pointeur pour le moment ne pointe sur rien (ou en tout cas pas sur une fonction que vous avez créée), voyons donc comment l'affecter.</p><h2 id="r-affecter-un-pointeur-sur-fonction" data-claire-element-id="378174">Affecter un pointeur sur fonction</h2><p id="r-378167" data-claire-element-id="378167">Comme on parle de pointeurs sur fonctions, vous pourriez tout à fait vous dire que c'est très facile de l'affecter, il suffit de récupérer l'adresse mémoire d'une fonction et de la mettre dans le pointeur. Et vous auriez tout à fait raison ! Il est tout à fait possible d'utiliser l'opérateur <strong>&amp;</strong> pour récupérer l'adresse d'une fonction. Par exemple :</p><pre id="r-378168" data-claire-element-id="378168"><code data-claire-semantic="cpp">#include &lt;string&gt;
+using namespace std;
+ 
+int fonction(double a,string phrase)  //Une jolie fonction
+{ 
+    //blablabla
+}
+ 
+int main()
+{
+   int (*monPointeur)(double,string);   //On déclare un pointeur sur fonction
+ 
+   monPointeur = &amp;fonction;   //Et on le fait pointer sur &quot;fonction&quot;
+ 
+   //...
+}</code></pre><p id="r-378169" data-claire-element-id="378169">Ce code est tout à fait correct, cependant les créateurs du C++ ont voulu simplifier ceci et ont décidé qu'il n'était pas nécessaire d'utiliser l'opérateur <strong>&amp;</strong>. Le code suivant revient donc au même:</p><pre id="r-378170" data-claire-element-id="378170"><code data-claire-semantic="cpp">#include &lt;string&gt;
+using namespace std;
+ 
+int fonction(double a,string phrase)  //Une jolie fonction
+{ 
+    //blablabla
+}
+ 
+int main()
+{
+   int (*monPointeur)(double,string);   //On déclare un pointeur sur fonction
+ 
+   monPointeur = fonction;   //Et on le fait pointer sur &quot;fonction&quot;
+   // Notez l'absence du '&amp;' !!
+ 
+   //...
+}</code></pre><p id="r-378171" data-claire-element-id="378171">Et c'est cette dernière méthode qui est utilisée par tous les programmeurs. Il n'est pas faux d'utiliser le <strong>&amp;</strong>, mais personne ne le fait. Puisque la notation est assez explicite sans, il n'est pas nécessaire pour le compilateur et pour les programmeurs d'ajouter le &amp;.</p><aside id="r-378173" data-claire-element-id="378173" data-claire-semantic="information"><p id="r-378172" data-claire-element-id="378172">Il est tout à fait possible d'affecter un pointeur directement à l'initialisation. Le code serait alors: <br/>void (*pointeur)(int) = fonction;</p></aside><h2 id="r-utiliser-la-fonction-pointee" data-claire-element-id="378179">Utiliser la fonction pointée</h2><p id="r-378175" data-claire-element-id="378175">A nouveau, comme l'on parle de pointeurs, vous pouvez vous douter que l'on va utiliser l'opérateur <strong>*</strong>. Et puisque vous êtes des lecteurs attentifs, vous pourriez penser qu'il existe à nouveau une convention permettant d'omettre le <strong>*</strong>. Et je ne pourrais que vous donner raison. Voyons cela sur un exemple:</p><pre id="r-378176" data-claire-element-id="378176"><code data-claire-semantic="cpp">int maximum(int a,int b)  //Retourne le plus grand de deux entiers
+{
+    return a&gt;b ? a : b;
+}
+ 
+int main()
+{
+   int (*ptr) (int,int); //Un joli pointeur
+   
+   ptr = maximum;  //que l'on affecte à la fonction &quot;maximum&quot; 
+ 
+   int resultat = (*ptr)(1,2); //On calcule le maximum de 1 et 2 via la fonction pointée
+   //Notez l'utilisation obligatoire des ()
+ 
+   int resultat_2 = ptr(3,4); //Et on fait la même chose pour 3 et 4
+   //Notez l'absence de *
+}</code></pre><p id="r-378177" data-claire-element-id="378177">Les lignes 12 et 15 sont tout à fait équivalentes au niveau du programme généré. Mais comme précédemment, personne n'utilise la version avec <strong>*</strong>. On peut donc déduire la règle suivante:</p><p id="r-378178" data-claire-element-id="378178"><strong>On utilise un pointeur sur fonction de la même manière qu'on utilise la fonction pointée.</strong></p><h2 id="r-recrire-le-code-de-l-exemple-initial" data-claire-element-id="378185">Récrire le code de l'exemple initial</h2><p id="r-378180" data-claire-element-id="378180">Maintenant que nous maitrisons un nouvel outil, nous pouvons récrire le code du premier exemple de la manière suivante:</p><pre id="r-378181" data-claire-element-id="378181"><code data-claire-semantic="cpp">#include &lt;iostream&gt;
+#include &lt;cmath&gt;
+using namespace std;
+ 
+//Un petit typedef pour simplifier la notation
+typedef double(*Fonction)(double);
+ 
+//Liste des fonctions &quot;calculables&quot;
+double carre(double x) { return x*x;}  
+double inverse(double x) { return 1/x;}
+double racine(double x) { return sqrt(x);}
+double exponentielle(double x) { return exp(x);}
+ 
+double minimum(double a,double b,Fonction f)  //On passe le pointeur en argument
+{
+   //Et on reprend le code du tout premier exemple
+   double min(100000);
+ 
+   for(double x=a; x&lt;b ; x+= 0.01)
+     min = min&lt; f(x)? min : f(x); 
+   //Mais cette fois c'est la fonction pointée qui est utilisée
+   
+   return min;
+}
+ 
+int main()
+{
+   cout &lt;&lt; &quot;De quelle fonction voulez-vous chercher le minimum ?&quot; &lt;&lt; endl;
+   cout &lt;&lt; &quot;1  --  x^2&quot; &lt;&lt; endl;
+   cout &lt;&lt; &quot;2  --  1/x&quot; &lt;&lt; endl;
+   cout &lt;&lt; &quot;3  --  racine de x&quot; &lt;&lt; endl;
+   cout &lt;&lt; &quot;4  --  exponentielle de x&quot; &lt;&lt; endl;
+   cout &lt;&lt; &quot;5  --  sinus de x&quot; &lt;&lt; endl;
+ 
+   int reponse;
+   cin &gt;&gt; reponse;
+ 
+   Fonction monPointeur; //On declare un pointeur sur fonction
+ 
+   switch(reponse){  //Et on déplace le pointeur sur la fonction choisie
+      case 1:  monPointeur = carre; break;
+      case 2:  monPointeur = inverse;  break;
+      case 3:  monPointeur = racine;  break;
+      case 4:  monPointeur = exponentielle;  break;
+      case 5:  monPointeur = sin; break; //On peut même utiliser les fonctions de cmath !
+   }
+ 
+   //Finalement on affiche le résultat de l'appel de la fonction via le pointeur
+   cout &lt;&lt; &quot;Le minimum de la fonction entre 3 et 4 est: &quot; &lt;&lt; minimum(3,4,monPointeur) &lt;&lt;endl;
+ 
+   return 0;
+}</code></pre><p id="r-378182" data-claire-element-id="378182">C'est certainement la meilleure manière de réaliser ce que l'on voulait faire.</p><aside id="r-378184" data-claire-element-id="378184" data-claire-semantic="information"><p id="r-378183" data-claire-element-id="378183">La fonction main n'est pas du tout sécurisée au niveau des entrées et du switch, mais ce n'est pas le but ici.</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/c-les-pointeurs-sur-fonctions">[C++] Les pointeurs sur fonctions</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-les-pointeurs-sur-fonctions/choisir-une-fonction">
+Choisir une fonction
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/c-les-pointeurs-sur-fonctions/les-pointeurs-sur-fonctions">
+Les pointeurs sur fonctions
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-les-pointeurs-sur-fonctions/le-cas-particulier-des-fonctions-membres">
+Le cas particulier des fonctions membres
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/c-les-pointeurs-sur-fonctions/choisir-une-fonction">
+<span class="arrow"></span>
+<span class="next">Choisir une fonction</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/c-les-pointeurs-sur-fonctions/le-cas-particulier-des-fonctions-membres">
+<span class="next">Le cas particulier des fonctions membres</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lecasparticulierdesfonctionsmembres"></a><h2>Le cas particulier des fonctions membres</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/c-les-pointeurs-sur-fonctions/les-pointeurs-sur-fonctions">
+<span class="arrow"></span>
+<span class="next">Les pointeurs sur fonctions</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-378187" data-claire-element-id="378187">Bon maintenant que nous avons vu la base, il faut quand même que je vous parle d'une erreur classique dans ce domaine. Imaginons que vous ayez écrit une classe et que vous aimeriez déclarer un pointeur sur une de ses fonctions membres.</p><p id="r-378188" data-claire-element-id="378188">Prenons donc un code classique (modifié) venant du forum:</p><pre id="r-378189" data-claire-element-id="378189"><code data-claire-semantic="cpp">class A{
+    public:
+       int fonction(int a);
+    //...
+};  
+ 
+int A::fonction(int a){return a*a;}
+ 
+int main()
+{
+   int(*ptr)(int) = fonction;     //aïe
+ 
+   int(*ptr)(int) = A::fonction;  //re-aïe mais déjà mieux
+ 
+   int (A::*ptr)(int) = &amp;A::fonction;  //Cette fois c'est bon !
+}</code></pre><p id="r-378190" data-claire-element-id="378190">Il y a deux erreurs possibles. La première consiste à se tromper dans le nom de la fonction. Elle ne se nomme pas fonction mais A::fonction, car elle fait partie de la classe A.</p><p id="r-378191" data-claire-element-id="378191">La deuxième erreur est beaucoup plus subtile. En effet une fonction membre reçoit en réalité implicitement un argument supplémentaire, une sorte de pointeur this sur l'objet qui appelle la fonction ! Il faut donc d'une certaine manière en tenir compte lors de la déclaration du pointeur, c'est pour cela qu'il faut mettre A:: devant le nom du pointeur lors de sa déclaration. La dernière ligne du code est donc correcte. Remarquez qu'il est nécessaire dans ce cas d'utiliser l'opérateur <strong>&amp;</strong>.</p><aside id="r-378193" data-claire-element-id="378193" data-claire-semantic="information"><p id="r-378192" data-claire-element-id="378192">S'il s'agit d'une fonction membre static, cette deuxième règle ne s'applique pas. En effet une fonction statique ne reçoit pas de pointeur sur un objet en argument &quot;caché&quot; puisqu'elle peut être appelée sans objet.</p></aside><p id="r-378194" data-claire-element-id="378194">Cependant, un autre problème survient rapidement. Comment utiliser le pointeur puisqu'il nécessite un objet ?</p><p id="r-378195" data-claire-element-id="378195">Cela se fait de la manière suivante:</p><pre id="r-378196" data-claire-element-id="378196"><code data-claire-semantic="cpp">class A{
+    public:
+       int fonction(int a);
+    //...
+};  
+ 
+int A::fonction(int a){return a*a;}
+ 
+int main()
+{
+   int (A::*ptr)(int) = &amp;A::fonction;  //On déclare un pointeur sur la fonction membre
+   
+   A instance;  //On crée une instance de la classe A
+ 
+   int resultat = (instance.*ptr)(2);
+   //On calcule le résultat de la fonction pointée par &quot;ptr&quot; appliquée à
+   //l'objet &quot;instance&quot; avec comme argument &quot;2&quot;
+
+   cout&lt;&lt; resultat  &lt;&lt; endl;  
+   //Et on affiche.
+
+   return 0;
+}</code></pre><p id="r-378197" data-claire-element-id="378197">Pfffou... :-° <br/> En effet, les pointeurs sur fonctions membres ne sont pas très digestes à utiliser. <br/> Vous remarquerez quand même l'utilisation obligatoire de l' opérateur<strong>*</strong> et la présence indispensable des parenthèses.</p><h2 id="r-simplifier-les-choses" data-claire-element-id="378213">Simplifier les choses</h2><p id="r-378198" data-claire-element-id="378198">Pour se simplifier la vie, il existe une solution que l'on rencontre parfois. Elle consiste à utiliser une macro. Normalement, les macros sont à éviter en C++ parce qu'on peut presque toujours s'en sortir sans. Ici, le but n'est pas d'utiliser une macro comme une fonction, mais plutôt comme moyen de simplifier drastiquement la notation.</p><p id="r-378199" data-claire-element-id="378199">Une des premières choses à faire est d'utiliser un <code data-claire-semantic="cpp">typedef </code>.</p><pre id="r-378200" data-claire-element-id="378200"><code data-claire-semantic="cpp">class A{
+    public:
+       int fonction(int x)
+       {
+           return x*x;
+       }
+    //...
+};  
+
+typedef int (A::*APointeurFonction)(int)</code></pre><p id="r-378201" data-claire-element-id="378201">En faisant ça, on peut utiliser ApointeurFonction à la place de la déclaration habituelle présente dans l'exemple précédent, ce qui donne:</p><pre id="r-378202" data-claire-element-id="378202"><code data-claire-semantic="cpp">int main()
+{
+   APointeurFonction ptr = &amp;A::fonction;  //On utilise le typedef ce qui simplifie la notation
+   
+   A instance;  //On crée une instance de la classe A
+ 
+   int resultat = (instance.*ptr)(2);
+
+   cout &lt;&lt; resultat &lt;&lt; endl;
+
+   return 0;
+}</code></pre><p id="r-378203" data-claire-element-id="378203">L'appel à la fonction reste malgré tout fastidieux. C'est là qu'intervient la macro.</p><pre id="r-378204" data-claire-element-id="378204"><code data-claire-semantic="cpp">#define appelleFonctionMembre(objet,pointeur)  ((objet).*(pointeur))</code></pre><p id="r-378205" data-claire-element-id="378205">L'appel à la fonction membre sera alors:</p><pre id="r-378206" data-claire-element-id="378206"><code data-claire-semantic="cpp">int main()
+{
+   APointeurFonction ptr = &amp;A::fonction; 
+   
+   A instance;
+ 
+   int resultat = appelleFonctionMembre(instance,ptr)(2);
+   //Avec la macro, c'est plus simple !
+
+   cout &lt;&lt; resultat &lt;&lt; endl;
+
+   return 0;
+}</code></pre><p id="r-378207" data-claire-element-id="378207">L'utilisation de la macro simplifie donc grandement le travail puisqu'on a eu besoin de réfléchir qu'une seule fois à la position des * et des parenthèses.</p><aside id="r-378209" data-claire-element-id="378209" data-claire-semantic="warning"><p id="r-378208" data-claire-element-id="378208">Je me répète, mais c'est important. Les macros sont généralement à éviter en C++. Ici, c'est un des rares cas où leur emploi se justifie.</p></aside><p id="r-378210" data-claire-element-id="378210">Voilà, c'est tout ce qu'il y avait à dire sur ce petit sujet. Mais je ne pense pas que vous aurez besoin souvent des pointeurs de fonctions membres. ;)</p><p id="r-378211" data-claire-element-id="378211">Comme déjà dit dans l'introduction, il est plus simple d'utiliser des <em>foncteurs</em>, la &quot;version C++&quot; du pointeur de fonction qui permet de faire les choses plus facilement.</p><p id="r-378212" data-claire-element-id="378212">Merci à <a href="http://www.siteduzero.com/membres-294-43221.html">Chlab_lak</a> pour avoir proposé l'utilisation de la macro.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/c-les-pointeurs-sur-fonctions">[C++] Les pointeurs sur fonctions</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-les-pointeurs-sur-fonctions/choisir-une-fonction">
+Choisir une fonction
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/c-les-pointeurs-sur-fonctions/les-pointeurs-sur-fonctions">
+Les pointeurs sur fonctions
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/c-les-pointeurs-sur-fonctions/le-cas-particulier-des-fonctions-membres">
+Le cas particulier des fonctions membres
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/c-les-pointeurs-sur-fonctions/les-pointeurs-sur-fonctions">
+<span class="arrow"></span>
+<span class="next">Les pointeurs sur fonctions</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/c-les-pointeurs-sur-fonctions.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 08:28:27 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/c-les-pointeurs-sur-fonctions.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:31:19 GMT -->
+</html>

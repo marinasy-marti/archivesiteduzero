@@ -1,0 +1,360 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/les-acl-access-control-lists-sous-linux.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 02:12:25 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/les-acl-access-control-lists-sous-linux.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:31:28 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Les ACL (Access Control Lists) sous Linux</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/les-acl-access-control-lists-sous-linux.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Les ACL (Access Control Lists) sous Linux</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#LesACLAccessControlListssousLinux">Les ACL (Access Control Lists) sous Linux</a><br/><a href="#Avantdecommencer...">Avant de commencer...</a><br/><a href="#setfaclModifierlesACL">setfacl : Modifier les ACL</a><br/><a href="#getfaclvoirlesACLenplace">getfacl : voir les ACL en place</a><br/><a href="#Annexes">Annexes</a><br/></div>
+<a name="LesACLAccessControlListssousLinux"></a><h2>Les ACL (Access Control Lists) sous Linux</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-acl-access-control-lists-sous-linux/avant-de-commencer-25">
+<span class="next">Avant de commencer...</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<div id="r-551846" data-claire-element-id="551846" data-claire-semantic="question"><p id="r-551845" data-claire-element-id="551845">Vous avez une machine sous Linux chez vous que toute la famille utilise ?<br/> Ou tout simplement un ordinateur partagé ?</p></div><p id="r-551847" data-claire-element-id="551847">Dans ce cas, vous avez surement déjà été confronté à un problème de permissions de fichiers et dossiers, par exemple vous voulez créer un dossier partagé, mais vous ne souhaitez que certains sous-dossiers ne soient accessibles qu'à certains utilisateurs, modifiables par d'autres, etc...</p><p id="r-551848" data-claire-element-id="551848">Dans ce cas, le système de permissions de Linux basé sur les utilisateurs et les groupes devient vite un casse-tête sans nom :p qui peut conduire à des problèmes de sécurité :colere2:</p><p id="r-551849" data-claire-element-id="551849">Les Access Control Lists (ACL) vous permettent de créer des permissions à la carte, fini la prise de tête :) ,toutes les combinaisons sont possibles.</p><aside id="r-551851" data-claire-element-id="551851" data-claire-semantic="information"><p id="r-551850" data-claire-element-id="551850">Il est nécessaire d'avoir suivi le <a href="http://www.siteduzero.com/tutoriel-3-12827-reprenez-le-controle-avec-linux.html">tutoriel sur Linux</a> de M@teo21 jusqu'au chapitre 7 de la partie 2 pour pouvoir suivre ce tutoriel.</p></aside><p id="r-551852" data-claire-element-id="551852">Sur ce, commençons :)</p>
+</div><a name="Avantdecommencer..."></a><h2>Avant de commencer...</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-acl-access-control-lists-sous-linux/setfacl-modifier-les-acl">
+<span class="next">setfacl : Modifier les ACL</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-verifier-la-configuration-du-noyau" data-claire-element-id="551861">Vérifier la configuration du noyau</h2><p id="r-551853" data-claire-element-id="551853">Tout d'abord, sachez que les ACL ne peuvent être utilisées que si le noyau le supporte :colere2: ; pour savoir si c'est votre cas, loguez-vous en tant que root avec <code data-claire-semantic="console">sudo su</code> si vous êtes sous (k)Ubuntu ou <code data-claire-semantic="console">su -</code> sous debian et les autres distribs. Tapez ensuite :</p><pre id="r-551854" data-claire-element-id="551854"><code data-claire-semantic="console">grep ACL /boot/config-*
+
+CONFIG_EXT2_FS_POSIX_ACL=y
+CONFIG_EXT3_FS_POSIX_ACL=y
+CONFIG_EXT4DEV_FS_POSIX_ACL=y
+CONFIG_REISERFS_FS_POSIX_ACL=y
+CONFIG_JFS_POSIX_ACL=y
+CONFIG_FS_POSIX_ACL=y
+CONFIG_XFS_POSIX_ACL=y
+CONFIG_GENERIC_ACL=y
+CONFIG_TMPFS_POSIX_ACL=y
+CONFIG_JFFS2_FS_POSIX_ACL=y
+CONFIG_NFS_V3_ACL=y
+CONFIG_NFSD_V2_ACL=y
+CONFIG_NFSD_V3_ACL=y
+CONFIG_NFS_ACL_SUPPORT=m</code></pre><p id="r-551855" data-claire-element-id="551855">La ligne suivante indique que le support général des ACL est présent :</p><pre id="r-551856" data-claire-element-id="551856"><code data-claire-semantic="console">CONFIG_FS_POSIX_ACL=y</code></pre><p id="r-551857" data-claire-element-id="551857">Ensuite des lignes du type suivant permettent de savoir pour quels systèmes de fichiers les ACL sont disponibles :</p><pre id="r-551858" data-claire-element-id="551858"><code data-claire-semantic="console">CONFIG_SystemeDeFichiers_FS_POSIX_ACL=y</code></pre><p id="r-551859" data-claire-element-id="551859">On remarque que chez moi, Les ACL fonctionnent sur les volumes formatés en EXT2, EXT3, EXT4 et pleins d'autres formats exotiques :) <br/> Les ACL ne sont pas disponibles sur les systèmes vfat (FAT16 et FAT32), vous ne pourrez donc pas utiliser les ACL sur une clée USB formatée pour Windows :colere2: Cela ne devrait toutefois pas poser problème :) .</p><p id="r-551860" data-claire-element-id="551860">Si votre noyau ne supporte pas les ACL, vous devez le recompiler. Je n'ai pas eu ce problème, je ne peux donc que vous orienter vers <a href="http://www.lea-linux.org/documentations/index.php/Rubrique_:_noyau_et_modules">cet article</a> du site <a href="http://www.lea-linux.org/">http://www.lea-linux.org</a></p><h2 id="r-installation-du-paquet-acl" data-claire-element-id="551867">Installation du paquet acl</h2><p id="r-551862" data-claire-element-id="551862">Les ACL sont activées, mais nous ne pouvons toujours pas les modifier, pour cela nous devons installer le paquet acl :</p><pre id="r-551863" data-claire-element-id="551863"><code data-claire-semantic="console"># apt-get install acl</code></pre><p id="r-551864" data-claire-element-id="551864">Le plus dur est fait, nous pouvons enfin nous servir des ACL :soleil:</p><aside id="r-551866" data-claire-element-id="551866" data-claire-semantic="information"><p id="r-551865" data-claire-element-id="551865">Il est possible que ces manipulations ne suffisent pas pour pouvoir utiliser les ACL, si vous rencontrez des problèmes avec les commandes sous-citées, rendez-vous à l'annexe <em><strong>&quot;Monter les partitions avec l'option acl&quot;</strong></em></p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-acl-access-control-lists-sous-linux">Les ACL (Access Control Lists) sous Linux</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-acl-access-control-lists-sous-linux/avant-de-commencer-25">
+Avant de commencer...
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-acl-access-control-lists-sous-linux/setfacl-modifier-les-acl">
+setfacl : Modifier les ACL
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-acl-access-control-lists-sous-linux/getfacl-voir-les-acl-en-place">
+getfacl : voir les ACL en place
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-acl-access-control-lists-sous-linux/annexes-59">
+Annexes
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-acl-access-control-lists-sous-linux/setfacl-modifier-les-acl">
+<span class="next">setfacl : Modifier les ACL</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="setfaclModifierlesACL"></a><h2>setfacl : Modifier les ACL</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-acl-access-control-lists-sous-linux/avant-de-commencer-25">
+<span class="arrow"></span>
+<span class="next">Avant de commencer...</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-acl-access-control-lists-sous-linux/getfacl-voir-les-acl-en-place">
+<span class="next">getfacl : voir les ACL en place</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-ajouter-une-acl" data-claire-element-id="551924">Ajouter une ACL</h2><h3 id="r-droits-classiques" data-claire-element-id="551908">Droits classiques</h3><p id="r-551869" data-claire-element-id="551869">Pour ajouter une ACL, vous devez utiliser la commande <code data-claire-semantic="console">setfacl</code> avec l'option <code data-claire-semantic="console">-m</code> :</p><pre id="r-551870" data-claire-element-id="551870"><code data-claire-semantic="console">setfacl -m permissions fichierOuDossier</code></pre><p id="r-551871" data-claire-element-id="551871">les permissions s'écrivent sous cette forme :</p><pre id="r-551872" data-claire-element-id="551872"><code data-claire-semantic="console">préfixe:[utilisateurOuGroupe:]droits</code></pre><ul id="r-551894" data-claire-element-id="551894"><li id="r-551881" data-claire-element-id="551881"><p id="r-551873" data-claire-element-id="551873">Les préfixes disponibles sont :</p><ul id="r-551880" data-claire-element-id="551880"><li id="r-551875" data-claire-element-id="551875"><p id="r-551874" data-claire-element-id="551874"><code data-claire-semantic="console">u:</code> : Pour modifier les droits d'un <strong>u</strong>tilisateur</p></li><li id="r-551877" data-claire-element-id="551877"><p id="r-551876" data-claire-element-id="551876"><code data-claire-semantic="console">g:</code> : Pour modifier les droits d'un <strong>g</strong>roupe</p></li><li id="r-551879" data-claire-element-id="551879"><p id="r-551878" data-claire-element-id="551878"><code data-claire-semantic="console">o:</code> : Pour modifier les droits du reste du monde (<strong>o</strong>ther)</p></li></ul></li><li id="r-551883" data-claire-element-id="551883"><p id="r-551882" data-claire-element-id="551882">Pour le préfixe <code data-claire-semantic="console">o:</code>, il ne faut pas spécifier d'utilisateur (logique, puisque ces droits s'appliquent au reste du monde, qui n'est pas un utilisateur précis ;) )(d'où le utilisateurOuGroupe: entre crochets pour ceux qui ne connaissent pas les expressions régulières)</p></li><li id="r-551893" data-claire-element-id="551893"><p id="r-551884" data-claire-element-id="551884">Les droits s'écrivent sous la forme d'un triplet <code data-claire-semantic="console">rwx</code> que vous devez déjà connaitre :</p><ul id="r-551891" data-claire-element-id="551891"><li id="r-551886" data-claire-element-id="551886"><p id="r-551885" data-claire-element-id="551885"><code data-claire-semantic="console">r</code> = droit de lecture</p></li><li id="r-551888" data-claire-element-id="551888"><p id="r-551887" data-claire-element-id="551887"><code data-claire-semantic="console">w</code> = droit d'écriture</p></li><li id="r-551890" data-claire-element-id="551890"><p id="r-551889" data-claire-element-id="551889"><code data-claire-semantic="console">x</code> = droit d'exécution pour les fichiers, pour les dossiers, c'est le droit &quot;d'entrée&quot; dans le dossier</p></li></ul><p id="r-551892" data-claire-element-id="551892">Pour ne pas attribuer un droit, vous pouvez ne pas écrire sa lettre correspondante ou la remplacer par un tiret (r-- est équivalent à r)</p></li></ul><pre id="r-551895" data-claire-element-id="551895"><code data-claire-semantic="console">setfacl -m u:bernard:rw- test</code></pre><p id="r-551896" data-claire-element-id="551896">... donnera les droits de lecture et d'écriture à bernard pour le fichier test.</p><p id="r-551897" data-claire-element-id="551897">Ajouter l'option <code data-claire-semantic="console">-R</code> permet d'appliquer des droits à tout un répertoire :</p><pre id="r-551898" data-claire-element-id="551898"><code data-claire-semantic="console">setfacl -Rm u:bernard:rw RepertoireDeTest/</code></pre><p id="r-551899" data-claire-element-id="551899">... effectuera la même opération que tout à l'heure mais sur tout le dossier RepertoireDeTest</p><aside id="r-551901" data-claire-element-id="551901" data-claire-semantic="warning"><p id="r-551900" data-claire-element-id="551900">L'option <code data-claire-semantic="console">-R</code> doit être spécifiée avant l'option <code data-claire-semantic="console">-m</code></p></aside><aside id="r-551904" data-claire-element-id="551904" data-claire-semantic="information"><p id="r-551902" data-claire-element-id="551902">Vous pouvez bien sur spécifier des permissions pour plusieurs utilisateurs/groupes à la fois :) , pour cela, séparez-les par une virgule :</p><pre id="r-551903" data-claire-element-id="551903"><code data-claire-semantic="console">setfacl -m u:bernard:rw,u:patrice:rwx,g:amis:r,o:--- test</code></pre></aside><p id="r-551905" data-claire-element-id="551905"><code data-claire-semantic="console">setfacl</code> permet aussi de modifier les droits classiques (comme <code data-claire-semantic="console">chmod</code>) :magicien: Il faut spécifier un nom vide :</p><pre id="r-551906" data-claire-element-id="551906"><code data-claire-semantic="console">setfacl -m u::rwx,g::r--,o:--- test</code></pre><p id="r-551907" data-claire-element-id="551907">... donnera les droits rwxr----- au fichier test :)</p><h3 id="r-doits-par-defaut-et-heritage" data-claire-element-id="551923">Doits par défaut et héritage</h3><p id="r-551909" data-claire-element-id="551909">Avec ce que je vous ai appris, si vous appliquez une ACL à un dossier, les fichiers créés ensuite dans se dossier n'hériteront pas de son ACL. Heureusement, l'héritage des ACL est possible :) , il suffit de rajouter le préfixe <code data-claire-semantic="console">d:</code> (comme <strong>d</strong>efault) au début de l'ACL :</p><pre id="r-551910" data-claire-element-id="551910"><code data-claire-semantic="console">setfacl -m d:u:bernard:rw RepertoireDeTest/</code></pre><aside id="r-551914" data-claire-element-id="551914" data-claire-semantic="warning"><pre id="r-551911" data-claire-element-id="551911"><code data-claire-semantic="console">setfacl -m d:u:bernard:rw,o:--- RepertoireDeTest/</code></pre><p id="r-551912" data-claire-element-id="551912">Dans cette ACL, seul u:bernard:rw sera un droit par défaut ; si vous souhaitez que les fichiers héritent aussi de o:---, vous devez taper :</p><pre id="r-551913" data-claire-element-id="551913"><code data-claire-semantic="console">setfacl -m d:u:bernard:rw,d:o:--- RepertoireDeTest/</code></pre></aside><p id="r-551915" data-claire-element-id="551915">Il cependant possible de se passer du préfixe <code data-claire-semantic="console">d:</code>, grâce à l'option <code data-claire-semantic="console">-d</code>, dans ce cas, toutes les permissions spécifiées seront des permissions par défaut :</p><pre id="r-551916" data-claire-element-id="551916"><code data-claire-semantic="console">setfacl -dm u:bernard:rw,o:--- RepertoireDeTest/</code></pre><p id="r-551917" data-claire-element-id="551917">... aura le même effet que le code précédent.</p><aside id="r-551919" data-claire-element-id="551919" data-claire-semantic="warning"><p id="r-551918" data-claire-element-id="551918">Une fois encore, l'option <code data-claire-semantic="console">-d</code> doit être spécifiée avant l'option <code data-claire-semantic="console">-m</code></p></aside><p id="r-551920" data-claire-element-id="551920">Ajouter des droits par défaut ne modifie pas les droits existants :colere2: , si vous shouaitez ajouter une ACL à tout un répertoire et ses sous-répertoires ET que cette ACL soit héritée par la suite, vous devez le faire de cette manière : (notez la présence de l'option <code data-claire-semantic="console">-R</code>)</p><pre id="r-551921" data-claire-element-id="551921"><code data-claire-semantic="console">setfacl -Rm d:u:bernard:rwx,d:g:amis:r--,d:o:---,u:bernard:rwx,g:amis:r--,o:--- RepertoireDeTest/</code></pre><p id="r-551922" data-claire-element-id="551922">Voilà ;) Vous avez fait le plus dur, il ne vous reste qu'à savoir comment enlever et visualiser les ACL.</p><h2 id="r-supprimer-une-acl" data-claire-element-id="551933">Supprimer une ACL</h2><p id="r-551925" data-claire-element-id="551925">Pour supprimer une ACL, il suffit d'utiliser l'option <code data-claire-semantic="console">-b</code> ...</p><pre id="r-551926" data-claire-element-id="551926"><code data-claire-semantic="console">setfacl -b test</code></pre><p id="r-551927" data-claire-element-id="551927">... supprimera toute l'ACL du fichier test :magicien:</p><p id="r-551928" data-claire-element-id="551928">Vous pouvez supprimer une partie de l'ACL avec l'option <code data-claire-semantic="console">-x</code> :</p><pre id="r-551929" data-claire-element-id="551929"><code data-claire-semantic="console">setfacl -x u:patrick,g:bernard test</code></pre><p id="r-551930" data-claire-element-id="551930">... supprimera les permission de l'utilisateur partick et du groupe amis du fichier test :magicien:</p><aside id="r-551932" data-claire-element-id="551932" data-claire-semantic="information"><p id="r-551931" data-claire-element-id="551931">Pour supprimer UNIQUEMENT les autorisations par défaut, vous devez utiliser l'option <code data-claire-semantic="console">-k</code>, TOUTES les permissions par défaut seront supprimées</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-acl-access-control-lists-sous-linux">Les ACL (Access Control Lists) sous Linux</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-acl-access-control-lists-sous-linux/avant-de-commencer-25">
+Avant de commencer...
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-acl-access-control-lists-sous-linux/setfacl-modifier-les-acl">
+setfacl : Modifier les ACL
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-acl-access-control-lists-sous-linux/getfacl-voir-les-acl-en-place">
+getfacl : voir les ACL en place
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-acl-access-control-lists-sous-linux/annexes-59">
+Annexes
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-acl-access-control-lists-sous-linux/avant-de-commencer-25">
+<span class="arrow"></span>
+<span class="next">Avant de commencer...</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-acl-access-control-lists-sous-linux/getfacl-voir-les-acl-en-place">
+<span class="next">getfacl : voir les ACL en place</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="getfaclvoirlesACLenplace"></a><h2>getfacl : voir les ACL en place</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-acl-access-control-lists-sous-linux/setfacl-modifier-les-acl">
+<span class="arrow"></span>
+<span class="next">setfacl : Modifier les ACL</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-acl-access-control-lists-sous-linux/annexes-59">
+<span class="next">Annexes</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-551935" data-claire-element-id="551935">La commande <code data-claire-semantic="console">getfacl</code> vous permet de connaitre les ACL en place :</p><pre id="r-551936" data-claire-element-id="551936"><code data-claire-semantic="console">getfacl reperoireDeTest/
+
+# file: reperoireDeTest/
+# owner: op414
+# group: op414
+user::rwx
+user:bernard:rwx
+user:patrick:r--
+group::rwx
+mask::rwx
+other::---
+default:user::rwx
+default:user:bernard:rwx
+default:user:patrick:r--
+default:group::rwx
+default:mask::rwx
+default:other::---</code></pre><p id="r-551937" data-claire-element-id="551937">je ne m'étends pas sur les résultats, ils sont facile à comprendre :) , hormis une notion : le masque (mask)</p><h2 id="r-le-masque" data-claire-element-id="551945">Le masque</h2><p id="r-551938" data-claire-element-id="551938">Le masque vous permet de savoir quelles sont les autorisations maximales accordées à un fichier ou dossier (utilisateurs et groupes confondus), les droits classiques (chmod) ne sont pas comptabilisés.</p><pre id="r-551939" data-claire-element-id="551939"><code data-claire-semantic="console">getfacl test
+
+# file: test
+# owner: op414
+# group: op414
+user::rwx
+user:bernard:rwx
+user:patrick:r--
+group::rwx
+mask::rwx
+other::--</code></pre><p id="r-551940" data-claire-element-id="551940">Ici, le masque est rwx car bernard possède les droits rwx.<br/> L'utilité du masque est de pouvoir enlever des permissions à tous les utilisateurs et groupes (sauf de l'utilisateur propriétaire, dont les droits sont définis par <code data-claire-semantic="console">chmod</code>):</p><pre id="r-551941" data-claire-element-id="551941"><code data-claire-semantic="console">setfacl -m m:r-- test</code></pre><p id="r-551942" data-claire-element-id="551942">Vous remarquez qu'il faut utiliser le préfixe <code data-claire-semantic="console">m:</code> (comme <strong>m</strong>ask). Refaisons un coup de <code data-claire-semantic="console">getfacl</code> sur le fichier :) :</p><pre id="r-551943" data-claire-element-id="551943"><code data-claire-semantic="console">getfacl test 
+
+# file: test
+# owner: op414
+# group: op414
+user::rwx
+user:bernard:rwx                #effective:r--
+user:patrick:r--                #effective:r--
+group::rwx                      #effective:r--
+mask::r--
+other::---</code></pre><p id="r-551944" data-claire-element-id="551944">On remarque que les droits de bernard, patrick et du groupe propriétaire n'ont pas été modifiés (ce qui permet de les rétablir en ré-augentant le masque :) ). En revanche, il est maintenant écrit #effective:r-- en face de leurs lignes. Cela signifie que leurs droits réellements appliqués sont r-- ! :soleil:</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-acl-access-control-lists-sous-linux">Les ACL (Access Control Lists) sous Linux</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-acl-access-control-lists-sous-linux/avant-de-commencer-25">
+Avant de commencer...
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-acl-access-control-lists-sous-linux/setfacl-modifier-les-acl">
+setfacl : Modifier les ACL
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-acl-access-control-lists-sous-linux/getfacl-voir-les-acl-en-place">
+getfacl : voir les ACL en place
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-acl-access-control-lists-sous-linux/annexes-59">
+Annexes
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-acl-access-control-lists-sous-linux/setfacl-modifier-les-acl">
+<span class="arrow"></span>
+<span class="next">setfacl : Modifier les ACL</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-acl-access-control-lists-sous-linux/annexes-59">
+<span class="next">Annexes</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Annexes"></a><h2>Annexes</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-acl-access-control-lists-sous-linux/getfacl-voir-les-acl-en-place">
+<span class="arrow"></span>
+<span class="next">getfacl : voir les ACL en place</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-copie-des-acl-cp-et-mv" data-claire-element-id="551949">Copie des ACL (cp et mv)</h2><p id="r-551947" data-claire-element-id="551947">Les commandes <code data-claire-semantic="console">cp</code> et <code data-claire-semantic="console">mv</code> sont capables de conserver les ACL. Il suffit de spécifier l'option <code data-claire-semantic="console">-a</code> lors de l'utilisation de <code data-claire-semantic="console">cp</code> . <code data-claire-semantic="console">mv</code> le fait au-to-ma-ti-que-ment :-° . Bien entendu, le répertoire cible doit être situé sur une partition gérant les ACL :)</p><p id="r-551948" data-claire-element-id="551948">Un dernier point : quand un fichier possède une ACL et que vous faites un <code data-claire-semantic="console">ls -l</code>, l'ACL ne peut être écrite en entier ; le signe + s'affiche pour signifier le présence de l'ACL : -rw-rw----+ :)</p><h2 id="r-monter-les-partitions-avec-l-option-acl" data-claire-element-id="551965">Monter les partitions avec l'option acl</h2><aside id="r-551951" data-claire-element-id="551951" data-claire-semantic="information"><p id="r-551950" data-claire-element-id="551950">Si vous lisez cette sous-partie, c'est que les commandes <code data-claire-semantic="console">setfacl</code> et <code data-claire-semantic="console">getfacl</code> n'ont pas fonctionné chez vous.<br/> Ces manipulations doivent effectuées en tant qu'utilisateur root</p></aside><p id="r-551952" data-claire-element-id="551952">Pour que vous puissiez utiliser les ACL, les partitions doivent êtres montées avec l'option correspondante...</p><pre id="r-551953" data-claire-element-id="551953"><code data-claire-semantic="console"># mount -t ext3 -o defaults,acl /dev/hda1/ /home</code></pre><p id="r-551954" data-claire-element-id="551954">... pour monter la partition 2 du premier disque, formatée en ext3 dans le répertoire /home</p><p id="r-551955" data-claire-element-id="551955">Vous pouvez remonter un partition déjà montée :</p><pre id="r-551956" data-claire-element-id="551956"><code data-claire-semantic="console"># mount -o remount,acl /home</code></pre><p id="r-551957" data-claire-element-id="551957">Si vous voulez que le volume soit monté automatiquement avec l'option acl, vous devez modifier le fichier /etc/fstab</p><pre id="r-551958" data-claire-element-id="551958"><code data-claire-semantic="console"># nano /etc/fstab</code></pre><p id="r-551959" data-claire-element-id="551959">Vous devez rajouter <code data-claire-semantic="console">,acl</code> dans la colonne &quot;options&quot; de la partition concernée :</p><pre id="r-551960" data-claire-element-id="551960"><code data-claire-semantic="console">/dev/sda1       /               ext3    errors=remount-ro 0       1</code></pre><p id="r-551961" data-claire-element-id="551961">devient chez moi :</p><pre id="r-551962" data-claire-element-id="551962"><code data-claire-semantic="console">/dev/sda1       /               ext3    errors=remount-ro,acl 0       1</code></pre><p id="r-551963" data-claire-element-id="551963">Voilà, ma partition principale sera automatiquement montée avec l'option acl au démarrage :magicien: Si vous avez une partition /home séparée, vous devez bien entendu modifier sa ligne.</p><p id="r-551964" data-claire-element-id="551964">Il ne vous reste plus qu'à redémarrer ou remonter les partitions concernées comme vu précédemment :)</p><h2 id="r-exemple-d-utilisation-concret" data-claire-element-id="551973">Exemple d'utilisation concret</h2><p id="r-551966" data-claire-element-id="551966">Voici un exemple d'utilisation des ACL, il est issu de ma propre utilisation de vos nouvelles meilleures amies :)</p><p id="r-551967" data-claire-element-id="551967">Si vous créez un serveur web grâce à <a href="http://www.siteduzero.com/tutoriel-3-36221-un-serveur-d-hebergement-multiutilisateur-sous-linux.html">ce tuto</a>, vous risquez d'avoir un petit problème de permissions.<br/> En effet, votre machine ne possède que deux <strong>vrais</strong> comptes utilisateur (le votre et le compte root), si vous vous loggez en FTP, le serveur vsFTPd utilise l'uilisateur www-data. Le compte <strong>virtuel</strong> d'administration à accès à tout le répertoire /home mais ne pourra pas entrer dans votre répertoire personnel car celui-ci appartient à votre compte utilisateur et non pas à www-data :colere2:</p><p id="r-551968" data-claire-element-id="551968">Pour palier ce problème, il suffit d'utiliser cette ACL :</p><pre id="r-551969" data-claire-element-id="551969"><code data-claire-semantic="console">setfacl -Rm d:u:www-data:rwx,d:u:op414:rwx,u:www-data:rwx,u:op414:rwx /home/op414</code></pre><p id="r-551970" data-claire-element-id="551970">... dans le cas ou votre compte utilisateur est op414</p><p id="r-551971" data-claire-element-id="551971">Le problème est résolu :)</p><p id="r-551972" data-claire-element-id="551972">PS: Il aurait également été possible de supprimer votre compte utilisateur (A NE SURTOUT PAS FAIRE SOUS UBUNTU ET DÉRIVÉS CAR IL EST IMPOSSIBLE DE SE LOGGER EN ROOT), mais le seul moyen de se connecter en SSH à votre serveur aurait été le compte root, ce qui est dangereux car il vaut mieux empêcher la possibilité de se connecter en root via SSH pour limiter les dégâts en cas d'attaque. Il est donc préférable de garder un compte utilisateur standard :)</p><h2 id="r-acl-et-interface-graphique" data-claire-element-id="551992">ACL et interface graphique</h2><h3 id="r-sous-mac-os-x-6" data-claire-element-id="551979">Sous Mac OS X</h3><p id="r-551974" data-claire-element-id="551974">Sous Mac OS X, les ACL sont activées par défaut et paramétrables via l'interface graphique :) Il suffit de sélectionner un dossier ou fichier puis d'afficher le panneau d'informations (pomme + i ou cmd + i)</p><figure id="r-551976" data-claire-element-id="551977"><img id="r-551975" data-claire-element-id="551975" src="medias/uploads.siteduzero.com_files_257001_258000_257631.png" alt="Image utilisateur"/></figure><p id="r-551978" data-claire-element-id="551978">La section &quot;Partage et Permissions&quot; est celle qui nous intéresse. Le plus en bas à gauche permet d'ajouter une ACL pour un utilisateur, tandis que le moins permet de supprimer un utilisateur de la liste. L'icône d'engrenage permet d'appliquer l'ACL à tous les fichiers et dossier d'un répertoire. Si vous n'êtes pas le propriétaire du fichier ou dossier, un mot de passe administrateur vous serra demandé ;)</p><h3 id="r-sous-kde-dolphin" data-claire-element-id="551991">Sous KDE (Dolphin)</h3><p id="r-551980" data-claire-element-id="551980">Les ACL peuvent aussi être modifiées via l'interface graphique :) <br/> Voilà comment faire sous KDE, muni de Dolphin, un explorateur de fichiers.</p><aside id="r-551982" data-claire-element-id="551982" data-claire-semantic="information"><p id="r-551981" data-claire-element-id="551981">Merci à <a href="http://www.siteduzero.com/membres-294-4909.html">chaispaquichui</a> pour les captures.</p></aside><p id="r-551983" data-claire-element-id="551987">Allez dans les information du fichier, puis cliquez sur l'onglet «Droits d'accès» puis sur «Droits d'accès avancés». Vous pouvez ensuite ajouter des entrées, les modifier et les supprimer.<a href="medias/uploads.siteduzero.com_files_262001_263000_262582.png"><img id="r-551984" data-claire-element-id="551983" src="medias/uploads.siteduzero.com_thb_262001_263000_262582.png" alt="Image utilisateur"/></a><a href="medias/uploads.siteduzero.com_files_262001_263000_262587.png"><img id="r-551985" data-claire-element-id="551984" src="medias/uploads.siteduzero.com_thb_262001_263000_262587.png" alt="Image utilisateur"/></a><a href="medias/uploads.siteduzero.com_files_262001_263000_262588.png"><img id="r-551986" data-claire-element-id="551985" src="medias/uploads.siteduzero.com_thb_262001_263000_262588.png" alt="Image utilisateur"/></a><a href="medias/uploads.siteduzero.com_files_262001_263000_262589.png"><img id="r-551987" data-claire-element-id="551986" src="medias/uploads.siteduzero.com_thb_262001_263000_262589.png" alt="Image utilisateur"/></a></p><p id="r-551988" data-claire-element-id="551988">Voilà, les ACL n'ont plus de secret pour vous ;) J'espère que cela vous sera utile. Ceci est mon premier tutoriel, si vous avez des remarques ou des questions, n'hésitez pas à les écrire dans les commentaire de ce tuto :)</p><aside id="r-551990" data-claire-element-id="551990" data-claire-semantic="information"><p id="r-551989" data-claire-element-id="551989">Ce tutoriel bien que réécrit dans sa totalité à été largement inspiré par <a href="http://www.lea-linux.org/documentations/index.php/Gestion_des_ACL">cet article</a> du site <a href="http://www.lea-linux.org/">http://www.lea-linux.org/</a>, publié sous licence GNU par Vincent Ramos.</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-acl-access-control-lists-sous-linux">Les ACL (Access Control Lists) sous Linux</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-acl-access-control-lists-sous-linux/avant-de-commencer-25">
+Avant de commencer...
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-acl-access-control-lists-sous-linux/setfacl-modifier-les-acl">
+setfacl : Modifier les ACL
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-acl-access-control-lists-sous-linux/getfacl-voir-les-acl-en-place">
+getfacl : voir les ACL en place
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-acl-access-control-lists-sous-linux/annexes-59">
+Annexes
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-acl-access-control-lists-sous-linux/getfacl-voir-les-acl-en-place">
+<span class="arrow"></span>
+<span class="next">getfacl : voir les ACL en place</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/les-acl-access-control-lists-sous-linux.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 02:12:36 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/les-acl-access-control-lists-sous-linux.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:31:30 GMT -->
+</html>

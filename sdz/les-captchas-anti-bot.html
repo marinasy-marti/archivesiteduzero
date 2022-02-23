@@ -1,0 +1,608 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/les-captchas-anti-bot.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 06:42:29 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/les-captchas-anti-bot.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:12:15 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Les captchas anti-bot</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/les-captchas-anti-bot.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Les captchas anti-bot</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Lescaptchasanti-bot">Les captchas anti-bot</a><br/><a href="#Creruncaptcha">Créer un captcha</a><br/></div>
+<a name="Lescaptchasanti-bot"></a><h2>Les captchas anti-bot</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-captchas-anti-bot/creer-un-captcha">
+<span class="next">Créer un captcha</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-385513" data-claire-element-id="385513">Votre site est envahi par des inscriptions de <em>bots</em> (des robots qui s'inscrivent plusieurs fois à des sites dans le but de publier des messages publicitaires sur un livre d'or ou un forum, ou pour utiliser des comptes mail) ?<br/> Il existe de nombreuses solutions pour empêcher ces bots d'agir. Dans ce tutoriel, vous apprendrez à en coder quelques-unes en PHP.</p><p id="r-385514" data-claire-element-id="385514">En plus de vous apprendre à créer des <em>captchas</em>, ce cours va vous apprendre - je l'espère - à utiliser des outils méconnus de PHP et des notions informatiques un peu plus complexes. ;) Dans le premier chapitre, vous apprendrez à réaliser un captcha textuel sous la forme d'une question, puis vous découvrirez comment manipuler le hasard avec PHP et générer des chaînes de caractères aléatoires.<br/> Dans le deuxième chapitre, nous nous concentrerons sur la bibliothèque GD et sur quelques fonctions intéressantes : utiliser une police <em>true type</em>, créer des effets tels que des rotations et des flous avec des matrices de convolution, etc.<br/> Enfin, dans le troisième chapitre, nous aborderons la manipulation de données binaires : d'abord la théorie, puis la pratique avec PHP.</p><figure id="r-385516" data-claire-element-id="385517"><img id="r-385515" data-claire-element-id="385515" src="medias/uploads.siteduzero.com_files_128001_129000_128626.jpg" alt="Image utilisateur"/></figure>
+</div><a name="Creruncaptcha"></a><h2>Créer un captcha</h2><div class="clear"></div> <div id="content" role="article">
+<p id="r-385518" data-claire-element-id="385518">Un <a href="http://fr.wikipedia.org/wiki/captcha">captcha</a> est un test destiné à différencier un humain d'une machine.<br/> Ces tests, généralement présentés sous la forme d'une image déformée ou d'une question, sont utilisés sur Internet dans les formulaires pour éviter les envois par des robots.</p><p id="r-385519" data-claire-element-id="385519">Ils sont utilisés contre le spam, dans les forums ou dans les commentaires d'articles de blogs, dans les formulaires d'inscription, contre les tentatives d'attaque par force brute et également contre la participation automatique à des sondages.</p><h2 id="r-les-captchas-textuels" data-claire-element-id="385530">Les captchas textuels</h2><p id="r-385520" data-claire-element-id="385520">Un captcha textuel est un système qui demande une information à l'utilisateur à partir d'une question que seul un humain peut comprendre.<br/> Par exemple : « <em>combien font 3 plus 5 ?</em> » Même si un ordinateur pourrait faire le calcul, on suppose qu'il ne comprend pas la question.</p><p id="r-385521" data-claire-element-id="385521">Voici quelques exemples :</p><ul id="r-385526" data-claire-element-id="385526"><li id="r-385523" data-claire-element-id="385523"><p id="r-385522" data-claire-element-id="385522">« Recopiez le mot <em>maison</em> » ;</p></li><li id="r-385525" data-claire-element-id="385525"><p id="r-385524" data-claire-element-id="385524">« Entrez la somme de 5 et 6 ».</p></li></ul><h3 id="r-recopier-un-mot" data-claire-element-id="385529">Recopier un mot</h3><p id="r-385527" data-claire-element-id="385527">Dans cette première partie, nous allons réaliser un captcha qui demande à l'utilisateur de taper un mot.</p><p id="r-385528" data-claire-element-id="385528">Vous pouvez voir un exemple sur le formulaire du forum ubuntu-fr : <a href="http://forum.ubuntu-fr.org/">http://forum.ubuntu-fr.org/</a>.</p><h2 id="r-l-organisation-du-script" data-claire-element-id="385539">L'organisation du script</h2><p id="r-385531" data-claire-element-id="385531">Nous allons utiliser trois fichiers PHP :</p><ul id="r-385538" data-claire-element-id="385538"><li id="r-385533" data-claire-element-id="385533"><p id="r-385532" data-claire-element-id="385532">formulaire.php (le formulaire) ;</p></li><li id="r-385535" data-claire-element-id="385535"><p id="r-385534" data-claire-element-id="385534">verification.php (la page de vérification) ;</p></li><li id="r-385537" data-claire-element-id="385537"><p id="r-385536" data-claire-element-id="385536">captcha.php (le fichier pour l'algorithme du captcha).</p></li></ul><h2 id="r-le-formulaire-7" data-claire-element-id="385543">Le formulaire</h2><p id="r-385540" data-claire-element-id="385540">Il s'agit d'un formulaire HTML tout simple avec un champ text pour le captcha.</p><pre id="r-385541" data-claire-element-id="385541"><code data-claire-semantic="html">&lt;form action=&quot;verification.php&quot; method=&quot;post&quot;&gt;
+	&lt;p&gt;
+		&lt;label for=&quot;nom&quot;&gt;Votre nom&lt;/label&gt;
+			&lt;input type=&quot;text&quot; name=&quot;nom&quot; id=&quot;nom&quot; /&gt;&lt;br /&gt;
+			
+		&lt;label for=&quot;captcha&quot;&gt;Recopiez le mot : &quot;&quot;&lt;/label&gt;
+			&lt;input type=&quot;text&quot; name=&quot;captcha&quot; id=&quot;captcha&quot; /&gt;&lt;br /&gt;
+		
+		&lt;input type=&quot;submit&quot; value=&quot;envoyer&quot; /&gt;
+	&lt;/p&gt;
+&lt;/form&gt;</code></pre><p id="r-385542" data-claire-element-id="385542">Nous écrirons le mot une fois l'algorithme du captcha réalisé.</p><h2 id="r-l-algorithme-du-captcha" data-claire-element-id="385558">L'algorithme du captcha</h2><p id="r-385544" data-claire-element-id="385544">Nous avons deux possibilités : générer un mot au hasard ou en sélectionner un parmi une liste prédéfinie. Bien que la seconde solution soit la plus facile, nous verrons les deux.</p><h3 id="r-un-mot-parmi-une-liste" data-claire-element-id="385550">Un mot parmi une liste</h3><p id="r-385545" data-claire-element-id="385545">La liste de mots sera un tableau. Pour choisir aléatoirement un mot de ce tableau, on utilise la fonction <a href="http://fr.php.net/array_rand">array_rand()</a>.</p><pre id="r-385546" data-claire-element-id="385546"><code data-claire-semantic="html+php">&lt;?php
+function motListe()
+{
+	$liste = array('internet', 'captcha', 'robot');
+	return $liste[array_rand($liste)];
+}
+
+function captcha()
+{
+	return motListe();
+}
+?&gt;</code></pre><p id="r-385547" data-claire-element-id="385547">Il faut maintenant afficher ce mot dans formulaire.php et l'enregistrer quelque part pour que verification.php puisse vérifier que l'utilisateur a saisi le bon mot.</p><p id="r-385548" data-claire-element-id="385548">On utilise les sessions pour transmettre le mot d'une page à l'autre.</p><p id="r-385549" data-claire-element-id="385549">Il faut penser à ajouter <code data-claire-semantic="html+php">&lt;?php session_start(); ?&gt; </code> en haut de chaque page (formulaire.php et verification.php). Le fichier captcha.php étant inclus dans formulaire.php, la session sera déjà initialisée et il n'y aura donc pas besoin d'ajouter cette ligne de code.</p><h3 id="r-dans-formulaire-php" data-claire-element-id="385554">Dans formulaire.php</h3><p id="r-385551" data-claire-element-id="385551">On inclut la page captcha.php avec <code data-claire-semantic="html+php">&lt;?php require('captcha.php'); ?&gt; </code> et on écrit le mot dans le label avec :</p><pre id="r-385552" data-claire-element-id="385552"><code data-claire-semantic="html+php">&lt;label for=&quot;captcha&quot;&gt;Recopiez le mot : &quot;&lt;?php echo captcha(); ?&gt;&quot;&lt;/label&gt;</code></pre><p id="r-385553" data-claire-element-id="385553">.</p><h3 id="r-dans-captcha-php" data-claire-element-id="385557">Dans captcha.php</h3><p id="r-385555" data-claire-element-id="385555">Il faut penser à sauvegarder le mot dans une session ; on modifie donc la fonction captcha() :</p><pre id="r-385556" data-claire-element-id="385556"><code data-claire-semantic="html+php">&lt;?php
+function captcha()
+{
+	$mot = motListe();
+	$_SESSION['captcha'] = $mot;
+	return $mot;
+}
+?&gt;</code></pre><h2 id="r-verification" data-claire-element-id="385578">Vérification</h2><p id="r-385559" data-claire-element-id="385559">Maintenant, nous allons nous occuper de verification.php.</p><p id="r-385560" data-claire-element-id="385560">Il s'agit juste de vérifier que $_POST['captcha'] est égale à $_SESSION['captcha'].</p><p id="r-385561" data-claire-element-id="385561">Voici le code de verification.php :</p><pre id="r-385562" data-claire-element-id="385562"><code data-claire-semantic="html+php">&lt;?php
+if(!empty($_POST['captcha']) &amp;&amp; !empty($_POST['nom']))
+{
+	if($_POST['captcha'] == $_SESSION['captcha'])
+		echo 'Le captcha est bon, votre nom est '.$_POST['nom'];
+	else
+		echo 'Le captcha n\'est pas bon.';
+}
+else
+	echo 'Il faut remplir tous les champs.';
+?&gt;</code></pre><aside id="r-385564" data-claire-element-id="385564" data-claire-semantic="warning"><p id="r-385563" data-claire-element-id="385563">Pensez à appeler la fonction <code>session_start()</code> au début du script !</p></aside><p id="r-385565" data-claire-element-id="385565"><a href="http://tutos.alwaysdata.net/captcha/text1"><strong>Exemple</strong></a></p><h3 id="r-recopier-un-mot-dictionnaire" data-claire-element-id="385573">Recopier un mot (dictionnaire)</h3><p id="r-385566" data-claire-element-id="385566">Au lieu de saisir vous-même la liste de mots, il peut être amusant d'en choisir un au hasard dans un dictionnaire.</p><p id="r-385567" data-claire-element-id="385567">Il suffit juste de trouver un fichier texte « dictionnaire ». Pour cela, je vous conseille <a href="http://www.google.fr/search?q=dictionnaire%2Btxt">Google</a>.</p><p id="r-385568" data-claire-element-id="385568">Pour ma part, je prends ce dictionnaire <a href="http://tutos.alwaysdata.net/captcha/text1dic/dic-iso.text">dic-iso.text</a> (version UTF-8 : <a href="http://tutos.alwaysdata.net/captcha/text1dic/dic-utf8.text">dico-utf8.text</a>).</p><p id="r-385569" data-claire-element-id="385569">Ensuite, il suffit de modifier dans le fichier captcha.php la fonction <strong>motListe()</strong>.</p><pre id="r-385570" data-claire-element-id="385570"><code data-claire-semantic="html+php">&lt;?php
+function motListe()
+{
+	$liste = file('dico.text');
+	return trim($liste[array_rand($liste)]);
+}
+?&gt;</code></pre><p id="r-385571" data-claire-element-id="385571">Il est nécessaire d'utiliser la fonction <a href="http://fr.php.net/trim">trim()</a> car le mot contient le <strong></strong> de fin de ligne.</p><p id="r-385572" data-claire-element-id="385572"><a href="http://tutos.alwaysdata.net/captcha/text1dic"><strong>Exemple</strong></a></p><h3 id="r-recopier-un-mot-aleatoire" data-claire-element-id="385577">Recopier un mot aléatoire</h3><p id="r-385574" data-claire-element-id="385574">Nous allons, dans cette partie, demander au visiteur de recopier un mot non pas choisi dans une liste, mais généré au hasard.<br/> On va donc écrire une nouvelle fonction dans captcha.php : <strong>motHasard($n)</strong>.</p><p id="r-385575" data-claire-element-id="385575">Cette fonction génère un mot au hasard de <strong>$n</strong> caractères.</p><p id="r-385576" data-claire-element-id="385576">Il existe des dizaines (des centaines ?) de méthodes pour générer un mot au hasard ; nous allons en étudier quelques-unes, c'est assez amusant. :)</p><h2 id="r-une-sequence-de-caracteres-aleatoires" data-claire-element-id="385594">Une séquence de caractères aléatoires</h2><p id="r-385579" data-claire-element-id="385579">Une méthode utilise les fonctions de <a href="http://fr.wikipedia.org/wiki/Fonction_de_hachage">hash</a>. Bien que ce ne soit pas leur but premier, ces fonctions permettent d'obtenir des séquences de caractères aléatoires si l'on passe en paramètre une chaîne aléatoire.</p><p id="r-385580" data-claire-element-id="385580">Bon, on tourne un peu en rond puisqu'il nous faut une chaîne aléatoire au départ ! Mais PHP propose plein de fonctions pour cela :</p><ul id="r-385589" data-claire-element-id="385589"><li id="r-385582" data-claire-element-id="385582"><p id="r-385581" data-claire-element-id="385581"><a href="http://fr.php.net/uniqid">uniqid</a> ;</p></li><li id="r-385584" data-claire-element-id="385584"><p id="r-385583" data-claire-element-id="385583"><a href="http://fr.php.net/mt_rand">mt_rand</a> ;</p></li><li id="r-385586" data-claire-element-id="385586"><p id="r-385585" data-claire-element-id="385585"><a href="http://fr.php.net/microtime">microtime</a> ;</p></li><li id="r-385588" data-claire-element-id="385588"><p id="r-385587" data-claire-element-id="385587">...</p></li></ul><p id="r-385590" data-claire-element-id="385590">Modifions notre fichier captcha.php pour obtenir ceci :</p><pre id="r-385591" data-claire-element-id="385591"><code data-claire-semantic="html+php">&lt;?php
+function motHasard($n)
+{
+	// Séquence aléatoire
+	return substr(md5(uniqid()),0,$n);
+}
+
+function captcha()
+{
+	$mot = motHasard(6);
+	$_SESSION['captcha'] = $mot;
+	return $mot;
+}
+?&gt;</code></pre><p id="r-385592" data-claire-element-id="385592">Bien sûr, vous pouvez utiliser d'autres combinaisons dans la fonction <strong>motHasard()</strong>. En voici quelques-unes :</p><pre id="r-385593" data-claire-element-id="385593"><code data-claire-semantic="html+php">&lt;?php
+function motHasard($n)
+{
+	// Séquence aléatoire (en choisir une)
+	$mot = substr(md5(uniqid()),0,$n);
+	$mot = substr(sha1(rand()),0,$n);
+	$mot = substr(strrev(time()),0,$n);
+	$mot = substr(str_pad(next(explode('.',microtime(true))),$n,'0'),0,$n);
+	$mot = str_pad(mt_rand(0,pow(10,$n)-1),$n,'0');
+	return $mot;
+}
+?&gt;</code></pre><h2 id="r-une-sequence-de-lettres" data-claire-element-id="385619">Une séquence de lettres</h2><p id="r-385595" data-claire-element-id="385595">Dans la partie précédente, nous avons surtout travaillé avec des chaînes de chiffres (ou de caractères hexadécimaux). Maintenant, nous allons voir comment générer une chaîne de caractères alphabétiques aléatoires.</p><p id="r-385596" data-claire-element-id="385596">Il s'agira uniquement de modifier la fonction <strong>motHasard()</strong>.</p><p id="r-385597" data-claire-element-id="385597">On peut, par exemple, piocher au hasard dans un tableau de caractères :</p><pre id="r-385598" data-claire-element-id="385598"><code data-claire-semantic="html+php">&lt;?php
+function motHasard($n)
+{
+	$lettres = array_merge(range('a','z'),range('A','Z'),range('0','9'));
+	$nl = count($lettres)-1;
+	$mot = '';
+	for($i = 0; $i &lt; $n; ++$i)
+		$mot .= $lettres[mt_rand(0,$nl)];
+	return $mot;
+}
+
+?&gt;</code></pre><p id="r-385599" data-claire-element-id="385599">Maintenant, nous allons coder une fonction qui donne un mot « prononçable », c'est-à-dire dans lequel les voyelles sont suivies de consonnes.</p><p id="r-385600" data-claire-element-id="385600">La subtilité est de définir un tableau de voyelles et un de consonnes.</p><pre id="r-385601" data-claire-element-id="385601"><code data-claire-semantic="html+php">&lt;?php
+function motHasard($n)
+{
+    $voyelles = array('a', 'e', 'i', 'o', 'u', 'ou', 'io','ou','ai');
+    $consonnes = array('b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm','n', 'p', 'r', 's', 't', 'v', 'w',
+			'br','bl', 'cr','ch', 'dr', 'fr', 'dr', 'fr', 'fl', 'gr','gl','pr','pl','ps','st','tr','vr');
+                            
+    $mot = '';
+    $nv = count($voyelles)-1;
+    $nc = count($consonnes)-1;
+	for($i = 0; $i &lt; round($n/2); ++$i)
+	{
+		$mot .= $voyelles[mt_rand(0,$nv)];
+		$mot .= $consonnes[mt_rand(0,$nc)];
+	}
+	
+	return substr($mot,0,$n); // Comme certaines syllabes font plus d'un caractère, on est obligé de couper pour avoir le nombre exact de caractères.
+}
+?&gt;</code></pre><p id="r-385602" data-claire-element-id="385602"><a href="http://tutos.alwaysdata.net/captcha/text2"><strong>Exemple</strong></a></p><p id="r-385603" data-claire-element-id="385603">Maintenant, à vous de choisir la fonction que vous préférez. L'avantage est qu'avec l'agencement des fichiers que nous avons défini au début (formulaire.php, captcha.php, verification.php), vous pouvez générer n'importe quel type de captcha, il n'y aura qu'une seule fonction à changer (la fonction captcha()). Vous pouvez donc utiliser ce script dans n'importe lequel de vos sites (voire l'ajouter à un formulaire déjà existant).</p><h3 id="r-une-question-mathematique" data-claire-element-id="385618">Une question mathématique</h3><p id="r-385604" data-claire-element-id="385604">Dans cette partie, nous allons demander à l'utilisateur de répondre à une question mathématique.<br/> Par exemple : « <em>combien font deux plus huit ? </em>» Malgré l'apparente simplicité de cette question, elle permet d'éliminer les robots car ils ne peuvent pas <em>comprendre</em> le sens de la question.</p><p id="r-385605" data-claire-element-id="385605">On génère deux nombres au hasard, on calcule leur somme, et on affiche une question en toutes <strong>lettres</strong>.</p><p id="r-385606" data-claire-element-id="385606">Voici une idée de code :</p><pre id="r-385607" data-claire-element-id="385607"><code data-claire-semantic="html+php">&lt;?php
+function captchaMath()
+{
+	$n1 = mt_rand(0,10);
+	$n2 = mt_rand(0,10);
+	$nbrFr = array('zero','un','deux','trois','quatre','cinq','six','sept','huit','neuf','dix');
+	$resultat = $n1 + $n2;
+	$phrase = $nbrFr[$n1] .' plus '.$nbrFr[$n2];
+	
+	return array($resultat, $phrase);	
+}
+
+function captcha()
+{
+	list($resultat, $phrase) = captchaMath();
+	$_SESSION['captcha'] = $resultat;
+	return $phrase;
+}
+?&gt;</code></pre><p id="r-385608" data-claire-element-id="385608">J'utilise la structure de langage <a href="http://fr.php.net/list">list()</a> que vous n'avez peut-être pas encore vue : elle transforme un tableau en une liste de variables.</p><p id="r-385609" data-claire-element-id="385609">Il n'y a pas besoin de modifier le fichier verification.php.<br/> Dans le fichier formulaire.php, vous pouvez remplacer :</p><pre id="r-385610" data-claire-element-id="385610"><code data-claire-semantic="html+php">&lt;label for=&quot;captcha&quot;&gt;Recopiez le mot : &quot;&lt;?php echo captcha(); ?&gt;&quot;&lt;/label&gt;</code></pre><p id="r-385611" data-claire-element-id="385611">par :</p><pre id="r-385612" data-claire-element-id="385612"><code data-claire-semantic="html+php">&lt;label for=&quot;captcha&quot;&gt;Combien font &lt;?php echo captcha(); ?&gt;&lt;/label&gt;</code></pre><p id="r-385613" data-claire-element-id="385613">.</p><p id="r-385614" data-claire-element-id="385614">Sur cette base de code, vous pouvez inventer plein de types de captchas. ;)</p><p id="r-385615" data-claire-element-id="385615"><a href="http://tutos.alwaysdata.net/captcha/maths1"><strong>Exemple</strong></a></p><p id="r-385616" data-claire-element-id="385616">Maintenant que nous avons vu comment réaliser un captcha textuel, nous allons nous intéresser aux images.</p><p id="r-385617" data-claire-element-id="385617">Mais avant cela, sachez que les captchas textuels sont les plus simples à réaliser... et à contourner.<br/> Lisez cet article qui illustre bien le problème : <a href="http://www.seoblackout.com/2007/12/30/failles-captchas-questions-calculs/">http://www.seoblackout.com/2007/12/30/ [...] ions-calculs/</a>.</p><h2 id="r-les-captchas-graphiques" data-claire-element-id="385635">Les captchas graphiques</h2><p id="r-385620" data-claire-element-id="385620">Dans ce chapitre, nous allons créer une image anti-bot (un captcha) : ce chapitre utilise l'architecture de fichiers fournie dans le chapitre <em>Les captchas textuels</em>. Il est donc important d'avoir lu au moins la première partie.</p><p id="r-385621" data-claire-element-id="385621">Les captchas <em>graphiques</em> sont très difficilement lisibles pour un robot : très peu arrivent à identifier les caractères, surtout s'ils sont déformés ou en partie masqués.</p><p id="r-385622" data-claire-element-id="385622">Nous utiliserons tout au long de ce tutoriel la <a href="http://fr.php.net/gd">bibliothèque GD</a>. Le tuto officiel du site sur cette bibliothèque devrait vous aider à l'installer et à l'utiliser (je vous recommande cependant de lire un peu la <a href="http://fr.php.net/gd">doc</a>).</p><figure id="r-385624" data-claire-element-id="385625"><img id="r-385623" data-claire-element-id="385623" src="medias/uploads.siteduzero.com_files_128001_129000_128766.png" alt="Image utilisateur"/></figure><p id="r-385626" data-claire-element-id="385626">--&gt;</p><figure id="r-385628" data-claire-element-id="385629"><img id="r-385627" data-claire-element-id="385627" src="medias/uploads.siteduzero.com_files_128001_129000_128767.png" alt="Image utilisateur"/></figure><p id="r-385630" data-claire-element-id="385630"><em>Voici la première et la dernière image que nous allons créer.</em></p><aside id="r-385632" data-claire-element-id="385632" data-claire-semantic="warning"><p id="r-385631" data-claire-element-id="385631">Mise en garde : les captchas présentés ici ne sont pas très résistants face aux robots et ne feront pas le poids face à un robot développé exprès contre eux, gardez cela à l'esprit. Le but de ce tuto est avant tout de vous enseigner comment réaliser un captcha, pas d'en fournir un à toute épreuve.<br/> Le dernier captcha réalisé est toutefois plutôt efficace.</p></aside><h3 id="r-une-image-simple" data-claire-element-id="385634">Une image simple</h3><p id="r-385633" data-claire-element-id="385633">Dans un premier temps, nous allons réaliser une image simple contenant une certaine chaîne de caractères. La chaîne de caractères sera générée par une fonction que nous avons vue dans le premier chapitre, nous nous concentrerons ainsi sur l'image.</p><h2 id="r-la-chaine-de-caracteres" data-claire-element-id="385641">La chaîne de caractères</h2><p id="r-385636" data-claire-element-id="385636">On utilisera la fonction :</p><pre id="r-385637" data-claire-element-id="385637"><code data-claire-semantic="html+php">&lt;?php
+function nombre($n)
+{
+    return str_pad(mt_rand(0,pow(10,$n)-1),$n,'0',STR_PAD_LEFT);
+}
+?&gt;</code></pre><p id="r-385638" data-claire-element-id="385638">Renseignez-vous sur les fonctions utilisées (<a href="http://fr.php.net/str_pad">str_pad</a>, <a href="http://fr.php.net/mt_rand">mt_rand</a> et <a href="http://fr.php.net/pow">pow</a>) si besoin.</p><p id="r-385639" data-claire-element-id="385639">La différence avec nos autres scripts (chapitre 1) est que captcha.php génère maintenant une image, il faut donc le modifier comme ceci :</p><pre id="r-385640" data-claire-element-id="385640"><code data-claire-semantic="html+php">&lt;?php
+
+function image($mot)
+{
+
+}
+
+function nombre($n)
+{
+	return str_pad(mt_rand(0,pow(10,$n)-1),$n,'0',STR_PAD_LEFT);
+}
+
+function captcha()
+{
+	$mot = nombre(5);
+	$_SESSION['captcha'] = $mot;
+	image($mot);
+}
+
+header(&quot;Content-type: image/png&quot;);
+captcha();
+?&gt;</code></pre><h2 id="r-fonction-de-generation-de-l-image" data-claire-element-id="385660">Fonction de génération de l'image</h2><p id="r-385642" data-claire-element-id="385642">On crée une fonction <strong>image($mot)</strong> qui prend en paramètre la chaîne de caractères à écrire dans l'image.<br/> Cette fonction générera l'image et l'affichera.</p><p id="r-385643" data-claire-element-id="385643">Pour connaître la largeur de notre image, on va utiliser la taille du mot, en admettant qu'un caractère fait 10 pixels de largeur (en comptant les espaces et les marges).<br/> Pour la hauteur, on utilisera une image de 20 pixels.</p><p id="r-385644" data-claire-element-id="385644">Notre fichier ressemble donc à cela :</p><pre id="r-385645" data-claire-element-id="385645"><code data-claire-semantic="html+php">&lt;?php
+function nombre($n){
+// [...]
+}
+
+function image($mot)
+{
+	$largeur = strlen($mot) * 10;
+	$hauteur = 20;
+	$img = imagecreate($largeur, $hauteur);
+	$blanc = imagecolorallocate($img, 255, 255, 255);
+	$noir = imagecolorallocate($img, 0, 0, 0);
+
+	imagepng($img);
+	imagedestroy($img);
+
+}
+
+function captcha()
+{
+	$mot = nombre(5);
+	$_SESSION['captcha'] = $mot;
+	image($mot);
+}
+
+header(&quot;Content-type: image/png&quot;);
+captcha();
+?&gt;</code></pre><p id="r-385646" data-claire-element-id="385646">Il faut maintenant écrire le mot sur l'image, grâce à la fonction <a href="http://fr2.php.net/manual/en/function.imagestring.php">imagestring()</a>.</p><p id="r-385647" data-claire-element-id="385647">Pour centrer le mot dans l'image, il faut réfléchir un peu. ^^ La fonction imagestring() a besoin des coordonnées (abscisse et ordonnée) auxquelles sera placé le texte. Cette position correspond au coin supérieur gauche de notre mot.</p><p id="r-385648" data-claire-element-id="385648">Pour l'ordonnée (axe vertical), on prend donc le milieu de l'image moins la hauteur d'un caractère divisée par deux. Pour la position horizontale, c'est un peu plus compliqué.<br/> J'ai trouvé empiriquement que <code data-claire-semantic="html+php">&lt;?php strlen($mot) / 2; ?&gt; </code> était une abscisse acceptable.</p><p id="r-385649" data-claire-element-id="385649">On trace aussi une bordure extérieure pour rendre notre captcha plus joli avec la fonction <a href="http://fr2.php.net/manual/en/function.imagerectangle.php">imagerectangle()</a>.</p><pre id="r-385650" data-claire-element-id="385650"><code data-claire-semantic="html+php">&lt;?php
+
+function image($mot)
+{
+	$largeur = strlen($mot) * 10;
+	$hauteur = 20;
+	$img = imagecreate($largeur, $hauteur);
+	$blanc = imagecolorallocate($img, 255, 255, 255); 
+	$noir = imagecolorallocate($img, 0, 0, 0);
+	$milieuHauteur = ($hauteur / 2) - 8;
+	imagestring($img, 6, strlen($mot) /2 , $milieuHauteur, $mot, $noir);
+	imagerectangle($img, 1, 1, $largeur - 1, $hauteur - 1, $noir); // La bordure
+
+	imagepng($img);
+	imagedestroy($img);
+
+}
+?&gt;</code></pre><p id="r-385651" data-claire-element-id="385651">Il faut maintenant adapter un peu formulaire.php. Il ne faut plus inclure captcha.php, mais l'utiliser comme l'adresse de l'image.</p><pre id="r-385652" data-claire-element-id="385652"><code data-claire-semantic="html">&lt;label for=&quot;captcha&quot;&gt;Recopiez le mot : &lt;img src=&quot;captcha.php&quot; alt=&quot;Captcha&quot; /&gt;&lt;/label&gt;</code></pre><aside id="r-385654" data-claire-element-id="385654" data-claire-semantic="warning"><p id="r-385653" data-claire-element-id="385653">Il faut donc mettre <code data-claire-semantic="html+php">&lt;?php session_start(); ?&gt; </code> en haut de captcha.php et enlever <code data-claire-semantic="html+php">&lt;?php require('captcha.php'); ?&gt; </code> de formulaire.php.</p></aside><p id="r-385655" data-claire-element-id="385655"><a href="http://tutos.alwaysdata.net/captcha/image1"><strong>Exemple</strong></a></p><p id="r-385656" data-claire-element-id="385656">Nous avons maintenant un captcha fonctionnel, bien que sa sécurité soit un peu faible.</p><h3 id="r-une-image-masquee" data-claire-element-id="385659">Une image masquée</h3><p id="r-385657" data-claire-element-id="385657">Les captchas graphiques sont un peu plus sûrs que les captchas textuels, mais il faut impérativement masquer le texte ou le déformer, car les robots arrivent de plus en plus à décoder les images.</p><p id="r-385658" data-claire-element-id="385658">Nous allons donc masquer notre image en y ajoutant des bandes noires horizontales et un fond hachuré.</p><h2 id="r-les-bandes-noires" data-claire-element-id="385666">Les bandes noires</h2><p id="r-385661" data-claire-element-id="385661">Pour ajouter des bandes noires, on utilise la fonction <a href="http://fr2.php.net/imageline">imageline()</a>. On va dessiner une barre aléatoire et une barre standard. À vous d'adapter le script pour obtenir ce que vous voulez.</p><p id="r-385662" data-claire-element-id="385662">Pour la barre aléatoire, on choisit deux hauteurs au hasard et on trace la ligne d'un bout à l'autre de l'image. La barre standard coupera l'image en deux.</p><pre id="r-385663" data-claire-element-id="385663"><code data-claire-semantic="html+php">&lt;?php imageline($img, 2, $milieuHauteur + 8, $largeur - 2, $milieuHauteur + 8, $noir); ?&gt;</code></pre><pre id="r-385664" data-claire-element-id="385664"><code data-claire-semantic="html+php">&lt;?php imageline($img, 2,mt_rand(2,$hauteur), $largeur - 2, mt_rand(2,$hauteur), $noir); ?&gt;</code></pre><p id="r-385665" data-claire-element-id="385665"><a href="http://tutos.alwaysdata.net/captcha/image2"><strong>Exemple</strong></a></p><h2 id="r-un-fond-hachure" data-claire-element-id="385676">Un fond hachuré</h2><p id="r-385667" data-claire-element-id="385667">Pour obtenir un fond hachuré, on utilisera une boucle. Il suffit juste d'une variable <em>x</em> que l'on incrémentera jusqu'à ce qu'elle atteigne la largeur de l'image.</p><pre id="r-385668" data-claire-element-id="385668"><code data-claire-semantic="html+php">&lt;?php
+// Le fond hachuré
+for($x = 5; $x &lt; $largeur; $x+=6)
+{
+	imageline($img, $x,2,$x-5,$hauteur,$noir);
+}
+?&gt;</code></pre><p id="r-385669" data-claire-element-id="385669"><a href="http://tutos.alwaysdata.net/captcha/image3"><strong>Exemple</strong></a></p><p id="r-385670" data-claire-element-id="385670">Vous pouvez facilement adapter ces scripts en modifiant quelques valeurs et la couleur pour avoir des captchas originaux.</p><h3 id="r-une-image-utilisant-une-police-ttf" data-claire-element-id="385675">Une image utilisant une police ttf</h3><p id="r-385671" data-claire-element-id="385671">Nous allons maintenant utiliser une police ttf à la place de la police par défaut. Vous pouvez prendre une police plus difficile à lire par un robot.</p><p id="r-385672" data-claire-element-id="385672">Tout d'abord, téléchargez une police ttf sur Internet : une police manuscrite est conseillée car elle est plus difficilement reconnaissable par un robot. Vous pouvez aller voir sur <a href="http://www.dafont.com/">Dafont.com</a>. Je vais utiliser la police <a href="http://www.dafont.com/fr/smartie.font">Smartie</a>.</p><aside id="r-385674" data-claire-element-id="385674" data-claire-semantic="warning"><p id="r-385673" data-claire-element-id="385673">Faites attention aux licences des polices, certaines interdisent une utilisation commerciale.</p></aside><h2 id="r-ecrire-le-captcha-dans-une-police-ttf" data-claire-element-id="385695">Écrire le captcha dans une police ttf</h2><p id="r-385677" data-claire-element-id="385677">Il faut tout d'abord que la police (le fichier ttf) se trouve dans le même dossier que captcha.php.</p><p id="r-385678" data-claire-element-id="385678">Nous allons utiliser une fonction très pratique, <a href="http://fr2.php.net/manual/en/function.imagettfbbox.php">imagettfbbox</a>, qui nous retournera la taille du bloc de texte écrit avec la police. Cette fonction nous permet de calculer plus facilement les dimensions de l'image.</p><p id="r-385679" data-claire-element-id="385679">J'utilise imagettfbbox comme cela :</p><pre id="r-385680" data-claire-element-id="385680"><code data-claire-semantic="html+php">&lt;?php
+$size = 32;
+$box = imagettfbbox($size, 0, './smartie.ttf', $mot);
+?&gt;</code></pre><p id="r-385681" data-claire-element-id="385681">La <a href="http://fr2.php.net/manual/en/function.imagettfbbox.php">doc</a> nous indique ce que contient le tableau que retourne <strong>imagettfbbox()</strong> :</p><p id="r-385682" data-claire-element-id="385682"><cite>Citation : Doc PHP</cite></p><blockquote id="r-385684" data-claire-element-id="385684"><p id="r-385683" data-claire-element-id="385683">imagettfbbox() returns an array with 8 elements representing four points making the bounding box of the text:<br/> 0 lower left corner, X position<br/> 1 lower left corner, Y position<br/> 2 lower right corner, X position<br/> 3 lower right corner, Y position<br/> 4 upper right corner, X position<br/> 5 upper right corner, Y position<br/> 6 upper left corner, X position<br/> 7 upper left corner, Y position</p></blockquote><p id="r-385685" data-claire-element-id="385685">Étant donné que je n'ai pas indiqué d'angle, nous n'avons besoin que de quatre valeurs pour calculer la largeur et la hauteur.</p><pre id="r-385686" data-claire-element-id="385686"><code data-claire-semantic="html+php">&lt;?php
+$largeur = $box[2] - $box[0];
+$hauteur = $box[1] - $box[7];
+?&gt;</code></pre><p id="r-385687" data-claire-element-id="385687">Le code de la fonction image() est donc :</p><pre id="r-385688" data-claire-element-id="385688"><code data-claire-semantic="html+php">&lt;?php
+
+function image($mot)
+{
+	$size = 32;
+	$marge = 5;
+	
+	$box = imagettfbbox($size, 0, './smartie.ttf', $mot);
+	$largeur = $box[2] - $box[0];
+	$hauteur = $box[1] - $box[7];
+	
+	
+	$img = imagecreate($largeur+$marge*2, $hauteur+$marge*2);
+	$blanc = imagecolorallocate($img, 255, 255, 255); 
+	$noir = imagecolorallocate($img, 0, 0, 0);
+	
+	imagepng($img);
+	imagedestroy($img);
+
+}
+?&gt;</code></pre><p id="r-385689" data-claire-element-id="385689">Il faut maintenant écrire le texte grâce à la fonction <a href="http://fr2.php.net/manual/en/function.imagettftext.php">imagettftext</a>.</p><pre id="r-385690" data-claire-element-id="385690"><code data-claire-semantic="html+php">&lt;?php
+imagettftext($img, $size, 0,$marge,$hauteur+$marge, $noir, './smartie.ttf', $mot);
+?&gt;</code></pre><p id="r-385691" data-claire-element-id="385691">Pour le paramètre <em>y</em>, il faut essayer diverses valeurs. J'ai pour ma part mis <code data-claire-semantic="html+php">&lt;?php $hauteur+$marge; ?&gt; </code>, mais cela dépend de la police que vous utilisez ; essayez de trouver une valeur qui convient et gardez-la.</p><p id="r-385692" data-claire-element-id="385692"><a href="http://tutos.alwaysdata.net/captcha/image4"><strong>Exemple</strong></a></p><p id="r-385693" data-claire-element-id="385693">Vous pouvez ajouter à ce captcha les barres horizontales que nous avions incluses précédemment. Et n'hésitez pas à changer les couleurs.</p><h3 id="r-matrice-de-convolution" data-claire-element-id="385694">Matrice de convolution</h3><h2 id="r-les-matrices-de-convolution" data-claire-element-id="385704">Les matrices de convolution</h2><p id="r-385696" data-claire-element-id="385696">Les matrices de convolution sont des modifications appliquées à une image : elles sont souvent utilisées dans les logiciels de retouche d'image sous le nom de <em>filtres</em>. Le but d'une matrice est d'appliquer une modification de couleur sur chaque pixel de l'image en réalisant une opération par rapport à la couleur des pixels adjacents. Pour un flou, par exemple, on fera la moyenne arithmétique des couleurs (représentées par les nombres <a href="http://fr.wikipedia.org/wiki/Rouge_vert_bleu"><em>rgb</em></a>) des pixels adjacents.<br/> Pour schématiser la modification, on utilise un tableau à deux dimensions (3 x 3 généralement). L'élément (également appelé <em>case</em>) central représente le pixel que l'on est en train de modifier. Les autres éléments représentent quant à eux les pixels adjacents. On affecte à chaque élément un nombre représentant le coefficient du pixel. Ce coefficient permet de réaliser une moyenne.</p><h3 id="r-exemple-le-flou-gaussien" data-claire-element-id="385703">Exemple : le flou gaussien</h3><p id="r-385697" data-claire-element-id="385697">\begin{pmatrix}1&amp;2&amp;1 \\2&amp;4&amp;2 \\1&amp;2&amp;1 \\\end{pmatrix}</p><p id="r-385698" data-claire-element-id="385698">On applique la matrice à chaque pixel de l'image, en la centrant sur le pixel traité. Les valeurs de la matrice sont le poids des pixels de l'image. Le point central est le poids du pixel traité, les autres points ceux des pixels entourant ce dernier. On aura donc un problème pour les pixels du contour qui n'ont pas forcément de pixels adjacents, mais plusieurs solutions existent : ignorer ces pixels, considérer que les pixels adjacents sont noirs, modifier les coefficients pour ne pas tenir compte du bord, etc.</p><p id="r-385699" data-claire-element-id="385699">Si l'on applique la matrice précédente à un pixel comme celui-ci (les valeurs correspondent à un niveau de gris pour simplifier) :<br/>\begin{bmatrix}68 &amp; 125 &amp;&amp; 210 \\127 &amp; 34 &amp;&amp; 222 \\235 &amp; 65 &amp;&amp; 128 \\\end{bmatrix}<br/> la couleur du pixel central sera : <br/>( (1 imes 68) + (2 imes 125) + (1 imes 210) + (2 imes 127) + (4 imes 34) + (2 imes 222) + (1 imes 235) + (2 imes 65) + (2 imes 128) ) = 1855</p><p id="r-385700" data-claire-element-id="385700">On voit bien que la valeur dépasse la valeur maximale pour une couleur (255) : c'était prévisible étant donné que la somme des coefficients est différente de 1. Une solution consiste à diviser tous les coefficients par 16 (1/16, 2/16, etc.) pour obtenir la matrice suivante : <br/>\begin{pmatrix}\frac{1}{16}&amp;\frac{1}{8}&amp;\frac{1}{16} \\\frac{1}{8}&amp;\frac{1}{4}&amp;\frac{1}{8} \\\frac{1}{16}&amp;\frac{1}{8}&amp;\frac{1}{16} \\\end{pmatrix}</p><p id="r-385701" data-claire-element-id="385701">On peut également ajouter des modificateurs (diviseurs et décalages). On donnera la valeur 16 au diviseur pour le flou gaussien car la somme des coefficients n'est pas égale à 1.<br/>\frac{1855}{16} = 116<br/> Ce qui est alors la valeur finale de la couleur du pixel. Pour une image en couleur, on applique la matrice à chaque composante (rouge, vert, bleu).</p><p id="r-385702" data-claire-element-id="385702">Le décalage est une valeur qui s'ajoute au résultat de la division. En général, on lui donne la valeur 0.</p><h2 id="r-en-php-ca-donne-quoi" data-claire-element-id="385720">En PHP, ça donne quoi ?</h2><p id="r-385705" data-claire-element-id="385705">Pour notre captcha, on va utiliser une matrice de flou pour déformer notre image. PHP propose une fonction toute faite pour les matrices : <a href="http://fr2.php.net/manual/en/function.imageconvolution.php">imageconvolution()</a>.</p><aside id="r-385707" data-claire-element-id="385707" data-claire-semantic="information"><p id="r-385706" data-claire-element-id="385706">Imageconvolution est une fonction récente (PHP &gt;= 5.1.0), il est donc possible qu'elle ne fonctionne pas chez votre hébergeur.</p></aside><h3 id="r-flou-gaussien-1" data-claire-element-id="385717">Flou gaussien</h3><p id="r-385708" data-claire-element-id="385708">Voici la fonction qui permet d'ajouter un flou gaussien.<br/> La matrice est, je vous le rappelle, \begin{pmatrix}1&amp;2&amp;1 \\2&amp;4&amp;2 \\1&amp;2&amp;1 \\\end{pmatrix}.</p><p id="r-385709" data-claire-element-id="385709">J'utilise cette fois la police <a href="http://www.dafont.com/fr/aixdarbotzcumi.font">AIx Darbotzcumi</a>.</p><pre id="r-385710" data-claire-element-id="385710"><code data-claire-semantic="html+php">&lt;?php
+function image($mot)
+{
+	$size = 32;
+	$marge = 5;
+	
+        // Flou Gaussien
+	$matrix_blur = array(
+		array(1,2,1),
+		array(2,4,2),
+		array(1,2,1));
+			
+	$box = imagettfbbox($size, 0, './aix.ttf', $mot);
+	$largeur = $box[2] - $box[0];
+	$hauteur = $box[1] - $box[7];
+	
+	$img = imagecreate($largeur+$marge*2, $hauteur+$marge*2);
+	$blanc = imagecolorallocate($img, 255, 255, 255); 
+	$noir = imagecolorallocate($img, 0, 0, 0);
+	
+	imagettftext($img, $size, 0,$marge,$hauteur+$marge, $noir, './aix.ttf', $mot);
+	imageconvolution($img, $matrix_blur,16,0); // On applique la matrice, avec un diviseur 16
+	
+	imagepng($img);
+	imagedestroy($img);
+}
+?&gt;</code></pre><p id="r-385711" data-claire-element-id="385711"><a href="http://tutos.alwaysdata.net/captcha/image5"><strong>Exemple</strong></a></p><p id="r-385712" data-claire-element-id="385712">Vous pouvez utiliser la matrice du flou classique : \begin{pmatrix}1&amp;1&amp;1 \\1&amp;1&amp;1 \\1&amp;1&amp;1 \\\end{pmatrix}.</p><pre id="r-385713" data-claire-element-id="385713"><code data-claire-semantic="html+php">&lt;?php
+	$matrix_blur = array(
+		array(1,1,1),
+		array(1,1,1),
+		array(1,1,1));
+
+	imageconvolution($img, $matrix_blur,9,0);
+	imageconvolution($img, $matrix_blur,9,0); // Appliquée deux fois, l'effet sera plus prononcé
+?&gt;</code></pre><p id="r-385714" data-claire-element-id="385714">Vous pouvez obtenir de meilleurs captcha avec un fond gris et en appliquant le flou plusieurs fois :</p><p id="r-385715" data-claire-element-id="385715"><a href="http://tutos.alwaysdata.net/captcha/image6"><strong>Exemple</strong></a></p><p id="r-385716" data-claire-element-id="385716">Si le sujet vous intéresse, voici un article sur les matrices de convolution : <a href="http://tuxy2885.free.fr/index.php?cat=tutorial&amp;id=graphics_convolution">http://tuxy2885.free.fr/index.php?cat= [...] s_convolution</a>.</p><h3 id="r-deformation-1" data-claire-element-id="385719">Déformation</h3><p id="r-385718" data-claire-element-id="385718">Maintenant, nous nous attaquons à quelque chose d'un peu plus compliqué : la déformation d'image. Déformer son image est une sécurité supplémentaire lorsque l'on crée un captcha.</p><h2 id="r-rotation-des-lettres" data-claire-element-id="385737">Rotation des lettres</h2><p id="r-385721" data-claire-element-id="385721">L'un des paramètres de la fonction <a href="http://fr2.php.net/manual/en/function.imagettftext.php">imagettftext()</a> est un angle servant à incliner le mot. Il nous suffit alors d'écrire les lettres une par une avec un angle aléatoire compris entre - 35° et + 35°.</p><p id="r-385722" data-claire-element-id="385722">Pour placer les lettres une par une, on calculera auparavant la largeur d'une lettre.</p><p id="r-385723" data-claire-element-id="385723">J'utilise la police <a href="http://www.dafont.com/fr/angelina.font">angelina</a>.</p><p id="r-385724" data-claire-element-id="385724">Pour calculer la largeur d'une lettre, on divise la largeur de l'image par le nombre de lettres :</p><pre id="r-385725" data-claire-element-id="385725"><code data-claire-semantic="html+php">&lt;?php
+	$box = imagettfbbox($size, 0, $font, $mot);
+	$largeur = $box[2] - $box[0];
+	$hauteur = $box[1] - $box[7];
+	$largeur_lettre = round($largeur/strlen($mot));
+?&gt;</code></pre><p id="r-385726" data-claire-element-id="385726">Ensuite, on parcourt le mot lettre par lettre :</p><pre id="r-385727" data-claire-element-id="385727"><code data-claire-semantic="html+php">&lt;?php
+for($i = 0; $i &lt; strlen($mot);++$i)
+{
+	$l = $mot[$i];
+	$angle = mt_rand(-35,35); // Angle au hasard
+}
+?&gt;</code></pre><p id="r-385728" data-claire-element-id="385728">Il ne reste plus qu'a écrire la lettre sur l'image :</p><pre id="r-385729" data-claire-element-id="385729"><code data-claire-semantic="html+php">&lt;?php
+imagettftext($img,$size,$angle,($i*$largeur_lettre)+$marge, $hauteur+mt_rand(0,$marge/2),$noir, $font, $l);	
+?&gt;</code></pre><p id="r-385730" data-claire-element-id="385730">J'ai ajouté une valeur aléatoire à la hauteur pour que les lettres ne soient pas toutes alignées.</p><p id="r-385731" data-claire-element-id="385731">Le code final de la fonction image est le suivant :</p><pre id="r-385732" data-claire-element-id="385732"><code data-claire-semantic="html+php">&lt;?php
+function image($mot)
+{
+	$size = 32;
+	$marge = 15;
+	$font = './angelina.ttf';
+		
+	$box = imagettfbbox($size, 0, $font, $mot);
+	$largeur = $box[2] - $box[0];
+	$hauteur = $box[1] - $box[7];
+	$largeur_lettre = round($largeur/strlen($mot));
+	
+	$img = imagecreate($largeur+$marge, $hauteur+$marge);
+	$blanc = imagecolorallocate($img, 255, 255, 255); 
+	$noir = imagecolorallocate($img, 0, 0, 0);
+	
+	for($i = 0; $i &lt; strlen($mot);++$i)
+	{
+		$l = $mot[$i];
+		$angle = mt_rand(-35,35);
+		imagettftext($img,$size,$angle,($i*$largeur_lettre)+$marge, $hauteur+mt_rand(0,$marge/2),$noir, $font, $l);	
+	}
+	
+	imagepng($img);
+	imagedestroy($img);
+}
+?&gt;</code></pre><p id="r-385733" data-claire-element-id="385733">On peut même rajouter un flou gaussien, des barres horizontales, une taille aléatoire pour les lettres, des couleurs différentes, etc. :</p><pre id="r-385734" data-claire-element-id="385734"><code data-claire-semantic="html+php">&lt;?php
+
+function image($mot)
+{
+	$size = 32;
+	$marge = 15;
+	$font = './angelina.ttf';
+	
+	$matrix_blur = array(
+		array(1,1,1),
+		array(1,1,1),
+		array(1,1,1));
+		
+	$box = imagettfbbox($size, 0, $font, $mot);
+	$largeur = $box[2] - $box[0];
+	$hauteur = $box[1] - $box[7];
+	$largeur_lettre = round($largeur/strlen($mot));
+	
+	$img = imagecreate($largeur+$marge, $hauteur+$marge);
+	$blanc = imagecolorallocate($img, 255, 255, 255); 
+	$noir = imagecolorallocate($img, 0, 0, 0);
+	
+	$couleur = array(
+		imagecolorallocate($img, 0x99, 0x00, 0x66),
+		imagecolorallocate($img, 0xCC, 0x00, 0x00),
+		imagecolorallocate($img, 0x00, 0x00, 0xCC),
+		imagecolorallocate($img, 0x00, 0x00, 0xCC),
+		imagecolorallocate($img, 0xBB, 0x88, 0x77));
+
+	for($i = 0; $i &lt; strlen($mot);++$i)
+	{
+		$l = $mot[$i];
+		$angle = mt_rand(-35,35);
+		imagettftext($img,mt_rand($size-7,$size),$angle,($i*$largeur_lettre)+$marge, $hauteur+mt_rand(0,$marge/2),$couleur[array_rand($couleur)], $font, $l);	
+	}
+	
+	
+	imageline($img, 2,mt_rand(2,$hauteur), $largeur+$marge, mt_rand(2,$hauteur), $noir);
+	imageline($img, 2,mt_rand(2,$hauteur), $largeur+$marge, mt_rand(2,$hauteur), $noir);
+	
+
+	imageconvolution($img, $matrix_blur,9,0);
+	imageconvolution($img, $matrix_blur,9,0);
+	
+	imagepng($img);
+	imagedestroy($img);
+}
+?&gt;</code></pre><p id="r-385735" data-claire-element-id="385735"><a href="http://tutos.alwaysdata.net/captcha/defo7"><strong>Exemple</strong></a></p><p id="r-385736" data-claire-element-id="385736">Vous venez de découvrir comment réaliser un captcha graphique ; ces captchas sont largements utilisés sur Internet bien que cela pose un problème : l'accessibilité. En effet, certaines personnes malvoyantes sont dans l'incapacité de lire votre captcha. Pour pallier ce problème, nous allons voir comment générer un fichier son qui lira le captcha. Les robots sont bien souvent incapables de comprendre un fichier sonore (d'autant plus s'il est en français).</p><h2 id="r-accessibilite-creer-un-fichier-son" data-claire-element-id="385741">Accessibilité : créer un fichier son</h2><p id="r-385738" data-claire-element-id="385738">Nous nous attaquons maintenant à la partie la plus compliquée de ce cours : la génération d'un fichier son qui lit notre captcha. Ce chapitre est difficile car nous allons manipuler des <a href="http://fr.wikipedia.org/wiki/Fichier_binaire">données binaires</a>, et non des <a href="http://fr.wikipedia.org/wiki/Fichier_texte">fichiers textes</a>.<br/> Un fichier binaire ne s'ouvre et ne se lit pas de la même manière qu'un fichier texte. On n'y écrit pas non plus de la même manière.</p><p id="r-385739" data-claire-element-id="385739">L'intérêt de réaliser un fichier .wav est de permettre l'accès à votre site aux personnes malvoyantes lorsque votre captcha est une image. Ces personnes disposent souvent d'un navigateur vocal et / ou braille, mais un captcha n'étant pas censé pouvoir être lu par une machine, l'ordinateur de ces personnes ne pourra pas le lire . Un fichier son va permettre l'accès d'un plus grand nombre de personnes à votre site.</p><h3 id="r-introduction-a-la-manipulation-de-fichiers-binaires" data-claire-element-id="385740">Introduction à la manipulation de fichiers binaires</h3><h2 id="r-les-fichiers-binaires" data-claire-element-id="385770">Les fichiers binaires</h2><p id="r-385742" data-claire-element-id="385742">Manipuler des fichiers binaires est loin d'être aussi facile que des fichiers textes. En effet, un fichier binaire se résume à une suite de 0 et de 1. À partir de là, un certain nombre de problèmes se posent pour le programmeur. Nous allons y répondre progressivement en étudiant chacun d'entre eux.</p><h3 id="r-comment-delimiter-les-differentes-parties-d-un-fichier" data-claire-element-id="385762">Comment délimiter les différentes parties d'un fichier ?</h3><p id="r-385743" data-claire-element-id="385743">Dans un fichier texte, vous pouvez enregistrer une ligne comme cela :</p><p id="r-385744" data-claire-element-id="385744"><cite>Citation : Fichier texte</cite></p><blockquote id="r-385746" data-claire-element-id="385746"><p id="r-385745" data-claire-element-id="385745">55;mon fichier texte;12.36;147;1</p></blockquote><p id="r-385747" data-claire-element-id="385747">Et à la lecture du fichier, on peut extraire facilement chaque variable grâce aux points-virgules, aux retours à la ligne, ou à n'importe quel délimiteur.</p><p id="r-385748" data-claire-element-id="385748">Pour un fichier binaire, c'est différent.<br/> Toutes les informations sont transformées en valeurs numériques, puis en valeurs binaires :</p><p id="r-385749" data-claire-element-id="385749"><cite>Citation : Fichier binaire</cite></p><blockquote id="r-385751" data-claire-element-id="385751"><p id="r-385750" data-claire-element-id="385750">0101101101011110001010101110100100110110</p></blockquote><p id="r-385752" data-claire-element-id="385752">Impossible de délimiter chaque information : <em>comment savoir où commence et où se termine chaque information ?</em></p><p id="r-385753" data-claire-element-id="385753">La première chose à faire est de délimiter le fichier en <a href="http://fr.wikipedia.org/wiki/Octet">octets</a>, c'est-à-dire en groupes de <strong>8</strong><a href="http://fr.wikipedia.org/wiki/Bit">bits</a> ou encore, pour faire le lien avec les 0 et les 1, en groupes de 8 chiffres binaires (0 ou 1).<br/> On peut également découper en groupes de 2 chiffres hexadécimaux, ce qui revient au même comme nous allons le voir.</p><p id="r-385754" data-claire-element-id="385754">Lorsqu'on lit ce fichier, on obtient donc quelque chose comme ça :</p><p id="r-385755" data-claire-element-id="385755"><cite>Citation : Fichier binaire</cite></p><blockquote id="r-385757" data-claire-element-id="385757"><p id="r-385756" data-claire-element-id="385756">01011011 01011110 00101010 11101001 00110110</p></blockquote><p id="r-385758" data-claire-element-id="385758"><cite>Citation : Fichier binaire (représentation en base 16)</cite></p><blockquote id="r-385760" data-claire-element-id="385760"><p id="r-385759" data-claire-element-id="385759">5B 5E 2A E9 36</p></blockquote><p id="r-385761" data-claire-element-id="385761">Pour obtenir notre information, on peut dès lors demander à lire les <em>x</em> premiers octets puis les <em>x</em> suivants, et ainsi de suite.</p><h3 id="r-cependant-comment-savoir-ce-qui-correspond-a-ces-octets" data-claire-element-id="385767">Cependant, comment savoir ce qui correspond à ces octets ?</h3><p id="r-385763" data-claire-element-id="385763">Il n'y a pas de solution miracle, il faut connaître la <em>structure</em> du fichier que l'on essaye de lire, ou, si c'est notre propre type de fichier, en définir une.</p><p id="r-385764" data-claire-element-id="385764">Par <em>structure</em>, je veux dire par exemple « <em>savoir que les 2 premiers octets représentent un nombre, les 3 suivants représentent chacun un caractère</em> », etc.</p><p id="r-385765" data-claire-element-id="385765">En effet, chaque type de <a href="http://fr.wikipedia.org/wiki/Type_(informatique)">donnée informatique</a> (entier, booléen, flottant) est codé en base 2 (binaire) sur un certain nombre d'octets (nous y reviendrons plus loin). C'est-à-dire qu'à chaque type de données que vous pouvez manipuler avec votre programme correspond un certain nombre de bits (donc d'octets). Connaître la structure d'un fichier, c'est savoir quels octets contiennent quel type de données et ce que ces données renseignent dans le fichier.</p><p id="r-385766" data-claire-element-id="385766">Tout cela vous semblera plus clair lorsque nous aurons découvert la structure d'un fichier .wav.</p><h3 id="r-decouverte-du-format-wav" data-claire-element-id="385769">Découverte du format .wav</h3><p id="r-385768" data-claire-element-id="385768">Dans cette partie, nous allons découvrir la structure du type de fichier <a href="http://fr.wikipedia.org/wiki/WAVEform_audio_format">.wav</a>-<a href="http://fr.wikipedia.org/wiki/Modulation_d%27impulsion_codée">pcm</a>, car c'est celui-ci que nous utiliserons pour notre fichier son.</p><h2 id="r-obtenir-la-structure-du-fichier" data-claire-element-id="386005">Obtenir la structure du fichier</h2><p id="r-385771" data-claire-element-id="385771">Si vous voulez comprendre comment est fait un format de fichier, vous devrez rechercher les informations concernant sa structure sur le Web. Vous trouverez ces informations chez le propriétaire du format ou sur différents sites, le plus simple étant de <a href="http://www.google.fr/search?q=specification%2Bwav">chercher sur Google</a> ; par exemple, avec les mots-clés « <em>specifications wave</em> », on obtient beaucoup de résultats ! Le format .wav étant très utilisé, de nombreux sites peuvent vous documenter.</p><p id="r-385772" data-claire-element-id="385772">Voici la structure d'un fichier .wav (trouvée sur : <a href="http://fr.wikipedia.org/wiki/WAVEform_audio_format">http://fr.wikipedia.org/wiki/WAVEform_audio_format</a>) :</p><table id="r-385949" data-claire-element-id="385949"><thead id="r-385784" data-claire-element-id="385784"><tr id="r-385783" data-claire-element-id="385783"><th id="r-385774" data-claire-element-id="385774"><p id="r-385773" data-claire-element-id="385773">Nom</p></th><th id="r-385776" data-claire-element-id="385776"><p id="r-385775" data-claire-element-id="385775">Nombre d'octets</p></th><th id="r-385778" data-claire-element-id="385778"><p id="r-385777" data-claire-element-id="385777">Type</p></th><th id="r-385780" data-claire-element-id="385780"><p id="r-385779" data-claire-element-id="385779"><a href="http://fr.wikipedia.org/wiki/Endian">Endian</a></p></th><th id="r-385782" data-claire-element-id="385782"><p id="r-385781" data-claire-element-id="385781">Description</p></th></tr></thead><tbody id="r-385948" data-claire-element-id="385948"><tr id="r-385787" data-claire-element-id="385787"><td id="r-385786" data-claire-element-id="385786"><p id="r-385785" data-claire-element-id="385785"><strong>Bloc de déclaration d'un fichier au format WAVE</strong></p></td></tr><tr id="r-385798" data-claire-element-id="385798"><td id="r-385789" data-claire-element-id="385789"><p id="r-385788" data-claire-element-id="385788">Chunk ID</p></td><td id="r-385791" data-claire-element-id="385791"><p id="r-385790" data-claire-element-id="385790">4</p></td><td id="r-385793" data-claire-element-id="385793"><p id="r-385792" data-claire-element-id="385792">4 char</p></td><td id="r-385795" data-claire-element-id="385795"><p id="r-385794" data-claire-element-id="385794">big</p></td><td id="r-385797" data-claire-element-id="385797"><p id="r-385796" data-claire-element-id="385796">4 caractères constants RIFF : 0x52494646</p></td></tr><tr id="r-385809" data-claire-element-id="385809"><td id="r-385800" data-claire-element-id="385800"><p id="r-385799" data-claire-element-id="385799">Chunk Size</p></td><td id="r-385802" data-claire-element-id="385802"><p id="r-385801" data-claire-element-id="385801">4</p></td><td id="r-385804" data-claire-element-id="385804"><p id="r-385803" data-claire-element-id="385803">int 32</p></td><td id="r-385806" data-claire-element-id="385806"><p id="r-385805" data-claire-element-id="385805">little</p></td><td id="r-385808" data-claire-element-id="385808"><p id="r-385807" data-claire-element-id="385807">Taille du fichier - 8 octets des deux premiers blocs</p></td></tr><tr id="r-385820" data-claire-element-id="385820"><td id="r-385811" data-claire-element-id="385811"><p id="r-385810" data-claire-element-id="385810">Format</p></td><td id="r-385813" data-claire-element-id="385813"><p id="r-385812" data-claire-element-id="385812">4</p></td><td id="r-385815" data-claire-element-id="385815"><p id="r-385814" data-claire-element-id="385814">4 char</p></td><td id="r-385817" data-claire-element-id="385817"><p id="r-385816" data-claire-element-id="385816">big</p></td><td id="r-385819" data-claire-element-id="385819"><p id="r-385818" data-claire-element-id="385818">4 caractères constants WAVE : codé 0x57415645</p></td></tr><tr id="r-385823" data-claire-element-id="385823"><td id="r-385822" data-claire-element-id="385822"><p id="r-385821" data-claire-element-id="385821"><strong>Bloc décrivant le format audio</strong></p></td></tr><tr id="r-385834" data-claire-element-id="385834"><td id="r-385825" data-claire-element-id="385825"><p id="r-385824" data-claire-element-id="385824">SubChunk 1 ID</p></td><td id="r-385827" data-claire-element-id="385827"><p id="r-385826" data-claire-element-id="385826">4</p></td><td id="r-385829" data-claire-element-id="385829"><p id="r-385828" data-claire-element-id="385828">4 char</p></td><td id="r-385831" data-claire-element-id="385831"><p id="r-385830" data-claire-element-id="385830">big</p></td><td id="r-385833" data-claire-element-id="385833"><p id="r-385832" data-claire-element-id="385832">4 caractères constants &quot;fmt &quot; : codé 0x666d7420</p></td></tr><tr id="r-385845" data-claire-element-id="385845"><td id="r-385836" data-claire-element-id="385836"><p id="r-385835" data-claire-element-id="385835">SubChunk 1 Size</p></td><td id="r-385838" data-claire-element-id="385838"><p id="r-385837" data-claire-element-id="385837">4</p></td><td id="r-385840" data-claire-element-id="385840"><p id="r-385839" data-claire-element-id="385839">int 32</p></td><td id="r-385842" data-claire-element-id="385842"><p id="r-385841" data-claire-element-id="385841">little</p></td><td id="r-385844" data-claire-element-id="385844"><p id="r-385843" data-claire-element-id="385843">Taille du sous-bloc &quot;SubCHunk 1&quot; - 8 octets, vaut 16 pour le <a href="http://fr.wikipedia.org/wiki/Modulation_d%27impulsion_codée">PCM</a></p></td></tr><tr id="r-385856" data-claire-element-id="385856"><td id="r-385847" data-claire-element-id="385847"><p id="r-385846" data-claire-element-id="385846">Audio Format</p></td><td id="r-385849" data-claire-element-id="385849"><p id="r-385848" data-claire-element-id="385848">2</p></td><td id="r-385851" data-claire-element-id="385851"><p id="r-385850" data-claire-element-id="385850">int 16</p></td><td id="r-385853" data-claire-element-id="385853"><p id="r-385852" data-claire-element-id="385852">little</p></td><td id="r-385855" data-claire-element-id="385855"><p id="r-385854" data-claire-element-id="385854">Type de compression audio, 1 pour <a href="http://fr.wikipedia.org/wiki/Modulation_d%27impulsion_codée">PCM</a></p></td></tr><tr id="r-385867" data-claire-element-id="385867"><td id="r-385858" data-claire-element-id="385858"><p id="r-385857" data-claire-element-id="385857">Num Channels</p></td><td id="r-385860" data-claire-element-id="385860"><p id="r-385859" data-claire-element-id="385859">2</p></td><td id="r-385862" data-claire-element-id="385862"><p id="r-385861" data-claire-element-id="385861">int 16</p></td><td id="r-385864" data-claire-element-id="385864"><p id="r-385863" data-claire-element-id="385863">little</p></td><td id="r-385866" data-claire-element-id="385866"><p id="r-385865" data-claire-element-id="385865">Nombre de canaux (1 = Mono, 2 = Stéréo, ...)</p></td></tr><tr id="r-385878" data-claire-element-id="385878"><td id="r-385869" data-claire-element-id="385869"><p id="r-385868" data-claire-element-id="385868">Sample Rate (Frequence)</p></td><td id="r-385871" data-claire-element-id="385871"><p id="r-385870" data-claire-element-id="385870">4</p></td><td id="r-385873" data-claire-element-id="385873"><p id="r-385872" data-claire-element-id="385872">int 32</p></td><td id="r-385875" data-claire-element-id="385875"><p id="r-385874" data-claire-element-id="385874">little</p></td><td id="r-385877" data-claire-element-id="385877"><p id="r-385876" data-claire-element-id="385876">Fréquence d'échantillonnage (nombre d'échantillons par seconde)</p></td></tr><tr id="r-385889" data-claire-element-id="385889"><td id="r-385880" data-claire-element-id="385880"><p id="r-385879" data-claire-element-id="385879">Byte Rate (BytePerSec)</p></td><td id="r-385882" data-claire-element-id="385882"><p id="r-385881" data-claire-element-id="385881">4</p></td><td id="r-385884" data-claire-element-id="385884"><p id="r-385883" data-claire-element-id="385883">int 32</p></td><td id="r-385886" data-claire-element-id="385886"><p id="r-385885" data-claire-element-id="385885">little</p></td><td id="r-385888" data-claire-element-id="385888"><p id="r-385887" data-claire-element-id="385887">Nombre d'octets par seconde = Frequence * BitsPerSample/8 * NumChannels</p></td></tr><tr id="r-385900" data-claire-element-id="385900"><td id="r-385891" data-claire-element-id="385891"><p id="r-385890" data-claire-element-id="385890">Block Align (BytePerSample)</p></td><td id="r-385893" data-claire-element-id="385893"><p id="r-385892" data-claire-element-id="385892">2</p></td><td id="r-385895" data-claire-element-id="385895"><p id="r-385894" data-claire-element-id="385894">int 16</p></td><td id="r-385897" data-claire-element-id="385897"><p id="r-385896" data-claire-element-id="385896">little</p></td><td id="r-385899" data-claire-element-id="385899"><p id="r-385898" data-claire-element-id="385898">Nombre d'octets par échantillon (tous canaux confondus) = Nombre de canaux * Nombre d'octets par échantillons</p></td></tr><tr id="r-385911" data-claire-element-id="385911"><td id="r-385902" data-claire-element-id="385902"><p id="r-385901" data-claire-element-id="385901">Bits per Sample</p></td><td id="r-385904" data-claire-element-id="385904"><p id="r-385903" data-claire-element-id="385903">2</p></td><td id="r-385906" data-claire-element-id="385906"><p id="r-385905" data-claire-element-id="385905">int 16</p></td><td id="r-385908" data-claire-element-id="385908"><p id="r-385907" data-claire-element-id="385907">little</p></td><td id="r-385910" data-claire-element-id="385910"><p id="r-385909" data-claire-element-id="385909">Nombre de bits par échantillon</p></td></tr><tr id="r-385914" data-claire-element-id="385914"><td id="r-385913" data-claire-element-id="385913"><p id="r-385912" data-claire-element-id="385912"><strong>Bloc des données</strong></p></td></tr><tr id="r-385925" data-claire-element-id="385925"><td id="r-385916" data-claire-element-id="385916"><p id="r-385915" data-claire-element-id="385915">SubChunk 2 ID</p></td><td id="r-385918" data-claire-element-id="385918"><p id="r-385917" data-claire-element-id="385917">4</p></td><td id="r-385920" data-claire-element-id="385920"><p id="r-385919" data-claire-element-id="385919">4 char</p></td><td id="r-385922" data-claire-element-id="385922"><p id="r-385921" data-claire-element-id="385921">big</p></td><td id="r-385924" data-claire-element-id="385924"><p id="r-385923" data-claire-element-id="385923">4 caractères constants : &quot;data&quot; : 0x64617461</p></td></tr><tr id="r-385936" data-claire-element-id="385936"><td id="r-385927" data-claire-element-id="385927"><p id="r-385926" data-claire-element-id="385926">SubChunk 2 Size</p></td><td id="r-385929" data-claire-element-id="385929"><p id="r-385928" data-claire-element-id="385928">4</p></td><td id="r-385931" data-claire-element-id="385931"><p id="r-385930" data-claire-element-id="385930">int 32</p></td><td id="r-385933" data-claire-element-id="385933"><p id="r-385932" data-claire-element-id="385932">little</p></td><td id="r-385935" data-claire-element-id="385935"><p id="r-385934" data-claire-element-id="385934">Taille des données = NbCannaux * NbSamples * BitsPerSample/8 = taille du fichier - 44 octets (taille de l'en-tête, rappelez-vous-en !)</p></td></tr><tr id="r-385947" data-claire-element-id="385947"><td id="r-385938" data-claire-element-id="385938"><p id="r-385937" data-claire-element-id="385937"><strong>Datas (données)</strong></p></td><td id="r-385940" data-claire-element-id="385940"><p id="r-385939" data-claire-element-id="385939">FileSize - 44</p></td><td id="r-385942" data-claire-element-id="385942"><p id="r-385941" data-claire-element-id="385941">...</p></td><td id="r-385944" data-claire-element-id="385944"><p id="r-385943" data-claire-element-id="385943">little</p></td><td id="r-385946" data-claire-element-id="385946"><p id="r-385945" data-claire-element-id="385945">Les données !</p></td></tr></tbody></table><figure id="r-385951" data-claire-element-id="385952"><img id="r-385950" data-claire-element-id="385950" src="../../user.oc-static.com/files/135001_136000/135319.gif" alt="Image utilisateur"/></figure><h3 id="r-petite-parenthese-qu-est-ce-que-l-endian" data-claire-element-id="385994">Petite parenthèse : qu'est-ce que l'endian ?</h3><p id="r-385953" data-claire-element-id="385953">J'ai mis un lien pour l'expliquer, mais si vous ne l'avez pas lu, je vais l'expliquer brièvement ici. L'endian est la manière de représenter les données en binaire : ici, nous ne nous occuperons que de <em>big endian</em> et de <em>little endian</em> pour des entiers.</p><p id="r-385954" data-claire-element-id="385954">Un entier peut être représenté sur plusieurs octets s'il est supérieur à 255, valeur maximale que peut représenter un octet (11111111) ; il faut donc le représenter sur 2, 4, 8 ou 16 octets. On parle d'entiers 8 bits, 16 bits, 32 bits, 64 bits...</p><table id="r-385992" data-claire-element-id="385992"><thead id="r-385962" data-claire-element-id="385962"><tr id="r-385961" data-claire-element-id="385961"><th id="r-385956" data-claire-element-id="385956"><p id="r-385955" data-claire-element-id="385955">Bits</p></th><th id="r-385958" data-claire-element-id="385958"><p id="r-385957" data-claire-element-id="385957">Octets</p></th><th id="r-385960" data-claire-element-id="385960"><p id="r-385959" data-claire-element-id="385959">Valeurs représentées (entier positif)</p></th></tr></thead><tbody id="r-385991" data-claire-element-id="385991"><tr id="r-385969" data-claire-element-id="385969"><td id="r-385964" data-claire-element-id="385964"><p id="r-385963" data-claire-element-id="385963">8</p></td><td id="r-385966" data-claire-element-id="385966"><p id="r-385965" data-claire-element-id="385965">1</p></td><td id="r-385968" data-claire-element-id="385968"><p id="r-385967" data-claire-element-id="385967">0 à 28-1 soit [0 ; 255]</p></td></tr><tr id="r-385976" data-claire-element-id="385976"><td id="r-385971" data-claire-element-id="385971"><p id="r-385970" data-claire-element-id="385970">16</p></td><td id="r-385973" data-claire-element-id="385973"><p id="r-385972" data-claire-element-id="385972">2</p></td><td id="r-385975" data-claire-element-id="385975"><p id="r-385974" data-claire-element-id="385974">[0 ; 216-1] soit [0 ; 65535]</p></td></tr><tr id="r-385983" data-claire-element-id="385983"><td id="r-385978" data-claire-element-id="385978"><p id="r-385977" data-claire-element-id="385977">32</p></td><td id="r-385980" data-claire-element-id="385980"><p id="r-385979" data-claire-element-id="385979">4</p></td><td id="r-385982" data-claire-element-id="385982"><p id="r-385981" data-claire-element-id="385981">[0 ; 232-1] soit [0 ; 4294967295]</p></td></tr><tr id="r-385990" data-claire-element-id="385990"><td id="r-385985" data-claire-element-id="385985"><p id="r-385984" data-claire-element-id="385984">64</p></td><td id="r-385987" data-claire-element-id="385987"><p id="r-385986" data-claire-element-id="385986">8</p></td><td id="r-385989" data-claire-element-id="385989"><p id="r-385988" data-claire-element-id="385988">[0 ; 264-1] soit [0 ; 18446744073709551615]</p></td></tr></tbody></table><p id="r-385993" data-claire-element-id="385993">Dans le format .wav, la plupart des entiers sont codés sur 4 ou 2 octets.<br/> Pour coder un nombre sur plusieurs octets, on le convertit en binaire et on enregistre les octets (groupe de 8, 1 ou 0) à la suite. Si le nombre d'octets que l'on s'est donné pour enregistrer l'entier est supérieur au nombre d'octets qu'il faut pour l'enregistrer, on ajoute des bits nuls (0). L'endian caractérise l'ordre dans lequel sont enchaînés les octets. En <em>big-endian</em>, <a href="http://fr.wikipedia.org/wiki/Bit_de_poids_fort">le bit de poids fort</a> est en premier ; en <em>little-endian</em>, c'est l'inverse.</p><h3 id="r-exemple-94" data-claire-element-id="386004">Exemple</h3><p id="r-385995" data-claire-element-id="385995">Prenons le nombre 2084 en décimal, valant 824 en hexadécimal : représenté sur 4 octets, on a <strong>00 00 08 24</strong> en hexadécimal. Bits de poids fort en rouge, et bits de poids faible en bleu.<br/> Il sera égal à <strong>00000000 00000000 00001000 00100100</strong> en binaire (codé sur 4 octets).<br/> Enregistré en big endian, il apparaîtrait comme cela dans le fichier :</p><p id="r-385996" data-claire-element-id="385996"><cite>Citation : Big Endian</cite></p><blockquote id="r-385998" data-claire-element-id="385998"><p id="r-385997" data-claire-element-id="385997"><strong>00000000 00000000 00001000 00100100 ou 00 00 08 24 (hex)</strong></p></blockquote><p id="r-385999" data-claire-element-id="385999"><strong>(hex) :</strong> notation hexadécimale que l'on trouve dans les éditeurs hexadécimaux, plus simple à afficher car deux chiffres hexadécimaux représentent un octet.</p><p id="r-386000" data-claire-element-id="386000">S'il était codé en <em>little endian</em>, l'octet de poids fort apparaîtrait en dernier.</p><p id="r-386001" data-claire-element-id="386001"><cite>Citation : Little Endian</cite></p><blockquote id="r-386003" data-claire-element-id="386003"><p id="r-386002" data-claire-element-id="386002"><strong>00100100 00001000 00000000 00000000 ou 24 08 00 00 (hex)</strong></p></blockquote><h2 id="r-un-exemple-de-fichier-wav" data-claire-element-id="386054">Un exemple de fichier .wav</h2><p id="r-386006" data-claire-element-id="386006">Maintenant, je pense qu'il faudrait vous montrer un exemple de fichier .wav pour bien comprendre.</p><pre id="r-386007" data-claire-element-id="386007"><code>52 49 46 46 24 08 00 00 57 41 56 45 66 6d 74 20 10 00 00 00 01 00 02 00 
+22 56 00 00 88 58 01 00 04 00 10 00 64 61 74 61 00 08 00 00 00 00 00 00 
+24 17 1e f3 3c 13 3c 14 16 f9 18 f9 34 e7 23 a6 3c f2 24 f2 11 ce 1a 0d</code></pre><p id="r-386008" data-claire-element-id="386008">J'ai écrit ce fichier dans un éditeur hexadécimal (par exemple hexedit pour Windows, ghex pour Gnome, khexedit pour KDE). Avec un éditeur hexadécimal, vous pouvez voir les données binaires (contrairement à un éditeur de texte).</p><p id="r-386009" data-claire-element-id="386010"><a href="../../62.4.17.167/uploads/fr/files/128001_129000/128903.html"><img id="r-386010" data-claire-element-id="386009" src="medias/uploads.siteduzero.com_thb_128001_129000_128903.png" alt="Image utilisateur"/></a></p><p id="r-386011" data-claire-element-id="386011">Un nombre hexadécimal de deux chiffres représente en fait un octet du fichier. Les 4 premiers octets contiennent le mot &quot;RIFF&quot;, comme on le voit à droite du logiciel. Ensuite, les 4 octets suivants contiennent la taille du fichier <strong>moins 8 octets</strong>. Cependant, l'entier est codé en <a href="http://fr.wikipedia.org/wiki/Little_endian">little endian</a>, ce qui veut dire qu'il faut lire le nombre comme cela :</p><p id="r-386012" data-claire-element-id="386012"><cite>Citation : Chunk Size</cite></p><blockquote id="r-386014" data-claire-element-id="386014"><p id="r-386013" data-claire-element-id="386013">24 08 00 00 correspond à 00 00 08 24 en hexadécimal (824)</p></blockquote><p id="r-386015" data-claire-element-id="386015">Sortez votre calculatrice, et vous obtenez 2084 octets (le fichier a été coupé à 72 octets pour simplifier).</p><p id="r-386016" data-claire-element-id="386016">Cette valeur peut être obtenue directement depuis l'éditeur hexadécimal dans la case 32 bits (4 octets) en sélectionnant le premier octet du nombre et en activant le décodage<strong> little endian</strong> / petit boutiste.</p><p id="r-386017" data-claire-element-id="386018"><a href="../../62.4.17.167/uploads/fr/files/128001_129000/128906.html"><img id="r-386018" data-claire-element-id="386017" src="medias/uploads.siteduzero.com_thb_128001_129000_128906.png" alt="Image utilisateur"/></a></p><p id="r-386019" data-claire-element-id="386019">Nous avons ensuite :</p><pre id="r-386020" data-claire-element-id="386020"><code>52 49 46 46 24 08 00 00 57 41 56 45 66 6d 74 20 10 00 00 00 01 00 02 00 
+R  I  F  F  |   2048  | W  A  V  E  f  m  t  ?  |   16    | | 1 | | 2 |     
+...</code></pre><p id="r-386021" data-claire-element-id="386021">Essayez de continuer ainsi tout le fichier. :) Sachant que le fichier est composé de deux canaux et que BitsPerSample vaut « 10 00 », soit 16, un échantillon sera composé de BytePerSample * NbChannels octets (16/8 * 2), soit 4 octets.</p><p id="r-386022" data-claire-element-id="386022">Maintenant que nous avons vu la théorie, nous allons passer à la pratique avec PHP !</p><h3 id="r-lecture-d-un-fichier-binaire" data-claire-element-id="386042">Lecture d'un fichier binaire</h3><p id="r-386023" data-claire-element-id="386023">Maintenant que vous avez compris comment était organisé un fichier binaire, nous allons voir comment en lire un avec PHP. J'ai créé un petit fichier pour nos tests avec un éditeur hexadécimal : vous pouvez faire de même ou le télécharger à cette adresse : <a href="http://tutos.alwaysdata.net/captcha/sound1/test.wav">http://tutos.alwaysdata.net/captcha/sound1/test.wav</a>.</p><pre id="r-386024" data-claire-element-id="386024"><code>52 49 46 46 24 08 00 00</code></pre><p id="r-386025" data-claire-element-id="386025">Ce fichier contient les 4 caractères « RIFF » en <em>big endian</em> et un entier sur 4 octets en <em>little endian</em> (2084 en décimal).</p><p id="r-386026" data-claire-element-id="386026">Notre but est de lire ce fichier avec PHP et d'afficher les 4 caractères, et l'entier en décimal. Nous allons utiliser la fonction <strong><a href="http://fr.php.net/unpack">unpack</a></strong>.</p><p id="r-386027" data-claire-element-id="386027">Elle prend en paramètre le format (la structure, si vous préférez) et les données binaires.</p><p id="r-386028" data-claire-element-id="386028">Pour le format, il faut consulter la documentation de la fonction <a href="http://fr.php.net/manual/en/function.pack.php">pack</a> (nous la verrons plus tard). On apprend que le format doit être constitué d'un caractère pour identifier le type de données, suivi d'un nombre indiquant la quantité (optionnel). Les différents types de formats sont séparés par des « / ».</p><p id="r-386029" data-claire-element-id="386029">Nous, nous avons 4 caractères et un entier sur 32 bits (4 octets) en <em>little endian</em>. Selon la doc, le format devrait être quelque chose de ce type :</p><p id="r-386030" data-claire-element-id="386030"><cite>Citation : Format unpack</cite></p><blockquote id="r-386032" data-claire-element-id="386032"><p id="r-386031" data-claire-element-id="386031">c4riff/Vint</p></blockquote><p id="r-386033" data-claire-element-id="386033">J'ai donné les noms riff et int aux variables qui seront créées par unpack.</p><p id="r-386034" data-claire-element-id="386034">Maintenant, nous avons besoin des données ; pour les obtenir, nous allons lire le fichier avec fread(), mais nous allons l'ouvrir avec fopen() en mode <strong>binaire</strong>, en rajoutant <strong>b</strong> dans l'option d'ouverture !</p><pre id="r-386035" data-claire-element-id="386035"><code data-claire-semantic="html+php">&lt;?php
+$file = fopen('test.wav','rb'); // Ouvert en mode lecture / binaire
+$data = fread($file, 8); // Fichier de 8 octets
+$infos = unpack('c4riff/Vint',$data);
+?&gt;</code></pre><p id="r-386036" data-claire-element-id="386036">Avec ce code, les données sont stockées dans le tableau infos. Il ne reste plus qu'à les afficher !</p><pre id="r-386037" data-claire-element-id="386037"><code data-claire-semantic="html+php">&lt;?php
+$file = fopen('test.wav','rb'); // Ouvert en mode lecture / binaire
+$data = freaf($file, 8); // Fichier de 8 octets
+$infos = unpack('c4riff/Vint',$data);
+var_dump($infos);
+echo '&lt;br /&gt;';
+for($i = 0; $i &lt; 4; ++$i)
+{
+	echo chr(current($infos));
+	next($infos);
+}
+
+echo $infos['int'];
+?&gt;</code></pre><p id="r-386038" data-claire-element-id="386038">Le tableau infos contient :</p><pre id="r-386039" data-claire-element-id="386039"><code data-claire-semantic="html+php">array(5) { 
+     [&quot;riff1&quot;]=&gt;  int(82) 
+     [&quot;riff2&quot;]=&gt;  int(73) 
+     [&quot;riff3&quot;]=&gt;  int(70) 
+     [&quot;riff4&quot;]=&gt;  int(70) 
+     [&quot;int&quot;]=&gt;  int(2084) 
+}</code></pre><p id="r-386040" data-claire-element-id="386040">Avec chr(), on obtient le caractère correspondant à la valeur ASCII indiquée en paramètre : cela permet d'afficher RIFF.</p><p id="r-386041" data-claire-element-id="386041">Ce code ne présente aucune autre difficulté, et maintenant vous savez lire un fichier binaire !</p><h3 id="r-lecture-d-un-fichier-wav" data-claire-element-id="386053">Lecture d'un fichier .wav</h3><p id="r-386043" data-claire-element-id="386043">Bien ! Maintenant, nous allons lire un fichier .wav et donc implémenter quelques fonctions :</p><ul id="r-386050" data-claire-element-id="386050"><li id="r-386045" data-claire-element-id="386045"><p id="r-386044" data-claire-element-id="386044">boolisWav(string$file) : vérifie si le fichier est un fichier .wav ;</p></li><li id="r-386047" data-claire-element-id="386047"><p id="r-386046" data-claire-element-id="386046">arraygetHeader(string$file) : retourne l'en-tête du fichier ;</p></li><li id="r-386049" data-claire-element-id="386049"><p id="r-386048" data-claire-element-id="386048">stringgetData(string$file) : retourne les données brutes (binaires) du fichier .wav.</p></li></ul><p id="r-386051" data-claire-element-id="386051">J'utilise des fichiers .wav générés par le site <a href="http://www.research.att.com/~ttsweb/tts/demo.php">http://www.research.att.com/~ttsweb/tts/demo.php</a> (usage non commercial uniquement).<br/> J'ai enregistré des fichier « 1 », « 2 », « 3 », etc. pour mes tests.</p><p id="r-386052" data-claire-element-id="386052">J'ai créé un dossier dans lequel j'ai mis wav.php qui contient les fonctions pour générer le son, et un dossier sounds qui contient les fichiers .wav.<br/> Vous pouvez placer dans ce dossier nos fichiers captcha.php, formulaire.php et verification.php.</p><h2 id="r-iswav" data-claire-element-id="386072">isWav</h2><p id="r-386055" data-claire-element-id="386055">Pour cette fonction, nous allons lire certains blocs de l'en-tête du fichier et vérifier que :</p><ul id="r-386068" data-claire-element-id="386068"><li id="r-386057" data-claire-element-id="386057"><p id="r-386056" data-claire-element-id="386056">les 4 premiers octets contiennent la chaîne <strong>RIFF</strong> ;</p></li><li id="r-386059" data-claire-element-id="386059"><p id="r-386058" data-claire-element-id="386058">les octets 4 à 8 contiennent un entier égal à la taille du fichier moins 8 ;</p></li><li id="r-386061" data-claire-element-id="386061"><p id="r-386060" data-claire-element-id="386060">les octets 8 à 12 contiennent la chaîne <strong>WAVE</strong> ;</p></li><li id="r-386063" data-claire-element-id="386063"><p id="r-386062" data-claire-element-id="386062">les octets 12 à 16 contiennent la chaîne <strong>fmt</strong> ;</p></li><li id="r-386065" data-claire-element-id="386065"><p id="r-386064" data-claire-element-id="386064">les octets 36 à 40 contiennent la chaîne <strong>data</strong> ;</p></li><li id="r-386067" data-claire-element-id="386067"><p id="r-386066" data-claire-element-id="386066">les octets 40 à 44 contiennent la taille du fichier moins 44.</p></li></ul><p id="r-386069" data-claire-element-id="386069">Si toutes ces conditions sont réunies, on est en face d'un fichier .wav et l'on retourne true.</p><pre id="r-386070" data-claire-element-id="386070"><code data-claire-semantic="html+php">&lt;?php
+function isWav($file)
+{
+	if(is_file($file) &amp;&amp; is_readable($file))
+	{
+		$res = fopen($file, 'rb');
+		$data = fread($res, 16);
+		$h = unpack('H8riff/Vfile_size/H8wave/H8fmt',$data);
+
+		if($h['riff'] === '52494646' &amp;&amp;
+		   $h['file_size'] === filesize($file) - 8 &amp;&amp;
+		   $h['wave'] === '57415645' &amp;&amp;
+		   $h['fmt'] === '666d7420')
+		{
+							
+			fseek($res, 36); // position au bloc data
+		
+			$data = fread($res,8);
+			fclose($res);
+			
+			$h = unpack('H8data/Vdata_size',$data);
+			
+			if($h['data'] === '64617461' &amp;&amp;
+			   $h['data_size'] === filesize($file) - 44)
+					return true;
+			else
+					return false;
+		}
+		else{
+			fclose($res);
+			return false;
+		}
+	}
+	else{
+		return false;
+	}
+}?&gt;</code></pre><p id="r-386071" data-claire-element-id="386071">J'ai utilisé le format H8 pour les chaînes de caractères : comme cela, j'ai une chaîne qui contient la forme hexadécimale telle que l'on peut la voir dans un éditeur du même type. On traduit donc <strong>RIFF</strong> par « 52494646 », pareil pour <strong>WAVE</strong>, <strong>fmt</strong> et <strong>data</strong>. On vérifie aussi la taille du fichier.</p><h2 id="r-getheader" data-claire-element-id="386080">getHeader</h2><p id="r-386073" data-claire-element-id="386073">Cette fonction retournera un tableau donné par un unpack() de l'en-tête du fichier .wav.<br/> Il s'agit juste de définir le format du paramètre pour unpack() ; avec les informations sur le fichier .wav, ça ne devrait pas poser de problème.</p><p id="r-386074" data-claire-element-id="386074">On vérifiera que c'est bien un fichier .wav avec isWav().</p><pre id="r-386075" data-claire-element-id="386075"><code data-claire-semantic="html+php">&lt;?php
+function getHeader($file)
+{
+	if(isWav($file))
+	{
+		$res = fopen($file,'rb');
+		$data = fread($res, 44);
+		fclose($res);
+		
+		// Riff chunk descriptor
+		$entete_unpack = 'H8FileTypeBlocID/VFileSize/H8FileFormatID';
+		// Sub Chunck fmt
+		$entete_unpack .='/H8FormatBlocID/VBlocSize/vAudioFormat/vNbrCanaux/VFrequence/VBytePerSec/vBytePerBloc';
+		$entete_unpack .='/vBitsPerSample';
+		// Sub Chunck data
+		$entete_unpack .='/H8DataBlocID/VDataSize';
+		return unpack($entete_unpack,$data);
+	}
+	else{
+		return false;
+	}
+}
+?&gt;</code></pre><p id="r-386076" data-claire-element-id="386076">On lit les 44 premiers octets (taille de l'en-tête), puis on utilise unpack sur les données binaires.<br/> J'ai utilisé un format en me basant sur les tableaux du format .wav (<a href="http://fr.wikipedia.org/wiki/Wav%23En-t.C3.AAte_de_fichier_WAV">Wav#En-t.C3.AAte_de_fichier_WAV</a> et <a href="http://ccrma.stanford.edu/CCRMA/Courses/422/projects/WaveFormat/">http://ccrma.stanford.edu/CCRMA/Course [...] s/WaveFormat/</a>).</p><p id="r-386077" data-claire-element-id="386077">Vous pouvez vous amuser à faire :</p><pre id="r-386078" data-claire-element-id="386078"><code data-claire-semantic="html+php">&lt;pre&gt;
+&lt;?php var_dump(getHeader('sounds/1.wav')); ?&gt;
+&lt;/pre&gt;</code></pre><p id="r-386079" data-claire-element-id="386079">pour voir les informations du fichier .wav !</p><h2 id="r-getdata" data-claire-element-id="386103">getData</h2><p id="r-386081" data-claire-element-id="386081">getData() est la fonction la plus simple à coder :</p><ul id="r-386088" data-claire-element-id="386088"><li id="r-386083" data-claire-element-id="386083"><p id="r-386082" data-claire-element-id="386082">on vérifie que le fichier est un fichier .wav ;</p></li><li id="r-386085" data-claire-element-id="386085"><p id="r-386084" data-claire-element-id="386084">on lit du 44e octet à la fin du fichier ;</p></li><li id="r-386087" data-claire-element-id="386087"><p id="r-386086" data-claire-element-id="386086">on retourne les données brutes (pas de unpack).</p></li></ul><pre id="r-386089" data-claire-element-id="386089"><code data-claire-semantic="html+php">&lt;?php
+function getData($file)
+{
+	if(isWav($file))
+	{
+		$res = fopen($file, 'rb');
+		fseek($res, 44);
+		return fread($res, filesize($file) - 44);
+	}
+	else{
+		return false;
+	}
+}
+?&gt;</code></pre><p id="r-386090" data-claire-element-id="386090">Maintenant, nous avons toutes les fonctions pour lire n'importe quel fichier .wav !</p><p id="r-386091" data-claire-element-id="386091">Dans la partie suivante, nous allons voir comment en créer un.</p><h3 id="r-ecriture-d-un-fichier-wav" data-claire-element-id="386102">Écriture d'un fichier .wav</h3><p id="r-386092" data-claire-element-id="386092">Nous allons maintenant voir comment créer un fichier .wav ! Nous allons utiliser la fonction <a href="http://fr.php.net/pack">pack</a> et les fonctions de lecture que nous venons de créer.</p><p id="r-386093" data-claire-element-id="386093">Pack fonctionne comme unpack() mais de façon inverse : elle prend en paramètre des entiers, des chaînes de caractères, n'importe quelle variable et crée une chaîne binaire.</p><p id="r-386094" data-claire-element-id="386094">Notre but est en fait de combiner plusieurs fichiers .wav pour en créer un nouveau qui « lira » notre captcha. Dans cet exemple, nous allons lire un nombre, on combinera donc des fichiers « 1 », « 2 » , « 3 », etc. J'ai créé des fichiers comme cela avec <a href="http://www.research.att.com/~ttsweb/tts/demo.php">http://www.research.att.com/~ttsweb/tts/demo.php</a>.</p><p id="r-386095" data-claire-element-id="386095">Maintenant, la liste des fonctions à créer :</p><ul id="r-386100" data-claire-element-id="386100"><li id="r-386097" data-claire-element-id="386097"><p id="r-386096" data-claire-element-id="386096">array listWav($mot) : liste les fichiers qu'il faut assembler pour obtenir le mot ;</p></li><li id="r-386099" data-claire-element-id="386099"><p id="r-386098" data-claire-element-id="386098">string toWav($mot) : renvoie les données binaires d'un fichier .wav créé à partir de la liste des fichiers retournée par listWav.</p></li></ul><p id="r-386101" data-claire-element-id="386101">On utilisera donc listWav pour générer la liste des fichiers nécessaires et toWav pour les assembler.</p><h2 id="r-listwav" data-claire-element-id="386107">listWav</h2><p id="r-386104" data-claire-element-id="386104">Vous ne devriez rencontrer aucune difficulté à écrire la fonction listWav :</p><pre id="r-386105" data-claire-element-id="386105"><code data-claire-semantic="html+php">&lt;?php
+function listWav($mot)
+{
+	$l = strlen($mot);
+	$list = array();
+	for($i = 0; $i &lt; $l; ++$i)
+	{
+		$list[] = 'sounds/'.$mot[$i].'.wav';
+	}
+	return $list;
+}
+?&gt;</code></pre><p id="r-386106" data-claire-element-id="386106">Précisez bien le chemin des fichiers par rapport à wav.php (ici sounds/<a href="http://fr.wikipedia.org/wiki/Foo">$foo</a>.wav).</p><h2 id="r-towav" data-claire-element-id="386121">toWav</h2><p id="r-386108" data-claire-element-id="386108">Cette fonction est un peu plus délicate ( ^^ ). <br/> Nous allons maintenir dans notre fonction un <a href="http://fr.wikipedia.org/wiki/Mémoire_tampon">buffer</a> qui contiendra les données du fichier .wav que nous allons créer.<br/> L'en-tête de notre fichier sera similaire à celui des autres fichiers, mis à part le fait qu'il nous faudra calculer les différentes tailles (dataSize et fileSize).<br/> On écrira donc en premier toutes les données (bloc data), auxquelles on ajoutera en dernier l'en-tête approprié.</p><p id="r-386109" data-claire-element-id="386109">On récupère la liste des fichiers .wav. S'il n'y en a qu'un seul, on peut renvoyer le contenu du fichier ; sinon on va devoir <strong>créer</strong> un fichier spécifique au mot. Pour cela, on prend les fichiers un par un et on vérifie que les informations (en-têtes) sont identiques pour tous les fichiers. En effet, pas question d'assembler un fichier stéréo avec un fichier mono, par exemple. On vérifie donc chaque paramètre grâce à la fonction getHeader().<br/> Ensuite, on récupère les données de chaque fichier que l'on ajoute au buffer.</p><p id="r-386110" data-claire-element-id="386110">Puis on crée l'en-tête de notre nouveau fichier avec la fonction pack(), en ayant préalablement calculé la taille des données grâce à la fonction strlen(). <br/> Pour finir, on renvoie les données binaires. On pourra adapter le script pour enregistrer le fichier .wav avec fopen et fwrite.</p><pre id="r-386111" data-claire-element-id="386111"><code data-claire-semantic="html+php">&lt;?php
+function toWav($mot)
+	{
+		$list = listWav($mot);
+		
+		$datas = ''; // Buffer data
+		$nbFiles = count($list);
+		
+		/* On vérifie avant tout que les différents
+		fichiers ont les mêmes format, nombre de canaux, 
+		fréquence, nombre d'octets par seconde, d'octets par échantillon (tous canaux), 
+		de bits par échantillon, etc. */
+		
+		if($nbFiles &gt; 0)
+		{
+			if($nbFiles === 1)
+				return file_get_contents(current($list));
+				
+			// On se base donc sur le premier fichier de la liste et on vérifie le reste :
+			$infos = getHeader(current($list));
+			for($i = 1; $i &lt; $nbFiles; ++$i)
+			{
+				$h = getHeader($list[$i]);
+				if($h['AudioFormat'] !== $infos['AudioFormat'])
+					die('AudioFormat in '.$list[$i].' different');
+				if($h['NbrCanaux'] !== $infos['NbrCanaux'])
+					die('NbrCanaux in '.$list[$i].' different');
+				if($h['Frequence'] !== $infos['Frequence'])
+					die('Frequence in '.$list[$i].' different');
+				if($h['BytePerSec'] !== $infos['BytePerSec'])
+					die('BytePerSec in '.$list[$i].' different');
+				if($h['BytePerBloc'] !== $infos['BytePerBloc'])
+					die('BytePerBloc in '.$list[$i].' different');
+				if($h['BitsPerSample'] !== $infos['BitsPerSample'])
+					die('BitsPerSample in '.$list[$i].' different');
+				
+				foreach($list as $file)
+				{
+					$datas .= getData($file);
+				}
+				
+				$datasize = strlen($datas);
+				$filesize = 36 + $datasize; 
+				$entete_pack = 'H8VH8H8VvvVVvvH8V';
+				
+				$file = pack($entete_pack, 
+				 	$infos['FileTypeBlocID'], $filesize,$infos['FileFormatID'],
+				 	$infos['FormatBlocID'], $infos['BlocSize'], $infos['AudioFormat'],
+				 	$infos['NbrCanaux'], $infos['Frequence'], $infos['BytePerSec'],
+				 	$infos['BytePerBloc'],$infos['BitsPerSample'],$infos['DataBlocID'],
+				 	$datasize) . $datas;
+				
+				return $file;
+			}
+		}
+		else{
+			return false;
+		}
+	}
+	
+	session_start();
+	header('Content-type: audio/x-wav');
+	header('Content-Disposition: attachment; filename=&quot;captcha.wav&quot;');
+	echo toWav($_SESSION['captcha']);
+
+/* Pour enregistrer le fichier, on aurait fait : 
+
+	$filename = uniqid().'.wav';
+	$res = fopen($filename, 'wb');
+	fwrite($res, toWav($_SESSION['captcha']));
+	fclose($res);
+	
+*/
+?&gt;</code></pre><p id="r-386112" data-claire-element-id="386112">Vous pouvez tester le script en allant sur la page wav.php et en remplaçant <code data-claire-semantic="html+php">&lt;?php echo toWav($_SESSION['captcha']); ?&gt; </code> par <code data-claire-semantic="html+php">&lt;?php echo toWav('cequevousvoulez0123456789'); ?&gt; </code>, du moment que les fichiers sons (a.wav, b.wav, etc.) existent.</p><h3 id="r-integration-dans-notre-script-de-captcha" data-claire-element-id="386120">Intégration dans notre script de captcha</h3><p id="r-386113" data-claire-element-id="386113">À présent, nous allons intégrer nos fonctions qui génèrent des fichiers .wav dans notre script de captcha.</p><p id="r-386114" data-claire-element-id="386114">Il suffit juste de mettre un lien vers wav.php pour la lecture du fichier .wav.</p><p id="r-386115" data-claire-element-id="386115">J'utilise cette image pour le lien :</p><figure id="r-386117" data-claire-element-id="386118"><img id="r-386116" data-claire-element-id="386116" src="medias/uploads.siteduzero.com_files_129001_130000_129075.png" alt="Image utilisateur"/></figure><p id="r-386119" data-claire-element-id="386119">(<a href="../../commons.wikimedia.org/wiki/File_Crystal_Clear_mimetype_sound.html">GNU/LGPL</a>).</p><h2 id="r-formulaire-php" data-claire-element-id="386125">formulaire.php</h2><p id="r-386122" data-claire-element-id="386122">On ajoute juste un lien vers wav.php :</p><pre id="r-386123" data-claire-element-id="386123"><code data-claire-semantic="html+php">&lt;label for=&quot;captcha&quot;&gt;Recopiez le mot : &lt;img src=&quot;captcha.php&quot; alt=&quot;Captcha&quot; /&gt; &lt;a href=&quot;wav.php&quot;&gt;&lt;img src=&quot;sound.png&quot; alt=&quot;ecouter le captcha&quot; /&gt;&lt;/a&gt;&lt;/label&gt;</code></pre><p id="r-386124" data-claire-element-id="386124"><a href="http://tutos.alwaysdata.net/captcha/sound1/">Source du fichier</a>.</p><h2 id="r-captcha-php" data-claire-element-id="386128">captcha.php</h2><p id="r-386126" data-claire-element-id="386126">Je n'ai rien eu à changer dans captcha.php.</p><p id="r-386127" data-claire-element-id="386127"><a href="http://tutos.alwaysdata.net/captcha/sound1/">Source du fichier</a>.</p><h2 id="r-wav-php" data-claire-element-id="386140">wav.php</h2><p id="r-386129" data-claire-element-id="386129">J'ai choisi de ne pas enregistrer le fichier et d'utiliser la fonction toWav() de cette manière :</p><pre id="r-386130" data-claire-element-id="386130"><code data-claire-semantic="html+php">&lt;?php
+
+function toWav(){
+ // [...]
+
+$file = pack($entete_pack, 
+ 	$infos['FileTypeBlocID'], $filesize,$infos['FileFormatID'],
+ 	$infos['FormatBlocID'], $infos['BlocSize'], $infos['AudioFormat'],
+ 	$infos['NbrCanaux'], $infos['Frequence'], $infos['BytePerSec'],
+ 	$infos['BytePerBloc'],$infos['BitsPerSample'],$infos['DataBlocID'],
+ 	$datasize) . $datas;
+
+return $file;
+
+}
+?&gt;</code></pre><p id="r-386131" data-claire-element-id="386131">Pour ainsi pouvoir envoyer le fichier en dehors de la fonction :</p><pre id="r-386132" data-claire-element-id="386132"><code data-claire-semantic="html+php">&lt;?php
+session_start();
+header('Content-type: audio/x-wav');
+header('Content-Disposition: attachment; filename=&quot;captcha.wav&quot;');
+echo toWav($_SESSION['captcha']); 
+?&gt;</code></pre><p id="r-386133" data-claire-element-id="386133"><a href="http://tutos.alwaysdata.net/captcha/sound1/">Source du fichier</a>.</p><p id="r-386134" data-claire-element-id="386134"><a href="http://tutos.alwaysdata.net/captcha/sound1"><strong>Exemple</strong></a></p><p id="r-386135" data-claire-element-id="386135">Vous avez dorénavant un captcha à la fois résistant et accessible !</p><p id="r-386136" data-claire-element-id="386136">Ce chapitre vous a permis - je l'espère - d'apprendre à manipuler les fichiers binaires. Vous pouvez utiliser le même principe pour éditer des fichiers .mp3 ou .zip et même des images (.png, .jpeg...) sans passer par une bibliothèque.</p><p id="r-386137" data-claire-element-id="386137">J'espère que ce cours vous aura appris bien plus que la création de captchas : c'est en effet un type d'application qui permet d'utiliser des notions de programmation originales et intéressantes.</p><p id="r-386138" data-claire-element-id="386138">Si vous avez apprécié ce tutoriel, merci de laisser un petit message en commentaire. Si vous avez des difficultés, n'hésitez pas à me contacter par MP et / ou à demander de l'aide sur le forum.</p><p id="r-386139" data-claire-element-id="386139">Merci.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-captchas-anti-bot">Les captchas anti-bot</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-captchas-anti-bot/creer-un-captcha">
+Créer un captcha
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/les-captchas-anti-bot.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 06:42:31 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/les-captchas-anti-bot.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:12:19 GMT -->
+</html>

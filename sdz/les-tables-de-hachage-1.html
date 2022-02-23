@@ -1,0 +1,1367 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/les-tables-de-hachage-1.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 04:57:56 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/les-tables-de-hachage-1.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:57:41 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Les tables de hachage</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/les-tables-de-hachage-1.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Les tables de hachage</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Lestablesdehachage">Les tables de hachage</a><br/><a href="#Lestablesdesymbolesmapsetdictionnaires">Les tables de symboles : maps et dictionnaires</a><br/><a href="#Leprincipedestablesdehachage">Le principe des tables de hachage</a><br/><a href="#Gestionsdescollisions">Gestions des collisions</a><br/><a href="#L039importancedesdonnesetlefacteurdecharge">L&#039;importance des données et le facteur de charge</a><br/><a href="#Implmentationdelatabledehachage">Implémentation de la table de hachage</a><br/><a href="#Implmentationdusondageetdudoublehachage">Implémentation du sondage et du double hachage</a><br/><a href="#Implmentationduchanagelinaire">Implémentation du chaînage linéaire</a><br/><a href="#Lafonctiondehachage">La fonction de hachage</a><br/><a href="#Discussiondesperformancesetamliorations">Discussion des performances et améliorations</a><br/></div>
+<a name="Lestablesdehachage"></a><h2>Les tables de hachage</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/les-tables-de-symboles-maps-et-dictionnaires">
+<span class="next">Les tables de symboles : maps et dictionnaires</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-399663" data-claire-element-id="399663">Bonjour à tous et bienvenue dans ce modeste tutoriel ! Aujourd'hui nous allons explorer et décortiquer une structure de donnée particulière : <strong>les tables de hachage</strong> ! Au programme : à quoi cela sert, comment cela fonctionne, une rapide analyse sur les temps d'exécutions et en prime une implémentation en Java (que le monde est bien fait :p ).</p><aside id="r-399665" data-claire-element-id="399665" data-claire-semantic="information"><p id="r-399664" data-claire-element-id="399664">Pour aborder ce tutoriel, il n'est pas nécessaire d'avoir des connaissances particulières sur les structures de données, nous allons reprendre tout depuis zéro. En soit, le concept est facile...</p></aside><aside id="r-399667" data-claire-element-id="399667" data-claire-semantic="warning"><p id="r-399666" data-claire-element-id="399666">... néanmoins je ne détaillerai pas les mécanismes de Java et de la POO utilisés pour l'implémentation (ce qui explique le niveau intermédiaire), <a href="http://www.siteduzero.com/tutoriel-3-10601-programmation-en-java.html">le tutoriel de cysboy</a> le fera mieux de toute façon ;) . Sachez juste que j'utiliserai des exceptions et des interfaces.</p></aside><p id="r-399668" data-claire-element-id="399668">Bonne lecture !</p><p id="r-399669" data-claire-element-id="399669"><em>Note : j'ai choisi Java comme langage par <strong>facilité</strong> et afin de donner des pistes simples d'accès vers un autre langage comme le C ou le C++. Il faut savoir que Java intègre déjà du code pour les tables de symbole (notamment <a href="http://download.oracle.com/javase/6/docs/api/java/util/Map.html">une interface</a>), et même une <a href="http://download.oracle.com/javase/6/docs/api/java/util/Hashtable.html">implémentation</a>. Nous n'allons pas aborder ces objets existants, vu que le but est de comprendre et recréer les mécanismes internes en partant de rien ;) .</em></p>
+</div><a name="Lestablesdesymbolesmapsetdictionnaires"></a><h2>Les tables de symboles : maps et dictionnaires</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/le-principe-des-tables-de-hachage">
+<span class="next">Le principe des tables de hachage</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-399670" data-claire-element-id="399670">Avant de commencer, un petit rappel sur le type de donnée abstrait que sont <strong>les tables de symboles</strong>. Le but du jeu est en fait de stocker des paires &quot;clé-valeur&quot; et de pouvoir y accéder efficacement, en utilisant seulement la clé. Un exemple sera plus parlant :) .</p><p id="r-399671" data-claire-element-id="399671">Imaginez un répertoire dans un téléphone portable : la clé serait le nom du contact tandis que la valeur serait le numéro de téléphone. Ou encore un dictionnaire, où vous associez un mot à une définition. Dans les deux cas, vous cherchez une clé (un nom/mot) pour retrouver une information (le numéro de téléphone/la définition).</p><figure id="r-399673" data-claire-element-id="399674"><img id="r-399672" data-claire-element-id="399672" src="medias/uploads.siteduzero.com_files_243001_244000_243765.png" alt="Image utilisateur"/></figure><p id="r-399675" data-claire-element-id="399675"><em>(Avouez-le, vous êtes jaloux de ne pas avoir Chuck Norris dans vos contacts :p .)</em></p><p id="r-399676" data-claire-element-id="399676">Autre exemple, qui parlera plus aux webmasters et programmeurs PHP : les news des sites web. Chacune possède un numéro d'identification unique qui permet de les distinguer, c'est la clé (le fameux champ 'id' <a href="http://www.siteduzero.com/tutoriel-3-231261-tp-un-blog-avec-des-commentaires.html">du tutoriel de M@teo21</a>), le reste de la news (titre, contenu, etc) étant la valeur associée. Pour les autres qui ne voient pas trop de quoi je parle, vous pouvez également penser au PID que les systèmes d'exploitation assignent aux programmes chargés en mémoire.</p><figure id="r-399678" data-claire-element-id="399679"><img id="r-399677" data-claire-element-id="399677" src="medias/uploads.siteduzero.com_files_243001_244000_243766.png" alt="Image utilisateur"/></figure><p id="r-399680" data-claire-element-id="399680"><em>(Extrait de phpMyAdmin.)</em></p><aside id="r-399683" data-claire-element-id="399684" data-claire-semantic="information"><img id="r-399684" data-claire-element-id="399683" src="medias/uploads.siteduzero.com_files_243001_244000_243767.png" alt="Image utilisateur"/><p id="r-399681" data-claire-element-id="399681">Les plus curieux d'entre vous auront peut être remarqué le tableau ci-dessous, dans l'onglet &quot;Structure&quot; d'une table SQL dans phpMyAdmin (pour le voir, il est possible que vous deviez cliquer sur un lien &quot;Détails&quot;).</p><p id="r-399682" data-claire-element-id="399682">En fait, c'est la configuration de la structure de table de symbole de la table ! On peut voir que la clé est le champ 'id', qu'il y a 6 éléments (c'est la cardinalité), que la clé est unique et que le type de structure de donnée est un <a href="http://fr.wikipedia.org/wiki/Arbre_B">B-tree</a>.</p></aside><h2 id="r-map-ou-dictionnaire" data-claire-element-id="399690">Map ou dictionnaire ?</h2><p id="r-399685" data-claire-element-id="399685">C'est ici que parmi les tables de symboles on distingue deux types : les <strong>tables associatives</strong> (<em>maps</em> en anglais) et <strong>les dictionnaires</strong>. Ce sont exactement les mêmes structures avec une légère différence (mais de taille !) : les clés des <em>maps</em> sont uniques tandis que celles d'un dictionnaire ne le sont pas nécessairement. Cela peut paraître anodin, mais dans nos exemples c'est hyper important !</p><p id="r-399686" data-claire-element-id="399686">Ainsi, le répertoire téléphonique est un dictionnaire : vous pourriez très bien avoir deux contacts qui portent le même nom, mais qui ont des numéros différents. Ou bien vous pourriez associer à une même personne plusieurs numéros, par exemple son téléphone fixe et son téléphone portable. Un dictionnaire est également un... dictionnaire ( :D ) puisque certains mots peuvent avoir plusieurs significations.</p><p id="r-399687" data-claire-element-id="399687">A l'opposé, l'unicité des id des news d'un site et des PIDs est primordiale ; imaginez que deux news possèdent le même id, comment savoir laquelle consulter ? Cela serait pire avec les PIDs ; si vous voulez terminer un programme avec un PID qui n'est pas unique, comment faire la différence ?</p><aside id="r-399689" data-claire-element-id="399689" data-claire-semantic="warning"><p id="r-399688" data-claire-element-id="399688">Cette distinction est très importante lorsqu'on programmera les tables de hachage, pensez y car le comportement est radicalement différent !</p></aside><h2 id="r-mode-d-emploi" data-claire-element-id="399710">Mode d'emploi</h2><p id="r-399691" data-claire-element-id="399691">Définissons à présent l'interface d'une table de symbole, autrement dit ce que l'on peut faire avec ; on a les méthodes suivantes :</p><ul id="r-399702" data-claire-element-id="399702"><li id="r-399693" data-claire-element-id="399693"><p id="r-399692" data-claire-element-id="399692">put(clé, valeur) : permet d'ajouter une paire &quot;clé-valeur&quot; ;</p></li><li id="r-399695" data-claire-element-id="399695"><p id="r-399694" data-claire-element-id="399694">get(clé) : comme son nom l'indique, retourne la valeur associée à une clé ;</p></li><li id="r-399697" data-claire-element-id="399697"><p id="r-399696" data-claire-element-id="399696">remove(clé) : je ne vous le cache pas plus longtemps, supprime une paire ;</p></li><li id="r-399699" data-claire-element-id="399699"><p id="r-399698" data-claire-element-id="399698">contains(clé) : retourne vrai si la clé se trouve dans la table, faux sinon ;</p></li><li id="r-399701" data-claire-element-id="399701"><p id="r-399700" data-claire-element-id="399700">size() : retourne le nombre de paires entrées dans la table.</p></li></ul><aside id="r-399704" data-claire-element-id="399704" data-claire-semantic="information"><p id="r-399703" data-claire-element-id="399703">Il existe d'autres opérations sur les clés, comme min qui retourne la plus petite clé, mais vu que les tables de hachage ne sont pas efficaces ni pratiques pour les réaliser, nous n'en discuterons pas.</p></aside><p id="r-399705" data-claire-element-id="399705">Voici l'interface Java que nous nous amuserons à implémenter par la suite :</p><pre id="r-399706" data-claire-element-id="399706"><code data-claire-semantic="java">public interface SymbolTable
+{
+	public void put(int key, Object value) throws HashTableException;
+	public Object get(int key) throws HashTableException;
+	public void remove(int key) throws HashTableException;
+	public boolean contains(int key);
+	public int size();
+}</code></pre><aside id="r-399708" data-claire-element-id="399708" data-claire-semantic="information"><p id="r-399707" data-claire-element-id="399707">Les exceptions sont là &quot;pour faire propre&quot;, si vous reprenez cette interface vous n'êtes pas obligé de les utiliser (même si cela reste plus élégant que des valeurs particulières ;) ). Pour ceux que cela intéresse, voici le code Java de cette exception.</p></aside><pre id="r-399709" data-claire-element-id="399709"><code data-claire-semantic="java">public class HashTableException extends Exception
+{
+	public HashTableException()         { super() ; }
+	public HashTableException(String s) { super(s); }
+}</code></pre><h2 id="r-implementations" data-claire-element-id="399713">Implémentations</h2><p id="r-399711" data-claire-element-id="399711">Il existe plusieurs manières d'implémenter ces méthodes : on peut citer un tableau, une liste liée, un arbre, ou encore... une table de hachage :) .</p><p id="r-399712" data-claire-element-id="399712">Pour maintenir le suspens, nous n'allons parler des temps d'exécution qu'à la fin de ce tutoriel, car les tables de hachage ont des performances extrêmement variables selon les situations, notamment à cause du mécanisme interne utilisé. Quand nous aurons vu les manières de concevoir une table de hachage, vous comprendrez tout de suite ;) .</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1">Les tables de hachage</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/les-tables-de-symboles-maps-et-dictionnaires">
+Les tables de symboles : maps et dictionnaires
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/le-principe-des-tables-de-hachage">
+Le principe des tables de hachage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/gestions-des-collisions">
+Gestions des collisions
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/l-importance-des-donnees-et-le-facteur-de-charge">
+L&#039;importance des données et le facteur de charge
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-de-la-table-de-hachage">
+Implémentation de la table de hachage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-du-sondage-et-du-double-hachage">
+Implémentation du sondage et du double hachage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-du-chainage-lineaire">
+Implémentation du chaînage linéaire
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/la-fonction-de-hachage">
+La fonction de hachage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/discussion-des-performances-et-ameliorations">
+Discussion des performances et améliorations
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/le-principe-des-tables-de-hachage">
+<span class="next">Le principe des tables de hachage</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Leprincipedestablesdehachage"></a><h2>Le principe des tables de hachage</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/les-tables-de-symboles-maps-et-dictionnaires">
+<span class="arrow"></span>
+<span class="next">Les tables de symboles : maps et dictionnaires</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/gestions-des-collisions">
+<span class="next">Gestions des collisions</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-399715" data-claire-element-id="399715">Rentrons enfin dans le vif du sujet : que sont ces fameux tables de hachage ? Derrière ce nom un peu barbare se cache un mécanisme très simple : les paires &quot;clé-valeur&quot; sont placées dans un tableau de manière efficace. En fait, au lieu de les ajouter l'une après l'autre comme on aurait tendance à faire dans un tableau, on va les <strong>éparpiller le plus uniformément possible</strong>.</p><p id="r-399716" data-claire-element-id="399716">Un peu de vocabulaire : le tableau porte généralement le nom de <em>bucket array</em> tandis que les cases, vides ou occupées, sont les <em>buckets</em>.</p><figure id="r-399718" data-claire-element-id="399719"><img id="r-399717" data-claire-element-id="399717" src="medias/uploads.siteduzero.com_files_243001_244000_243773.png" alt="Image utilisateur"/></figure><p id="r-399720" data-claire-element-id="399720">Bien évidemment, on ne va pas les mettre n'importe comment, sinon on ne saura plus les retrouver :p . Les indices de chaque paire sont déterminés par le <strong>hach code</strong> de la clé, qui est donné par une <strong>fonction de hachage</strong>. Oui, je sais, ces mots font peur, mais vous verrez que ce n'est pas si terrible que ça !</p><h2 id="r-une-histoire-de-hach-code" data-claire-element-id="399764">Une histoire de hach code</h2><p id="r-399721" data-claire-element-id="399721">Pour faire simple, le <strong>hach code</strong> d'un objet ou d'une variable est un entier qui lui est associé et qui est idéalement propre à chaque élément. C'est le résultat d'une fonction de hachage, on dit qu'elle hache l'élément.</p><p id="r-399722" data-claire-element-id="399722">On pourrait faire tout un cours sur les fonctions de hachage (<a href="http://www.siteduzero.com/tutoriel-3-32293-bien-utiliser-les-fonctions-de-hachage.html">Artefact2 en a même fait un tutoriel</a>), mais pour rester simple une bonne fonction de hachage (que l'on va appeler</p><figure id="r-399724" data-claire-element-id="399725"><img id="r-399723" data-claire-element-id="399723" src="medias/uploads.siteduzero.com_files_259001_260000_259416.png" alt="Image utilisateur"/></figure><p id="r-399726" data-claire-element-id="399726">dans le reste de ce tutoriel) doit respecter les deux conditions suivantes :</p><ul id="r-399738" data-claire-element-id="399738"><li id="r-399730" data-claire-element-id="399732"><img id="r-399731" data-claire-element-id="399730" src="medias/uploads.siteduzero.com_files_259001_260000_259415.png" alt="Image utilisateur"/><img id="r-399732" data-claire-element-id="399731" src="medias/uploads.siteduzero.com_files_259001_260000_259418.png" alt="Image utilisateur"/><p id="r-399727" data-claire-element-id="399727">si deux clés sont identiques, leur hachage l'est aussi ; si</p><p id="r-399728" data-claire-element-id="399728">, alors</p><p id="r-399729" data-claire-element-id="399729">;</p></li><li id="r-399735" data-claire-element-id="399737"><img id="r-399736" data-claire-element-id="399735" src="medias/uploads.siteduzero.com_files_259001_260000_259420.png" alt="Image utilisateur"/><img id="r-399737" data-claire-element-id="399736" src="medias/uploads.siteduzero.com_files_259001_260000_259419.png" alt="Image utilisateur"/><p id="r-399733" data-claire-element-id="399733">les hach codes doivent être tous uniques ; si</p><p id="r-399734" data-claire-element-id="399734">, alors</p></li></ul><p id="r-399739" data-claire-element-id="399739">La première condition est <strong>obligatoire</strong>, mais est assez facile à faire respecter, tandis que la seconde est beaucoup plus difficile à mettre en pratique (surtout dans le cas des tables de hachage).</p><p id="r-399740" data-claire-element-id="399740">En effet, les tables de hachage utilisent le hach code pour placer une paire dans un tableau, mais ce code peut potentiellement prendre n'importe quelle valeur (généralement de</p><figure id="r-399742" data-claire-element-id="399743"><img id="r-399741" data-claire-element-id="399741" src="medias/uploads.siteduzero.com_files_259001_260000_259423.png" alt="Image utilisateur"/></figure><p id="r-399744" data-claire-element-id="399744">à</p><figure id="r-399746" data-claire-element-id="399747"><img id="r-399745" data-claire-element-id="399745" src="medias/uploads.siteduzero.com_files_259001_260000_259422.png" alt="Image utilisateur"/></figure><p id="r-399748" data-claire-element-id="399748">). Il va donc falloir le <strong>compresser</strong>, c'est-à-dire le borner aux indices du tableau. On utilise pour cela une <strong>fonction de compression</strong> (que l'on va ici noter</p><figure id="r-399750" data-claire-element-id="399751"><img id="r-399749" data-claire-element-id="399749" src="medias/uploads.siteduzero.com_files_259001_260000_259421.png" alt="Image utilisateur"/></figure><p id="r-399752" data-claire-element-id="399752">). Ainsi, l'indice d'un élément i, qui sera donné par la fonction</p><figure id="r-399754" data-claire-element-id="399755"><img id="r-399753" data-claire-element-id="399753" src="medias/uploads.siteduzero.com_files_259001_260000_259424.png" alt="Image utilisateur"/></figure><p id="r-399756" data-claire-element-id="399756">, est défini ainsi :</p><figure id="r-399758" data-claire-element-id="399759"><img id="r-399757" data-claire-element-id="399757" src="medias/uploads.siteduzero.com_files_259001_260000_259425.png" alt="Image utilisateur"/></figure><p id="r-399760" data-claire-element-id="399760">Par exemple, imaginons que j'ajoute le numéro de téléphone Jean-Paul Belmondo (pourquoi pas ^^ ). L'ajout se déroulera selon le schéma ci-dessous.</p><figure id="r-399762" data-claire-element-id="399763"><img id="r-399761" data-claire-element-id="399761" src="medias/uploads.siteduzero.com_files_243001_244000_243785.png" alt="Image utilisateur"/></figure><h2 id="r-exemple-avec-des-chiffres" data-claire-element-id="399829">Exemple avec des chiffres</h2><p id="r-399765" data-claire-element-id="399765">Illustrons le mécanisme que nous allons implémenter avec un petit exemple numérique, cela ne sera pas de trop ;) . Imaginons que l'on dispose des fonctions suivantes :</p><figure id="r-399767" data-claire-element-id="399768"><img id="r-399766" data-claire-element-id="399766" src="medias/uploads.siteduzero.com_files_259001_260000_259430.png" alt="Image utilisateur"/></figure><figure id="r-399770" data-claire-element-id="399771"><img id="r-399769" data-claire-element-id="399769" src="medias/uploads.siteduzero.com_files_259001_260000_259429.png" alt="Image utilisateur"/></figure><aside id="r-399775" data-claire-element-id="399778" data-claire-semantic="information"><img id="r-399776" data-claire-element-id="399775" src="medias/uploads.siteduzero.com_files_259001_260000_259428.png" alt="Image utilisateur"/><img id="r-399777" data-claire-element-id="399776" src="medias/uploads.siteduzero.com_files_259001_260000_259427.png" alt="Image utilisateur"/><img id="r-399778" data-claire-element-id="399777" src="medias/uploads.siteduzero.com_files_259001_260000_259426.png" alt="Image utilisateur"/><p id="r-399772" data-claire-element-id="399772">Pour ceux qui sont allergiques aux maths et/ou qui ne connaissent pas la fonction modulo (mod ou %), il s'agit du reste d'une division entière. Ici, par exemple, on a</p><p id="r-399773" data-claire-element-id="399773">,</p><p id="r-399774" data-claire-element-id="399774">et</p></aside><p id="r-399779" data-claire-element-id="399779">On aimerait insérer les clés suivantes dans un tableau de 10 cases (les valeurs associées n'ont ici pas beaucoup d'importance, on va les laisser de côté) : <strong>0, 4, 7</strong> et <strong>42</strong>(soyons fous :p ). En sortant la calculette, on obtient les résultats ci-dessous :</p><table id="r-399819" data-claire-element-id="399819"><thead id="r-399789" data-claire-element-id="399789"><tr id="r-399788" data-claire-element-id="399788"><th id="r-399781" data-claire-element-id="399781"><p id="r-399780" data-claire-element-id="399780">Clé</p></th><th id="r-399783" data-claire-element-id="399784"><img id="r-399784" data-claire-element-id="399783" src="medias/uploads.siteduzero.com_files_259001_260000_259416.png" alt="Image utilisateur"/><img id="r-399782" data-claire-element-id="399782" src="medias/uploads.siteduzero.com_files_259001_260000_259416.png" alt="Image utilisateur"/></th><th id="r-399786" data-claire-element-id="399787"><img id="r-399787" data-claire-element-id="399786" src="medias/uploads.siteduzero.com_files_259001_260000_259432.png" alt="Image utilisateur"/><img id="r-399785" data-claire-element-id="399785" src="medias/uploads.siteduzero.com_files_259001_260000_259432.png" alt="Image utilisateur"/></th></tr></thead><tbody id="r-399818" data-claire-element-id="399818"><tr id="r-399796" data-claire-element-id="399796"><td id="r-399791" data-claire-element-id="399791"><p id="r-399790" data-claire-element-id="399790">0</p></td><td id="r-399793" data-claire-element-id="399793"><p id="r-399792" data-claire-element-id="399792">14</p></td><td id="r-399795" data-claire-element-id="399795"><p id="r-399794" data-claire-element-id="399794">4</p></td></tr><tr id="r-399803" data-claire-element-id="399803"><td id="r-399798" data-claire-element-id="399798"><p id="r-399797" data-claire-element-id="399797">4</p></td><td id="r-399800" data-claire-element-id="399800"><p id="r-399799" data-claire-element-id="399799">26</p></td><td id="r-399802" data-claire-element-id="399802"><p id="r-399801" data-claire-element-id="399801">6</p></td></tr><tr id="r-399810" data-claire-element-id="399810"><td id="r-399805" data-claire-element-id="399805"><p id="r-399804" data-claire-element-id="399804">7</p></td><td id="r-399807" data-claire-element-id="399807"><p id="r-399806" data-claire-element-id="399806">35</p></td><td id="r-399809" data-claire-element-id="399809"><p id="r-399808" data-claire-element-id="399808">5</p></td></tr><tr id="r-399817" data-claire-element-id="399817"><td id="r-399812" data-claire-element-id="399812"><p id="r-399811" data-claire-element-id="399811">42</p></td><td id="r-399814" data-claire-element-id="399814"><p id="r-399813" data-claire-element-id="399813">140</p></td><td id="r-399816" data-claire-element-id="399816"><p id="r-399815" data-claire-element-id="399815">0</p></td></tr></tbody></table><aside id="r-399821" data-claire-element-id="399821" data-claire-semantic="information"><p id="r-399820" data-claire-element-id="399820">Par convention, pour ne pas confondre les clés et les indices dans du texte, les clés seront écrites en <strong>bleu gras</strong>.</p></aside><p id="r-399822" data-claire-element-id="399822">Et si on place les clés dans un tableau, on a</p><figure id="r-399824" data-claire-element-id="399825"><img id="r-399823" data-claire-element-id="399823" src="medias/uploads.siteduzero.com_files_259001_260000_259993.png" alt="Image utilisateur"/></figure><p id="r-399826" data-claire-element-id="399826">Diablement simple, n'est-il pas ? ^^</p><aside id="r-399828" data-claire-element-id="399828" data-claire-semantic="warning"><p id="r-399827" data-claire-element-id="399827">Vous avez ici un exemple de mauvaise fonction de hachage. En effet, les clés sont regroupées en une grappe (que l'on appelle <em>cluster</em> en anglais) ; idéalement il devrait y avoir des cases vides entre <strong>0</strong>, <strong>4</strong> et <strong>7</strong>. Ce manque d'uniformité dans la répartition peut engendrer de sérieux problèmes, dont nous discuterons juste après. En attendant, ne reprenez pas cette fonction de hachage, elle n'est là que pour l'exemple :) .</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1">Les tables de hachage</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/les-tables-de-symboles-maps-et-dictionnaires">
+Les tables de symboles : maps et dictionnaires
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/le-principe-des-tables-de-hachage">
+Le principe des tables de hachage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/gestions-des-collisions">
+Gestions des collisions
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/l-importance-des-donnees-et-le-facteur-de-charge">
+L&#039;importance des données et le facteur de charge
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-de-la-table-de-hachage">
+Implémentation de la table de hachage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-du-sondage-et-du-double-hachage">
+Implémentation du sondage et du double hachage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-du-chainage-lineaire">
+Implémentation du chaînage linéaire
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/la-fonction-de-hachage">
+La fonction de hachage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/discussion-des-performances-et-ameliorations">
+Discussion des performances et améliorations
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/les-tables-de-symboles-maps-et-dictionnaires">
+<span class="arrow"></span>
+<span class="next">Les tables de symboles : maps et dictionnaires</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/gestions-des-collisions">
+<span class="next">Gestions des collisions</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Gestionsdescollisions"></a><h2>Gestions des collisions</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/le-principe-des-tables-de-hachage">
+<span class="arrow"></span>
+<span class="next">Le principe des tables de hachage</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/l-importance-des-donnees-et-le-facteur-de-charge">
+<span class="next">L&#039;importance des données et le facteur de charge</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-399831" data-claire-element-id="399831">Tout paraît si beau, et pourtant un problème de taille peut survenir. Reprenons notre exemple, et imaginons que l'on veut insérer la clé <strong>22</strong>. On a</p><figure id="r-399833" data-claire-element-id="399834"><img id="r-399832" data-claire-element-id="399832" src="medias/uploads.siteduzero.com_files_259001_260000_259434.png" alt="Image utilisateur"/></figure><p id="r-399835" data-claire-element-id="399835">et</p><figure id="r-399837" data-claire-element-id="399838"><img id="r-399836" data-claire-element-id="399836" src="medias/uploads.siteduzero.com_files_259001_260000_259433.png" alt="Image utilisateur"/></figure><p id="r-399839" data-claire-element-id="399839">, et c'est la cata : l'indice 0 est déjà occupé par <strong>42</strong> !</p><p id="r-399840" data-claire-element-id="399840">Lorsque deux clés différentes sont envoyées sur la même case, on dit qu'il y a <strong>collision</strong>, et il va falloir les gérer car plus le tableau sera rempli plus il y aura de chances d'en avoir une !</p><p id="r-399841" data-claire-element-id="399841">Plusieurs manières existent ; nous n'allons en voir que trois, très différentes mais faciles à implémenter :</p><ul id="r-399848" data-claire-element-id="399848"><li id="r-399843" data-claire-element-id="399843"><p id="r-399842" data-claire-element-id="399842">le sondage ;</p></li><li id="r-399845" data-claire-element-id="399845"><p id="r-399844" data-claire-element-id="399844">le double hachage ;</p></li><li id="r-399847" data-claire-element-id="399847"><p id="r-399846" data-claire-element-id="399846">le chaînage linéaire.</p></li></ul><p id="r-399849" data-claire-element-id="399849">Des noms qui font peur, mais vous verrez ce n'est pas si difficile ;) .</p><h2 id="r-le-sondage-lineaire" data-claire-element-id="399898">Le sondage linéaire</h2><h3 id="r-le-principe-16" data-claire-element-id="399875">Le principe</h3><p id="r-399850" data-claire-element-id="399850">Appelé <em>probing</em> en anglais, cette méthode est la plus intuitive : si on a une collision, à partir de l'indice, on parcourt le tableau jusqu'à trouver une case libre ! Les indices parcourus peuvent être écrits sous la forme suivante, avec M la taille du tableau,</p><figure id="r-399852" data-claire-element-id="399853"><img id="r-399851" data-claire-element-id="399851" src="medias/uploads.siteduzero.com_files_259001_260000_259424.png" alt="Image utilisateur"/></figure><p id="r-399854" data-claire-element-id="399854">la fonction de hachage-compression, et i un indice qui varie de 0 à M :</p><figure id="r-399856" data-claire-element-id="399857"><img id="r-399855" data-claire-element-id="399855" src="medias/uploads.siteduzero.com_files_259001_260000_259437.png" alt="Image utilisateur"/></figure><p id="r-399858" data-claire-element-id="399858">Ainsi, pour placer <strong>22</strong>, vu que la case à l'indice 0 est occupée, on va vérifier en 1. C'est vide, on l'y insère !</p><figure id="r-399860" data-claire-element-id="399861"><img id="r-399859" data-claire-element-id="399859" src="medias/uploads.siteduzero.com_files_259001_260000_259995.png" alt="Image utilisateur"/></figure><p id="r-399862" data-claire-element-id="399862">Ajoutons la clé <strong>30</strong> ; on a</p><figure id="r-399864" data-claire-element-id="399865"><img id="r-399863" data-claire-element-id="399863" src="medias/uploads.siteduzero.com_files_259001_260000_259436.png" alt="Image utilisateur"/></figure><p id="r-399866" data-claire-element-id="399866">et</p><figure id="r-399868" data-claire-element-id="399869"><img id="r-399867" data-claire-element-id="399867" src="medias/uploads.siteduzero.com_files_259001_260000_259435.png" alt="Image utilisateur"/></figure><p id="r-399870" data-claire-element-id="399870">. La case 4 est occupée, on parcourt alors les indices jusqu'à trouver une case libre. La première case libre est en 7, on y met <strong>30</strong> !</p><figure id="r-399872" data-claire-element-id="399873"><img id="r-399871" data-claire-element-id="399871" src="medias/uploads.siteduzero.com_files_259001_260000_259996.png" alt="Image utilisateur"/></figure><p id="r-399874" data-claire-element-id="399874">Pour rechercher une clé, c'est le même principe : on va calculer son indice, puis on va descendre dans le tableau jusqu'à trouver la clé. Si on tombe sur une case vide, c'est que la clé n'existe pas (sinon on l'aurait rencontrée en chemin), idem si on revient au point de départ.</p><h3 id="r-une-petite-subtilite-la-suppression" data-claire-element-id="399886">Une petite subtilité : la suppression</h3><p id="r-399876" data-claire-element-id="399876">L'insertion de clés est relativement simple, mais c'est la suppression qui est délicate et qui peut rendre inefficace la recherche. Comme dit plus haut, on va descendre dans le tableau jusqu'à trouver la clé ou une case vide... Si la suppression rend une case vide sur le &quot;chemin&quot; à parcourir, alors on perdra l'accès à certaines clés !</p><p id="r-399877" data-claire-element-id="399877">Par exemple, imaginons qu'on supprime purement et simplement la clé <strong>7</strong> qui est à l'indice 5, après avoir inséré la clé <strong>30</strong>.</p><figure id="r-399879" data-claire-element-id="399880"><img id="r-399878" data-claire-element-id="399878" src="medias/uploads.siteduzero.com_files_259001_260000_259997.png" alt="Image utilisateur"/></figure><p id="r-399881" data-claire-element-id="399881">Dès lors, on ne saura jamais trouver <strong>30</strong> vu que le &quot;chemin&quot; pour y accéder passe par une case vide, à laquelle le programme va s'arrêter.</p><p id="r-399882" data-claire-element-id="399882">Une solution simple pour éviter ces pertes est, lorsqu'on demande la suppression d'une clé, de la garder mais de marquer la case comme libre. Ainsi, lorsqu'on cherchera <strong>30</strong>, on passera dessus sans problèmes. Il faut juste penser, dans la méthode pour ajouter une paire &quot;clé-valeur&quot;, à chercher la première case vide ou marquée libre.</p><figure id="r-399884" data-claire-element-id="399885"><img id="r-399883" data-claire-element-id="399883" src="medias/uploads.siteduzero.com_files_259001_260000_259998.png" alt="Image utilisateur"/></figure><h3 id="r-avantages-et-inconvenients-8" data-claire-element-id="399897">Avantages et inconvénients</h3><p id="r-399887" data-claire-element-id="399887">Le système de sondage est simple, ne requière pas d'espace mémoire en plus, mais malheureusement souffre d'un problème de <em>clustering</em>. En fait, les clés vont avoir tendance à s'agglutiner, à former des grappes (<em>clusters</em>) dans le tableau. Le soucis viendra quand il faudra parcourir toute la grappe pour trouver une case disponible ou une clé, le temps d'exécution va grimper en flèche !</p><figure id="r-399889" data-claire-element-id="399890"><img id="r-399888" data-claire-element-id="399888" src="medias/uploads.siteduzero.com_files_259001_260000_259996.png" alt="Image utilisateur"/></figure><p id="r-399891" data-claire-element-id="399891">Si on reprend le même exemple que tout à l'heure, si une nouvelle clé tombe à l'indice 4, il va falloir faire 4 tests pour trouver sa place définitive. Dans ce cas-ci c'est peu, mais avec des tableaux de centaines de milliers, voir de millions d'éléments, il faudra prendre patience ! Une manière d'éviter ces grappes et d'utiliser un sondage d'un degré plus haut (comme nous allons le voir plus en bas). Des <em>clusters</em> existeront toujours, mais seront plus petits.</p><p id="r-399892" data-claire-element-id="399892">Sachez aussi que les temps d'exécutions seront d'autant plus grand que le tableau est plus rempli. Ainsi, le tableau ci-dessous montre le pire des cas que vous pourriez avoir lorsqu'on insère <strong>38</strong>.</p><figure id="r-399894" data-claire-element-id="399895"><img id="r-399893" data-claire-element-id="399893" src="medias/uploads.siteduzero.com_files_260001_261000_260002.png" alt="Image utilisateur"/></figure><p id="r-399896" data-claire-element-id="399896">En clair, un sondage est une bonne manière de gérer les collisions si le tableau n'est pas trop rempli.</p><h2 id="r-le-sondage-quadratique" data-claire-element-id="399931">Le sondage quadratique</h2><p id="r-399899" data-claire-element-id="399899">Un moyen d'éviter le <em>clustering</em> du sondage linéaire est d'utiliser un sondage quadratique : le principe est exactement le même, c'est la forme des indices qui change : si</p><figure id="r-399901" data-claire-element-id="399902"><img id="r-399900" data-claire-element-id="399900" src="medias/uploads.siteduzero.com_files_267001_268000_267098.png" alt="Image utilisateur"/></figure><p id="r-399903" data-claire-element-id="399903">et</p><figure id="r-399905" data-claire-element-id="399906"><img id="r-399904" data-claire-element-id="399904" src="medias/uploads.siteduzero.com_files_267001_268000_267099.png" alt="Image utilisateur"/></figure><p id="r-399907" data-claire-element-id="399907">sont des constantes (et où</p><figure id="r-399909" data-claire-element-id="399910"><img id="r-399908" data-claire-element-id="399908" src="medias/uploads.siteduzero.com_files_267001_268000_267099.png" alt="Image utilisateur"/></figure><p id="r-399911" data-claire-element-id="399911">est <strong>non nul</strong>),</p><figure id="r-399913" data-claire-element-id="399914"><img id="r-399912" data-claire-element-id="399912" src="medias/uploads.siteduzero.com_files_267001_268000_267097.png" alt="Image utilisateur"/></figure><p id="r-399915" data-claire-element-id="399915">Reprenons notre exemple de tout à l'heure, avec</p><figure id="r-399917" data-claire-element-id="399918"><img id="r-399916" data-claire-element-id="399916" src="medias/uploads.siteduzero.com_files_267001_268000_267098.png" alt="Image utilisateur"/></figure><p id="r-399919" data-claire-element-id="399919">valant 0 et</p><figure id="r-399921" data-claire-element-id="399922"><img id="r-399920" data-claire-element-id="399920" src="medias/uploads.siteduzero.com_files_267001_268000_267099.png" alt="Image utilisateur"/></figure><p id="r-399923" data-claire-element-id="399923">valant 1. Si on insère <strong>22</strong> (dont le hach code est 0), on testera les indices 0 et 1. Pour insérer <strong>30</strong>, on ira d'abord voir en 4, puis en 5 et enfin en 8.</p><figure id="r-399925" data-claire-element-id="399926"><img id="r-399924" data-claire-element-id="399924" src="medias/uploads.siteduzero.com_files_259001_260000_259999.png" alt="Image utilisateur"/></figure><h3 id="r-avantages-et-inconvenients-9" data-claire-element-id="399930">Avantages et inconvénients</h3><p id="r-399927" data-claire-element-id="399927">Le sondage quadratique fonctionne beaucoup mieux que le sondage linéaire, la formation de grappes est moindre. Ainsi, dans l'exemple, la clé <strong>30</strong> ne rejoint pas la grappe formée par <strong>0</strong>, <strong>7</strong> et <strong>4</strong>.</p><p id="r-399928" data-claire-element-id="399928">En revanche, les problèmes vont se manifester lorsqu'on aura deux clés dont le hach code est le même. En effet, elles vont toutes les deux emprunter le même chemin. Par exemple, si pour une clé le hach code vaut 4, comme dans le cas de la clé <strong>30</strong> il va falloir passer par les indices 4, 5 et 8 avant d'arriver à 3 !</p><p id="r-399929" data-claire-element-id="399929">En cas de collisions dans un sondage quadratique, on dit que les clés vont former des grappes secondaires. Elles sont moins importantes que les grappes du sondages linéaire car elles sont plus éparpillées, mais restent problématiques.</p><h2 id="r-le-double-hachage" data-claire-element-id="399976">Le double hachage</h2><p id="r-399932" data-claire-element-id="399932">Le principe du <strong>double hachage</strong> est similaire à celui du sondage : <em>on va chercher la première case disponible en faisant varier un indice i</em>, mais en plus de l'incrémenter, on va aussi le hacher ! Ainsi, cela évitera du <em>clustering</em> (en supposant bien sûr que la fonction de hachage soit bonne).</p><p id="r-399933" data-claire-element-id="399933">Si on prend comme seconde fonction de hachage</p><figure id="r-399935" data-claire-element-id="399936"><img id="r-399934" data-claire-element-id="399934" src="medias/uploads.siteduzero.com_files_259001_260000_259441.png" alt="Image utilisateur"/></figure><p id="r-399937" data-claire-element-id="399937">, les indices testés auront la forme</p><figure id="r-399939" data-claire-element-id="399940"><img id="r-399938" data-claire-element-id="399938" src="medias/uploads.siteduzero.com_files_259001_260000_259440.png" alt="Image utilisateur"/></figure><p id="r-399941" data-claire-element-id="399941">Comme exemple, on va insérer <strong>22</strong> et <strong>30</strong> avec la fonction</p><figure id="r-399943" data-claire-element-id="399944"><img id="r-399942" data-claire-element-id="399942" src="medias/uploads.siteduzero.com_files_259001_260000_259441.png" alt="Image utilisateur"/></figure><p id="r-399945" data-claire-element-id="399945">définie de cette manière :</p><figure id="r-399947" data-claire-element-id="399948"><img id="r-399946" data-claire-element-id="399946" src="medias/uploads.siteduzero.com_files_259001_260000_259442.png" alt="Image utilisateur"/></figure><p id="r-399949" data-claire-element-id="399949">Pour rappel, le hach code compressé de <strong>22</strong> est 0. On a successivement</p><ul id="r-399958" data-claire-element-id="399958"><li id="r-399952" data-claire-element-id="399953"><img id="r-399953" data-claire-element-id="399952" src="medias/uploads.siteduzero.com_files_259001_260000_259444.png" alt="Image utilisateur"/><p id="r-399950" data-claire-element-id="399950">i = 0, l'indice est</p><p id="r-399951" data-claire-element-id="399951">qui est occupé ;</p></li><li id="r-399956" data-claire-element-id="399957"><img id="r-399957" data-claire-element-id="399956" src="medias/uploads.siteduzero.com_files_259001_260000_259443.png" alt="Image utilisateur"/><p id="r-399954" data-claire-element-id="399954">i = 1, l'indice est</p><p id="r-399955" data-claire-element-id="399955">qui n'est pas occupé, on doit s'arrêter.</p></li></ul><figure id="r-399960" data-claire-element-id="399961"><img id="r-399959" data-claire-element-id="399959" src="medias/uploads.siteduzero.com_files_260001_261000_260003.png" alt="Image utilisateur"/></figure><p id="r-399962" data-claire-element-id="399962">A tour de <strong>30</strong> : son hach code compressé est 4. On a ainsi</p><ul id="r-399967" data-claire-element-id="399967"><li id="r-399965" data-claire-element-id="399966"><img id="r-399966" data-claire-element-id="399965" src="medias/uploads.siteduzero.com_files_259001_260000_259445.png" alt="Image utilisateur"/><p id="r-399963" data-claire-element-id="399963">i = 0, l'indice est</p><p id="r-399964" data-claire-element-id="399964">, qui n'est pas occupé, on doit s'arrêter.</p></li></ul><figure id="r-399969" data-claire-element-id="399970"><img id="r-399968" data-claire-element-id="399968" src="medias/uploads.siteduzero.com_files_260001_261000_260004.png" alt="Image utilisateur"/></figure><h3 id="r-avantages-et-inconvenients-10" data-claire-element-id="399975">Avantages et inconvénients</h3><p id="r-399971" data-claire-element-id="399971">Grâce à ce second hachage, on va parcourir le tableau dans tous les sens, cela évite le phénomène de <em>clustering</em>. En revanche, cela peut amener un autre problème : si la seconde fonction de hachage est mal choisie, il se peut qu'il faille beaucoup d'incrémentations de i pour trouver une case libre ! Cela peut dans certains cas durer plus longtemps que le sondage linéaire. Pire : on pourrait ne jamais trouver de case libre, même s'il y en a dans le tableau !</p><aside id="r-399973" data-claire-element-id="399973" data-claire-semantic="information"><p id="r-399972" data-claire-element-id="399972">Il est possible de choisir une fonction de double hachage qui permettra de vérifier au moins une fois toutes les cases du tableau, mais gardez à l'esprit que le processus peut être long !</p></aside><p id="r-399974" data-claire-element-id="399974">En résumé, comme le sondage, le double hachage est mis à genoux lorsque le tableau est fort rempli, mais avec un remplissage raisonnable et si la fonction est bien choisie, il évite les <em>clusters</em> et est très efficace.</p><h2 id="r-le-chainage-lineaire" data-claire-element-id="399994">Le chaînage linéaire</h2><p id="r-399977" data-claire-element-id="399977">Clôturons ce rapide tour d'horizon des méthodes de gestion des collisions avec <strong>le chaînage linéaire</strong> ! Il utilise un stratagème tout à fait différent, mais pas plus difficile à comprendre : au lieu d'avoir un élément par <em>bucket</em>, on va avoir une liste. Lorsqu'on place un élément dans le <em>bucket</em>, on l'ajoute dans la liste, et quand il y a une collision... on l'ajoute aussi dans la liste:p . Un dessin sera plus explicite : voici la table de notre exemple.</p><figure id="r-399979" data-claire-element-id="399980"><img id="r-399978" data-claire-element-id="399978" src="medias/uploads.siteduzero.com_files_261001_262000_261696.png" alt="Image utilisateur"/></figure><p id="r-399981" data-claire-element-id="399981">Et maintenant, voici ce qu'il se passe avec l'insertion de la clé <strong>22</strong>.</p><figure id="r-399983" data-claire-element-id="399984"><img id="r-399982" data-claire-element-id="399982" src="medias/uploads.siteduzero.com_files_261001_262000_261697.png" alt="Image utilisateur"/></figure><p id="r-399985" data-claire-element-id="399985">Continuons avec une autre clé qui posait problème, <strong>30</strong>.</p><figure id="r-399987" data-claire-element-id="399988"><img id="r-399986" data-claire-element-id="399986" src="medias/uploads.siteduzero.com_files_261001_262000_261698.png" alt="Image utilisateur"/></figure><p id="r-399989" data-claire-element-id="399989">Donc pour ajouter une clé, il suffit de l'ajouter dans la liste. Pour chercher une clé, il suffit de parcourir la liste de l'indice qui lui est associé. Enfin, pour supprimer une clé, on supprime simplement un noeud de la liste de l'indice concerné. Simple et efficace qui plus est !</p><h3 id="r-avantages-et-inconvenients-11" data-claire-element-id="399993">Avantages et inconvénients</h3><p id="r-399990" data-claire-element-id="399990">Contrairement aux sondage et double hachage, vous devrez utiliser des structures externes au tableau, en l'occurrence des files. Autant ce désavantage en espace mémoire est comblé dans des situations où les deux autres méthodes dégénèrent (avec des tableaux bien remplis), autant ces dernières sont à préférer pour un remplissage du tableau modéré. De plus, si la fonction de hachage n'est pas optimale, il est possible que de longues files se créent, ce qui inévitablement va flinguer les performances...</p><aside id="r-399992" data-claire-element-id="399992" data-claire-semantic="information"><p id="r-399991" data-claire-element-id="399991">Nous rediscuterons des performances et des avantages/désavantages de toutes les méthodes de gestion de collision à la fin du tutoriel ;) .</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1">Les tables de hachage</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/les-tables-de-symboles-maps-et-dictionnaires">
+Les tables de symboles : maps et dictionnaires
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/le-principe-des-tables-de-hachage">
+Le principe des tables de hachage
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/gestions-des-collisions">
+Gestions des collisions
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/l-importance-des-donnees-et-le-facteur-de-charge">
+L&#039;importance des données et le facteur de charge
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-de-la-table-de-hachage">
+Implémentation de la table de hachage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-du-sondage-et-du-double-hachage">
+Implémentation du sondage et du double hachage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-du-chainage-lineaire">
+Implémentation du chaînage linéaire
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/la-fonction-de-hachage">
+La fonction de hachage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/discussion-des-performances-et-ameliorations">
+Discussion des performances et améliorations
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/le-principe-des-tables-de-hachage">
+<span class="arrow"></span>
+<span class="next">Le principe des tables de hachage</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/l-importance-des-donnees-et-le-facteur-de-charge">
+<span class="next">L&#039;importance des données et le facteur de charge</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="L039importancedesdonnesetlefacteurdecharge"></a><h2>L&#039;importance des données et le facteur de charge</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/gestions-des-collisions">
+<span class="arrow"></span>
+<span class="next">Gestions des collisions</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-de-la-table-de-hachage">
+<span class="next">Implémentation de la table de hachage</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-399996" data-claire-element-id="399996">Nous l'avons vu, chaque méthode de collision a ses avantages et inconvénients, mais elles risquent toutes de dégénérer dans certaines situations. D'où une règle primordiale : si vous en avez la possibilité, <strong>obtenez le plus d'informations possibles sur les données qui seront insérées</strong> dans votre table de hachage ! Utilisez la force si nécessaire :diable: .</p><p id="r-399997" data-claire-element-id="399997">En effet, plus vous aurez d'infos et plus vous aurez les moyens de mieux stocker les informations ! Par exemple, certaines fonctions de hachage seront plus efficaces avec certains types de clé que d'autres.</p><p id="r-399998" data-claire-element-id="399998">Dans cette sous-partie, nous allons nous attarder sur une des données très intéressante à connaître : le nombre de clés qui seront insérées ! En fait, les performances de votre table de hachage sont entièrement basées dessus, et il faudra tenir compte de ce nombre, que vous le connaissiez ou pas.</p><p id="r-399999" data-claire-element-id="399999">Avant de continuer, un petit rappel des situations pathologiques pour chaque méthode de gestion des collisions (en supposant que la fonction de hachage n'a pas d'influence) :</p><ul id="r-400006" data-claire-element-id="400006"><li id="r-400001" data-claire-element-id="400001"><p id="r-400000" data-claire-element-id="400000">pour le sondage linéaire, plus le tableau se remplit et plus des <em>clusters</em> se formeront ;</p></li><li id="r-400003" data-claire-element-id="400003"><p id="r-400002" data-claire-element-id="400002">pour le double hachage, idem que le sondage linéaire, mais sera plus robuste ;</p></li><li id="r-400005" data-claire-element-id="400005"><p id="r-400004" data-claire-element-id="400004">pour le chaînage linéaire, plus il y aura d'éléments et plus les listes seront longues.</p></li></ul><p id="r-400007" data-claire-element-id="400007">Le fait de connaître le nombre de clés qui seront insérées peut grandement changer la donne ; par exemple, dans une situation où vous êtes obligés d'utiliser un sondage linéaire, si vous savez que vous devrez stocker 50 clés, en prenant un tableau deux fois plus grand vous n'aurez pas (ou peu) de soucis !</p><p id="r-400008" data-claire-element-id="400008">L'idée serait d'adapter la taille de la table en fonction du nombre de clés insérées, autrement dit l'agrandir quand il commence à être rempli (et éventuellement le rétrécir pour économiser de la place, mais nous aborderons cet aspect comme une amélioration à la fin du tuto). Le tout est de savoir quand modifier la taille, et c'est dans cette optique que l'on va définir <strong>le facteur de charge</strong>.</p><h2 id="r-une-histoire-de-rapport" data-claire-element-id="400031">Une histoire de rapport</h2><p id="r-400009" data-claire-element-id="400009">Par définition, le facteur de charge, que je noterai par un lambda (</p><figure id="r-400011" data-claire-element-id="400012"><img id="r-400010" data-claire-element-id="400010" src="medias/uploads.siteduzero.com_files_266001_267000_266816.png" alt="Image utilisateur"/></figure><p id="r-400013" data-claire-element-id="400013">), est le rapport entre le nombre d'éléments insérés dans la table et le nombre de cases libres.</p><figure id="r-400015" data-claire-element-id="400016"><img id="r-400014" data-claire-element-id="400014" src="medias/uploads.siteduzero.com_files_266001_267000_266817.png" alt="Image utilisateur"/></figure><p id="r-400017" data-claire-element-id="400017">Par exemple, reprenons le tableau de tout à l'heure.</p><figure id="r-400019" data-claire-element-id="400020"><img id="r-400018" data-claire-element-id="400018" src="medias/uploads.siteduzero.com_files_259001_260000_259993.png" alt="Image utilisateur"/></figure><p id="r-400021" data-claire-element-id="400021">Il y a dix cases, dont quatre sont occupées, le facteur de charge sera alors</p><figure id="r-400023" data-claire-element-id="400024"><img id="r-400022" data-claire-element-id="400022" src="medias/uploads.siteduzero.com_files_261001_262000_261646.png" alt="Image utilisateur"/></figure><p id="r-400025" data-claire-element-id="400025">. Cela s'applique également pour les tableaux avec des listes (cas du chaînage linéaire).</p><figure id="r-400027" data-claire-element-id="400028"><img id="r-400026" data-claire-element-id="400026" src="medias/uploads.siteduzero.com_files_261001_262000_261727.png" alt="Image utilisateur"/></figure><p id="r-400029" data-claire-element-id="400029">Il y a toujours dix cases, mais 6 clés : le facteur de charge est de 0,6.</p><p id="r-400030" data-claire-element-id="400030">Le facteur de charge est donc un indicateur du taux de remplissage de votre table : plus il est proche de 1 (100%), moins il y aura de cases libres et plus les temps d'exécution seront grands.</p><h2 id="r-limiter-la-casse-avec-le-facteur-de-charge" data-claire-element-id="400049">Limiter la casse avec le facteur de charge</h2><p id="r-400032" data-claire-element-id="400032">Naïvement, on pourrait penser à ces quelques solutions violentes pour limiter le facteur :</p><ul id="r-400039" data-claire-element-id="400039"><li id="r-400034" data-claire-element-id="400034"><p id="r-400033" data-claire-element-id="400033">prend un tableau très grand ;</p></li><li id="r-400036" data-claire-element-id="400036"><p id="r-400035" data-claire-element-id="400035">doubler la taille du tableau à chaque insertion ;</p></li><li id="r-400038" data-claire-element-id="400038"><p id="r-400037" data-claire-element-id="400037">utiliser d'office du chaînage linéaire.</p></li></ul><p id="r-400040" data-claire-element-id="400040">Ces solutions fonctionneront, mais ne sont vraiment pas économiques du tout :lol: . Si la table ne contiendra que peu de clés la première solution tombe à l'eau. Pour la seconde, à chaque insertion il faudra reconstruire à chaque fois la table, bref la joie niveau performances ! Quant au chaînage linéaire, il est une bonne alternative, mais il faudra vous décider sur la taille du tableau des listes. Et si beaucoup d'éléments sont insérés, les listes s'allongeront et on aura un temps d'exécution linéaire.</p><p id="r-400041" data-claire-element-id="400041">En fait, il existe une solution beaucoup plus efficace, dérivée de la deuxième, et pas si compliquée à implémenter : pour chaque méthode de gestion des collisions on va définir un facteur de charge maximum, et s'il est dépassé on agrandira la table.</p><p id="r-400042" data-claire-element-id="400042">Voici les valeurs que l'on m'a apprises et que j'utilise ; elles sont arbitraires et assez larges, libre à vous de les adapter ou à en essayer des autres ;) .</p><ul id="r-400047" data-claire-element-id="400047"><li id="r-400044" data-claire-element-id="400044"><p id="r-400043" data-claire-element-id="400043">pour un sondage et un double hachage, le facteur de charge à ne pas dépasser est <strong>0,5</strong> ;</p></li><li id="r-400046" data-claire-element-id="400046"><p id="r-400045" data-claire-element-id="400045">pour un chaînage linéaire, le facteur de charge à ne pas dépasser est <strong>0,7</strong>.</p></li></ul><p id="r-400048" data-claire-element-id="400048">Ainsi, en s'arrangeant pour que le facteur de charge ne dépasse pas ce nombre, vous garantissez des bonnes performances pour vos tables !</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1">Les tables de hachage</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/les-tables-de-symboles-maps-et-dictionnaires">
+Les tables de symboles : maps et dictionnaires
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/le-principe-des-tables-de-hachage">
+Le principe des tables de hachage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/gestions-des-collisions">
+Gestions des collisions
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/l-importance-des-donnees-et-le-facteur-de-charge">
+L&#039;importance des données et le facteur de charge
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-de-la-table-de-hachage">
+Implémentation de la table de hachage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-du-sondage-et-du-double-hachage">
+Implémentation du sondage et du double hachage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-du-chainage-lineaire">
+Implémentation du chaînage linéaire
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/la-fonction-de-hachage">
+La fonction de hachage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/discussion-des-performances-et-ameliorations">
+Discussion des performances et améliorations
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/gestions-des-collisions">
+<span class="arrow"></span>
+<span class="next">Gestions des collisions</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-de-la-table-de-hachage">
+<span class="next">Implémentation de la table de hachage</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Implmentationdelatabledehachage"></a><h2>Implémentation de la table de hachage</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/l-importance-des-donnees-et-le-facteur-de-charge">
+<span class="arrow"></span>
+<span class="next">L&#039;importance des données et le facteur de charge</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-du-sondage-et-du-double-hachage">
+<span class="next">Implémentation du sondage et du double hachage</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-400051" data-claire-element-id="400051">Commençons les choses sérieuses : implémentons ces fameuses tables ! On va d'abord voir comment implémenter la table de façon a être facilement utilisable avec le sondage et le double hachage, ensuite dans la prochaine sous-partie nous verrons comment la modifier pour le chaînage linéaire.</p><p id="r-400052" data-claire-element-id="400052">Sachez avant tout que ce tutoriel n'a pas pour but de faire du Java ni de vous apprendre à vous en servir. De ce fait, ne vous attendez pas spécialement à du code hyper optimisé, ni à des explications complètes : je ne vous expliquerai que ma méthode de résolution (qui n'est pas certifiée la plus optimale non plus), mais que je trouve facile à comprendre.</p><aside id="r-400054" data-claire-element-id="400054" data-claire-semantic="information"><p id="r-400053" data-claire-element-id="400053">Un excellent exercice serait d'essayer de pondre le code par vous-mêmes, à votre manière, pour vérifier si vous avez bien compris le principe ;) .</p></aside><h2 id="r-un-conteneur-pour-les-paires" data-claire-element-id="400064">Un conteneur pour les paires</h2><p id="r-400055" data-claire-element-id="400055">Tout d'abord, pour plus de facilité, on va placer les paires &quot;clé-valeur&quot; dans un conteneur que l'on va appeler <em>Entry</em>, avec des méthodes de base (accesseurs et mutateurs).</p><pre id="r-400056" data-claire-element-id="400056"><code data-claire-semantic="java">public class Entry
+{
+	private int key;
+	private Object value;
+	
+	public Entry(int key, Object value)
+	{
+		this.key = key;
+		this.value = value;
+	}
+	
+	// Accesseurs
+	public int getKey()      { return key;   }
+	public Object getValue() { return value; }
+	
+	// Mutateurs
+	public void setValue(Object value) { this.value = value; }
+}</code></pre><p id="r-400057" data-claire-element-id="400057">C'est un conteneur très classique, cela ne devrait pas vous poser de problèmes ;) .</p><aside id="r-400059" data-claire-element-id="400059" data-claire-semantic="warning"><p id="r-400058" data-claire-element-id="400058">Le conteneur va copier la référence vers l'objet. Cela signifie que si cet objet est modifié par une autre partie de votre programme, ces modifications seront répercutées dans la table de hachage ! Si vous voulez que ça ne soit pas le cas (c'est-à-dire faire une copie de l'objet), <a href="http://en.wikipedia.org/wiki/Clone_(Java_method)">le clonage</a> est tout indiqué ;) .</p></aside><aside id="r-400061" data-claire-element-id="400061" data-claire-semantic="information"><p id="r-400060" data-claire-element-id="400060">Un mutateur pour la clé n'est pas vraiment nécessaire, par contre celui pour la valeur est important pour gérer les cas où des clés sont identiques avec les <em>maps</em> (et où normalement elles sont toutes différentes). Ça sera à vous de décider si on ne fait rien ou si on remplace la valeur.</p></aside><aside id="r-400063" data-claire-element-id="400063" data-claire-semantic="warning"><p id="r-400062" data-claire-element-id="400062">Dans ce tutoriel, j'utilise des entiers pour les clés par facilité, vous pouvez très bien utiliser des chaînes de caractères ou tout type d'objet. Si vous voulez faire avec un autre genre de clé, pensez à adapter les opérations de comparaison si c'est nécessaire !</p></aside><h2 id="r-la-table-de-hachage" data-claire-element-id="400139">La table de hachage</h2><h3 id="r-les-methodes-22" data-claire-element-id="400074">Les méthodes</h3><p id="r-400065" data-claire-element-id="400065">Passons à la classe principale : <em>HashTable</em>. Au niveau des méthodes, elle doit implémenter l'interface des tables de symboles que nous avons vu plus haut et que revoici.</p><pre id="r-400066" data-claire-element-id="400066"><code data-claire-semantic="java">public interface SymbolTable
+{
+	public void put(int key, Object value) throws HashTableException;
+	public Object get(int key) throws HashTableException;
+	public void remove(int key) throws HashTableException;
+	public boolean contains(int key);
+	public int size();
+}</code></pre><p id="r-400067" data-claire-element-id="400067">A cela il faudra bien évidemment ajouter une fonction de hachage !</p><pre id="r-400068" data-claire-element-id="400068"><code data-claire-semantic="java">private int hash(String s)
+{
+	// ...
+}</code></pre><p id="r-400069" data-claire-element-id="400069">Nous en discuterons en temps voulu ;) .</p><aside id="r-400071" data-claire-element-id="400071" data-claire-semantic="warning"><p id="r-400070" data-claire-element-id="400070">L'entrée est une chaîne, il faudra penser à convertir la clé (vu qu'elle est entière). Je vous expliquerai pourquoi ce choix qui peut paraître bizarre dans la sous-partie sur les fonctions de hachage ;) .</p></aside><p id="r-400072" data-claire-element-id="400072">Enfin, quand nous implémenterons les méthodes, vous remarquerez qu'une opération revient très souvent : trouver l'indice du <em>bucket</em> dans le <em>bucket array</em> qui contient une clé donnée. On va définir une méthode à part qui va s'en occuper, le code sera ainsi très fortement dégrossi ;) .</p><pre id="r-400073" data-claire-element-id="400073"><code data-claire-semantic="java">private int getBucketIndex(int key)
+{
+	// ...
+}</code></pre><h3 id="r-les-variables-membres-2" data-claire-element-id="400089">Les variables membres</h3><p id="r-400075" data-claire-element-id="400075">Passons aux variables membres : il faudra au moins un tableau où stocker les paires &quot;clé-valeurs&quot;, qui seront dans des conteneurs <em>Entry</em>. On va appeler ce tableau <em>bucketArray</em>, comme on l'a fait plus haut.</p><p id="r-400076" data-claire-element-id="400076">On va d'abord définir une classe pour les <em>buckets</em>. Son rôle sera d'avoir une référence vers un conteneur <em>Entry</em>, mais aussi de gérer le fait que la case est disponible ou non ! En effet, il faut avoir en tête la subtilité qui fait que supprimer purement et simplement une case peut causer la perte d'autres clés (voir la sous-partie précédente).</p><pre id="r-400077" data-claire-element-id="400077"><code data-claire-semantic="java">public class Bucket
+{
+	private Entry slot;
+	private boolean free = true;
+	
+	public Bucket(Entry e)
+	{
+		this.slot = e;
+		this.free = false;
+	}
+	
+	public void clean()
+	{
+		slot.setValue(null);
+		free = true;
+	}
+	
+	// Accesseurs 
+	public int getKey()      { return slot.getKey();   }
+	public Object getValue() { return slot.getValue(); }
+	public boolean isFree()  { return free;  }
+	
+	// Mutateur
+	public void setValue(Object value) { slot.setValue(value) ; free = false; }
+}</code></pre><p id="r-400078" data-claire-element-id="400078">Sachez que les méthodes getKey, getValue et setValue sont là pour simplifier les écritures, et ne sont pas obligatoires, mais gardez en tête que lorsqu'on manipulera le <em>bucket array</em>, il faudra avoir accès à la clé et à la valeur de chaque <em>bucket</em> !</p><p id="r-400079" data-claire-element-id="400079">Petite note sur la méthode clean : son rôle est de marquer la case comme disponible, tout en conservant la clé. Elle assigne une valeur nulle à la variable <em>value</em> (via le mutateur) pour économiser de l'espace (car on n'en a plus besoin ; la paire est censée être supprimée).</p><p id="r-400080" data-claire-element-id="400080">Revenons aux variables membres de la classe <em>HashTable</em> : il faut donc un tableau de <em>Bucket</em>. On aura aussi besoin d'un compteur pour savoir combien de paires ont été insérées, ainsi la méthode size sera efficace et on pourra rapidement vérifier si le tableau est plein ou vide.</p><p id="r-400081" data-claire-element-id="400081">Il reste un dernier élément, et non des moindres : un module de gestion des collisions. Son rôle sera de nous dire quels indices tester si on a des collisions. On va le définir comme une interface nommée <em>CollisionManagement</em>, on s'occupera de son implémentation par après ;) . Elle devra être spécifiée lors de l'instanciation de la table de hachage, et si elle ne l'est pas, on va utiliser une méthode de gestion des collisions par défaut.</p><pre id="r-400082" data-claire-element-id="400082"><code data-claire-semantic="java">public interface CollisionManagement
+{
+	public int nextIndex(int h, int i);
+}</code></pre><p id="r-400083" data-claire-element-id="400083">Ici, <em>h</em> est le hach code de la clé et <em>i</em> l'incrément. En les séparant ainsi, vous verrez qu'on pourra plus facilement étendre ce mécanisme à tout type de sondage et au double hachage ;) .</p><p id="r-400084" data-claire-element-id="400084">On a fait le tour ! Voici le code de base de la classe : il faudra ajouter des méthodes et des variables membres, mais nous verrons cela en temps voulu ;) .</p><pre id="r-400085" data-claire-element-id="400085"><code data-claire-semantic="java">public class HashTable implements SymbolTable
+{
+	private Bucket[] bucketArray;        // Tableau contenant les paires &quot;clé-valeur&quot;
+	
+	private int nbrObject = 0;           // Nombre d'éléments insérés
+	
+	private CollisionManagement manager; // Gestionnaire de collision
+	
+	
+	public HashTable(int size)
+	{
+		// ...
+	}
+
+	public HashTable(int size, CollisionManagement manager)
+	{
+		// ...
+	}
+
+	public void put(int key, Object value) throws HashTableException
+	{
+		// ...
+	}
+	
+	public Object get(int key) throws HashTableException
+	{
+		// ...
+	}
+
+	public void remove(int key) throws HashTableException
+	{
+		// ...
+	}
+	
+	public boolean contains(int key)
+	{
+		// ...
+	}
+	
+	public int size()
+	{
+		// ...
+	}
+
+	private int hash(String s)
+	{
+		// ...
+	}
+
+	private int getBucketIndex(int key)
+	{
+		// ...
+	}
+}</code></pre><p id="r-400086" data-claire-element-id="400086">Ouf, on va pouvoir commencer l'implémentation :) .</p><aside id="r-400088" data-claire-element-id="400088" data-claire-semantic="information"><p id="r-400087" data-claire-element-id="400087">Sachez que je traiterai la méthode de hachage plus tard, car il y a des choses à dire dessus. Imaginez simplement qu'elle est disponible et renvoie un entier qui peut servir d'indice pour le <em>bucket array</em>.</p></aside><h3 id="r-implementation-du-constructeur" data-claire-element-id="400094">Implémentation du constructeur</h3><p id="r-400090" data-claire-element-id="400090">Lors de l'instanciation, il faut penser à instancier le tableau des <em>bucket</em> et enregistrer le type de gestion des collisions.</p><pre id="r-400091" data-claire-element-id="400091"><code data-claire-semantic="java">public HashTable(int size, CollisionManagement manager)
+{
+	this.manager = manager;
+	bucketArray = new Bucket[size];
+}</code></pre><p id="r-400092" data-claire-element-id="400092">Il faut aussi penser au programmeur distrait qui aurait oublié de spécifier <em>manager</em>:p . On va par exemple utiliser le sondage linéaire par défaut (que l'on implémentera dans la prochaine sous-partie, rassurez-vous ;) ).</p><pre id="r-400093" data-claire-element-id="400093"><code data-claire-semantic="java">public HashTable(int size)
+{
+	this(size, new LinearProbing());
+}</code></pre><h3 id="r-implementation-de-getbucketindex" data-claire-element-id="400108">Implémentation de getBucketIndex</h3><p id="r-400095" data-claire-element-id="400095">Cette méthode va donc chercher le <em>bucket</em> qui contient une clé <em>key</em> et va le retourner. Elle retournera <strong>null</strong> si la clé n'est pas dedans. Si vous avez bien suivi, vous saurez que le fonctionnement est le suivant :</p><ol id="r-400102" data-claire-element-id="400102"><li id="r-400097" data-claire-element-id="400097"><p id="r-400096" data-claire-element-id="400096">calculer l'indice de la clé avec la fonction de hachage ;</p></li><li id="r-400099" data-claire-element-id="400099"><p id="r-400098" data-claire-element-id="400098">si la case est nulle ou si les clés correspondent, retourner l'indice ;</p></li><li id="r-400101" data-claire-element-id="400101"><p id="r-400100" data-claire-element-id="400100">sinon, passer à la case suivante en utilisant le gestionnaire de collision (pour obtenir le prochain indice) et répéter 2.</p></li></ol><p id="r-400103" data-claire-element-id="400103">Le code associé à ce petit algorithme est relativement simple, il suffit de ne pas se tromper dans la boucle ; en effet, on avance tant que la case n'est pas nulle et tant que la clé n'est pas la même. Si une des deux conditions est remplie, on doit s'arrêter !</p><pre id="r-400104" data-claire-element-id="400104"><code data-claire-semantic="java">private int getBucketIndex(int key)
+{
+	int h = hash(new Integer(key).toString()); // Calcul du hach code
+	int index = h; // index sera l'indice de la clé
+
+	for(int i = 0 ; bucketArray[index] != null &amp;&amp; bucketArray[index].getKey() != key ; i++)
+		index = manager.nextIndex(h, i) % bucketArray.length; // Obtention de la prochaine case
+			
+	return index;
+}</code></pre><aside id="r-400106" data-claire-element-id="400106" data-claire-semantic="error"><p id="r-400105" data-claire-element-id="400105">N'oubliez pas de prendre le modulo de l'indice, car la méthode nextIndex va renvoyer un indice de taille imprévisible !</p></aside><p id="r-400107" data-claire-element-id="400107">Dites-vous que, avec cette petite méthode getBucketIndex, on a fait 80% du travail :p . Le reste des fonctions n'est qu'une formalité !</p><h3 id="r-implementation-de-put" data-claire-element-id="400119">Implémentation de put</h3><p id="r-400109" data-claire-element-id="400109">Tout d'abord, il faut vérifier que la table n'est pas pleine, et si c'est le cas, renvoyer une exception. Ensuite, il faut trouver la case dans laquelle devra s'insérer la clé... avec notre méthode getBucketIndex ! Deux cas se présenteront :</p><ol id="r-400114" data-claire-element-id="400114"><li id="r-400111" data-claire-element-id="400111"><p id="r-400110" data-claire-element-id="400110">la case est vide (<strong>null</strong>) : on instancie la classe <em>Bucket</em> avec la paire &quot;clé-valeur&quot; et on place la référence dans la case ;</p></li><li id="r-400113" data-claire-element-id="400113"><p id="r-400112" data-claire-element-id="400112">la case n'est pas vide : soit remplacer l'élément, soit ne rien faire (à vous de décider sur ce point ; personnellement, j'écrase la valeur).</p></li></ol><pre id="r-400115" data-claire-element-id="400115"><code data-claire-semantic="java">public void put(int key, Object value) throws HashTableException
+{
+	if(bucketArray.length == nbrObject) // D'abord vérifier s'il reste de la place
+		throw new HashTableException(&quot;Table pleine.&quot;);
+	
+	int index = getBucketIndex(key); // L'emplacement de la paire &quot;clé-valeur&quot;
+	
+	boolean inc = true;
+	
+	if(bucketArray[index] == null) // Si l'emplacement est vide...
+		bucketArray[index] = new Bucket(new Entry(key, value)); // ... alors on y place la paire !
+	else // Si l'emplacement est déjà occupé ou libre...
+	{
+		inc = bucketArray[index].isFree(); // On incrémente que dans le cas où la case est libre
+		bucketArray[index].setValue(value); // On remplace la valeur (choix d'implémentation)
+	}
+	
+	if(inc)
+		nbrObject++;
+}</code></pre><aside id="r-400117" data-claire-element-id="400117" data-claire-semantic="warning"><p id="r-400116" data-claire-element-id="400116">N'oubliez pas d'incrémenter le nombre d'élément uniquement dans le cas où un élément est réellement ajouté ! En effet, la méthode <code data-claire-semantic="java">getBucketIndex </code> renvoie la première case vide (<strong>null</strong>) ou dont la clé est la même que celle qu'on veut insérer. Or, on incrémente seulement dans le cas où la case est libre (donc la clé a déjà été insérée mais supprimée).</p></aside><p id="r-400118" data-claire-element-id="400118">Il faut l'avouer, il n'y a rien de très méchant... Et c'était la méthode la plus compliquée ! :p</p><h3 id="r-implementation-de-get" data-claire-element-id="400129">Implémentation de get</h3><p id="r-400120" data-claire-element-id="400120">On va d'abord chercher l'emplacement de la clé, avec getBucketIndex, et (encore) deux cas se présenteront à nous :</p><ul id="r-400125" data-claire-element-id="400125"><li id="r-400122" data-claire-element-id="400122"><p id="r-400121" data-claire-element-id="400121">la case est occupée : on peut retourner la valeur, car getBucketIndex retourne toujours la case qui la contient ;</p></li><li id="r-400124" data-claire-element-id="400124"><p id="r-400123" data-claire-element-id="400123">la case est vide ou libre, la clé n'est donc pas dans la table, et on peut par exemple lancer une exception.</p></li></ul><aside id="r-400127" data-claire-element-id="400127" data-claire-semantic="warning"><p id="r-400126" data-claire-element-id="400126">Par &quot;case occupée&quot;, je sous-entends que la case n'est pas nulle ET que la valeur à l'intérieur n'a pas été supprimée !</p></aside><pre id="r-400128" data-claire-element-id="400128"><code data-claire-semantic="java">public Object get(int key) throws HashTableException
+{
+	if(nbrObject == 0) // Si la table est vide, cela ne sert à rien de continuer.
+		throw new HashTableException(&quot;Table vide.&quot;);
+		
+	Bucket bucket = bucketArray[getBucketIndex(key)]; // Case dans laquelle devrait se trouver la clé
+	
+	if(bucket != null &amp;&amp; !bucket.isFree()) // Si la case est occupée, on a trouvé notre clé !
+		return bucket.getValue();
+	else
+		throw new HashTableException(&quot;Clé non trouvée&quot;);
+}</code></pre><h3 id="r-implementation-de-remove" data-claire-element-id="400132">Implémentation de remove</h3><p id="r-400130" data-claire-element-id="400130">Pour remove, il faut d'abord trouver la case dans laquelle se trouve la clé (toujours grâce à getBucketIndex), et si elle existe la &quot;supprimer&quot; avec la méthode clean (que l'on a, pour rappelle, défini dans la classe <em>Bucket</em> et qui permet de garder la clé).</p><pre id="r-400131" data-claire-element-id="400131"><code data-claire-semantic="java">public void remove(int key) throws HashTableException
+{
+	if(nbrObject == 0) // Si la table est vide, cela ne sert à rien de continuer
+		throw new HashTableException(&quot;Table vide.&quot;);
+			
+	Bucket delete = bucketArray[getBucketIndex(key)]; // La case à nettoyer
+		
+	if(delete == null || delete.isFree()) // Si la case est vide ou déjà nettoyée, on peut s'arrêter
+		throw new HashTableException(&quot;Clée non trouvée&quot;);
+		
+	delete.clean();
+	nbrObject--;
+}</code></pre><h3 id="r-implementation-de-contains" data-claire-element-id="400135">Implémentation de contains</h3><p id="r-400133" data-claire-element-id="400133">Cette méthode est extrêmement simple à implémenter : en deux lignes c'est possible :p . Vous devez d'abord récupérer le <em>bucket</em> (toujours avec getBucketIndex), et ensuite renvoyer vrai si elle est occupée, faux sinon.</p><pre id="r-400134" data-claire-element-id="400134"><code data-claire-semantic="java">public boolean contains(int key)
+{
+	Bucket bucket = bucketArray[getBucketIndex(key)];
+	return (bucket != null &amp;&amp; !bucket.isFree());
+}</code></pre><h3 id="r-implementation-de-size" data-claire-element-id="400138">Implémentation de size</h3><p id="r-400136" data-claire-element-id="400136">Inutile de faire un commentaire sur cette méthode, ça serait une insulte envers vous :lol: .</p><pre id="r-400137" data-claire-element-id="400137"><code data-claire-semantic="java">public int size()
+{
+	return nbrObject;
+}</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1">Les tables de hachage</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/les-tables-de-symboles-maps-et-dictionnaires">
+Les tables de symboles : maps et dictionnaires
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/le-principe-des-tables-de-hachage">
+Le principe des tables de hachage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/gestions-des-collisions">
+Gestions des collisions
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/l-importance-des-donnees-et-le-facteur-de-charge">
+L&#039;importance des données et le facteur de charge
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-de-la-table-de-hachage">
+Implémentation de la table de hachage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-du-sondage-et-du-double-hachage">
+Implémentation du sondage et du double hachage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-du-chainage-lineaire">
+Implémentation du chaînage linéaire
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/la-fonction-de-hachage">
+La fonction de hachage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/discussion-des-performances-et-ameliorations">
+Discussion des performances et améliorations
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/l-importance-des-donnees-et-le-facteur-de-charge">
+<span class="arrow"></span>
+<span class="next">L&#039;importance des données et le facteur de charge</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-du-sondage-et-du-double-hachage">
+<span class="next">Implémentation du sondage et du double hachage</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Implmentationdusondageetdudoublehachage"></a><h2>Implémentation du sondage et du double hachage</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-de-la-table-de-hachage">
+<span class="arrow"></span>
+<span class="next">Implémentation de la table de hachage</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-du-chainage-lineaire">
+<span class="next">Implémentation du chaînage linéaire</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-400141" data-claire-element-id="400141">C'est ici que les interfaces vont nous aider ! En effet, en créant des classes qui implémentent l'interface <em>CollisionManagement</em>, en les instanciant et en les passant en argument dans le constructeur de la table de hachage, on passe d'une méthode à l'autre très facilement !</p><p id="r-400142" data-claire-element-id="400142">Pour rappel, voici ce que nous devons implémenter.</p><pre id="r-400143" data-claire-element-id="400143"><code data-claire-semantic="java">public interface CollisionManagement
+{
+	public int nextIndex(int h, int i);
+}</code></pre><h2 id="r-le-sondage-lineaire-1" data-claire-element-id="400151">Le sondage linéaire</h2><p id="r-400144" data-claire-element-id="400144">Pour ceux qui ne se rappellent pas de la formule pour les indices, la voici :</p><figure id="r-400146" data-claire-element-id="400147"><img id="r-400145" data-claire-element-id="400145" src="medias/uploads.siteduzero.com_files_259001_260000_259437.png" alt="Image utilisateur"/></figure><p id="r-400148" data-claire-element-id="400148">Sachant que l'on a le hach code h(k) (l'argument h) et l'indice i (l'argument i) et que le modulo est effectué par la méthode appelante... Oui, c'est hyper évident :lol: .</p><pre id="r-400149" data-claire-element-id="400149"><code data-claire-semantic="java">public class LinearProbing implements CollisionManagement
+{
+	public int nextIndex(int h, int i)
+	{
+		return h + i;
+	}
+}</code></pre><p id="r-400150" data-claire-element-id="400150">Oui, oui, c'est tout :p .</p><h2 id="r-le-sondage-quadratique-1" data-claire-element-id="400155">Le sondage quadratique</h2><p id="r-400152" data-claire-element-id="400152">Pour ce type de sondage, il va juste falloir tenir compte des constantes, mais le code n'est pas spécialement plus compliqué que pour le sondage linéaire !</p><p id="r-400153" data-claire-element-id="400153">Pour bien faire les choses, on va prévoir le cas où l'utilisateur n'entre pas de constantes particulières. Là, c'est à vous de choisir : soit on peut les imposer (comme dans le code ci-dessous), soit on peut les générer aléatoirement.</p><pre id="r-400154" data-claire-element-id="400154"><code data-claire-semantic="java">public class QuadraticProbing implements CollisionManagement
+{	
+	private int c1, c2;
+	
+	// Si l'utilisateur ne spécifie pas les constantes lors de l'instanciation
+	public QuadraticProbing()
+	{
+		this(0, 1);
+		
+		// Ou les générer aléatoirement
+	}
+	
+	public QuadraticProbing(int c1, int c2)
+	{
+		this.c1 = c1;
+		this.c2 = c2;
+	}
+	public int nextIndex(int h, int i)
+	{
+		return h + c1 * i + c2 * (i * i);
+	}
+}</code></pre><h2 id="r-le-double-hachage-1" data-claire-element-id="400162">Le double hachage</h2><p id="r-400156" data-claire-element-id="400156">Pour le double hachage, on peut réutiliser le même système, si ce n'est qu'il faut y ajouter une autre fonction de hachage.</p><pre id="r-400157" data-claire-element-id="400157"><code data-claire-semantic="java">public class DoubleHash implements CollisionManagement
+{	
+	public int nextIndex(int h, int i)
+	{
+		return h + hash(i);
+	}
+	private int hash(int i)
+	{
+		// ...
+	}
+}</code></pre><aside id="r-400159" data-claire-element-id="400159" data-claire-semantic="information"><p id="r-400158" data-claire-element-id="400158">Nous reparlerons de cette seconde fonction de hachage en même temps que celle de <em>HashTable</em> ;) .</p></aside><p id="r-400160" data-claire-element-id="400160">Et comme ma bonté n'a pas de limite (hum :euh: ), <a href="http://www.kmel.be/~jipe/sdz/tableHachage/probingDoubleHash.zip">voici une archive</a> avec tout le code complet. Pour utiliser ces classes avec le code de la sous-partie précédente, il suffit d'en instancier une et de passer la référence dans le constructeur de la classe <em>HashTable</em>. Par exemple :</p><pre id="r-400161" data-claire-element-id="400161"><code data-claire-semantic="java">// ...
+
+CollisionManagement manager = new LinearProbing();
+
+HashTable table = new HashTable(1000, manager);
+
+// ...</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1">Les tables de hachage</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/les-tables-de-symboles-maps-et-dictionnaires">
+Les tables de symboles : maps et dictionnaires
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/le-principe-des-tables-de-hachage">
+Le principe des tables de hachage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/gestions-des-collisions">
+Gestions des collisions
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/l-importance-des-donnees-et-le-facteur-de-charge">
+L&#039;importance des données et le facteur de charge
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-de-la-table-de-hachage">
+Implémentation de la table de hachage
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-du-sondage-et-du-double-hachage">
+Implémentation du sondage et du double hachage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-du-chainage-lineaire">
+Implémentation du chaînage linéaire
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/la-fonction-de-hachage">
+La fonction de hachage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/discussion-des-performances-et-ameliorations">
+Discussion des performances et améliorations
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-de-la-table-de-hachage">
+<span class="arrow"></span>
+<span class="next">Implémentation de la table de hachage</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-du-chainage-lineaire">
+<span class="next">Implémentation du chaînage linéaire</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Implmentationduchanagelinaire"></a><h2>Implémentation du chaînage linéaire</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-du-sondage-et-du-double-hachage">
+<span class="arrow"></span>
+<span class="next">Implémentation du sondage et du double hachage</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/la-fonction-de-hachage">
+<span class="next">La fonction de hachage</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-400164" data-claire-element-id="400164">C'est ici que les choses se corsent : en effet, il va falloir changer assez fortement le code de la table de hachage, vu qu'on va travailler avec un tableau et des listes. Ce n'est pas la mer à boire, malheureusement nous ne pourrons pas reprendre l'interface <em>CollisionManagement</em>:( .</p><p id="r-400165" data-claire-element-id="400165">On va d'abord repenser la classe <em>Bucket</em>, qui devra dorénavant gérer une liste. Ensuite, nous modifierons la classe de la table de hachage.</p><h2 id="r-implementation-de-bucket" data-claire-element-id="400205">Implémentation de <em>Bucket</em></h2><p id="r-400166" data-claire-element-id="400166">Toujours par facilité, on va utiliser une liste doublement liée, c'est-à-dire que chaque noeud contiendra une référence vers le noeud précédent et le noeud suivant (en plus d'une référence vers le conteneur avec la clé et la valeur). Schématiquement, avec le nom des classes en bleu et les variables membres en noir, on aura ceci :</p><figure id="r-400168" data-claire-element-id="400169"><img id="r-400167" data-claire-element-id="400167" src="medias/uploads.siteduzero.com_files_244001_245000_244124.png" alt="Image utilisateur"/></figure><p id="r-400170" data-claire-element-id="400170">Il y a tout de même un peu de boulot ^^ . Cependant, je ne m'étendrai pas dessus, le but de ce tutoriel est de vous apprendre à utiliser les tables de hachage et non de coder des listes doublement liées. Je ne l'ai pas mis sur le schéma, mais il y aura également une variable membre <em>nbrNode</em> qui sera le nombre de noeuds que contient la liste.</p><h3 id="r-les-noeuds" data-claire-element-id="400175">Les noeuds</h3><p id="r-400171" data-claire-element-id="400171">Pour ceux qui ont déjà manipulé des listes, les noeuds sont on ne peut plus classiques : comme sur le schéma on aura trois références (<em>prev</em> et <em>next</em> pour les noeuds précédent et suivant, et <em>entry</em> pour le conteneur).</p><p id="r-400172" data-claire-element-id="400172">En plus des habituels accesseurs et mutateurs, comme on l'a fait pour la classe <em>Bucket</em> auparavant dans ce tutoriel, on va ajouter des méthodes interagissant avec le conteneur, afin de simplifier les écritures.</p><pre id="r-400173" data-claire-element-id="400173"><code data-claire-semantic="java">public class Node
+{
+	private Entry entry;
+	private Node next, prev;
+	
+	public Node(Entry entry)
+	{
+		this(entry, null);
+	}
+	
+	public Node(Entry entry, Node next)
+	{
+		this.entry = entry;
+		this.next = next;
+		this.prev = null;
+	}
+	
+	// Accesseurs
+	public int getKey() 		{ return entry.getKey();   }
+	public Object getValue()	{ return entry.getValue(); }
+	public Node getNext()		{ return next;  }
+	public Node getPrev()		{ return prev;  }
+	
+	// Mutateurs
+	public void setValue(Object value)      { entry.setValue(value); }
+	public void setNext(Node next) 		{ this.next = next;      }
+	public void setPrev(Node prev) 		{ this.prev = prev;      }
+}</code></pre><p id="r-400174" data-claire-element-id="400174">Notez que le premier constructeur (avec seulement un <em>Entry</em> en argument) sera utilisé lors de la création du <em>bucket</em>, c'est-à-dire quand on y placera le premier élément. Le deuxième constructeur est là lorsqu'on ajoutera un noeud dans la liste.</p><h3 id="r-gestion-de-la-liste" data-claire-element-id="400204">Gestion de la liste</h3><p id="r-400176" data-claire-element-id="400176">Il nous faut tout d'abord des méthodes dans <em>Bucket</em> qui permettent de gérer une liste :</p><ul id="r-400185" data-claire-element-id="400185"><li id="r-400178" data-claire-element-id="400178"><p id="r-400177" data-claire-element-id="400177">get(clé), pour récupérer un référence vers un noeud ;</p></li><li id="r-400180" data-claire-element-id="400180"><p id="r-400179" data-claire-element-id="400179">contains(clé), pour savoir si une liste contient une clé ;</p></li><li id="r-400182" data-claire-element-id="400182"><p id="r-400181" data-claire-element-id="400181">add(entrée), pour ajouter un noeud dans la liste. Il faudra qu'elle renvoie un booléen si la valeur a été ajoutée (*) ;</p></li><li id="r-400184" data-claire-element-id="400184"><p id="r-400183" data-claire-element-id="400183">remove(clé), pour en supprimer un noeud.</p></li></ul><p id="r-400186" data-claire-element-id="400186">* : ce retour est nécessaire pour correctement modifier la variable <em>nbrObject</em> de la table de hachage dans un cas de figure bien précis : lorsque la valeur est déjà dans la liste, il ne faudra pas l'incrémenter ! Le booléen renvoyé permettra de le faire ou non ;) .</p><p id="r-400187" data-claire-element-id="400187">La classe <em>Bucket</em> aura cette allure :</p><pre id="r-400188" data-claire-element-id="400188"><code data-claire-semantic="java">public class Bucket
+{
+	private int nbrNode = 0; // Nombre de noeuds dans la liste
+
+	private Node list; // Référence vers la tête de la liste
+	
+	public Bucket(Entry e)
+	{
+		// ...
+	}
+	
+	public boolean add(Entry e)
+	{
+		// ...
+	}
+	
+	public void remove(int key) throws HashTableException
+	{
+		// ...
+	}
+	
+	public Node get(int key)
+	{
+		// ...
+	
+	public boolean contains(int key)
+	{
+		// ...
+	}
+	
+	public int getNbrNode()
+	{
+		// ...
+	}
+}</code></pre><p id="r-400189" data-claire-element-id="400189">Ces méthodes seront utilisées par la classe de la table de hachage, <em>HashTable</em>.</p><p id="r-400190" data-claire-element-id="400190">Commençons gentillement par le constructeur : lorsqu'on créera le <em>bucket</em>, c'est qu'on voudra y placer une entrée. Il faut donc créer le premier noeud de la liste.</p><pre id="r-400191" data-claire-element-id="400191"><code data-claire-semantic="java">public Bucket(Entry e)
+{
+	this.add(e);
+}</code></pre><p id="r-400192" data-claire-element-id="400192">Enchaînons sur get, elle est importante car sera très utilisée pour les autres méthodes ! Il faut parcourir la liste à partir du premier noeud jusqu'à la fin (on utilisera une référence <em>n</em>). Si on trouve la clé passée en argument, on s'arrête et on renvoit une référence vers le noeud. Si elle ne se trouve pas dans la liste, la méthode renverra <strong>null</strong>.</p><pre id="r-400193" data-claire-element-id="400193"><code data-claire-semantic="java">public Node get(int key)
+{
+	Node n = list; // Tête de la liste
+	
+	while(n != null &amp;&amp; n.getKey() != key) // Tant qu'on n'est pas à la fin ou qu'on n'a pas la clé...
+		n = n.getNext(); // .. on avance dans la liste
+	return n;
+}</code></pre><p id="r-400194" data-claire-element-id="400194">Grâce à cette méthode, les autres sont terriblement simplifiées. En effet, prenons la méthode add. Il faut d'abord vérifier si la clé ne s'y trouve pas déjà : si c'est le cas, on remplace la valeur. Sinon, on ajoute le noeud. Grâce au second constructeur de la classe <em>Node</em>, on peut ajouter un noeud en tête de liste en une seule ligne :) .</p><aside id="r-400196" data-claire-element-id="400196" data-claire-semantic="warning"><p id="r-400195" data-claire-element-id="400195">N'oubliez pas de mettre à jour la référence <em>prev</em> de l'ancien premier noeud vers le nouveau !</p></aside><pre id="r-400197" data-claire-element-id="400197"><code data-claire-semantic="java">public boolean add(Entry e)
+{
+	Node n = get(e.getKey());
+
+	if(n != null) // Si la clé est déjà dans la liste, on change la valeur
+	{ 
+		n.setValue(e.getValue());
+		return false;
+	}
+
+	// Si la clé n'est pas dans la liste, on ajoute un noeud
+	
+	nbrNode++;
+	Node v = new Node(e, list); // Nouveau noeud, future tête de liste
+		
+	if(list != null) // S'il y a déjà un noeud en tête, on met à jour la référence prev
+		list.setPrev(v);
+		
+	list = v; // Mise à jour de la tête de liste
+		
+	return true;
+}</code></pre><p id="r-400198" data-claire-element-id="400198">Passons à la suppression : il faut d'abord trouver le noeud (si la clé est dans la liste) avec la méthode get. Ensuite, il faut le sortir de la liste en modifiant les variables qui le référencent.</p><p id="r-400199" data-claire-element-id="400199">Ainsi, il faut modifier le <em>next</em> du noeud précédent vers le noeud après celui qu'il faut supprimer. Notez que s'il n'y a pas de noeud précédent, c'est qu'on se trouve en tête de liste, il faudra donc modifier la variable membre <em>list</em> de <em>Bucket</em> ! C'est l'opération 1 dans les commentaires du code.</p><p id="r-400200" data-claire-element-id="400200">Ensuite, s'il y a un noeud après celui qu'il faut supprimer, il faut changer son <em>prev</em> pour qu'il réfère le noeud avant le noeud à supprimer. C'est l'opération 2 dans le code.</p><pre id="r-400201" data-claire-element-id="400201"><code data-claire-semantic="java">public void remove(int key) throws HashTableException
+{
+	Node n = get(key);
+	
+	if(n == null)
+		throw new HashTableException(&quot;Clé non trouvée.&quot;);
+	
+	nbrNode--;
+	
+	// Opération 1
+	if(n.getPrev() != null) // Si le noeud est dans la liste
+		n.getPrev().setNext(n.getNext());
+	else // Si le noeud est le premier de la liste
+		list = n.getNext();
+	
+	// Opération 2
+	if(n.getNext() != null)
+		n.getNext().setPrev(n.getPrev());
+}</code></pre><p id="r-400202" data-claire-element-id="400202">Terminons avec la fonction contains, qui est toute mignonne puisqu'elle ne fait qu'une seule ligne ! En effet, il faut faut juste tester si le noeud obtenu avec get est <strong>null</strong> (donc la clé n'est pas dans la liste) ou non.</p><pre id="r-400203" data-claire-element-id="400203"><code data-claire-semantic="java">public boolean contains(int key)
+{
+	return (get(key) != null);
+}</code></pre><h2 id="r-adaptation-de-la-table-de-hachage" data-claire-element-id="400221">Adaptation de la table de hachage</h2><p id="r-400206" data-claire-element-id="400206">Courage, on arrive tout doucement à la fin ! Il ne reste plus que les méthodes de la table de hachage à modifier.</p><h3 id="r-methode-put" data-claire-element-id="400210">Méthode put</h3><p id="r-400207" data-claire-element-id="400207">Notez que l'on peut enlever l'exception. En effet, précédemment une erreur se produisait lorsque la table était remplie, or ici on peut dépasser la taille du tableau sans problèmes !</p><p id="r-400208" data-claire-element-id="400208">La méthode se comportera ainsi : après avoir calculé le hach code de la clé, si le <em>bucket</em> est <strong>null</strong> on l'instancie. Sinon, on l'ajoute à la liste.</p><pre id="r-400209" data-claire-element-id="400209"><code data-claire-semantic="java">public void put(int key, Object value)
+{
+	int index = hash(new Integer(key).toString()); // Calcul de l'indice
+
+	Entry e = new Entry(key, value);
+	
+	if(bucketArray[index] != null) // Si la liste existe, on ajoute un noeud...
+	{
+		if(bucketArray[index].add(e)) // ... et le nombre d'élément augmente si la clé est nouvelle
+			nbrObject++;
+	}
+	else // Si la liste n'existe pas, on l'instancie
+	{
+		nbrObject++;
+		bucketArray[index] = new Bucket(e);
+	}
+}</code></pre><h3 id="r-methode-get" data-claire-element-id="400213">Méthode get</h3><p id="r-400211" data-claire-element-id="400211">La méthode get reste assez simple, à la limite il y a plus de cas d'erreur à traiter que de &quot;vrai&quot; code :p . Ainsi, on va chercher le noeud qui contiendrait la clé à son indice, et on retourne la valeur si elle existe.</p><pre id="r-400212" data-claire-element-id="400212"><code data-claire-semantic="java">public Object get(int key) throws HashTableException
+{
+	
+	if(nbrObject == 0)
+		throw new HashTableException(&quot;Table vide.&quot;);
+		
+	int index = hash(new Integer(key).toString()); // Calcul de l'indice
+	
+	if(bucketArray[index] == null || bucketArray[index].getNbrNode() == 0) // Si la liste n'existe pas ou est vide
+		throw new HashTableException(&quot;Clée non trouvée&quot;);
+	
+	Node n = bucketArray[index].get(key); // Récupération du noeud
+	
+	if(n != null) // Si le noeud existe, on retourne la valeur
+		return n.getValue();
+	else
+		throw new HashTableException(&quot;Clée non trouvée&quot;);
+}</code></pre><h3 id="r-methode-remove" data-claire-element-id="400216">Méthode remove</h3><p id="r-400214" data-claire-element-id="400214">Terminons par remove, qui ne fait qu'appeler la méthode remove de <em>Bucket</em>.</p><pre id="r-400215" data-claire-element-id="400215"><code data-claire-semantic="java">public void remove(int key) throws HashTableException
+{
+	if(nbrObject == 0)
+		throw new HashTableException(&quot;Table vide.&quot;);
+		
+	int index = hash(new Integer(key).toString()); // Calcul de l'indice
+	
+	if(bucketArray[index] == null)
+		throw new HashTableException(&quot;Clée non trouvée&quot;);
+	
+	bucketArray[index].remove(key); // Suppression du noeud
+	nbrObject--;
+}</code></pre><h3 id="r-methode-contains" data-claire-element-id="400220">Méthode contains</h3><p id="r-400217" data-claire-element-id="400217">Enfin, la méthode contains renverra vrai si la liste située dans l'indice existe et contient la clé.</p><pre id="r-400218" data-claire-element-id="400218"><code data-claire-semantic="java">public boolean contains(int key)
+{
+	if(nbrObject == 0)
+		return false;
+			
+	int index = hash(new Integer(key).toString()); // Calcul de l'indice
+	Bucket b = bucketArray[index];
+		
+	return (b != null &amp;&amp; b.contains(key)); // Renvoie vrai si la liste existe et si elle contient la clé
+}</code></pre><p id="r-400219" data-claire-element-id="400219">Ouf, on y sera arrivé :lol: . Vous pouvez retrouver tout le code <a href="http://www.kmel.be/~jipe/sdz/tableHachage/chainageLineaire.zip">dans cette archive</a> !</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1">Les tables de hachage</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/les-tables-de-symboles-maps-et-dictionnaires">
+Les tables de symboles : maps et dictionnaires
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/le-principe-des-tables-de-hachage">
+Le principe des tables de hachage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/gestions-des-collisions">
+Gestions des collisions
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/l-importance-des-donnees-et-le-facteur-de-charge">
+L&#039;importance des données et le facteur de charge
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-de-la-table-de-hachage">
+Implémentation de la table de hachage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-du-sondage-et-du-double-hachage">
+Implémentation du sondage et du double hachage
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-du-chainage-lineaire">
+Implémentation du chaînage linéaire
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/la-fonction-de-hachage">
+La fonction de hachage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/discussion-des-performances-et-ameliorations">
+Discussion des performances et améliorations
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-du-sondage-et-du-double-hachage">
+<span class="arrow"></span>
+<span class="next">Implémentation du sondage et du double hachage</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/la-fonction-de-hachage">
+<span class="next">La fonction de hachage</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lafonctiondehachage"></a><h2>La fonction de hachage</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-du-chainage-lineaire">
+<span class="arrow"></span>
+<span class="next">Implémentation du chaînage linéaire</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/discussion-des-performances-et-ameliorations">
+<span class="next">Discussion des performances et améliorations</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-400223" data-claire-element-id="400223">Je n'arrête pas de vous parler de fonctions de hachage dans ce tutoriel, tout en ne vous expliquant pas comment elle fonctionne ni en vous montrant le moindre bout de code... Ne m'en voulez pas, c'est parce que c'est un sujet assez compliqué :p .</p><p id="r-400224" data-claire-element-id="400224">En soi, une fonction de hachage n'est pas difficile à imaginer, n'importe quelle fonction peut être utilisée... mais ne sera pas nécessairement efficace !</p><p id="r-400225" data-claire-element-id="400225">Rappelez-vous qu'une fonction de hachage est bonne si, pour n'importe quel élément, les hach codes générés sont les plus différents possibles (idéalement, ils devraient être tous différents), afin bien sûr d'éviter les collisions. Cependant, pour trouvez LA fonction de hachage universelle et ultra efficace, vous pouvez repasser :p . Une table de hachage sera d'autant plus efficace si les fonctions de hachage et de compression répartissent les indices le plus uniformément possible.</p><p id="r-400226" data-claire-element-id="400226">Dans cette sous-partie, je ne ferai que vous expliquer deux fonction de hachage faciles à implémenter et assez efficaces, ensuite nous parlerons un peu sécurité (parce que malheureusement nous ne vivons pas dans le monde des bisounours il y a toujours des gens/concurrents prêts à vous mettre des bâtons dans les roues, et il vaut mieux blinder son code dès le début).</p><h2 id="r-une-bonne-fonction-de-hachage" data-claire-element-id="400338">Une bonne fonction de hachage</h2><p id="r-400227" data-claire-element-id="400227">Rappelez-vous que, dans notre table de hachage, les indices sont générés en deux opérations :</p><ul id="r-400232" data-claire-element-id="400232"><li id="r-400229" data-claire-element-id="400229"><p id="r-400228" data-claire-element-id="400228">on hache la clé, qui donne un nombre prenant une valeur pouvant être très très grande en valeur absolue ;</p></li><li id="r-400231" data-claire-element-id="400231"><p id="r-400230" data-claire-element-id="400230">on compresse le hach code, pour qu'il puisse rentrer dans la table.</p></li></ul><p id="r-400233" data-claire-element-id="400233">Pour les deux étapes il y a moyen d'avoir des valeurs très efficaces !</p><h3 id="r-hachage-polynomial" data-claire-element-id="400242">Hachage polynomial</h3><p id="r-400234" data-claire-element-id="400234">Un exemple de fonction de hachage simple est la somme de la valeur entière de chaque lettre de la chaîne :</p><pre id="r-400235" data-claire-element-id="400235"><code data-claire-semantic="java">public int hash(String s)
+{
+	int h = 0;
+	
+	// Etape 1 - Hachage
+	for(int i = 0 ; i &lt; s.length() ; i++)
+		h += (int) s.charAt(i);
+}</code></pre><p id="r-400236" data-claire-element-id="400236">Ainsi, pour chaque mot différent on aura un hach code différent... sauf pour les mots qui ont les mêmes lettres ! Par exemple, les mots &quot;marie&quot; et &quot;maire&quot; auront les mêmes hach codes. Le problème vient du fait que cette fonction est trop simple : on ne tient pas compte de la position à laquelle se trouve le caractère.</p><p id="r-400237" data-claire-element-id="400237">Et pour en tenir compte, on peut multiplier le tout par un coefficient qui varie selon la position (avec i comme exposant par exemple).</p><pre id="r-400238" data-claire-element-id="400238"><code data-claire-semantic="java">public int hash(String s)
+{
+	int h = 0;
+	int c = 42;
+	// Etape 1 - Hachage
+	for(int i = 0 ; i &lt; s.length() ; i++) // On parcourt tous les caractères
+		h += (int) s.charAt(i) * (int)(Math.pow(c, i));
+}</code></pre><p id="r-400239" data-claire-element-id="400239">Cela n'a l'air de rien, mais pour un ajout de 1 000 nombres aléatoires dans un tableau de 2 000 cases, en utilisant le sondage linéaire, on passe d'environ 400 000 collisions à 720, rien qu'en multipliant par un exposant choisit (un peu) n'importe comment !</p><aside id="r-400241" data-claire-element-id="400241" data-claire-semantic="warning"><p id="r-400240" data-claire-element-id="400240">La valeur de c influence très fortement les performances ; avec c = 2, dans les mêmes conditions, j'obtiens environ 960 collisions. Il convient donc d'essayer différentes valeurs, en espérant en trouver une qui produit moins de collisions que les autres ;) .</p></aside><h3 id="r-hachage-cyclique" data-claire-element-id="400246">Hachage cyclique</h3><p id="r-400243" data-claire-element-id="400243">La fonction qui suit est en fait un décalage cyclique de bits : le code va décaler la représentation binaire de la somme de la valeur numérique de chaque caractère... Vous suivez ? Le code sera peut être plus simple à comprendre que la version texte :p .</p><pre id="r-400244" data-claire-element-id="400244"><code data-claire-semantic="java">public int hash(String s)
+{
+	int h = 0;
+
+	// Etape 1 - hachage
+	for(int i = 0 ; i &lt; s.length() ; i++) // On parcourt tous les caractères
+	{
+		h = (h &lt;&lt; 5) | (h &gt;&gt;&gt; 27); // Décalage cyclique de 5 bits
+		h += (int) s.charAt(i);
+	}
+}</code></pre><p id="r-400245" data-claire-element-id="400245">Selon la valeur du décalage, le nombre de collision varie ; ici par exemple un décalage de 5 bits convient bien pour les mots anglais (ce qui est peu surprenant vu que le bouquin d'où la fonction est tirée est en anglais ^^ ).</p><h3 id="r-une-fonction-de-compression" data-claire-element-id="400261">Une fonction de compression</h3><p id="r-400247" data-claire-element-id="400247">C'est bien beau d'avoir un énorme hach code, encore faut-il le rentrer dans la table ! La manière la plus simple est d'utiliser un modulo avec la taille du tableau :</p><pre id="r-400248" data-claire-element-id="400248"><code data-claire-semantic="java">private int hash(String s)
+{
+	int h = 0;
+				
+	// Etape 1 - Hachage
+	// ...
+		
+	// Etape 2 : compression
+	return Math.abs(h) % bucketArray.length;	
+}</code></pre><aside id="r-400250" data-claire-element-id="400250" data-claire-semantic="error"><p id="r-400249" data-claire-element-id="400249">Pensez à prendre la valeur absolue de h ! En effet, il peut être un nombre très grand et devenir négatif (surtout si vous faites un décalage cyclique). De plus, la fonction modulo de Java renvoie le modulo d'un nombre <strong>avec le même signe</strong>, donc il peut être négatif (ce qui n'est pas tolérable comme indice d'un tableau :p ).</p></aside><p id="r-400251" data-claire-element-id="400251">Compression simple et efficace... mais il y a un risque de collision avec les multiples ! En effet, imaginons que les valeurs de hachage de clés sont 15, 25 et 35 à placer dans un tableau de 10 <em>buckets</em>. Avec la compression décrite plus haut, elles atterriront toutes dans la même case, en 5 !</p><p id="r-400252" data-claire-element-id="400252">Par contre, en prenant d'abord un modulo qui est un nombre premier avec la taille du tableau, on évite ces collisions. Par exemple, si on reprend 15, 25 et 35 en modulo 11, on aura respectivement 4, 3 et 2, bref aucune collision !</p><aside id="r-400254" data-claire-element-id="400254" data-claire-semantic="warning"><p id="r-400253" data-claire-element-id="400253">Il faudra bien évidemment refaire un modulo avec la taille du tableau, histoire de ne pas en sortir ;) .</p></aside><p id="r-400255" data-claire-element-id="400255">Si on appelle p ce nombre premier, on aura</p><pre id="r-400256" data-claire-element-id="400256"><code data-claire-semantic="java">private int hash(String s)
+{
+	// ...
+	return (Math.abs(h) % p) % bucketArray.length;	
+}</code></pre><p id="r-400257" data-claire-element-id="400257">Toute la question est de choisir p, et pour bien le faire il faut connaître le genre de données qui seront utilisées comme clés ! En effet, ce n'est pas parce que p est premier que cela marchera ! Si on reprend 15, 25 et 35 et qu'on utilise p = 5, les indices seront tous 0 ! De plus, on n'utilisera qu'une moitié du tableau, les cases de 5 à 9 ne seront jamais atteintes...</p><p id="r-400258" data-claire-element-id="400258">Vous devrez donc choisir p un nombre premier plus grand que la taille du tableau. <a href="http://fr.wikipedia.org/wiki/Liste_de_nombres_premiers">Voici une page de Wikipédia</a>, où vous devriez trouver votre bonheur ;) .</p><aside id="r-400260" data-claire-element-id="400260" data-claire-semantic="error"><p id="r-400259" data-claire-element-id="400259">N'en prenez pas un trop grand, sinon vous dépasserez la capacité d'un entier !</p></aside><h3 id="r-etc-2" data-claire-element-id="400264">Etc</h3><p id="r-400262" data-claire-element-id="400262">Bien évidemment, les fonctions que je viens de vous donner ne sont pas uniques, et encore moins les plus efficaces. C'est pour cela que je vous conseille de tester différentes fonctions de hachage, que vous pouvez trouver facilement avec votre moteur de recherche préféré ;) . Par exemple, <a href="http://www.cse.yorku.ca/~oz/hash.html">ce site</a> en possède pas mal, et était un des premiers résultats !</p><p id="r-400263" data-claire-element-id="400263">Notez que vous trouverez beaucoup de fonctions de hachage qui prennent une chaîne de caractère en argument, cela explique pourquoi je prenais un objet String dans le code :) .</p><h3 id="r-le-cas-de-la-fonction-de-double-hachage" data-claire-element-id="400337">Le cas de la fonction de double hachage</h3><p id="r-400265" data-claire-element-id="400265">Je vous l'ai dit dans la sous-partie sur la gestion des collisions, il est possible de choisir une fonction de double hachage de manière à vérifier au moins une fois toutes les cases de la table. Cela ne veut pas dire que vous trouverez une place libre rapidement, mais cela garantira que vous en trouverez une !</p><p id="r-400266" data-claire-element-id="400266">On va par contre prendre une formulation un peu différente de ce que nous avons vu plus haut (mais pas plus compliquée) ; au lieu de hacher l'indice, la seconde fonction de hachage s'appliquera sur la clé et on va multiplier le résultat par i.</p><figure id="r-400268" data-claire-element-id="400269"><img id="r-400267" data-claire-element-id="400267" src="medias/uploads.siteduzero.com_files_267001_268000_267085.png" alt="Image utilisateur"/></figure><p id="r-400270" data-claire-element-id="400270">Cette nouvelle forme va nous permettre d'utiliser la propriété suivante : si la valeur de la seconde fonction de hachage est première par rapport à M, toutes les cases seront vérifiées.</p><p id="r-400271" data-claire-element-id="400271">Par exemple, prenons un tableau de 10 cases et un hach code valant 1. Une valeur possible pour la fonction de hachage est 3. Les indices parcourus seront</p><table id="r-400320" data-claire-element-id="400320"><thead id="r-400295" data-claire-element-id="400295"><tr id="r-400294" data-claire-element-id="400294"><th id="r-400273" data-claire-element-id="400273"><p id="r-400272" data-claire-element-id="400272">i</p></th><th id="r-400275" data-claire-element-id="400275"><p id="r-400274" data-claire-element-id="400274">0</p></th><th id="r-400277" data-claire-element-id="400277"><p id="r-400276" data-claire-element-id="400276">1</p></th><th id="r-400279" data-claire-element-id="400279"><p id="r-400278" data-claire-element-id="400278">2</p></th><th id="r-400281" data-claire-element-id="400281"><p id="r-400280" data-claire-element-id="400280">3</p></th><th id="r-400283" data-claire-element-id="400283"><p id="r-400282" data-claire-element-id="400282">4</p></th><th id="r-400285" data-claire-element-id="400285"><p id="r-400284" data-claire-element-id="400284">5</p></th><th id="r-400287" data-claire-element-id="400287"><p id="r-400286" data-claire-element-id="400286">6</p></th><th id="r-400289" data-claire-element-id="400289"><p id="r-400288" data-claire-element-id="400288">7</p></th><th id="r-400291" data-claire-element-id="400291"><p id="r-400290" data-claire-element-id="400290">8</p></th><th id="r-400293" data-claire-element-id="400293"><p id="r-400292" data-claire-element-id="400292">9</p></th></tr></thead><tbody id="r-400319" data-claire-element-id="400319"><tr id="r-400318" data-claire-element-id="400318"><td id="r-400297" data-claire-element-id="400297"><p id="r-400296" data-claire-element-id="400296">Indice</p></td><td id="r-400299" data-claire-element-id="400299"><p id="r-400298" data-claire-element-id="400298">1</p></td><td id="r-400301" data-claire-element-id="400301"><p id="r-400300" data-claire-element-id="400300">4</p></td><td id="r-400303" data-claire-element-id="400303"><p id="r-400302" data-claire-element-id="400302">7</p></td><td id="r-400305" data-claire-element-id="400305"><p id="r-400304" data-claire-element-id="400304">0</p></td><td id="r-400307" data-claire-element-id="400307"><p id="r-400306" data-claire-element-id="400306">3</p></td><td id="r-400309" data-claire-element-id="400309"><p id="r-400308" data-claire-element-id="400308">6</p></td><td id="r-400311" data-claire-element-id="400311"><p id="r-400310" data-claire-element-id="400310">9</p></td><td id="r-400313" data-claire-element-id="400313"><p id="r-400312" data-claire-element-id="400312">2</p></td><td id="r-400315" data-claire-element-id="400315"><p id="r-400314" data-claire-element-id="400314">5</p></td><td id="r-400317" data-claire-element-id="400317"><p id="r-400316" data-claire-element-id="400316">8</p></td></tr></tbody></table><p id="r-400321" data-claire-element-id="400321">Ainsi, on devra au pire exécuter 10 itérations de la recherche, et sans retomber une seule fois sur un indice déjà passé en revue !</p><p id="r-400322" data-claire-element-id="400322">Il existe plusieurs manières d'arriver à ce genre de résultat, en voici deux (tirés d'un bouquin d'algorithmique dont je parle dans la conclusion) :</p><ul id="r-400334" data-claire-element-id="400334"><li id="r-400326" data-claire-element-id="400329"><img id="r-400327" data-claire-element-id="400326" src="medias/uploads.siteduzero.com_files_259001_260000_259441.png" alt="Image utilisateur"/><img id="r-400328" data-claire-element-id="400327" src="medias/uploads.siteduzero.com_files_267001_268000_267090.png" alt="Image utilisateur"/><img id="r-400329" data-claire-element-id="400328" src="medias/uploads.siteduzero.com_files_267001_268000_267095.png" alt="Image utilisateur"/><p id="r-400323" data-claire-element-id="400323">prendre comme taille de la table M un nombre premier et pour</p><p id="r-400324" data-claire-element-id="400324">utiliser une fonction qui renvoie un entier positif toujours inférieur à M, par exemple en prenant les fonctions de hachage suivantes :</p><p id="r-400325" data-claire-element-id="400325">Avec M' un nombre légèrement plus petit que la taille de la table, par exemple M - 1.</p></li><li id="r-400332" data-claire-element-id="400333"><img id="r-400333" data-claire-element-id="400332" src="medias/uploads.siteduzero.com_files_259001_260000_259441.png" alt="Image utilisateur"/><p id="r-400330" data-claire-element-id="400330">prendre comme taille de la table une puissance de 2 et s'arranger pour que</p><p id="r-400331" data-claire-element-id="400331">renvoit toujours une valeur impaire.</p></li></ul><aside id="r-400336" data-claire-element-id="400336" data-claire-semantic="warning"><p id="r-400335" data-claire-element-id="400335">Si vous reprenez l'implémentation des sous-parties précédentes, il va falloir modifier quelque peu la méthode qui donne le prochain indice, vu qu'il faut prendre en compte la taille du tableau !</p></aside><h2 id="r-protegeons-notre-table-de-hachage" data-claire-element-id="400350">Protégeons notre table de hachage</h2><p id="r-400339" data-claire-element-id="400339">Dans le monde dans lequel nous vivons, il y aura toujours des petits malins qui feront tout pour vous pourrir la vie :euh: . Ainsi, ils pourraient s'amuser à entrer des clés dans votre table de hachage qui vont complètement détruire les performances !</p><p id="r-400340" data-claire-element-id="400340">Par exemple, supposons que vous proposez un carnet d'adresses sur le web, qui est en fait une table de hachage avec comme méthode de gestion des collisions un sondage et comme clé le nom du contact (comme dans l'exemple du début de ce tutoriel). Une personne malintentionnée pourrait par exemple entrer des noms particuliers qui créent des collisions, qui vont former des <em>clusters</em> et ainsi démolir les performances lors des recherches !</p><p id="r-400341" data-claire-element-id="400341">Plus dangereux encore, imaginez que cette personne crée plusieurs carnets d'adresse avec des énormes <em>clusters</em> et, simultanément, lance plusieurs recherches qui dégénèrent, au point que le serveur web ne puisse plus satisfaire les requêtes... C'est le B-A-ba d'une <a href="http://fr.wikipedia.org/wiki/Attaque_par_déni_de_service">attaque par déni de service</a>o_O .</p><p id="r-400342" data-claire-element-id="400342">Heureusement, il y a moyen de se prémunir et de déjouer ses plans diaboliques en changement très simplement la fonction de compression !</p><p id="r-400343" data-claire-element-id="400343">L'idée est la suivante : la fonction de compression aura des facteurs qui seront choisis aléatoirement lors de l'instanciation de la classe de la table de hachage. Ainsi, chaque fois qu'une table sera instanciée les clés qui feront dégénérer le programme seront différentes, et même si elles sont trouvées, ça sera impossible à reproduire !</p><p id="r-400344" data-claire-element-id="400344">On va par exemple choisir deux entiers a et b que l'on a injecter ainsi dans la fonction de compression :</p><pre id="r-400345" data-claire-element-id="400345"><code data-claire-semantic="java">private int hash(String s)
+{
+	// ...
+	return (Math.abs(a * h + b) % p) % bucketArray.length;	
+}</code></pre><aside id="r-400347" data-claire-element-id="400347" data-claire-semantic="warning"><p id="r-400346" data-claire-element-id="400346">Vu que a multiplie le hach code, il faut qu'il soit nécessairement <strong>non nul</strong>, sinon le hach code sera ignoré, et toutes les clés iront dans la case <code>b % p % bucketArray.length</code>.</p></aside><p id="r-400348" data-claire-element-id="400348">Bien évidemment, on ne choisira pas la valeur de a et b à chaque fois que l'on va utiliser la fonction de hachage (sinon on ne retrouvera jamais nos clés) ; on va les déclarer comme variables membres et les fixer dans le constructeur :</p><pre id="r-400349" data-claire-element-id="400349"><code data-claire-semantic="java">public class HashTable implements SymbolTable
+{
+	// ...
+
+	// Entiers pour le hachage
+	private int a, b;
+	private int p;
+	
+	// ... 
+
+	public HashTable(int size, CollisionManagement manager)
+	{
+		this.manager = manager;
+		bucketArray = new Bucket[size];
+		
+		Random generator = new Random(); // Générateur de nombres aléatoires
+
+		p = 1073676287; // Grand nombre premier
+		
+		a = (Math.abs(generator.nextInt()) % p)  + 1;
+		b = Math.abs(generator.nextInt()) % p;
+	}
+	// ...
+}</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1">Les tables de hachage</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/les-tables-de-symboles-maps-et-dictionnaires">
+Les tables de symboles : maps et dictionnaires
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/le-principe-des-tables-de-hachage">
+Le principe des tables de hachage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/gestions-des-collisions">
+Gestions des collisions
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/l-importance-des-donnees-et-le-facteur-de-charge">
+L&#039;importance des données et le facteur de charge
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-de-la-table-de-hachage">
+Implémentation de la table de hachage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-du-sondage-et-du-double-hachage">
+Implémentation du sondage et du double hachage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-du-chainage-lineaire">
+Implémentation du chaînage linéaire
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/la-fonction-de-hachage">
+La fonction de hachage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/discussion-des-performances-et-ameliorations">
+Discussion des performances et améliorations
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-du-chainage-lineaire">
+<span class="arrow"></span>
+<span class="next">Implémentation du chaînage linéaire</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/discussion-des-performances-et-ameliorations">
+<span class="next">Discussion des performances et améliorations</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Discussiondesperformancesetamliorations"></a><h2>Discussion des performances et améliorations</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/la-fonction-de-hachage">
+<span class="arrow"></span>
+<span class="next">La fonction de hachage</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-400352" data-claire-element-id="400352">Terminons ce modeste tutoriel par un résumé sur la gestion des collisions, une petite discussion des performances des tables de hachage par rapport aux autres implémentations des tables de symbole, et enfin quelques améliorations.</p><h2 id="r-resume-des-methodes-de-gestion-des-collisions" data-claire-element-id="400368">Résumé des méthodes de gestion des collisions</h2><aside id="r-400354" data-claire-element-id="400354" data-claire-semantic="information"><p id="r-400353" data-claire-element-id="400353">On va supposer la fonction de hachage de notre table est très efficace et qu'elle distribue les indices de manière uniforme.</p></aside><p id="r-400355" data-claire-element-id="400355">Comme dit plus haut, lorsque je vous ai présenté les méthodes de gestion des collisions, les performances des tables de hachage dépendent fortement de la situation dans laquelle on se trouve. Chaque méthode a ses avantages et inconvénients, résumons rapidement :</p><ol id="r-400362" data-claire-element-id="400362"><li id="r-400357" data-claire-element-id="400357"><p id="r-400356" data-claire-element-id="400356">Les sondages sont efficaces lorsque le tableau n'est pas trop rempli, sinon il y a formation de <em>clusters</em>, qui flinguent les performances. Comptez que si le tableau est rempli jusqu'à environ 50%, il n'y aura pas de dégénération des temps d'exécution ;</p></li><li id="r-400359" data-claire-element-id="400359"><p id="r-400358" data-claire-element-id="400358">comme pour les sondages et en supposant que la seconde fonction de hachage est bien choisie, la méthode du double hachage sera efficace si le tableau n'est pas très rempli ;</p></li><li id="r-400361" data-claire-element-id="400361"><p id="r-400360" data-claire-element-id="400360">le chaînage linéaire possède aussi de bonnes performances, mais nécessite plus d'espace mémoire (vu qu'il y a des listes liées à gérer). Cependant, la méthode ne dégénèrera pas aussi vite que les autres si le nombre d'éléments ajoutés est important.</p></li></ol><p id="r-400363" data-claire-element-id="400363">Dans des bonnes conditions et en tenant compte du facteur de charge, on peut considérer qu'une table de hachage voit ses opérations effectuées en temps constant (</p><figure id="r-400365" data-claire-element-id="400366"><img id="r-400364" data-claire-element-id="400364" src="medias/uploads.siteduzero.com_files_259001_260000_259452.png" alt="Image utilisateur"/></figure><p id="r-400367" data-claire-element-id="400367">), mais peut être très instable et nécessiter de l'espace mémoire supplémentaire.</p><h2 id="r-comparaison-arbres-tables-de-hachage" data-claire-element-id="400375">Comparaison arbres/tables de hachage</h2><p id="r-400369" data-claire-element-id="400369">Une autre implémentation, très répandue, des tables de symboles se fait avec des arbres. Les performances des opérations dépendent ici de la hauteur de l'arbre, quand celles des tables de hachage dépendent du temps nécessaire pour trouver la case dans le <em>bucket array</em>.</p><p id="r-400370" data-claire-element-id="400370">Avec une implémentation optimale, pour N éléments ajoutés, la hauteur d'un arbre peut être réduite à</p><figure id="r-400372" data-claire-element-id="400373"><img id="r-400371" data-claire-element-id="400371" src="medias/uploads.siteduzero.com_files_259001_260000_259454.png" alt="Image utilisateur"/></figure><p id="r-400374" data-claire-element-id="400374">. C'est moins performant, mais il y a l'assurance de la stabilité des performances, c'est là un des grands avantages des arbres !</p><h2 id="r-ameliorations-19" data-claire-element-id="400400">Améliorations</h2><p id="r-400376" data-claire-element-id="400376">Bien évidemment, le code que j'ai donné n'est pas exempte de défauts, et peut être amélioré. Voici quelques idées :</p><ul id="r-400389" data-claire-element-id="400389"><li id="r-400378" data-claire-element-id="400378"><p id="r-400377" data-claire-element-id="400377">modifier le code pour pouvoir utiliser les trois méthodes de gestion des collisions sans utiliser deux classes différentes pour la table de hachage ;</p></li><li id="r-400380" data-claire-element-id="400380"><p id="r-400379" data-claire-element-id="400379">utiliser un arbre au lieu d'une liste pour le chaînage linéaire si les files deviennent longues, ainsi le temps de recherche sera diminué ;</p></li><li id="r-400382" data-claire-element-id="400382"><p id="r-400381" data-claire-element-id="400381">adapter la table pour passer d'un dictionnaire à une <em>map</em> ;</p></li><li id="r-400384" data-claire-element-id="400384"><p id="r-400383" data-claire-element-id="400383">une méthode qui permettrait de passer d'une méthode de gestion des collisions à une autre (parce que non, ce n'est pas en changeant bêtement la variable membre de type <em>CollisionManagement</em> que vous y arriverez :p ) ;</p></li><li id="r-400386" data-claire-element-id="400386"><p id="r-400385" data-claire-element-id="400385">lors de l'utilisation du sondage, proposer de redimensionner le tableau lorsque le facteur de charge est dépassé. Comme pour le point précédent, il ne suffit pas de simplement de redimensionner le tableau ;) ;</p></li><li id="r-400388" data-claire-element-id="400388"><p id="r-400387" data-claire-element-id="400387">définir un facteur de charge minimum pour chaque méthode, et s'il n'est pas dépassé (donc si le tableau n'est pas trop rempli), rétrécir le tableau.</p></li></ul><p id="r-400390" data-claire-element-id="400390">Il y a également une grosse amélioration que vous pouvez apporter au code et qui vous permettra de l'utiliser partout : il faudrait le généraliser.</p><p id="r-400391" data-claire-element-id="400391">En effet, si vous réutilisez le code tel que je vous l'ai donné, vous serez par exemple limité par les clés. Ici, on ne peut utiliser que des entiers... mais vous serez peut être amené à ajouter des clés qui sont des chaînes ! Et peut être qu'un peu plus tard vous aurez besoin de nombres en virgule flottante. Bref, vous allez devoir remettre les mains dans le cambouis pour des histoires de typage.</p><p id="r-400392" data-claire-element-id="400392">La solution serait d'utiliser <a href="http://www-igm.univ-mlv.fr/~forax/java/jlx/template/paper/">des templates</a>, ainsi vous pourrez utiliser tout type de clé ! Il en est de même pour la valeur que vous leur associez, vous pourrez utiliser n'importe quoi. Et en plus, c'est plus propre ^^ .</p><p id="r-400393" data-claire-element-id="400393">C'est ici que nous nous quittons, j'espère que vous avez apprécié la lecture de ce tutoriel et vous avoir fait comprendre en quoi consistaient les tables de hachage :) . Pour toute question ou suggestion (constructive), n'hésitez pas à poster un commentaire. Un grand merci à <a href="http://www.siteduzero.com/membres-294-33267.html">messages71</a> pour sa relecture, à <a href="http://www.siteduzero.com/membres-294-131290.html">Arthurus</a> pour la validation et aux commentaires avisés des Zéros ;) .</p><p id="r-400394" data-claire-element-id="400394">Un peu de lecture pour ceux qui veulent creuser le sujet (et retrouver tout ce que j'ai dit) :</p><ul id="r-400399" data-claire-element-id="400399"><li id="r-400396" data-claire-element-id="400396"><p id="r-400395" data-claire-element-id="400395"><a href="http://ww0.java4.datastructures.net/">Data Structures &amp; Algorithms in Java</a>, un livre anglais de structures de données et d'algorithmes centré sur Java et très complet ; la fonction de hachage cyclique en est tirée :) . Le chapitre sur les tables de hachage commence à partir de la page 372 (dans la 4ème édition) ;</p></li><li id="r-400398" data-claire-element-id="400398"><p id="r-400397" data-claire-element-id="400397"><a href="http://www.amazon.fr/Introduction-à-lalgorithmique-Thomas-Cormen/dp/2100031287/ref=sr_1_1?ie=UTF8&amp;s=books&amp;qid=1287920079&amp;sr=8-1">Introduction à l'algorithmique</a>, un bouquin d'algorithmique en français, plus général que le précédent et qui utilise du pseudo-code. C'est de là que vient le truc pour parcourir toutes les cases dans la fonction de double hachage :) . Le chapitre sur les tables de hachage commence à la page 215 (2ème édition).</p></li></ul>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1">Les tables de hachage</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/les-tables-de-symboles-maps-et-dictionnaires">
+Les tables de symboles : maps et dictionnaires
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/le-principe-des-tables-de-hachage">
+Le principe des tables de hachage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/gestions-des-collisions">
+Gestions des collisions
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/l-importance-des-donnees-et-le-facteur-de-charge">
+L&#039;importance des données et le facteur de charge
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-de-la-table-de-hachage">
+Implémentation de la table de hachage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-du-sondage-et-du-double-hachage">
+Implémentation du sondage et du double hachage
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/implementation-du-chainage-lineaire">
+Implémentation du chaînage linéaire
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/la-fonction-de-hachage">
+La fonction de hachage
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/discussion-des-performances-et-ameliorations">
+Discussion des performances et améliorations
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-tables-de-hachage-1/la-fonction-de-hachage">
+<span class="arrow"></span>
+<span class="next">La fonction de hachage</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/les-tables-de-hachage-1.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 04:58:15 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/les-tables-de-hachage-1.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:57:53 GMT -->
+</html>

@@ -1,0 +1,971 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/introduction-au-dialogue-entre-ocaml-et-le-c.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 20:50:36 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/introduction-au-dialogue-entre-ocaml-et-le-c.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 03:54:07 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Introduction au dialogue entre OCaml et le C</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Introduction au dialogue entre OCaml et le C</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#IntroductionaudialogueentreOCamletleC">Introduction au dialogue entre OCaml et le C</a><br/><a href="#Desmacrosetdeladiscipline">Des macros et de la discipline</a><br/><a href="#Helloworld">Hello world!</a><br/><a href="#Lestypesdebase">Les types de base</a><br/><a href="#Aupaysdesallocations">Au pays des allocations</a><br/><a href="#Vivreenharmonieavecleramasse-miettes">Vivre en harmonie avec le ramasse-miettes</a><br/><a href="#N-upletsetlistes">N-uplets et listes</a><br/><a href="#Ol039ondshabilleunchameau">Où l&#039;on déshabille un chameau</a><br/><a href="#Erreursfrquentes">Erreurs fréquentes</a><br/></div>
+<a name="IntroductionaudialogueentreOCamletleC"></a><h2>Introduction au dialogue entre OCaml et le C</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/des-macros-et-de-la-discipline">
+<span class="next">Des macros et de la discipline</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-594369" data-claire-element-id="594369">Bonjour à tous !</p><p id="r-594370" data-claire-element-id="594370">Il n'est pas rare que l'on souhaite faire dialoguer OCaml avec le C. C'est particulièrement vrai quand :</p><ul id="r-594377" data-claire-element-id="594377"><li id="r-594372" data-claire-element-id="594372"><p id="r-594371" data-claire-element-id="594371">On veut utiliser une bibliothèque écrite en C (par exemple GTK+) ou dialoguer avec un langage tiers par l'intermédiaire du C.</p></li><li id="r-594374" data-claire-element-id="594374"><p id="r-594373" data-claire-element-id="594373">On a identifié les goulots d'étranglement (<em>bottleneck</em>) d'un code OCaml et on voudrait gagner en performance en les réécrivant en C.</p></li><li id="r-594376" data-claire-element-id="594376"><p id="r-594375" data-claire-element-id="594375">On a plus d'imagination que moi pour trouver des exemples d'application. :lol:</p></li></ul><p id="r-594378" data-claire-element-id="594378">Bien entendu, le dialogue entre deux langages n'est pas quelque chose d'anodin. Je vous propose ici une introduction orientée vers la pratique et destinée avant tout à des utilisateurs expérimentés d'OCaml. En d'autres termes, si vous ne connaissez pas OCaml, il n'est peut-être pas judicieux de commencer la lecture ici.</p><p id="r-594379" data-claire-element-id="594379">Comme de coutume, je vous invite à me faire part de vos suggestions et critiques à propos de ce tutoriel. J'adresse en particulier ce message aux programmeurs C expérimentés qui pourront probablement corriger certaines fonctions maladroites.</p><p id="r-594380" data-claire-element-id="594380">Dernière chose, chaque partie du tutoriel se termine par un tableau récapitulatif des macros et fonctions qui y ont été abordées (ceci pour faciliter la recherche des notions dans le texte).</p><p id="r-594381" data-claire-element-id="594381">Bonne lecture,<br/> Cacophrène</p>
+</div><a name="Desmacrosetdeladiscipline"></a><h2>Des macros et de la discipline</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/hello-world-18">
+<span class="next">Hello world!</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-des-macros" data-claire-element-id="594413">Des macros</h2><p id="r-594382" data-claire-element-id="594382">Une <strong>macro</strong> est un fragment de code auquel a été donné un nom. Un programme, le <strong>préprocesseur</strong>, remplace les macros par leur contenu dans le code source avant de le donner au compilateur. Notons au passage que le préprocesseur du langage C est très différent du préprocesseur camlp4 : alors que le premier effectue essentiellement des substitutions de texte, le second agit sur un arbre syntaxique abstrait (AST).</p><p id="r-594383" data-claire-element-id="594383">Pour que le dialogue entre OCaml et le C soit facile à mettre en œuvre et sûr, les développeurs d'OCaml ont défini de nombreuses macros. Elles sont toutes définies dans les fichiers d'en-tête du sous-répertoire caml de votre installation :</p><pre id="r-594384" data-claire-element-id="594384"><code data-claire-semantic="console">$ ls $(ocamlc -where)/caml
+alloc.h     compatibility.h  fail.h    misc.h    
+bigarray.h  config.h         intext.h  mlvalues.h
+callback.h  custom.h         memory.h  printexc.h</code></pre><p id="r-594385" data-claire-element-id="594385">Nous n'allons pas utiliser tous ces fichiers dans ce tutoriel, c'est pourquoi je ne vous donne la description que de quelques-uns d'entre eux :</p><table id="r-594412" data-claire-element-id="594412"><tbody id="r-594411" data-claire-element-id="594411"><tr id="r-594390" data-claire-element-id="594390"><td id="r-594387" data-claire-element-id="594387"><p id="r-594386" data-claire-element-id="594386"><strong>Fichier d'en-tête</strong></p></td><td id="r-594389" data-claire-element-id="594389"><p id="r-594388" data-claire-element-id="594388"><strong>Contenu</strong></p></td></tr><tr id="r-594395" data-claire-element-id="594395"><td id="r-594392" data-claire-element-id="594392"><p id="r-594391" data-claire-element-id="594391">mlvalues.h</p></td><td id="r-594394" data-claire-element-id="594394"><p id="r-594393" data-claire-element-id="594393">Macros et fonctions usuelles, type value</p></td></tr><tr id="r-594400" data-claire-element-id="594400"><td id="r-594397" data-claire-element-id="594397"><p id="r-594396" data-claire-element-id="594396">fail.h</p></td><td id="r-594399" data-claire-element-id="594399"><p id="r-594398" data-claire-element-id="594398">Lever des exceptions</p></td></tr><tr id="r-594405" data-claire-element-id="594405"><td id="r-594402" data-claire-element-id="594402"><p id="r-594401" data-claire-element-id="594401">alloc.h</p></td><td id="r-594404" data-claire-element-id="594404"><p id="r-594403" data-claire-element-id="594403">Allouer de la mémoire</p></td></tr><tr id="r-594410" data-claire-element-id="594410"><td id="r-594407" data-claire-element-id="594407"><p id="r-594406" data-claire-element-id="594406">memory.h</p></td><td id="r-594409" data-claire-element-id="594409"><p id="r-594408" data-claire-element-id="594408">Dialoguer avec le GC</p></td></tr></tbody></table><h2 id="r-de-la-discipline" data-claire-element-id="594416">De la discipline</h2><p id="r-594414" data-claire-element-id="594414">Tous les types OCaml sont exportés dans le monde C avec le type unique value. On convertit ensuite les valeurs de ce type en données manipulables par le C, et on renvoie une valeur qui, elle aussi, doit être de type value.</p><p id="r-594415" data-claire-element-id="594415">Le code C et le code OCaml sont placés dans des fichiers séparés qui diffèrent par leur nom. En effet, si vous choisissez foo.c et foo.ml, les fichiers ne diffèrent que par leur extension... or, à la compilation, vous allez créer deux fichiers foo.o : un pour OCaml et un pour le C. Vous l'aurez compris, cela ne marchera pas. Sachez également que la coutume veut que l'on utilise les noms foo_stub.c et foo.ml. Je vais donc garder cette convention tout au long de ce tutoriel.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c">Introduction au dialogue entre OCaml et le C</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/des-macros-et-de-la-discipline">
+Des macros et de la discipline
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/hello-world-18">
+Hello world!
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/les-types-de-base">
+Les types de base
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/au-pays-des-allocations">
+Au pays des allocations
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/vivre-en-harmonie-avec-le-ramasse-miettes">
+Vivre en harmonie avec le ramasse-miettes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/n-uplets-et-listes">
+N-uplets et listes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/ou-l-on-deshabille-un-chameau">
+Où l&#039;on déshabille un chameau
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/erreurs-frequentes-2">
+Erreurs fréquentes
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/hello-world-18">
+<span class="next">Hello world!</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Helloworld"></a><h2>Hello world!</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/des-macros-et-de-la-discipline">
+<span class="arrow"></span>
+<span class="next">Des macros et de la discipline</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/les-types-de-base">
+<span class="next">Les types de base</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-594418" data-claire-element-id="594418">Pour débuter, faisons simple. Nous allons tenter d'écrire une fonction hello en C que nous appellerons depuis OCaml. Voici le code, que nous détaillerons après :</p><pre id="r-594419" data-claire-element-id="594419"><code data-claire-semantic="c">#include &lt;caml/mlvalues.h&gt;
+#include &lt;caml/memory.h&gt;
+#include &lt;stdio.h&gt;
+
+CAMLprim
+value caml_hello(value unit) {
+  CAMLparam1(unit);
+  printf(&quot;Hello world!\n&quot;);
+  CAMLreturn(Val_unit);
+}</code></pre><pre id="r-594420" data-claire-element-id="594420"><code data-claire-semantic="ocaml">external hello : unit -&gt; unit = &quot;caml_hello&quot;
+
+let _ = hello ()</code></pre><p id="r-594421" data-claire-element-id="594421">Du côté d'OCaml, les choses sont assez simples. Les fonctions écrites en C (fonctions externes) sont définies avec le mot-clef external. Elles sont suivies de leur signature, puis d'une chaîne de caractères qui n'est autre que le nom correspondant dans le code C. En résumé :</p><p id="r-594422" data-claire-element-id="594422"><strong>external nom_ocaml : signature = &quot;nom_c&quot;</strong></p><h3 id="r-la-macro-camlprim" data-claire-element-id="594424">La macro CAMLprim</h3><p id="r-594423" data-claire-element-id="594423">Les choses se compliquent un peu du côté du code C. On trouve d'abord la macro CAMLprim, qui doit <em>toujours</em> précéder les fonctions C accessibles depuis OCaml. On trouve ensuite une définition assez classique de fonction en C, avec cette particularité que les arguments reçus en entrée ont tous le même type value, quel que soit leur type d'origine dans le monde OCaml.</p><h3 id="r-la-macro-camlparamn" data-claire-element-id="594426">La macro CAMLparam<em>N</em></h3><p id="r-594425" data-claire-element-id="594425">Le corps de la fonction diffère également d'un code C standard. Les arguments reçus en entrée sont tous protégés avec la macro CAMLparam<em>N</em> (<em>N</em> est à remplacer par le nombre d'arguments) pour s'assurer qu'aucune interaction malheureuse avec le ramasse-miettes (GC) d'OCaml ne viendra perturber le bon déroulement du programme.</p><h3 id="r-la-macro-camlreturn" data-claire-element-id="594428">La macro CAMLreturn</h3><p id="r-594427" data-claire-element-id="594427">Dernière chose, et non des moindres : on doit renvoyer vers OCaml une valeur de type value en utilisant la macro CAMLreturn en lieu et place du mot-clef <code>return</code> habituel. Ce premier code me permet d'ailleurs d'introduire la macro Val_unit, qui est l'équivalent C de la valeur () (type unit).</p><h3 id="r-compilation-17" data-claire-element-id="594458">Compilation</h3><p id="r-594429" data-claire-element-id="594429">C'est tout ! ^^ Il ne reste plus qu'à compiler. Dans tous les exemples que nous allons présenter ici, c'est une étape facile puisqu'il suffit de passer les deux fichiers au compilateur OCaml (si vous voulez savoir ce qui se passe, utilisez l'option <strong>-verbose</strong>) :</p><p id="r-594430" data-claire-element-id="594430"><strong>ocamlopt hello_stub.c hello.ml -o hello<br/></strong><br/> et ça marche ! (enfin ça devrait :p )</p><table id="r-594457" data-claire-element-id="594457"><tbody id="r-594456" data-claire-element-id="594456"><tr id="r-594435" data-claire-element-id="594435"><td id="r-594432" data-claire-element-id="594432"><p id="r-594431" data-claire-element-id="594431"><strong>Commande/Macro</strong></p></td><td id="r-594434" data-claire-element-id="594434"><p id="r-594433" data-claire-element-id="594433"><strong>Fonction</strong></p></td></tr><tr id="r-594440" data-claire-element-id="594440"><td id="r-594437" data-claire-element-id="594437"><p id="r-594436" data-claire-element-id="594436">CAMLprim</p></td><td id="r-594439" data-claire-element-id="594439"><p id="r-594438" data-claire-element-id="594438">Introduit une fonction C accessible depuis OCaml</p></td></tr><tr id="r-594445" data-claire-element-id="594445"><td id="r-594442" data-claire-element-id="594442"><p id="r-594441" data-claire-element-id="594441">CAMLparam<em>N</em></p></td><td id="r-594444" data-claire-element-id="594444"><p id="r-594443" data-claire-element-id="594443">Protéger les <em>N</em> arguments reçus en entrée</p></td></tr><tr id="r-594450" data-claire-element-id="594450"><td id="r-594447" data-claire-element-id="594447"><p id="r-594446" data-claire-element-id="594446">CAMLreturn</p></td><td id="r-594449" data-claire-element-id="594449"><p id="r-594448" data-claire-element-id="594448">Renvoyer un résultat (de type value) dans le monde OCaml</p></td></tr><tr id="r-594455" data-claire-element-id="594455"><td id="r-594452" data-claire-element-id="594452"><p id="r-594451" data-claire-element-id="594451">Val_unit</p></td><td id="r-594454" data-claire-element-id="594454"><p id="r-594453" data-claire-element-id="594453">value (unit OCaml)</p></td></tr></tbody></table>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c">Introduction au dialogue entre OCaml et le C</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/des-macros-et-de-la-discipline">
+Des macros et de la discipline
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/hello-world-18">
+Hello world!
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/les-types-de-base">
+Les types de base
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/au-pays-des-allocations">
+Au pays des allocations
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/vivre-en-harmonie-avec-le-ramasse-miettes">
+Vivre en harmonie avec le ramasse-miettes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/n-uplets-et-listes">
+N-uplets et listes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/ou-l-on-deshabille-un-chameau">
+Où l&#039;on déshabille un chameau
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/erreurs-frequentes-2">
+Erreurs fréquentes
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/des-macros-et-de-la-discipline">
+<span class="arrow"></span>
+<span class="next">Des macros et de la discipline</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/les-types-de-base">
+<span class="next">Les types de base</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lestypesdebase"></a><h2>Les types de base</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/hello-world-18">
+<span class="arrow"></span>
+<span class="next">Hello world!</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/au-pays-des-allocations">
+<span class="next">Au pays des allocations</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-594460" data-claire-element-id="594460">Voyons maintenant comment manipuler les types de base, c'est-à-dire les <em>entiers</em> et les <em>booléens</em>. Vous l'aurez compris, par « types de base », il faut en fait entendre les types qui ne font pas l'objet d'une allocation.</p><h2 id="r-les-booleens-7" data-claire-element-id="594469">Les booléens</h2><p id="r-594461" data-claire-element-id="594461">Commençons par les booléens. Par exemple, nous pouvons essayer de réécrire les tests logiques et (&amp;&amp;) et ou (||).</p><pre id="r-594462" data-claire-element-id="594462"><code data-claire-semantic="c">#include &lt;caml/mlvalues.h&gt;
+#include &lt;caml/memory.h&gt;
+
+CAMLprim
+value caml_and(value x, value y) {
+  CAMLparam2(x, y);
+  int res = Bool_val(x) &amp;&amp; Bool_val(y);
+  CAMLreturn(Val_bool(res));
+}
+
+CAMLprim
+value caml_or(value x, value y) {
+  CAMLparam2(x, y);
+  int res = Bool_val(x) || Bool_val(y);
+  CAMLreturn(Val_bool(res));
+}</code></pre><pre id="r-594463" data-claire-element-id="594463"><code data-claire-semantic="ocaml">external my_and : bool -&gt; bool -&gt; bool = &quot;caml_and&quot;
+external my_or : bool -&gt; bool -&gt; bool = &quot;caml_or&quot;
+
+let _ = 
+  let print = Printf.printf &quot;Résultat : %B\n%!&quot; in
+  print (my_and true false);
+  print (my_or false true)</code></pre><p id="r-594464" data-claire-element-id="594464">Ce code permet d'introduire deux nouvelles macros. La première, Bool_val, renvoie un entier C (0 ou 1) à partir d'une valeur de type value qui correspond à un booléen en OCaml. La seconde, Val_bool, assure la fonction inverse : elle renvoie une valeur de type value (correspondant au type bool d'OCaml) à partir d'un entier C.</p><aside id="r-594466" data-claire-element-id="594466" data-claire-semantic="information"><p id="r-594465" data-claire-element-id="594465">Toutes les macros qui commencent par Val_ renvoient une valeur de type value. Toutes les autres convertissent une valeur de type value en quelque chose de compréhensible par le C. On peut appeler cette règle la règle <em>To_from</em>.</p></aside><p id="r-594467" data-claire-element-id="594467">Bon, ça suffit ! :p Testons sans tarder notre code :</p><p id="r-594468" data-claire-element-id="594468"><strong>ocamlopt bool_stub.c bool.ml -o bool</strong></p><h2 id="r-les-entiers-1" data-claire-element-id="594511">Les entiers</h2><p id="r-594470" data-claire-element-id="594470">Il existe des macros Int_val et Val_int, qui étendent aux entiers ce que nous venons de voir avec les booléens. Comme vous pouvez le voir, elles obéissent aussi à la règle générale de type <em>To_from</em> que nous avons exposée précédemment.</p><pre id="r-594471" data-claire-element-id="594471"><code data-claire-semantic="c">#include &lt;caml/mlvalues.h&gt;
+#include &lt;caml/memory.h&gt;
+
+CAMLprim
+value caml_succ(value x) {
+  CAMLparam1(x);
+  int res = Int_val(x) + 1;
+  CAMLreturn(Val_int(res));
+}
+
+CAMLprim
+value caml_prev(value x) {
+  CAMLparam1(x);
+  int res = Int_val(x) - 1;
+  CAMLreturn(Val_int(res));
+}</code></pre><pre id="r-594472" data-claire-element-id="594472"><code data-claire-semantic="ocaml">external succ : int -&gt; int = &quot;caml_succ&quot;
+external prev : int -&gt; int = &quot;caml_prev&quot;
+
+let _ = 
+  let n = 25 in
+  Printf.printf &quot;Résultat : %d &lt; %d &lt; %d\n%!&quot; (pred n) n (succ n)</code></pre><p id="r-594473" data-claire-element-id="594473">Ce code peut être compilé avec <strong>ocamlopt int_stub.c int.ml -o int</strong>.</p><table id="r-594510" data-claire-element-id="594510"><tbody id="r-594509" data-claire-element-id="594509"><tr id="r-594478" data-claire-element-id="594478"><td id="r-594475" data-claire-element-id="594475"><p id="r-594474" data-claire-element-id="594474"><strong>Commande/Macro</strong></p></td><td id="r-594477" data-claire-element-id="594477"><p id="r-594476" data-claire-element-id="594476"><strong>Fonction</strong></p></td></tr><tr id="r-594483" data-claire-element-id="594483"><td id="r-594480" data-claire-element-id="594480"><p id="r-594479" data-claire-element-id="594479">Int_val</p></td><td id="r-594482" data-claire-element-id="594482"><p id="r-594481" data-claire-element-id="594481">value vers entier C</p></td></tr><tr id="r-594488" data-claire-element-id="594488"><td id="r-594485" data-claire-element-id="594485"><p id="r-594484" data-claire-element-id="594484">Val_int</p></td><td id="r-594487" data-claire-element-id="594487"><p id="r-594486" data-claire-element-id="594486">Entier C vers value (entier OCaml)</p></td></tr><tr id="r-594493" data-claire-element-id="594493"><td id="r-594490" data-claire-element-id="594490"><p id="r-594489" data-claire-element-id="594489">Bool_val</p></td><td id="r-594492" data-claire-element-id="594492"><p id="r-594491" data-claire-element-id="594491">value vers entier C (0 ou 1)</p></td></tr><tr id="r-594498" data-claire-element-id="594498"><td id="r-594495" data-claire-element-id="594495"><p id="r-594494" data-claire-element-id="594494">Val_bool</p></td><td id="r-594497" data-claire-element-id="594497"><p id="r-594496" data-claire-element-id="594496">Entier C vers value (booléen OCaml)</p></td></tr><tr id="r-594503" data-claire-element-id="594503"><td id="r-594500" data-claire-element-id="594500"><p id="r-594499" data-claire-element-id="594499">Val_true</p></td><td id="r-594502" data-claire-element-id="594502"><p id="r-594501" data-claire-element-id="594501">value (booléen OCaml true)</p></td></tr><tr id="r-594508" data-claire-element-id="594508"><td id="r-594505" data-claire-element-id="594505"><p id="r-594504" data-claire-element-id="594504">Val_false</p></td><td id="r-594507" data-claire-element-id="594507"><p id="r-594506" data-claire-element-id="594506">value (booléen OCaml false)</p></td></tr></tbody></table>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c">Introduction au dialogue entre OCaml et le C</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/des-macros-et-de-la-discipline">
+Des macros et de la discipline
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/hello-world-18">
+Hello world!
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/les-types-de-base">
+Les types de base
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/au-pays-des-allocations">
+Au pays des allocations
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/vivre-en-harmonie-avec-le-ramasse-miettes">
+Vivre en harmonie avec le ramasse-miettes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/n-uplets-et-listes">
+N-uplets et listes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/ou-l-on-deshabille-un-chameau">
+Où l&#039;on déshabille un chameau
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/erreurs-frequentes-2">
+Erreurs fréquentes
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/hello-world-18">
+<span class="arrow"></span>
+<span class="next">Hello world!</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/au-pays-des-allocations">
+<span class="next">Au pays des allocations</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Aupaysdesallocations"></a><h2>Au pays des allocations</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/les-types-de-base">
+<span class="arrow"></span>
+<span class="next">Les types de base</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/vivre-en-harmonie-avec-le-ramasse-miettes">
+<span class="next">Vivre en harmonie avec le ramasse-miettes</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-594513" data-claire-element-id="594513">Maintenant que nous avons vu les cas les plus simples, nous pouvons aborder le cas des <em>nombres à virgule flottante</em> et des <em>chaînes de caractères</em>. Ces types diffèrent des précédents dans la mesure où les valeurs correspondantes font l'objet d'une allocation.</p><h2 id="r-les-nombres-a-virgule-flottante" data-claire-element-id="594523">Les nombres à virgule flottante</h2><p id="r-594514" data-claire-element-id="594514">Je vous propose d'écrire des fonctions de calcul de l'<em>exponentielle naturelle</em> et du <em>logarithme népérien</em> d'un flottant :</p><pre id="r-594515" data-claire-element-id="594515"><code data-claire-semantic="c">#include &lt;math.h&gt;
+#include &lt;caml/mlvalues.h&gt;
+#include &lt;caml/memory.h&gt;
+#include &lt;caml/alloc.h&gt;
+
+CAMLprim
+value caml_exp(value x) {
+  CAMLparam1(x);
+  double res = exp(Double_val(x));
+  CAMLreturn(caml_copy_double(res));
+}
+
+CAMLprim
+value caml_exp(value x) {
+  CAMLparam1(x);
+  double res = log(Double_val(x));
+  CAMLreturn(caml_copy_double(res));
+}</code></pre><pre id="r-594516" data-claire-element-id="594516"><code data-claire-semantic="ocaml">external my_exp : float -&gt; float = &quot;caml_exp&quot;
+external my_log : float -&gt; float = &quot;caml_log&quot;
+
+let _ =
+  let resultat = my_exp 1.0 in
+  Printf.printf &quot;Résultat : %.4f %.4f\n%!&quot; (log resultat) (my_log resultat)</code></pre><h3 id="r-macros-d-allocation" data-claire-element-id="594518">Macros d'allocation</h3><p id="r-594517" data-claire-element-id="594517">Notez l'utilisation du fichier alloc.h dans lequel sont définies les fonctions d'allocation. Parmi les nouveautés, on trouve la fonction caml_copy_double qui permet de convertir un flottant C (qu'il soit de type float ou double) en valeur de type value, et Double_val, qui renvoie un flottant C de type double à partir d'une valeur de type value.</p><h3 id="r-quelques-remarques-4" data-claire-element-id="594522">Quelques remarques</h3><p id="r-594519" data-claire-element-id="594519"><strong>Remarque 1 :</strong> le type float d'OCaml correspond au type double du C. En d'autres termes, OCaml n'a pas de nombres à virgule flottante en précision simple.<br/><strong>Remarque 2 :</strong> en C comme en OCaml, le logarithme népérien est noté log et le logarithme décimal log10. Il n'y a donc pas de confusion !</p><p id="r-594520" data-claire-element-id="594520">Comme précédemment, on compile avec :</p><p id="r-594521" data-claire-element-id="594521"><strong>ocamlopt math_stub.c math.ml -o math</strong></p><h2 id="r-les-chaines-de-caracteres-21" data-claire-element-id="594563">Les chaînes de caractères</h2><p id="r-594524" data-claire-element-id="594524">Qu'en est-il des chaînes de caractères ? Eh bien, c'est un peu la même chose. Il existe une macro String_val qui renvoie un char* à partir d'une valeur de type value, et une fonction caml_copy_string pour l'opération inverse. Voyez par exemple :</p><pre id="r-594525" data-claire-element-id="594525"><code data-claire-semantic="c">#include &lt;ctype.h&gt;
+#include &lt;caml/mlvalues.h&gt;
+#include &lt;caml/memory.h&gt;
+#include &lt;caml/alloc.h&gt;
+
+CAMLprim
+value caml_uppercase(value s) {
+  CAMLparam1(s);
+  int i;
+  char *str = String_val(s);
+  for(i = 0; i &lt; caml_string_length(s); i++)
+    str[i] = toupper(str[i]);
+  CAMLreturn(s);
+}</code></pre><pre id="r-594526" data-claire-element-id="594526"><code data-claire-semantic="ocaml">external uppercase : string -&gt; string = &quot;caml_uppercase&quot;
+
+let _ = print_endline (uppercase &quot;Hello world!&quot;)</code></pre><p id="r-594527" data-claire-element-id="594527">Ce code peut être compilé comme précédemment :</p><p id="r-594528" data-claire-element-id="594528"><strong>ocamlopt str_stub.c str.ml -o str</strong></p><aside id="r-594530" data-claire-element-id="594530" data-claire-semantic="warning"><p id="r-594529" data-claire-element-id="594529">Les chaînes de caractères OCaml peuvent contenir le caractère null (\000). Il est donc préférable d'utiliser caml_string_length au lieu de strlen si l'on ne sait pas exactement quel sera le contenu de la chaîne à traiter.</p></aside><table id="r-594562" data-claire-element-id="594562"><tbody id="r-594561" data-claire-element-id="594561"><tr id="r-594535" data-claire-element-id="594535"><td id="r-594532" data-claire-element-id="594532"><p id="r-594531" data-claire-element-id="594531"><strong>Commande/Macro</strong></p></td><td id="r-594534" data-claire-element-id="594534"><p id="r-594533" data-claire-element-id="594533"><strong>Fonction</strong></p></td></tr><tr id="r-594540" data-claire-element-id="594540"><td id="r-594537" data-claire-element-id="594537"><p id="r-594536" data-claire-element-id="594536">Double_val</p></td><td id="r-594539" data-claire-element-id="594539"><p id="r-594538" data-claire-element-id="594538">value vers flottant C</p></td></tr><tr id="r-594545" data-claire-element-id="594545"><td id="r-594542" data-claire-element-id="594542"><p id="r-594541" data-claire-element-id="594541">caml_copy_double</p></td><td id="r-594544" data-claire-element-id="594544"><p id="r-594543" data-claire-element-id="594543">Flottant C vers value (flottant OCaml)</p></td></tr><tr id="r-594550" data-claire-element-id="594550"><td id="r-594547" data-claire-element-id="594547"><p id="r-594546" data-claire-element-id="594546">String_val</p></td><td id="r-594549" data-claire-element-id="594549"><p id="r-594548" data-claire-element-id="594548">value vers char*</p></td></tr><tr id="r-594555" data-claire-element-id="594555"><td id="r-594552" data-claire-element-id="594552"><p id="r-594551" data-claire-element-id="594551">caml_string_length</p></td><td id="r-594554" data-claire-element-id="594554"><p id="r-594553" data-claire-element-id="594553">Renvoie la longueur d'une chaîne OCaml (type value) sous forme d'entier C</p></td></tr><tr id="r-594560" data-claire-element-id="594560"><td id="r-594557" data-claire-element-id="594557"><p id="r-594556" data-claire-element-id="594556">caml_copy_string</p></td><td id="r-594559" data-claire-element-id="594559"><p id="r-594558" data-claire-element-id="594558">char* C vers value (chaîne OCaml)</p></td></tr></tbody></table>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c">Introduction au dialogue entre OCaml et le C</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/des-macros-et-de-la-discipline">
+Des macros et de la discipline
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/hello-world-18">
+Hello world!
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/les-types-de-base">
+Les types de base
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/au-pays-des-allocations">
+Au pays des allocations
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/vivre-en-harmonie-avec-le-ramasse-miettes">
+Vivre en harmonie avec le ramasse-miettes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/n-uplets-et-listes">
+N-uplets et listes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/ou-l-on-deshabille-un-chameau">
+Où l&#039;on déshabille un chameau
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/erreurs-frequentes-2">
+Erreurs fréquentes
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/les-types-de-base">
+<span class="arrow"></span>
+<span class="next">Les types de base</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/vivre-en-harmonie-avec-le-ramasse-miettes">
+<span class="next">Vivre en harmonie avec le ramasse-miettes</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Vivreenharmonieavecleramasse-miettes"></a><h2>Vivre en harmonie avec le ramasse-miettes</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/au-pays-des-allocations">
+<span class="arrow"></span>
+<span class="next">Au pays des allocations</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/n-uplets-et-listes">
+<span class="next">N-uplets et listes</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-594565" data-claire-element-id="594565">Les exemples que nous venons de voir jusqu'à présent sont en fait très simples et masquent le problème principal posé par les allocations. Quel est-il ?</p><p id="r-594566" data-claire-element-id="594566">Vous savez sans doute qu'OCaml possède un <em>ramasse-miettes</em> (GC). Or, si vous souhaitez définir une valeur de type value à l'intérieur d'une fonction C (valeur locale), mais que vous voulez continuer à utiliser les valeurs reçues en argument, sachez qu'il existe un risque qu'elles soient récupérées par le GC au moment de l'allocation. Aïe ! o_O</p><h3 id="r-interactions-avec-le-ramasse-miettes" data-claire-element-id="594568">Interactions avec le ramasse-miettes</h3><p id="r-594567" data-claire-element-id="594567">Il faut donc préciser au GC que les valeurs reçues par la fonction C doivent être conservées. C'est pourquoi on utilise depuis le débutla macro CAMLparam<em>N</em> (en remplaçant <em>N</em> par le nombre de paramètres). C'est aussi pour cette raison que l'on utilise CAMLreturn à la place du mot-clef return.</p><h3 id="r-variables-locales-de-type-value" data-claire-element-id="594570">Variables locales de type value</h3><p id="r-594569" data-claire-element-id="594569">De la même façon, la définition de <em>variables locales</em> de type value se fera grâce à la macro CAMLlocal<em>N</em> (en remplaçant <em>N</em> par le nombre de paramètres). Pour mémoire, cette macro, comme les précédentes, nécessite le fichier d'en-tête memory.h.</p><h3 id="r-subtilites" data-claire-element-id="594600">Subtilités</h3><p id="r-594571" data-claire-element-id="594571">Si vous décidez d'approfondir votre connaissance du dialogue entre le C et OCaml, vous apprendrez qu'il existe des cas où l'on peut se passer des macros CAMLparam<em>N</em> et CAMLreturn. Mais attention : <strong>il est fortement recommandé de les utiliser systématiquement quand on débute</strong>, comme nous le faisons dans ce tutoriel. En effet, il vaut mieux les utiliser dans des situations où elles sont superflues (y perd-on vraiment grand-chose ?) que les oublier là où elles sont utiles !</p><h2 id="r-que-j-aime-a-faire-apprendre-ce-nombre-aux-sages" data-claire-element-id="594599">Que j'aime à faire apprendre ce nombre aux sages...</h2><p id="r-594572" data-claire-element-id="594572">Pour illustrer l'utilisation de la macro CAMLlocal<em>N</em>, écrivons une fonction C qui renvoie une valeur approchée de \pi en utilisant la formule \pi = \arccos(-1).</p><pre id="r-594573" data-claire-element-id="594573"><code data-claire-semantic="c">#include &lt;math.h&gt;
+#include &lt;caml/mlvalues.h&gt;
+#include &lt;caml/memory.h&gt;
+#include &lt;caml/alloc.h&gt;
+
+CAMLprim
+value caml_approx_pi(value unit) {
+  CAMLparam1(unit);
+  CAMLlocal1(approx_pi);
+  approx_pi = caml_copy_double(acos(-1));
+  CAMLreturn(approx_pi);
+}</code></pre><pre id="r-594574" data-claire-element-id="594574"><code data-claire-semantic="ocaml">external approx_pi : unit -&gt; float = &quot;caml_approx_pi&quot;
+
+let _ = Printf.printf &quot;pi = %.12f\n%!&quot; (approx_pi ())</code></pre><p id="r-594575" data-claire-element-id="594575">On compile comme d'habitude (vous devez avoir pris l'habitude depuis que je l'écris ;) ) :</p><p id="r-594576" data-claire-element-id="594576"><strong>ocamlopt pi_stub.c pi.ml -o pi</strong></p><table id="r-594598" data-claire-element-id="594598"><tbody id="r-594597" data-claire-element-id="594597"><tr id="r-594581" data-claire-element-id="594581"><td id="r-594578" data-claire-element-id="594578"><p id="r-594577" data-claire-element-id="594577"><strong>Commande/Macro</strong></p></td><td id="r-594580" data-claire-element-id="594580"><p id="r-594579" data-claire-element-id="594579"><strong>Fonction</strong></p></td></tr><tr id="r-594586" data-claire-element-id="594586"><td id="r-594583" data-claire-element-id="594583"><p id="r-594582" data-claire-element-id="594582">CAMLparam<em>N</em></p></td><td id="r-594585" data-claire-element-id="594585"><p id="r-594584" data-claire-element-id="594584">Préserve les valeurs reçues en entrée</p></td></tr><tr id="r-594591" data-claire-element-id="594591"><td id="r-594588" data-claire-element-id="594588"><p id="r-594587" data-claire-element-id="594587">CAMLlocal<em>N</em></p></td><td id="r-594590" data-claire-element-id="594590"><p id="r-594589" data-claire-element-id="594589">Définit des valeurs locales de type value</p></td></tr><tr id="r-594596" data-claire-element-id="594596"><td id="r-594593" data-claire-element-id="594593"><p id="r-594592" data-claire-element-id="594592">CAMLreturn</p></td><td id="r-594595" data-claire-element-id="594595"><p id="r-594594" data-claire-element-id="594594">Renvoie une valeur de type value</p></td></tr></tbody></table>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c">Introduction au dialogue entre OCaml et le C</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/des-macros-et-de-la-discipline">
+Des macros et de la discipline
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/hello-world-18">
+Hello world!
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/les-types-de-base">
+Les types de base
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/au-pays-des-allocations">
+Au pays des allocations
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/vivre-en-harmonie-avec-le-ramasse-miettes">
+Vivre en harmonie avec le ramasse-miettes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/n-uplets-et-listes">
+N-uplets et listes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/ou-l-on-deshabille-un-chameau">
+Où l&#039;on déshabille un chameau
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/erreurs-frequentes-2">
+Erreurs fréquentes
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/au-pays-des-allocations">
+<span class="arrow"></span>
+<span class="next">Au pays des allocations</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/n-uplets-et-listes">
+<span class="next">N-uplets et listes</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="N-upletsetlistes"></a><h2>N-uplets et listes</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/vivre-en-harmonie-avec-le-ramasse-miettes">
+<span class="arrow"></span>
+<span class="next">Vivre en harmonie avec le ramasse-miettes</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/ou-l-on-deshabille-un-chameau">
+<span class="next">Où l&#039;on déshabille un chameau</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-594602" data-claire-element-id="594602">Nous allons maintenant nous intéresser au parcours et à la construction de types plus complexes tels que les n-uplets et les listes.</p><h2 id="r-les-n-uplets" data-claire-element-id="594615">Les n-uplets</h2><h3 id="r-inspection" data-claire-element-id="594609">Inspection</h3><p id="r-594603" data-claire-element-id="594603">Les n-uplets (tuples en anglais) sont constitués d'un nombre variable de champs de types hétérogènes. On accède à un champ donné avec la commande Field(tuple, i) où tuple est le n-uplet (de type value) et i l'index du champ auquel on veut accéder. Les champs sont numérotés à partir de zéro. La valeur renvoyée par Field est elle-même de type value.</p><p id="r-594604" data-claire-element-id="594604">Nous pouvons donc écrire une fonction très générale qui reçoit en entrée un triplet et un entier et renvoie le champ correspondant. Lorsque l'entier reçu en argument est incorrect, l'exception <code data-claire-semantic="ocaml">Invalid_argument </code> est levée (nous n'avons pas parlé des exceptions dans ce tutoriel, mais leur utilisation dans le cas présent est assez intuitive) :</p><pre id="r-594605" data-claire-element-id="594605"><code data-claire-semantic="c">#include &lt;caml/mlvalues.h&gt;
+#include &lt;caml/memory.h&gt;
+#include &lt;caml/fail.h&gt;
+
+CAMLprim
+value caml_triplet_nth(value triplet, value n) {
+  CAMLparam2(triplet, n);
+  int i = Int_val(n);
+  if (i &lt; 0 || i &gt; 2) caml_invalid_argument(&quot;triplet_nth&quot;);
+  CAMLreturn(Field(triplet, i));
+}</code></pre><pre id="r-594606" data-claire-element-id="594606"><code data-claire-semantic="ocaml">external triplet_nth : float * float * float -&gt; int -&gt; float = &quot;caml_triplet_nth&quot;
+
+let _ = 
+  let x = (1.6, 3.2, 7.5) in
+  Printf.printf &quot;x = (%.1f, %.1f, %.1f)\n%!&quot; (triplet_nth x 0) (triplet_nth x 1) 
+    (triplet_nth x 2)</code></pre><p id="r-594607" data-claire-element-id="594607">Cet exemple se compile comme tous les autres :</p><p id="r-594608" data-claire-element-id="594608"><strong>ocamlopt tuple_stub.c tuple.ml -o tuple</strong></p><h3 id="r-creation-35" data-claire-element-id="594614">Création</h3><p id="r-594610" data-claire-element-id="594610">La création d'un n-uplet fait appel à la commande caml_alloc_tuple(n) où <em>n</em> désigne le nombre de champs du n-uplet. Des valeurs peuvent ensuite être stockées dans les champs à l'aide de la commande Store_field(tuple, i, value). Voici un exemple :</p><pre id="r-594611" data-claire-element-id="594611"><code data-claire-semantic="c">#include &lt;caml/mlvalues.h&gt;
+#include &lt;caml/memory.h&gt;
+#include &lt;caml/alloc.h&gt;
+
+CAMLprim
+value caml_triplet(value unit) {
+  CAMLparam1(unit);
+  CAMLlocal1(triplet);
+  triplet = caml_alloc_tuple(3);
+  Store_field(triplet, 0, Val_true);
+  Store_field(triplet, 1, caml_copy_double(3.14));
+  Store_field(triplet, 2, Val_int(65));
+  CAMLreturn(triplet);
+}</code></pre><pre id="r-594612" data-claire-element-id="594612"><code data-claire-semantic="ocaml">external triplet : unit -&gt; bool * float * char = &quot;caml_triplet&quot;
+
+let _ =
+  let x, y, z = triplet () in
+  Printf.printf &quot;(%b, %.2f, %C)\n%!&quot; x y z</code></pre><p id="r-594613" data-claire-element-id="594613">Je vous laisse le soin de compiler comme des grands. :lol:</p><h2 id="r-les-listes-24" data-claire-element-id="594660">Les listes</h2><h3 id="r-parcours-1" data-claire-element-id="594622">Parcours</h3><p id="r-594616" data-claire-element-id="594616">Les listes d'OCaml sont représentées à l'aide de couples composés d'une tête h (un élément de la liste) et d'une queue t (la sous-liste restante). On accède au contenu de ces couples avec Field, comme précédemment.</p><aside id="r-594618" data-claire-element-id="594618" data-claire-semantic="information"><p id="r-594617" data-claire-element-id="594617">La <em>liste vide</em> fait l'objet d'un traitement particulier. Elle est obtenue avec la macro Val_emptylist qui est un synonyme de Val_int(0).</p></aside><pre id="r-594619" data-claire-element-id="594619"><code data-claire-semantic="c">#include &lt;stdio.h&gt;
+#include &lt;caml/mlvalues.h&gt;
+#include &lt;caml/memory.h&gt;
+
+CAMLprim
+value caml_inspect_list(value list) {
+  CAMLparam1(list);
+  CAMLlocal1(head);
+  while (list != Val_emptylist) {
+    head = Field(list, 0);
+    printf(&quot;%s\n&quot;, String_val(head));
+    list = Field(list, 1);
+  }
+  CAMLreturn(Val_unit);
+}</code></pre><pre id="r-594620" data-claire-element-id="594620"><code data-claire-semantic="ocaml">external inspect_list : string list -&gt; unit = &quot;caml_inspect_list&quot;
+
+let _ = inspect_list [&quot;Hello&quot;; &quot;world&quot;; &quot;!&quot;]</code></pre><p id="r-594621" data-claire-element-id="594621">Compilez avec <strong>ocamlopt list_stub.c list.ml -o list</strong>.</p><h3 id="r-construction-31" data-claire-element-id="594659">Construction</h3><p id="r-594623" data-claire-element-id="594623">Pour construire une liste, on procède exactement de la même façon. On crée un couple pour chaque élément de la liste. Le premier élément du couple contient la valeur (de type value) et le second la queue de la liste. Pour créer un couple, on utilise la commande caml_alloc(n, tag). Le paramètre <em>n</em> indique la taille du bloc à allouer (2 pour le couple tête/queue). Le paramètre tag vaut toujours 0 dans le cas d'une liste. Il s'agit d'une valeur (étiquette) qui <strong>renseigne sur la nature des données</strong> (par exemple, il existe un tag pour les fermetures, les objets, les chaînes de caractères, etc.). On utilise ensuite Store_field(list, 0, x) pour stocker la tête de liste (ici <em>x</em>) et Store_field(list, 1, y) pour stocker la queue (ici <em>y</em>).</p><pre id="r-594624" data-claire-element-id="594624"><code data-claire-semantic="c">#include &lt;caml/mlvalues.h&gt;
+#include &lt;caml/memory.h&gt;
+#include &lt;caml/alloc.h&gt;
+
+CAMLprim
+value caml_explode(value s) {
+  CAMLparam1(s);
+  CAMLlocal2(list, cons);
+  list = Val_emptylist;
+  int i;
+  char* str = String_val(s);
+  for(i = caml_string_length(s); i; i--) {
+    cons = caml_alloc(2, 0);
+    Store_field(cons, 0, Val_int(str[i - 1]));
+    Store_field(cons, 1, list);
+    list = cons;
+  }
+  CAMLreturn(list);
+}</code></pre><pre id="r-594625" data-claire-element-id="594625"><code data-claire-semantic="ocaml">external explode : string -&gt; char list = &quot;caml_explode&quot;
+
+let _ = 
+  let str = read_line () in
+  Printf.printf &quot;[ &quot;;
+  List.iter (Printf.printf &quot;%C &quot;) (explode str);
+  Printf.printf &quot;]\n%!&quot;</code></pre><p id="r-594626" data-claire-element-id="594626">Compilez avec <strong>ocamlopt explode_stub.c explode.ml -o explode</strong>.</p><table id="r-594658" data-claire-element-id="594658"><tbody id="r-594657" data-claire-element-id="594657"><tr id="r-594631" data-claire-element-id="594631"><td id="r-594628" data-claire-element-id="594628"><p id="r-594627" data-claire-element-id="594627"><strong>Commande/Macro</strong></p></td><td id="r-594630" data-claire-element-id="594630"><p id="r-594629" data-claire-element-id="594629"><strong>Fonction</strong></p></td></tr><tr id="r-594636" data-claire-element-id="594636"><td id="r-594633" data-claire-element-id="594633"><p id="r-594632" data-claire-element-id="594632">Field(v, n)</p></td><td id="r-594635" data-claire-element-id="594635"><p id="r-594634" data-claire-element-id="594634">Renvoie le champ <em>n</em> (entier C) de la valeur <em>v</em> (type value)</p></td></tr><tr id="r-594641" data-claire-element-id="594641"><td id="r-594638" data-claire-element-id="594638"><p id="r-594637" data-claire-element-id="594637">Store_field(v, n, x)</p></td><td id="r-594640" data-claire-element-id="594640"><p id="r-594639" data-claire-element-id="594639">Enregistre la valeur <em>x</em> (type value) dans le champ <em>n</em> (entier C) de la valeur <em>v</em> (type value)</p></td></tr><tr id="r-594646" data-claire-element-id="594646"><td id="r-594643" data-claire-element-id="594643"><p id="r-594642" data-claire-element-id="594642">caml_alloc(n, tag)</p></td><td id="r-594645" data-claire-element-id="594645"><p id="r-594644" data-claire-element-id="594644">Alloue un bloc de taille <em>n</em> (entier C) contenant l'étiquette <em>tag</em> (entier C)</p></td></tr><tr id="r-594651" data-claire-element-id="594651"><td id="r-594648" data-claire-element-id="594648"><p id="r-594647" data-claire-element-id="594647">caml_alloc_tuple(i)</p></td><td id="r-594650" data-claire-element-id="594650"><p id="r-594649" data-claire-element-id="594649">Alloue de la mémoire pour un n-uplet contenant <em>i</em> champs</p></td></tr><tr id="r-594656" data-claire-element-id="594656"><td id="r-594653" data-claire-element-id="594653"><p id="r-594652" data-claire-element-id="594652">caml_alloc_string(n)</p></td><td id="r-594655" data-claire-element-id="594655"><p id="r-594654" data-claire-element-id="594654">Alloue de la mémoire pour une chaîne de caractères de longueur <em>n</em>. La chaîne est initialisée avec des données quelconques.</p></td></tr></tbody></table>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c">Introduction au dialogue entre OCaml et le C</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/des-macros-et-de-la-discipline">
+Des macros et de la discipline
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/hello-world-18">
+Hello world!
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/les-types-de-base">
+Les types de base
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/au-pays-des-allocations">
+Au pays des allocations
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/vivre-en-harmonie-avec-le-ramasse-miettes">
+Vivre en harmonie avec le ramasse-miettes
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/n-uplets-et-listes">
+N-uplets et listes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/ou-l-on-deshabille-un-chameau">
+Où l&#039;on déshabille un chameau
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/erreurs-frequentes-2">
+Erreurs fréquentes
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/vivre-en-harmonie-avec-le-ramasse-miettes">
+<span class="arrow"></span>
+<span class="next">Vivre en harmonie avec le ramasse-miettes</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/ou-l-on-deshabille-un-chameau">
+<span class="next">Où l&#039;on déshabille un chameau</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Ol039ondshabilleunchameau"></a><h2>Où l&#039;on déshabille un chameau</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/n-uplets-et-listes">
+<span class="arrow"></span>
+<span class="next">N-uplets et listes</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/erreurs-frequentes-2">
+<span class="next">Erreurs fréquentes</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-des-avantages-et-des-inconvenients" data-claire-element-id="594663">Des avantages et des inconvénients</h2><p id="r-594662" data-claire-element-id="594662">Terminons cette présentation du dialogue entre C et OCaml par quelques considérations générales sur ce que nous venons de voir. D'abord, j'espère vous avoir convaincu que l'ajout de code C dans un code OCaml <em>n'est pas</em> une chose anodine : il y a des règles à respecter et des risques potentiels à prendre en considération.</p><h2 id="r-ocaml-vu-de-l-interieur" data-claire-element-id="594665">OCaml vu de l'intérieur</h2><p id="r-594664" data-claire-element-id="594664">Cette présentation nous a également permis de mettre à jour une partie de la <em>représentation interne</em> des types d'OCaml. C'est cette même représentation interne qu'il vous est possible de manipuler avec le module de magie noire Obj.</p><h2 id="r-le-fantasme-de-la-fonction-print-polymorphe" data-claire-element-id="594667">Le fantasme de la fonction print polymorphe</h2><p id="r-594666" data-claire-element-id="594666">Je crois que vous êtes maintenant en mesure de comprendre pourquoi il n'est pas possible d'écrire une fonction print polymorphe en OCaml. Puisque les informations de type sont perdues à l'exécution, on ne peut afficher que la représentation interne d'une valeur. Ceci a pour conséquence que la fonction print polymorphe affichera la même chose pour plusieurs entrées différentes, comme (), [], None, 0 et false.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c">Introduction au dialogue entre OCaml et le C</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/des-macros-et-de-la-discipline">
+Des macros et de la discipline
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/hello-world-18">
+Hello world!
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/les-types-de-base">
+Les types de base
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/au-pays-des-allocations">
+Au pays des allocations
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/vivre-en-harmonie-avec-le-ramasse-miettes">
+Vivre en harmonie avec le ramasse-miettes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/n-uplets-et-listes">
+N-uplets et listes
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/ou-l-on-deshabille-un-chameau">
+Où l&#039;on déshabille un chameau
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/erreurs-frequentes-2">
+Erreurs fréquentes
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/n-uplets-et-listes">
+<span class="arrow"></span>
+<span class="next">N-uplets et listes</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/erreurs-frequentes-2">
+<span class="next">Erreurs fréquentes</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Erreursfrquentes"></a><h2>Erreurs fréquentes</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/ou-l-on-deshabille-un-chameau">
+<span class="arrow"></span>
+<span class="next">Où l&#039;on déshabille un chameau</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-594669" data-claire-element-id="594669">Dans cette partie, nous allons voir quelles sont les principales erreurs auxquelles vous pouvez être confronté lorsque vous écrivez des fonctions de dialogue entre OCaml et le C.</p><aside id="r-594671" data-claire-element-id="594671" data-claire-semantic="warning"><p id="r-594670" data-claire-element-id="594670"><strong>Soyons clair</strong> : Cette partie du tutoriel contient des codes erronés susceptibles de planter plus ou moins méchamment (du résultat incorrect à l'erreur de segmentation).</p></aside><h3 id="r-des-calculs-errones" data-claire-element-id="594680">Des calculs erronés</h3><p id="r-594672" data-claire-element-id="594672">Voyons d'abord ce qui se passe quand on oublie de convertir un résultat de calcul en value. Pour cela, considérons la fonction <strong><em>erronée</em></strong> suivante :</p><pre id="r-594673" data-claire-element-id="594673"><code data-claire-semantic="c">#include &lt;caml/mlvalues.h&gt;
+#include &lt;caml/memory.h&gt;
+
+CAMLprim
+value caml_succ(value n) {
+  CAMLparam1(n);
+  int res = Int_val(n) + 1;
+  CAMLreturn(res);
+}</code></pre><pre id="r-594674" data-claire-element-id="594674"><code data-claire-semantic="ocaml">external succ : int -&gt; int = &quot;caml_succ&quot;
+
+let _ = 
+  let n = 3 in
+  Printf.printf &quot;succ %d = %d\n%!&quot; n (succ n)</code></pre><p id="r-594675" data-claire-element-id="594675">À l'exécution, on obtient quelque chose d'assez inattendu :</p><pre id="r-594676" data-claire-element-id="594676"><code data-claire-semantic="console">$ ocamlopt int_stub.c int.ml -o int
+$ ./int
+succ 4 = 2
+$</code></pre><p id="r-594677" data-claire-element-id="594677">Si vous avez bien suivi le tutoriel, vous avez dû remarquer que l'on a oublié de convertir la variable res en valeur de type value avant de la renvoyer à OCaml (regardez la ligne surlignée dans le code C). Sans plus attendre, compilons ce code (<strong>ocamlopt int_stub.c int.ml -o int</strong>) et exécutons-le : nous obtenons le texte &quot;succ 3 = 2&quot;. Voilà qui est surprenant !</p><p id="r-594678" data-claire-element-id="594678">Pour bien comprendre ce qui ne va pas, il faut se souvenir que les entiers d'OCaml sont codés sur 31 bits (63 bits sur les architectures en 64 bits). Le dernier bit, c'est-à-dire le bit de poids faible en représentation binaire conventionnelle, est utilisé par le ramasse-miettes : il permet de savoir si l'on a affaire à un bloc (bit égal à 0) ou à un nombre (bit égal à 1).</p><p id="r-594679" data-claire-element-id="594679">Que se passe-t-il si l'on renvoie res sans conversion ? La variable res contient la valeur 4, qui se note <strong>0b10</strong>0 en binaire. Pour OCaml, ce résultat est valide mais correspond au chiffre 2 (partie en gras). De la même façon, si vous demandez le successeur de 4, res contiendra <strong>0b10</strong>1, qui correspond toujours à 2 pour OCaml !</p><h3 id="r-mise-en-echec-du-typage" data-claire-element-id="594687">Mise en échec du typage</h3><p id="r-594681" data-claire-element-id="594681">Nous allons maitenant voir comment obtenir une erreur de segmentation (segfault). J'ai volontairement choisi un code <em>correct</em> pour montrer que l'erreur ne vient pas toujours d'une mauvaise programmation.</p><pre id="r-594682" data-claire-element-id="594682"><code data-claire-semantic="c">#include &lt;caml/mlvalues.h&gt;
+#include &lt;caml/memory.h&gt;
+
+CAMLprim
+value caml_nth_tuple(value tuple, value n) {
+  CAMLparam2(tuple, n);
+  CAMLreturn(Field(tuple, Int_val(n) - 1));
+}</code></pre><pre id="r-594683" data-claire-element-id="594683"><code data-claire-semantic="ocaml">external nth_tuple : 'a -&gt; int -&gt; 'b = &quot;caml_nth_tuple&quot;
+
+let _ =
+  let tuple = (1, &quot;oui&quot;, true, None) in
+  Printf.printf &quot;Résultat : %s\n%!&quot; (nth_tuple tuple 3)</code></pre><p id="r-594684" data-claire-element-id="594684">Voici ce que l'on obtient à l'exécution (le message d'erreur exact peut varier selon le système et la configuration locale) :</p><pre id="r-594685" data-claire-element-id="594685"><code data-claire-semantic="console">$ ocamlopt crash_stub.c crash.ml -o crash
+$ ./crash
+Erreur de segmentation
+$</code></pre><p id="r-594686" data-claire-element-id="594686">La ligne surlignée devrait vous mettre sur la piste : l'appel de <code data-claire-semantic="ocaml">nth_tuple tuple 3 </code> renvoie un <strong>booléen</strong> alors que la fonction <code data-claire-semantic="ocaml">Printf.printf </code> attend une <strong>chaîne de caractères</strong>. Pourquoi l'erreur de typage n'est-elle pas signalée à la compilation comme c'est toujours le cas en OCaml ? Eh bien, la réponse est simple : la fonction <strong>nth_tuple</strong> est polymorphe; il est donc impossible de voir le problème.</p><h3 id="r-autres-erreurs-possibles" data-claire-element-id="594702">Autres erreurs possibles</h3><p id="r-594688" data-claire-element-id="594688">Hélas, la liste est longue et ne s'arrête sûrement pas là ! Il y a plein d'autres manières de provoquer une erreur de segmentation sans le vouloir. Comme il n'est pas possible de présenter tous les cas, je vous invite à suivre une règle simple : <strong>testez vos codes le plus souvent possible</strong>, bien avant d'avoir écrit plusieurs pages. Vous gagnerez un temps considérable !</p><p id="r-594689" data-claire-element-id="594689">Vous savez désormais comment fonctionne le dialogue entre OCaml et le C, au moins dans ses grandes lignes. Je crois que c'est suffisant pour vous permettre de faire appel au C dans des situations simples. Mais, n'en doutez pas, l'histoire n'est pas terminée, loin s'en faut !</p><p id="r-594690" data-claire-element-id="594690">Je vous parlerai dans un autre tutoriel des tableaux, des variants polymorphes, des types personnalisés, et peut-être aussi du passage en argument de fonctions OCaml (fermetures) à un code C. J'ai choisi de passer ces notions sous silence pour le moment car j'en ai déjà bien assez dit pour une introduction !</p><p id="r-594691" data-claire-element-id="594691">Bonne programmation et à bientôt,<br/> Cacophrène</p><h2 id="r-remerciements-17" data-claire-element-id="594693">Remerciements</h2><p id="r-594692" data-claire-element-id="594692">Je tiens à remercier <strong>bluestorm</strong> pour sa relecture critique et <strong>Thunderseb</strong> pour l'intérêt qu'il a porté à la validation de ce tutoriel.</p><h2 id="r-references-bibliographiques" data-claire-element-id="594701">Références bibliographiques</h2><ul id="r-594700" data-claire-element-id="594700"><li id="r-594695" data-claire-element-id="594695"><p id="r-594694" data-claire-element-id="594694"><a href="http://www.linux-nantes.org/~fmonnier/OCaml/ocaml-wrapping-c.php">Le dialogue entre OCaml et le C (complet)</a></p></li><li id="r-594697" data-claire-element-id="594697"><p id="r-594696" data-claire-element-id="594696"><a href="http://caml.inria.fr/pub/docs/manual-ocaml/index.html">OCaml - Manuel de l'utilisateur</a></p></li><li id="r-594699" data-claire-element-id="594699"><p id="r-594698" data-claire-element-id="594698"><a href="http://anne-pacalet.developpez.com/tutoriels/ocaml/interface-c-ou-cpp-et-ocaml/">Compilation C/OCaml et C++/OCaml</a></p></li></ul>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c">Introduction au dialogue entre OCaml et le C</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/des-macros-et-de-la-discipline">
+Des macros et de la discipline
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/hello-world-18">
+Hello world!
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/les-types-de-base">
+Les types de base
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/au-pays-des-allocations">
+Au pays des allocations
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/vivre-en-harmonie-avec-le-ramasse-miettes">
+Vivre en harmonie avec le ramasse-miettes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/n-uplets-et-listes">
+N-uplets et listes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/ou-l-on-deshabille-un-chameau">
+Où l&#039;on déshabille un chameau
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/erreurs-frequentes-2">
+Erreurs fréquentes
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/introduction-au-dialogue-entre-ocaml-et-le-c/ou-l-on-deshabille-un-chameau">
+<span class="arrow"></span>
+<span class="next">Où l&#039;on déshabille un chameau</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/introduction-au-dialogue-entre-ocaml-et-le-c.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 20:50:36 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/introduction-au-dialogue-entre-ocaml-et-le-c.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 03:54:07 GMT -->
+</html>

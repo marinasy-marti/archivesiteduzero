@@ -1,0 +1,361 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/les-interfaces-graphiques-avec-ocaml.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 11:14:12 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/les-interfaces-graphiques-avec-ocaml.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:48:26 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Les interfaces graphiques avec OCaml</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/les-interfaces-graphiques-avec-ocaml.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Les interfaces graphiques avec OCaml</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#LesinterfacesgraphiquesavecOCaml">Les interfaces graphiques avec OCaml</a><br/><a href="#QuelquesrappelssurOCaml">Quelques rappels sur OCaml</a><br/><a href="#Contenudelabibliothque">Contenu de la bibliothèque</a><br/><a href="#Exemplesetcompilation">Exemples et compilation</a><br/></div>
+<a name="LesinterfacesgraphiquesavecOCaml"></a><h2>Les interfaces graphiques avec OCaml</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-interfaces-graphiques-avec-ocaml/quelques-rappels-sur-ocaml">
+<span class="next">Quelques rappels sur OCaml</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-566689" data-claire-element-id="566689">Bonjour à tous !</p><p id="r-566690" data-claire-element-id="566690">Quand on veut faire un programme convivial, on s'efforce en général de concevoir une interface graphique de qualité. Parfois même, dans une équipe, certaines personnes sont chargées tout spécialement de cet aspect du programme. Or, la bibliothèque standard d'OCaml offre un choix limité... puisqu'elle ne propose que Tcl/Tk (<em>via</em> le module LablTk). Peut-être savez-vous déjà que le résultat n'est pas très agréable à regarder (voyez <code>ocamlbrowser</code> par exemple ou, pour citer quelque chose de très différent, aMSN). Fort heureusement, une interface GTK (un <em>binding</em> en anglais) pour OCaml a été réalisée, pour notre plus grand bonheur : c'est LablGTK. Et c'est de cette bibliothèque que nous allons parler un peu ici.</p><p id="r-566691" data-claire-element-id="566691"><strong>Attention</strong> : ce tutoriel n'est ni une introduction à OCaml ni une introduction à GTK. Il est donc conseillé de le lire avec quelques notions en poche. Songez plutôt : ce n'est qu'un mini-tuto... il ne peut pas y avoir vraiment beaucoup de choses dedans. ;)</p>
+</div><a name="QuelquesrappelssurOCaml"></a><h2>Quelques rappels sur OCaml</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-interfaces-graphiques-avec-ocaml/contenu-de-la-bibliotheque">
+<span class="next">Contenu de la bibliothèque</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-566692" data-claire-element-id="566692">La version 3 d'OCaml a introduit plusieurs nouveaux concepts « avancés » dont LablGTK se sert beaucoup. On dit généralement qu'ils sont « avancés » dans la mesure où il n'est absolument pas indispensable de les aborder dans le cadre d'une introduction au langage. Tout ceci m'a donc incité à commencer ce tutoriel par une brève présentation de ces quelques points. Ceux qui savent déjà tout des arguments nommés, des arguments optionnels et des variants polymorphes peuvent passer d'emblée à la deuxième partie du tutoriel.</p><h2 id="r-les-arguments-nommes" data-claire-element-id="566715">Les arguments nommés</h2><p id="r-566693" data-claire-element-id="566693">Si vous utilisez déjà OCaml, vous avez probablement déjà utilisé les modules <code>String</code> et <code>Unix</code>. Si vous regardez attentivement la liste des modules de la bibliothèque standard, vous verrez qu'il existe également des modules <code>StringLabels</code> et <code>UnixLabels</code>.</p><div id="r-566695" data-claire-element-id="566695" data-claire-semantic="question"><p id="r-566694" data-claire-element-id="566694">C'est vrai ça ! Mais, à quoi peuvent-ils bien servir vu qu'ils contiennent exactement les mêmes fonctions que <code>String</code> et <code>Unix</code> ?</p></div><p id="r-566696" data-claire-element-id="566696">En fait, la grande différence entre ces modules réside dans la présence d'étiquettes (ou <em>labels</em> en anglais), que j'appellerai « arguments nommés » dans la suite de ce tutoriel (je crois que c'est la bonne traduction, mais comme je les ai toujours connus comme étant des <em>labels</em>, je suis un peu démuni ^^ ).</p><div id="r-566698" data-claire-element-id="566698" data-claire-semantic="question"><p id="r-566697" data-claire-element-id="566697">Bon, d'accord, il y a de petites différences... mais ça ne change pas le code. Alors à quoi cela peut-il bien servir ?</p></div><p id="r-566699" data-claire-element-id="566699">Eh bien, les arguments nommés permettent de préciser la nature de certains arguments lorsque leur type n'est pas très explicite, ou quand il y a vraiment <em>beaucoup</em> d'arguments. Je vais vous donner un exemple. Considérez cette fonction sans grand intérêt :</p><pre id="r-566700" data-claire-element-id="566700"><code data-claire-semantic="ocaml">let boucle min max step f =
+  let rec loop = function
+    | i when i &gt; max -&gt; ()
+    | i -&gt; f i;
+      loop (i + step)
+  in loop min</code></pre><p id="r-566701" data-claire-element-id="566701">Si vous la tapez dans l'interpréteur, vous verrez que sa signature n'utilise que des types simples... mais qu'on ne sait pas trop, en la voyant, à quoi correspondent tous ces entiers :</p><pre id="r-566702" data-claire-element-id="566702"><code data-claire-semantic="ocaml">val boucle : int -&gt; int -&gt; int -&gt; (int -&gt; 'a) -&gt; unit</code></pre><p id="r-566703" data-claire-element-id="566703">Nous rencontrons donc un premier problème : celui de la <em>lisibilité</em>. On aimerait bien que la seule signature d'une fonction suffise à nous en faire comprendre le fonctionnement (c'est ce qui rend précieux des outils tels que <code>ocamlbrowser</code> et <code>ocamldoc</code>). Or, dans le cas présent, les types ne nous sont d'aucun secours. Nous allons donc écrire quelque chose comme ça :</p><pre id="r-566704" data-claire-element-id="566704"><code data-claire-semantic="ocaml">let boucle ~min ~max ~step f =
+  let rec loop = function
+    | i when i &gt; max -&gt; ()
+    | i -&gt; f i;
+      loop (i + step)
+  in loop min</code></pre><p id="r-566705" data-claire-element-id="566705">L'ajout d'un tilde (~) devant <strong>min</strong>, <strong>max</strong> et <strong>step</strong> permet d'associer un nom à chacun des arguments dans la signature de la fonction :</p><pre id="r-566706" data-claire-element-id="566706"><code data-claire-semantic="ocaml">val boucle : min:int -&gt; max:int -&gt; step:int -&gt; (int -&gt; 'a) -&gt; unit</code></pre><aside id="r-566708" data-claire-element-id="566708" data-claire-semantic="warning"><p id="r-566707" data-claire-element-id="566707">Même si cela vous plaît et qu'il vous prend l'envie d'en utiliser partout dans vos développements futurs, notez quand même que cela n'est pas sans conséquence sur le typage (notamment pour les applications partielles, mais je n'en dis pas plus).</p></aside><p id="r-566709" data-claire-element-id="566709">L'utilisation des arguments nommés permet aussi d'écrire les arguments dans n'importe quel ordre (ou presque). Par exemple, ceci fonctionne très bien :</p><pre id="r-566710" data-claire-element-id="566710"><code data-claire-semantic="ocaml"># boucle ~step:2 ~max:5 ~min:1 print_int ;;
+135- : unit = ()
+#</code></pre><p id="r-566711" data-claire-element-id="566711">Notez que si vous indiquez tous les arguments d'une fonction, autrement dit si vous ne faites pas d'application partielle, vous pouvez vous abstenir de préciser les étiquettes des arguments.</p><aside id="r-566713" data-claire-element-id="566713" data-claire-semantic="information"><p id="r-566712" data-claire-element-id="566712">Une petite information sur la syntaxe, pour clore cette partie : notez que lorsqu'une variable porte le même nom qu'un argument nommé, la notation habituelle <code>~nom:variable</code> peut être abrégée en <code>~nom</code>.</p></aside><pre id="r-566714" data-claire-element-id="566714"><code data-claire-semantic="ocaml">let min = 2 and max = 8 in
+boucle ~min ~max ~step:2 print_int</code></pre><h2 id="r-les-arguments-optionnels-1" data-claire-element-id="566732">Les arguments optionnels</h2><h3 id="r-avec-une-valeur-par-defaut" data-claire-element-id="566722">Avec une valeur par défaut</h3><p id="r-566716" data-claire-element-id="566716">Les arguments optionnels sont aussi des arguments nommés, mais ils introduisent une propriété supplémentaire puisqu'ils permettent de rendre un argument facultatif (avec, éventuellement, une valeur par défaut). Voici d'abord un exemple avec des valeurs par défaut :</p><pre id="r-566717" data-claire-element-id="566717"><code data-claire-semantic="ocaml">let boucle ?(min = 0) ?(max = 100) ?(step = 1) f =
+  let rec loop = function
+    | i when i &gt; max -&gt; ()
+    | i -&gt; f i;
+      loop (i + step)
+  in loop min</code></pre><p id="r-566718" data-claire-element-id="566718">La signature de la fonction est aussi lisible qu'avec les arguments nommés, mais, chose nouvelle, il n'est plus nécessaire d'indiquer tous les paramètres (min, max et step). Notez que les tildes (~) ont été remplacés par des points d'interrogation (?).</p><pre id="r-566719" data-claire-element-id="566719"><code data-claire-semantic="ocaml">val boucle : ?min:int -&gt; ?max:int -&gt; ?step:int -&gt; (int -&gt; 'a) -&gt; unit</code></pre><aside id="r-566721" data-claire-element-id="566721" data-claire-semantic="warning"><p id="r-566720" data-claire-element-id="566720">C'est simple non ? Oui ? Eh bien non ! Il y a quelques subtilités à comprendre. Je vais vous les présenter, et il faut vraiment bien les saisir pour utiliser ensuite LablGTK en toute sérénité.</p></aside><h3 id="r-sans-valeur-par-defaut" data-claire-element-id="566726">Sans valeur par défaut</h3><p id="r-566723" data-claire-element-id="566723">Que se passe-t-il maintenant si nous ne mettons pas de valeur par défaut ? Eh bien, c'est une bonne question... qui me permet de vous présenter une première subtilité. S'il n'y a pas de valeur par défaut, l'argument est de type <code>'a option</code> dans le <em>corps de la fonction</em>. C'est logique, mais il faut le savoir. Un exemple pour illustrer ce comportement :</p><pre id="r-566724" data-claire-element-id="566724"><code data-claire-semantic="ocaml">let weird_is_lower ?x y =
+  match x with
+  | None -&gt; true
+  | Some x -&gt; y &lt; x</code></pre><p id="r-566725" data-claire-element-id="566725">J'ai qualifié cette fonction de curieuse (<em>weird</em>) parce qu'elle n'est pas vraiment très utile. Son seul mérite est de montrer que le paramètre <code>x</code> est bien de type <code>'a option</code>.</p><h3 id="r-utilisation-des-arguments-optionnels" data-claire-element-id="566731">Utilisation des arguments optionnels</h3><p id="r-566727" data-claire-element-id="566727">Puisqu'un exemple vaut mieux qu'un long discours, je vous propose quelques lignes de code à essayer dans l'interpréteur... pour découvrir la deuxième subtilité.</p><pre id="r-566728" data-claire-element-id="566728"><code data-claire-semantic="console"># let incr ?(step = 1) x = x + step;;
+val incr : ?step:int -&gt; int -&gt; int = &lt;fun&gt;
+# incr 1 ;;
+- : int = 2
+# incr ~step:2 1 ;;
+- : int = 3
+# incr ?step:(Some 3) 1 ;;
+- : int = 4
+#</code></pre><aside id="r-566730" data-claire-element-id="566730" data-claire-semantic="information"><p id="r-566729" data-claire-element-id="566729">C'est bien si vous avez trouvé ! Un argument optionnel utilisé avec un tilde (~) sert à indiquer une valeur de type <code>'a</code>. Un argument optionnel utilisé avec un point d'interrogation (?) sert à indiquer une valeur de type <code>'a option</code>.</p></aside><h2 id="r-variants-polymorphes" data-claire-element-id="566752">Variants polymorphes</h2><p id="r-566733" data-claire-element-id="566733">Vous savez sans doute que le <em>type somme</em> d'OCaml permet de créer de nouveaux types dont la manipulation est grandement facilitée par le filtrage. Par exemple, on peut construire un module <code>Carte</code> dans lequel est défini le type suivant :</p><pre id="r-566734" data-claire-element-id="566734"><code data-claire-semantic="ocaml">type t = As | Roi | Dame | Valet | Valeur of int</code></pre><p id="r-566735" data-claire-element-id="566735">Le principal reproche que l'on peut formuler à l'encontre de ce type réside dans le manque de flexibilité qui apparaît lorsqu'on veut s'en servir dans un autre module. On doit en effet utiliser la notation longue <code>Carte.As</code> ou <code>Carte.Dame</code>. Il y a derrière tout ça la notion d'espace de nom (<em>namespace</em> en anglais), mais il est inutile d'en dire plus ici.</p><aside id="r-566737" data-claire-element-id="566737" data-claire-semantic="warning"><p id="r-566736" data-claire-element-id="566736">Je ne suis ni « pour » ni « contre » cette notation longue, car elle présente des avantages indéniables. En revanche, dans le cas de LablGTK, où certains types sont conçus pour être accessibles dans tous les autres modules (par exemple <code>GtkStock.id</code> qui définit les icônes prédéfinies de GTK), il vaut mieux remplacer le type somme habituel par des variants polymorphes. La présence de nombreux modules n'est alors plus un obstacle à l'utilisation d'un type donné.</p></aside><p id="r-566738" data-claire-element-id="566738">C'est pourquoi LablGTK utilise exclusivement les <em>variants polymorphes</em>.</p><div id="r-566740" data-claire-element-id="566740" data-claire-semantic="question"><p id="r-566739" data-claire-element-id="566739">De quoi s'agit-il ?</p></div><p id="r-566741" data-claire-element-id="566741">Les variants polymorphes sont conçus pour être accessibles tels quels en dehors du module où ils sont définis. Ils ont bien d'autres caractéristiques (détaillées dans le manuel de référence), mais nous ne nous y attarderons pas. Voyons plutôt à quoi ressemble le type <code>Carte.t</code> lorsqu'il est réécrit avec des variants polymorphes :</p><pre id="r-566742" data-claire-element-id="566742"><code data-claire-semantic="ocaml">type t = [ `As | `Roi | `Dame | `Valet | `Valeur of int ]</code></pre><p id="r-566743" data-claire-element-id="566743">Le caractère qui introduit un variant polymorphe est un <em>accent grave</em> (AltGr + 7).</p><p id="r-566744" data-claire-element-id="566744">Comme je l'ai dit plus haut, la bibliothèque LablGTK utilise beaucoup les variants polymorphes pour définir des groupes de valeurs possibles (par exemple pour une fenêtre : <code>`CENTER</code> centre la fenêtre sur l'écran, <code>`CENTER_ON_PARENT</code> centre la fenêtre par rapport à son parent, et ainsi de suite). Voici d'autres exemples :</p><ul id="r-566749" data-claire-element-id="566749"><li id="r-566746" data-claire-element-id="566746"><p id="r-566745" data-claire-element-id="566745">le type <code>GtkStock.id</code> contient les icônes prédéfinies de GTK ;</p></li><li id="r-566748" data-claire-element-id="566748"><p id="r-566747" data-claire-element-id="566747">le type <code>Gtk.Tags</code> contient de très nombreux types à base de variants polymorphes... qui ont été ainsi regroupés parce qu'on peut s'en servir sans se soucier de leur module d'origine.</p></li></ul><aside id="r-566751" data-claire-element-id="566751" data-claire-semantic="information"><p id="r-566750" data-claire-element-id="566750">Si vous voulez en savoir plus sur ce sujet, et que vous lisez l'anglais, ne manquez pas le chapitre <em>Labels and variants</em> du manuel de référence, que vous trouverez <a href="http://caml.inria.fr/pub/docs/manual-ocaml/manual006.html#toc36">ici</a>.</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-interfaces-graphiques-avec-ocaml">Les interfaces graphiques avec OCaml</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-interfaces-graphiques-avec-ocaml/quelques-rappels-sur-ocaml">
+Quelques rappels sur OCaml
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-interfaces-graphiques-avec-ocaml/contenu-de-la-bibliotheque">
+Contenu de la bibliothèque
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-interfaces-graphiques-avec-ocaml/exemples-et-compilation">
+Exemples et compilation
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-interfaces-graphiques-avec-ocaml/contenu-de-la-bibliotheque">
+<span class="next">Contenu de la bibliothèque</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Contenudelabibliothque"></a><h2>Contenu de la bibliothèque</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-interfaces-graphiques-avec-ocaml/quelques-rappels-sur-ocaml">
+<span class="arrow"></span>
+<span class="next">Quelques rappels sur OCaml</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-interfaces-graphiques-avec-ocaml/exemples-et-compilation">
+<span class="next">Exemples et compilation</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-566754" data-claire-element-id="566754">Pour bien comprendre comment est organisée la bibliothèque LablGTK, nous allons la présenter en restreignant peu à peu notre champ d'observation. Nous partirons donc d'une vue d'ensemble pour nous pencher ensuite sur l'organisation d'une petite partie de la bibliothèque.</p><h2 id="r-organisation-en-modules" data-claire-element-id="566890">Organisation en modules</h2><h3 id="r-modules-principaux" data-claire-element-id="566887">Modules principaux</h3><p id="r-566755" data-claire-element-id="566755">LablGTK est une grosse bibliothèque. De nombreux modules ont été créés pour en faciliter l'utilisation. <strong>Ceux qui nous intéressent le plus pour le moment sont tous préfixés par la lettre G seule</strong>. Voici ce que contiennent ces modules :</p><table id="r-566883" data-claire-element-id="566883"><tbody id="r-566882" data-claire-element-id="566882"><tr id="r-566762" data-claire-element-id="566762"><td id="r-566757" data-claire-element-id="566757"><p id="r-566756" data-claire-element-id="566756"><strong>Module</strong></p></td><td id="r-566759" data-claire-element-id="566759"><p id="r-566758" data-claire-element-id="566758"><strong>Contenu</strong></p></td><td id="r-566761" data-claire-element-id="566761"><p id="r-566760" data-claire-element-id="566760"><strong>Noms GTK</strong></p></td></tr><tr id="r-566769" data-claire-element-id="566769"><td id="r-566764" data-claire-element-id="566764"><p id="r-566763" data-claire-element-id="566763">GWindow</p></td><td id="r-566766" data-claire-element-id="566766"><p id="r-566765" data-claire-element-id="566765">Fenêtres et boîtes de dialogue</p></td><td id="r-566768" data-claire-element-id="566768"><p id="r-566767" data-claire-element-id="566767">GtkWindow, GtkDialog, GtkMessageDialog, GtkColorSelectionDialog...</p></td></tr><tr id="r-566776" data-claire-element-id="566776"><td id="r-566771" data-claire-element-id="566771"><p id="r-566770" data-claire-element-id="566770">GButton</p></td><td id="r-566773" data-claire-element-id="566773"><p id="r-566772" data-claire-element-id="566772">Boutons et barres d'outils</p></td><td id="r-566775" data-claire-element-id="566775"><p id="r-566774" data-claire-element-id="566774">GtkButton, GtkToggleButton, GtkRadioButton, GtkColorButton...</p></td></tr><tr id="r-566783" data-claire-element-id="566783"><td id="r-566778" data-claire-element-id="566778"><p id="r-566777" data-claire-element-id="566777">GMenu</p></td><td id="r-566780" data-claire-element-id="566780"><p id="r-566779" data-claire-element-id="566779">Menus et barre de menus</p></td><td id="r-566782" data-claire-element-id="566782"><p id="r-566781" data-claire-element-id="566781">GtkMenuShell, GtkMenu, GtkMenuItem...</p></td></tr><tr id="r-566790" data-claire-element-id="566790"><td id="r-566785" data-claire-element-id="566785"><p id="r-566784" data-claire-element-id="566784">GTree</p></td><td id="r-566787" data-claire-element-id="566787"><p id="r-566786" data-claire-element-id="566786">Vues arborescentes</p></td><td id="r-566789" data-claire-element-id="566789"><p id="r-566788" data-claire-element-id="566788">GtkTreeView, GtkTreeStore, GtkListStore...</p></td></tr><tr id="r-566797" data-claire-element-id="566797"><td id="r-566792" data-claire-element-id="566792"><p id="r-566791" data-claire-element-id="566791">GMisc</p></td><td id="r-566794" data-claire-element-id="566794"><p id="r-566793" data-claire-element-id="566793">Divers widgets (GtkLabel, GtkImage...)</p></td><td id="r-566796" data-claire-element-id="566796"><p id="r-566795" data-claire-element-id="566795">GtkLabel, GtkImage, GtkStatusbar...</p></td></tr><tr id="r-566804" data-claire-element-id="566804"><td id="r-566799" data-claire-element-id="566799"><p id="r-566798" data-claire-element-id="566798">GRange</p></td><td id="r-566801" data-claire-element-id="566801"><p id="r-566800" data-claire-element-id="566800">Barres de progression, barres de défilement</p></td><td id="r-566803" data-claire-element-id="566803"><p id="r-566802" data-claire-element-id="566802">GtkScrollbar, GtkProgressBar, GtkRuler...</p></td></tr><tr id="r-566811" data-claire-element-id="566811"><td id="r-566806" data-claire-element-id="566806"><p id="r-566805" data-claire-element-id="566805">GBin</p></td><td id="r-566808" data-claire-element-id="566808"><p id="r-566807" data-claire-element-id="566807">Conteneurs à un enfant unique</p></td><td id="r-566810" data-claire-element-id="566810"><p id="r-566809" data-claire-element-id="566809">GtkScrolledWindow, GtkEventBox, GtkHandleBox...</p></td></tr><tr id="r-566818" data-claire-element-id="566818"><td id="r-566813" data-claire-element-id="566813"><p id="r-566812" data-claire-element-id="566812">GText</p></td><td id="r-566815" data-claire-element-id="566815"><p id="r-566814" data-claire-element-id="566814">Zone de texte</p></td><td id="r-566817" data-claire-element-id="566817"><p id="r-566816" data-claire-element-id="566816">GtkTextView, GtkTextBuffer, GtkTextIter...</p></td></tr><tr id="r-566825" data-claire-element-id="566825"><td id="r-566820" data-claire-element-id="566820"><p id="r-566819" data-claire-element-id="566819">GSourceView</p></td><td id="r-566822" data-claire-element-id="566822"><p id="r-566821" data-claire-element-id="566821">Code source</p></td><td id="r-566824" data-claire-element-id="566824"><p id="r-566823" data-claire-element-id="566823">GtkSourceView, GtkSourceBuffer, GtkSourceLanguage...</p></td></tr><tr id="r-566832" data-claire-element-id="566832"><td id="r-566827" data-claire-element-id="566827"><p id="r-566826" data-claire-element-id="566826">GPack</p></td><td id="r-566829" data-claire-element-id="566829"><p id="r-566828" data-claire-element-id="566828">Boîtes et conteneurs</p></td><td id="r-566831" data-claire-element-id="566831"><p id="r-566830" data-claire-element-id="566830">GtkHBox, GtkVBox, GtkTable, GtkButtonBox...</p></td></tr><tr id="r-566839" data-claire-element-id="566839"><td id="r-566834" data-claire-element-id="566834"><p id="r-566833" data-claire-element-id="566833">GEdit</p></td><td id="r-566836" data-claire-element-id="566836"><p id="r-566835" data-claire-element-id="566835">Divers widgets éditables</p></td><td id="r-566838" data-claire-element-id="566838"><p id="r-566837" data-claire-element-id="566837">GtkSpinButton, GtkCombo, GtkComboBox...</p></td></tr><tr id="r-566846" data-claire-element-id="566846"><td id="r-566841" data-claire-element-id="566841"><p id="r-566840" data-claire-element-id="566840">GData</p></td><td id="r-566843" data-claire-element-id="566843"><p id="r-566842" data-claire-element-id="566842">Gestion des données</p></td><td id="r-566845" data-claire-element-id="566845"><p id="r-566844" data-claire-element-id="566844">GtkClipboard, GtkTooltips...</p></td></tr><tr id="r-566853" data-claire-element-id="566853"><td id="r-566848" data-claire-element-id="566848"><p id="r-566847" data-claire-element-id="566847">GFile</p></td><td id="r-566850" data-claire-element-id="566850"><p id="r-566849" data-claire-element-id="566849">Sélecteur de fichiers</p></td><td id="r-566852" data-claire-element-id="566852"><p id="r-566851" data-claire-element-id="566851">GtkFileChooser, GtkFileFilter...</p></td></tr><tr id="r-566860" data-claire-element-id="566860"><td id="r-566855" data-claire-element-id="566855"><p id="r-566854" data-claire-element-id="566854">GAction</p></td><td id="r-566857" data-claire-element-id="566857"><p id="r-566856" data-claire-element-id="566856">Nouveaux outils de création de menus</p></td><td id="r-566859" data-claire-element-id="566859"><p id="r-566858" data-claire-element-id="566858">GtkAction, GtkActionGroup...</p></td></tr><tr id="r-566867" data-claire-element-id="566867"><td id="r-566862" data-claire-element-id="566862"><p id="r-566861" data-claire-element-id="566861">GDraw</p></td><td id="r-566864" data-claire-element-id="566864"><p id="r-566863" data-claire-element-id="566863">Fonctions de dessin Gdk</p></td><td id="r-566866" data-claire-element-id="566866"><p id="r-566865" data-claire-element-id="566865">GdkPixmap, GdkBitmap...</p></td></tr><tr id="r-566874" data-claire-element-id="566874"><td id="r-566869" data-claire-element-id="566869"><p id="r-566868" data-claire-element-id="566868">Glib</p></td><td id="r-566871" data-claire-element-id="566871"><p id="r-566870" data-claire-element-id="566870">Manipulation du texte</p></td><td id="r-566873" data-claire-element-id="566873"><p id="r-566872" data-claire-element-id="566872">unistring, unichar, conversion vers UTF-8...</p></td></tr><tr id="r-566881" data-claire-element-id="566881"><td id="r-566876" data-claire-element-id="566876"><p id="r-566875" data-claire-element-id="566875">GMain</p></td><td id="r-566878" data-claire-element-id="566878"><p id="r-566877" data-claire-element-id="566877">Module principal, avec fonctions d'initialisation</p></td><td id="r-566880" data-claire-element-id="566880"><p id="r-566879" data-claire-element-id="566879">GMain.init, GMain.main, GMain.quit...</p></td></tr></tbody></table><p id="r-566884" data-claire-element-id="566884">À ces modules s'ajoutent <strong>GUtil</strong>, qui contient des fonctions et des classes utiles au développement d'applications avec LablGTK, <strong>GToolbox</strong> et <strong>Gaux</strong>, qui contiennent des fonctions auxiliaires (notamment sur le type <code>'a option</code>), et <strong>GBroken</strong>, qui contient les widgets obsolètes (<em>deprecated</em>).</p><aside id="r-566886" data-claire-element-id="566886" data-claire-semantic="information"><p id="r-566885" data-claire-element-id="566885">Résumons-nous : les principaux modules de LablGTK sont préfixés par la lettre G majuscule. Ils donnent accès à la plupart des widgets et des fonctions qui permettent de construire une application GTK.</p></aside><h3 id="r-autres-modules" data-claire-element-id="566889">Autres modules</h3><p id="r-566888" data-claire-element-id="566888">Mais ce n'est pas tout ! Il existe de nombreux autres modules. Certains font un lien avec d'autres outils (dont <strong>GtkSpell</strong> pour la correction de l'orthographe), d'autres fournissent des outils pour le développement d'applications (par exemple <strong>Xml_lexer</strong> est un petit analyseur lexical pour le XML). Enfin, on trouve des modules préfixés par Gtk (comme GtkWindow, GtkEdit, GtkMenu...) qui contiennent les aspects « bas niveau » de la bibliothèque ; à ce titre, ils ne devraient pas être utilisés tels quels (à l'exception notable de <strong>GtkStock</strong> qui permet de manipuler les collections d'icônes de l'application).</p><h2 id="r-zoom-sur-un-module" data-claire-element-id="566897">Zoom sur un module</h2><p id="r-566891" data-claire-element-id="566891">Que trouve-t-on dans un module ? Eh bien, c'est très simple. On trouve des classes, qui ne sont presque jamais utilisées directement, et des fonctions qui aident à créer de nouveaux widgets. Ces fonctions possèdent en général de nombreux arguments optionnels, et permettent d'alléger le code. Voici deux exemples équivalents.</p><p id="r-566892" data-claire-element-id="566892">Sans utiliser les arguments des fonctions :</p><pre id="r-566893" data-claire-element-id="566893"><code data-claire-semantic="ocaml">let source =
+  let source = GSourceView.source_view () in
+  source#set_insert_spaces_instead_of_tabs true;
+  source#set_highlight_current_line true;
+  source#set_tabs_width 5;
+  source</code></pre><p id="r-566894" data-claire-element-id="566894">En utilisant les arguments des fonctions :</p><pre id="r-566895" data-claire-element-id="566895"><code data-claire-semantic="ocaml">let source = GSourceView.source_view 
+  ~insert_spaces_instead_of_tabs:true
+  ~highlight_current_line:true
+  ~tabs_width:5 ()</code></pre><p id="r-566896" data-claire-element-id="566896">On préfère donc généralement utiliser les fonctions pour créer des widgets... surtout que OCaml ne dispose pas de structure du type <code>with widget do</code> pour alléger le code (à moins que vous ne maîtrisiez le démoniaque <code>camlp4</code>...)</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-interfaces-graphiques-avec-ocaml">Les interfaces graphiques avec OCaml</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-interfaces-graphiques-avec-ocaml/quelques-rappels-sur-ocaml">
+Quelques rappels sur OCaml
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-interfaces-graphiques-avec-ocaml/contenu-de-la-bibliotheque">
+Contenu de la bibliothèque
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-interfaces-graphiques-avec-ocaml/exemples-et-compilation">
+Exemples et compilation
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-interfaces-graphiques-avec-ocaml/quelques-rappels-sur-ocaml">
+<span class="arrow"></span>
+<span class="next">Quelques rappels sur OCaml</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-interfaces-graphiques-avec-ocaml/exemples-et-compilation">
+<span class="next">Exemples et compilation</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Exemplesetcompilation"></a><h2>Exemples et compilation</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-interfaces-graphiques-avec-ocaml/contenu-de-la-bibliotheque">
+<span class="arrow"></span>
+<span class="next">Contenu de la bibliothèque</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-566899" data-claire-element-id="566899">Pour terminer notre présentation de LablGTK, je vous propose de détailler ensemble deux petits programmes sans prétention. Vous verrez également comment les compiler en code natif (c'est presque pareil pour le bytecode, et je suppose que vous savez déjà qu'il faut remplacer les .cmxa par .cma, et les .cmx par .cmo). <strong>Attention ! Tous ces exemples ont été testés sous GNU/Linux uniquement</strong>.</p><h2 id="r-exemple-1-une-fenetre-avec-un-bouton" data-claire-element-id="566953">Exemple 1 : une fenêtre avec un bouton</h2><h3 id="r-programme-2" data-claire-element-id="566903">Programme</h3><p id="r-566900" data-claire-element-id="566900">Ce premier exemple tout simple consiste à créer une fenêtre de taille 50 x 100 pixels, dans laquelle se trouve un bouton &quot;Bonjour !&quot; qui affiche &quot;Bonjour X !&quot; sur la sortie standard <code>stdout</code> (X est bien entendu remplacé par le nom de l'utilisateur).</p><pre id="r-566901" data-claire-element-id="566901"><code data-claire-semantic="ocaml">(* Initialisation de GTK. Voir la discussion plus loin. *)
+let _ = GMain.init ()
+
+(* Fenêtre principale de l'application. *)
+let window = GWindow.window 
+  ~title:&quot;Tuto SdZ Exemple 1&quot; 
+  ~height:50 
+  ~width:100 ()
+
+(* Bouton qui souhaite le bonjour à l'utilisateur. *)
+let say_hello = GButton.button
+  ~label:&quot;Bonjour !&quot;
+  ~packing:window#add ()
+
+(* Fonction qui affiche le message sur stdout. *)
+let print_hello () =
+  let user = Glib.get_user_name () in
+  Printf.printf &quot;Bonjour %s !\n%!&quot; (String.capitalize user)
+
+let _ =
+  window#connect#destroy ~callback:GMain.quit;
+  say_hello#connect#clicked ~callback:print_hello;
+  window#show ();
+  GMain.main ()</code></pre><p id="r-566902" data-claire-element-id="566902"><strong>Une petite remarque sur ce code avant d'aller plus loin</strong> : avez-vous remarqué l'indentation quelque peu singulière des arguments nommés ? C'est une habitude avec LablGTK, pour améliorer la lisibilité, car on préfère éviter les trop longues lignes (par convention, on se limite à 80 colonnes, quel que soit le langage utilisé).</p><h3 id="r-compilation-13" data-claire-element-id="566952">Compilation</h3><p id="r-566904" data-claire-element-id="566904">Pour commencer, rappelons brièvement quelles sont les extensions utilisées par OCaml... et leur origine « du côté du programmeur » :</p><table id="r-566948" data-claire-element-id="566948"><tbody id="r-566947" data-claire-element-id="566947"><tr id="r-566911" data-claire-element-id="566911"><td id="r-566906" data-claire-element-id="566906"><p id="r-566905" data-claire-element-id="566905"><strong>Extension</strong></p></td><td id="r-566908" data-claire-element-id="566908"><p id="r-566907" data-claire-element-id="566907"><strong>Compilateur</strong></p></td><td id="r-566910" data-claire-element-id="566910"><p id="r-566909" data-claire-element-id="566909"><strong>Type de fichier</strong></p></td></tr><tr id="r-566918" data-claire-element-id="566918"><td id="r-566913" data-claire-element-id="566913"><p id="r-566912" data-claire-element-id="566912">.cmxa</p></td><td id="r-566915" data-claire-element-id="566915"><p id="r-566914" data-claire-element-id="566914">ocamlopt</p></td><td id="r-566917" data-claire-element-id="566917"><p id="r-566916" data-claire-element-id="566916">Bibliothèque (par exemple lablgtk.cmxa)</p></td></tr><tr id="r-566925" data-claire-element-id="566925"><td id="r-566920" data-claire-element-id="566920"><p id="r-566919" data-claire-element-id="566919">.cma</p></td><td id="r-566922" data-claire-element-id="566922"><p id="r-566921" data-claire-element-id="566921">ocamlc</p></td><td id="r-566924" data-claire-element-id="566924"><p id="r-566923" data-claire-element-id="566923">Bibliothèque (par exemple lablgtk.cma)</p></td></tr><tr id="r-566932" data-claire-element-id="566932"><td id="r-566927" data-claire-element-id="566927"><p id="r-566926" data-claire-element-id="566926">.cmx</p></td><td id="r-566929" data-claire-element-id="566929"><p id="r-566928" data-claire-element-id="566928">ocamlopt</p></td><td id="r-566931" data-claire-element-id="566931"><p id="r-566930" data-claire-element-id="566930">Fichier ml (implémentation)</p></td></tr><tr id="r-566939" data-claire-element-id="566939"><td id="r-566934" data-claire-element-id="566934"><p id="r-566933" data-claire-element-id="566933">.cmo</p></td><td id="r-566936" data-claire-element-id="566936"><p id="r-566935" data-claire-element-id="566935">ocamlc</p></td><td id="r-566938" data-claire-element-id="566938"><p id="r-566937" data-claire-element-id="566937">Fichier ml (implémentation)</p></td></tr><tr id="r-566946" data-claire-element-id="566946"><td id="r-566941" data-claire-element-id="566941"><p id="r-566940" data-claire-element-id="566940">.cmi</p></td><td id="r-566943" data-claire-element-id="566943"><p id="r-566942" data-claire-element-id="566942">ocamlc/ocamlopt</p></td><td id="r-566945" data-claire-element-id="566945"><p id="r-566944" data-claire-element-id="566944">Fichier mli (interface)</p></td></tr></tbody></table><p id="r-566949" data-claire-element-id="566949">Un autre point important est l'option <strong>-I</strong> (i majuscule), disponible aussi bien avec <code>ocamlc</code> qu'<code>ocamlopt</code>. Elle permet d'ajouter un répertoire à la liste des répertoires parcourus par un compilateur (pour trouver des modules ou des bibliothèques). Lorsque ce répertoire est un sous-dossier du répertoire d'installation d'OCaml (celui que renvoie la commande <code data-claire-semantic="console">ocamlc -where</code>), on le préfixe avec un <strong>+</strong>. Ainsi, si on veut compiler notre exemple en code natif, on utilisera <code data-claire-semantic="console">ocamlopt -I +lablgtk2 lablgtk.cmxa exemple1.ml -o exemple</code>.</p><aside id="r-566951" data-claire-element-id="566951" data-claire-semantic="information"><p id="r-566950" data-claire-element-id="566950">Si vous n'aimez pas <code data-claire-semantic="ocaml">GMain.init () </code>, vous pouvez vous abstenir de l'écrire et passer le fichier <strong>gtkInit.cmx</strong> (<strong>gtkInit.cmo</strong> en bytecode) lors de la compilation... pour le même effet.</p></aside><h2 id="r-exemple-2-un-peu-plus-gros" data-claire-element-id="566967">Exemple 2 : un peu plus gros</h2><h3 id="r-programme-3" data-claire-element-id="566960">Programme</h3><p id="r-566954" data-claire-element-id="566954">Il s'agit d'un exemple plus ambitieux. J'ai voulu montrer qu'on peut créer sans trop d'effort des interfaces plus fournies que ce que laisse entrevoir le premier exemple. Ne vous inquiétez pas si vous ne comprenez pas tout : ce tutoriel n'est pas là pour <em>tout</em> vous expliquer. Il s'agit juste d'une <em>introduction</em>. Vous gagnerez beaucoup à consulter les nombreuses ressources disponibles sur la toile (en anglais) : tutoriel GTK adapté à OCaml, API de la bibiothèque, tutoriel centré sur GtkTreeView, liste de diffusion, exemples fournis avec la bibliothèque et... les codes écrits par les autres !</p><pre id="r-566955" data-claire-element-id="566955"><code data-claire-semantic="ocaml">let _ = GMain.init ()
+
+(* Fenêtre principale (non redimensionnable). *)
+let window = GWindow.window 
+  ~width:300 
+  ~resizable:false
+  ~title:&quot;Tuto SdZ Exemple 2&quot; ()
+
+(* Conteneur principal, pour pouvoir insérer plusieurs widgets. En effet, les
+ * fenêtres (GtkWindow) ne peuvent contenir qu'un seul enfant. *)
+let vbox = GPack.vbox 
+  ~spacing:10
+  ~border_width:10
+  ~packing:window#add ()
+
+(* Insertion de barres de défilement. *)
+let scroll = GBin.scrolled_window
+  ~height:200
+  ~hpolicy:`ALWAYS
+  ~vpolicy:`ALWAYS
+  ~packing:vbox#add ()
+
+(* Conteneur en forme de tableau. La méthode add_with_viewport permet d'insérer
+ * un conteneur tel que GPack.table (GtkTable) en le faisant défiler à l'aide 
+ * des barres de défilement de GBin.scrolled_window (GtkScrolledWindow). *)
+let table = GPack.table
+  ~row_spacings:5
+  ~col_spacings:5
+  ~homogeneous:true
+  ~packing:scroll#add_with_viewport ()
+
+(* Un conteneur spécialement conçu pour les boutons. Essayez de remplacer 
+ * `SPREAD par `EDGE pour voir ce que ça fait... *)
+let bbox = GPack.button_box `HORIZONTAL
+  ~layout:`SPREAD
+  ~packing:(vbox#pack ~expand:false) ()
+
+let help_message () = print_endline &quot;Cliquez sur \&quot;Quitter\&quot; pour quitter&quot;
+
+(* Un bouton pour obtenir de l'aide. *)
+let help = 
+  let button = GButton.button 
+    ~stock:`HELP
+    ~packing:bbox#add () in
+  button#connect#clicked ~callback:help_message;
+  button
+
+(* Un bouton pour quitter. *)
+let quit = 
+  let button = GButton.button
+    ~stock:`QUIT
+    ~packing:bbox#add () in
+  button#connect#clicked ~callback:GMain.quit;
+  button
+
+(* Un tableau de symboles obtenus grâce à leur code UTF-8. *)
+let symbols =
+  Array.concat [
+    (* Lettres grecques minuscules. *)
+    Array.init  25 (fun i -&gt; Glib.Utf8.from_unichar (i +  945));
+    (* Divers symboles mathématiques. *)
+    Array.init 256 (fun i -&gt; Glib.Utf8.from_unichar (i + 8704));
+  ]
+
+(* Le conteneur GPack.table (GtkTable) est rempli : chaque case reçoit un bouton
+ * contenant un symbole du tableau &lt; symbols &gt; défini ci-dessus. Le symbole est
+ * inséré dans une étiquette (GtkLabel) pour pouvoir utiliser les balises Pango
+ * (notamment &lt;big&gt; et &lt;/big&gt; qui augmentent la taille du texte). *)
+let init_table () =
+  Array.iteri (fun i sym -&gt;
+    let button = GButton.button 
+      ~relief:`NONE 
+      ~packing:(table#attach ~left:(i mod 10) ~top:(i / 10)) ()
+    and markup = Printf.sprintf &quot;&lt;big&gt;%s&lt;/big&gt;&quot; sym in
+    ignore (GMisc.label ~markup ~packing:button#add ())
+  ) symbols
+
+let _ =
+  init_table ();
+  window#connect#destroy ~callback:GMain.quit;
+  window#show ();
+  GMain.main ()</code></pre><p id="r-566956" data-claire-element-id="566956">Et avec tout ça, qu'obtient-on ? Quelque chose comme ceci :</p><figure id="r-566958" data-claire-element-id="566959"><img id="r-566957" data-claire-element-id="566957" src="medias/uploads.siteduzero.com_files_150001_151000_150169.png" alt="Image utilisateur"/></figure><h3 id="r-compilation-14" data-claire-element-id="566966">Compilation</h3><p id="r-566961" data-claire-element-id="566961">Comme précédemment, il y a plusieurs manières de procéder. Je vous en donne une seule, avec l'interpréteur, parce que c'est bien suffisant pour cet exemple.</p><pre id="r-566962" data-claire-element-id="566962"><code data-claire-semantic="console">cacophrene$ ocaml -w s -I +lablgtk2 lablgtk.cma exemple2.ml</code></pre><p id="r-566963" data-claire-element-id="566963">Notez la présence de l'option -w s dans la ligne de commande. Elle indique de ne pas afficher les avertissements de type S (<em>Warning S: this expression should have type unit.</em>), car il y en a généralement beaucoup dans les programmes qui utilisent LablGTK... et puis on n'a pas envie d'utiliser mille fois la fonction <code>ignore</code> ou <code>let _ = (...)</code> (justification très subjective : « ça alourdit le code »).</p><aside id="r-566965" data-claire-element-id="566965" data-claire-semantic="information"><p id="r-566964" data-claire-element-id="566964">LablGTK permet de créer facilement des interfaces graphiques en GTK pour OCaml. La grande différence entre GTK et LablGTK réside dans l'utilisation de classes et d'objets (GTK utilise le <em>modèle</em> objet). La principale difficulté est liée à la taille de la bibliothèque et à l'utilisation de traits avancés du langage OCaml.</p></aside><h2 id="r-references-liens-utiles" data-claire-element-id="566971">Références / liens utiles</h2><p id="r-566968" data-claire-element-id="566968">Voici les liens qui ont servi à la rédaction de ce mini-tuto. Vous pouvez les consulter pour obtenir de plus amples renseignements.</p><p id="r-566969" data-claire-element-id="566969"><a href="http://wwwfun.kurims.kyoto-u.ac.jp/soft/lsl/lablgtk.html">Présentation de LablGTK2</a><br/><a href="http://wwwfun.kurims.kyoto-u.ac.jp/soft/lsl/lablgtk/html/">API de LablGTK2</a><br/><a href="http://plus.kaist.ac.kr/~shoh/ocaml/lablgtk2/lablgtk2-tutorial/">Adaptation du tutoriel GTK par SooHyoung Oh</a><br/><a href="http://www.nabble.com/Lablgtk---France-f22132.html">Liste de diffusion de LablGTK2</a><br/><a href="http://plus.kaist.ac.kr/~shoh/ocaml/lablgtk2/treeview-tutorial/">Tutoriel sur GtkTreeView</a></p><p id="r-566970" data-claire-element-id="566970">Voilà, l'essentiel est dit ! Vous pouvez maintenant créer de jolies interfaces graphiques bien intégrées dans le bureau GNOME (pour ceux qui codent sous GNU/Linux). N'hésitez pas à consulter l'API de la bibliothèque (disponible en ligne <a href="http://wwwfun.kurims.kyoto-u.ac.jp/soft/lsl/lablgtk/html/">ici</a>), la liste de diffusion et les exemples de code fournis avec les sources !</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-interfaces-graphiques-avec-ocaml">Les interfaces graphiques avec OCaml</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-interfaces-graphiques-avec-ocaml/quelques-rappels-sur-ocaml">
+Quelques rappels sur OCaml
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-interfaces-graphiques-avec-ocaml/contenu-de-la-bibliotheque">
+Contenu de la bibliothèque
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-interfaces-graphiques-avec-ocaml/exemples-et-compilation">
+Exemples et compilation
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-interfaces-graphiques-avec-ocaml/contenu-de-la-bibliotheque">
+<span class="arrow"></span>
+<span class="next">Contenu de la bibliothèque</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/les-interfaces-graphiques-avec-ocaml.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 11:14:12 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/les-interfaces-graphiques-avec-ocaml.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:48:27 GMT -->
+</html>

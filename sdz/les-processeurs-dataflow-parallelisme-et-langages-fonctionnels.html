@@ -1,0 +1,636 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 02:41:06 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:35:33 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Les processeurs Dataflow : parallélisme et langages fonctionnels</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Les processeurs Dataflow : parallélisme et langages fonctionnels</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#LesprocesseursDataflowparalllismeetlangagesfonctionnels">Les processeurs Dataflow : parallélisme et langages fonctionnels</a><br/><a href="#Etc039estquoicetruc">Et c&#039;est quoi ce truc ?</a><br/><a href="#Dpendancesdedonnes">Dépendances de données</a><br/><a href="#Modledecalculdataflow">Modéle de calcul dataflow</a><br/><a href="#Architecturesstatiques">Architectures statiques</a><br/><a href="#ArchitecturesdynamiquesetETS">Architectures dynamiques et ETS</a><br/><a href="#LesstructuresdedonnesetleurgestionparleCPU">Les structures de données et leur gestion par le CPU</a><br/><a href="#Architectureshybrides">Architectures hybrides</a><br/></div>
+<a name="LesprocesseursDataflowparalllismeetlangagesfonctionnels"></a><h2>Les processeurs Dataflow : parallélisme et langages fonctionnels</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/et-c-est-quoi-ce-truc">
+<span class="next">Et c&#039;est quoi ce truc ?</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-345182" data-claire-element-id="345182">Si vous programmez depuis un certain temps, vous savez sûrement qu'il existe plusieurs paradigmes de programmation : le paradigme procédural, l'impératif, l'objet, le fonctionnel, etc. Chaque langage est plus ou moins rattaché à un (voire plusieurs) de ces paradigmes, et dispose de fonctionnalités plus ou moins diverses et variées. Mais ces langages ont pour but de créer des programmes exécutables par un ordinateur dont le matériel est plus ou moins évolué.</p><p id="r-345183" data-claire-element-id="345183">Au départ, les premiers ordinateurs étaient optimisés pour exécuter des langages de programmation impératifs très simples, et leur assembleur disposait de peu de fonctionnalités proches des langages de haut niveau : pas de support des tableaux, sous-programmes (les fameuses fonctions), et les types de haut niveau n'étaient pas supportés (pas de flottants ni de caractères, seul un type était accepté : le word). Au fil du temps, l'assembleur de ces processeurs et leur architecture ont évolué pour supporter les fonctionnalités de haut niveau dans leur assembleur : le nombre de types supportés par le processeur s'est étoffé, des instructions spéciales pour supporter les sous-programmes ont été inventées, et de nombreux modes d'adressage spécialement dédiés aux tableaux et structures ont fait leur apparition. Toutes ces améliorations ont fait que nos processeurs sont particulièrement adaptés à des langages procéduraux de haut niveau comme le C, le Pascal, le BASIC ou le Fortran.</p><p id="r-345184" data-claire-element-id="345184">Mais tous les processeurs existants n’ont pas forcément suivi cette logique et ne se sont pas adaptés qu'aux langages procéduraux. Par exemple, quand la programmation orientée objet s'est démocratisée dans les années 1980, des chercheurs ou des fabricants de processeurs ont décidé de créer des processeurs prenant en charge une bonne partie des fonctionnalités des langages de programmation orientés objet directement dans leur matériel. Cela a donné lieu à quelques petites architectures plutôt sympas, dont certaines ont quitté les laboratoires pour finir par être commercialisées.</p><p id="r-345185" data-claire-element-id="345185">Mais certains sont carrément allés beaucoup plus loin : il existe de nombreuses architectures spécialement adaptées à l’exécution de langages fonctionnels ou logiques : les <strong>architectures <em>dataflow</em></strong>. Ces architectures étaient assez étudiées dans les années 1980, mais sont aujourd’hui tombée en désuétude. Ce tutoriel va parler de ces processeurs (en même temps, vu le titre...), assez différents de ce à quoi l'on peut être habitué.</p>
+</div><a name="Etc039estquoicetruc"></a><h2>Et c&#039;est quoi ce truc ?</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/dependances-de-donnees-2">
+<span class="next">Dépendances de données</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-345186" data-claire-element-id="345186">Pour introduire ces architectures <em>dataflow</em>, nous allons commencer par voir qu'est-ce qui différencie ces architectures des architectures &quot;normales&quot;, adaptées aux langages procéduraux. Et pour commencer, je vais commencer par quelques explications (des rappels pour certains) qui vont expliquer dans les grandes lignes comment fonctionne un ordinateur &quot;normal&quot;.</p><h2 id="r-les-processeurs-normaux" data-claire-element-id="345235">Les processeurs normaux</h2><p id="r-345187" data-claire-element-id="345187">Sur un ordinateur normal, un programme est une suite d'<strong>instructions</strong> : ces instructions sont des opérations de base qu'un processeur va éxecuter sur des données, qui sont généralement stockées dans l'ordinateur sous la forme d'une suite de bits. Cela ne change pas sur les architectures <em>dataflow</em>. Ces instructions sont stockées dans la mémoire de notre ordinateur comme les données : avec des suites de bits.</p><p id="r-345188" data-claire-element-id="345188">Sur un processeur normal, ces instructions sont exécutées dans un ordre bien précis, les unes après les autres. Un programme informatique n'est donc qu'une vulgaire suite d'instructions stockée quelque part dans la mémoire de notre ordinateur. Celles-ci sont placées les unes à la suite des autres dans l'ordre où elles doivent être exécutées. L'ordre en question est un peu arbitraire, et est décidé soit par le programmeur, soit par le compilateur. Ces processeurs sont donc adaptés à des langages dits impératifs, comme le C, le C++, le Java, etc ; vu que dans ces langages, on crée un programme en utilisant certaines instructions de base et en précisant l'ordre d’exécution explicitement.</p><p id="r-345189" data-claire-element-id="345189">Par exemple :</p><table id="r-345232" data-claire-element-id="345232"><thead id="r-345195" data-claire-element-id="345195"><tr id="r-345194" data-claire-element-id="345194"><th id="r-345191" data-claire-element-id="345191"><p id="r-345190" data-claire-element-id="345190">Adresse</p></th><th id="r-345193" data-claire-element-id="345193"><p id="r-345192" data-claire-element-id="345192">Instruction</p></th></tr></thead><tbody id="r-345231" data-claire-element-id="345231"><tr id="r-345200" data-claire-element-id="345200"><td id="r-345197" data-claire-element-id="345197"><p id="r-345196" data-claire-element-id="345196">0</p></td><td id="r-345199" data-claire-element-id="345199"><p id="r-345198" data-claire-element-id="345198">Charger le contenu de l'adresse 0F05</p></td></tr><tr id="r-345205" data-claire-element-id="345205"><td id="r-345202" data-claire-element-id="345202"><p id="r-345201" data-claire-element-id="345201">1</p></td><td id="r-345204" data-claire-element-id="345204"><p id="r-345203" data-claire-element-id="345203">Charger le contenu de l'adresse 0555</p></td></tr><tr id="r-345210" data-claire-element-id="345210"><td id="r-345207" data-claire-element-id="345207"><p id="r-345206" data-claire-element-id="345206">2</p></td><td id="r-345209" data-claire-element-id="345209"><p id="r-345208" data-claire-element-id="345208">Additionner ces deux nombres</p></td></tr><tr id="r-345215" data-claire-element-id="345215"><td id="r-345212" data-claire-element-id="345212"><p id="r-345211" data-claire-element-id="345211">3</p></td><td id="r-345214" data-claire-element-id="345214"><p id="r-345213" data-claire-element-id="345213">Charger le contenu de l'adresse 0555</p></td></tr><tr id="r-345220" data-claire-element-id="345220"><td id="r-345217" data-claire-element-id="345217"><p id="r-345216" data-claire-element-id="345216">4</p></td><td id="r-345219" data-claire-element-id="345219"><p id="r-345218" data-claire-element-id="345218">Faire en XOR avec le résultat antérieur</p></td></tr><tr id="r-345225" data-claire-element-id="345225"><td id="r-345222" data-claire-element-id="345222"><p id="r-345221" data-claire-element-id="345221">...</p></td><td id="r-345224" data-claire-element-id="345224"><p id="r-345223" data-claire-element-id="345223">...</p></td></tr><tr id="r-345230" data-claire-element-id="345230"><td id="r-345227" data-claire-element-id="345227"><p id="r-345226" data-claire-element-id="345226">5464</p></td><td id="r-345229" data-claire-element-id="345229"><p id="r-345228" data-claire-element-id="345228">Instruction d'arrêt</p></td></tr></tbody></table><p id="r-345233" data-claire-element-id="345233">Pour savoir où il est est, le processeur contient un petit registre qui stocke la position en mémoire de la prochaine instruction à exécuter. Ce registre s'appelle le <em><strong>Program Counter</strong></em>. Lorsqu'on allume le processeur, celui-ci charge automatiquement la première instruction du programme. Puis, à chaque cycle d'horloge, un petit circuit interne au processeur va calculer l'adresse de la prochaine instruction et va la placer dans le <em>Program Counter</em> de façon à pointer sur l'instruction suivante. Et ainsi de suite, jusqu'à ce que notre programme termine (s'il termine !).</p><p id="r-345234" data-claire-element-id="345234">Il existe quand même un moyen de faire varier l'ordre des instruction au cours de l’exécution de notre programme : certaines instructions spéciales, les<strong> branchements</strong>, peuvent modifier le contenu du <em>Program Counter</em>. Cela permet de créer des structures de contrôle comme des boucles, des tests, des branchements (break, goto, exceptions, etc), des fonctions, etc ; qui sont massivement utilisés, et sans lesquels on ne pourrait pas faire grand chose d’intéressant.</p><h2 id="r-architecture-dataflow" data-claire-element-id="345246">Architecture <em>dataflow</em></h2><p id="r-345236" data-claire-element-id="345236">Sur les architectures <em>dataflow</em>, ce <em>Program Counter</em> n'existe pas : ces processeurs s'en passent royalement et sont incapables de calculer la prochaine adresse. Sur ces ordinateurs, <strong>une instruction s’exécute dès que ses opérandes (les données qu'elle manipule) sont disponibles</strong>. L'ordre des opérations n'est donc pas imposé une fois pour toute de façon rigide, et est déterminé par d'autres mécanismes assez contre-intuitifs.</p><h3 id="r-a-quoi-ca-sert-11" data-claire-element-id="345243">A quoi ça sert ?</h3><p id="r-345237" data-claire-element-id="345237">Ces architectures étaient assez en vogue dans les milieux universitaires dans les années 1970 à 1980. A cette époque, les chercheurs en architecture des ordinateurs cherchaient, comme toujours, à rendre nos ordinateurs plus rapides, plus puissants. A l'époque, les chercheurs cherchaient à créer des architectures parallèles, capables de traiter plusieurs données ou plusieurs instructions en même temps. Le but était très clairement la performance, et les chercheurs essayaient de trouver des moyens permettant de paralléliser facilement des programmes informatiques. A ce propos, la recherche dans le domaine du parallélisme est une sorte de serpent de mer qui revient régulièrement : quand les chercheurs en architecture des ordinateurs sont à court d'idées, ils cherchent à paralléliser ce qui ne l'est pas encore (et quand ils n'y arrivent pas ou que cette parallélisation montre ses limites, ils sortent la spéculation). D'ailleurs, cette problématique est revenue au gout du jour ces dernières années avec l’avènement des architectures multicœurs. De nos jours, avec l’avènement des architectures multicœurs, de nombreux programmeurs cherchent à utiliser au mieux la puissance fournie par les processeurs modernes. Pour cela, une des solutions possibles consiste à faire exécuter des instructions indépendantes dans des processeurs ou dans des circuits (unités de calcul) séparés.</p><div id="r-345239" data-claire-element-id="345239" data-claire-semantic="question"><p id="r-345238" data-claire-element-id="345238">Mais comment profiter au mieux de ce parallélisme et faire en sorte que nos programmes puissent éxecuter plusieurs instructions en parallèle ?</p></div><p id="r-345240" data-claire-element-id="345240">Nombreux sont ceux qui pensent que paralléliser un programme est avant tout un problème logiciel. Modifier un logiciel pour que celui-ci soit découpé en plusieurs morceaux indépendants à éxecuter sur des processeurs séparés est en effet un bon moyen pour utiliser plusieurs processeurs ou plusieurs cœurs. La parallélisation est donc dans ce cas du ressort du compilateur ou du programmeur : c'est à eux de modifier le programme pour le paralléliser. Le matériel se charge alors de fournir plusieurs processeurs ou cœurs à utiliser, et éventuellement quelques instructions pour faciliter communication ou la synchronisation entre les différents morceaux de programmes (interruptions inter-processeurs, instructions machines atomiques permettant d'implémenter des <em>Mutex</em>, etc). En clair, on garde une architecture non-parallèle, avec son <em>Program Counter</em> qui exécute des instructions les unes après les autres (et donc, de façon non-parallèle), et on se débrouille pour la rendre parallèle. La conséquence, c'est que les couts de synchronisation et de communication entre les différents morceaux de programmes peut être assez conséquent et peut réduire les performances si on s'y prend assez mal. Sans compter certaines contraintes concernant la hiérarchie mémoire, qui jouent souvent de mauvais tours.</p><p id="r-345241" data-claire-element-id="345241">Mais certains chercheurs se sont dits que penser hors du cadre ne faisait pas de mal : ceux-ci ont considérer que paralléliser un programme pouvait être un problème matériel, et que créer des architectures réellement conçue pour éxecuter des instructions en parallèle serait une grande avancée. Si on regarde bien, l'existence même du <em>Program Counter</em> est anti-parallèle par nature : celui-ci impose d’exécuter nos instructions dans un ordre bien précis, sans possibilité d’exécuter des instructions en parallèle (sauf si on utilise des ruses de sioux comme le pipeline, ou l’exécution superscalaire). Créer des architectures spéciales, sans <em>Program Counter</em> serait donc un gros plus qui permettrait non pas de découper des programmes entiers en morceaux qu'on pourrait éxecuter en parallèle, mais permettrait de paralléliser directement des instructions ! Nos chercheurs ont cherché (quoi de plus normal...) un moyen de créer des ordinateurs pouvant se passer de ce <em>Program Counter</em> et qui soient capable naturellement exécuter en parallèle un grand nombre d'instructions facilement, sans trop d'aide venant du logiciel. Les architectures <em>dataflow </em>furent une de ces réponses, qui a été adaptée et remise au gout du jour d'une certaine façon (préparez-vous à une surprise !).</p><p id="r-345242" data-claire-element-id="345242">Comme vous l'avez remarqué, les architectures <em>dataflow</em> ne se voient pas imposer d'ordre d’exécution arbitraire et ont pour seul maitre la disponibilité des données à manipuler. Cela signifie une chose assez intéressante : si deux instructions ont leurs opérandes prêtes, rien n’empêche de les éxecuter simultanément. Les architectures <em>dataflow </em>sont conçues pour profiter de cette particularités et possèdent souvent plusieurs processeurs ou unités de calculs indépendantes : cela permet d’exécuter plusieurs instructions en parallèle (simultanément). Cela allait même beaucoup plus loin : ces architectures étaient conçus pour être utilisés dans des réseaux reliant plusieurs centaines d'exemplaires via un réseau local. Généralement, les architectures <em>dataflow</em> reliaient entre eux des centaines de processeurs, chacun accompagné de sa propre mémoire, via un réseau local.</p><h3 id="r-mais-comment-remplacer-le-program-counter" data-claire-element-id="345245">Mais comment remplacer le <em>Program Counter</em> ?</h3><p id="r-345244" data-claire-element-id="345244">Sur ces architectures, les instructions ne sont pas placées les unes à la suite des autres dans la mémoire vu qu'elles ne sont pas rangées dans un ordre bien précis. Les architectures <em>dataflow</em> utilisent une autre méthode pour indiquer au processeur quelle sera la prochaine instruction à exécuter : on devra indiquer au processeur quelle est la prochaine instruction à éxecuter à chaque fois qu'on exécute une instruction. Pour cela, chaque suite de bits représentant une instruction machine contient l'adresse mémoire de la prochaine instruction à exécuter.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels">Les processeurs Dataflow : parallélisme et langages fonctionnels</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/et-c-est-quoi-ce-truc">
+Et c&#039;est quoi ce truc ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/dependances-de-donnees-2">
+Dépendances de données
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/modele-de-calcul-dataflow">
+Modéle de calcul dataflow
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/architectures-statiques">
+Architectures statiques
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/architectures-dynamiques-et-ets">
+Architectures dynamiques et ETS
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/les-structures-de-donnees-et-leur-gestion-par-le-cpu">
+Les structures de données et leur gestion par le CPU
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/architectures-hybrides">
+Architectures hybrides
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/dependances-de-donnees-2">
+<span class="next">Dépendances de données</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Dpendancesdedonnes"></a><h2>Dépendances de données</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/et-c-est-quoi-ce-truc">
+<span class="arrow"></span>
+<span class="next">Et c&#039;est quoi ce truc ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/modele-de-calcul-dataflow">
+<span class="next">Modéle de calcul dataflow</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-345248" data-claire-element-id="345248">Comme dit plus haut, nos instructions fonctionnent sur un principe simple : <strong>une instruction s’exécute dès que ses opérandes (les données qu'elle manipule) sont disponibles</strong>. Mine de rien, cela cache un concept assez important pour ces architectures : celui de <strong>dépendance de donnée</strong> entre instructions. Le terme pourrait sembler bien barbare, et je dois avouer que quelques explications vont vous faire le plus grand bien !</p><h2 id="r-qu-est-ce-qu-une-dependance-de-donnees" data-claire-element-id="345284">Qu'est-ce qu'une dépendance de données ?</h2><div id="r-345250" data-claire-element-id="345250" data-claire-semantic="question"><p id="r-345249" data-claire-element-id="345249">Une...dépendance ? Nos instructions sont droguées ?</p></div><p id="r-345251" data-claire-element-id="345251">Mais non ! :lol:</p><p id="r-345252" data-claire-element-id="345252">Deux instructions ont une dépendance de donnée quand elles doivent lire ou écrire au même endroit dans la mémoire de notre ordinateur : même registre ou à la même adresse mémoire. Dans ce cas, suivant l'ordre dans lequel on effectue nos instruction, le résultat peut changer. Ainsi, un programme devra absolument suivre l'ordre d'accès à la mémoire imposé par le programmeur (ou le compilateur), histoire de donner le bon résultat.</p><p id="r-345253" data-claire-element-id="345253">Différents cas se présentent, suivant que les deux instructions écrivent ou lisent cette donnée. La localisation de la donnée n'a pas d'importance : celle-ci peut être en RAM ou dans un registre, on s'en moque ! On se retrouve alors avec quatre possibilités :</p><table id="r-345281" data-claire-element-id="345281"><thead id="r-345259" data-claire-element-id="345259"><tr id="r-345258" data-claire-element-id="345258"><th id="r-345255" data-claire-element-id="345255"><p id="r-345254" data-claire-element-id="345254">Dépendance de données</p></th><th id="r-345257" data-claire-element-id="345257"><p id="r-345256" data-claire-element-id="345256">Effets</p></th></tr></thead><tbody id="r-345280" data-claire-element-id="345280"><tr id="r-345264" data-claire-element-id="345264"><td id="r-345261" data-claire-element-id="345261"><p id="r-345260" data-claire-element-id="345260">Read after Read</p></td><td id="r-345263" data-claire-element-id="345263"><p id="r-345262" data-claire-element-id="345262">Nos deux instructions doivent lire la même donnée, <strong>mais pas en même temps</strong> ! Dans ce cas, on peut mettre les deux instructions dans n'importe quel ordre, cela ne pose aucun problème.</p></td></tr><tr id="r-345269" data-claire-element-id="345269"><td id="r-345266" data-claire-element-id="345266"><p id="r-345265" data-claire-element-id="345265">Read after write</p></td><td id="r-345268" data-claire-element-id="345268"><p id="r-345267" data-claire-element-id="345267">La première instruction va écrire son résultat dans un registre ou dans la RAM, et un peu plus tard, la seconde va lire ce résultat et effectuer une opération dessus. La seconde instruction va donc manipuler le résultat de la première.</p></td></tr><tr id="r-345274" data-claire-element-id="345274"><td id="r-345271" data-claire-element-id="345271"><p id="r-345270" data-claire-element-id="345270">Write after Read</p></td><td id="r-345273" data-claire-element-id="345273"><p id="r-345272" data-claire-element-id="345272">la première instruction va lire un registre ou le contenu d'une adresse en RAM, et la seconde va écrire son résultat au même endroit un peu plus tard. Dans ce cas, on doit aussi exécuter la première instruction avant la seconde.</p></td></tr><tr id="r-345279" data-claire-element-id="345279"><td id="r-345276" data-claire-element-id="345276"><p id="r-345275" data-claire-element-id="345275">Write after Write</p></td><td id="r-345278" data-claire-element-id="345278"><p id="r-345277" data-claire-element-id="345277">Nos deux instructions effectuent des écritures au même endroit : registre ou adresse mémoire. Dans ce cas aussi, on doit conserver l'ordre des instructions et ne pas réordonnancer, pour les mêmes raisons que les deux dépendances précédentes.</p></td></tr></tbody></table><p id="r-345282" data-claire-element-id="345282">Comme vous le voyez, ces dépendances vont imposer un certain ordre d’exécution pour nos instructions. Un programme conçu pour les architectures <em>dataflow </em>devra absolument suivre l'ordre imposé par les dépendances de données. Cet ordre est un ordre qui est imposé : exécutez les instructions dans un ordre différent, et votre programme donnera un résultat différent. Prenons le cas d'une dépendance WAR : on a une lecture suivie par une écriture. Si on décide de changer l'ordre des deux accès mémoires et que l'on effectue l'écriture avant la lecture, la lecture ne renverra pas la valeur présente avant l'écriture, mais celle qui a été écrite. Il est donc strictement impossible de changer l'ordre des lectures/écritures dans ce cas précis. Toutes les lectures de notre registre ou adresse mémoire précédant notre écriture devront être terminées avant de pouvoir lancer notre écriture.</p><p id="r-345283" data-claire-element-id="345283">Par chance, cet ordre ne permet pas d'ordonner toutes les instructions : autant avec un <em>Program Counter</em> toute les instructions sont ordonnées et doivent s’exécuter les unes après les autres, autant l'ordre des dépendances de données n'est pas total et est celui qui laisse le plus de libertés. On peut ainsi éxecuter un grand nombre d'instructions en parallèle en se basant sur les dépendances de données.</p><h2 id="r-des-dependances-fictives-1" data-claire-element-id="345287">Des dépendances fictives</h2><p id="r-345285" data-claire-element-id="345285">Dans ce que j'ai dit plus haut, j'ai évoqué trois types de dépendances de données. Et bien sachez que parmi celles-ci, certaines ne sont pas de &quot;vraies dépendances&quot;. Une vraie dépendance de donnée correspond au cas où une instruction a besoin du résultat d'une instruction précédente pour fonctionner : il s'agit des dépendances <em>Read After Write</em>. Il est très courant qu'une instruction manipule des données qui sont le résultat d'instructions antérieures : dans une situation, on dit que les deux instructions ont une <strong>dépendance de donnée véritable</strong> ou une <em><strong>True Dependency</strong></em>. Il est en effet impossible d’exécuter une instruction si les données nécessaires à son exécution ne sont pas encore connues. Quelque soit la situation, on est obligé de tenir compte de ces dépendances, qui imposent un certain ordre d’exécution de nos instructions. Tout le génie des architectures <em>dataflow</em> est d’exécuter les instructions dans l'ordre imposé par les dépendances de données véritables et aucune autre contrainte.</p><p id="r-345286" data-claire-element-id="345286">Les autres dépendances,<em> Write After Write</em> et <em>Write After Read</em>, sont des fausses dépendances : elles viennent du fait que nos deux instructions doivent se partager le même registre ou la même adresse mémoire, sans pour autant que l'une aie besoin du résultat de l'autre. Ces dépendances viennent simplement du fait qu'une adresse mémoire (pardonnez mon abus de langage en confondant l'adresse et le <em>byte </em>qu'elle sélectionne), un registre, ou toute autre portion de la mémoire, est réutilisée pour stocker des données différentes à des instants différents. De telle dépendances sont appelées des <em><strong>name dependencies</strong></em>. Réutiliser une portion de la mémoire et remplacer une donnée devenue inutile par une autre ne pose pas de problèmes quand on exécute des instructions l'une après l'autre, mais ce n'est pas le cas quand on veut paralléliser ces instructions.</p><h2 id="r-supprimer-les-dependances-de-nommage" data-claire-element-id="345294">Supprimer les dépendances de nommage</h2><p id="r-345288" data-claire-element-id="345288">Supprimer ces dépendances est donc une nécessité si on veut paralléliser nos instructions. Tirer parti des architectures <em>dataflow </em>nécessite de virer au maximum ces dépendances de données fictives afin de laisser un maximum d'opportunité pour éxecuter des instructions indépendantes en parallèle.</p><div id="r-345290" data-claire-element-id="345290" data-claire-semantic="question"><p id="r-345289" data-claire-element-id="345289">Mais comment faire ?</p></div><p id="r-345291" data-claire-element-id="345291">Ces dépendances apparaissent si on lit ou écrit des données différentes au même endroit : si ce n'est pas le cas, on peut trouver une solution ! Et cette solution est assez simple : on doit faire en sorte de ne pas réutiliser une portion de mémoire qui contient une donnée. En clair, impossible de modifier le contenu d'un registre ou d'une adresse (abus de langage, encore...) : on peut copier celui-ci ailleurs, le supprimer si besoin, mais on ne peut pas le modifier ou l'écraser.</p><p id="r-345292" data-claire-element-id="345292">On voit clairement le lien entre ces architectures et les langages fonctionnels purs : dans ceux-ci, il est impossible de modifier la valeur d'une variable. Dans les langages impératifs ou dans les langages procéduraux, les variables sont légions : on peut modifier leur contenu autant qu'on le souhaite et sans vraiment de restrictions. Mais dans les langages fonctionnels, on peut initialiser une variable lors de sa création, mais pas la modifier ! Pour permettre ce genre de choses, on utilise divers mécanismes : par exemple, dans toute affectation, le nom d'une variable ne doit être présent qu'une seule et unique fois. C'est ce qu'on appelle la <strong><em>Single Statement Assignement Rule</em></strong>. Les architectures <em>dataflow </em>disposent de mécanismes permettant d'éviter les modifications du contenu d'une adresse mémoire afin de respecter cette règle.</p><p id="r-345293" data-claire-element-id="345293">Cette règle permet de supprimer ce qu'on appelle des effets de bords. Un effet de bords est une situation dans laquelle une fonction, une suite d'instruction, voire une instruction seule, va faire plus que calculer son résultat et va faire deux ou trois petites choses en plus, pas forcément attendues. Et ces effets de bords sont une chose que l'on chercher à éviter dans notre cas : ces effets de bords ont tendance à imposer un certain ordre d’exécution dans nos instructions. Les dépendances de nommage en sont un exemple : elles sont une conséquence directe d'un type d'effet de bord particulier (écraser une donnée). Néanmoins sachez qu'il existe d'autres effets de bords, comme on le verra rapidement plus tard.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels">Les processeurs Dataflow : parallélisme et langages fonctionnels</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/et-c-est-quoi-ce-truc">
+Et c&#039;est quoi ce truc ?
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/dependances-de-donnees-2">
+Dépendances de données
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/modele-de-calcul-dataflow">
+Modéle de calcul dataflow
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/architectures-statiques">
+Architectures statiques
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/architectures-dynamiques-et-ets">
+Architectures dynamiques et ETS
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/les-structures-de-donnees-et-leur-gestion-par-le-cpu">
+Les structures de données et leur gestion par le CPU
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/architectures-hybrides">
+Architectures hybrides
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/et-c-est-quoi-ce-truc">
+<span class="arrow"></span>
+<span class="next">Et c&#039;est quoi ce truc ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/modele-de-calcul-dataflow">
+<span class="next">Modéle de calcul dataflow</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Modledecalculdataflow"></a><h2>Modéle de calcul dataflow</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/dependances-de-donnees-2">
+<span class="arrow"></span>
+<span class="next">Dépendances de données</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/architectures-statiques">
+<span class="next">Architectures statiques</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-345296" data-claire-element-id="345296">Il va de soit qu'avec ce qu'on a dit plus haut, un programme conçu pour une architecture <em>dataflow </em>n'est pas une simple suite d'instruction. Un programme de ce type sera quelque chose de plus compliqué : il devra contenir les instructions du programme, et devra préciser quelles sont les dépendances de données entre instructions (vu que notre processeur se basera sur ces dépendances de données entre instructions pour choisir quelles sont les instructions à éxecuter).</p><h2 id="r-les-programmes-1" data-claire-element-id="345304">Les programmes</h2><p id="r-345297" data-claire-element-id="345297">Sur ces processeurs, un programme sera ce qu'on appelle un <strong>graphe orienté</strong>, un objet mathématique assez particulier qu'on va décrire assez rapidement. Pour faire simple, un graphe est un ensemble de points (les matheux qui lisent ce tutoriel vont surement vouloir me tuer...), qu'on relie par des flèches.</p><p id="r-345298" data-claire-element-id="345298">Les fameux points de ce graphe, ce seront les instructions de notre programme. Quand aux flèches, elles représenteront chacune une dépendance de donnée. Leur sens permet de savoir si deux instructions que la flèche relie possèdent des dépendances de données : deux instructions seront reliées par une flèche si elles ont une dépendance de donnée. La flèche ira de l'instruction qui calcule l'opérande vers celle qui va devoir manipuler l'opérande calculée par sa ou ses congénères. Rien n’empêche à une instruction de manipuler le résultat de plusieurs instructions différentes.</p><figure id="r-345300" data-claire-element-id="345301"><img id="r-345299" data-claire-element-id="345299" src="medias/uploads.siteduzero.com_files_361001_362000_361821.png" alt="Image utilisateur"/></figure><p id="r-345302" data-claire-element-id="345302">Il n'est pas rare qu'une instruction doive attendre un certain évènement avant que ses opérandes soient disponibles. Par exemple, ce peut être le cas si une instruction attend que des opérandes soient tapées au clavier ou proviennent d'une carte réseau. Dans ce cas, certaines flèches partiront de données, qui seront fournies par des périphériques ou qui seront présentes en mémoire au lancement du programme.</p><p id="r-345303" data-claire-element-id="345303">C'est avec ce genre de chose qu'un programme est représenté dans un ordinateur <em>dataflow</em>. Le stockage de ce graphe, ce programme, dépend de l'ordinateur utilisé, mais vous pouvez être certains qu'il est stocké quelque part (même si parfois de manière implicite) dans la mémoire de l'ordinateur et que le processeur utilise celui-ci pour savoir quelles instructions éxecuter et dans quel ordre.</p><h2 id="r-jetons" data-claire-element-id="345313">Jetons</h2><p id="r-345305" data-claire-element-id="345305">Reste que lorsque notre programme s’exécute, il faut que notre processeur puisse s'y retrouver et sache où il est dans ce graphe, et quelles sont les données disponibles (ainsi que les instructions auxquelles elles sont destinées). En clair : il faut trouver un remplaçant au <em>Program Counter</em> !</p><p id="r-345306" data-claire-element-id="345306">Pour cela, il va attribuer aux données disponibles ce qu'on appelle un <strong>jeton</strong>. Ce jeton permet de se repérer dans le graphe vu au-dessus en mémorisant, pour une donnée, l'adresse mémoire de la prochaine instruction à éxecuter. Qui plus est, ce jeton contient aussi la donnée qui se voit attribuer le jeton et peut aussi éventuellement contenir certains renseignements supplémentaires. Il est stocké en mémoire, et va y attendre bien sagement qu'une instruction veulent bien l'utiliser.</p><p id="r-345307" data-claire-element-id="345307">Chaque donnée de départ, fournie par un périphérique ou enregistrée en mémoire au lancement d'un programme, se voit attribuer un jeton, qui signifie tout simplement que la donnée est disponible et prête à se faire &quot;instructionner&quot;. Lorsque toutes les opérandes d'une instruction ont leur jeton actif, l'instruction va alors supprimer les jetons de ses données et va fournir un résultat, auquel on attribuera un nouveau jeton.</p><figure id="r-345309" data-claire-element-id="345310"><img id="r-345308" data-claire-element-id="345308" src="medias/uploads.siteduzero.com_files_362001_363000_362142.png" alt="Image utilisateur"/></figure><p id="r-345311" data-claire-element-id="345311">En clair, les opérandes auront étés utilisées et ne sont plus disponibles, tandis que le résultat l'est. Un nouveau jeton sera alors crée pour le résultat, et rebelote. L’exécution de notre programme consistera à une propagation de jetons à travers ce graphe, qui se fera suivant les disponibilités et le parcourt des jetons.</p><p id="r-345312" data-claire-element-id="345312">Ce jeton est un concepts assez théorique, mais on verra comment celui-ci est géré dans notre ordinateur <em>dataflow </em>dans les chapitres qui suivent. Quoiqu'il en soit, pour éxecuter une instruction, il faudra détecter la disponibilité des jetons qu'elle manipule (et qui contiennent ses opérandes). Et c'est le processeur qui se chargera de vérifier la disponibilité des opérandes d'une instruction. Plus précisément, ce sera le rôle d'un circuit spécialisé, comme on le verra plus tard.</p><h2 id="r-jeu-d-instruction" data-claire-element-id="345318">Jeu d'instruction</h2><p id="r-345314" data-claire-element-id="345314">Niveau instructions, on retrouvera nos fameux <code data-claire-semantic="nasm">add</code>, <code data-claire-semantic="nasm">mul</code>, et autres instructions arithmétiques et logiques. On trouve donc : des additions, des multiplications, des négations, des décalages, etc. Ces instructions sont particulièrement simples : elles consomment leurs entrées, et fournissent un résultat sans rien faire d'autre : elles sont sans aucun effet de bord. Mine de rien, cela n'est pas le cas dans les processeurs Von Neumann : certaines instructions arithmétiques vont faire plus que fournir un résultat. Elles peuvent écraser une donnée, modifier des bits de contrôle du registre d'état, lever des exceptions matérielles, etc. Rien de tout cela n'est permis sur les architectures <em>dataflow</em>, afin de garder un maximum d'opportunités de parallélisation.</p><h3 id="r-vade-retro" data-claire-element-id="345317">Vade Retro</h3><p id="r-345315" data-claire-element-id="345315">Mais plus étonnant, on trouve parfois des instructions équivalentes aux instructions de tests et de branchements des architectures normales ! Il est ainsi parfaitement possible d'effectuer des boucles, des conditionnelles, des appels de fonctions, etc ; sur ce genre d'architectures. Difficile de supporter des fonctions récursives sans ces instructions. Ces instructions spéciales, sont appelées<em> switch </em>et <em>merges</em>. Pour faire simple, les <em>merges</em> sont des instructions qui effectuent des comparaisons ou des tests et qui fournissent un résultat du style : la propriété testée est vraie (ou fausse). Les <em>switch </em>quand à eux, sont l'équivalent des instructions de branchements, vues plus haut.</p><p id="r-345316" data-claire-element-id="345316">On peut aussi utiliser des fonctions, avec ce genre de programme. Une fonction n'est rien d'autre qu'un ensemble d'instructions avec ses dépendances de données, comme tout programme digne de ce nom. Sur ces architectures, une fonction est donc un graphe qu'on peut incorporer dans le graphe du programme principal ou dans celui d'une autre fonction. Petit détail : une fonction devra attendre que tous ses arguments soient disponibles avant de pouvoir s’exécuter.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels">Les processeurs Dataflow : parallélisme et langages fonctionnels</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/et-c-est-quoi-ce-truc">
+Et c&#039;est quoi ce truc ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/dependances-de-donnees-2">
+Dépendances de données
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/modele-de-calcul-dataflow">
+Modéle de calcul dataflow
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/architectures-statiques">
+Architectures statiques
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/architectures-dynamiques-et-ets">
+Architectures dynamiques et ETS
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/les-structures-de-donnees-et-leur-gestion-par-le-cpu">
+Les structures de données et leur gestion par le CPU
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/architectures-hybrides">
+Architectures hybrides
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/dependances-de-donnees-2">
+<span class="arrow"></span>
+<span class="next">Dépendances de données</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/architectures-statiques">
+<span class="next">Architectures statiques</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Architecturesstatiques"></a><h2>Architectures statiques</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/modele-de-calcul-dataflow">
+<span class="arrow"></span>
+<span class="next">Modéle de calcul dataflow</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/architectures-dynamiques-et-ets">
+<span class="next">Architectures dynamiques et ETS</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-345320" data-claire-element-id="345320">La gestion des jetons sur les architectures <em>dataflow </em>est véritablement primordiale. Suivant l'ordinateur utilisé, cette gestion du jeton peut être plus ou moins évoluée et peut permettre ou interdire certaines manipulations potentiellement intéressantes. Dans ce qui va suivre, on va voir qu'il existe différentes façons de gérer ce jeton.</p><p id="r-345321" data-claire-element-id="345321">Le principal problème avec les jetons, c'est que ceux-ci doivent parfois attendre que leur instruction aie réunie toutes ses opérandes pour les utiliser. Dans pas mal de cas, cela ne pose pas de problèmes : les jetons n'ont pas trop de temps à attendre et un nouveau jeton n'a pas le temps d'arriver avant que l'ancien jeton soit utilisé. Mais ce n'est pas toujours le cas, et parfois, on pourrait se retrouver avec des instructions qui font attendre tellement longtemps un jeton qu'un nouveau jeton va arriver. Dans ce cas, on est face à un problème : comment faire pour différencier l'ancien jeton du nouveau venu ? Parce que si on utilise le mauvais jeton, notre programme ne donnera pas forcément le résultat escompté !</p><p id="r-345322" data-claire-element-id="345322">La première manière de gérer ce jeton est celle utilisée sur les architectures <em>dataflow</em> statiques. Sur ces architectures, on doit se débrouiller pour n'avoir qu'un seul jeton actif sur chaque flèche du graphe vu au-dessus. Une instruction ne produira un résultat que si un jeton n'est pas en train d'attendre que l'instruction suivante s’exécute.</p><h2 id="r-le-langage-machine-1" data-claire-element-id="345361">Le langage machine</h2><p id="r-345323" data-claire-element-id="345323">Une instruction a besoin de plusieurs informations pour s’exécuter :</p><ul id="r-345330" data-claire-element-id="345330"><li id="r-345325" data-claire-element-id="345325"><p id="r-345324" data-claire-element-id="345324">ses opérandes (les jetons) ;</p></li><li id="r-345327" data-claire-element-id="345327"><p id="r-345326" data-claire-element-id="345326">ce qu'elle doit faire (est-ce une addition, une multiplication, etc) ;</p></li><li id="r-345329" data-claire-element-id="345329"><p id="r-345328" data-claire-element-id="345328">et il ne faut pas oublier de représenter la flèche, les dépendances de données qu'elle peut avoir.</p></li></ul><p id="r-345331" data-claire-element-id="345331">Tout cela, il faut falloir le stocker quelque part. Sur tous les ordinateurs, les instructions d'un programme sont représentées par des suites de bits qui se suivent et sont organisées d'une certaine façon. Et on va devoir retrouver les informations citées au-dessus dans cette suite de bits.</p><p id="r-345332" data-claire-element-id="345332">Avec cette contrainte d'un jeton par arc, on est certain que notre instruction devra manipuler une seule version de sa donnée. Dans ce cas, on peut simplifier la gestion des transferts de données et pré-réserver de la place en mémoire pour les données d'une instruction. La manière la plus simple de le faire est encore de réserver un peu de place dans la suite de bits d'une instruction pour y placer l'opérande une fois celle-ci disponible. Quand à l'instruction suivante, on peut l'indiquer directement dans la suite de bits qui représente une instruction en mémoire, sans que cela ne pose problème.</p><p id="r-345333" data-claire-element-id="345333">Une instruction est donc représentée comme ceci sur les architectures <em>dataflow </em> :</p><figure id="r-345335" data-claire-element-id="345336"><img id="r-345334" data-claire-element-id="345334" src="medias/uploads.siteduzero.com_files_362001_363000_362143.png" alt="Image utilisateur"/></figure><p id="r-345337" data-claire-element-id="345337">Comme vous le voyez, cette suite de bits est découpée en morceaux, en <strong><em>slots</em></strong>. Comme vous le voyez, les opérandes d'une instruction (ou leur adresse en mémoire) sont stockées directement dans ces <em>slots</em>, ainsi que l'adresse de l'instruction qui doit manipuler le résultat. Cela ne se voit pas directement, mais cela permet de représenter les jetons et les flèches de notre graphe directement dans le langage machine. Ces flèches représentent des dépendances entre instructions et déterminent quelle est la prochaine instruction à éxecuter. Coder ces flèches signifie simplement trouver un moyen d'indiquer la prochaine instruction, celle qui utilisera le résultat.</p><p id="r-345338" data-claire-element-id="345338">On pourra passer à l'instruction suivante en recopiant cette adresse dans un registre du processeur. Cela se fait automatiquement lors de l’exécution de notre instruction : celle-ci est décodée, et l'adresse de l'instruction suivante est alors conservée dans un registre, avant d'être utilisée.</p><h3 id="r-disponibilite-des-operandes" data-claire-element-id="345345">Disponibilité des opérandes</h3><p id="r-345339" data-claire-element-id="345339">Reste à trouver un moyen pour savoir que les opérandes d'une instruction sont disponibles : il suffit de placer des bits de présence qui permettront de savoir si l'opérande est bien écrite dans le bon <em>slot</em>.</p><figure id="r-345341" data-claire-element-id="345342"><img id="r-345340" data-claire-element-id="345340" src="medias/uploads.siteduzero.com_files_362001_363000_362144.png" alt="Image utilisateur"/></figure><p id="r-345343" data-claire-element-id="345343">Quand une opérande est disponible, l'instruction qui vient de la calculer va écrire le résultat dans la case de l'instruction adéquate automatiquement (le processeur s'en charge tout seul). Ces bits de présence seront mis à jour quand l'opérande sera écrite dans le <em>slot</em>.</p><p id="r-345344" data-claire-element-id="345344">Vu qu'une instruction contient ses propres opérandes, on préfère parfois utiliser un autre terme que celui d'instruction et on parle d'<em><strong>activity template</strong></em>.</p><h3 id="r-acknoledge-token" data-claire-element-id="345360">Acknoledge Token</h3><p id="r-345346" data-claire-element-id="345346">Une fois que l'on a placé nos bits de présence et organisé notre instruction comme il fallait, tout n'est pas terminé.</p><div id="r-345348" data-claire-element-id="345348" data-claire-semantic="question"><p id="r-345347" data-claire-element-id="345347">Comment respecter la contrainte qui veut qu'on aie qu'un seul jeton par arc ?</p></div><p id="r-345349" data-claire-element-id="345349">En effet, il faut trouver un moyen de toujours respecter cette contrainte. Il faut empêcher une instruction de s’exécuter et de fournir un résultat si une autre donnée est en train d'attendre sur la même fléche.</p><p id="r-345350" data-claire-element-id="345350">Pour cela, chaque instruction contient, en plus de ses opérandes, un <em>slot </em>pour un jeton spécial qui permettra de dire : &quot; la voie est libre, tu peux produire un résultat si besoin &quot;.</p><figure id="r-345352" data-claire-element-id="345353"><img id="r-345351" data-claire-element-id="345351" src="medias/uploads.siteduzero.com_files_362001_363000_362152.png" alt="Image utilisateur"/></figure><p id="r-345354" data-claire-element-id="345354">Autant vous dire que les mises à jours de ces jetons d'autorisation prennent du temps et sont la cause de pas mal d'écritures en mémoire. Rien de tel pour pourrir les performances d'un ordinateur dans les normes.</p><p id="r-345355" data-claire-element-id="345355">Ce jeton est écrit quand l'instruction suivante vient de s’exécuter : elle a consommé ses jetons, et dont la flèche qui la relie à l'instruction qui la précède est vide. On peut donc lui envoyer un jeton. Quand une instruction s’exécute, elle va placer automatiquement (le processeur s'en charge) les jetons d’autorisation d’exécution des instructions précédentes de façon à les autoriser à s’exécuter. Cela signifie que chaque instruction doit aussi savoir quelle est la ou les instructions qui la précédent dans l'ordre des dépendances. Pour cela, une seule solution : stocker toutes leurs adresses dans l'instruction.</p><figure id="r-345357" data-claire-element-id="345358"><img id="r-345356" data-claire-element-id="345356" src="medias/uploads.siteduzero.com_files_362001_363000_362151.png" alt="Image utilisateur"/></figure><p id="r-345359" data-claire-element-id="345359">Mine de rien, les instructions de ce genre de processeur prennent pas mal de place, et la quantité de mémoire utilisée peut rapidement atteindre des sommets si celle-ci est mal gérée.</p><h2 id="r-organisation-d-une-architecture-statique" data-claire-element-id="345376">Organisation d'une architecture statique</h2><p id="r-345362" data-claire-element-id="345362">Voyons maintenant ce qu'il y a dans un processeur <em>dataflow</em>, cela ne nous fera pas de mal ! Dans les grandes lignes, notre ordinateur est découpé en plusieurs grands élèments, que j'ai représentés sur le schéma que vous pouvez voir juste en-dessous.</p><figure id="r-345364" data-claire-element-id="345365"><img id="r-345363" data-claire-element-id="345363" src="medias/uploads.siteduzero.com_files_362001_363000_362169.png" alt="Image utilisateur"/></figure><p id="r-345366" data-claire-element-id="345366">J'ai colorié en jaune les unités qui ne sont pas présentes sur les ordinateurs normaux et qui sont spécifiques aux architectures <em>dataflow</em>. Reste à savoir ce qu'elles font.</p><h3 id="r-alus" data-claire-element-id="345368">ALUs</h3><p id="r-345367" data-claire-element-id="345367">Les ALU sont des unités de calcul normales, rien de bien extraordinaire. Petite remarque : une architecture <em>dataflow </em>est au départ conçue pour éxecuter un grand nombre d’instructions en parallèle, ce qui fait qu'elle contient souvent un grand nombre d'unités de calcul : au minimum 16.</p><h3 id="r-fetch-unit" data-claire-element-id="345370"><em>Fetch Unit</em></h3><p id="r-345369" data-claire-element-id="345369">L'unité de <em>Fetch</em> se contente de charger les instructions depuis la mémoire en envoyant leur adresse sur le bus d'adresse et en récupérant le résultat sur le bus de donnée. Pour les connaisseurs, il n'y a pas besoin de séquenceur, même si les instructions doivent être décodées.</p><h3 id="r-file-d-instructions-en-attente" data-claire-element-id="345373">File d'instructions en attente</h3><p id="r-345371" data-claire-element-id="345371">La file d'instruction est une mémoire temporaire qui sert à stocker les adresses des instructions dont toutes les données sont prêtes. Toute instruction dont les opérandes sont disponibles va avoir son adresse placée dans cette file, et va attendre que l'unité de <em>Fetch </em>puisse la charger. Une fois l'instruction chargée depuis la mémoire, son adresse est supprimée de cette file d'attente. Cette file sert en quelque sorte de palliatif au <em>Program Counter</em>, vu qu'elle mémorise les adresses des prochaines instructions.</p><p id="r-345372" data-claire-element-id="345372">Bien évidemment, cette file n'a pas une taille infinie et elle peut se remplir totalement. Pour éviter les catastrophes, cette file est couplée à des circuits chargés de gérer les situations dans lesquelles la file est pleine.</p><h3 id="r-update-unit" data-claire-element-id="345375"><em>Update Unit</em></h3><p id="r-345374" data-claire-element-id="345374">Ce circuit est le plus important de tous : c'est lui qui va faire tout le travail ! Il s'occupe d'enregistrer les résultats des instructions en mémoire, dans les <em>slots </em>adéquats. Pour cela, il va lire la ou les adresses de destination du résultat, précisées dans l'instruction, et obtenue en découpant l'instruction exécutée. Cette unité va donc, pour chacune de ces instructions de destination, écrire le résultat dans les <em>slots </em>adéquats de celle-ci. Mieux : il va vérifier que celle-ci a toutes ses opérandes disponibles, et va charger son adresse dans la file d'instruction en attente.</p><h2 id="r-ces-architectures-ne-servent-a-rien" data-claire-element-id="345382">Ces architectures ne servent à rien !</h2><p id="r-345377" data-claire-element-id="345377">Ces architectures ont toutefois de gros défauts : certaines fonctionnalités importantes de nos langages de programmation fonctionnels ne sont pas implémentables sur ces architectures. Exemples : pas de fonctions de première classe, pas de fonctions réentrantes, ni de récursivité. Autant vous dire que ces architectures ne servent pas à grand chose. Pire : les boucles dont les itérations sont indépendantes ne peuvent pas être déroulées (ni pipelinées) : on exécute itérations après itérations au lieu d’exécuter toutes les boucles en parallèle.</p><div id="r-345379" data-claire-element-id="345379" data-claire-semantic="question"><p id="r-345378" data-claire-element-id="345378">Pourquoi ?</p></div><p id="r-345380" data-claire-element-id="345380">Très simple : les instructions d'une fonction ne sont stockées qu'à un seul endroit en mémoire RAM. On a un seul <em>activity template</em> pour chaque instruction de cette fonction, et celui-ci ne peut contenir qu'une seule version de ses opérandes. Hors, lorsqu'on exécute une fonction, plusieurs versions de la fonction peuvent s’exécuter en même temps : par exemple, si un fonction récursive est exécutée, on a une version de la fonction par appel récursif. Et chacune de ces versions va manipuler son propre lot de variables locales et d'arguments, tous différents. La même instruction va peut manipuler différentes version de la même donnée, ce qui est interdit par la règle du &quot;un seul jeton par flèche &quot;, vue plus haut.</p><p id="r-345381" data-claire-element-id="345381">Autant vous dire qu'il a fallu rapidement trouver une solution !</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels">Les processeurs Dataflow : parallélisme et langages fonctionnels</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/et-c-est-quoi-ce-truc">
+Et c&#039;est quoi ce truc ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/dependances-de-donnees-2">
+Dépendances de données
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/modele-de-calcul-dataflow">
+Modéle de calcul dataflow
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/architectures-statiques">
+Architectures statiques
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/architectures-dynamiques-et-ets">
+Architectures dynamiques et ETS
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/les-structures-de-donnees-et-leur-gestion-par-le-cpu">
+Les structures de données et leur gestion par le CPU
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/architectures-hybrides">
+Architectures hybrides
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/modele-de-calcul-dataflow">
+<span class="arrow"></span>
+<span class="next">Modéle de calcul dataflow</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/architectures-dynamiques-et-ets">
+<span class="next">Architectures dynamiques et ETS</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="ArchitecturesdynamiquesetETS"></a><h2>Architectures dynamiques et ETS</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/architectures-statiques">
+<span class="arrow"></span>
+<span class="next">Architectures statiques</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/les-structures-de-donnees-et-leur-gestion-par-le-cpu">
+<span class="next">Les structures de données et leur gestion par le CPU</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-345384" data-claire-element-id="345384">Et la solution est venue avec les architectures <em>dataflow </em>dynamiques. Avec elles, les fonctions récursives et réentrantes sont supportées, et les boucles sont automatiquement déroulées par le processeur à l’exécution. Aucune des limitations des architectures statiques n'est présente sur les architectures dynamiques. Reste à savoir comment font ces architectures pour réussir cette prouesse.</p><h2 id="r-architectures-dynamiques" data-claire-element-id="345399">Architectures dynamiques</h2><p id="r-345385" data-claire-element-id="345385">Vu que la règle du &quot;un jeton par flèche &quot; est à l'origine du mal, la seule solution est de faire sauter cette règle inepte servant juste à rendre inutiles nos magnifiques architectures <em>dataflow</em>. Pour cela, on ajoute à nos jetons des informations qui permettent de préciser à quel exemplaire d'une fonction ou d'un boucle ils sont destinés. Ces informations sont stockées dans le jeton, avec la donnée, et sont regroupées dans ce qu'on appelle le <em><strong>Tag</strong></em>.</p><p id="r-345386" data-claire-element-id="345386">Avec ces informations en plus, on peut savoir à quel exemplaire d'une boucle ou d'une fonction est destiné notre jeton. Auparavant, une fonction ou une boucle s’exécutait quand toutes ses opérandes étaient disponibles. Maintenant, il faut en plus rajouter que cette fonction ou boucle s’exécute une fois que toutes ses opérandes ayant le même Tag sont disponibles.</p><p id="r-345387" data-claire-element-id="345387">Cela autorise l'utilisation de fonctions réentrantes, de fonctions récursives. Cela permet aussi de dérouler des boucles dont les itérations sont indépendantes en matériel : si il n'y a pas de dépendances entre itération, on peut exécuter les instructions de la boucle en autant d'exemplaire qu'il y a d'itérations de la boucle. Que demande le peuple ?</p><h3 id="r-architecture-harvard" data-claire-element-id="345393">Architecture Harvard</h3><p id="r-345388" data-claire-element-id="345388">Cela a une grosse conséquence : en permettant l’exécution de plusieurs exemplaires d'une même fonction, on ne peut coder nos instructions comme sur les architectures statiques. Vu qu'une instruction dans une boucle ou une fonction peut s’exécuter en un nombre indéterminé d'exemplaire, on ne peut réserver de la place pour les opérandes à l'avance.</p><p id="r-345389" data-claire-element-id="345389">Quelque part, le problème des architectures statiques est que celle-ci mélangeaient un peu instructions et jetons dans la même suite de bits, sans véritable séparation, imposant de fortes contraintes de disponibilité. Le changement est donc radical, vu qu'on ne peut plus mélanger les torchons et les serviettes : en français, cela veut dire que les jetons sont séparés des instructions. Sur les architectures dynamiques, on utilise deux mémoire séparées : une pour les instructions et une pour les jetons - les données. On dit aussi que ce sont des architectures de type Harvard.</p><figure id="r-345391" data-claire-element-id="345392"><img id="r-345390" data-claire-element-id="345390" src="medias/uploads.siteduzero.com_files_362001_363000_362214.png" alt="Image utilisateur"/></figure><h3 id="r-detection-de-disponibilite-des-operandes-d-une-instruction" data-claire-element-id="345398">Détection de disponibilité des opérandes d'une instruction</h3><p id="r-345394" data-claire-element-id="345394">La gestion des jetons change du tout au tout. Sur les architectures statiques, les jetons n'étaient pas vraiment présents dans la mémoire : on avait pré-reservé leur emplacement et supprimés un peu ceux-ci en les fusionnant avec les instructions. Mais maintenant, ce n'est plus le cas. Par facilité, c'est maintenant aux jetons d'indiquer quelle est l'instruction qui doit les manipuler. Ceux-ci contiennent donc la donnée à manipuler, leur <em>Tag</em>, et l'adresse mentionnée, ainsi que le nombre d'opérandes que cette instruction de destination doit manipuler (afin de faciliter la détection de la disponibilité des opérandes de celle-ci).</p><p id="r-345395" data-claire-element-id="345395">Dès qu'un jeton a été calculé par l'ALU, il sera stocké dans une file d'attente, dédiée aux jetons disponibles. Reste à vérifier la disponibilité des opérandes. Et là, c'est le drame ! Si notre instruction a toutes ses opérandes disponibles, alors elles sont toutes dans cette file d'attente, et il y a juste à les récupérer. Ainsi, à chaque ajout d'un jeton dans la file d'attente des jetons, on va vérifier quelles sont les jetons présents dans cette file qui possèdent le même <em>Tag,</em> afin de charger celle-ci le cas échéant. Mais on n'a aucun moyen de savoir où ils sont dans cette file d 'attente : il ont pu y être ajouté n'importe quand ! La seule solution : parcourir toute la mémoire de la file d'attente et vérifier pour chaque case mémoire si elle contient une donnée avec le Tag . Mais rassurez-vous, il y a une solution : utiliser une <strong>mémoire adressable par contenu</strong> !</p><p id="r-345396" data-claire-element-id="345396">Ce genre de mémoire fonctionne différemment des mémoires normales : on peut voir ces mémoires comme des tables de hashage matérielles. Dans ces mémoires, les données sont stockées dans des espèces de blocs de mémoire, dont une partie stocke la donnée proprement dite, et l'autre stocke un <em>Tag</em>, une suite de bits qui permet d'identifier la donnée stockée en mémoire. Ce qu'on envoie à cette mémoire n'est pas une adresse mémoire, mais un <em>Tag</em>. La mémoire va alors comparer le <em>Tag</em>, et si jamais elle trouve des blocs de mémoire dont le <em>Tag</em> est identique, elle va renvoyer les données stockées dans ces blocs.</p><p id="r-345397" data-claire-element-id="345397">Le seul problème (car il y en a un) est que les performances d'une architecture dynamique dépendent fortement de la vitesse de cette mémoire adressable par contenu : si celle-ci est un peu lente, votre merveilleuse architecture <em>dataflow </em> à 200 unités de calcul sera aussi lente qu'un 486 DX mal réveillé.</p><h2 id="r-explicit-token-store" data-claire-element-id="345406">Explicit Token Store</h2><p id="r-345400" data-claire-element-id="345400">Enfin, il existe une dernière technique de gestion du jeton, qui est assez similaire avec les architectures statiques, les défauts en moins. Il s'agit des architectures <strong><em>Explicit Token Store</em></strong>.</p><p id="r-345401" data-claire-element-id="345401">Sur ces machines, lorsqu’une fonction ou une boucle s’exécute, elle va réserver une portion de mémoire et l'utiliser pour stocker ses opérandes et ses variables locales. Cette portion de mémoire s'appele une <em>Frame</em>. A chaque appel d'une fonction ou à chaque itération d'une boucle, on crée une nouvelle <em>Frame</em> qui stockera les opérandes de la dite version : ainsi, chaque fonction ou itération de boucle pourra avoir son propre jeu d'opérandes et de variables locales, permettant ainsi l'utilisation de fonctions réentrantes ou récursives et un déroulage matériel des boucles. Ces <em>Frames</em> sont localisées par leur adresse mémoire et les instruction ont juste à repérer la position dans la <em>Frame</em>.</p><aside id="r-345403" data-claire-element-id="345403" data-claire-semantic="information"><p id="r-345402" data-claire-element-id="345402">Les connaisseurs auront remarqués que cela ressemble fortement à ce qui est utilisé sur les architectures spécialisées pour les programmes impératifs : ceux-ci utilisent une pile, dont l'équivalent sur des architectures <em>dataflow </em>peut être vu comme cette solution à base de <em>Frame</em>. La différence entre la pile des architectures usuelles et ces <em>Frames </em>tient dans le fait que les <em>Frames </em>ne sont pas placées de façon consécutive dans la mémoire, mais peuvent être dispersées n'importe où et n'importe comment (ou presque) en mémoire. Qui plus est, ces <em>Frames </em>ne sont pas organisés dans une pile, avec une politique d'ajout et de retraits de type LIFO.</p></aside><p id="r-345404" data-claire-element-id="345404">Chaque donnée présente dans la <em>Frame </em>possède des bits de présence, comme toutes les autres données utilisées sur ces architectures.</p><p id="r-345405" data-claire-element-id="345405">Dans ces architectures, la mémoire est encore séparée en deux : une mémoire pour les instructions et les <em>slots </em>qui vont avec, et une autre pour les <em>Frames</em>. L’organisation est similaire aux architectures dynamiques, à un détail prêt : nos <em>Frames </em>sont stockées dans une mémoire tout ce qu'il y a de plus normale, avec des adresses et tout le reste.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels">Les processeurs Dataflow : parallélisme et langages fonctionnels</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/et-c-est-quoi-ce-truc">
+Et c&#039;est quoi ce truc ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/dependances-de-donnees-2">
+Dépendances de données
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/modele-de-calcul-dataflow">
+Modéle de calcul dataflow
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/architectures-statiques">
+Architectures statiques
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/architectures-dynamiques-et-ets">
+Architectures dynamiques et ETS
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/les-structures-de-donnees-et-leur-gestion-par-le-cpu">
+Les structures de données et leur gestion par le CPU
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/architectures-hybrides">
+Architectures hybrides
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/architectures-statiques">
+<span class="arrow"></span>
+<span class="next">Architectures statiques</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/les-structures-de-donnees-et-leur-gestion-par-le-cpu">
+<span class="next">Les structures de données et leur gestion par le CPU</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="LesstructuresdedonnesetleurgestionparleCPU"></a><h2>Les structures de données et leur gestion par le CPU</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/architectures-dynamiques-et-ets">
+<span class="arrow"></span>
+<span class="next">Architectures dynamiques et ETS</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/architectures-hybrides">
+<span class="next">Architectures hybrides</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-345408" data-claire-element-id="345408">Un processeur <em>dataflow </em>supporte souvent des instructions travaillant sur des structures de données, comme des listes, des piles, des files ou des graphes. Ces structures de données sont facilement à gérer sur ces processeurs, et ils possèdent donc des instructions adaptées. Par exemple, certains processeurs possèdent une instruction <code data-claire-semantic="nasm">cons</code>, qui permet de construire une liste à partir d'un élément et d'une liste.</p><p id="r-345409" data-claire-element-id="345409">Qui plus est, il existe aussi certaines instructions spécialisées dans la gestion des tableaux ou de structures de données impératives : le fait que ces architectures soient sans effets de bords peut en effet poser des problèmes quand on manipule ce genre de structures et certaines instructions spéciales utilisant des effets de bords ont étés inventées pour résoudre ces problèmes.</p><h2 id="r-i-structures" data-claire-element-id="345415">I-structures</h2><p id="r-345410" data-claire-element-id="345410">Nos architectures <em>dataflow </em>sont particulièrement adaptées aux langages fonctionnels, vu qu'elles n'ont strictement aucun effet de bord. Aussi il n'est pas étonnant que celles-ci souffrent des défauts de ces langages. La gestion des structures de données impératives, comme les tableaux ou les structures, est en effet une véritable catastrophe sur ces architectures. Les données sur ces architectures sont <em>immutables </em>: on peut les lire, mais pas y écrire. Pire : elles sont carrément détruites ) chaque accès mémoire dans certaines situations. Autant dire que pour gérer des tableaux ou des structures, cela pose quelques problèmes : pour modifier un tableau, il faudrait supprimer celui-ci et le recréer entièrement. Je ne vous raconte pas le carnage que cela donne en terme de performances. Il va de soit qu'il a fallu trouver des solutions. Pour cela, nos architectures <em>dataflow </em>ont introduit le concept d'<em>I-Structure</em>.</p><p id="r-345411" data-claire-element-id="345411">Première remarque : ces <em>I-structrures</em> n'ont pas étés inventées par Apple ! :lol:</p><p id="r-345412" data-claire-element-id="345412">Ces I-structures sont une mémoire spéciale. Cette mémoire est découpée en blocs, capables de contenir des données de taille fixes auxquels on a ajouté un bit permettant de savoir si le bloc contient une donnée. On peut voir ces I-structures comme un tableau de cases immutables qui contiennent les éléments d'un tableau ou les champs d'une structure. Au lieu de recréer des structures de données complètes, on va pouvoir modifier leurs éléments indépendamment, en modifiant le contenu des blocs de la I-structure. Ainsi, si jamais on a besoin de modifier une structure de donnée (comme un tableau), on n'aura pas à supprimer toute la structure : on supprime simplement l’élément à modifier et on en crée un nouveau qui stocke le résultat de l'opération. Pour cela, ces éléments, ne peuvent qu'être initialisés et lus : on ne peut pas les modifier, le matériel se chargeant d'interdire ce genre de manipulations. Pour cela, les circuits chargés de la gestion de l'I-structure se chargent d'interdire les écritures dans les blocs pour lesquels le bit de présence indique qu'elle contient une donnée.</p><p id="r-345413" data-claire-element-id="345413">Reste que lorsqu'une instruction manipule une I-structure, elle devra manipuler la totalité de ses élèments, et on doit éviter que celle-ci manipule des éléments pas encore crées ou déjà supprimés. Pour éviter les catastrophes, chacun de ces éléments se voit attribuer un bit indiquant si cet élément contient une donnée et une file d'attente dans laquelle on va placer les demandes de lectures. Si l’élément est absent, il suffit alors de mettre les lectures en attente. Une fois que l’élément est disponible, le bit de présence est mit à jour et les lectures peuvent alors démarrer.</p><p id="r-345414" data-claire-element-id="345414">Pour gérer ces I-structures, on va devoir utiliser des instructions spéciales : Select, qui va lire le contenu d'un de ces blocs, et Write, qui va écrire dans un bloc si celui-ci est vide.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels">Les processeurs Dataflow : parallélisme et langages fonctionnels</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/et-c-est-quoi-ce-truc">
+Et c&#039;est quoi ce truc ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/dependances-de-donnees-2">
+Dépendances de données
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/modele-de-calcul-dataflow">
+Modéle de calcul dataflow
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/architectures-statiques">
+Architectures statiques
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/architectures-dynamiques-et-ets">
+Architectures dynamiques et ETS
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/les-structures-de-donnees-et-leur-gestion-par-le-cpu">
+Les structures de données et leur gestion par le CPU
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/architectures-hybrides">
+Architectures hybrides
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/architectures-dynamiques-et-ets">
+<span class="arrow"></span>
+<span class="next">Architectures dynamiques et ETS</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/architectures-hybrides">
+<span class="next">Architectures hybrides</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Architectureshybrides"></a><h2>Architectures hybrides</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/les-structures-de-donnees-et-leur-gestion-par-le-cpu">
+<span class="arrow"></span>
+<span class="next">Les structures de données et leur gestion par le CPU</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-345417" data-claire-element-id="345417">Nos architectures <em>dataflow </em>sont certes très belles, élégantes, tout ce qu'on veut (et encore, ça se discute...), mais celles-ci ont, comme toute architecture, étés crées pour répondre à un besoin : la performance ! C'est le seul critère sur lequel on peut juger une architecture : est-elle rapide ? Le bilan est sans appel : ces architectures souffrent de défauts qui empêchent de les utiliser de façon réellement efficace.</p><h2 id="r-les-defauts-des-architectures-dataflow" data-claire-element-id="345425">Les défauts des architectures <em>dataflow</em></h2><p id="r-345418" data-claire-element-id="345418">Des défauts... lesquels ?</p><p id="r-345419" data-claire-element-id="345419">Et bien pour commencer, la gestion des jetons et des instructions est assez laborieuse et plutôt lente. La détection de la disponibilité des opérandes d'une instruction est souvent assez couteuse, et prend un certain temps à cause du fait que la gestion de ces <em>Tags</em> se base surtout sur des mémoires associatives. Hors, les mémoires associatives sont redoutablement lentes, ce qui pose de gros problèmes de performances : le temps mit pour attendre que la mémoire réponde est suffisamment grand pour foutre en l'air tous les gains apportés par la parallélisation.</p><p id="r-345420" data-claire-element-id="345420">Autre problème : la répartition des instructions prêtes sur les différentes unités de calcul prenait un certain temps, difficile à amortir. Gérer les différents cas, en testant la disponibilités des processeurs ou unités de calcul, trouver quelles instructions éxecuter en priorité, etc ; est tout sauf gratuit.</p><p id="r-345421" data-claire-element-id="345421">Autre problème : les <em>Tags</em> prennent de la mémoire. La consommation de mémoire peut devenir rapidement importante, en tout cas suffisamment pour devenir un problème.</p><p id="r-345422" data-claire-element-id="345422">Ensuite, le fait que ces architectures empêchent de modifier les données fait que la gestion des structures de données est laborieuse à lente. L'immutabilité des variables peut certes être compensée par les I-structures (quand elles sont disponibles), mais cela n’empêche pas de faire beaucoup d'allocations mémoires et augmente fortement le nombre de lectures et écritures en mémoire, comparé à un programme impératif.</p><p id="r-345423" data-claire-element-id="345423">Et ensuite, le plus gros problème de tous : ces architectures ont une faible <a href="http://www.siteduzero.com/tutoriel-3-595495-la-memoire-cache.html#ss_part_2">localité spatiale, couplée à une localité temporelle franchement pas meilleure</a>. Ces architectures se comportent très mal lorsque la mémoire à laquelle elle accède est lente. La même chose a lieu dans les programmes impératifs sur des architectures normale, à la différence que celles-ci ont apportées des solutions : celles-ci possèdent des caches, et divers niveaux de hiérarchie mémoire, afin d'amortir le cout des accès mémoires. Seul problème, ces caches et ces techniques ne fonctionnent correctement que lorsque le code exécuté a une bonne localité temporelle et spatiale. Ce qui n'est franchement pas le cas des programmes conçus pour les architectures <em>dataflow</em>, et les programmes fonctionnels en général (à cause d'allocations mémoires fréquentes, structures de donnée très peu locales, etc).</p><p id="r-345424" data-claire-element-id="345424">On peut toujours amortir ces différents couts en exécutant beaucoup d'instructions en parallèle, mais cela ne suffit pas forcément. Il faut dire que rares sont les programmes avec peu de dépendances et pour lesquels on peut trouver un grand nombre d'instructions à éxecuter en parallèle. En tout cas, pas forcément suffisamment pour compenser les couts de recherche des opérandes et les autres couts annexes. Il faut dire que beaucoup d'instructions possèdent des dépendances dans un programme (même programmé avec des langages fonctionnels), et qu'il n'y a pas de miracles : on ne peut pas toujours trouver suffisamment d'instructions à paralléliser, sauf dans certains programmes, qui résolvent des problèmes particuliers. En conséquence, les architectures <em>dataflow </em>ont étés abandonnées, après pas mal de recherches, en raison de leurs faibles performances. Mais certains chercheurs ont quand même décidés de donner une dernière chance au paradigme <em>dataflow</em>, en le modifiant de façon à le rendre un peu plus impératif.</p><h2 id="r-threaded-dataflow" data-claire-element-id="345431"><em>Threaded Dataflow</em></h2><p id="r-345426" data-claire-element-id="345426">Ainsi sont nées les architectures <em><strong>Threaded Dataflow</strong></em> ! Sur ces architectures, un programme est découpé en plusieurs blocs d'instructions. A l'intérieur de ces blocs, les instructions s’exécutent les unes à la suite des autres. Par contre, les blocs eux-mêmes seront exécutes dans l'ordre des dépendances de données : un bloc commence son exécution quand toutes les opérandes nécessaire à son exécution sont disponibles.</p><h3 id="r-explicit-data-graph-execution" data-claire-element-id="345430"><em>Explicit Data Graph Execution</em></h3><p id="r-345427" data-claire-element-id="345427">Certains chercheurs ont cherchés à trouver un moyen d'adapter au maximum ces architectures aux langages de programmation procéduraux, comme le C, le JAVA, etc. C'est comme cela que sont nées les architectures <em><strong>Explicit Data Graph Execution</strong></em>.</p><p id="r-345428" data-claire-element-id="345428">Cela peut sembler un tour de force, mais sachez qu'il n'en est rien. Ces architectures se basent sur le fonctionnement des compilateurs modernes pour découper un programme procédural ou impératif en blocs de code. Généralement, ceux-ci vont découper un programme en petits morceaux de code qu'on appelle des <a href="http://en.wikipedia.org/wiki/Basic_block"><em><strong>basics blocs</strong></em></a>, qui sont souvent délimités par des branchements (ou des destinations de branchements). Ces sont ces <em>basics blocs</em> qui seront exécutés dans l'ordre des dépendances de données.</p><p id="r-345429" data-claire-element-id="345429">Certaines architectures de ce type ont déjà étés inventées, comme les processeurs <em>WaveScalar</em> et <a href="http://en.wikipedia.org/wiki/TRIPS_architecture">TRIPS</a>.</p><h2 id="r-processeurs-superscalaires-out-of-order" data-claire-element-id="345442">Processeurs superscalaires Out Of Order</h2><p id="r-345432" data-claire-element-id="345432">Les architectures <em>dataflow </em>ont aussi des descendants plus connus : regardez votre processeur ! Je suis sûr que vous ne voyez pas le rapport, et pourtant. Sachez que les processeur actuels fonctionnent comme des architectures <em>dataflow </em> en interne. Je ne sais pas si vous connaissez le principe de l’exécution superscalaire et de l'<em>Out Of Order</em>, aussi un petit rappel ne fera pas de mal.</p><p id="r-345433" data-claire-element-id="345433">Nos processeurs actuels possèdent plusieurs unités de calcul et sont donc capable d'effectuer plusieurs instructions en même temps. Le problème, c'est qu'il faut bien alimenter ces unités en instructions. Avec des programmes conçus pour éxecuter des instructions les unes après les autres, c'est assez difficile. Mais il y a des solutions : les processeurs actuels sont capables de changer l'ordre d’exécution des instructions de nos programmes sur de petits blocs de code, et si possible les éxecuter en parallèle. Notre processeur va ainsi charger plusieurs instructions à la fois dans l'ordre imposé par le <em>Program Counter</em>, va les décoder, et va tenter de les répartir sur ses unités de calcul. Comme sur les architectures <em>dataflow</em>, une instruction chargée et décodée pourra s’exécuter dès que ses opérandes sont disponibles. C'est un peu la méthode inverse des architectures <em>Threaded Dataflow</em> et <em>Explicit Data Graph Execution</em> : notre programme sera découpé en petits blocs (c'est évidemment une simplification : le fonctionnement d'un processeur est bien plus complexe), que le processeur va chercher à éxecuter dans l'ordre des dépendances de données.</p><p id="r-345434" data-claire-element-id="345434">Comme vous vous en doutez, le fait que nos programmes soient programmés en utilisant des effets de bords pose quelques problèmes : de nombreuses dépendances apparaissent. Nos compilateurs ont souvent tendance à réutiliser nos registres afin d'utiliser ceux-ci au maximum : quand on est limité à 4 ou 8 registres sur un processeur, on ne peut pas faire de miracles et réutiliser au maximum les registres est une nécessité si on veut éviter de devoir accéder à la RAM ou au cache pour tout et n'importe quoi. Ainsi, on pourrait croire que les dépendances de nommage seront un gros problème. Mais il existe des techniques comme le <strong>renommage de registre</strong> qui permettent au processeur de réécrire la suite d'instruction sur laquelle il travaille de façon à ce que ce programme respecte bien la <em>Single Statement Assignement Rule</em>. En clair : notre processeur va traduire en interne de petites suites d'instruction impératives en suites d'instructions fonctionnelles directement à l’exécution ! Pour cela, nos processeurs contiennent de nombreux registres cachés : toute écriture dans un registre sera redirigée vers ces registres cachés, de façon à ce que chaque registre contienne bien une seule et unique donnée. Cette donnée est conservée jusqu'à ce qu'elle soit devenue inutile et n'aie plus jamais besoin d'être lue : on peut alors la supprimer et réutiliser le registre si besoin est. De nombreuses dépendances sont ainsi supprimées.</p><p id="r-345435" data-claire-element-id="345435">Les autres effets de bords de nos instructions sont quand à eux gérés par spéculation. Par exemple, on suppose que nos instructions ne génèrent jamais d'exceptions et on peut alors les paralléliser sans problèmes. Bien sûr, si une instruction lève une exception, il faut trouver un moyen de réparer les dégâts, ce qui est laissé à la charge d'un circuit spécialisé nommé le <em>Reorder Buffer</em>.</p><p id="r-345436" data-claire-element-id="345436">Pour finir, sachez qu'il existe peu de documentation sur le sujet. Il s'agit d'un sujet de recherche assez ancien, et qui est un peu délaissé des dernières années. Quoiqu'il en soit, je recommande la lecture ds liens qui suivent, pour se renseigner un peu plus sur le sujet :</p><ul id="r-345441" data-claire-element-id="345441"><li id="r-345438" data-claire-element-id="345438"><p id="r-345437" data-claire-element-id="345437"><a href="http://csd.ijs.si/courses/dataflow/index.htm">Dataflow Computers</a></p></li><li id="r-345440" data-claire-element-id="345440"><p id="r-345439" data-claire-element-id="345439"><a href="http://perso.limsi.fr/jps/enseignement/tutoriels/archi/ARCHI.06.DataDriven/ch6datadriven.html">Modèles d'extraction dynamique du parallèlisme.</a></p></li></ul>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels">Les processeurs Dataflow : parallélisme et langages fonctionnels</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/et-c-est-quoi-ce-truc">
+Et c&#039;est quoi ce truc ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/dependances-de-donnees-2">
+Dépendances de données
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/modele-de-calcul-dataflow">
+Modéle de calcul dataflow
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/architectures-statiques">
+Architectures statiques
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/architectures-dynamiques-et-ets">
+Architectures dynamiques et ETS
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/les-structures-de-donnees-et-leur-gestion-par-le-cpu">
+Les structures de données et leur gestion par le CPU
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/architectures-hybrides">
+Architectures hybrides
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels/les-structures-de-donnees-et-leur-gestion-par-le-cpu">
+<span class="arrow"></span>
+<span class="next">Les structures de données et leur gestion par le CPU</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 02:41:09 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/les-processeurs-dataflow-parallelisme-et-langages-fonctionnels.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:35:34 GMT -->
+</html>

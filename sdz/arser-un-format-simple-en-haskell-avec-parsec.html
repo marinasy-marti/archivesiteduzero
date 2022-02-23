@@ -1,0 +1,497 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/arser-un-format-simple-en-haskell-avec-parsec.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 05:39:43 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/arser-un-format-simple-en-haskell-avec-parsec.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:00:15 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Parser un format simple en Haskell avec Parsec</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/parser-un-format-simple-en-haskell-avec-parsec.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Parser un format simple en Haskell avec Parsec</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#ParserunformatsimpleenHaskellavecParsec">Parser un format simple en Haskell avec Parsec</a><br/><a href="#Prmices">Prémices</a><br/><a href="#Premiercontact">Premier contact</a><br/><a href="#Lepointmode">Le point mode</a><br/><a href="#Unparserunvrai">Un parser, un vrai</a><br/></div>
+<a name="ParserunformatsimpleenHaskellavecParsec"></a><h2>Parser un format simple en Haskell avec Parsec</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/parser-un-format-simple-en-haskell-avec-parsec/premices">
+<span class="next">Prémices</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-362178" data-claire-element-id="362178">Ce tutoriel a pour but de vous présenter les bases de l'utilisation de <a href="http://hackage.haskell.org/package/parsec">Parsec</a>, une bibliothèque écrite en Haskell. Parsec facilite l'écriture d'analyseur syntaxique (<em>parser</em>) en fournissant des <em>parsers</em> plus ou moins basiques ainsi que des combinateurs pour les lier. Le <em>parsing</em> étant une tâche courante en programmation (que ce soit pour lire un fichier de configuration, des résultats dans une base de données ou interpréter un langage), la connaissance de Parsec peut très largement vous simplifier la vie.<br/> Contrairement à <a href="http://fr.wikipedia.org/wiki/Bison_(GNU)">bison</a> ou à <a href="http://hackage.haskell.org/package/happy">Happy</a>, avec Parsec, la grammaire du langage à parser s'écrit directement en Haskell. Pour suivre ce tutoriel, il est donc seulement nécessaire d'avoir des bases dans ce langage. Si vous ne savez pas ce que sont une monade ou un foncteur, reportez-vous au <a href="http://www.siteduzero.com/tutoriel-3-158953-apprenez-la-programmation-fonctionnelle-avec-haskell.html">cours</a> de gnomnain (à ce jour, il est suffisant pour comprendre de quoi il retourne dans ce tutoriel).</p>
+</div><a name="Prmices"></a><h2>Prémices</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/parser-un-format-simple-en-haskell-avec-parsec/premier-contact">
+<span class="next">Premier contact</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-outils-2" data-claire-element-id="362180">Outils</h2><p id="r-362179" data-claire-element-id="362179">Pour suivre le tutoriel, vous n'aurez besoin que d'un éditeur, d'un compilateur Haskell (de préférence avec un mode interactif) et de Parsec.<br/> Parsec est disponible sur <a href="http://hackage.haskell.org/packages/hackage.html">HackageDB</a>. Vous pouvez télécharger le paquet directement et suivre les instructions du README ou utiliser cabal-install, voir les paquets de votre distribution. Attention tout de même, ce tutoriel est prévu pour la version 3.*. Pensez à vérifier quelle version vous installez (précisez là si vous utilisez cabal-install).</p><h2 id="r-objectifs-15" data-claire-element-id="362194">Objectifs</h2><p id="r-362181" data-claire-element-id="362181">Afin d'en apprendre un peu plus sur Parsec, nous allons écrire un <em>parser</em> pour un format simple. J'ai choisi d'implémenter un <em>parser</em> pour les &quot;Desktop Entries&quot;. Ce sont des fichiers de configuration donnant des informations sur la façon d'ouvrir un programme, comment l'afficher dans un menu … La spécification de ce format fait partie de celles proposées par le groupe <a href="http://www.freedesktop.org/wiki/Home">Freedesktop.org</a> et est utilisée, entre autres, par <a href="http://www.gnome.org/">GNOME</a> et <a href="http://www.kde.org/">KDE</a>. Cette spécification a le mérite d'être courte, simple, disponible librement et <a href="http://standards.freedesktop.org/desktop-entry-spec/latest/index.html">en ligne</a> (bien qu'en anglais), tout en permettant de jouer avec les bases de Parsec. <br/> Voici à quoi ressemble le type de fichier que nous allons analyser:</p><pre id="r-362182" data-claire-element-id="362182"><code>[Desktop Entry]
+Cle=Valeur
+Name=XMonad
+Comment=Lightweight tiling window manager
+Comment[fr]=Un gestionnaire de fenêtre pavant et léger
+Exec=xmonad
+Icon=xmonad
+Type=Application
+Version=0.9
+NoDisplay=true
+
+# Un commentaire
+[Autre Groupe]
+X-IsAwesome=true
+X-CeNestPasUnBooleen=True
+X-DonotKnow=
+X-JaiBesoinDunExemple=des chaînes contenant un caractère spécial:\t \n etc.</code></pre><p id="r-362183" data-claire-element-id="362183">L'exemple parle de lui-même: un fichier .desktop est une suite de clef/valeur (comme Name=XMonad) appartenant à un groupe (X-IsAwesome=True appartient au groupe Autre Groupe) et les lignes commençant par un dièse sont des commentaires. Toutes les clefs se trouvant après la déclaration d'un groupe appartiennent à celui-ci.<br/> Notre <em>parser</em> respectera les règles suivantes:</p><ul id="r-362192" data-claire-element-id="362192"><li id="r-362185" data-claire-element-id="362185"><p id="r-362184" data-claire-element-id="362184">Un nom de groupe peut contenir n'importe quel caractère, sauf les crochets ([]) et les caractères spéciaux ( , …), et doit être unique.</p></li><li id="r-362187" data-claire-element-id="362187"><p id="r-362186" data-claire-element-id="362186">Un nom de clef peut contenir uniquement des caractères alphanumériques non accentués ainsi que le tiret (-) et les crochets.</p></li><li id="r-362189" data-claire-element-id="362189"><p id="r-362188" data-claire-element-id="362188">Au sein d'un même groupe, deux clefs ne peuvent avoir le même nom.</p></li><li id="r-362191" data-claire-element-id="362191"><p id="r-362190" data-claire-element-id="362190">La spécification retient 4 types pour les valeurs: string, localestring, boolean et numeric. Nous conserverons ces types à l'exception de localestring, qui sera traité comme string (la différence entre les deux se situant dans l'encodage, ça ne me semble pas intéressant d'en parler).</p></li></ul><p id="r-362193" data-claire-element-id="362193">Nous ajouterons deux ou trois choses au cours du tutoriel, mais il est plus que temps de lancer notre éditeur et d'utiliser Parsec.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/parser-un-format-simple-en-haskell-avec-parsec">Parser un format simple en Haskell avec Parsec</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/parser-un-format-simple-en-haskell-avec-parsec/premices">
+Prémices
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/parser-un-format-simple-en-haskell-avec-parsec/premier-contact">
+Premier contact
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/parser-un-format-simple-en-haskell-avec-parsec/le-point-mode">
+Le point mode
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/parser-un-format-simple-en-haskell-avec-parsec/un-parser-un-vrai">
+Un parser, un vrai
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/parser-un-format-simple-en-haskell-avec-parsec/premier-contact">
+<span class="next">Premier contact</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Premiercontact"></a><h2>Premier contact</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/parser-un-format-simple-en-haskell-avec-parsec/premices">
+<span class="arrow"></span>
+<span class="next">Prémices</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/parser-un-format-simple-en-haskell-avec-parsec/le-point-mode">
+<span class="next">Le point mode</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-362196" data-claire-element-id="362196">Dans la partie précédente, nous avons distingué trois éléments principaux dans notre spécification: les groupes, les commentaires et les paires clefs/valeurs. Le but de cette partie sera de <em>parser</em> chacun d'entre eux.</p><h2 id="r-parser-une-ligne" data-claire-element-id="362226">Parser une ligne</h2><p id="r-362197" data-claire-element-id="362197">Dans un fichier .desktop, les lignes ont une particularité intéressante: elles contiennent un et un seul élément: une déclaration de groupe, un commentaire ou une paire (éventuellement rien, mais ce ne sera pas un problème). Commençons donc par <em>parser</em> une ligne.</p><h3 id="r-parser-un-commentaire" data-claire-element-id="362211">Parser un commentaire</h3><p id="r-362198" data-claire-element-id="362198">Les commentaires sont les lignes les plus simples à <em>parser</em>. En effet, il suffit de vérifier que la ligne commence par un dièse. Voyons comment implémenter ça avec Parsec. Les deux premières lignes du code permettent d'importer Parsec. Par la suite, on les considérera comme sous-entendues.</p><pre id="r-362199" data-claire-element-id="362199"><code data-claire-semantic="haskell">import Text.Parsec
+import Text.Parsec.String (Parser)
+
+commentaire :: Parser String
+commentaire = char '#' &gt;&gt; (many $ noneOf &quot;\n&quot;)</code></pre><p id="r-362200" data-claire-element-id="362200">Tout d'abord, un commentaire sur le type de la fonction <code data-claire-semantic="haskell">commentaire </code>. <code data-claire-semantic="haskell">Parser String </code> est un alias pour le type <code data-claire-semantic="haskell">ParsecT String () Identity String </code>. <code data-claire-semantic="haskell">ParsecT s u m a </code> est la monade (en fait, le <a href="http://en.wikipedia.org/wiki/Monad_transformer">transformeur de monade</a>) utilisé par Parsec. Son premier paramètre (<code data-claire-semantic="haskell">s </code>) est le type du flux à <em>parser</em>. Un flux est une instance de la classe <code data-claire-semantic="haskell">Stream </code>, définie par Parsec et dont le but est entre autres de gérer la position actuelle dans le flux. Ici, nous allons <em>parser</em> une liste de caractères. Le second (<code data-claire-semantic="haskell">u </code>) ne nous sera pas utile et donc nous n'en parlerons pas. Le troisième (<code data-claire-semantic="haskell">m </code>) est une monade. Comme <code data-claire-semantic="haskell">ParsecT </code> est un transformeur de monade, on peut le composer avec d'autres monades pour profiter des caractéristiques de chacune. Mais ici, nous utilisons la monade <code data-claire-semantic="haskell">Identity </code> qui permet d'obtenir en fait une monade classique. Il n'est pas nécessaire de bien comprendre ce qu'est un transformeur de monade pour la suite puisque nous allons l'utiliser comme une simple monade. Toutefois, ceux souhaitant en savoir plus peuvent lire le <a href="http://book.realworldhaskell.org/read/monad-transformers.html">chapitre de Real World Haskell</a> sur le sujet. Enfin, le dernier (<code data-claire-semantic="haskell">a </code>) est le type de retour du <em>parser</em>.</p><p id="r-362201" data-claire-element-id="362201">Après ce point légèrement délicat, jetons un coup d'œil au corps de la fonction. L'une des choses qu'on peut remarquer en premier est l'utilisation de l'opérateur <code data-claire-semantic="haskell">&gt;&gt; </code>. Comme je l'ai dit, Parsec est une bibliothèque <strong>monadique</strong>: on va <code data-claire-semantic="haskell">don</code>c pouvoir utiliser toutes les fonctions sur les monades et la notation do . Dans Parsec, <code data-claire-semantic="haskell">&gt;&gt; </code> va appliquer le <em>parser</em> à sa droite si celui à sa gauche a réussi. On retrouve un peu la logique de la monade <code data-claire-semantic="haskell">Maybe </code> qui court-circuite toute la suite d'action si l'une d'entre elles retourne <code data-claire-semantic="haskell">Nothing </code>. Là, si un <em>parser</em> échoue, tout le reste échoue. Sinon, on évalue la fonction suivante.</p><p id="r-362202" data-claire-element-id="362202">À gauche de <code data-claire-semantic="haskell">&gt;&gt; </code> se trouve la fonction <code data-claire-semantic="haskell">char </code>. C'est une fonction fournie par Parsec. Elle prend en paramètre un caractère (en Haskell, on note les caractères entre guillemets simples) et va tenter de le <em>parser</em>. Si elle réussit, c'est donc qu'on a affaire à un commentaire.</p><p id="r-362203" data-claire-element-id="362203">Il ne nous reste plus qu'à analyser le reste de la ligne. <code data-claire-semantic="haskell">noneOf </code> prend en paramètre une liste de caractère et réussi si le caractère à <em>parser</em> n'est <strong>pas</strong> dans la liste. Parsec contient également une fonction s'appelant <code data-claire-semantic="haskell">oneOf </code> qui fait l'opposé (elle <em>parse</em> seulement les caractères qui sont dans la liste qui lui est fournie). Comme un commentaire peut contenir n'importe quoi à l'exception d'un retour à la ligne, on utilise <code data-claire-semantic="haskell">noneOf &quot; &quot; </code>.</p><p id="r-362204" data-claire-element-id="362204"><code data-claire-semantic="haskell">many </code> est un combinateur très courant qui va appliquer le <em>parser</em> qu'on lui passe en argument autant de fois que possible (ça peut être 0, 1 ou n'importe quel nombre de fois, tant que le <em>parser</em> réussi) et retourner une liste des éléments <em>parsés</em>. <code data-claire-semantic="haskell">noneOf </code> retournant le caractère analysé — tout comme <code data-claire-semantic="haskell">char </code> d'ailleurs — <code data-claire-semantic="haskell">commentaire </code> nous retournera une liste de caractère. Cette liste sera le commentaire, privé du dièse initial.</p><p id="r-362205" data-claire-element-id="362205">Chargez le code précédent avec GHCi et essayons de <em>parser</em> un texte.</p><pre id="r-362206" data-claire-element-id="362206"><code data-claire-semantic="console">*Main&gt;parse commentaire &quot;&quot; &quot;#Salut&quot;
+Right &quot;Salut&quot;</code></pre><p id="r-362207" data-claire-element-id="362207">Comme on s'y attendait, la fonction <code data-claire-semantic="haskell">parse </code>retourne le commentaire, le dièse en moins. La fonction <code data-claire-semantic="haskell">parse </code> prend trois arguments : un <em>parser</em>, une chaîne de caractère utilisée comme label pour les erreurs (le nom du fichier en général) et le texte à analyser. Elle retourne une valeur du type <code data-claire-semantic="haskell">Either ParseError a </code> où <code data-claire-semantic="haskell">a </code> est le type de retour du <em>parser</em> passé en argument.</p><p id="r-362208" data-claire-element-id="362208">Essayons maintenant avec autre chose qu'un commentaire.</p><pre id="r-362209" data-claire-element-id="362209"><code data-claire-semantic="console">*Main&gt;parse commentaire &quot;&quot; &quot;Salut&quot;
+Left (line 1, column 1):
+unexpected &quot;S&quot;
+expecting &quot;#&quot;</code></pre><p id="r-362210" data-claire-element-id="362210">Parsec renvoie une erreur, mais précise aussi ce qui a causé cette erreur. Ici, le premier caractère doit être un dièse, pas un S. On verra avant la fin du tutoriel qu'on peut personnaliser le message d'erreur grâce au combinateur <code data-claire-semantic="haskell">&lt;?&gt; </code>.</p><h3 id="r-parser-une-declaration-de-groupe" data-claire-element-id="362218">Parser une déclaration de groupe</h3><p id="r-362212" data-claire-element-id="362212">Si vous avez bien compris comment <em>parser</em> un commentaire, vous devriez déjà être capable de <em>parser</em> une déclaration de groupe. Voici une première implémentation n'utilisant que ce qu'on a vu pour les commentaires :</p><pre id="r-362213" data-claire-element-id="362213"><code data-claire-semantic="haskell">groupe :: Parser String
+groupe = do
+    char '['
+    nom &lt;- many $ noneOf (&quot;[]\127&quot;++['\0'..'\31'])
+    char ']'
+    return nom</code></pre><p id="r-362214" data-claire-element-id="362214">La liste fournie à <code data-claire-semantic="haskell">noneOf </code> est la seule chose nouvelle. Dans la première partie, nous avons fixé que les noms de groupe pouvaient contenir tous les caractères ASCII à l'exception des crochets et des caractères de contrôle. En Haskell, on peut écrire les caractères soit en les tapant directement comme <code data-claire-semantic="haskell">'A' </code> soit en donnant leur représentation numérique (<code data-claire-semantic="haskell">'\65' </code> par exemple). Les caractères de contrôles sont tous ceux ayant un code inférieur à 32 ou égal à 127. Nous autorisons l'utilisation de <code data-claire-semantic="haskell">'\32' </code> car c'est l'espace. La notation <code data-claire-semantic="haskell">[a..b] </code> permet de lister tout les éléments entre a et b (avec a=2 et b=5, la liste sera <code data-claire-semantic="haskell">[2,3,4,5] </code>).</p><p id="r-362215" data-claire-element-id="362215">Cette implémentation marche correctement, mais on peut faire beaucoup plus concis en regardant dans les combinateurs proposés par Parsec. <code data-claire-semantic="haskell">between </code> est un combinateur prenant trois <em>parsers</em> en paramètre. Il va <em>parser</em> le premier puis le troisième et après, le second et retourner le résultat du troisième. Dans notre cas, la valeur de retour sera donc le nom du <code data-claire-semantic="haskell">groupe,</code> sans les crochets. C'est exactement ce que fait notre fonction groupe . En utilisant <code data-claire-semantic="haskell">between </code>, elle devient ceci :</p><pre id="r-362216" data-claire-element-id="362216"><code data-claire-semantic="haskell">groupe :: Parser String
+groupe = between (char '[') (char ']') (many $ noneOf (&quot;[]\127&quot;++['\0'..'\31']))</code></pre><p id="r-362217" data-claire-element-id="362217">C'est déjà plus esthétique, non? Il faut tout de même faire attention lorsqu'on utilise <code data-claire-semantic="haskell">between </code> à ce que le troisième <em>parser</em> n'inclue pas le délimiteur de fin, sinon <code data-claire-semantic="haskell">between </code> échouera forcément. <br/> Si nous avions écrit <code data-claire-semantic="haskell">groupe </code> de cette façon (<code data-claire-semantic="haskell">anyChar </code><em>parse</em> n'importe quel caractère), <code data-claire-semantic="haskell">groupe = between (char '[') (char ']') $ many anyChar </code>, lors de l'exécution de notre parser, nous aurions eu droit à une erreur du type &quot;unexpected end of input&quot;, indiquant que le <em>parser</em> a consommé tout le fichier sans pour autant réussir.</p><h3 id="r-parser-une-paire" data-claire-element-id="362225">Parser une paire</h3><p id="r-362219" data-claire-element-id="362219">Après tout cela, <em>parser</em> une paire se révèle être extrêmement simple. Je vous recommande d'ailleurs d'essayer d'implémenter vous même le <em>parser</em> avant de voir la solution que voici :</p><pre id="r-362220" data-claire-element-id="362220"><code data-claire-semantic="haskell">paire :: Parser String
+paire = do
+    c &lt;- clef
+    char '='
+    v &lt;- valeur
+    return $ c ++ &quot; vaut &quot; ++ v
+
+clef :: Parser String
+clef = many (alphaNum &lt;|&gt; oneOf &quot;[]_-@&quot;)
+
+valeur :: Parser String
+valeur = many $ noneOf &quot;\n&quot;</code></pre><p id="r-362221" data-claire-element-id="362221">La grande nouveauté est le combinateur <code data-claire-semantic="haskell">&lt;|&gt; </code>. Il applique tout d'abord le <em>parser</em> à sa gauche. S'il réussit, il retourne le résultat. S'il échoue <strong>sans modifier l'état du flux</strong> (le flux est ici la chaîne de caractère à lire, par exemple, le contenu d'un fichier .desktop), il applique le second. Un <em>parser</em> consomme le flux à partir du moment où il <em>parse</em> quelque chose, et ce même s'il rencontre une erreur après. Prenons le <em>parser</em> suivant :</p><pre id="r-362222" data-claire-element-id="362222"><code data-claire-semantic="haskell">test = anyChar &gt;&gt; char '#'</code></pre><p id="r-362223" data-claire-element-id="362223">Comme <code data-claire-semantic="haskell">anyChar </code> réussi pour tout caractère, on est quasiment sûr que ce <em>parser</em> va consommer une partie du flux. Si on l'utilise avec <code data-claire-semantic="haskell">&lt;|&gt; </code>, le <em>parser</em> à droite ne sera jamais essayé. Nous verrons ce problème plus en détail par la suite. Pour l'instant, aucun problème puisqu'<code data-claire-semantic="haskell">alphaNum </code> ne consomme rien lorsqu'il échoue. Une autre chose à laquelle nous devons prendre garde lorsqu'on utilise <code data-claire-semantic="haskell">&lt;|&gt; </code>, c'est que les deux <em>parsers</em> doivent être du même type, et donc retourner des données du même type. <br/> Par ailleurs, <code data-claire-semantic="haskell">alphaNum </code> est la seule autre nouveauté de ce code. Il réussit dans le cas où le caractère à <em>parser</em> est un chiffre ou une lettre.</p><p id="r-362224" data-claire-element-id="362224">La fonction <code data-claire-semantic="haskell">paire </code> retourne la clef et la valeur sous la forme d'une chaîne de caractère.</p><h2 id="r-parser-un-fichier" data-claire-element-id="362242">Parser un fichier</h2><p id="r-362227" data-claire-element-id="362227">Pouvoir <em>parser</em> une ligne, c'est cool mais c'est assez limité surtout quand la plupart des fichiers utilisant le format que nous devons <em>parser</em> sont généralement composés de plusieurs dizaines de lignes. Toutefois, nous n'avons pas perdu notre temps: nous avons un <em>parser</em> pour chaque élément de base de notre spécification. Il suffit maintenant d'assembler le tout et ce à l'aide, évidemment, des combinateurs de Parsec.</p><p id="r-362228" data-claire-element-id="362228">Il faut tout d'abord définir une fonction capable de <em>parser</em><strong>n'importe quelle ligne</strong> qu'on puisse trouver dans un fichier .desktop, c'est-à-dire soit une déclaration de groupe, soit un commentaire, soit une paire. Si vous avez pensé utiliser le combinateur <code data-claire-semantic="haskell">&lt;|&gt; </code>, bravo, vous avez bien suivi. Mais dans quel ordre? On sait que si un parser consomme une partie de l'entrée, les autres options sont ignorées. Il faut donc d'abord préciser des <em>parsers</em> qui ne consommeront rien dans le cas où ils échouent. On sait que <code data-claire-semantic="haskell">commentaire </code> ne posera aucun problème puisqu'il ne peut échouer que si <code data-claire-semantic="haskell">char '#' </code> échoue, et lorsque <code data-claire-semantic="haskell">char </code> échoue, cela veut dire qu'il n'a rien <em>parsé</em>, et s'il réussi, on se trouve nécessairement face à un commentaire. Le problème se pose pour <code data-claire-semantic="haskell">groupe </code> et <code data-claire-semantic="haskell">paire </code>. En effet, dans le cas d'une ligne commençant par un crochet ouvrant ([), <code data-claire-semantic="haskell">groupe </code> va parser tout les caractères suivants n'étant pas des caractères de contrôle. Le problème est qu'on pourrait avoir en fait affaire à une clef, ce qu'on ne saura qu'au moment où nous trouverons le crochet fermant ou le retour à la ligne. Ça semble mal engagé.</p><p id="r-362229" data-claire-element-id="362229">On peut envisager deux solutions : la première serait de récupérer l'état actuel du flux avant d'utiliser <code data-claire-semantic="haskell">groupe </code> puis, dans le cas où il échoue, remettre le flux dans son état précédent et appliquer <code data-claire-semantic="haskell">paire </code>. Parsec nous permet de faire cela. La seconde serait d'appliquer d'abord le <em>parser</em><code data-claire-semantic="haskell">paire </code> tout en vérifiant d'abord que le premier caractère n'est pas un crochet. En effet, les crochets dans les noms de clefs sont sensés servir à indiquer la localisation et donc ne pas se trouver au début du nom. Il paraît raisonnable et en accord avec la spécification d'interdire l'utilisation du crochet comme premier caractère.<br/> Dans les deux cas, on veut pouvoir faire une « recherche en avant » (l'expression consacrée en anglais est <em>lookahead</em>). Voici l'implémentation de la fonction <code data-claire-semantic="haskell">ligne </code> dans chacun des deux cas :</p><pre id="r-362230" data-claire-element-id="362230"><code data-claire-semantic="haskell">ligne :: Parser String
+ligne = commentaire &lt;|&gt; try groupe &lt;|&gt; paire</code></pre><pre id="r-362231" data-claire-element-id="362231"><code data-claire-semantic="haskell">ligne :: Parser String
+ligne = commentaire &lt;|&gt; paire &lt;|&gt; groupe
+
+clef = lookAhead (noneOf &quot;[&quot;) &gt;&gt; many (alphaNum &lt;|&gt; oneOf &quot;[]_@-&quot;)</code></pre><p id="r-362232" data-claire-element-id="362232">La première solution utilise la fonction <code data-claire-semantic="haskell">try </code>. <code data-claire-semantic="haskell">try </code> va essayer d'appliquer le <em>parser</em> qu'on lui passe en argument. S'il échoue, le flux sera remis dans son état précédent. Il faut noter que, lorsqu'on utilise l'opérateur <code data-claire-semantic="haskell">&lt;|&gt; </code>, <code data-claire-semantic="haskell">try </code> n'a d'intérêt que s'il se trouve à sa gauche.<br/> Dans la seconde solution, c'est dans la façon de <em>parser</em> une clef que se trouve la différence. lookAhead permet d'appliquer un parser sans altérer le flux. Le <em>parser</em><code data-claire-semantic="haskell">cle </code> va échouer lorsqu'un crochet se trouvera en début de ligne sans pour autant le <em>parser</em>. Ensuite, le <em>parser</em> groupe sera appliqué. Les deux solutions sont plutôt bonnes mais nous allons choisir la seconde (utilisant <code data-claire-semantic="haskell">lookAhead </code>), car elle sera plus adaptée pour la suite.</p><p id="r-362233" data-claire-element-id="362233">Bien. Maintenant que nous pouvons <em>parser</em> n'importe quelle ligne, il va falloir être capable de le faire autant de fois que nécessaire. Ça ressemble un peu à la définition de <code data-claire-semantic="haskell">many </code> tout ça, non? Mais il y a un problème: notre <em>parser</em><code data-claire-semantic="haskell">ligne </code> ne consomme pas le caractère de retour à la ligne (' '). Si nous faisons simplement un <code data-claire-semantic="haskell">fichier = many ligne </code>, le <em>parser</em> va s'arrêter à la fin de la première ligne. On va légèrement modifier notre définition de <code data-claire-semantic="haskell">ligne </code> pour prendre en compte ce problème.</p><pre id="r-362234" data-claire-element-id="362234"><code data-claire-semantic="haskell">ligne :: Parser String
+ligne = do
+    resultat &lt;- commentaire &lt;|&gt; paire &lt;|&gt; groupe
+    many1 newline
+    return resultat</code></pre><p id="r-362235" data-claire-element-id="362235"><code data-claire-semantic="haskell">newline </code> est un synonyme de <code data-claire-semantic="haskell">char ' ' </code>. On en profite également pour gérer les lignes vides, puisque <code data-claire-semantic="haskell">many1 newline </code> va consommer toutes les lignes vides entre deux éléments (<code data-claire-semantic="haskell">many1 </code> fonctionne comme <code data-claire-semantic="haskell">many </code> sauf qu'il doit au moins <em>parser</em> une fois pour réussir). Maintenant, on peut simplement définir la fonction <code data-claire-semantic="haskell">fichier </code> de cette façon :</p><pre id="r-362236" data-claire-element-id="362236"><code data-claire-semantic="haskell">fichier :: Parser [String]
+fichier = do
+    resultat &lt;- many ligne
+    eof
+    return resultat</code></pre><p id="r-362237" data-claire-element-id="362237"><code data-claire-semantic="haskell">eof </code> sert simplement à <em>parser</em> l'indicateur de fin de fichier. Néanmoins, Parsec nous permet encore une fois de faire mieux. <code data-claire-semantic="haskell">endBy </code> est un combinateur semblable à <code data-claire-semantic="haskell">many </code> mais qui prend deux <em>parsers</em> en argument et va appliquer le premier puis le second et ce autant de fois que possible (de 0 à ∞). <code data-claire-semantic="haskell">endBy </code> retourne ensuite une liste des résultats fournis par le premier <em>parser</em>.</p><pre id="r-362238" data-claire-element-id="362238"><code data-claire-semantic="haskell">fichier :: Parser [String]
+fichier = ligne `endBy` many1 newline
+
+ligne :: Parser String
+ligne = commentaire &lt;|&gt; paire &lt;|&gt; groupe</code></pre><p id="r-362239" data-claire-element-id="362239">Et voilà, vous venez d'implémenter un <em>parser</em> complet pour notre format. On va maintenant utiliser la fonction <code data-claire-semantic="haskell">parse </code> pour récupérer le résultat. Voici le code complet de notre <em>parser</em> :</p><pre id="r-362240" data-claire-element-id="362240"><code data-claire-semantic="haskell">import Text.Parsec
+import Text.Parsec.String (Parser)
+
+parserDesktop :: SourceName -&gt; String -&gt; Either ParseError [String]
+parserDesktop = parse fichier
+
+parserDesktopF :: FilePath -&gt; IO (Either ParseError [String])
+parserDesktopF chemin = fmap (parserDesktop chemin) $ readFile chemin
+
+fichier :: Parser [String]
+fichier = ligne `endBy` many1 newline
+
+ligne :: Parser String
+ligne = commentaire &lt;|&gt; paire &lt;|&gt; groupe
+
+clef :: Parser String
+clef = lookAhead (noneOf &quot;[&quot;) &gt;&gt; many (alphaNum &lt;|&gt; oneOf &quot;[]_@-&quot;)
+
+valeur :: Parser String
+valeur = many $ noneOf &quot;\n&quot;
+
+paire :: Parser String
+paire = do
+    c &lt;- clef
+    char '='
+    v &lt;- valeur
+    return $ c ++ &quot; vaut &quot; ++ v
+    
+groupe :: Parser String
+groupe = between (char '[') (char ']') (many $ noneOf (&quot;[]\127&quot;++['\0'..'\31']))
+
+commentaire :: Parser String
+commentaire = char '#' &gt;&gt; (many $ noneOf &quot;\n&quot;)</code></pre><p id="r-362241" data-claire-element-id="362241">Il n'y a que deux nouvelles fonctions : <code data-claire-semantic="haskell">parserDesktop </code> et <code data-claire-semantic="haskell">parserDesktopF </code>. La première n'est qu'un raccourci pour <code data-claire-semantic="haskell">parse </code>. La seconde prend en paramètre le chemin d'un fichier et va le <em>parser</em>. C'est une simple fonction de test. Si vous voulez voir ce que fait notre parser, vous trouverez probablement des fichiers .desktop dans le dossier /usr/share/applications/ si vous utilisez un *nix. Sinon, il reste l'exemple de la première partie.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/parser-un-format-simple-en-haskell-avec-parsec">Parser un format simple en Haskell avec Parsec</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/parser-un-format-simple-en-haskell-avec-parsec/premices">
+Prémices
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/parser-un-format-simple-en-haskell-avec-parsec/premier-contact">
+Premier contact
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/parser-un-format-simple-en-haskell-avec-parsec/le-point-mode">
+Le point mode
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/parser-un-format-simple-en-haskell-avec-parsec/un-parser-un-vrai">
+Un parser, un vrai
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/parser-un-format-simple-en-haskell-avec-parsec/premices">
+<span class="arrow"></span>
+<span class="next">Prémices</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/parser-un-format-simple-en-haskell-avec-parsec/le-point-mode">
+<span class="next">Le point mode</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lepointmode"></a><h2>Le point mode</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/parser-un-format-simple-en-haskell-avec-parsec/premier-contact">
+<span class="arrow"></span>
+<span class="next">Premier contact</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/parser-un-format-simple-en-haskell-avec-parsec/un-parser-un-vrai">
+<span class="next">Un parser, un vrai</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-362244" data-claire-element-id="362244">Avant de nous attaquer plus profondément à notre <em>parser</em>, nous allons parler un peu de style.</p><p id="r-362245" data-claire-element-id="362245">Si vous regardez nos fonctions, vous verrez que nous n'avons utilisé la notation <code data-claire-semantic="haskell">do </code> qu'une seule fois: dans la fonction <code data-claire-semantic="haskell">paire </code> pour pouvoir stocker le résultat de nos <em>parsers</em> dans des variables pour pouvoir les utiliser par la suite. La notation <code data-claire-semantic="haskell">do </code> est certes très pratique, mais pousse également à adopter un style impératif, ce qui n'est pas franchement désirable en Haskell. On peut utiliser la fonction <code data-claire-semantic="haskell">liftM2 </code> issue du module <code data-claire-semantic="haskell">Control.Monad </code> pour revenir à quelque chose de plus propre.</p><pre id="r-362246" data-claire-element-id="362246"><code data-claire-semantic="haskell">import Text.Parsec
+import Text.Parsec.String (Parser)
+import Control.Monad
+
+paire :: Parser String
+paire = liftM2 (\c v -&gt; c ++&quot; vaut &quot;++ v)  cle  (char '=' &gt;&gt; valeur)</code></pre><p id="r-362247" data-claire-element-id="362247">Toutefois, un certain nombre de programmeurs préfèrent utiliser <code data-claire-semantic="haskell">ParsecT </code> comme un foncteur applicatif (étant une monade, <code data-claire-semantic="haskell">ParsecT </code> est nécessairement un foncteur applicatif).<br/> Depuis la version 3.0, <code data-claire-semantic="haskell">ParsecT </code> est une instance des classes <code data-claire-semantic="haskell">Applicative </code> et <code data-claire-semantic="haskell">Alternative </code>. Il suffit donc d'importer le module <code data-claire-semantic="haskell">Control.Applicative </code> pour utiliser <code data-claire-semantic="haskell">ParsecT </code> comme un foncteur applicatif. Il faut également penser à ne pas importer les fonctions <code data-claire-semantic="haskell">many </code>, <code data-claire-semantic="haskell">optional </code> et <code data-claire-semantic="haskell">&lt;|&gt; </code> car celles-ci sont aussi définies dans <code data-claire-semantic="haskell">Control.Applicative </code>. <code data-claire-semantic="haskell">optional </code> est un combinateur qui va tenter d'appliquer un <em>parser</em> (si le <em>parser</em> échoue <strong>sans modifier l'état du flux</strong>, <code data-claire-semantic="haskell">optional </code> ne renvoie pas d'erreur et retourne <code data-claire-semantic="haskell">() </code>).</p><p id="r-362248" data-claire-element-id="362248">En utilisant <code data-claire-semantic="haskell">ParsecT </code> en tant que foncteur applicatif, notre code devient ceci :</p><pre id="r-362249" data-claire-element-id="362249"><code data-claire-semantic="haskell">import Text.Parsec hiding (many,optional,(&lt;|&gt;))
+import Text.Parsec.String (Parser)
+import Control.Applicative
+
+parserDesktop :: SourceName -&gt; String -&gt; Either ParseError [String]
+parserDesktop = parse fichier
+
+parserDesktopF :: FilePath -&gt; IO (Either ParseError [String])
+parserDesktopF chemin = fmap (parserDesktop chemin) $ readFile chemin
+
+fichier :: Parser [String]
+fichier = ligne `endBy` many1 newline
+
+ligne :: Parser String
+ligne = commentaire &lt;|&gt; paire &lt;|&gt; groupe
+
+clef :: Parser String
+clef = lookAhead (noneOf &quot;[&quot;) *&gt; many (alphaNum &lt;|&gt; oneOf &quot;[]_@-&quot;)
+
+valeur :: Parser String
+valeur = many $ noneOf &quot;\n&quot;
+
+paire :: Parser String
+paire = liftA2 (\c v -&gt; c ++ &quot; vaut &quot; ++ v) clef (char '=' *&gt; valeur)
+
+groupe :: Parser String
+groupe = between (char '[') (char ']') (many $ noneOf (&quot;[]\127&quot;++['\0'..'\31']))
+
+commentaire :: Parser String
+commentaire = char '#' *&gt; (many $ noneOf &quot;\n&quot;)</code></pre><p id="r-362250" data-claire-element-id="362250">Quasiment rien n'a changé : les <code data-claire-semantic="haskell">&gt;&gt; </code> sont devenus <code data-claire-semantic="haskell">*&gt; </code> et <code data-claire-semantic="haskell">liftM2 </code> a été transformé en <code data-claire-semantic="haskell">liftA2 </code>. L'opérateur <code data-claire-semantic="haskell">*&gt; </code> va appliquer les deux fonctions et retourner le résultat de la seconde (celle qui est à sa droite). <code data-claire-semantic="haskell">&lt;* </code> fait la même chose mais retourne le résultat de la première (à sa gauche).<br/> Vu le peu de modifications, on peut se demander si ça vaut vraiment le coup. C'est vrai dans notre cas, car il est plutôt trivial, mais dans d'autres les modifications sont beaucoup plus importantes. Comme les foncteurs applicatifs favorisent un style de programmation plus fonctionnelle, ce sont eux que nous allons privilégier dans le reste du tutoriel. Toutefois, ça ne nous empêche absolument pas d'utiliser parfois l'aspect monadique de <code data-claire-semantic="haskell">ParsecT </code> (et <code data-claire-semantic="haskell">don</code>c do ).</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/parser-un-format-simple-en-haskell-avec-parsec">Parser un format simple en Haskell avec Parsec</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/parser-un-format-simple-en-haskell-avec-parsec/premices">
+Prémices
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/parser-un-format-simple-en-haskell-avec-parsec/premier-contact">
+Premier contact
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/parser-un-format-simple-en-haskell-avec-parsec/le-point-mode">
+Le point mode
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/parser-un-format-simple-en-haskell-avec-parsec/un-parser-un-vrai">
+Un parser, un vrai
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/parser-un-format-simple-en-haskell-avec-parsec/premier-contact">
+<span class="arrow"></span>
+<span class="next">Premier contact</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/parser-un-format-simple-en-haskell-avec-parsec/un-parser-un-vrai">
+<span class="next">Un parser, un vrai</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Unparserunvrai"></a><h2>Un parser, un vrai</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/parser-un-format-simple-en-haskell-avec-parsec/le-point-mode">
+<span class="arrow"></span>
+<span class="next">Le point mode</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-362252" data-claire-element-id="362252">Le <em>parser</em> que nous venons d'implémenter présente plusieurs problèmes.</p><p id="r-362253" data-claire-element-id="362253">Le premier est le résultat qu'il fournit. Si vous ne l'avez pas testé, voici un exemple de résultat obtenu en parsant un fichier .desktop :</p><pre id="r-362254" data-claire-element-id="362254"><code data-claire-semantic="console">Right [&quot;Desktop Entry&quot;,&quot;Version vaut 1.0&quot;,&quot;Encoding vaut UTF-8&quot;,&quot;Name vaut rxvt-unicode&quot;,
+&quot;Comment vaut An Unicode capable rxvt clone&quot;,&quot;Exec vaut urxvt&quot;,&quot;Icon vaut rxvt-unicode&quot;,&quot;Terminal vaut false&quot;,
+&quot;Type vaut Application&quot;,&quot;Categories vaut Application;System;TerminalEmulator;&quot;]</code></pre><p id="r-362255" data-claire-element-id="362255">Utilisez la fonction <code data-claire-semantic="haskell">lines </code> sur le même fichier et vous obtiendrez à quelques détails près la même chose. Plusieurs dizaines de lignes pour récupérer une fonction de <code data-claire-semantic="haskell">Prelude </code>, ça semble cher payé. En plus, le résultat obtenu est presque moins utilisable que le fichier brut et on récupère toutes les valeurs sous forme de texte, alors que nous avions décidé que l'on conserverait leur type. Malgré cela, le <em>parser</em> est fonctionnel. Il sait reconnaître une clef, un groupe, un commentaire. Le travail à effectuer se trouve en fait sur la façon de traiter ces éléments une fois extraits du texte brut.</p><p id="r-362256" data-claire-element-id="362256">Le second problème est que les clefs ne sont pas liées à leur groupe. On perd tout l'intérêt d'avoir des groupes si on procède de cette façon. En fait, nous avons traité les paires, les groupes et les commentaires plus ou moins de la même façon dans notre résultat. Il faudrait hiérarchiser ces informations.</p><h2 id="r-on-veut-des-types" data-claire-element-id="362278">On veut des types</h2><p id="r-362257" data-claire-element-id="362257">Nous allons commencer par nous intéresser au type des valeurs. Rappelez-vous, nous en avions retenu trois : string, numeric et boolean. Nous allons donc créer un type algébrique pour les gérer.</p><pre id="r-362258" data-claire-element-id="362258"><code data-claire-semantic="haskell">data DValeur = DString String | DNum Float | DBool Bool deriving (Show, Eq)</code></pre><p id="r-362259" data-claire-element-id="362259">Maintenant, il va falloir reconnaître ces types. Un booléen est représenté par la chaîne false ou true. Il faut vérifier la présence de ces chaînes et surtout qu'elles ne soient pas suivies par autre chose qu'un retour à la ligne, sinon, la valeur est du type string. L'utilisation de <code data-claire-semantic="haskell">lookAhead </code> semble toute indiquée.</p><pre id="r-362260" data-claire-element-id="362260"><code data-claire-semantic="haskell">pBool = (True &lt;$ string &quot;true&quot; &lt;|&gt; False &lt;$ string &quot;false&quot;) &lt;* lookAhead newline</code></pre><p id="r-362261" data-claire-element-id="362261"><code data-claire-semantic="haskell">string </code> est très semblable à <code data-claire-semantic="haskell">char </code> sauf qu'au lieu de chercher un caractère, on cherche toute une chaîne. On utilise <code data-claire-semantic="haskell">lookAhead </code> pour vérifier qu'on a bien affaire aux mots clefs true ou false et pas à une chaîne. Souvent, pour rechercher des mots clefs, on utilise le combinateur <code data-claire-semantic="haskell">notFollowedBy </code>. Il prend en paramètre un <em>parser</em> et l'applique. Si le <em>parser</em> rencontre une erreur, <code data-claire-semantic="haskell">notFollowedBy </code> réussi. Ce combinateur à la particularité de ne pas modifier l'état du flux et donc peut être très utile pour faire une « recherche en avant » . <code data-claire-semantic="haskell">notFollowedBy </code> retourne l'unité (<code data-claire-semantic="haskell">() </code>). Toutefois, ici nous utilisons <code data-claire-semantic="haskell">lookAhead </code> car la liste des caractères qui ne doivent pas suivre notre mot clef est plus longue que celle des caractères qu'il faut trouver (il n'y en a qu'un).</p><p id="r-362262" data-claire-element-id="362262">Ensuite, il va nous falloir parser un nombre. Haskell possède justement un module répondant au doux nom de <code data-claire-semantic="haskell">Numeric </code> qui contient des fonctions permettant de lire les flottants. <code data-claire-semantic="haskell">readSigned readFloat s </code> (où <code data-claire-semantic="haskell">s </code> est du type <code data-claire-semantic="haskell">String </code>) renvoie une liste du type <code data-claire-semantic="haskell">[(Float,String)] </code>. Dans le cas où nous aurions effectivement à faire à un nombre, cette liste contiendra un seul couple dont le premier élément sera le nombre et le second, le reste de la chaîne. Ça semble très séduisant, mais le problème est que ces fonctions n'interagissent pas avec Parsec et ne modifient donc pas l'état du flux, quand bien même elles <em>parseraient</em> quelque chose. Comment faire pour les utiliser ? On va devoir passer par les étapes suivantes :</p><ul id="r-362271" data-claire-element-id="362271"><li id="r-362264" data-claire-element-id="362264"><p id="r-362263" data-claire-element-id="362263">Nous devons d'abord récupérer le flux qui n'a pas encore été consommé depuis <code data-claire-semantic="haskell">ParsecT </code>. Pour ce faire, on va utiliser la fonction <code data-claire-semantic="haskell">getInput </code>.</p></li><li id="r-362266" data-claire-element-id="362266"><p id="r-362265" data-claire-element-id="362265">Ensuite, il va falloir utiliser la fonction <code data-claire-semantic="haskell">readSigned readFloat </code>.</p></li><li id="r-362268" data-claire-element-id="362268"><p id="r-362267" data-claire-element-id="362267">Si ce <em>parser</em> retourne une liste contenant un seul tuple, c'est que nous avons affaire à un nombre. Il faut alors retourner ce nombre et modifier l'état du flux en utilisant le second élément du couple et la fonction <code data-claire-semantic="haskell">setInput </code> de Parsec. Il faut aussi penser à vérifier que le caractère suivant est un retour à la ligne.</p></li><li id="r-362270" data-claire-element-id="362270"><p id="r-362269" data-claire-element-id="362269">Si on récupère autre chose, il va falloir signaler à Parsec que notre <em>parser</em> a échoué. On utilise pour cela la fonction <code data-claire-semantic="haskell">parserZero </code>, qui est un <em>parser</em> qui échoue tout le temps (on peut aussi utiliser <code data-claire-semantic="haskell">empty </code>, qui est un alias).</p></li></ul><pre id="r-362272" data-claire-element-id="362272"><code data-claire-semantic="haskell">pNum = do
+    f &lt;- getInput
+    case readSigned readFloat f of
+        [(n,f')] -&gt; n &lt;$ (setInput f' &lt;* lookAhead newline)
+        _        -&gt; parserZero</code></pre><p id="r-362273" data-claire-element-id="362273">Il ne nous reste plus que le type string à identifier. Comme les chaînes peuvent contenir n'importe quoi, c'est trivial : <code data-claire-semantic="haskell">pString = many (noneOf &quot; &quot;)</code></p><p id="r-362274" data-claire-element-id="362274">A présent, il nous faut réécrire le <em>parser</em> de manière à gérer les types.</p><pre id="r-362275" data-claire-element-id="362275"><code data-claire-semantic="haskell">valeur = try (DBool &lt;$&gt; pBool) &lt;|&gt; try (DNum &lt;$&gt; pNum) &lt;|&gt; DString pString</code></pre><p id="r-362276" data-claire-element-id="362276">L'utilisation de <code data-claire-semantic="haskell">try </code> est nécessaire puisque <code data-claire-semantic="haskell">pNum </code> tout comme <code data-claire-semantic="haskell">pBool </code> peuvent modifier l'état du flux et échouer (par exemple, sans <code data-claire-semantic="haskell">try </code>, nous ne pourrons pas <em>parser</em> &quot;true is not false&quot; comme valeur).<br/> Quand on commence à enchaîner les <code data-claire-semantic="haskell">&lt;|&gt; </code>, il peut être intéressant d'utiliser le combinateur <code data-claire-semantic="haskell">choice </code>. Il prend une liste de <em>parser</em> en paramètre et va modifier le constructeur de liste <code data-claire-semantic="haskell">: </code> en <code data-claire-semantic="haskell">&lt;|&gt; </code>. C'est un bon exemple d'une utilisation de <code data-claire-semantic="haskell">foldr </code>. Nous pouvons utiliser <code data-claire-semantic="haskell">choice </code> pour écrire <code data-claire-semantic="haskell">valeur </code> :</p><pre id="r-362277" data-claire-element-id="362277"><code data-claire-semantic="haskell">valeur = choice [ try (DBool &lt;$&gt; pBool)
+                 ,try (DNum &lt;$&gt; pNum)
+                 ,DString &lt;$&gt; pString ]</code></pre><h2 id="r-nous-voulons-des-informations" data-claire-element-id="362304">Nous voulons des informations</h2><p id="r-362279" data-claire-element-id="362279">Nous avons résolu notre premier problème et notre <em>parser</em> est en bonne voie pour devenir utile. Il faut maintenant songer à la manière d'organiser les données qu'il récupère. Les &quot;Desktop Entries&quot; sont des fichiers de configuration donc on s'en sert surtout pour lire des données. Il faut une structure qui permette de récupérer facilement la valeur d'une clef. Il existe dans <code data-claire-semantic="haskell">GHC.List </code> une fonction nommée <code data-claire-semantic="haskell">lookup </code> qui permet de récupérer une valeur depuis une liste associative, autrement dit une liste du type <code data-claire-semantic="haskell">Eq a =&gt; [(a,b)] </code>. Remplacez <code data-claire-semantic="haskell">a </code> par le nom d'une clef et <code data-claire-semantic="haskell">b </code> par sa valeur et on obtient une structure permettant un accès simple à une valeur depuis sa clef.</p><p id="r-362280" data-claire-element-id="362280">Mais comment inscrire les groupes dans cette structure ? Souvent, lorsqu'on a besoin de hiérarchiser des données, on utilise un arbre. C'est très bien pour une expression mathématique, du HTML … Mais comme un groupe ne peut pas avoir de sous-groupe, on peut se contenter de beaucoup plus simple. Tout comme il était intéressant de pouvoir accéder à une clef en fonction de sa valeur, il serait intéressant de pouvoir accéder aux éléments d'un groupe simplement avec son nom. Là encore, une liste associative ne semble pas un mauvais choix. Au final, notre <em>parser</em> renverra une liste de type <code data-claire-semantic="haskell">[(String,[(String,DValeur)])] </code>.</p><h3 id="r-des-clefs-et-des-valeurs" data-claire-element-id="362284">Des clefs et des valeurs</h3><p id="r-362281" data-claire-element-id="362281">Voici la fonction <code data-claire-semantic="haskell">paire </code> telle que nous l'avons écrite dans la seconde partie : <code data-claire-semantic="haskell">paire = liftA2 (\c v -&gt; c ++ &quot; vaut &quot; ++ v) clef (char '=' *&gt; valeur) </code>. Pour se retrouver avec une fonction <code data-claire-semantic="haskell">paire </code> retournant un couple, nous avons juste besoin de changer la fonction anonyme en <code data-claire-semantic="haskell">(,) </code>.</p><pre id="r-362282" data-claire-element-id="362282"><code data-claire-semantic="haskell">paire = liftA2 (,) clef (char '=' *&gt; valeur)</code></pre><p id="r-362283" data-claire-element-id="362283">Voilà.</p><h3 id="r-des-groupes-et-des-paires" data-claire-element-id="362303">Des groupes et des paires</h3><p id="r-362285" data-claire-element-id="362285">On aimerait bien faire exactement la même chose avec les groupes pour récupérer notre couple. Sauf que c'est un peu (mais vraiment un peu) plus compliqué. Tout d'abord, nous allons modifier (et renommer) le <em>parser</em><code data-claire-semantic="haskell">fichier </code> pour qu'il ne gère plus les groupes. Voici le <em>parser</em><code data-claire-semantic="haskell">bloc </code> :</p><pre id="r-362286" data-claire-element-id="362286"><code data-claire-semantic="haskell">bloc = (commentaire &lt;|&gt; paire) `endBy` many1 newline</code></pre><p id="r-362287" data-claire-element-id="362287">Oui, sauf que si vous essayez de compiler ça, vous aurez droit à une erreur. En effet, les <em>parsers</em> avec lesquels on utilise <code data-claire-semantic="haskell">&lt;|&gt; </code> doivent être du même type. Sauf que <code data-claire-semantic="haskell">paire </code> a pour type <code data-claire-semantic="haskell">paire :: Parser (String, DValeur) </code> alors que <code data-claire-semantic="haskell">commentaire </code> a pour type <code data-claire-semantic="haskell">commentaire :: Parser String </code>. On pourrait envisager d'utiliser le combinateur <code data-claire-semantic="haskell">skipMany </code> qui fonctionne de la même façon que <code data-claire-semantic="haskell">many </code> mais retourne <code data-claire-semantic="haskell">() </code>. Sauf que, si nous voulions par exemple modifier les valeurs de notre fichier puis les réécrire, on perdrait les commentaires. Nous allons donc simplement ajouter un constructeur au type <code data-claire-semantic="haskell">DValeur </code> pour les commentaires. Et, en guise de clef, nous donnerons le numéro de la ligne.</p><pre id="r-362288" data-claire-element-id="362288"><code data-claire-semantic="haskell">data DValeur = DString String | DNum Float | DBool Bool | DCom String 
+    deriving (Show, Eq)
+
+commentaire = liftA2 (,) ( show . sourceLine &lt;$&gt; getPosition) (DCom &lt;$&gt; (char '#' *&gt; many (noneOf  &quot;\n&quot;)))</code></pre><p id="r-362289" data-claire-element-id="362289"><code data-claire-semantic="haskell">getPosition </code> renvoie une valeur du type <code data-claire-semantic="haskell">SourcePos </code> qui contient des informations telles que le nom du fichier, la ligne ou la colonne. <code data-claire-semantic="haskell">sourceLine </code> récupère le numéro de la ligne comme un entier.<br/> Maintenant, <code data-claire-semantic="haskell">bloc </code> fonctionne correctement. Pour <em>parser</em> un groupe, il nous suffit de réutiliser <code data-claire-semantic="haskell">liftA2 </code> :</p><pre id="r-362290" data-claire-element-id="362290"><code data-claire-semantic="haskell">groupe' = liftA2 (,) groupe bloc</code></pre><p id="r-362291" data-claire-element-id="362291">Et enfin, il faut créer une fonction <code data-claire-semantic="haskell">fichier </code> qui utilise la fonction <code data-claire-semantic="haskell">groupe' </code>.</p><pre id="r-362292" data-claire-element-id="362292"><code data-claire-semantic="haskell">fichier = manyTill groupe' eof</code></pre><p id="r-362293" data-claire-element-id="362293"><code data-claire-semantic="haskell">manyTill </code> va appliquer le <em>parser</em><code data-claire-semantic="haskell">groupe' </code> jusqu'à trouver la fin du fichier (<code data-claire-semantic="haskell">eof </code>).</p><p id="r-362294" data-claire-element-id="362294">On pourrait croire que c'est fini, mais il y a un dernier détail à régler. La fonction <code data-claire-semantic="haskell">groupe </code><em>parse</em> une déclaration de groupe mais laisse le caractère de retour à la ligne. Lorsqu'on va utiliser <code data-claire-semantic="haskell">bloc </code>, on aura une erreur puisque nous nous attendons en fait à trouver un commentaire ou une paire. Il faut consommer ce caractère dans le <em>parser</em><code data-claire-semantic="haskell">groupe </code> :</p><pre id="r-362295" data-claire-element-id="362295"><code data-claire-semantic="haskell">groupe = between (char '[') (char ']') (many $ noneOf (&quot;[]\127&quot;++['\0'..'\31'])) &lt;* newline</code></pre><p id="r-362296" data-claire-element-id="362296">Voici le code final de notre <em>parser</em> :</p><pre id="r-362297" data-claire-element-id="362297"><code data-claire-semantic="haskell">import Text.Parsec hiding ((&lt;|&gt;), many, optional)
+import Text.Parsec.String (Parser)
+import Control.Applicative
+import Numeric
+
+data DValeur = DString String | DNum Float | DBool Bool | DCom String 
+    deriving (Show, Eq)
+
+parserDesktopF :: FilePath -&gt; IO (Either ParseError [(String,[(String,DValeur)])])
+parserDesktopF x = fmap (parserDesktop x) $ readFile x
+
+parserDesktop :: SourceName -&gt; String -&gt; Either ParseError [(String,[(String,DValeur)])]
+parserDesktop = parse fichier
+
+fichier :: Parser [(String,[(String,DValeur)])]
+fichier = manyTill groupe' eof
+
+groupe' :: Parser (String,[(String,DValeur)])
+groupe' = liftA2 (,) groupe bloc
+
+groupe :: Parser String
+groupe = between (char '[') (char ']') (many $ noneOf (&quot;[]\127&quot;++['\0'..'\31'])) &lt;* newline
+
+bloc :: Parser [(String,DValeur)]
+bloc = (commentaire &lt;|&gt; paire) `endBy` many1 newline
+
+paire :: Parser (String,DValeur)
+paire = liftA2 (,) clef (char '=' *&gt; valeur)
+
+commentaire :: Parser (String,DValeur)
+commentaire = liftA2 (,) ( show . sourceLine &lt;$&gt; getPosition) (DCom &lt;$&gt; (char '#' *&gt; many (noneOf  &quot;\n&quot;)))
+
+clef :: Parser String
+clef = lookAhead (noneOf &quot;[&quot;) *&gt; many (alphaNum &lt;|&gt; oneOf &quot;[]_@-&quot;)
+
+valeur :: Parser DValeur
+valeur = choice [ try (DBool &lt;$&gt; pBool)
+                 ,try (DNum &lt;$&gt; pNum)
+                 ,DString &lt;$&gt; pString ] &lt;?&gt; &quot;a valid desktop value&quot;
+
+
+pBool :: Parser Bool
+pBool = (True &lt;$ string &quot;true&quot; &lt;|&gt; False &lt;$ string &quot;false&quot;) &lt;* lookAhead newline
+
+pNum :: Parser Float
+pNum = do
+    f &lt;- getInput
+    case readSigned readFloat f of
+        [(n,f')] -&gt; n &lt;$ (setInput f' &lt;* lookAhead newline)
+        _        -&gt; parserZero
+
+pString :: Parser String
+pString = many (noneOf &quot;\n&quot;)</code></pre><p id="r-362298" data-claire-element-id="362298">J'ai juste rajouté l'opérateur <code data-claire-semantic="haskell">&lt;?&gt; </code> dans la fonction <code data-claire-semantic="haskell">valeur </code>, à titre d'exemple. Ce combinateur se comporte de façon similaire à <code data-claire-semantic="haskell">&lt;|&gt; </code> sauf que, dans le cas où le <em>parser</em> à sa gauche échoue <strong>sans modifier l'état du flux</strong>, il renvoie un message d'erreur utilisant la chaîne à sa droite pour indiquer ce qu'on devrait trouver.</p><p id="r-362299" data-claire-element-id="362299">Si vous tester à nouveau ce code, voici le type de retour qu'on obtient :</p><pre id="r-362300" data-claire-element-id="362300"><code data-claire-semantic="console">y = Right [(&quot;Desktop Entry&quot;,[(&quot;Version&quot;,DNum 1.0),(&quot;Encoding&quot;,DString &quot;UTF-8&quot;),(&quot;Name&quot;,DString &quot;rxvt-unicode&quot;)
+          ,(&quot;Comment&quot;,DString &quot;An Unicode capable rxvt clone&quot;),(&quot;Exec&quot;,DString &quot;urxvt&quot;),(&quot;Icon&quot;,DString &quot;rxvt-unicode&quot;)
+          ,(&quot;Terminal&quot;,DBool False),(&quot;Type&quot;,DString &quot;Application&quot;),(&quot;Categories&quot;,DString &quot;Application;System;TerminalEmulator;&quot;)])]</code></pre><p id="r-362301" data-claire-element-id="362301">On peut simplement utiliser <code data-claire-semantic="haskell">either (const Nothing) (\x -&gt; lookup &quot;Desktop Entry&quot; x &gt;&gt;= lookup &quot;Name&quot;) y </code> pour récupérer le nom de l'application.</p><p id="r-362302" data-claire-element-id="362302">Ce tutoriel touche à sa fin et vous en savez déjà beaucoup sur Parsec mais il vous reste encore beaucoup de choses à apprendre sur Parsec, notamment sur les modules <code data-claire-semantic="haskell">Token </code> et <code data-claire-semantic="haskell">Expr </code>, particulièrement utile lorsqu'on s'attaque à un projet un peu plus sérieux que de <em>parser</em> un petit fichier de configuration.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/parser-un-format-simple-en-haskell-avec-parsec">Parser un format simple en Haskell avec Parsec</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/parser-un-format-simple-en-haskell-avec-parsec/premices">
+Prémices
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/parser-un-format-simple-en-haskell-avec-parsec/premier-contact">
+Premier contact
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/parser-un-format-simple-en-haskell-avec-parsec/le-point-mode">
+Le point mode
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/parser-un-format-simple-en-haskell-avec-parsec/un-parser-un-vrai">
+Un parser, un vrai
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/parser-un-format-simple-en-haskell-avec-parsec/le-point-mode">
+<span class="arrow"></span>
+<span class="next">Le point mode</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/arser-un-format-simple-en-haskell-avec-parsec.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 05:39:43 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/arser-un-format-simple-en-haskell-avec-parsec.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:00:15 GMT -->
+</html>

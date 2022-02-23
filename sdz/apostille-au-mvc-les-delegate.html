@@ -1,0 +1,629 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/apostille-au-mvc-les-delegate.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 23:20:12 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/apostille-au-mvc-les-delegate.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:04:35 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Apostille au MVC : les Delegate</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/apostille-au-mvc-les-delegate.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Apostille au MVC : les Delegate</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#ApostilleauMVClesDelegate">Apostille au MVC : les Delegate</a><br/><a href="#Quelquespiqresderappel">Quelques piqûres de rappel</a><br/><a href="#Parlonsducontrleur">Parlons du contrôleur</a><br/><a href="#CrersonpropreDelegate">Créer son propre Delegate</a><br/><a href="#Passonslapratiquepartie1Lemodle">Passons à la pratique partie 1 : Le modèle</a><br/><a href="#Passonslapratiquepartie2ledelegate">Passons à la pratique partie 2 : le delegate</a><br/></div>
+<a name="ApostilleauMVClesDelegate"></a><h2>Apostille au MVC : les Delegate</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/quelques-piqures-de-rappel">
+<span class="next">Quelques piqûres de rappel</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-590637" data-claire-element-id="590637">Dans la partie 3 de leur tutoriel sur le C++, M@teo21 et Nanoc font état d'un chapitre intitulé <a href="http://www.siteduzero.com/tutoriel-3-11384-l-architecture-mvc-avec-les-widgets-complexes.html">L'architecture MVC avec les widgets complexes</a>.</p><p id="r-590638" data-claire-element-id="590638">Ce chapitre constitue, pour le lecteur, une mise en bouche à l'architecture MVC mise en place par Qt ainsi que ses différents composants. Celui-ci traite principalement de l'aspect <strong>M</strong>odèle en présentant quelques modèles déjà existant comme <em>QStringListModel</em> ou encore <em>QStandardItemModel</em>, ainsi que de l'aspect <strong>V</strong>iew en présentant les trois grands types de vue disponibles avec Qt, à savoir <em>QListView</em>, <em>QTableView</em> ainsi que <em>QTreeView</em>.</p><p id="r-590639" data-claire-element-id="590639">Dans ce contexte, une <strong>apostille</strong> constitue un rajout. Dans ce tutoriel, je me propose d'introduire un composant non évoqué dans le tutoriel officiel : les <strong>Delegate</strong></p><p id="r-590640" data-claire-element-id="590640">Au terme de ce mini-tutoriel, nous apprendrons ce que sont les Delegate, à quelle problématique ils répondent, et comment s'en servir, au travers d'un exemple simple.</p>
+</div><a name="Quelquespiqresderappel"></a><h2>Quelques piqûres de rappel</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/parlons-du-controleur">
+<span class="next">Parlons du contrôleur</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-l-architecture-mvc-1" data-claire-element-id="590650">L'architecture MVC</h2><p id="r-590641" data-claire-element-id="590641">L'architecture <strong>M</strong>odèle <strong>V</strong>ue <strong>C</strong>ontrôleur (<em>Model View Controler</em>) est un modèle de conception (<em>design pattern</em>) bien connu et beaucoup utilisé lors de la création d'interfaces graphiques. Originaire du langage <a href="http://fr.wikipedia.org/wiki/Smalltalk">Smalltalk</a>, ce modèle permet de diviser une interface utilisateur en trois entités :</p><ul id="r-590648" data-claire-element-id="590648"><li id="r-590643" data-claire-element-id="590643"><p id="r-590642" data-claire-element-id="590642"><strong>Le modèle </strong> contient les données. Il s'occupe du traitement et de l’interaction des données avec, par exemple, une base de données ;</p></li><li id="r-590645" data-claire-element-id="590645"><p id="r-590644" data-claire-element-id="590644"><strong>La vue </strong> est la représentation graphique. Elle correspond à la partie affichage des données, de ce que l'utilisateur peut voir ;</p></li><li id="r-590647" data-claire-element-id="590647"><p id="r-590646" data-claire-element-id="590646">Enfin, <strong>le contrôleur </strong> prend en charge l'interaction avec l'utilisateur, recevant tous les événements déclenchés par l'utilisateur (clic, sélection, ...) et mettant par la suite à jour les données.</p></li></ul><p id="r-590649" data-claire-element-id="590649">Cette achitecture permet donc de <strong>séparer</strong> les différentes entités d'une application, aboutissant à une architecture flexible, claire, et maintenable.</p><h2 id="r-mise-en-oeuvre-avec-qt" data-claire-element-id="590693">Mise en oeuvre avec Qt</h2><p id="r-590651" data-claire-element-id="590651">Dans sa version 4, Qt a introduit un ensemble de nouvelles vues mettant en oeuvre une architecture de type <em>modèle/vue</em></p><h3 id="r-les-modeles-6" data-claire-element-id="590681">Les modèles</h3><p id="r-590652" data-claire-element-id="590652">Tous les modèles fournis par Qt sont basés sur la classe <em>QAbstractItemModel</em>. Cette classe est la plus abstraite, et la plus haute dans la hiérarchie des classes des différents modèles. Cette classe fournit une <strong>interface</strong> que tous les modèles doivent respecter, afin de pouvoir être utilisé correctement avec une vue.</p><p id="r-590653" data-claire-element-id="590653">De base, Qt fournit un ensemble de modèles pouvant être directement utilisés comme :</p><ul id="r-590662" data-claire-element-id="590662"><li id="r-590655" data-claire-element-id="590655"><p id="r-590654" data-claire-element-id="590654"><a href="http://doc.qt.nokia.com/4.7/qstringlistmodel.html">QStringListModel</a> : modèle utilisé pour stocker une liste de <em>QString</em> ;</p></li><li id="r-590657" data-claire-element-id="590657"><p id="r-590656" data-claire-element-id="590656"><a href="http://doc.qt.nokia.com/4.7/qfilesystemmodel.html">QFileSystemModel</a> : modèle fournissant un ensemble d'informations sur un fichier ou un répertoire du système de fichier local (anciennement <em>QDirModel</em>) ;</p></li><li id="r-590659" data-claire-element-id="590659"><p id="r-590658" data-claire-element-id="590658"><a href="http://doc.qt.nokia.com/4.7/qstandarditemmodel.html">QStandardItemModel</a> : ce modèle permet de gérer tout de type de structure, complexe ou non ;</p></li><li id="r-590661" data-claire-element-id="590661"><p id="r-590660" data-claire-element-id="590660">Et enfin, <a href="http://doc.qt.nokia.com/4.7/qsqlquerymodel.html">QSqlQueryModel</a>, <a href="http://doc.qt.nokia.com/4.7/qsqltablemodel.html">QSqlTableModel</a>, <a href="http://doc.qt.nokia.com/4.7/qsqlrelationaltablemodel.html">QSqlRelationalTableModel</a>, trois modèles utilisés pour accéder à une base de données (SQLite, MySQL, ...).</p></li></ul><p id="r-590663" data-claire-element-id="590663">Cependant, il arrive parfois (voire souvent), que ces modèles ne conviennent pas à notre utilisation, et que l'on souhaite créer nos <strong>propres</strong> modèles. Pour cela, rien de réellement complexe. Il suffit en effet de créer une classe dérivant d'une des classes suivantes :</p><ul id="r-590670" data-claire-element-id="590670"><li id="r-590665" data-claire-element-id="590665"><p id="r-590664" data-claire-element-id="590664"><a href="http://doc.qt.nokia.com/4.7/qabstractitemmodel.html">QAbstractItemModel</a> : comme évoqué plus haut, il s'agit de la classe la plus abstraite ;</p></li><li id="r-590667" data-claire-element-id="590667"><p id="r-590666" data-claire-element-id="590666"><a href="http://doc.qt.nokia.com/4.7/qabstractlistmodel.html">QAbstractListModel</a> : classe abstraite fournissant une interface pour un modèle de type liste (associé à une <a href="http://doc.qt.nokia.com/4.7/qlistview.html">QListView</a>) ;</p></li><li id="r-590669" data-claire-element-id="590669"><p id="r-590668" data-claire-element-id="590668"><a href="http://doc.qt.nokia.com/4.7/qabstracttablemodel.html">QAbstractTableModel</a> : classe abstraite fournissant une interface pour un modèle de type tableau (associé à une <a href="http://doc.qt.nokia.com/4.7/qtableview.html">QTableView</a>) ;</p></li></ul><p id="r-590671" data-claire-element-id="590671">A noter qu'il n'existe pas de classe séparée pour un modèle de type hiérarchique (<a href="http://doc.qt.nokia.com/4.7/qtreeview.html">QTreeView</a>). Il s'agit simplement de QAbstractItemModel.</p><p id="r-590672" data-claire-element-id="590672">Vous remarquerez que toutes ces classes utilise la même racine, à savoir <em>QAbstractXModel</em>.</p><p id="r-590673" data-claire-element-id="590673">Une fois que l'on a choisi la classe de base convenant le mieux à notre utilisation, il ne reste plus qu'à redéfinir certaines méthodes virtuelles comme :</p><ul id="r-590678" data-claire-element-id="590678"><li id="r-590675" data-claire-element-id="590675"><p id="r-590674" data-claire-element-id="590674"><code data-claire-semantic="cpp">int QAbstractItemModel::rowCount(const QModelIndex &amp; parent = QModelIndex()) const</code> : fonction retournant le nombre de lignes du modèle ;</p></li><li id="r-590677" data-claire-element-id="590677"><p id="r-590676" data-claire-element-id="590676"><code data-claire-semantic="cpp">QVariant QAbstractItemModel::data (const QModelIndex &amp; index, int role = Qt::DisplayRole ) const</code> : fonction renvoyant la donnée associée au rôle <em>role</em> pour l'index <em>index</em></p></li></ul><p id="r-590679" data-claire-element-id="590679">Pour des modèles modifiables, il est aussi nécessaire de redéfinir la fonction <code data-claire-semantic="cpp">bool QAbstractItemModel::setData (const QModelIndex &amp; index, const QVariant &amp; value, int role = Qt::EditRole )</code></p><p id="r-590680" data-claire-element-id="590680">La création de modèles personnalisés n'est cependant pas l'objet de ce tutoriel. Bien que nous l'aborderons brièvement au travers d'un exemple, je vous renvoie à la <a href="http://doc.qt.nokia.com/4.7/model-view-programming.html#model-subclassing-reference">documentation</a> traitant le sujet en profondeur.</p><h3 id="r-les-vues-5" data-claire-element-id="590692">Les vues</h3><p id="r-590682" data-claire-element-id="590682">Une fois que l'on dispose d'un modèle (déjà existant ou personnalisé), on dispose de trois types de vue :</p><ul id="r-590689" data-claire-element-id="590689"><li id="r-590684" data-claire-element-id="590684"><p id="r-590683" data-claire-element-id="590683"><a href="http://doc.qt.nokia.com/4.7/qlistview.html">QListView</a> : liste d'éléments ;</p></li><li id="r-590686" data-claire-element-id="590686"><p id="r-590685" data-claire-element-id="590685"><a href="http://doc.qt.nokia.com/4.7/qtableview.html">QTableView</a> : tableau d'éléments ;</p></li><li id="r-590688" data-claire-element-id="590688"><p id="r-590687" data-claire-element-id="590687"><a href="http://doc.qt.nokia.com/4.7/qtreeview.html">QTreeView</a> : représentation d'éléments sous forme hiérarchique (arbre d'éléments).</p></li></ul><p id="r-590690" data-claire-element-id="590690">Une fois la vue choisie, le modèle y est affecté en utilisant la fonction <code data-claire-semantic="cpp">void QAbstractItemView::setModel ( QAbstractItemModel * model )</code>.</p><p id="r-590691" data-claire-element-id="590691">Pour d'avantage de précisions, libre à vous de vous reporter à la <a href="http://doc.qt.nokia.com/4.7/model-view-programming.html">documentation</a> ou bien au <a href="http://www.siteduzero.com/tutoriel-3-11384-l-architecture-mvc-avec-les-widgets-complexes.html">tutoriel officiel</a></p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate">Apostille au MVC : les Delegate</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/quelques-piqures-de-rappel">
+Quelques piqûres de rappel
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/parlons-du-controleur">
+Parlons du contrôleur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/creer-son-propre-delegate">
+Créer son propre Delegate
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/passons-a-la-pratique-partie-1-le-modele">
+Passons à la pratique partie 1 : Le modèle
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/passons-a-la-pratique-partie-2-le-delegate">
+Passons à la pratique partie 2 : le delegate
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/parlons-du-controleur">
+<span class="next">Parlons du contrôleur</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Parlonsducontrleur"></a><h2>Parlons du contrôleur</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/quelques-piqures-de-rappel">
+<span class="arrow"></span>
+<span class="next">Quelques piqûres de rappel</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/creer-son-propre-delegate">
+<span class="next">Créer son propre Delegate</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-590695" data-claire-element-id="590695">Comme vous l'aurez sans doute remarqué, nous n'avons jusqu'à présent pas évoqué le dernier aspect à savoir le <strong>C</strong>ontrôleur. Voici la vérité : Qt n'utilise pas tout à fait une architecture MVC. Ce n'est plus un <strong>C</strong> mais désormais un <strong>D</strong>. Pour ceux qui n'auraient pas fait le rapprochement, il s'agit d'un <strong>D</strong> pour ... <strong>D</strong>elegate. Eh oui, maintenant, vous savez tout : Qt utilise en réalité une architecture <em>model/view</em> entourée d'un delegate.</p><h3 id="r-presentation-du-concept-1" data-claire-element-id="590705">Présentation du concept</h3><p id="r-590696" data-claire-element-id="590696">Mais à quoi Diantre ce fameux Delegate sert-il ?</p><p id="r-590697" data-claire-element-id="590697">Au contraire d'une architecture MVC classique, l'architecture <em>model/view</em> instaurée par Qt ne fournit pas de réel composant permettant de gérer les interactions avec l'utilisateur. De ce fait, ceci est géré par la vue elle-même.</p><p id="r-590698" data-claire-element-id="590698">Cependant, pour des raisons de flexibilité, l'interaction et les entrées utilisateurs ne sont non pas prises en compte par un composant totalement séparé, à savoir le contrôleur, mais par un composant <strong>interne</strong> à la vue : le Delegate. Ce composant est responsable de deux choses :</p><ul id="r-590703" data-claire-element-id="590703"><li id="r-590700" data-claire-element-id="590700"><p id="r-590699" data-claire-element-id="590699">Personnaliser l'édition des éléments au moyen d'un <em>editor</em> ;</p></li><li id="r-590702" data-claire-element-id="590702"><p id="r-590701" data-claire-element-id="590701">Personnaliser le rendu des éléments à l'intérieur d'une vue.</p></li></ul><p id="r-590704" data-claire-element-id="590704">Ainsi, grace à un delegate, il vous est possible de personnaliser la manière dont les entrées utilisateurs seront gérées, ainsi que le rendu des éléments.<br/> Pour exemple, lorsque vous utilisez une QTableView avec un modèle éditable, lorsque vous cliquez sur une cellule de votre table, il vous est possible de modifier la valeur de la cellule, grace à une <em>LineEdit</em>.<br/> Cela est possible grace au Delegate qui a fourni à la vue un moyen d'éditer les données au travers d'un composant de type <em>QLineEdit</em>.</p><h3 id="r-utiliser-un-delegate-existant" data-claire-element-id="590714">Utiliser un Delegate existant</h3><p id="r-590706" data-claire-element-id="590706">Vous aurez sans douté remarqué, que, par défaut, même si vous n'avez paramétré aucun delegate, votre vue se charge toute seule de fournir un moyen d'éditer vos données. Cela est du au fait que les vues sont déjà dotées d'un delegate par défaut : <em>QStyledItemDelegate</em>. En effet, de base, Qt fournit deux delegate par défaut :</p><ul id="r-590711" data-claire-element-id="590711"><li id="r-590708" data-claire-element-id="590708"><p id="r-590707" data-claire-element-id="590707"><a href="http://doc.qt.nokia.com/4.7/qitemdelegate.html">QItemDelegate</a> ;</p></li><li id="r-590710" data-claire-element-id="590710"><p id="r-590709" data-claire-element-id="590709"><a href="http://doc.qt.nokia.com/4.7/qstyleditemdelegate.html">QStyledItemDelegate</a>.</p></li></ul><p id="r-590712" data-claire-element-id="590712">La seule différence résidant entre ces deux Delegate est que QStyledItemDelegate utilise le style courant pour le rendu des données. Ces deux Delegate héritent cependant de la même classe, à savoir <a href="http://doc.qt.nokia.com/4.7/qabstractitemdelegate.html">QAbstractItemDelegate</a>, fournissant une interface de base générique à tous les delegate.<br/> Qt fournit en outre <a href="http://doc.qt.nokia.com/4.7/qsqlrelationaldelegate.html">QSqlRelationalDelegate</a>, permettant d'éditer et afficher des données d'un QSqlRelationalTableModel.</p><p id="r-590713" data-claire-element-id="590713">Cependant, même si les vues sont dotés d'un delegate par défaut, il est bien entendu possible de modifier et paramétrer celui-ci grâce à la fonction <code data-claire-semantic="cpp">void QAbstractItemView::setItemDelegate ( QAbstractItemDelegate * delegate )</code>. Il est aussi possible de récupérer le delegate courant grâce à la fonction <code data-claire-semantic="cpp">QAbstractItemDelegate * QAbstractItemView::itemDelegate () const</code></p><h3 id="r-jetons-un-coup-d-oeil-a-la-mecanique-interne" data-claire-element-id="590772">Jetons un coup d'oeil à la mécanique interne</h3><p id="r-590715" data-claire-element-id="590715">Nous avons dit que le delegate était en partie chargé de fournir à l'utilisateur un moyen d'éditer les données au sein d'une vue, en fournissant un <em>editor</em>. Cet editor est tout simplement un composant de type <strong>QWidget</strong>. Même si précédemment nous avons évoqué l'exemple d'une <strong>QLineEdit</strong>, le delegate par défaut ne crée pas <strong>que</strong> des QLineEdit. En effet, celui-ci crée le composant adapté au <strong>type de données</strong> de la cellule. Par exemple, si la cellule contient un <strong>int</strong>, le delegate par défaut créera un composant de type <strong>QSpinBox</strong>. Pour un composant de type <strong>double</strong>, il s'agira d'un <strong>QDoubleSpinBox</strong>.</p><p id="r-590716" data-claire-element-id="590716">Regardons le code de %QTDIR%/src/gui/itemviews/qstyleditemdelegate.cpp, et notamment la méthode createEditor :</p><pre id="r-590717" data-claire-element-id="590717"><code data-claire-semantic="cpp">QVariant::Type t = static_cast&lt;QVariant::Type&gt;(index.data(Qt::EditRole).userType());
+return d-&gt;editorFactory()-&gt;createEditor(t, parent);</code></pre><p id="r-590718" data-claire-element-id="590718">Que font ces deux lignes ? Tout d'abord, le <strong>type</strong> de la donnée contenue dans la cellule est stoqué dans la variable t. Souvenez-vous, la fonction data() de QAbstractItemModel renvoyant une variable de type <em>QVariant</em>, celle-ci est capable de gérer de nombreux types de données. La fonction <em>userType()</em> renvoie ce type sous forme d'un int (ce qui justifie l'emploi de static_cast). Si la variable est de type QString, t serait donc égal à QVariant::String, QVariant::Date pour une variable de type QDate, ... La liste complète étant disponible <a href="http://doc.qt.nokia.com/4.7/qvariant.html#Type-enum">ici</a></p><p id="r-590719" data-claire-element-id="590719">La deuxième ligne fait appel à la méthode <em>createEditor</em> de <em>editorFactory()</em>. <br/> La méthode editorFactory() étant définie comme :</p><pre id="r-590720" data-claire-element-id="590720"><code data-claire-semantic="cpp">const QItemEditorFactory *editorFactory() const
+{
+    return factory ? factory : QItemEditorFactory::defaultFactory();
+}</code></pre><p id="r-590721" data-claire-element-id="590721">On y comprend donc que cette méthode retourne la factory par défaut si aucune n'a été définie. Mais qu'est-ce donc que cette fameuse <strong>factory</strong> ? <em>QItemEditorFactory</em> est une classe dite de fabrique (<em>factory</em>), permettant entre autre de créer l'editor correspondant au type de données que l'on a évoqué plus haut.</p><p id="r-590722" data-claire-element-id="590722">Par défaut, voici les composants crées en fonction du type :</p><table id="r-590770" data-claire-element-id="590770"><thead id="r-590728" data-claire-element-id="590728"><tr id="r-590727" data-claire-element-id="590727"><th id="r-590724" data-claire-element-id="590724"><p id="r-590723" data-claire-element-id="590723">Type</p></th><th id="r-590726" data-claire-element-id="590726"><p id="r-590725" data-claire-element-id="590725">Widget</p></th></tr></thead><tbody id="r-590769" data-claire-element-id="590769"><tr id="r-590733" data-claire-element-id="590733"><td id="r-590730" data-claire-element-id="590730"><p id="r-590729" data-claire-element-id="590729">bool</p></td><td id="r-590732" data-claire-element-id="590732"><p id="r-590731" data-claire-element-id="590731">QComboBox</p></td></tr><tr id="r-590738" data-claire-element-id="590738"><td id="r-590735" data-claire-element-id="590735"><p id="r-590734" data-claire-element-id="590734">int / unsigned int</p></td><td id="r-590737" data-claire-element-id="590737"><p id="r-590736" data-claire-element-id="590736">QSpinBox</p></td></tr><tr id="r-590743" data-claire-element-id="590743"><td id="r-590740" data-claire-element-id="590740"><p id="r-590739" data-claire-element-id="590739">double</p></td><td id="r-590742" data-claire-element-id="590742"><p id="r-590741" data-claire-element-id="590741">QDoubleSpinBox</p></td></tr><tr id="r-590748" data-claire-element-id="590748"><td id="r-590745" data-claire-element-id="590745"><p id="r-590744" data-claire-element-id="590744">QDate</p></td><td id="r-590747" data-claire-element-id="590747"><p id="r-590746" data-claire-element-id="590746">QDateEdit</p></td></tr><tr id="r-590753" data-claire-element-id="590753"><td id="r-590750" data-claire-element-id="590750"><p id="r-590749" data-claire-element-id="590749">QDateTime</p></td><td id="r-590752" data-claire-element-id="590752"><p id="r-590751" data-claire-element-id="590751">QDateTimeEdit</p></td></tr><tr id="r-590758" data-claire-element-id="590758"><td id="r-590755" data-claire-element-id="590755"><p id="r-590754" data-claire-element-id="590754">QPixmap</p></td><td id="r-590757" data-claire-element-id="590757"><p id="r-590756" data-claire-element-id="590756">QLabel</p></td></tr><tr id="r-590763" data-claire-element-id="590763"><td id="r-590760" data-claire-element-id="590760"><p id="r-590759" data-claire-element-id="590759">QString</p></td><td id="r-590762" data-claire-element-id="590762"><p id="r-590761" data-claire-element-id="590761">QLineEdit</p></td></tr><tr id="r-590768" data-claire-element-id="590768"><td id="r-590765" data-claire-element-id="590765"><p id="r-590764" data-claire-element-id="590764">QTime</p></td><td id="r-590767" data-claire-element-id="590767"><p id="r-590766" data-claire-element-id="590766">QTimeEdit</p></td></tr></tbody></table><p id="r-590771" data-claire-element-id="590771">Le delegate par défaut est donc capable de gérer une grande partie des types de données. Cependant, il se peut que nous ayons besoin d'un comportement autre que celui par défaut. Pour cela, il suffit de créer notre propre delegate, c'est ce que nous allons voir dans le chapitre suivant.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate">Apostille au MVC : les Delegate</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/quelques-piqures-de-rappel">
+Quelques piqûres de rappel
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/parlons-du-controleur">
+Parlons du contrôleur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/creer-son-propre-delegate">
+Créer son propre Delegate
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/passons-a-la-pratique-partie-1-le-modele">
+Passons à la pratique partie 1 : Le modèle
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/passons-a-la-pratique-partie-2-le-delegate">
+Passons à la pratique partie 2 : le delegate
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/quelques-piqures-de-rappel">
+<span class="arrow"></span>
+<span class="next">Quelques piqûres de rappel</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/creer-son-propre-delegate">
+<span class="next">Créer son propre Delegate</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="CrersonpropreDelegate"></a><h2>Créer son propre Delegate</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/parlons-du-controleur">
+<span class="arrow"></span>
+<span class="next">Parlons du contrôleur</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/passons-a-la-pratique-partie-1-le-modele">
+<span class="next">Passons à la pratique partie 1 : Le modèle</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-590774" data-claire-element-id="590774">Comme nous l'avons vu dans la partie précédente, nous disposons de trois classes de base déjà fournies par Qt :</p><ul id="r-590781" data-claire-element-id="590781"><li id="r-590776" data-claire-element-id="590776"><p id="r-590775" data-claire-element-id="590775"><a href="http://doc.qt.nokia.com/4.7/qabstractitemdelegate.html">QAbstractItemDelegate</a> ;</p></li><li id="r-590778" data-claire-element-id="590778"><p id="r-590777" data-claire-element-id="590777"><a href="http://doc.qt.nokia.com/4.7/qitemdelegate.html">QItemDelegate</a> ;</p></li><li id="r-590780" data-claire-element-id="590780"><p id="r-590779" data-claire-element-id="590779"><a href="http://doc.qt.nokia.com/4.7/qstyleditemdelegate.html">QStyledItemDelegate</a>.</p></li></ul><p id="r-590782" data-claire-element-id="590782">Depuis Qt 4.4, il est recommandé d'utiliser <em>QStyledItemDelegate</em>. Nous l'utiliserons donc comme classe de base de nos delegate.</p><p id="r-590783" data-claire-element-id="590783">Lorsque l'on souhaite uniquement personnaliser l'édition des éléments dans notre vue, et non pas le rendu, nous devons <strong>redéfinir</strong> quatre méthodes :</p><h3 id="r-createeditor" data-claire-element-id="590787">createEditor()</h3><pre id="r-590784" data-claire-element-id="590784"><code data-claire-semantic="cpp">QWidget * QStyledItemDelegate::createEditor ( QWidget * parent, const QStyleOptionViewItem &amp; option, 
+                                              const QModelIndex &amp; index ) const</code></pre><p id="r-590785" data-claire-element-id="590785">Cette fonction retourne le widget (<em>editor</em>) pour éditer l'item se trouvant à l'index <em>index</em>. Le paramètre <em>option</em> permet de contrôler comment le widget apparait.</p><p id="r-590786" data-claire-element-id="590786">Cette fonction sera par exemple appelée lorsque l'utilisateur effectuera un double-clic sur la cellule d'une QTableView. L'editor retourné par la fonction sera alors présenté à l'utilisateur</p><h3 id="r-seteditordata" data-claire-element-id="590791">setEditorData()</h3><pre id="r-590788" data-claire-element-id="590788"><code data-claire-semantic="cpp">void QStyledItemDelegate::setEditorData ( QWidget * editor, const QModelIndex &amp; index ) const</code></pre><p id="r-590789" data-claire-element-id="590789">Cette fonction permet de <strong>transmettre</strong> à l'editor <em>editor</em> les données à afficher à partir du modèle, se trouvant à l'index <em>index</em></p><p id="r-590790" data-claire-element-id="590790">Une fois l'editor crée et ouvert, cette fonction sera ensuite appelée afin de remplir l'editor avec la donnée concernée, à partir du modèle. La donnée sera alors extraite du modèle puis affichée au travers de l'editor <em>editor</em></p><h3 id="r-setmodeldata" data-claire-element-id="590794">setModelData()</h3><pre id="r-590792" data-claire-element-id="590792"><code data-claire-semantic="cpp">void QStyledItemDelegate::setModelData ( QWidget * editor, QAbstractItemModel * model, const QModelIndex &amp; index ) const</code></pre><p id="r-590793" data-claire-element-id="590793">Cette fonction est en quelque-sorte l'inverse de la précédente. Le rôle de celle-ci est de récupérer les données de l'editor <em>editor</em> et de les stocker à l'intérieur du modèle <em>model</em>, à l'index identifié par le paramètre <em>index</em>.</p><h3 id="r-updateeditorgeometry" data-claire-element-id="590801">updateEditorGeometry()</h3><pre id="r-590795" data-claire-element-id="590795"><code data-claire-semantic="cpp">void QStyledItemDelegate::updateEditorGeometry ( QWidget * editor, const QStyleOptionViewItem &amp; option, 
+                                                 const QModelIndex &amp; index ) const</code></pre><p id="r-590796" data-claire-element-id="590796">Lorsque la taille de la vue change, cette fonction permettra de redimensionner l'editor <em>editor</em> à la bonne taille.</p><p id="r-590797" data-claire-element-id="590797">De manière générale, cette fonction contiendra la ligne de code suivante :</p><pre id="r-590798" data-claire-element-id="590798"><code data-claire-semantic="cpp">editor-&gt;setGeometry(option.rect);</code></pre><p id="r-590799" data-claire-element-id="590799">option.rect déliminant la zone de l'editor.</p><p id="r-590800" data-claire-element-id="590800">Si l'on souhaite par ailleurs personnaliser le rendu des éléments, il nous faudra redéfinir une cinquième méthode :</p><h3 id="r-paint-1" data-claire-element-id="590804">paint()</h3><pre id="r-590802" data-claire-element-id="590802"><code data-claire-semantic="cpp">void QStyledItemDelegate::paint ( QPainter * painter, const QStyleOptionViewItem &amp; option, 
+                                  const QModelIndex &amp; index ) const</code></pre><p id="r-590803" data-claire-element-id="590803">Comme son nom l'indique, cette fonction permet d'effectuer le rendu d'un certain élément en utilisant le painter<br/><em>painter</em>. Les éléments sont rendus en utilisant le style courant de la vue.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate">Apostille au MVC : les Delegate</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/quelques-piqures-de-rappel">
+Quelques piqûres de rappel
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/parlons-du-controleur">
+Parlons du contrôleur
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/creer-son-propre-delegate">
+Créer son propre Delegate
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/passons-a-la-pratique-partie-1-le-modele">
+Passons à la pratique partie 1 : Le modèle
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/passons-a-la-pratique-partie-2-le-delegate">
+Passons à la pratique partie 2 : le delegate
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/parlons-du-controleur">
+<span class="arrow"></span>
+<span class="next">Parlons du contrôleur</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/passons-a-la-pratique-partie-1-le-modele">
+<span class="next">Passons à la pratique partie 1 : Le modèle</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Passonslapratiquepartie1Lemodle"></a><h2>Passons à la pratique partie 1 : Le modèle</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/creer-son-propre-delegate">
+<span class="arrow"></span>
+<span class="next">Créer son propre Delegate</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/passons-a-la-pratique-partie-2-le-delegate">
+<span class="next">Passons à la pratique partie 2 : le delegate</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-590806" data-claire-element-id="590806">Maintenant que nous savons comment créer notre propre Delegate, nous allons mettre ce que nous venons d'apprendre en oeuvre au travers d'un exemple. <br/> Pour éviter de nous épancher dans un long discours, voici une capture d'écran de l'application que nous allons réaliser :</p><figure id="r-590808" data-claire-element-id="590809"><img id="r-590807" data-claire-element-id="590807" src="medias/uploads.siteduzero.com_files_319001_320000_319620.png" alt="Image utilisateur"/></figure><p id="r-590810" data-claire-element-id="590810">Il s'agit donc d'un tableau (<em>QTableView</em>) comportant deux colonnes, présentant à gauche un élément et à droite une valeur associée en pourcentage. Lorsque nous ne sommes pas en mode édition, nous dessinerons une barre, représentant le pourcentage. Lorsque nous serons en édition, nous utiliserons un <em>QSlider</em> afin de faire varier le pourcentage comme bon nous semble.</p><p id="r-590811" data-claire-element-id="590811">Commençons donc par la première étape.</p><h2 id="r-le-modele-18" data-claire-element-id="590856">Le modèle</h2><p id="r-590812" data-claire-element-id="590812">La première étape va être de créer notre propre modèle. Nous n'utiliserons pas ici de <em>QStandardItemModel</em>. La première chose à faire est de réfléchir à quelle classe de base nous allons hériter. Notre modèle devant être présenté en tant que tableau, il devient alors évident que nous allons hériter de la classe <em>QAbstractTableModel</em>.</p><p id="r-590813" data-claire-element-id="590813">Allons-y :</p><h3 id="r-la-classe-7" data-claire-element-id="590820">La classe</h3><pre id="r-590814" data-claire-element-id="590814"><code data-claire-semantic="cpp">class TableModel : public QAbstractTableModel
+{
+    Q_OBJECT
+public:
+    enum Columns { Element = 0, Value, Count = Value + 1 };
+
+    explicit TableModel(QObject *parent = 0);
+
+    Qt::ItemFlags flags(const QModelIndex &amp;index) const;
+    int rowCount(const QModelIndex &amp;parent = QModelIndex()) const;
+    int columnCount(const QModelIndex &amp;parent = QModelIndex()) const;
+
+    QVariant data(const QModelIndex &amp;index, int role = Qt::DisplayRole) const;
+    QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
+    bool setData(const QModelIndex &amp;index, const QVariant &amp;value, int role = Qt::DisplayRole);
+
+    void addElement(const QString &amp;element, int value);
+
+private:
+    QList&lt;QPair&lt;QString, int&gt; &gt; mElements;
+
+};</code></pre><aside id="r-590816" data-claire-element-id="590816" data-claire-semantic="information"><p id="r-590815" data-claire-element-id="590815">La partie <em>includes</em> a volontairement été laissée de côté, afin de ne pas alourdir le code.</p></aside><p id="r-590817" data-claire-element-id="590817">Pour des raisons de lisibilité et flexibilité, nous définissons une énumération <em>Columns</em> nous permettant de lister les différentes colonnes. Le <em>Count </em> est une petite astuce pour obtenir le nombre d'éléments et nous servira pour la méthode columnCount().</p><p id="r-590818" data-claire-element-id="590818">La méthode <code data-claire-semantic="cpp">Qt::ItemFlags flags(const QModelIndex &amp;index) const;</code> nous sera utile pour décider de quelles parties de notre modèle seront éditables ou non (la colonne des éléments sera en lecture seule).</p><p id="r-590819" data-claire-element-id="590819">Nos éléments seront stockés à l'intérieur d'une liste de <em>QPair</em>. Pour rappel, une paire est un ensemble composé de deux éléments. Le premier élément sera le texte <em>QString</em> et le deuxième la valeur associée <em>(int)</em>.<br/> La méthode <code data-claire-semantic="cpp">void addElement(const QString &amp;element, int value);</code> nous permettra d'ajouter un élément à l'intérieur de notre modèle.</p><h3 id="r-flags-6" data-claire-element-id="590824">flags()</h3><pre id="r-590821" data-claire-element-id="590821"><code data-claire-semantic="cpp">Qt::ItemFlags TableModel::flags(const QModelIndex &amp;index) const
+{
+    if (index.column() == Element)
+    {
+        return Qt::ItemIsEnabled | Qt::ItemIsSelectable;
+    }
+    else if (index.column() == Value)
+    {
+        return Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable;
+    }
+
+    return QAbstractTableModel::flags(index);
+}</code></pre><p id="r-590822" data-claire-element-id="590822">A l'intérieur de la fonction, nous vérifions la colonne visée grace à la méthode <em>column()</em> de <em>index</em>. Si la colonne est la colonne des éléments (<em>Element</em>), nous retournons les flags <em>Qt::ItemIsEnabled | Qt::ItemIsEnabled</em>. Ceci signifie que notre élément sera activé et sélectionnable mais pas éditable. Si la colonne est la colonne des valeurs (<em>Value</em>), nous y rajoutons le flag <em>Qt::ItemIsEditable</em>, permettant à l'utilisateur d'éditer l'élément.</p><p id="r-590823" data-claire-element-id="590823">Si nous ne sommes dans aucune de ces configurations (ce qui ne devrait pas être le cas ici), nous laissons la responsabilité à la classe de base de retourner les flags nécessaires.</p><h3 id="r-rowcount-et-columncount" data-claire-element-id="590829">rowCount() et columnCount()</h3><pre id="r-590825" data-claire-element-id="590825"><code data-claire-semantic="cpp">int TableModel::columnCount(const QModelIndex &amp;parent) const
+{
+    return parent.isValid() ? 0 : Count;
+}</code></pre><p id="r-590826" data-claire-element-id="590826">Si l'index <em>parent</em> est valide (notre modèle n'est pas un modèle hiérarchique), nous renvoyons 0, sinon <em>Count</em> (énumération que nous avons précédemment définie).</p><pre id="r-590827" data-claire-element-id="590827"><code data-claire-semantic="cpp">int TableModel::rowCount(const QModelIndex &amp;parent) const
+{
+    return parent.isValid() ? 0 : mElements.count();
+}</code></pre><p id="r-590828" data-claire-element-id="590828">Comme précédemment, nous renvoyons 0 si <em>parent</em> est valide. Sinon, le nombre de lignes de notre modèle correspond au nombre d'éléments de mElements : <code data-claire-semantic="cpp">mElements.count()</code></p><h3 id="r-data-headerdata-setdata" data-claire-element-id="590838">data() headerData() setData()</h3><pre id="r-590830" data-claire-element-id="590830"><code data-claire-semantic="cpp">QVariant TableModel::data(const QModelIndex &amp;index, int role) const
+{
+    if (!index.isValid() || index.row() &lt; 0 || index.row() &gt;= mElements.count())
+    {
+        return QVariant();
+    }
+
+    switch (role)
+    {
+    case Qt::DisplayRole:
+    case Qt::EditRole:
+        if (index.column() == Element)
+        {
+            return mElements[index.row()].first;
+        }
+        else if (index.column() == Value)
+        {
+            return mElements[index.row()].second;
+        }
+        break;
+    }
+
+    return QVariant();
+}</code></pre><p id="r-590831" data-claire-element-id="590831">Nous commençons par vérifier la validité de l'index. Si tel n'est pas le cas, nous renvoyons une donnée <em>invalide</em> : <code data-claire-semantic="cpp">QVariant()</code></p><p id="r-590832" data-claire-element-id="590832">Nous renvoyons ensuite, selon le rôle <em>role</em> la donnée correspondante. Dans notre modèle, nous prenons en compte les rôle <em>Qt::DisplayRole</em> et <em>Qt::EditRole</em> (consulter la <a href="http://doc.qt.nokia.com/4.7/qt.html#ItemDataRole-enum">documentation</a> pour la description de ces rôles). S'il s'agit d'un de ces deux rôles, nous renvoyons le premier élément de notre paire correspondant à l'index <em>index</em> si la colonne est Element, ou bien le second pour la colonne Value.</p><p id="r-590833" data-claire-element-id="590833">Pour tous les rôles restants, nous retournons une donnée invalide.</p><pre id="r-590834" data-claire-element-id="590834"><code data-claire-semantic="cpp">QVariant TableModel::headerData(int section, Qt::Orientation orientation, int role) const
+{
+    if (orientation == Qt::Horizontal &amp;&amp; role == Qt::DisplayRole)
+    {
+        switch (section)
+        {
+        case Element:
+            return trUtf8(&quot;Elément&quot;);
+            break;
+        case Value:
+            return trUtf8(&quot;Valeur&quot;);
+            break;
+        }
+    }
+
+    return QAbstractTableModel::headerData(section, orientation, role);
+}</code></pre><p id="r-590835" data-claire-element-id="590835">Ce code ne devrait pas avoir besoin de descriptions supplémentaires. Si nous somme dans l'orientation <em>Horizontal</em> (header horizontal), avec le rôle <em>DisplayRole</em>, nous renvoyons le texte correspondant à la section (colonne).</p><pre id="r-590836" data-claire-element-id="590836"><code data-claire-semantic="cpp">bool TableModel::setData(const QModelIndex &amp;index, const QVariant &amp;value, int role)
+{
+    if (!index.isValid() || index.row() &lt; 0 || index.row() &gt;= mElements.count())
+    {
+        return false;
+    }
+
+    switch (role)
+    {
+    case Qt::DisplayRole:
+    case Qt::EditRole:
+        if (index.column() == Element)
+        {
+            mElements[index.row()].first = value.toString();
+        }
+        else if (index.column() == Value)
+        {
+            mElements[index.row()].second = value.toInt();
+        }
+        emit dataChanged(index, index);
+        return true;
+        break;
+    }
+
+    return false;
+}</code></pre><p id="r-590837" data-claire-element-id="590837">Voir la fonction <em>data()</em>. Il est par ailleurs important de prendre soin d'émettre le signal <code data-claire-semantic="cpp">void QAbstractItemModel::dataChanged ( const QModelIndex &amp; topLeft, const QModelIndex &amp; bottomRight )</code> afin de notifier à la vue que les données ont changé.</p><h3 id="r-addelement" data-claire-element-id="590841">addElement()</h3><pre id="r-590839" data-claire-element-id="590839"><code data-claire-semantic="cpp">void TableModel::addElement(const QString &amp;element, int value)
+{
+    const int count = mElements.count();
+    if (value &lt; 0)
+    {
+        value = 0;
+    }
+    else if (value &gt; 100)
+    {
+        value = 100;
+    }
+    beginInsertRows(QModelIndex(), count, count);
+    mElements &lt;&lt; qMakePair(element, value);
+    endInsertRows();
+}</code></pre><p id="r-590840" data-claire-element-id="590840">Nous commençons par récupérer le nombre d'éléments courant puis nous nous assurons que value est comprise entre 0 et 100. La fonction <code data-claire-semantic="cpp">void QAbstractItemModel::beginInsertRows ( const QModelIndex &amp; parent, int first, int last )</code> permet de commencer une opération d'insertion de ligne à l'intérieur d'un modèle (il est nécessaire de l'appeler). Après avoir ajouté notre élément à l'intérieur de notre liste en utilisant la fonction utilitaire <code data-claire-semantic="cpp">QPair&lt;T1, T2&gt; qMakePair ( const T1 &amp; value1, const T2 &amp; value2 )</code>, nous terminons notre opération d'insertion grace à la fonction <code data-claire-semantic="cpp">endInsertRows()</code></p><h3 id="r-exercice-64" data-claire-element-id="590855">Exercice</h3><p id="r-590842" data-claire-element-id="590842">En vous aidant de la documentation, modifiez le modèle afin que les éléments de la première colonne soit alignés de manière <strong>centrée</strong></p><p id="r-590843" data-claire-element-id="590843">Indice 1</p><p id="r-590844" data-claire-element-id="590844"></p><div id="r-590846" data-claire-element-id="590846"><p id="r-590845" data-claire-element-id="590845">La fonction à modifier est la fonction data()</p></div><p id="r-590847" data-claire-element-id="590847">Indice 2</p><p id="r-590848" data-claire-element-id="590848"></p><div id="r-590850" data-claire-element-id="590850"><p id="r-590849" data-claire-element-id="590849">Le rôle à gérer est le rôle <em>Qt::TextAligmentRole</em></p></div><p id="r-590851" data-claire-element-id="590851">Solution</p><p id="r-590852" data-claire-element-id="590852"></p><div id="r-590854" data-claire-element-id="590854"><pre id="r-590853" data-claire-element-id="590853"><code data-claire-semantic="cpp">case Qt::TextAlignmentRole:
+    if (index.column() == Element)
+    {
+         return Qt::AlignCenter;
+    }
+    break;</code></pre></div>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate">Apostille au MVC : les Delegate</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/quelques-piqures-de-rappel">
+Quelques piqûres de rappel
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/parlons-du-controleur">
+Parlons du contrôleur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/creer-son-propre-delegate">
+Créer son propre Delegate
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/passons-a-la-pratique-partie-1-le-modele">
+Passons à la pratique partie 1 : Le modèle
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/passons-a-la-pratique-partie-2-le-delegate">
+Passons à la pratique partie 2 : le delegate
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/creer-son-propre-delegate">
+<span class="arrow"></span>
+<span class="next">Créer son propre Delegate</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/passons-a-la-pratique-partie-2-le-delegate">
+<span class="next">Passons à la pratique partie 2 : le delegate</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Passonslapratiquepartie2ledelegate"></a><h2>Passons à la pratique partie 2 : le delegate</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/passons-a-la-pratique-partie-1-le-modele">
+<span class="arrow"></span>
+<span class="next">Passons à la pratique partie 1 : Le modèle</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-590858" data-claire-element-id="590858">Notre modèle étant désormais terminé et prêt à l'emploi, nous allons nous atteler au delegate qui nous permettra d'éditer les valeurs grace à un Slider et dessiner une &quot;barre&quot; en mode non-édition.</p><h2 id="r-le-delegate" data-claire-element-id="590894">Le Delegate</h2><h3 id="r-la-classe-8" data-claire-element-id="590861">La classe</h3><pre id="r-590859" data-claire-element-id="590859"><code data-claire-semantic="cpp">class TableDelegate : public QStyledItemDelegate
+{
+    Q_OBJECT
+public:
+    explicit TableDelegate(QObject *parent = 0);
+    QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &amp;option, const QModelIndex &amp;index) const;
+    void setEditorData(QWidget *editor, const QModelIndex &amp;index) const;
+    void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &amp;index) const;
+
+    void paint(QPainter *painter, const QStyleOptionViewItem &amp;option, const QModelIndex &amp;index) const;
+    void updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &amp;option, const QModelIndex &amp;index) const;
+
+};</code></pre><p id="r-590860" data-claire-element-id="590860">Aucune surprise ici. Nous créons notre propre classe <em>TableDelegate</em> héritant de <em>QStyledItemDelegate</em> et nous redéfinissons les méthodes nécessaires (voir précédemment).</p><h3 id="r-createeditor-1" data-claire-element-id="590864">createEditor()</h3><pre id="r-590862" data-claire-element-id="590862"><code data-claire-semantic="cpp">QWidget *TableDelegate::createEditor(QWidget *parent, const QStyleOptionViewItem &amp;option,
+                                    const QModelIndex &amp;index) const
+{
+    if (index.column() == TableModel::Value)
+    {
+        QSlider *editor = new QSlider(Qt::Horizontal, parent);
+        editor-&gt;setRange(0, 100);
+        editor-&gt;setAutoFillBackground(true);
+        return editor;
+    }
+
+    return QStyledItemDelegate::createEditor(parent, option, index);
+}</code></pre><p id="r-590863" data-claire-element-id="590863">Comme nous y sommes habitués, nous agissons en fonction de la colonne <em>column()</em>. Dans le cas de la colonne <em>Value</em>, nous créons un <em>QSlider</em> horizontal. Nous lui affectons un intervalle de valeurs de 0 à 100 et nous plaçons la propriété <em>autoFillBackground</em> à true afin d'obtenir un fond opaque. Sinon, nous laissons la responsabilité à la classe parente de créer l'editor.</p><h3 id="r-seteditordata-setmodeldata" data-claire-element-id="590869">setEditorData() setModelData()</h3><pre id="r-590865" data-claire-element-id="590865"><code data-claire-semantic="cpp">void TableDelegate::setEditorData(QWidget *editor, const QModelIndex &amp;index) const
+{
+    if (index.column() == TableModel::Value)
+    {
+        QSlider *slider = qobject_cast&lt;QSlider *&gt;(editor);
+        if (slider)
+        {
+            const int value = index.model()-&gt;data(index).toInt();
+            slider-&gt;setValue(value);
+        }
+    }
+    else
+    {
+        QStyledItemDelegate::setEditorData(editor, index);
+    }
+}</code></pre><p id="r-590866" data-claire-element-id="590866">Afin d'initialiser correctement notre Slider, nous récupérons la valeur correspondante dans notre modèle à l'index <em>index</em> (que nous n'oublions pas de convertir en int, la fonction data renvoyant un <em>QVariant</em>) puis nous l'affectons à notre slider en appelant la fonction <em>setValue</em>. Le paramètre editor étant un paramètre de type <em>QWidget</em>, nous n'oublions pas de le convertir en <em>QSlider</em> à l'aide de la fonction <em>qobject_cast</em>.</p><pre id="r-590867" data-claire-element-id="590867"><code data-claire-semantic="cpp">void TableDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &amp;index) const
+{
+    if (index.column() == TableModel::Value)
+    {
+        QSlider *slider = qobject_cast&lt;QSlider *&gt;(editor);
+        if (editor)
+        {
+            model-&gt;setData(index, slider-&gt;value());
+        }
+    }
+    else
+    {
+        QStyledItemDelegate::setModelData(editor, model, index);
+    }
+}</code></pre><p id="r-590868" data-claire-element-id="590868">Nous réalisons ici l'opération inverse. Lors de la fin de l'édition, nous récupérons la valeur de notre Slider puis nous l'affectons à notre modèle à l'index <em>index</em>. Ceci permet donc de mettre à jour le modèle une fois l'édition terminée et l'editor fermé.</p><h3 id="r-updateeditorgeometry-1" data-claire-element-id="590872">updateEditorGeometry()</h3><pre id="r-590870" data-claire-element-id="590870"><code data-claire-semantic="cpp">void TableDelegate::updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &amp;option,
+                                         const QModelIndex &amp;index) const
+{
+    Q_UNUSED(index);
+    editor-&gt;setGeometry(option.rect);
+}</code></pre><p id="r-590871" data-claire-element-id="590871">Comme convenu, nous mettons à jour la géométrie (position et taille) de notre editor via les informations du paramètre <em>option</em>. La macro <em>Q_UNUSED</em> permet de marquer le paramètre index comme non-utilisé afin de ne pas obtenir de warning lors de la compilation (<em>unused parameter</em>).</p><h3 id="r-paint-2" data-claire-element-id="590893">paint()</h3><pre id="r-590873" data-claire-element-id="590873"><code data-claire-semantic="cpp">void TableDelegate::paint(QPainter *painter, const QStyleOptionViewItem &amp;option, const QModelIndex &amp;index) const
+{
+    if (index.column() == TableModel::Value)
+    {       
+        painter-&gt;save();
+        const int value = index.model()-&gt;data(index).toInt();
+        QRect rect(option.rect);
+        const int width = (value * rect.width()) / 100;
+        rect.setWidth(width);
+        QColor c;
+        if (value &lt;= 20)
+        {
+            c = Qt::red;
+        }
+        else if (value &lt;= 50)
+        {
+            c = QColor(240, 96, 0);
+        }
+        else
+        {
+            c = Qt::green;
+        }
+
+        painter-&gt;fillRect(rect, c);
+        QTextOption o;
+        o.setAlignment(Qt::AlignCenter);
+        painter-&gt;drawText(option.rect, QString(&quot;%1 %&quot;).arg(value), o);
+
+        painter-&gt;restore();
+    }
+    else
+    {
+        QStyledItemDelegate::paint(painter, option, index);
+    }
+}</code></pre><p id="r-590874" data-claire-element-id="590874">Voici pour finir la partie rendu. Souhaitant uniquement agir sur la colonne des valeurs, nous commençons par vérifier si nous sommes dans ce cas de configuration. Dans le cas contraire, nous laissons la responsabilité à la classe parent d'effectuer le rendu.</p><p id="r-590875" data-claire-element-id="590875">Nous commençons par <em>enregistrer (sauvegarder)</em> l'état courant du painter. Nous récupérons la valeur située à l'index correspondant que nous utilisons afin de calculer la largeur effective de notre barre grâce à un simple produit en croix. Nous obtenons donc notre rectangle <em>QRect</em>. Nous en profitons aussi par la même occasion pour affecter une couleur différente selon la valeur correspondante :</p><ul id="r-590882" data-claire-element-id="590882"><li id="r-590877" data-claire-element-id="590877"><p id="r-590876" data-claire-element-id="590876">Rouge si valeur &lt;= 20 ;</p></li><li id="r-590879" data-claire-element-id="590879"><p id="r-590878" data-claire-element-id="590878">orange si valeur &lt;= 50 ;</p></li><li id="r-590881" data-claire-element-id="590881"><p id="r-590880" data-claire-element-id="590880">vert sinon.</p></li></ul><p id="r-590883" data-claire-element-id="590883">Disponsant de notre rectangle et sa couleur, nous utilisons la fonction <em>fillRect</em> pour dessiner et remplir le rectangle de la couleur correspondante.<br/> Pour finir, nous dessinons le texte correspondant à la valeur suivie du pourcentage, de manière centrée, avant de restorer l'état du painter que nous avons préalablement sauvegardé.</p><p id="r-590884" data-claire-element-id="590884">Ceci conclut donc notre programme. Il est laissé au soin du lecteur de le compléter en créant la vue, le modèle puis le delegate avant de remplir le modèle des valeurs souhaitées, afin d'avoir un programme complet et opérationnel.</p><p id="r-590885" data-claire-element-id="590885">Nous voici arrivés au terme de ce tutoriel. Celui-ci vous aura appris :</p><ul id="r-590890" data-claire-element-id="590890"><li id="r-590887" data-claire-element-id="590887"><p id="r-590886" data-claire-element-id="590886">Ce que sont sont les delegate : composants permettant de personnaliser <strong>l'édition et le rendu</strong> des éléments à l'intérieur d'une vue ;</p></li><li id="r-590889" data-claire-element-id="590889"><p id="r-590888" data-claire-element-id="590888">Comment créer son propre delegate ;</p></li></ul><p id="r-590891" data-claire-element-id="590891">D'autre part, nous venons de voir, au travers d'un exemple simple, comment créer de toute pièce notre propre modèle.</p><p id="r-590892" data-claire-element-id="590892">Pour un autre exemple d'utilisation, un peu plus concret, la documentation fournit par ailleurs un <a href="http://doc.qt.nokia.com/4.7/itemviews-stardelegate.html">Star Delegate Example</a>.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate">Apostille au MVC : les Delegate</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/quelques-piqures-de-rappel">
+Quelques piqûres de rappel
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/parlons-du-controleur">
+Parlons du contrôleur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/creer-son-propre-delegate">
+Créer son propre Delegate
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/passons-a-la-pratique-partie-1-le-modele">
+Passons à la pratique partie 1 : Le modèle
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/passons-a-la-pratique-partie-2-le-delegate">
+Passons à la pratique partie 2 : le delegate
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/apostille-au-mvc-les-delegate/passons-a-la-pratique-partie-1-le-modele">
+<span class="arrow"></span>
+<span class="next">Passons à la pratique partie 1 : Le modèle</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/apostille-au-mvc-les-delegate.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 23:20:12 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/apostille-au-mvc-les-delegate.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:04:35 GMT -->
+</html>

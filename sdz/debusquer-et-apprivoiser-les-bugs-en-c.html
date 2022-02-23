@@ -1,0 +1,663 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/debusquer-et-apprivoiser-les-bugs-en-c.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 19:54:44 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/debusquer-et-apprivoiser-les-bugs-en-c.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 03:39:48 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Débusquer et apprivoiser les bugs en C</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Débusquer et apprivoiser les bugs en C</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#DbusqueretapprivoiserlesbugsenC">Débusquer et apprivoiser les bugs en C</a><br/><a href="#Qu039est-cequ039unbugenC">Qu&#039;est-ce qu&#039;un bug en C ?</a><br/><a href="#Bestiairedeserreurslespluscourantes">Bestiaire des erreurs les plus courantes</a><br/><a href="#Comprendrelesmessagesducompilateur">Comprendre les messages du compilateur</a><br/><a href="#Uneaideinestimableledebugger">Une aide inestimable : le debugger</a><br/><a href="#Conseilspourl039critureducode">Conseils pour l&#039;écriture du code</a><br/><a href="#Lisezladoc">Lisez la doc !</a><br/></div>
+<a name="DbusqueretapprivoiserlesbugsenC"></a><h2>Débusquer et apprivoiser les bugs en C</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/qu-est-ce-qu-un-bug-en-c">
+<span class="next">Qu&#039;est-ce qu&#039;un bug en C ?</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-584980" data-claire-element-id="584980">Bonjour ! :)</p><p id="r-584981" data-claire-element-id="584981">Ce tutoriel a pour but de mieux vous faire comprendre ce qui se passe et comment réagir lorsque votre code compile, mais ne s'exécute pas correctement. Nous en profiterons pour tordre le cou à quelques mauvaises pratiques sources d'erreur. :pirate:</p><p id="r-584982" data-claire-element-id="584982">Nous verrons en premier lieu ce qui peut amener un programme à « crasher », puis les erreurs fréquentes empêchant nos chers codes de tourner. Nous terminerons par de nombreux conseils de prévention pour éviter de tomber dans de mauvaises situations.</p><p id="r-584983" data-claire-element-id="584983">Notez que le traitement et la correction des erreurs est un sujet extrêmement vaste. Ce tutoriel n'est qu'une petite introduction, n'hésitez pas à creuser le sujet par vous-mêmes !</p><p id="r-584984" data-claire-element-id="584984">C'est parti pour la chasse aux bugs !</p>
+</div><a name="Qu039est-cequ039unbugenC"></a><h2>Qu&#039;est-ce qu&#039;un bug en C ?</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/bestiaire-des-erreurs-les-plus-courantes">
+<span class="next">Bestiaire des erreurs les plus courantes</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-584985" data-claire-element-id="584985">Nous allons partir à la chasse aux bugs, soit. Mais qu'est-ce qu'un bug, concrètement ? Il existe plusieurs définitions de ce terme. Nous proposons la suivante :</p><aside id="r-584987" data-claire-element-id="584987" data-claire-semantic="information"><p id="r-584986" data-claire-element-id="584986">Un bug est un comportement non-désiré d'un programme.</p></aside><p id="r-584988" data-claire-element-id="584988">Ainsi, dès que votre programme fait quelque chose que vous ne voulez pas, nous dirons qu'il s'agit d'un bug. C'est un concept très large, qui peut aller d'un affichage moins joli que celui que vous imaginiez à un plantage brutal du programme. L'appréciation de ce qui est un bug ou non peut parfois être subjective : si votre logiciel favori ne se comporte pas comme vous vous y attendez, vous conclurez à un bug. Mais il s'agit peut-être d'un comportement voulu par l'auteur du programme ! Il arrive que les développeurs, lorsqu'on leur signale un bug, rétorquent avec humour « ce n'est pas un bug, c'est une fonctionnalité » (<em>“it's not a bug, it's a feature”</em>). Ainsi, ils prétendent parfois que les plantages inexpliqués de leurs programmes sont introduits exprès. Bien entendu, il n'est pas recommandé de faire ceci. ^^</p><p id="r-584989" data-claire-element-id="584989">Dans ce tutoriel, nous allons nous concentrer sur les bugs rencontrés le plus couramment par les débutants en C : les <strong>comportements indéterminés</strong>.</p><div id="r-584991" data-claire-element-id="584991" data-claire-semantic="question"><p id="r-584990" data-claire-element-id="584990">Qu'est-ce qu'un comportement indéterminé ?</p></div><p id="r-584992" data-claire-element-id="584992">Pour l'expliquer, il faut dans un premier temps présenter la <strong>norme du langage C</strong>. La norme (pour faire court) est le document qui répond à la question : « qu'est-ce que le langage C ? » Elle explique chaque aspect du langage, depuis la liste des directives du préprocesseur jusqu'à la signification des fonctions de la bibliothèque standard. Il s'agit d'un gros document, rédigé en anglais. Elle constitue la référence ultime pour le langage C : ce qui est du C est ce qui obéit à la description donnée dans cette norme, ni plus, ni moins.</p><p id="r-584993" data-claire-element-id="584993"><a href="http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1256.pdf">Télécharger la norme du langage C</a><br/><em>En anglais, format PDF.</em></p><p id="r-584994" data-claire-element-id="584994">Pour être tout à fait franc, il ne s'agit pas de la norme définitive, mais d'un brouillon (<em>draft</em>) de celle-ci. Il est extrêmement proche de la « vraie » norme, dont le téléchargement est payant. À moins que vous ne vouliez développer un compilateur C certifié, le <em>draft</em> gratuit conviendra parfaitement. :)</p><p id="r-584995" data-claire-element-id="584995">Ainsi donc, la norme est la définition complète du langage C. Qu'en est-il de ces fameux <strong>comportements indéterminés</strong> ? Il arrive que la norme ne spécifie pas le comportement que doit avoir une certaine instruction du langage C. Voyons un exemple simple :</p><p id="r-584996" data-claire-element-id="584996"><cite>Citation : La norme, point 6.7.2.2</cite></p><blockquote id="r-584998" data-claire-element-id="584998"><p id="r-584997" data-claire-element-id="584997">All declarations that refer to the same object or function shall have compatible type; otherwise, <strong>the behavior is undefined</strong>.</p></blockquote><p id="r-584999" data-claire-element-id="584999"><cite>Citation : Traduction libre</cite></p><blockquote id="r-585001" data-claire-element-id="585001"><p id="r-585000" data-claire-element-id="585000">Toutes les déclarations désignant un même objet ou une même fonction devront avoir des types compatibles ; autrement, <strong>le comportement est indéterminé</strong>.</p></blockquote><p id="r-585002" data-claire-element-id="585002">Cette phrase signifie que si une fonction est déclarée plusieurs fois dans un même programme, tous les types sous lesquels elle est déclarée devront être équivalents. Il arrive par exemple que le prototype d'une même fonction apparaisse dans deux fichiers d'en-têtes différents. Cette situation est autorisée à condition que les prototypes de cette fonction soient les mêmes, ou reviennent au même.</p><div id="r-585004" data-claire-element-id="585004" data-claire-semantic="question"><p id="r-585003" data-claire-element-id="585003">Et sinon, que se passe-t-il ? Le compilateur renvoie une erreur ?</p></div><p id="r-585005" data-claire-element-id="585005">La norme vous donne la réponse : si cette règle n'est pas respectée, le <strong>comportement est indéterminé</strong> (<em>the behavior is undefined</em>). Cela signifie que la norme ne prévoit pas ce qui arrive ; chaque compilateur peut donc faire ce qu'il veut. En d'autres termes, <strong>tout</strong>, absolument tout peut arriver. Le compilateur affichera probablement un message d'erreur, mais il n'est pas toujours capable de détecter ce type de situations. Il se pourra donc que votre programme compile sans le moindre problème... Et il est impossible de prévoir ce qui arrivera lorsque la fonction aux multiples prototypes sera appelée !</p><p id="r-585006" data-claire-element-id="585006">Le gros danger des comportements indéterminés est le suivant : lorsque votre programme a un comportement indéterminé, il se peut qu'il fonctionne tout à fait correctement.</p><div id="r-585008" data-claire-element-id="585008" data-claire-semantic="question"><p id="r-585007" data-claire-element-id="585007">C'est plutôt positif, non ? Nous avons fait une erreur, mais finalement tout se passe bien !</p></div><p id="r-585009" data-claire-element-id="585009">Personne ne vous garantit que tout se passera bien dans le futur ! Après tout, qu'est-ce qui vous fait croire que la fonction <code data-claire-semantic="c">printf</code> affiche du texte sur la sortie standard ? Le fait que ce soit une fonction du langage C... Et donc qu'elle soit définie dans la norme. Si cette même norme anonce : « dans cette situation, tout peut arriver », alors il y a danger. Peut-être que votre programme plantera demain, ou qu'il plantera sur la machine de votre voisin... En d'autres termes, ce n'est pas parce qu'un code <em>a l'air</em> de marcher qu'il fonctionne vraiment. Les logiciels évitent parfois les plantages par pure chance.</p><p id="r-585010" data-claire-element-id="585010">Si votre programme a un plantage brutal, ou affiche des caractères bizarres, il a de grandes chances d'avoir un comportement indéterminé. Dans la sous-partie suivante, nous verrons quelques UB (<em>undefined behaviors</em>, comportement indéterminé en anglais) courants. Dans les deux dernières sous-parties, nous apprendrons à nous en prémunir, dans une certaine mesure.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c">Débusquer et apprivoiser les bugs en C</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/qu-est-ce-qu-un-bug-en-c">
+Qu&#039;est-ce qu&#039;un bug en C ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/bestiaire-des-erreurs-les-plus-courantes">
+Bestiaire des erreurs les plus courantes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/comprendre-les-messages-du-compilateur">
+Comprendre les messages du compilateur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/une-aide-inestimable-le-debugger">
+Une aide inestimable : le debugger
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/conseils-pour-l-ecriture-du-code">
+Conseils pour l&#039;écriture du code
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/lisez-la-doc">
+Lisez la doc !
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/bestiaire-des-erreurs-les-plus-courantes">
+<span class="next">Bestiaire des erreurs les plus courantes</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Bestiairedeserreurslespluscourantes"></a><h2>Bestiaire des erreurs les plus courantes</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/qu-est-ce-qu-un-bug-en-c">
+<span class="arrow"></span>
+<span class="next">Qu&#039;est-ce qu&#039;un bug en C ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/comprendre-les-messages-du-compilateur">
+<span class="next">Comprendre les messages du compilateur</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-585012" data-claire-element-id="585012">Nous allons voir ici deux grandes catégories d'erreurs : celles concernant la mémoire, et celles concernant les fichiers. J'aborderai aussi, pour la culture, quelques petits problèmes plus rares, mais qui peuvent arriver.</p><h2 id="r-jouons-avec-la-memoire" data-claire-element-id="585049">Jouons avec la mémoire</h2><p id="r-585013" data-claire-element-id="585013">La mauvaise manipulation des pointeurs est un grand classique. Comme vous le savez tous, les pointeurs contiennent des adresses de cases mémoires, et ces adresses sont des entiers. Pourtant, le code suivant est faux :</p><pre id="r-585014" data-claire-element-id="585014"><code data-claire-semantic="c">#include &lt;stdio.h&gt;
+
+int main(void)
+{
+    int *mon_pointeur = 0x13374242;
+    *mon_pointeur = 170;
+    printf(&quot;%d\n&quot;, *mon_pointeur);
+    
+    return 0;
+}</code></pre><p id="r-585015" data-claire-element-id="585015">Ici, j'ai déclaré un pointeur contenant l'adresse-mémoire 13374242 (en hexadécimal). J'ai ensuite demandé à écrire dans cette case mémoire, puis à afficher la valeur que j'y avais écrite. Ce code est faux car je n'ai pas le droit d'écrire à une telle adresse ! La case en question pourrait très bien appartenir à un autre programme, avec lequel je n'ai pas à interférer. Si vous tentez de compiler puis d'exécuter ce code, il est probable que votre système d'exploitation ferme brutalement votre programme pour l'empêcher de faire des dégâts. Il vous parlera alors d'une <strong>erreur de segmentation</strong> (<em>segmentation fault</em>, ou <em>segfault</em> pour faire court). La majorité des « crashes » que vous pouvez observer dans vos logiciels favoris sont dus à des segfaults.</p><p id="r-585016" data-claire-element-id="585016">Il faut donc <strong>toujours</strong> prendre garde à manipuler des adresses qui vous appartiennent. On les appelle les <strong>adresses valides</strong>, ce sont :</p><ul id="r-585023" data-claire-element-id="585023"><li id="r-585018" data-claire-element-id="585018"><p id="r-585017" data-claire-element-id="585017">les adresses de vos variables, locales et globales ;</p></li><li id="r-585020" data-claire-element-id="585020"><p id="r-585019" data-claire-element-id="585019">les adresses des cases contenues dans les blocs renvoyés par un appel <em>réussi</em> à <code data-claire-semantic="c">malloc</code>, <code data-claire-semantic="c">calloc</code> ou <code data-claire-semantic="c">realloc</code> ;</p></li><li id="r-585022" data-claire-element-id="585022"><p id="r-585021" data-claire-element-id="585021">les adresses des cases de tableaux, locaux et globaux ¹.</p></li></ul><p id="r-585024" data-claire-element-id="585024">¹ En vérité, les cases de tableaux sont des variables particulières. Ce troisième point est donc redondant, mais il est toujours bon à rappeler. :)</p><p id="r-585025" data-claire-element-id="585025">Toutes les autres adresses sont <strong>invalides</strong> ; y lire ou écrire aura un comportement indéterminé. Notez que <code data-claire-semantic="c">NULL</code> est <strong>toujours</strong> une adresse invalide.</p><aside id="r-585027" data-claire-element-id="585027" data-claire-semantic="error"><p id="r-585026" data-claire-element-id="585026">N'essayez jamais de lire ou d'écrire à une adresse invalide.</p></aside><p id="r-585028" data-claire-element-id="585028">Bien entendu, il arrive rarement que l'on déclare un pointeur « en dur » comme dans le code précédent. Mais il est facile de se laisser distraire, voyez plutôt...</p><pre id="r-585029" data-claire-element-id="585029"><code data-claire-semantic="c">#include &lt;stdio.h&gt;
+
+int main(void)
+{
+    int i = 0;
+    int tableau[4] = {1, 2, 3, 4};
+    int somme = 0;
+
+    /* FAUX ! */
+    for(i = 0; i &lt;= 4; i++)
+    {
+        somme += tableau[i]; /* équivalent à somme += *(tableau+i), pour rappel */
+    }
+    
+    printf(&quot;%d\n&quot;, somme);
+    
+    return 0;
+}</code></pre><p id="r-585030" data-claire-element-id="585030">Ici, nous déclarons un tableau de quatre cases : <code data-claire-semantic="c">tableau[0]</code>, <code data-claire-semantic="c">tableau[1]</code>, <code data-claire-semantic="c">tableau[2]</code>, <code data-claire-semantic="c">tableau[3]</code>. Les indices d'un tableau à n cases vont de <code data-claire-semantic="c">0</code> à <code data-claire-semantic="c">n-1</code>. Aussi, lorsque i vaudra 4 dans la boucle, nous tenterons de lire <code data-claire-semantic="c">tableau[4]</code>... Qui est en réalité la case mémoire située immédiatement après notre tableau. Et nous n'avons aucune idée de ce qu'elle contient !</p><div id="r-585032" data-claire-element-id="585032" data-claire-semantic="question"><p id="r-585031" data-claire-element-id="585031">Le programme va donc planter ?</p></div><p id="r-585033" data-claire-element-id="585033">Pas nécessairement, puisqu'il s'agit d'un comportement indéterminé. Tout peut arriver. En l'occurrence, il est assez probable que <code data-claire-semantic="c">tableau[4]</code> désigne soit la variable <code data-claire-semantic="c">i</code>, soit la variable <code data-claire-semantic="c">somme</code>, selon votre processeur, votre système d'exploitation et votre compilateur. Vous vous retrouverez donc avec le double de la somme voulue, ou bien avec <code data-claire-semantic="c">somme+4</code>... L'origine d'un tel problème peut être un véritable mystère pour le programmeur non-averti !</p><h3 id="r-ne-pas-tester-les-retours-de-fopen-ou-malloc" data-claire-element-id="585040">Ne pas tester les retours de fopen ou malloc</h3><p id="r-585034" data-claire-element-id="585034">Un autre cas de figure menant à l'écriture à une adresse invalide est le suivant :</p><pre id="r-585035" data-claire-element-id="585035"><code data-claire-semantic="c">#include &lt;stdio.h&gt;
+
+int main(void)
+{
+    char buffer[40];
+    FILE *monfichier = fopen(&quot;donnees.txt&quot;, &quot;r&quot;);
+    
+    fgets(buffer, 40, monfichier);
+    puts(buffer);
+
+    fclose(monfichier);
+    return 0;
+}</code></pre><p id="r-585036" data-claire-element-id="585036">Si le fichier « <em>donnees.txt</em> » existe bel et bien, tout se passera correctement. Mais qu'en est-il si le fichier n'existe pas, ou bien si nous n'avons pas le droit de le lire ? La fonction <code data-claire-semantic="c">fopen</code> va alors renvoyer <code data-claire-semantic="c">NULL</code>, qui est toujours une adresse invalide ! Lorsque nous passons cette adresse à la fonction <code data-claire-semantic="c">fgets</code>, cette dernière tentera innocemment de lire la case pointée par <code data-claire-semantic="c">NULL</code>... Et déclenchera un plantage du programme ! Ainsi, chaque fois que vous appelez une fonction renvoyant un pointeur, il faut <strong>systématiquement</strong> vérifier que ce pointeur n'est pas <code data-claire-semantic="c">NULL</code>. Cette remarque est également valable pour <code data-claire-semantic="c">malloc</code> et consorts.</p><aside id="r-585038" data-claire-element-id="585038" data-claire-semantic="error"><p id="r-585037" data-claire-element-id="585037">Ne partez <strong>jamais</strong> du principe que votre fichier sera toujours là, ou qu'une allocation réussira toujours. Les êtres humains font des erreurs, et la réalité du monde du développement a plus d'imagination que vous. En testant la valeur de retour de fopen, vous vous épargnez <strong>beaucoup</strong> de temps perdu à chercher le problème si un fichier est accidentellement supprimé.</p></aside><p id="r-585039" data-claire-element-id="585039">Nous verrons dans la dernière sous-partie de ce tutoriel comment se prémunir contre les fonctions dont l'appel échoue. Pour le moment, nous allons voir un dernier cas de figure pouvant mener à manipuler des adresses invalides.</p><h3 id="r-renvoyer-l-adresse-d-une-variable-locale" data-claire-element-id="585048">Renvoyer l'adresse d'une variable locale</h3><p id="r-585041" data-claire-element-id="585041">Une dernière manière d'obtenir une adresse invalide :</p><pre id="r-585042" data-claire-element-id="585042"><code data-claire-semantic="c">#include &lt;stdio.h&gt;
+
+/* Ce code est FAUX, Archi-FAUX, mais il a des chances de fonctionner tout de même ! */
+
+int *minimum(int a, int b)
+{
+    if(a &lt; b)
+    {
+        return &amp;a;
+    }
+    else
+    {
+        return &amp;b;
+    }
+}
+
+int main(void)
+{
+    int *ptr = minimum(3, 4);
+    printf(&quot;%d\n&quot;, *ptr);
+    return 0;
+}</code></pre><p id="r-585043" data-claire-element-id="585043">Vous avez sans doute remarqué que ce code est inhabituel... L'idée est la suivante : nous avons une fonction <code data-claire-semantic="c">minimum</code>, qui prend en paramètre deux entiers et renvoie l'adresse du plus petit d'entre eux. Puis, nous appelons cette fonction avec deux constantes, 3 et 4... Mais les constantes ne possèdent pas d'adresses ? o_O</p><p id="r-585044" data-claire-element-id="585044">Le piège ici est que <code data-claire-semantic="c">minimum</code> renvoie l'adresse de l'un de ses paramètres. Or, dans une fonction, les variables locales et les paramètres sont des objets <strong>temporaires</strong>. Sitôt que nous sortons de la fonction, ils cessent d'exister... Et les cases mémoires qu'ils occupaient sont alors réutilisées pour autre chose. Elles deviennent donc invalides pour nous.</p><aside id="r-585046" data-claire-element-id="585046" data-claire-semantic="error"><p id="r-585045" data-claire-element-id="585045">Les adresses de variables ou paramètres locaux sont uniquement valides pendant la période où ces variables existent.</p></aside><p id="r-585047" data-claire-element-id="585047">Remarquez que le code précédent <strong>a des chances de fonctionner correctement </strong> chez vous. La raison est simple : bien que la case mémoire dont nous renvoyons l'adresse n'est plus utilisée, elle n'est pas encore affectée à un autre usage au moment de l'affichage. Elle contient donc toujours son ancienne valeur, « 3 », qui s'affichera ainsi correctement. Cependant, il s'agit ici de pure chance. Il est tout à fait possible que l'OS récupère cette case pour une autre fonction de votre programme. Nous avons donc une belle illustration du fait qu'un code très dangereux peut <em>avoir l'air</em> de marcher. <strong>Un code qui s'exécute correctement n'est donc pas synonyme d'un code juste.</strong></p><h2 id="r-jouons-avec-les-fichiers" data-claire-element-id="585096">Jouons avec les fichiers</h2><p id="r-585050" data-claire-element-id="585050">Nous passons maintenant à un tout autre type de problème.</p><p id="r-585051" data-claire-element-id="585051">Connaissez-vous <code data-claire-semantic="c">fflush</code> ? Il s'agit d'une fonction vidant le tampon (<em>buffer</em>) d'un fichier.</p><div id="r-585053" data-claire-element-id="585053" data-claire-semantic="question"><p id="r-585052" data-claire-element-id="585052">Qu'est-ce qu'un buffer ?</p></div><p id="r-585054" data-claire-element-id="585054">Lorsque vous écrivez dans un fichier, il est rare que vos données soient envoyées directement sur le disque dur. En effet, l'accès au disque est une action relativement lente ; les systèmes d'exploitation préfèrent donc attendre d'avoir plusieurs choses à écrire pour envoyer effectivement les données sur le disque. Dans l'intervalle, les octets à écrire restent dans un <em>buffer</em>, c'est-à-dire une zone de la mémoire vive. Le contenu du <em>buffer</em> est écrit sur disque dès que l'une des trois situations suivantes survient :</p><ul id="r-585061" data-claire-element-id="585061"><li id="r-585056" data-claire-element-id="585056"><p id="r-585055" data-claire-element-id="585055">le <em>buffer</em> est plein (impossible à contrôler) ;</p></li><li id="r-585058" data-claire-element-id="585058"><p id="r-585057" data-claire-element-id="585057">la fonction <code data-claire-semantic="c">fflush</code> est appelée sur le flux de fichier ;</p></li><li id="r-585060" data-claire-element-id="585060"><p id="r-585059" data-claire-element-id="585059">pour certains flux², une fin de ligne (caractère <code data-claire-semantic="c">' '</code>) est envoyée.</p></li></ul><p id="r-585062" data-claire-element-id="585062">² Les flux en question sont dits <em>line buffered</em> ; ce sont notamment les flux console (<code data-claire-semantic="c">stdin</code>, <code data-claire-semantic="c">stdout</code> et <code data-claire-semantic="c">stderr</code>). Les autres flux sont dits <em>block buffered</em>, ce sont surtout les fichiers disque. On peut passer un flux en <em>line-buffered</em> ou en <em>block-buffered</em> grâce aux fonctions <code data-claire-semantic="c">setbuf</code> et <code data-claire-semantic="c">setvbuf</code>, mais seuls les programmeurs expérimentés devraient s'y risquer. Enfin, il existe des flux sans aucun buffer (<em>non-buffered</em>), mais leur utilisation est peu courante.</p><p id="r-585063" data-claire-element-id="585063">La fonction <code data-claire-semantic="c">fflush</code> sert donc précisément à cela : elle force le système d'exploitation à vider le <em>buffer</em>, provoquant ainsi l'écriture des données sur le disque dur.</p><p id="r-585064" data-claire-element-id="585064">Notez qu'il existe également un <em>buffer</em> pour accéder à un fichier en lecture. Plutôt que d'aller chercher les données sur le disque au fur et à mesure que vous les demandez, le système préfère lire tout un bloc d'octets en une seule fois. Le contenu de ce bloc est alors envoyé vers le <em>buffer</em>, dans lequel les fonctions telles que <code data-claire-semantic="c">fgets</code> vont venir lire. Lorsque le <em>buffer</em> est vide, un nouveau bloc est lu depuis le disque.</p><p id="r-585065" data-claire-element-id="585065">Voici un schéma de la <em>bufferisation</em> (utilisation d'un <em>buffer</em>) des flux :</p><figure id="r-585067" data-claire-element-id="585068"><img id="r-585066" data-claire-element-id="585066" src="medias/uploads.siteduzero.com_files_331001_332000_331855.png" alt="Buffer des flux en C"/></figure><p id="r-585069" data-claire-element-id="585069">Images trouvées sur <a href="http://www.openclipart.org/">Open Clipart</a>, dans le domaine public.</p><p id="r-585070" data-claire-element-id="585070">Il y a un <em>buffer</em> par flux, c'est-à-dire un <em>buffer</em> pour chaque variable <code data-claire-semantic="c">FILE*</code>.</p><p id="r-585071" data-claire-element-id="585071">Cette <em>bufferisation</em> s'applique également aux entrées et sorties sur la console. Par conséquent, le texte d'un <code data-claire-semantic="c">printf</code> ne s'affichera qu'après un <em>flush</em> (retour à la ligne, <em>buffer</em> plein, appel à <code data-claire-semantic="c">fflush</code>) du flux <code data-claire-semantic="c">stdout</code>. Il en va de même pour le flux d'erreur <code data-claire-semantic="c">stderr</code>. Dans le cas de l'entrée clavier, si le <em>buffer</em> est vide, le programme s'arrête et demande à l'utilisateur de taper une ligne. Cette ligne (terminée par le caractère <code data-claire-semantic="c">' '</code>) est ensuite copiée dans le buffer où elle est lue par scanf et consorts.</p><p id="r-585072" data-claire-element-id="585072">Ce comportement est à l'origine de nombreuses erreurs impliquant la fonction <code data-claire-semantic="c">scanf</code>. En effet, si, lors d'un appel à <code data-claire-semantic="c">scanf</code>, l'intégralité du <em>buffer</em> n'est pas lue, l'appel suivant lira la fin du <em>buffer</em> et ne s'arrêtera donc pas pour laisser l'utilisateur taper quelque chose. Il s'agit d'un problème fréquemment rencontré par les débutants ; voici donc une liste d'articles traitant du sujet plus en profondeur :</p><ul id="r-585081" data-claire-element-id="585081"><li id="r-585074" data-claire-element-id="585074"><p id="r-585073" data-claire-element-id="585073"><a href="http://www.siteduzero.com/tutoriel-3-14185-la-saisie-de-texte-securisee.html">la saisie de texte sécurisée ;</a></p></li><li id="r-585076" data-claire-element-id="585076"><p id="r-585075" data-claire-element-id="585075"><a href="http://www.siteduzero.com/tutoriel-3-133769-la-saisie-securisee-avec-scanf.html">la saisie de texte sécurisée, avec scanf ;</a></p></li><li id="r-585078" data-claire-element-id="585078"><p id="r-585077" data-claire-element-id="585077"><a href="http://www.siteduzero.com/tutoriel-3-35363-realiser-des-saisies-securisees-grace-a-fgets.html">réaliser des saisies sécurisées grâce à fgets ;</a></p></li><li id="r-585080" data-claire-element-id="585080"><p id="r-585079" data-claire-element-id="585079"><a href="http://xrenault.developpez.com/tutoriels/c/scanf/">scanf démythifiée.</a></p></li></ul><p id="r-585082" data-claire-element-id="585082">De nombreux programmeurs conseillent de vider le <em>buffer</em> d'entrée avant chaque utilisation de <code data-claire-semantic="c">scanf</code>. Nous pourrions être tentés d'utiliser la fonction <code data-claire-semantic="c">fflush</code> sur <code data-claire-semantic="c">stdin</code> pour le faire, mais...</p><aside id="r-585084" data-claire-element-id="585084" data-claire-semantic="error"><p id="r-585083" data-claire-element-id="585083">Si vous appelez fflush sur un flux en lecture, le comportement est indéterminé.</p></aside><p id="r-585085" data-claire-element-id="585085">Pour certains compilateurs, l'effet va être de vider le <em>buffer</em>. Dans ce cas, l'endroit où la lecture reprend sur le disque n'est pas spécifié. Sur d'autres plates-formes, l'effet sera totalement aléatoire. Dans tous les cas, vous n'avez aucune idée de ce qui va se passer, <strong>abstenez-vous donc d'appeler fflush sur des flux en entrée</strong>, en particulier <code data-claire-semantic="c">stdin</code>.</p><p id="r-585086" data-claire-element-id="585086">Il ne <strong>faut pas</strong> utiliser la fonction <code data-claire-semantic="c">fflush</code>, mais plutôt quelque chose du style :</p><pre id="r-585087" data-claire-element-id="585087"><code data-claire-semantic="c">void vider_buffer(void)
+{
+    int c;
+    do
+    {
+        c = fgetc(stdin);
+    } while(c != EOF &amp;&amp; c != '\n');
+}</code></pre><h3 id="r-les-fichiers-ouverts-en-lecture-ecriture" data-claire-element-id="585095">Les fichiers ouverts en lecture-écriture</h3><p id="r-585088" data-claire-element-id="585088">Les comportements indéterminés, comme on l'a vu, peuvent survenir aussi bien au sein du langage lui-même que dans la bibliothèque standard. Voici un nouvel exemple de ce dernier cas : si vous ouvrez un fichier en lecture-écriture (modes <code data-claire-semantic="c">&quot;r+&quot;</code> ou <code data-claire-semantic="c">&quot;w+&quot;</code>), il doit suivre des règles bien précises.</p><ul id="r-585093" data-claire-element-id="585093"><li id="r-585090" data-claire-element-id="585090"><p id="r-585089" data-claire-element-id="585089"><strong>Règle 1.</strong> Pour faire une <strong>lecture</strong> juste après une <strong>écriture</strong>, il faut d'abord appeler <code data-claire-semantic="c">fflush</code> ou déplacer le curseur du fichier (avec <code data-claire-semantic="c">fseek</code> par exemple).</p></li><li id="r-585092" data-claire-element-id="585092"><p id="r-585091" data-claire-element-id="585091"><strong>Règle 2.</strong> Pour faire une <strong>écriture</strong> juste après une <strong>lecture</strong>, il faut d'abord déplacer le curseur du fichier (avec <code data-claire-semantic="c">fseek</code> par exemple), sauf si la lecture a atteint la fin du fichier (EOF).</p></li></ul><p id="r-585094" data-claire-element-id="585094">Le non-respect de ces deux règles entraîne un comportement indéterminé. Pour faire simple, il est préférable de repositionner le curseur du fichier chaque fois que l'on passe de « lecture » à « écriture », et inversement. D'une façon générale, les fichiers ouverts en lecture-écriture sont délicats à manier et source d'erreur. Les cas où leur utilisation est justifiée sont assez rares, il est donc recommandé de les éviter lorsque c'est possible. :)</p><h2 id="r-les-changements-de-valeur-multiples" data-claire-element-id="585105">Les changements de valeur multiples</h2><p id="r-585097" data-claire-element-id="585097">Un dernier comportement indéterminé, peut-être plus ésotérique : les affectations multiples. La norme spécifie que toute instruction <strong>ne peut changer la valeur d'une variable qu'une seule fois</strong>, au maximum. Ainsi, des lignes telles que :</p><pre id="r-585098" data-claire-element-id="585098"><code data-claire-semantic="c">i = i++;</code></pre><p id="r-585099" data-claire-element-id="585099">ont un comportement indéterminé. La valeur de <code data-claire-semantic="c">i</code> est en effet incrémentée une première fois par l'opérateur <code data-claire-semantic="c">++</code>, puis changée par l'affectation <code data-claire-semantic="c">=</code>. La traduction que devrait avoir ce genre d'instructions en assembleur n'est pas claire ; aussi, le langage C ne précise pas la signification qu'elle doit avoir. Tout peut donc arriver, encore une fois, c'est donc une très mauvaise idée.</p><p id="r-585100" data-claire-element-id="585100">Ce genre d'erreurs survient parfois lorsqu'on tente d'écrire des <em>oneliners</em>, ces fonctions en une seule ligne. Prenons par exemple cet essai de fonction supprimant le premier caractère d'une chaîne :</p><pre id="r-585101" data-claire-element-id="585101"><code data-claire-semantic="c">void *my_chop(char *s)
+{
+    while(*s = * ++s) {}
+}</code></pre><p id="r-585102" data-claire-element-id="585102">Si vous êtes amateurs de ce genre de lignes cryptiques, les changements de valeurs multiples en une unique instruction ne sont jamais bien loin. :)</p><p id="r-585103" data-claire-element-id="585103">Nous avons fait un petit tour des comportements indéterminés et autres erreurs courantes en langage C. Cette liste est évidemment loin d'être exhaustive ; un recensement de toutes les erreurs possibles en langage C serait bien trop long pour être exploitable. Ceux qui veulent aller plus loin avec les UB peuvent consulter cette série d'articles : <strong><a href="http://blog.llvm.org/2011/05/what-every-c-programmer-should-know.html">ce que tout programmeur C devrait savoir sur les comportements indéterminés</a></strong> - <strong><a href="http://blog.llvm.org/2011/05/what-every-c-programmer-should-know_14.html">partie 2</a></strong> - <strong><a href="http://blog.llvm.org/2011/05/what-every-c-programmer-should-know_21.html">partie 3</a></strong>.</p><p id="r-585104" data-claire-element-id="585104">Nous allons plutôt voir des conseils généraux pour prévenir les erreurs qui peuvent survenir. Nous verrons également comment faciliter la détection et la résolution des problèmes. En avant ! :pirate:</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c">Débusquer et apprivoiser les bugs en C</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/qu-est-ce-qu-un-bug-en-c">
+Qu&#039;est-ce qu&#039;un bug en C ?
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/bestiaire-des-erreurs-les-plus-courantes">
+Bestiaire des erreurs les plus courantes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/comprendre-les-messages-du-compilateur">
+Comprendre les messages du compilateur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/une-aide-inestimable-le-debugger">
+Une aide inestimable : le debugger
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/conseils-pour-l-ecriture-du-code">
+Conseils pour l&#039;écriture du code
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/lisez-la-doc">
+Lisez la doc !
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/qu-est-ce-qu-un-bug-en-c">
+<span class="arrow"></span>
+<span class="next">Qu&#039;est-ce qu&#039;un bug en C ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/comprendre-les-messages-du-compilateur">
+<span class="next">Comprendre les messages du compilateur</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Comprendrelesmessagesducompilateur"></a><h2>Comprendre les messages du compilateur</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/bestiaire-des-erreurs-les-plus-courantes">
+<span class="arrow"></span>
+<span class="next">Bestiaire des erreurs les plus courantes</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/une-aide-inestimable-le-debugger">
+<span class="next">Une aide inestimable : le debugger</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-585107" data-claire-element-id="585107">Pour commencer cette partie, signalons qu'<strong>un compilateur n'est pas un débogueur</strong>. Certains zéros croient que le débogueur correspond à ce que M@teo21 nomme « la zone de la mort », c'est-à-dire l'endroit où les messages d'erreur apparaissent dans Code::Blocks. Il n'en est rien : cette zone affiche les messages du <strong>compilateur</strong>. Il vous explique pourquoi ce dernier n'a pas pu compiler votre programme.</p><p id="r-585108" data-claire-element-id="585108">Je vais vous révéler un secret : le compilateur est votre meilleur ami.</p><p id="r-585109" data-claire-element-id="585109">Loin d'être un adversaire pénible qui vous empêche de faire ce que vous voulez, le compilateur est un allié précieux qui peut vous signaler certains problèmes dans votre code.</p><p id="r-585110" data-claire-element-id="585110">Cependant, si l'on garde les réglages par défaut, votre compilateur n'est pas très bavard. Nous pouvons lui demander de nous signaler tous les problèmes qu'il voit !</p><h2 id="r-regler-son-compilateur" data-claire-element-id="585125">Régler son compilateur</h2><p id="r-585111" data-claire-element-id="585111">Voici une liste d'options de GCC permettant d'avoir plus de messages d'avertissement (<em>warnings</em>) sur votre code :</p><pre id="r-585112" data-claire-element-id="585112"><code data-claire-semantic="console">-Wall -Wextra -Wunreachable-code -Wwrite-strings -Wstrict-prototypes</code></pre><ul id="r-585119" data-claire-element-id="585119"><li id="r-585114" data-claire-element-id="585114"><p id="r-585113" data-claire-element-id="585113">Si vous compilez à la main depuis votre terminal ou votre éditeur, vous pouvez ajouter les options suivantes à la ligne de commande de GCC.</p></li><li id="r-585116" data-claire-element-id="585116"><p id="r-585115" data-claire-element-id="585115">Si vous utilisez un <strong>Makefile</strong>, vous pouvez rajouter ces options à la ligne de commande qui effectue la compilation. :)</p></li><li id="r-585118" data-claire-element-id="585118"><p id="r-585117" data-claire-element-id="585117">Dans <strong>Code::Blocks</strong>, cliquez sur le menu “<em>Settings</em>”, puis sur “<em>Compiler</em>”, puis sur l'onglet “<em>Compiler</em>” (pas deux fois le même :p ), puis sur “<em>Other options</em>”. Vous pouvez alors copier/coller les options que vous voulez passer à GCC.</p></li></ul><p id="r-585120" data-claire-element-id="585120">Si vous souhaitez en apprendre plus sur les options de GCC, vous pouvez consulter la <a href="http://gcc.gnu.org/onlinedocs/gcc/Option-Summary.html">documentation officielle</a>. Vous y trouverez notamment la signification de chacune de ces options, ainsi que d'autres réglages qu'il est possible de faire pour rendre GCC encore plus sensible.</p><p id="r-585121" data-claire-element-id="585121">Sous un système de type Unix (GNU/Linux, BSD...), vous pouvez également taper « man gcc » dans un terminal.</p><div id="r-585123" data-claire-element-id="585123" data-claire-semantic="question"><p id="r-585122" data-claire-element-id="585122">Et si j'utilise <strong>Visual C++</strong> ?</p></div><p id="r-585124" data-claire-element-id="585124">Allez dans les propriétés de votre projet, cliquez sur « <em>C/C++</em> » puis sur « <em>général</em> ». Vous pouvez alors choisir le niveau d'avertissement du compilateur. Nous vous recommandons de le mettre à 4.</p><h2 id="r-comprendre-les-messages-bizarres" data-claire-element-id="585128">Comprendre les messages bizarres</h2><p id="r-585126" data-claire-element-id="585126">Ces options vont certainement faire apparaître de nouveaux messages d'erreur, introduits par le mot “<em>Warning:</em>” (« Attention : »). En d'autres termes, ce ne sont pas des erreurs fatales (empêchant la compilation), mais des problèmes <strong>potentiels</strong> que le compilateur a détecté. Il arrive parfois que le compilateur panique et vous affiche un <em>warning</em> alors qu'il n'y a pas de problème. La règle est simple : vous pouvez ignorer un <em>warning</em><strong>si vous comprenez pourquoi il a été émis et pourquoi ça n'est pas un vrai problème</strong>.</p><p id="r-585127" data-claire-element-id="585127">Quoi qu'il en soit, il est fortement recommandé de chercher à comprendre la signification des messages d'erreur. Ne vous contentez pas de poster votre code avec le message sur le forum : Internet est plein de ressources ! Si vous comprenez l'anglais, vous pouvez comprendre la signification du message ; ils n'ont généralement rien de mystérieux. Sinon, les programmeurs plus expérimentés vous diront qu'il faut s'y mettre (avec raison !), mais vous pouvez également tenter d'utiliser un traducteur automatique. N'hésitez pas à copier votre message d'erreur dans un moteur de recherche et à lire le manuel de votre compilateur. Des recherches telles que “<em>GCC error messages explained</em>” donnent des <a href="http://ugweb.cs.ualberta.ca/~rod/tutorials/error_messagesC.html">pages intéressantes</a> à lire. :)</p><h2 id="r-les-warnings-et-autres-messages" data-claire-element-id="585159">Les <em>warnings</em> et autres messages</h2><p id="r-585129" data-claire-element-id="585129">Pour vous encourager à déchiffrer les messages de votre compilateur par vous-mêmes, je vous livre ici quelques traductions des messages les plus courants. N'hésitez pas à chercher ailleurs la signification des autres messages que vous obtenez !</p><pre id="r-585130" data-claire-element-id="585130"><code data-claire-semantic="console">warning: implicit declaration of function ‘****’
+error: redefinition of ‘****’
+undefined reference to ‘****’
+error: ‘****’ undeclared (first use in this function)</code></pre><p id="r-585131" data-claire-element-id="585131">Il s'agit d'une erreur classique liée au comportement de GCC : vous utilisez une fonction ou une variable non-déclarée.</p><p id="r-585132" data-claire-element-id="585132">Voici le problème : lorsque vous appelez une fonction non-déclarée (premier <em>warning</em>), GCC <strong>suppose tout de même que la fonction existe</strong>. Il donnera des types par défaut aux arguments et à la valeur de retour. Le fait est que GCC se trompera à coup sûr au sujet de ces types, et l'appel de fonction ne pourra donc pas se faire correctement. Si de plus la fonction est déclarée plus bas avec des types différents (deuxième <em>warning</em>), GCC aura deux prototypes différents pour une même fonction, ce qui est une erreur (le tout premier exemple de ce tutoriel !). Enfin, si votre fonction non-déclarée est en fait inexistante, GCC sera bien embêté pour trouver le code de la fonction à appeler au moment de l'édition des liens. Il renverra donc le troisième message d'erreur.</p><p id="r-585133" data-claire-element-id="585133">Le dernier message d'erreur concerne l'utilisation de variables inexistantes.</p><pre id="r-585134" data-claire-element-id="585134"><code data-claire-semantic="console">warning: comparison between signed and unsigned integer expressions
+warning: comparison of unsigned expression &gt;= 0 is always true</code></pre><p id="r-585135" data-claire-element-id="585135">Ces <em>warnings</em> surviennent lorsque vous comparez un entier signé (positif ou négatif) avec un entier non-signé (toujours positif). Ce type de comparaisons peut présenter des risques, GCC s'attend donc à ce que vous appliquiez un transtypage pour montrer que vous savez ce que vous faites.</p><pre id="r-585136" data-claire-element-id="585136"><code data-claire-semantic="console">warning: unused variable ‘****’
+warning: ‘****’ is used uninitialized in this function</code></pre><p id="r-585137" data-claire-element-id="585137">Ces <em>warnings</em> sont assez transparents. Dans le premier cas, vous avez une variable que votre fonction n'utilise jamais. Si cette fonction n'est pas encore finalisée et que vous êtes conscients de ce que vous faites, c'est normal. Autrement, il y a certainement une instruction de votre code qui ne fait pas ce à quoi vous vous attendez.<br/> Le deuxième <em>warning</em> survient lorsque vous essayez de lire une variable qui n'a pas encore de valeur. Le résultat d'une telle opération est complètement aléatoire, et ce n'est certainement pas ce que vous voulez. Vous avez donc un <em>warning</em>.</p><pre id="r-585138" data-claire-element-id="585138"><code data-claire-semantic="console">error: expected ‘;’, identifier or ‘(’ before ‘*’
+error: expected declaration or statement at end of input
+warning : missing braces around initializer
+warning: suggest braces around empty body in an ‘if’ statement</code></pre><p id="r-585139" data-claire-element-id="585139">Ces erreurs et <em>warnings</em> signalent qu'il y a des points-virgules <code data-claire-semantic="c">;</code> ou des accolades <code data-claire-semantic="c">{}</code> en trop ou manquantes. Dans l'ordre :</p><ul id="r-585148" data-claire-element-id="585148"><li id="r-585141" data-claire-element-id="585141"><p id="r-585140" data-claire-element-id="585140">il manque un point-virgule, probablement après une déclaration de structure ;</p></li><li id="r-585143" data-claire-element-id="585143"><p id="r-585142" data-claire-element-id="585142">il manque une accolade fermante quelque part (ne vous fiez pas au numéro de ligne de cette erreur) ;</p></li><li id="r-585145" data-claire-element-id="585145"><p id="r-585144" data-claire-element-id="585144">vous initialisez un tableau à deux dimensions comme un tableau à une dimension ;</p></li><li id="r-585147" data-claire-element-id="585147"><p id="r-585146" data-claire-element-id="585146">vous avez un point-virgule en trop immédiatement après un bloc <code data-claire-semantic="c">if</code>, <code data-claire-semantic="c">while</code>, <code data-claire-semantic="c">for</code>...</p></li></ul><pre id="r-585149" data-claire-element-id="585149"><code data-claire-semantic="console">error: invalid conversion from ‘void*’ to ‘int*’
+warning: passing argument N of ‘****’ discards ‘const’ qualifier from pointer target type
+warning: expected ‘char *’ but argument is of type ‘const char *’</code></pre><p id="r-585150" data-claire-element-id="585150">Les erreurs de pointeurs sont toujours les plus rigolotes. :) Vous utilisez un pointeur du mauvais type à un endroit donné, ce qui donnera presque sûrement une erreur de segmentation à l'exécution.</p><p id="r-585151" data-claire-element-id="585151">La première erreur révèle que vous compilez en C++ et non en C. Ces deux langages sont <strong>presque</strong> compatibles, mais il subsiste de menues différences, telles que celle-ci. Le C++ ne tolère pas qu'un pointeur <code data-claire-semantic="c">void*</code> soit converti implicitement en un autre type de pointeur. Le C, pour sa part, l'autorise et s'en sert notamment pour le retour de la fonction malloc. Vous devriez donc avoir cette erreur sur un appel à malloc.</p><p id="r-585152" data-claire-element-id="585152">Si vous le souhaitez, vous pouvez demander au compilateur de générer une erreur lorsqu'il est en mode C++ grâce à ces directives :</p><pre id="r-585153" data-claire-element-id="585153"><code data-claire-semantic="c">#ifdef __cplusplus
+#error Vous utilisez un compilateur C++ pour compiler un code C.
+#endif</code></pre><p id="r-585154" data-claire-element-id="585154">Les deux autres <em>warnings</em> surviennent lorsque vous tentez d'utiliser un pointeur à la place d'un autre, un <code data-claire-semantic="c">int*</code> pour un <code data-claire-semantic="c">char*</code> par exemple. Notez d'ailleurs qu'il est interdit de passer un pointeur <code data-claire-semantic="c">const</code> là où un pointeur de données non-constantes est attendu ! Autrement, il deviendrait possible de modifier une valeur constante... Ce qui résulterait là encore en une <em>segfault</em>.</p><pre id="r-585155" data-claire-element-id="585155"><code data-claire-semantic="console">error: lvalue required as left operand of assignment
+warning : operation on * may be undefined</code></pre><p id="r-585156" data-claire-element-id="585156">Les instructions que vous avez tapé n'ont pas de sens. Relisez attentivement la ligne indiquée, vous devriez rapidement comprendre ce qui se passe. :) Le premier message dénote probablement une confusion entre <code data-claire-semantic="c">=</code> et <code data-claire-semantic="c">==</code>.</p><div id="r-585158" data-claire-element-id="585158"><p id="r-585157" data-claire-element-id="585157">Merci à <a href="http://www.siteduzero.com/membres-294-45753.html">Taurre</a>, <a href="http://www.siteduzero.com/membres-294-140169.html">GurneyH</a>, <a href="http://www.siteduzero.com/membres-294-213878.html">Sabeurre</a>, <a href="http://www.siteduzero.com/membres-294-257806.html">Lebrian</a> et <a href="http://www.siteduzero.com/membres-294-181268.html">Pouet_forever</a> pour <a href="http://www.siteduzero.com/forum-83-679188-p1-listons-les-messages-courants-de-gcc.html">leurs contributions</a> à cette section.</p></div><h2 id="r-pour-en-finir-avec-le-compilateur" data-claire-element-id="585162">Pour en finir avec le compilateur...</h2><p id="r-585160" data-claire-element-id="585160">Je vous recommande en outre la lecture du tutoriel Nanoc sur le compilateur g++. En effet, g++ est la version C++ du compilateur gcc, et son tutoriel n'est en fait pas spécifique au C++ : tout ce qu'il dit est valable avec gcc.</p><p id="r-585161" data-claire-element-id="585161"><a href="http://www.siteduzero.com/tutoriel-3-499712-c-maitriser-le-compilateur-g.html">Lire le tutoriel : Maîtriser le compilateur g++</a><br/> Par Nanoc.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c">Débusquer et apprivoiser les bugs en C</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/qu-est-ce-qu-un-bug-en-c">
+Qu&#039;est-ce qu&#039;un bug en C ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/bestiaire-des-erreurs-les-plus-courantes">
+Bestiaire des erreurs les plus courantes
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/comprendre-les-messages-du-compilateur">
+Comprendre les messages du compilateur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/une-aide-inestimable-le-debugger">
+Une aide inestimable : le debugger
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/conseils-pour-l-ecriture-du-code">
+Conseils pour l&#039;écriture du code
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/lisez-la-doc">
+Lisez la doc !
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/bestiaire-des-erreurs-les-plus-courantes">
+<span class="arrow"></span>
+<span class="next">Bestiaire des erreurs les plus courantes</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/une-aide-inestimable-le-debugger">
+<span class="next">Une aide inestimable : le debugger</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Uneaideinestimableledebugger"></a><h2>Une aide inestimable : le debugger</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/comprendre-les-messages-du-compilateur">
+<span class="arrow"></span>
+<span class="next">Comprendre les messages du compilateur</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/conseils-pour-l-ecriture-du-code">
+<span class="next">Conseils pour l&#039;écriture du code</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-585164" data-claire-element-id="585164">Le débogueur (<em>debugger</em>) vous permet d'exécuter votre programme pas à pas, de mettre en pause l'exécution pour contrôler son état, puis de la reprendre. Il permet d'afficher la pile des appels : « main a appelé initialiser qui a appelé fgets qui a écrit à une adresse invalide ». Il permet également de vous prévenir chaque fois qu'une variable est lue ou modifiée. D'une façon générale, il permet d'exécuter votre programme en contrôlant tous les aspects de son exécution, même les plus avancés.</p><p id="r-585165" data-claire-element-id="585165">Si vous compilez avec GCC, vous voudrez probablement <a href="http://www.siteduzero.com/tutoriel-3-38738-deboguer-son-programme-avec-gdb.html">déboguer votre programme avec GDB</a>.</p><p id="r-585166" data-claire-element-id="585166">Même si vous n'en faites pas une utilisation très poussée, c'est un bon investissement d'apprendre à se servir du débogueur. Si une segfault survient, il peut vous indiquer la fonction, et même la ligne où le problème est apparu, ce qui peut être d'une grande aide. Il existe de nombreux tutoriels pour l'utilisation de GDB sur le Web.</p><p id="r-585167" data-claire-element-id="585167"><a href="http://www.siteduzero.com/tutoriel-3-544477-c-deboguer-avec-code-blocks.html">Lire le tutoriel : Déboguer avec Code::Blocks</a><br/> Par Nanoc.</p><p id="r-585168" data-claire-element-id="585168">Notez qu'il existe plusieurs types de débogueurs. GDB est un débogueur <strong>source </strong>: il permet d'exécuter votre programme ligne par ligne, de visualiser les valeurs des variables, etc. Mais il existe également des débogueurs <strong>mémoire</strong>, qui vous aident à traquer les fuites de mémoires et les lectures/écritures à des adresses invalides. Valgrind est l'un d'entre eux.</p><p id="r-585169" data-claire-element-id="585169"><a href="http://www.siteduzero.com/tutoriel-3-473022-debuguer-facilement-avec-valgrind.html">Lire le tutoriel : Débuguer facilement avec Valgrind</a><br/><em>Par Tados.</em></p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c">Débusquer et apprivoiser les bugs en C</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/qu-est-ce-qu-un-bug-en-c">
+Qu&#039;est-ce qu&#039;un bug en C ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/bestiaire-des-erreurs-les-plus-courantes">
+Bestiaire des erreurs les plus courantes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/comprendre-les-messages-du-compilateur">
+Comprendre les messages du compilateur
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/une-aide-inestimable-le-debugger">
+Une aide inestimable : le debugger
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/conseils-pour-l-ecriture-du-code">
+Conseils pour l&#039;écriture du code
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/lisez-la-doc">
+Lisez la doc !
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/comprendre-les-messages-du-compilateur">
+<span class="arrow"></span>
+<span class="next">Comprendre les messages du compilateur</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/conseils-pour-l-ecriture-du-code">
+<span class="next">Conseils pour l&#039;écriture du code</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Conseilspourl039critureducode"></a><h2>Conseils pour l&#039;écriture du code</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/une-aide-inestimable-le-debugger">
+<span class="arrow"></span>
+<span class="next">Une aide inestimable : le debugger</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/lisez-la-doc">
+<span class="next">Lisez la doc !</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-faites-des-tests" data-claire-element-id="585204">Faites des tests !</h2><p id="r-585171" data-claire-element-id="585171">Comme vous l'avez vous dans le bestiaire des erreurs courantes, les <strong>pointeurs</strong> et les <strong>fichiers</strong> sont la source de nombreux problèmes. Nous allons donc introduire un maximum de <strong>tests</strong> autour de ces aspects du code. Dès que nous verrons quelque chose qui se passe mal... Tiens au fait, que faire quand tout va mal ?</p><div id="r-585173" data-claire-element-id="585173" data-claire-semantic="question"><p id="r-585172" data-claire-element-id="585172">C'est vrai, ça ! On me dit toujours de tester les retours de <code data-claire-semantic="c">malloc</code> et <code data-claire-semantic="c">fopen</code>, mais je ne sais jamais quoi faire s'ils échouent ! Que faire ?</p></div><p id="r-585174" data-claire-element-id="585174">L'important est d'expliquer à l'utilisateur (autrement dit, à vous !) ce qui s'est passé. Plus vous donnerez de détails sur la panne, plus vous pourrez la corriger facilement. Dans cette optique, la variable <code data-claire-semantic="c">errno</code> et la fonction <code data-claire-semantic="c">perror</code> sont vos amies. Voyons comment elles fonctionnent.</p><p id="r-585175" data-claire-element-id="585175">La variable <code data-claire-semantic="c">errno</code> est globale, on peut y accéder depuis tout point du programme. Chaque fois qu'une fonction de la bibliothèque standard, telle que <code data-claire-semantic="c">fopen</code>, rencontre un problème, un code d'erreur est stocké dans <code data-claire-semantic="c">errno</code>. Par exemple, sous GNU/Linux, si <code data-claire-semantic="c">fopen</code> est appelée avec un second argument incorrect, <code data-claire-semantic="c">errno</code> est changée en <strong>EINVAL</strong>. Cet <strong>EINVAL</strong> est une macro (#define) définissant un entier, dont la valeur signifie « argument INVALide ».</p><aside id="r-585177" data-claire-element-id="585177" data-claire-semantic="information"><p id="r-585176" data-claire-element-id="585176">Les macros dont le nom commence par un « E » sont réservées pour les codes d'erreur. Vous ne devez pas faire de #define dont le nom commence par un E.</p></aside><p id="r-585178" data-claire-element-id="585178">La variable <code data-claire-semantic="c">errno</code>, ainsi que quelques codes d'erreurs, sont déclarées dans l'en-tête errno.h, qui est lui-même inclus dans de nombreux en-têtes standard (notamment stdio.h). Cependant, la majorité des codes d'erreur dépendent du système, seuls quelques-uns sont définis directement par la norme du C. Cet état de fait rend l'utilisation d'<code data-claire-semantic="c">errno</code> délicate. Pour simplifier le diagnostic d'erreurs, les fonctions <code data-claire-semantic="c">perror</code> (déclarée dans stdio.h) et <code data-claire-semantic="c">strerror</code> (string.h) sont à notre disposition.</p><p id="r-585179" data-claire-element-id="585179">La fonction <code data-claire-semantic="c">perror</code> affiche sur la sortie d'erreur standard un message d'erreur dépendant de la valeur d'<code data-claire-semantic="c">errno</code>. Voici un exemple d'utilisation :</p><pre id="r-585180" data-claire-element-id="585180"><code data-claire-semantic="c">#include &lt;stdio.h&gt;
+
+int main(void)
+{
+    FILE *f = fopen(&quot;fichier.txt&quot;, &quot;kzf&quot;);
+    if(f != NULL)
+    {
+        fputs(&quot;Bonjour les amis !&quot;, f);
+        fclose(f);
+    }
+    else
+    {
+        fprintf(stderr, &quot;Erreur fichier %s, ligne %u, &quot;, __FILE__, __LINE__);
+        perror(&quot;la fonction fopen a rencontré un problème &quot;);
+    }
+    return 0;
+}</code></pre><p id="r-585181" data-claire-element-id="585181">Résultat :</p><pre id="r-585182" data-claire-element-id="585182"><code data-claire-semantic="console">Erreur fichier main.c, ligne 13, la fonction fopen a rencontré un problème : invalid argument</code></pre><p id="r-585183" data-claire-element-id="585183">Comme vous le voyez, la fonction <code data-claire-semantic="c">perror</code> prend en paramètre une chaîne de caractères qui est affichée avant le message. Si vous souhaitez plutôt récupérer la chaîne correspondant à l'erreur, il vous suffit d'appeler la fonction <code data-claire-semantic="c">strerror</code>.</p><p id="r-585184" data-claire-element-id="585184">Vous disposez à présent d'un outil puissant pour comprendre d'où viennent vos erreurs !</p><p id="r-585185" data-claire-element-id="585185">Il existe une fonction similaire à <code data-claire-semantic="c">strerror</code> pour la SDL : <code data-claire-semantic="c">SDL_GetError()</code>.</p><pre id="r-585186" data-claire-element-id="585186"><code data-claire-semantic="c">#include &lt;stdio.h&gt;
+#include &quot;SDL.h&quot;
+
+int main(void)
+{
+    if(SDL_Init(SDL_INIT_VIDEO) != 0)
+    {
+        fprintf(stderr, &quot;Erreur de SDL_Init, fichier %s, ligne %u : %s\n&quot;, __FILE__, __LINE__, SDL_GetError());
+        return 1;
+    }
+    /* ... */
+    return 0;
+}</code></pre><p id="r-585187" data-claire-element-id="585187">Une fonction similaire existe pour SDL_TTF : <strong>TTF_GetError</strong>.</p><div id="r-585189" data-claire-element-id="585189" data-claire-semantic="question"><p id="r-585188" data-claire-element-id="585188">Qu'est-ce que stderr ? Qu'est-ce que le flux d'erreur standard ?</p></div><p id="r-585190" data-claire-element-id="585190">Lorsque votre programme démarre, au début de la fonction main, trois fichiers sont déjà ouverts sans que vous n'ayez rien à faire. Les objets <code data-claire-semantic="c">FILE*</code> correspondants sont nommés <code data-claire-semantic="c">stdin</code>, <code data-claire-semantic="c">stdout</code>, et <code data-claire-semantic="c">stderr</code>. Ils s'appellent respectivement :</p><ul id="r-585197" data-claire-element-id="585197"><li id="r-585192" data-claire-element-id="585192"><p id="r-585191" data-claire-element-id="585191">le <strong>flux d'entrée standard</strong>, qui sert au programme à lire les données dont il a besoin pour travailler ;</p></li><li id="r-585194" data-claire-element-id="585194"><p id="r-585193" data-claire-element-id="585193">le <strong>flux de sortie standard</strong>, qui lui permet d'écrire le résultat de son traitement ;</p></li><li id="r-585196" data-claire-element-id="585196"><p id="r-585195" data-claire-element-id="585195">et le <strong>flux d'erreur standard</strong>, qui permet d'afficher des messages d'erreur, sans les mélanger avec le résultat du programme.</p></li></ul><p id="r-585198" data-claire-element-id="585198">Par défaut, ces fichiers sont redirigés vers la console : lire dans <code data-claire-semantic="c">stdin</code> ou écrire dans <code data-claire-semantic="c">stderr</code>/<code data-claire-semantic="c">stdout</code> revient donc à lire au clavier ou à écrire dans la console. Mais il est possible (et même très courant) de rediriger l'entrée ou les sorties standard vers des fichiers ! Sous un système de type Unix (tels que GNU/Linux, BSD, Mac OS), nous procéderions comme suit :</p><pre id="r-585199" data-claire-element-id="585199"><code data-claire-semantic="console">wc &lt; /var/log/access.log &gt; statistiques.txt</code></pre><p id="r-585200" data-claire-element-id="585200">Le programme « wc » (<strong>w</strong>ord <strong>c</strong>ount) aura alors pour entrée standard le fichier « /var/log/access.log », et pour sortie standard « statistiques.txt ». La conséquence de ceci est que les fonctions <code data-claire-semantic="c">printf</code> &amp; <code data-claire-semantic="c">scanf</code> liront pour lui dans ces fichiers, plutôt que dans le terminal.</p><p id="r-585201" data-claire-element-id="585201">C'est la raison pour laquelle il est si difficile de faire des programmes console interactifs en C : les fonction de stdio.h ne sont pas prévues pour cela ! Ainsi, l'opération « effacer le contenu de la console » paraît à première vue raisonnable, mais perd tout son sens si la sortie du programme est un fichier. Voilà pourquoi les tutoriels ne disent pas comment effacer la console ou écrire du texte en couleur : dans la norme du C, ces instructions n'ont pas lieu d'être.</p><aside id="r-585203" data-claire-element-id="585203" data-claire-semantic="information"><p id="r-585202" data-claire-element-id="585202">Astuce : si vous testez de nombreuses fois un programme comportant de nombreux scanf, vous pouvez écrire ce que vous souhaitez taper dans un fichier texte, puis rediriger l'entrée de votre programme vers ce fichier. Vous vous épargnerez ainsi la corvée de tout retaper à chaque test du programme. :)</p></aside><h2 id="r-tenez-des-journaux-intimes" data-claire-element-id="585213">Tenez des journaux intimes !</h2><p id="r-585205" data-claire-element-id="585205">Les explications précédentes sont bien adaptées au programme en console de type « filtre », qui lisent une certaine entrée et écrivent une certaine sortie. Mais qu'en est-il des programmes interactifs, tels que les <a href="http://fr.wikipedia.org/wiki/Daemon_(informatique)">deamons</a> ou les programmes graphiques ? Ceux qui ont déjà administré des serveurs le savent : ce genre de programmes écrivent des <strong>journaux</strong>, aussi appelés “<em>logs</em>”. Pour découvrir ce qu'il en est des programmes graphiques, tentez l'expérience suivante (sous un système de type Unix de préférence) : lancez quelques programmes graphiques depuis un terminal. Que remarquez-vous ? Certains programmes sont très bavards, voire inondent littéralement la console de messages ! Ces programmes écrivent régulièrement sur la console ce qu'ils sont en train de faire. Bien entendu, l'immense majorité des utilisateurs ne verra jamais ces messages... Mais d'un autre côté, l'immense majorité des utilisateurs ne s'intéressent pas au fonctionnement interne du programme. :)</p><p id="r-585206" data-claire-element-id="585206">Voici le résultat de mon expérience :</p><pre id="r-585207" data-claire-element-id="585207"><code data-claire-semantic="console">guiloooo@claudius:~$ vlc
+VLC media player 1.1.3 The Luggage (revision exported)
+[...]
+Warning: call to srand(1314524565)
+Warning: call to rand()
+Blocked: call to setlocale(6, &quot;&quot;)
+
+(process:18984): Gtk-WARNING **: Locale not supported by C library.
+        Using the fallback 'C' locale.
+Warning: call to signal(13, 0x1)
+Blocked: call to setlocale(1, &quot;C&quot;)
+Blocked: call to setlocale(1, &quot;fr_FR.UTF-8&quot;)
+
+(&lt;unknown&gt;:18984): Gtk-WARNING **: Default font does not have a positive size</code></pre><p id="r-585208" data-claire-element-id="585208"><em>Exemple de sortie console lors du lancement de <a href="http://www.videolan.org/vlc/">VLC</a>. On peut y voir le report d'appels à des fonctions particulières (setlocale, rand) ainsi que des messages d'erreur.</em></p><p id="r-585209" data-claire-element-id="585209">En revanche, cette propriété est extrêmement intéressante pour nous, développeurs. Si le programme crashe subitement, nous pourrons voir rapidement ce qu'il était en train de faire. La technique est donc d'écrire dans un <strong>journal</strong>, qui peut être tout simplement le flux d'erreur standard (donc la console), ce que votre programme est en train de faire. Il y a un équilibre à trouver : trop de messages encombreront le code source du programme et les journaux, trop peu ne vous donneront pas assez d'informations en cas de problème. Personnellement, je place un message au début de chaque fonction importante, les opérations délicates pouvant échouer par exemple, puis j'ajoute des messages au besoin, suivant les crashes et les problèmes que je rencontre.</p><aside id="r-585211" data-claire-element-id="585211" data-claire-semantic="warning"><p id="r-585210" data-claire-element-id="585210">Je ne parle <strong>pas</strong> ici de « déboguer à coups de printf », c'est-à-dire de rajouter des printfs juste avant un crash du programme pour essayer de comprendre ce qui se passe. Je vous invite à consulter <a href="http://www.siteduzero.com/tutoriel-3-544477-c-deboguer-avec-code-blocks.html">le tutoriel de Nanoc</a>, déjà mentionné plus haut, pour de plus amples détails. :)</p></aside><p id="r-585212" data-claire-element-id="585212">N'hésitez pas à essayer cette technique si vous vous lancer dans un <strong>gros</strong> projet graphique ou un serveur ! <em>A contrario</em>, si vous débutez ou que vous faites un petit projet, l'écriture de journaux risque plus de vous ralentir que de vous aider. De toute manière, vous pouvez toujours rajouter des messages après le début du développement. :)</p><h2 id="r-ecrivez-du-code-clair" data-claire-element-id="585220">Écrivez du code clair !</h2><p id="r-585214" data-claire-element-id="585214">Revenons aux erreurs en C, si vous le voulez bien. :)</p><p id="r-585215" data-claire-element-id="585215">Ceci devrait être une évidence pour tous, c'est pourquoi je le place à la fin. Cependant, il s'agit d'un point incontournable pour la prévention des erreurs en C : un code <strong>clair</strong>, <strong>bien indenté</strong>, dont les variables portent <strong>des noms explicites</strong> et dont le <strong>découpage en fonctions</strong> est logique, aura d'autant moins de chances de planter. Une erreur de débutant dans un code impeccablement présenté saute aux yeux, tandis que cette même erreur perdue au fond d'un vague bouillon de lignes de code sera difficile à dénicher. Et si <strong>vous</strong> n'avez pas assez d'expérience pour repérer une erreur de débutant, pensez aux gens qui vous aideront sur le forum. Facilitez-leur la tâche. ;)</p><p id="r-585216" data-claire-element-id="585216">Autant que possible, essayez d'écrire le code d'une façon habituelle, qui ne surprenne pas les gens habitués. Il ne s'agit pas ici de brider vos possibilités, mais plutôt de permettre aux programmeurs expérimentés de comprendre votre programme en un coup d'œil. Ainsi, des deux fonctions :</p><pre id="r-585217" data-claire-element-id="585217"><code data-claire-semantic="c">int somme(int tab[], int taille)
+{
+    int total = 0;
+    int i;
+
+    for(i = 0; i &lt; taille; i++)
+    {
+        total += tab[i];
+    }
+
+    return total;
+}</code></pre><pre id="r-585218" data-claire-element-id="585218"><code data-claire-semantic="c">int somme(int tab[], int taille)
+{
+    int total = 0;
+    int *t = tab;
+
+    while(t-tab &lt; taille)
+    {
+        total += *t;
+        t++;
+    }
+    
+    return total;
+}</code></pre><p id="r-585219" data-claire-element-id="585219">La première est à préférer, car c'est ce à quoi tout le monde est habitué.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c">Débusquer et apprivoiser les bugs en C</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/qu-est-ce-qu-un-bug-en-c">
+Qu&#039;est-ce qu&#039;un bug en C ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/bestiaire-des-erreurs-les-plus-courantes">
+Bestiaire des erreurs les plus courantes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/comprendre-les-messages-du-compilateur">
+Comprendre les messages du compilateur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/une-aide-inestimable-le-debugger">
+Une aide inestimable : le debugger
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/conseils-pour-l-ecriture-du-code">
+Conseils pour l&#039;écriture du code
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/lisez-la-doc">
+Lisez la doc !
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/une-aide-inestimable-le-debugger">
+<span class="arrow"></span>
+<span class="next">Une aide inestimable : le debugger</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/lisez-la-doc">
+<span class="next">Lisez la doc !</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lisezladoc"></a><h2>Lisez la doc !</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/conseils-pour-l-ecriture-du-code">
+<span class="arrow"></span>
+<span class="next">Conseils pour l&#039;écriture du code</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-585222" data-claire-element-id="585222">Comme on l'a vu, certaines fonctions peuvent échouer (<code data-claire-semantic="c">fopen</code>, <code data-claire-semantic="c">SDL_Init</code>) et nous laisser des informations sur les raisons de cet échec (<code data-claire-semantic="c">perror</code>, <code data-claire-semantic="c">SDL_GetError</code>). Mais comment le savoir ? Lorsque vous découvrez une nouvelle fonction, il n'est pas évident de deviner si elle peut échouer ou non, ni de voir où trouver des informations complémentaires. La seule source fiable à ce sujet est <strong>la documentation de la bibliothèque</strong> à laquelle appartient la fonction. Par exemple, la <a href="http://wiki.libsdl.org/moin.cgi/CategoryAPI">documentation de la SDL</a> nous apprend que la fonction <a href="http://wiki.libsdl.org/moin.cgi/SDL_Init?highlight=%28%5CbCategoryAPI%5Cb%29%7C%28SDLFunctionTemplate%29">SDL_Init</a> peut renvoyer un nombre négatif si elle échoue. Nous sommes alors dirigés vers la fonction <a href="http://wiki.libsdl.org/moin.cgi/SDL_GetError">SDL_GetError</a> pour obtenir plus d'informations. Il y a même un exemple de code qui ressemble furieusement au nôtre ! Comme vous le voyez, toutes ces bonnes pratiques ne sortent pas du chapeau. ;)</p><p id="r-585223" data-claire-element-id="585223">Il est donc important de toujours connaître l'emplacement de la documentation de chaque bibliothèque que vous utilisez. Le plus souvent, on peut dénicher les documentations en quelques minutes via un moteur de recherche tel que Google. Je vous conseille de télécharger les documentations que vous consultez le plus couramment sur votre disque dur. Vous pourrez ainsi continuer à développer sereinement, même sans accès Internet.</p><p id="r-585224" data-claire-element-id="585224">Il existe un cas particulier : celui de la bibliothèque standard. Chaque compilateur vient avec sa propre implémentation de cette bibliothèque, et possède donc la documentation de sa propre version.</p><p id="r-585225" data-claire-element-id="585225"><a href="http://msdn.microsoft.com/fr-fr/library/2aza74he(v=VS.80).aspx">Accéder à la documentation de la bibliothèque C de Microsoft.</a><br/><em>Valable si vous utilisez Visual C++.</em></p><p id="r-585226" data-claire-element-id="585226"><a href="http://www.gnu.org/s/hello/manual/libc/index.html">Accéder à la documentation de la bibliothèque C de GCC.</a><em><br/> Valable si vous utilisez Code::Blocks.</em></p><p id="r-585227" data-claire-element-id="585227">Le problème est que ces deux documentations contiennent <em>bien plus</em> que la bibliothèque standard définie par la norme du C. Chacune possède ses propres extensions, spécifique à son système. Pour vous aider à écrire du code propre et portable, voici une documentation ne couvrant <strong>que</strong> les fonctions définies par la norme :</p><p id="r-585228" data-claire-element-id="585228"><a href="http://www.utas.edu.au/infosys/info/documentation/C/CStdLib.html">Accéder à <em>une</em> documentation de la bibliothèque standard du C.</a><br/><em>Telle que définie par la norme, toujours valable.</em></p><p id="r-585229" data-claire-element-id="585229">Si vous avez un doute au sujet d'une fonction précise de la bibliothèque standard, vous pouvez taper <code data-claire-semantic="console">man fonction</code> dans un terminal (sous un système de type Unix) ou dans un moteur de recherche. :)</p><p id="r-585230" data-claire-element-id="585230">J'insiste à nouveau : tous ces liens ne sont pas là pour faire joli. Vous devriez les consulter pour chaque nouvelle fonction que vous utilisez, afin de savoir si elle peut échouer ou non. Pour vous aider, voici une liste <strong>non-exhaustive</strong> de fonctions dont il <strong>faut</strong> tester la valeur de retour.</p><table id="r-585277" data-claire-element-id="585277"><thead id="r-585236" data-claire-element-id="585236"><tr id="r-585235" data-claire-element-id="585235"><th id="r-585232" data-claire-element-id="585232"><p id="r-585231" data-claire-element-id="585231">Fonctions standard</p></th><th id="r-585234" data-claire-element-id="585234"><p id="r-585233" data-claire-element-id="585233">Fonctions SDL</p></th></tr></thead><tbody id="r-585276" data-claire-element-id="585276"><tr id="r-585275" data-claire-element-id="585275"><td id="r-585255" data-claire-element-id="585255"><ul id="r-585253" data-claire-element-id="585253"><li id="r-585238" data-claire-element-id="585238"><p id="r-585237" data-claire-element-id="585237">fopen</p></li><li id="r-585240" data-claire-element-id="585240"><p id="r-585239" data-claire-element-id="585239">scanf &amp; consorts</p></li><li id="r-585242" data-claire-element-id="585242"><p id="r-585241" data-claire-element-id="585241">fread, fgets, recv</p></li><li id="r-585244" data-claire-element-id="585244"><p id="r-585243" data-claire-element-id="585243">fwrite, send</p></li><li id="r-585246" data-claire-element-id="585246"><p id="r-585245" data-claire-element-id="585245">malloc</p></li><li id="r-585248" data-claire-element-id="585248"><p id="r-585247" data-claire-element-id="585247">calloc</p></li><li id="r-585250" data-claire-element-id="585250"><p id="r-585249" data-claire-element-id="585249">realloc</p></li><li id="r-585252" data-claire-element-id="585252"><p id="r-585251" data-claire-element-id="585251">...</p></li></ul><p id="r-585254" data-claire-element-id="585254">Informations sur l'erreur :<br/><strong>perror</strong></p></td><td id="r-585274" data-claire-element-id="585274"><ul id="r-585272" data-claire-element-id="585272"><li id="r-585257" data-claire-element-id="585257"><p id="r-585256" data-claire-element-id="585256">SDL_Init</p></li><li id="r-585259" data-claire-element-id="585259"><p id="r-585258" data-claire-element-id="585258">SDL_SetVideoMode</p></li><li id="r-585261" data-claire-element-id="585261"><p id="r-585260" data-claire-element-id="585260">SDL_CreateRGBSurface</p></li><li id="r-585263" data-claire-element-id="585263"><p id="r-585262" data-claire-element-id="585262">SDL_LoadBMP</p></li><li id="r-585265" data-claire-element-id="585265"><p id="r-585264" data-claire-element-id="585264">IMG_Load</p></li><li id="r-585267" data-claire-element-id="585267"><p id="r-585266" data-claire-element-id="585266">TTF_Init</p></li><li id="r-585269" data-claire-element-id="585269"><p id="r-585268" data-claire-element-id="585268">TTF_OpenFont</p></li><li id="r-585271" data-claire-element-id="585271"><p id="r-585270" data-claire-element-id="585270">...</p></li></ul><p id="r-585273" data-claire-element-id="585273">Informations sur l'erreur :<br/><strong>SDL_GetError</strong> et <strong>TTF_GetError</strong>.</p></td></tr></tbody></table><p id="r-585278" data-claire-element-id="585278">Cette liste n'est pas exhaustive. Nombreuses sont les fonctions qui peuvent échouer ! Voici une petite astuce pour les repérer. Sont suspectes toutes les fonctions qui :</p><ul id="r-585287" data-claire-element-id="585287"><li id="r-585280" data-claire-element-id="585280"><p id="r-585279" data-claire-element-id="585279">initialisent une bibliothèque ;</p></li><li id="r-585282" data-claire-element-id="585282"><p id="r-585281" data-claire-element-id="585281">prennent un nom de fichier ou de dossier en paramètre ;</p></li><li id="r-585284" data-claire-element-id="585284"><p id="r-585283" data-claire-element-id="585283">renvoient un pointeur ;</p></li><li id="r-585286" data-claire-element-id="585286"><p id="r-585285" data-claire-element-id="585285">écrivent le résultat à une adresse passée en paramètre, mais renvoient quelque chose.</p></li></ul><p id="r-585288" data-claire-element-id="585288">Lisez-bien les documentations. :)</p><p id="r-585289" data-claire-element-id="585289">Ouf ! Nous voilà maintenant à la fin de ce tutoriel. Nous avons vu beaucoup de choses, n'est-ce pas ? Pour s'ordonner un peu les idées, voici un petit résumé :</p><ul id="r-585306" data-claire-element-id="585306"><li id="r-585291" data-claire-element-id="585291"><p id="r-585290" data-claire-element-id="585290">réglez votre compilateur pour afficher les <em>warnings</em> ;</p></li><li id="r-585293" data-claire-element-id="585293"><p id="r-585292" data-claire-element-id="585292">assurez-vous de comprendre chaque message d'erreur et chaque <em>warning </em>;</p></li><li id="r-585295" data-claire-element-id="585295"><p id="r-585294" data-claire-element-id="585294">surveillez vos pointeurs et vos tableaux ;</p></li><li id="r-585297" data-claire-element-id="585297"><p id="r-585296" data-claire-element-id="585296">testez les retours de fonction ;</p></li><li id="r-585299" data-claire-element-id="585299"><p id="r-585298" data-claire-element-id="585298">affichez des messages d'erreur explicatifs ;</p></li><li id="r-585301" data-claire-element-id="585301"><p id="r-585300" data-claire-element-id="585300">lisez la documentation ;</p></li><li id="r-585303" data-claire-element-id="585303"><p id="r-585302" data-claire-element-id="585302">faites des recherches sur Internet ;</p></li><li id="r-585305" data-claire-element-id="585305"><p id="r-585304" data-claire-element-id="585304">en dernier ressort, venez nous voir sur <a href="http://www.siteduzero.com/forum-81-126-langage-c.html">le forum</a> ! :)</p></li></ul><p id="r-585307" data-claire-element-id="585307">Nous espérons que ce tutoriel vous aura été utile. :) Si vous souhaitez en savoir plus sur les pièges et erreurs en C, vous pouvez consulter les deux articles suivants :</p><ul id="r-585312" data-claire-element-id="585312"><li id="r-585309" data-claire-element-id="585309"><p id="r-585308" data-claire-element-id="585308"><a href="http://nicolasj.developpez.com/articles/pieges/">les pièges du C</a> ;</p></li><li id="r-585311" data-claire-element-id="585311"><p id="r-585310" data-claire-element-id="585310"><a href="http://nicolasj.developpez.com/articles/erreurs/">les erreurs courantes en C</a>.</p></li></ul><p id="r-585313" data-claire-element-id="585313">Je tiens à remercier tous les contributeurs réguliers du <a href="http://www.siteduzero.com/forum-81-126-langage-c.html">forum de C</a>, mes <a href="http://www.siteduzero.com/forum-83-701294-p1-beta-on-eviter-les-erreurs-en-langage-c.html">aimables relecteurs</a> lors de la beta-test de ce tutoriel, ainsi que l'équipe de validation du site.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c">Débusquer et apprivoiser les bugs en C</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/qu-est-ce-qu-un-bug-en-c">
+Qu&#039;est-ce qu&#039;un bug en C ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/bestiaire-des-erreurs-les-plus-courantes">
+Bestiaire des erreurs les plus courantes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/comprendre-les-messages-du-compilateur">
+Comprendre les messages du compilateur
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/une-aide-inestimable-le-debugger">
+Une aide inestimable : le debugger
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/conseils-pour-l-ecriture-du-code">
+Conseils pour l&#039;écriture du code
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/lisez-la-doc">
+Lisez la doc !
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/debusquer-et-apprivoiser-les-bugs-en-c/conseils-pour-l-ecriture-du-code">
+<span class="arrow"></span>
+<span class="next">Conseils pour l&#039;écriture du code</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/debusquer-et-apprivoiser-les-bugs-en-c.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 19:54:44 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/debusquer-et-apprivoiser-les-bugs-en-c.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 03:39:49 GMT -->
+</html>

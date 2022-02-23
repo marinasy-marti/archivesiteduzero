@@ -1,0 +1,523 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/compilation-a-la-volee-avec-libtcc.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 09:01:51 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/compilation-a-la-volee-avec-libtcc.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:36:56 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Compilation à la volée avec libtcc</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/compilation-a-la-volee-avec-libtcc.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Compilation à la volée avec libtcc</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Compilationlavoleaveclibtcc">Compilation à la volée avec libtcc</a><br/><a href="#TCCetlibtcc">TCC et libtcc</a><br/><a href="#Compilons">Compilons !</a><br/><a href="#Manipulationdesymbole">Manipulation de symbole</a><br/><a href="#TPRalisationd039uncompilateur">[TP] Réalisation d&#039;un compilateur</a><br/></div>
+<a name="Compilationlavoleaveclibtcc"></a><h2>Compilation à la volée avec libtcc</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/compilation-a-la-volee-avec-libtcc/tcc-et-libtcc">
+<span class="next">TCC et libtcc</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-344870" data-claire-element-id="344870">Vous avez toujours voulu avoir <strong>un compilateur dans votre programm</strong>e ? Vous voulez laisser à vos utilisateurs la possibilité de coder en C dans votre application, en exécutant le code <strong>à chaud</strong> ? La libtcc est faite pour vous ! Et en plus, ce n'est qu'une question de minute tellement c'est simple !</p><aside id="r-344872" data-claire-element-id="344872" data-claire-semantic="warning"><p id="r-344871" data-claire-element-id="344871">LibTCC n'est <strong>pas</strong> entièrement portable, mais est compatible posix (vous pourrez donc l'utiliser si vous disposez par exemple du compilateur GCC, ou mingw, qui sont fournis, par exemple, avec code::block). Cependant Visual studio permet de compiler la libtcc.</p></aside><aside id="r-344874" data-claire-element-id="344874" data-claire-semantic="error"><p id="r-344873" data-claire-element-id="344873">Le code présenté dans ce tutoriel n'est pas vraiment robuste : pour des raisons de clarté, certaines vérifications ont été omises (notamment, les retours de malloc)</p></aside>
+</div><a name="TCCetlibtcc"></a><h2>TCC et libtcc</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/compilation-a-la-volee-avec-libtcc/compilons">
+<span class="next">Compilons !</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-un-peu-d-histoire-12" data-claire-element-id="344879">Un peu d'histoire</h2><p id="r-344875" data-claire-element-id="344875">Tout d'abord, laissez-moi présenter ce qui est à l'origine de libtcc, le compilateur TCC, écrit par Fabrice Bellard (Qui a notamment créé QEMU et qui est recordman du nombre de décimales de pi...). TCC, c'est un compilateur extrêmement léger (environ 100ko), qui gère le C sauf certaines fonctionnalités avancées (<em>trigraphe</em> et <em>proper type</em> notamment). Jusque-là, rien de bien enchanteur. Sauf que ce logiciel compile neuf fois plus vite que GCC. Oui, vous avez bien lu : <strong>neuf fois</strong> !</p><p id="r-344876" data-claire-element-id="344876">De ce logiciel est né libtcc qui permet de compiler du code C directement dans une application et l'exécuter sans redémarrer le programme (à chaud).</p><aside id="r-344878" data-claire-element-id="344878" data-claire-semantic="information"><p id="r-344877" data-claire-element-id="344877">Pour l'anecdote, tcc peut être utilisé comme interpréteur C, qui fonctionne de la même manière que les scripts sh : mettez la ligne <code data-claire-semantic="bash">#!/bin/tcc -run</code> en début de fichier, puis placez votre programme C, rendez le fichier exécutable et il sera compilé puis exécuté comme un script shell normal.</p></aside><h2 id="r-installation-de-tcc-et-libtcc" data-claire-element-id="344888">Installation de TCC et libtcc</h2><h3 id="r-sous-les-unix-like" data-claire-element-id="344882">Sous les UNIX-like</h3><p id="r-344880" data-claire-element-id="344880">Pour commencer, il vous faut les sources de tcc, disponible sur le <a href="http://bellard.org/tcc/">site officiel</a>, section <strong>download</strong>. Il faut bien choisir le code source et pas la version exécutable.<br/> Extrayez l'archive dans un répertoire, puis, dans un terminal, déplacez-vous dans celui-ci. Compilez et installez ensuite le programme. Ainsi, vous aurez à exécuter les commandes suivantes :</p><pre id="r-344881" data-claire-element-id="344881"><code data-claire-semantic="console">tar xjf tcc-0.9.25.tar.bz2
+./configure
+make
+make install # avec les droits root</code></pre><h3 id="r-sous-windows-24" data-claire-element-id="344887">Sous windows</h3><p id="r-344883" data-claire-element-id="344883">Pour commencer, il vous faut les sources de tcc, disponible sur le <a href="http://bellard.org/tcc/">site officiel</a>, section <strong>download</strong>. Il faut bien choisir le code source et pas la version exécutable.</p><p id="r-344884" data-claire-element-id="344884">Il existe 2 méthodes pour utiliser libtcc sous windows : utiliser visual studio ou mingw.</p><p id="r-344885" data-claire-element-id="344885"><strong>Avec visual studio</strong> : Compilez le fichier libtcc.c, disponible à la racine des sources, en une bibliothèque .lib. Vous pourrez l'utiliser ultérieurement en lieu et place de libtcc.a dans visual studio</p><p id="r-344886" data-claire-element-id="344886"><strong>Avec mingw </strong> : Dans le dossier &quot;win32&quot; de l'archive, vous trouverez un script batch &quot;build-tcc.bat&quot; qu'il suffit d'exécuter une fois (double clic) pour compiler les exécutables ainsi que la librairie elle-même (un nouveau dossier &quot;libtcc&quot; est créé, et il contient les fichiers &quot;libtcc.h&quot; et &quot;libtcc.a&quot;). Notez que la compilation avec MinGW sous windows peut causer des problème lors de l'exécution (Je recommande donc plutôt d'utiliser la méthode précédente).</p><h2 id="r-configurer-votre-projet-pour-utiliser-libtcc" data-claire-element-id="344892">Configurer votre projet pour utiliser libtcc</h2><p id="r-344889" data-claire-element-id="344889">Si vous utilisez directement GCC, vous n'aurez qu'à utiliser la ligne <code data-claire-semantic="bash">gcc votrefichiersource.c -ldl -ltcc</code> : en plus de lier avec libtcc (libtcc.a), il est nécessaire de lier avec libdl (Librairie pour charger dynamiquement du code exécutable, utilisée par exemple lors de l’utilisation de bibliothèque dynamique comme les .dll ou .so).</p><p id="r-344890" data-claire-element-id="344890">Avec un IDE, spécifiez que l'éditeur de lien doit utiliser votre fichier libtcc.a, et incluez libtcc.h dans votre projet.</p><p id="r-344891" data-claire-element-id="344891">Les utilisateurs de Visual Studio utiliseront la librairie qu'ils ont compilé à la place de libtcc.a .</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/compilation-a-la-volee-avec-libtcc">Compilation à la volée avec libtcc</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/compilation-a-la-volee-avec-libtcc/tcc-et-libtcc">
+TCC et libtcc
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/compilation-a-la-volee-avec-libtcc/compilons">
+Compilons !
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/compilation-a-la-volee-avec-libtcc/manipulation-de-symbole">
+Manipulation de symbole
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/compilation-a-la-volee-avec-libtcc/tp-realisation-d-un-compilateur">
+[TP] Réalisation d&#039;un compilateur
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/compilation-a-la-volee-avec-libtcc/compilons">
+<span class="next">Compilons !</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Compilons"></a><h2>Compilons !</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/compilation-a-la-volee-avec-libtcc/tcc-et-libtcc">
+<span class="arrow"></span>
+<span class="next">TCC et libtcc</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/compilation-a-la-volee-avec-libtcc/manipulation-de-symbole">
+<span class="next">Manipulation de symbole</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-344894" data-claire-element-id="344894">Je vais donner un exemple tout fait que je commenterais petit à petit. Il s’agit d’un programme qui affichera « Hello World ! (32)» (Comme c’est original…), mais avec quelques subtilités.</p><pre id="r-344895" data-claire-element-id="344895"><code data-claire-semantic="c">#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+#include &lt;libtcc.h&gt;
+
+char my_program[] =
+        &quot;int fonction(int n) &quot;
+        &quot;{&quot;
+        &quot;    printf(\&quot;Hello World! (%d)\\n\&quot;,n);&quot;
+        &quot;    return 0; &quot;
+        &quot;}&quot;;
+
+int main(int argc, char **argv)
+{
+        TCCState *s;
+
+        int (*entry)(int);
+        void *mem;
+        int size;
+
+        s = tcc_new();
+        if (!s) {
+                fprintf(stderr, &quot;Impossible de creer un contexte TCC\n&quot;);
+                exit(1);
+        }
+
+        tcc_set_output_type(s, TCC_OUTPUT_MEMORY);
+
+        if (tcc_compile_string(s, my_program) != 0) {
+                printf(&quot;Erreur de compilation !\n&quot;);
+                return 1;
+        }
+
+        size = tcc_relocate(s, NULL);
+        if (size == -1)
+                return 1;
+
+        mem = malloc(size);
+        tcc_relocate(s, mem);
+
+        entry = tcc_get_symbol(s, &quot;fonction&quot;);
+
+        tcc_delete(s);
+
+        entry(32);
+
+        free(mem);
+        return 0;
+}</code></pre><h2 id="r-commentaires-5" data-claire-element-id="344921">Commentaires:</h2><pre id="r-344896" data-claire-element-id="344896"><code data-claire-semantic="c">#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+#include &lt;libtcc.h&gt;</code></pre><p id="r-344897" data-claire-element-id="344897">Très classique, à ceci près que l'on inclut <em>libtcc.h</em></p><pre id="r-344898" data-claire-element-id="344898"><code data-claire-semantic="c">char my_program[] =
+        &quot;int fonction(int n)&quot;
+        &quot;{&quot;
+        &quot;    printf(\&quot;Hello World! (%d)\\n\&quot;,n);&quot;
+        &quot;    return 0;&quot;
+        &quot;}&quot;;</code></pre><p id="r-344899" data-claire-element-id="344899">Dans ce tableau de char est contenue une fonction qui sera compilée et exécutée. Bien sûr, vous n'êtes pas obligé de faire ainsi, vous pouvez récupérer directement l'entrée utilisateur, ou un champ texte de votre application graphique. L'important est de l'avoir disponible sous la forme d'un tableau de char.<br/> Notez cependant ici que j’ai dû échapper (placer un antislash devant) les double quote (\&quot; ) de façon à éviter de fermer malencontreusement la chaine de caractère. De la même manière, j'ai échappé le en \ pour qu'il ne soit pas interprété en un retour à la ligne lors de la compilation.</p><pre id="r-344900" data-claire-element-id="344900"><code data-claire-semantic="c">TCCState *s;
+/// … ///
+s = tcc_new();
+if (!s)
+{
+        fprintf(stderr, &quot;Impossible de creer un context TCC\n&quot;);
+        exit(1);
+}</code></pre><p id="r-344901" data-claire-element-id="344901">Création d'un contexte TCC, ce qui se fait par création d'un pointeur, puis acquisition du contexte via un appel à <strong>tcc_new</strong> Ce contexte identifie notre compilation. Ainsi, en faisant plusieurs contextes, on peut compiler plusieurs choses en même temps. Sachez aussi que quasiment toutes les fonctions de libtcc prennent pour premier argument un contexte TCC.</p><p id="r-344902" data-claire-element-id="344902">Un contexte TCC est une sorte de variable, dont on ne connait pas le contenu et qui stocke toutes les informations nécessaires à une compilation avec libtcc.</p><pre id="r-344903" data-claire-element-id="344903"><code data-claire-semantic="c">tcc_set_output_type(s, TCC_OUTPUT_MEMORY);</code></pre><p id="r-344904" data-claire-element-id="344904">Cette ligne est importante. Elle indique à libtcc sous quelle forme nous allons récupérer la sortie de la compilation. Dans notre cas, nous allons l'exécuter, il est donc nécessaire de stocker le code exécutable en mémoire (TCC_OUTPUT_MEMORY). Remarquez que l'on passe comme premier argument le contexte TCC créé précédemment.</p><pre id="r-344905" data-claire-element-id="344905"><code data-claire-semantic="c">if (tcc_compile_string(s, my_program) != 0)
+{
+        printf(&quot;Erreur de compilation !\n&quot;);
+        return 1;
+}</code></pre><p id="r-344906" data-claire-element-id="344906">On compile le programme avec l'instruction <code data-claire-semantic="c">tcc_compile_string(s, my_program) </code>, puis, si la fonction renvoie autre chose que 0, c'est qu'il y a eu une erreur de compilation. Dommage :diable: . Les arguments sont : le contexte TCC et le tableau de char contenant le programme.</p><pre id="r-344907" data-claire-element-id="344907"><code data-claire-semantic="c">size = tcc_relocate(s, NULL);
+if (size == -1)
+        return 1;</code></pre><p id="r-344908" data-claire-element-id="344908">Cette instruction est plus compliquée. tcc_relocate sert à copier notre résultat de compilation depuis le contexte (virtuellement opaque à nos yeux) vers un endroit dans la mémoire que l’on contrôle ; malheureusement, nous ne savons pas combien ce code exécutable prend comme place, nous allons donc le copier une fois à vide (on l'envoie vers NULL, qui n’est pas valable), mais on obtient en retour le nombre d'octet copié, c'est-à-dire la taille du code compilé.</p><pre id="r-344909" data-claire-element-id="344909"><code data-claire-semantic="c">mem = malloc(size);
+tcc_relocate(s, mem);</code></pre><p id="r-344910" data-claire-element-id="344910">Cette étape est très logiquement l'allocation de la mémoire disponible (déterminée à l'étape précédente et via <em>malloc</em>), et la copie réelle du code exécutable vers cette adresse (via <em>tcc_relocate</em>).</p><pre id="r-344911" data-claire-element-id="344911"><code data-claire-semantic="c">entry = tcc_get_symbol(s, &quot;fonction&quot;);</code></pre><p id="r-344912" data-claire-element-id="344912">Comme vous avez pu le constater, dans notre code compilé n'était pas présent de fonction main. Et pour cause, elle n'est pas nécessaire ! Nous allons obtenir l'adresse de notre fonction via <em>tcc_get_symbol</em>. Comme vous l'avez deviné, il prend comme argument un contexte TCC et un nom de symbole (un symbole est une variable, une fonction,...). Dans notre cas, nous voulons l'adresse de la fonction <strong>fonction</strong>. Notez tout de même que nous aurions pu appeler cette fonction comme nous le voulions, par exemple <strong>leGateauEstUnMensoge</strong>, <strong>trucbidule</strong>, ou même <strong>main</strong> (ce n'est pas interdit).</p><aside id="r-344914" data-claire-element-id="344914" data-claire-semantic="information"><p id="r-344913" data-claire-element-id="344913">Qu'est-ce que <strong>entry</strong> ? Ce truc mystérieux que vous avez vu en début de main() est un pointeur sur fonction, en l'occurrence un pointeur sur une fonction qui prend en argument un int et renvois un int. Pour vous faire mieux comprendre: voici un pointeur sur une fonction qui prend en argument 2 int et un char, et renvois un int: <code data-claire-semantic="c">int (*pointeur)(int, int, char); </code>. Les arguments des pointeurs doivent être les mêmes que la fonction ciblée ! Dans notre exemple, ils le sont, nous pouvons donc l’utiliser</p></aside><pre id="r-344915" data-claire-element-id="344915"><code data-claire-semantic="c">tcc_delete(s);</code></pre><p id="r-344916" data-claire-element-id="344916">Ceci est la suppression du contexte TCC. Cela libère de la mémoire.</p><pre id="r-344917" data-claire-element-id="344917"><code data-claire-semantic="c">entry(32);</code></pre><p id="r-344918" data-claire-element-id="344918">Et le moment de vérité : exécution de la fonction ! Votre programma va afficher &quot;Hello World ! (32)&quot;. Si vous aviez appelé la fonction avec 23 comme argument (<code data-claire-semantic="c">entry(23) ; </code>), elle aurait affiché &quot;Hello world ! (23)&quot;. Les arguments passés au pointeur sont passés à la fonction.</p><pre id="r-344919" data-claire-element-id="344919"><code data-claire-semantic="c">free(mem);
+return 0;</code></pre><p id="r-344920" data-claire-element-id="344920">Libération de la mémoire et fin du programme.</p><h2 id="r-execution-du-programme" data-claire-element-id="344936">Exécution du programme</h2><p id="r-344922" data-claire-element-id="344922">Lorsque vous exécuterez ce programme, vous obtiendrez la sortie suivante :</p><pre id="r-344923" data-claire-element-id="344923"><code data-claire-semantic="console">Hello world! (32)</code></pre><p id="r-344924" data-claire-element-id="344924">Décortiquons le comportement du programme, en entrant dans les détails :</p><ul id="r-344935" data-claire-element-id="344935"><li id="r-344926" data-claire-element-id="344926"><p id="r-344925" data-claire-element-id="344925">Lancement du programme</p></li><li id="r-344928" data-claire-element-id="344928"><p id="r-344927" data-claire-element-id="344927">Acquisition d'un contexte TCC (les opérations réalisées ici nous sont inconnues)</p></li><li id="r-344930" data-claire-element-id="344930"><p id="r-344929" data-claire-element-id="344929">Compilation du programme contenu dans le tableau <strong>my_program</strong></p></li><li id="r-344932" data-claire-element-id="344932"><p id="r-344931" data-claire-element-id="344931">Récupération de l'adresse de la fonction <strong>fonction(int n) </strong> dans le pointeur <strong>entry</strong></p></li><li id="r-344934" data-claire-element-id="344934"><p id="r-344933" data-claire-element-id="344933">Exécution de cette fonction via le pointeur de fonction <strong>entry</strong></p></li></ul>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/compilation-a-la-volee-avec-libtcc">Compilation à la volée avec libtcc</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/compilation-a-la-volee-avec-libtcc/tcc-et-libtcc">
+TCC et libtcc
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/compilation-a-la-volee-avec-libtcc/compilons">
+Compilons !
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/compilation-a-la-volee-avec-libtcc/manipulation-de-symbole">
+Manipulation de symbole
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/compilation-a-la-volee-avec-libtcc/tp-realisation-d-un-compilateur">
+[TP] Réalisation d&#039;un compilateur
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/compilation-a-la-volee-avec-libtcc/tcc-et-libtcc">
+<span class="arrow"></span>
+<span class="next">TCC et libtcc</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/compilation-a-la-volee-avec-libtcc/manipulation-de-symbole">
+<span class="next">Manipulation de symbole</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Manipulationdesymbole"></a><h2>Manipulation de symbole</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/compilation-a-la-volee-avec-libtcc/compilons">
+<span class="arrow"></span>
+<span class="next">Compilons !</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/compilation-a-la-volee-avec-libtcc/tp-realisation-d-un-compilateur">
+<span class="next">[TP] Réalisation d&#039;un compilateur</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-344938" data-claire-element-id="344938">Jusque-là, vous avez appris à faire compiler un morceau de code. Mais vous n'avez pas pu intervenir dessus. C'est là que vient la manipulation de symbole : vous pouvez rendre une fonction de votre programme accessible dans le morceau de code qui sera compilé et l'inverse sera aussi possible. Voyons ensemble les possibilités de la manipulation de symbole.</p><aside id="r-344940" data-claire-element-id="344940" data-claire-semantic="information"><p id="r-344939" data-claire-element-id="344939">Dans ce chapitre, je ne donnerais plus de code complet, mais des exemples</p></aside><h2 id="r-tcc-add-symbol" data-claire-element-id="344949">tcc_add_symbol()</h2><p id="r-344941" data-claire-element-id="344941">Soit l'instruction :</p><pre id="r-344942" data-claire-element-id="344942"><code data-claire-semantic="c">tcc_add_symbol(s, &quot;addition&quot;, add);</code></pre><p id="r-344943" data-claire-element-id="344943">Cette instruction prend trois arguments : un contexte TCC, un nom de symbole et un symbole existant. Cela signifie que, dans le contexte de compilation <strong>s</strong>, la fonction <strong>add</strong> sera disponible sous le nom <strong>addition</strong>.</p><p id="r-344944" data-claire-element-id="344944">Vous pourrez, dans le code que vous compilerez, faire appel à la fonction <strong>addition</strong>, en utilisant le même prototype que la fonction <strong>add</strong>.<br/> Si la fonction <strong>add</strong> est codée ainsi:</p><pre id="r-344945" data-claire-element-id="344945"><code data-claire-semantic="c">int add(int a, int b){return a+b;}</code></pre><p id="r-344946" data-claire-element-id="344946">Alors on pourra y faire appel depuis le programme allant être compilé via</p><pre id="r-344947" data-claire-element-id="344947"><code data-claire-semantic="c">addition(1,2); // résultat 3</code></pre><p id="r-344948" data-claire-element-id="344948">C'est assez utile si vous voulez créer une sorte de <a href="http://fr.wikipedia.org/wiki/Binding">binding</a> C avec votre programme.</p><h2 id="r-tcc-get-symbol" data-claire-element-id="344954">tcc_get_symbol()</h2><p id="r-344950" data-claire-element-id="344950">Cette instruction fait exactement l'inverse de la fonction précédente. Nous l'avons brièvement décrite durant le chapitre précédent.</p><p id="r-344951" data-claire-element-id="344951">Soit l'instruction :</p><pre id="r-344952" data-claire-element-id="344952"><code data-claire-semantic="c">void (*func)(int entier);
+func = tcc_get_symbol(s, &quot;ma_fonction&quot;)</code></pre><p id="r-344953" data-claire-element-id="344953">Dans le contexte <strong>s</strong>, l'adresse du symbole <strong>ma_fonction</strong>, qui doit être présent dans le code qui a été compilé (dans le code que l'on a fournit à <strong>tcc_compile_string</strong>, il doit y avoir une fonction nommée <strong>ma_fonction</strong>, qui accepte comme argument un entier) est récupérée dans le pointeur sur fonction <strong>func</strong>. Nous pouvons ensuite exécuter la fonction par un appel au pointeur de fonction, ainsi : <code data-claire-semantic="c">func(42); </code>, comme un appel de fonction normal.</p><h2 id="r-exemple-82" data-claire-element-id="344959">Exemple</h2><p id="r-344955" data-claire-element-id="344955">Reprenons le premier exemple, avec quelques ajouts :</p><pre id="r-344956" data-claire-element-id="344956"><code data-claire-semantic="c">#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+#include &lt;libtcc.h&gt;
+
+char ma_fonction[] =
+        &quot;int soustraction(int a,int b) &quot;
+        &quot;{&quot;
+        &quot;    return difference(a,b); &quot;
+        &quot;}&quot;;
+
+
+int soustraire(int a, int b)
+{
+        return a-b;
+}
+
+int main(int argc, char **argv)
+{
+        TCCState *s;
+
+        int (*entry)(int,int);
+        void *mem;
+        int size;
+
+        s = tcc_new();
+        if (!s) {
+                fprintf(stderr, &quot;Impossible de creer un contexte TCC\n&quot;);
+                exit(1);
+        }
+
+        tcc_add_symbol(s,&quot;difference&quot;, soustraire);
+
+        tcc_set_output_type(s, TCC_OUTPUT_MEMORY);
+
+        if (tcc_compile_string(s, ma_fonction) != 0) {
+                printf(&quot;Erreur de compilation !\n&quot;);
+                return 1;
+        }
+
+        size = tcc_relocate(s, NULL);
+        if (size == -1)
+                return 1;
+
+        mem = malloc(size);
+        tcc_relocate(s, mem);
+
+        entry = tcc_get_symbol(s, &quot;soustraction&quot;);
+
+        tcc_delete(s);
+
+        printf(&quot;%d \n&quot;, entry(10, 3) );
+
+        free(mem);
+        return 0;
+}</code></pre><p id="r-344957" data-claire-element-id="344957">A la ligne 33, nous exportons la fonction <strong>soustraire</strong>, sous le nom de <strong>difference</strong>, dans le contexte TCC <strong>s</strong>. Nous avons bien pris soin de placer cette ligne <strong>avant</strong> la compilation, pour éviter une erreur (si nous l'avions défini après, la compilation aurait échoué, car la fonction différence ne serait pas accessible).</p><p id="r-344958" data-claire-element-id="344958">A la ligne 49, nous avons obtenu un pointeur sur la fonction <strong>soustraction</strong> et nous avons affiché le résultat de la soustraction de 10 et 3 à la ligne 53.</p><h2 id="r-mise-en-garde-3" data-claire-element-id="344962">Mise en garde</h2><p id="r-344960" data-claire-element-id="344960">Vous devez toujours garder en tête, lors de la manipulation de symbole, et a fortiori lors de l'exécution du code entré par un utilisateur, que des fonctions peuvent entrer en collision : si votre programme originel contient une fonction nommée <strong>ouvrirFichier</strong> et que le code que vous compilez avec libtcc en contient aussi une, elles vont entrer en collision, et le comportement sera indéfini [1]. De la même manière, réfléchissez à deux fois avant d'utiliser l'entrée utilisateur : celui-ci est sournois (ou idiot) et pourra avec une grande facilité crasher votre application (un appel à exit() est si vite arrivé :diable: )</p><p id="r-344961" data-claire-element-id="344961">[1] En réalité, il est très répandu que la fonction la plus récente écrase celle d'origine, mais vous ne devez <strong>pas</strong> vous fier à ce comportement qui est possiblement lié à une implémentation de libdl !</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/compilation-a-la-volee-avec-libtcc">Compilation à la volée avec libtcc</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/compilation-a-la-volee-avec-libtcc/tcc-et-libtcc">
+TCC et libtcc
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/compilation-a-la-volee-avec-libtcc/compilons">
+Compilons !
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/compilation-a-la-volee-avec-libtcc/manipulation-de-symbole">
+Manipulation de symbole
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/compilation-a-la-volee-avec-libtcc/tp-realisation-d-un-compilateur">
+[TP] Réalisation d&#039;un compilateur
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/compilation-a-la-volee-avec-libtcc/compilons">
+<span class="arrow"></span>
+<span class="next">Compilons !</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/compilation-a-la-volee-avec-libtcc/tp-realisation-d-un-compilateur">
+<span class="next">[TP] Réalisation d&#039;un compilateur</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="TPRalisationd039uncompilateur"></a><h2>[TP] Réalisation d&#039;un compilateur</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/compilation-a-la-volee-avec-libtcc/manipulation-de-symbole">
+<span class="arrow"></span>
+<span class="next">Manipulation de symbole</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-344964" data-claire-element-id="344964">Vous avez les connaissances nécessaires pour réaliser un petit compilateur. Voici donc un TP.</p><h2 id="r-cahier-des-charges-16" data-claire-element-id="344974">Cahier des charges</h2><ul id="r-344973" data-claire-element-id="344973"><li id="r-344966" data-claire-element-id="344966"><p id="r-344965" data-claire-element-id="344965">Compile un fichier C en un exécutable</p></li><li id="r-344968" data-claire-element-id="344968"><p id="r-344967" data-claire-element-id="344967">Support de l'option -l &lt;nom de la librairie&gt; qui lie le programme avec la librairie</p></li><li id="r-344970" data-claire-element-id="344970"><p id="r-344969" data-claire-element-id="344969">Support de l'option -L &lt;chemin&gt; qui permet de rechercher les librairies spécifiées avec -l dans le chemin &lt;chemin&gt;</p></li><li id="r-344972" data-claire-element-id="344972"><p id="r-344971" data-claire-element-id="344971">Un seul fichier à l'entrée (je suis de bonne humeur…)</p></li></ul><h2 id="r-indices" data-claire-element-id="344982">Indices</h2><p id="r-344975" data-claire-element-id="344975">Regardez dans libtcc.h pour une liste de tous les prototypes disponibles. Vous aurez notamment besoin de <strong>tcc_add_library</strong> et <strong>tcc_add_library_path</strong>. Vous n'êtes pas obligé d'utiliser <strong>tcc_compile_string</strong> (cela implique de charger le fichier de vos propres moyens), je vous conseille <code data-claire-semantic="c">tcc_add_file(TCCState *s, const char *filename) </code> qui prend pour paramètre un contexte TCC et une chaine de caractère contenant le chemin du fichier à compiler. Cette fonction peut être utilisée plusieurs fois pour intégrer plusieurs fichiers.</p><p id="r-344976" data-claire-element-id="344976">Et si vraiment vous séchez:</p><div id="r-344981" data-claire-element-id="344981"><p id="r-344977" data-claire-element-id="344977">Cachez ces petits papiers dans votre trousse</p><pre id="r-344978" data-claire-element-id="344978"><code data-claire-semantic="c">tcc_set_output_type(s, TCC_OUTPUT_EXE);</code></pre><p id="r-344979" data-claire-element-id="344979">et</p><pre id="r-344980" data-claire-element-id="344980"><code data-claire-semantic="c">tcc_output_file(s,&quot;mon_executable_qui_sera_genere&quot;);</code></pre></div><h2 id="r-correction-116" data-claire-element-id="344989">Correction</h2><p id="r-344983" data-claire-element-id="344983">Je vous donne les sources d'une des premières versions de mon compilateur <strong>Irae</strong>. Vous noterez l'utilisation de <strong>getopt</strong> pour gérer les options</p><p id="r-344984" data-claire-element-id="344984"></p><div id="r-344986" data-claire-element-id="344986"><pre id="r-344985" data-claire-element-id="344985"><code data-claire-semantic="c">/*
+Copyright © 2010 Briand William
+This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+
+*/
+#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+#include &lt;getopt.h&gt;
+
+#include &lt;libtcc.h&gt;
+
+char copyright[] = 	&quot;Irae  Copyright (C) 2010  Briand William\n&quot;
+                    &quot;This program comes with ABSOLUTELY NO WARRANTY;\n&quot;
+                    &quot;This is free software, and you are welcome to redistribute it\n&quot;
+                    &quot;under certain conditions; You should have received a&quot;
+                    &quot; copy of the GNU General Public License along with this &quot;
+                    &quot;program. If not, see &lt;http://www.gnu.org/licenses/&gt;.\n&quot;
+                    &quot;\n&quot;
+                    &quot;irae -o &lt;output&gt; -i &lt;file&gt; : Compile &lt;file&gt; en &lt;output&gt;\n&quot;
+                    &quot;-L &lt;path&gt; : ajoute &lt;path&gt; au chemin de recherche des librairie\n&quot;
+                    &quot;-l &lt;lib&gt; : Lie le programme avec la librairie &lt;lib&gt;\n&quot;;
+
+int main(int argc,char **argv)
+{
+        char *output;
+        output = &quot;a.out&quot;;
+        char *input;
+        input = NULL;
+        TCCState *s;
+        s = tcc_new();
+        if (!s) {
+                fprintf(stderr, &quot;Erreur: impossible de créer un contexte TCC\n&quot;);
+                exit(1);
+        }
+
+        tcc_set_output_type(s, TCC_OUTPUT_EXE);
+
+        extern char *optarg;
+        extern int optind, opterr;
+        int c;
+        while ((c = getopt (argc, argv, &quot;hi:l:L:o:&quot;)) != -1) {
+                switch (c) {
+                case 'o':
+                        output = optarg;
+                        break;
+                case 'i':
+                        input = optarg;
+                case 'l':
+                        tcc_add_library(s, optarg);
+                        break;
+                case 'L':
+                        tcc_add_library_path(s, optarg);
+                        break;
+                case 'h':
+                        printf(copyright);
+                        return 1;
+                        break;
+                }
+        }
+        if (input == NULL) {
+                printf(&quot;Fichier a l'entree manquant (-i &lt;fichier&gt;)\n&quot;) ;
+                return 1;
+        }
+        if ( tcc_add_file(s,input) != 0) {
+                printf(&quot;Erreur de compilation. \n&quot;);
+        }
+
+        tcc_output_file(s,output);
+        tcc_delete(s);
+}</code></pre></div><p id="r-344987" data-claire-element-id="344987">Je rappelle que la compilation s'effectue avec les option suivantes:</p><pre id="r-344988" data-claire-element-id="344988"><code data-claire-semantic="console">gcc fichierAcompiler.c -ltcc -ldl -o compileur</code></pre><h2 id="r-plus-1" data-claire-element-id="345008">Plus...</h2><p id="r-344990" data-claire-element-id="344990">Voilà, vous avez la base. Pour mieux connaitre la librairie, lisez <strong>libtcc.h</strong> qui contient tous les prototypes. Ou sinon, revenez sur ce tuto où j'expliquerais peut-être plus de fonction. Une idée d’amélioration pour ce TP serait d’afficher les erreurs de compilations (c’est peut-être plus compliqué que vous ne le pensez.)</p><p id="r-344991" data-claire-element-id="344991">Pour vous donner des idées sur comment utiliser libtcc, vous n'avez qu'à songer un peu: cela peut être utilisé dans :</p><ul id="r-345004" data-claire-element-id="345004"><li id="r-344993" data-claire-element-id="344993"><p id="r-344992" data-claire-element-id="344992">Un MMORTS de programmation (Je ne vise personne :-° )</p></li><li id="r-344995" data-claire-element-id="344995"><p id="r-344994" data-claire-element-id="344994">Pour scripter votre programme, en C</p></li><li id="r-344997" data-claire-element-id="344997"><p id="r-344996" data-claire-element-id="344996">Faire un compilateur à votre sauce</p></li><li id="r-344999" data-claire-element-id="344999"><p id="r-344998" data-claire-element-id="344998">Faire un programme très modulaire, car qui pourrait compiler ses plugins lors de l'utilisation du programme</p></li><li id="r-345001" data-claire-element-id="345001"><p id="r-345000" data-claire-element-id="345000">Développez rapidement : au lieu de recompiler tout votre programme, codez un éditeur qui lancera votre programme directement sans passer par un compilateur externe</p></li><li id="r-345003" data-claire-element-id="345003"><p id="r-345002" data-claire-element-id="345002">... les possibilités sont infinies !</p></li></ul><p id="r-345005" data-claire-element-id="345005">Voilà, au plus vous avez pris 20 minutes pour lire ce tutoriel et vous êtes paré pour lancer tous vos projets les plus fous ! Moi aussi, quand j'ai découvert TCC, j'ai trouvé que les possibilités étaient gigantesques !</p><aside id="r-345007" data-claire-element-id="345007" data-claire-semantic="information"><p id="r-345006" data-claire-element-id="345006">Si vous recherchez le même type de solution appliquée au C++, dirigez vous vers <a href="http://root.cern.ch/drupal/content/cint">CINT</a></p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/compilation-a-la-volee-avec-libtcc">Compilation à la volée avec libtcc</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/compilation-a-la-volee-avec-libtcc/tcc-et-libtcc">
+TCC et libtcc
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/compilation-a-la-volee-avec-libtcc/compilons">
+Compilons !
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/compilation-a-la-volee-avec-libtcc/manipulation-de-symbole">
+Manipulation de symbole
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/compilation-a-la-volee-avec-libtcc/tp-realisation-d-un-compilateur">
+[TP] Réalisation d&#039;un compilateur
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/compilation-a-la-volee-avec-libtcc/manipulation-de-symbole">
+<span class="arrow"></span>
+<span class="next">Manipulation de symbole</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/compilation-a-la-volee-avec-libtcc.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 09:01:51 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/compilation-a-la-volee-avec-libtcc.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:36:56 GMT -->
+</html>

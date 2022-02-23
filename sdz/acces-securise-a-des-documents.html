@@ -1,0 +1,647 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/acces-securise-a-des-documents.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 23:27:32 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/acces-securise-a-des-documents.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:07:53 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Accès sécurisé à des documents</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/acces-securise-a-des-documents.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Accès sécurisé à des documents</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Accsscurisdesdocuments">Accès sécurisé à des documents</a><br/><a href="#L039architecturedusite">L&#039;architecture du site</a><br/><a href="#Ledossierdocuments">Le dossier documents</a><br/><a href="#Labasededonnes">La base de données</a><br/><a href="#LecodePHP">Le code PHP</a><br/></div>
+<a name="Accsscurisdesdocuments"></a><h2>Accès sécurisé à des documents</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/acces-securise-a-des-documents/l-architecture-du-site">
+<span class="next">L&#039;architecture du site</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-557537" data-claire-element-id="557537">Nous allons voir dans ce tutoriel comment sécuriser un accès à des documents.<br/> On trouve beaucoup de sites où sont expliqués les accès sécurisés à des répertoires <em>via</em> des fichiers <strong>.htaccess</strong>, ou des pages web avec une authentification préalable avec une base de données (MySQL en général). Une technique encore fréquente est de garder l'URL secrète avec des liens compliqués. Toutes ces méthodes ont leurs limites, nous allons ici étudier un concept utilisant plusieurs de ces outils afin de diminuer au maximum les inconvénients de chacun.</p><p id="r-557538" data-claire-element-id="557538">Imaginons le contexte suivant :</p><p id="r-557539" data-claire-element-id="557539">Je suis le responsable d'un site Internet comportant des documents à diffusion réduite (annuaire des membres, photos, etc.). Je souhaite limiter la diffusion de certains documents à une liste de membres authentifiés.<br/> J'ai bien pensé à mettre mes documents dans un répertoire où je ne donne le nom qu'à un certain nombre d'individus, mais ce niveau de sécurité n'est pas suffisant.<br/> Nous allons ici développer un système de restriction d'accès qui vérifie l'authentification et les autorisations de la personne avant chaque envoi de document.</p><aside id="r-557541" data-claire-element-id="557541" data-claire-semantic="information"><p id="r-557540" data-claire-element-id="557540">L'utilisation d'une authentification sous forme de .htaccess rend difficile la création de nouveau compte ou le changement de mot de passe. Nous allons donc chercher une autre méthode d'authentification qui repose sur une base de données.</p></aside>
+</div><a name="L039architecturedusite"></a><h2>L&#039;architecture du site</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/acces-securise-a-des-documents/le-dossier-documents">
+<span class="next">Le dossier documents</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-557542" data-claire-element-id="557542">Ce tutoriel utilise l'architecture de site suivante : <strong>une zone publique</strong> accessible à tous et <strong>une zone à accès restreint</strong> avec les fichiers dont on veut sécuriser l'accès.</p><ul id="r-557547" data-claire-element-id="557547"><li id="r-557544" data-claire-element-id="557544"><p id="r-557543" data-claire-element-id="557543">La zone <strong>publique</strong> est le répertoire principal du site.</p></li><li id="r-557546" data-claire-element-id="557546"><p id="r-557545" data-claire-element-id="557545">La zone à <strong>accès restreint</strong> est le répertoire <strong>documents</strong> situé dans le sous-répertoire principal.</p></li></ul><aside id="r-557549" data-claire-element-id="557549" data-claire-semantic="warning"><p id="r-557548" data-claire-element-id="557548">Pour que le tutoriel fonctionne sur votre machine de développement, vérifiez que la propriété « <strong>allowOverride</strong> » soit à « <strong>all</strong> » et non à « <strong>none</strong> » pour l'hôte virtuel concerné dans la configuration d'Apache (fichier <strong>httpd.conf</strong>ou le fichier spécifique à l'hôte virtuel). Vérifions en même temps que dans le fichier <strong>php.ini</strong>, la directive <strong>register_global</strong> soit désactivée. C'est souvent le cas sur les serveurs de production des différents hébergeurs.</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/acces-securise-a-des-documents">Accès sécurisé à des documents</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/acces-securise-a-des-documents/l-architecture-du-site">
+L&#039;architecture du site
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/acces-securise-a-des-documents/le-dossier-documents">
+Le dossier documents
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/acces-securise-a-des-documents/la-base-de-donnees-11">
+La base de données
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/acces-securise-a-des-documents/le-code-php-3">
+Le code PHP
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/acces-securise-a-des-documents/le-dossier-documents">
+<span class="next">Le dossier documents</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Ledossierdocuments"></a><h2>Le dossier documents</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/acces-securise-a-des-documents/l-architecture-du-site">
+<span class="arrow"></span>
+<span class="next">L&#039;architecture du site</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/acces-securise-a-des-documents/la-base-de-donnees-11">
+<span class="next">La base de données</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-557551" data-claire-element-id="557551">Ce dossier contient tous les documents et fichiers dont l'accès est réglementé. Son accès en direct doit être interdit.<br/> Pour cela, nous utilisons un fichier <strong>.htaccess</strong>.</p><aside id="r-557553" data-claire-element-id="557553" data-claire-semantic="warning"><p id="r-557552" data-claire-element-id="557552"><strong>.htaccess</strong> n'est pas l'extension du fichier mais son nom complet. Si avec Windows vous n'arrivez pas à faire directement un fichier avec ce nom, vous pouvez l'appeler htaccess.txt, et le renommer après en utilisant un client FTP.</p></aside><p id="r-557554" data-claire-element-id="557554">Ce fichier comporte une seule ligne :</p><pre id="r-557555" data-claire-element-id="557555"><code data-claire-semantic="apache">deny from all</code></pre><p id="r-557556" data-claire-element-id="557556">Expliquons ces trois mots (si vous ne parlez pas anglais) :</p><ul id="r-557563" data-claire-element-id="557563"><li id="r-557558" data-claire-element-id="557558"><p id="r-557557" data-claire-element-id="557557"><strong>deny : </strong>interdire (l'accès). Nous voulons interdire l'accès à ce répertoire ;</p></li><li id="r-557560" data-claire-element-id="557560"><p id="r-557559" data-claire-element-id="557559"><strong>from : </strong>depuis. Nous indiquons à qui nous interdisons l'accès en indiquant depuis quel endroit on ne peut pas se connecter ;</p></li><li id="r-557562" data-claire-element-id="557562"><p id="r-557561" data-claire-element-id="557561"><strong>all : </strong>tous. Depuis tous les endroits, l'accès est interdit. C'est simple l'anglais, non ?</p></li></ul><p id="r-557564" data-claire-element-id="557564">Ce répertoire va également comporter tous les fichiers dont l'accès doit être réglementé.<br/> Les formats de ces fichiers peuvent êtres variés (Word, PDF, ZIP, Open Office Document, images, etc.). Il est possible de rajouter les fichiers en fonction des besoins.<br/> Vérifions que notre système fonctionne.<br/> Ouvrons notre navigateur sur le répertoire, puis sur chacun des fichiers ci-dessus avec une adresse de type : <strong>http://localhost/documents/</strong> et <a href="http://localhost/documents/fichier.pdf">http://localhost/documents/fichier.pdf</a><strong>http://localhost/documents/fichier.pdf.</strong><br/> Ce message (ou un similaire) devrait apparaître :</p><figure id="r-557566" data-claire-element-id="557567"><img id="r-557565" data-claire-element-id="557565" src="medias/uploads.siteduzero.com_files_207001_208000_207260.png" alt="access denied"/></figure><p id="r-557568" data-claire-element-id="557568">Ayant plusieurs projets, j'ai mis ce projet dans un dossier <strong>secure</strong> sur ma machine de développement.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/acces-securise-a-des-documents">Accès sécurisé à des documents</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/acces-securise-a-des-documents/l-architecture-du-site">
+L&#039;architecture du site
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/acces-securise-a-des-documents/le-dossier-documents">
+Le dossier documents
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/acces-securise-a-des-documents/la-base-de-donnees-11">
+La base de données
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/acces-securise-a-des-documents/le-code-php-3">
+Le code PHP
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/acces-securise-a-des-documents/l-architecture-du-site">
+<span class="arrow"></span>
+<span class="next">L&#039;architecture du site</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/acces-securise-a-des-documents/la-base-de-donnees-11">
+<span class="next">La base de données</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Labasededonnes"></a><h2>La base de données</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/acces-securise-a-des-documents/le-dossier-documents">
+<span class="arrow"></span>
+<span class="next">Le dossier documents</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/acces-securise-a-des-documents/le-code-php-3">
+<span class="next">Le code PHP</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-quelques-details-supplementaires" data-claire-element-id="557571">Quelques détails supplémentaires</h2><p id="r-557570" data-claire-element-id="557570">Nous allons stocker les droits des utilisateurs ainsi que leurs comptes d'accès dans une base de données. Cela nous donnera une grande flexibilité quant aux droits.<br/> Cette base contient des individus dans la table <strong>personnes</strong> et les noms des fichiers dans la table <strong>fichiers</strong>.<br/> La liaison la plus simple est de faire une table de jointure qui donne une autorisation à une personne sur un fichier. C'est ce que fait la table <strong>autorisation_personne</strong>.<br/> Si nous avons beaucoup de fichiers et beaucoup de personnes au sein de notre système, la gestion de cette table est fastidieuse. Nous allons donc ajouter un système de groupe, où l'on fait appartenir une personne à un ou plusieurs groupes, puis donner des autorisations à ce groupe. Le système présenté dans le schéma ci-dessous permet de remplir ce cas d'utilisation.<br/> Un champ « autorisation » est ensuite ajouté à la table <strong>autorisation_personne</strong> afin de pouvoir donner une interdiction (valeur « non »), de manière spécifique à une personne appartenant à un groupe dont les membres ont un accès à un fichier spécifique.</p><h2 id="r-le-schema-de-la-base-de-donnees" data-claire-element-id="557575">Le schéma de la base de données</h2><figure id="r-557573" data-claire-element-id="557574"><img id="r-557572" data-claire-element-id="557572" src="medias/uploads.siteduzero.com_files_210001_211000_210985.png" alt="Image utilisateur"/></figure><h2 id="r-generation-de-la-base" data-claire-element-id="557586">Génération de la base</h2><p id="r-557576" data-claire-element-id="557576">Nous allons maintenant créer la base « <strong>secure</strong> » sur notre serveur de développement. Voici le script de création des tables de cette base de données.<br/> Une fois la base de données créée, ce script peut être donné à MySQL pour créer les tables qui vont être utilisées. La manière la plus simple de donner ce script à MySQL, c'est de faire un copier-coller dans l'interface de saisie MySQL de PHPMyAdmin.</p><pre id="r-557577" data-claire-element-id="557577"><code data-claire-semantic="sql">CREATE TABLE IF NOT EXISTS `autorisation_groupes` (
+  `id_autorisation_groupe` bigint(32) NOT NULL auto_increment,
+  `id_fichier_FK` int(11) unsigned NOT NULL,
+  `id_groupe_FK` tinyint(3) unsigned NOT NULL,
+  `debut` datetime default NULL,
+  `fin` datetime default NULL,
+  PRIMARY KEY  (`id_autorisation_groupe`),
+  KEY `id_groupe_FK` (`id_groupe_FK`),
+  KEY `id_fichier_FK` (`id_fichier_FK`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+
+CREATE TABLE IF NOT EXISTS `autorisation_personne` (
+  `id_autorisation_personne` bigint(32) NOT NULL auto_increment,
+  `id_fichier_FK` int(11) unsigned NOT NULL,
+  `id_personne_FK` smallint(5) unsigned NOT NULL,
+  `debut` datetime default NULL,
+  `fin` datetime default NULL,
+  `autorisation` enum('oui','non') NOT NULL default 'oui',
+  PRIMARY KEY  (`id_autorisation_personne`),
+  KEY `id_personne_FK` (`id_personne_FK`),
+  KEY `id_fichier_FK` (`id_fichier_FK`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+
+CREATE TABLE IF NOT EXISTS `fait_parti_de` (
+  `id_fait_parti_de` int(11) NOT NULL auto_increment,
+  `id_personne_FK` smallint(5) unsigned NOT NULL,
+  `id_groupe_FK` tinyint(3) unsigned NOT NULL,
+  PRIMARY KEY  (`id_fait_parti_de`),
+  KEY `id_groupe_FK` (`id_groupe_FK`),
+  KEY `id_personne_FK` (`id_personne_FK`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+
+CREATE TABLE IF NOT EXISTS `fichiers` (
+  `id_fichier` int(11) unsigned NOT NULL auto_increment,
+  `nom` varchar(50) default NULL,
+  PRIMARY KEY  (`id_fichier`),
+  UNIQUE KEY `nom_unique` (`nom`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+
+CREATE TABLE IF NOT EXISTS `groupes` (
+  `id_groupe` tinyint(3) unsigned NOT NULL auto_increment,
+  `nom` varchar(50) default NULL,
+  PRIMARY KEY  (`id_groupe`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+
+CREATE TABLE IF NOT EXISTS `personnes` (
+  `id_personne` smallint(5) unsigned NOT NULL auto_increment,
+  `nom` varchar(50) default NULL,
+  `prenom` varchar(50) default NULL,
+  `login` varchar(15) default NULL,
+  `mdp` varchar(40) default NULL,
+  PRIMARY KEY  (`id_personne`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+
+ALTER TABLE `autorisation_groupes`
+  ADD CONSTRAINT `autorisation_groupes_ibfk_1` FOREIGN KEY (`id_groupe_FK`) REFERENCES `groupes` (`id_groupe`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  ADD CONSTRAINT `autorisation_groupes_ibfk_2` FOREIGN KEY (`id_fichier_FK`) REFERENCES `fichiers` (`id_fichier`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+ALTER TABLE `autorisation_personne`
+  ADD CONSTRAINT `autorisation_personne_ibfk_1` FOREIGN KEY (`id_personne_FK`) REFERENCES `personnes` (`id_personne`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  ADD CONSTRAINT `autorisation_personne_ibfk_2` FOREIGN KEY (`id_fichier_FK`) REFERENCES `fichiers` (`id_fichier`) ON DELETE NO ACTION ON UPDATE NO ACTION;</code></pre><p id="r-557578" data-claire-element-id="557578">J'utilise le moteur InnoDB pour mes bases plutôt que MyISAM, car ce moteur s'assure que les contraintes d'existence des clés externes soient bien respectées. En plus, ce moteur est légèrement plus performant lors de jointures dans les requêtes. Cependant, beaucoup d'hébergeurs (notamment gratuits) ne le proposent pas, car il demande plus d'espace disque. Si vous ne pouvez pas utiliser InnoDB, il vous faudra modifier les requêtes de création avec les adaptations suivantes :</p><ul id="r-557585" data-claire-element-id="557585"><li id="r-557580" data-claire-element-id="557580"><p id="r-557579" data-claire-element-id="557579">changer <strong>ENGINE=InnoDB</strong> par <strong>ENGINE=MyISAM</strong> ;</p></li><li id="r-557582" data-claire-element-id="557582"><p id="r-557581" data-claire-element-id="557581">supprimer les ajouts de contraintes <strong>ADD CONSTRAINT</strong>... ;</p></li><li id="r-557584" data-claire-element-id="557584"><p id="r-557583" data-claire-element-id="557583">ajouter des index pour optimiser les jointures mentionnées sur le schéma ci-dessus.</p></li></ul>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/acces-securise-a-des-documents">Accès sécurisé à des documents</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/acces-securise-a-des-documents/l-architecture-du-site">
+L&#039;architecture du site
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/acces-securise-a-des-documents/le-dossier-documents">
+Le dossier documents
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/acces-securise-a-des-documents/la-base-de-donnees-11">
+La base de données
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/acces-securise-a-des-documents/le-code-php-3">
+Le code PHP
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/acces-securise-a-des-documents/le-dossier-documents">
+<span class="arrow"></span>
+<span class="next">Le dossier documents</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/acces-securise-a-des-documents/le-code-php-3">
+<span class="next">Le code PHP</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="LecodePHP"></a><h2>Le code PHP</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/acces-securise-a-des-documents/la-base-de-donnees-11">
+<span class="arrow"></span>
+<span class="next">La base de données</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-utilisation-et-appel-du-document" data-claire-element-id="557597">Utilisation et appel du document</h2><p id="r-557588" data-claire-element-id="557588">Ce script est prévu pour fonctionner en appelant les pages avec une URL du type <a href="http://serveur.tld/secure/?fichier=1">http://serveur.tld/secure/?fichier=1</a> où l'on remplace :</p><ul id="r-557595" data-claire-element-id="557595"><li id="r-557590" data-claire-element-id="557590"><p id="r-557589" data-claire-element-id="557589"><strong>serveur.tld </strong>par votre serveur (localhost en développement) ;</p></li><li id="r-557592" data-claire-element-id="557592"><p id="r-557591" data-claire-element-id="557591"><strong>secure </strong>par le répertoire contenant le script de sécurisation ;</p></li><li id="r-557594" data-claire-element-id="557594"><p id="r-557593" data-claire-element-id="557593"><strong>1</strong> par l'identifiant du fichier à télécharger.</p></li></ul><p id="r-557596" data-claire-element-id="557596">S'il manque le paramètre d'appel, le script ne peut fonctionner. Il demandera l'authentification, mais ne saura quel fichier vous servir, il vous informera donc qu'un paramètre est manquant.</p><h2 id="r-presentation-globale-du-code" data-claire-element-id="557617">Présentation globale du code</h2><p id="r-557598" data-claire-element-id="557598">Maintenant que nous avons préparé notre base de données, nous allons faire un code PHP qui va utiliser cette base.<br/> Notre code va utiliser :</p><ul id="r-557612" data-claire-element-id="557612"><li id="r-557600" data-claire-element-id="557600"><p id="r-557599" data-claire-element-id="557599">les <strong>sessions </strong>: permettent de mémoriser pendant quelques minutes (généralement 30) au travers de plusieurs page, le contenu de certaines variables ;</p></li><li id="r-557602" data-claire-element-id="557602"><p id="r-557601" data-claire-element-id="557601"><strong>l'inclusion d'un fichier de connexion </strong>à la base de données : cela permet d'avoir un fichier unique pour l'ensemble du site qui effectue la connexion à la base pour chaque page. En cas de changement de paramètres de connexion, il n'y a qu'un seul fichier à éditer pour l'ensemble du site ;</p></li><li id="r-557611" data-claire-element-id="557611"><p id="r-557603" data-claire-element-id="557603">un <strong>switch</strong> à trois états réalisés avec les instructions <strong>if</strong>, <strong>elseif</strong> et <strong>else</strong> : ce <em>switch</em> permet de charger une partie de code adaptée, en fonction de l'état où nous sommes. Ces trois états sont :</p><ul id="r-557610" data-claire-element-id="557610"><li id="r-557605" data-claire-element-id="557605"><p id="r-557604" data-claire-element-id="557604">un utilisateur authentifié demande un fichier,</p></li><li id="r-557607" data-claire-element-id="557607"><p id="r-557606" data-claire-element-id="557606">un utilisateur a rempli le formulaire d'authentification et a validé ce formulaire,</p></li><li id="r-557609" data-claire-element-id="557609"><p id="r-557608" data-claire-element-id="557608">un utilisateur non authentifié demande un fichier, on lui présente le formulaire d'authentification.</p></li></ul></li></ul><p id="r-557613" data-claire-element-id="557613">Écrivons maintenant cette structure principale du code que nous allons compléter par la suite. Ce code forme la structure du fichier index.php qui est dans le répertoire principal :</p><pre id="r-557614" data-claire-element-id="557614"><code data-claire-semantic="html+php">&lt;?php
+/* Accès sécurisé à des données contenues au sein d'un répertoire spécifique.
+ */
+
+// Démarrage de la session qui va contenir le login de l'utilisateur.
+session_start();
+
+// Connexion à la base de données.
+require 'connexion.php';
+
+// Répertoire contenant les fichiers à accès restreints.
+define('REPERTOIRE', 'documents');
+
+/* On a un switch à trois états : un utilisateur connu, un utilisateur en train de
+ * s'authentifier, un utilisateur à qui on demande une authentification.
+ */
+if (isset ($_SESSION['user'])) {
+	// Envoi du fichier demandé.
+} elseif (isset ($_POST['submit']) ) {
+	// Traitement du login et du mot de passe saisis.
+} else {
+	// Demande d'un login et d'un mot de passe.
+}
+mysql_close();
+?&gt;</code></pre><aside id="r-557616" data-claire-element-id="557616" data-claire-semantic="information"><p id="r-557615" data-claire-element-id="557615">Vous avez sans doute remarqué la présence d'une constante afin de pouvoir facilement changer le nom du répertoire à sécuriser.</p></aside><h2 id="r-connexion-9" data-claire-element-id="557620">Connexion</h2><p id="r-557618" data-claire-element-id="557618">Voici le script de connexion. Il ne présente pas des difficultés particulières, si vous avez suivi les tutoriels d'introduction au langage PHP rédigés par M@teo21 ou sur d'autres sites Internet.<br/> Nous le mettrons dans le fichier <strong>connexion.php</strong> qui se trouve dans le répertoire principal. C'est ce fichier qui est appelé lors de la ligne <strong>require 'connexion.php';</strong>.</p><pre id="r-557619" data-claire-element-id="557619"><code data-claire-semantic="html+php">&lt;?php
+/* Paramètres de configuration et de connexion à la base de données.
+ * À personnaliser
+ */
+$host='localhost';
+$user='root';
+$pass='';
+$db='secure';
+
+/* Connexion à la base de données. */
+if ( !mysql_connect($host, $user, $pass) ) {
+	$retour=FALSE;
+} else {
+	$retour = TRUE;
+}
+if ( !mysql_select_db ($db) ) {
+	exit ( 'Impossible de sélectionner la base' . $db);
+}
+?&gt;</code></pre><h2 id="r-authentification-demande-des-informations" data-claire-element-id="557623">Authentification : demande des informations</h2><p id="r-557621" data-claire-element-id="557621">Nous allons demander à l'utilisateur de s'authentifier. Pour cela, nous utilisons un simple formulaire HTML. Nous allons compléter par du HTML le code ci-dessus juste après le commentaire adapté de la partie <strong>else</strong> du <em>switch</em> tri état du fichier <strong>index.php</strong>.<br/> Voici le code du formulaire :</p><pre id="r-557622" data-claire-element-id="557622"><code data-claire-semantic="html">&lt;!DOCTYPE html 
+     PUBLIC &quot;-//W3C//DTD XHTML 1.0 Transitional//EN&quot;
+     &quot;http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd&quot;&gt;
+&lt;html&gt;
+&lt;head&gt;
+	&lt;title&gt;Authentification&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;form method=&quot;post&quot; action=&quot;&quot;&gt;
+	Login : &lt;input type=&quot;text&quot; name=&quot;login&quot; /&gt;&lt;br /&gt;
+	Mot de passe : &lt;input type=&quot;password&quot; name=&quot;mdp&quot; /&gt;&lt;br /&gt;
+	&lt;input type=&quot;submit&quot; name=&quot;submit&quot; value=&quot;Se connecter&quot; /&gt;
+&lt;/form&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre><h2 id="r-authentification-verification-des-saisies" data-claire-element-id="557628">Authentification : vérification des saisies</h2><p id="r-557624" data-claire-element-id="557624">Nous vérifions ici la saisie de l'authentification et, selon le cas, affichons un message d'erreur avec un bouton permettant de recommencer la saisie, ou enregistrer le nom de l'utilisateur et rafraîchir la page pour tomber dans le cas non encore complété, à savoir : donner à l'utilisateur le fichier demandé. Ce code s'insère dans le fichier index.php juste après le commentaire : <strong>// Traitement du <em>login</em> et du mot de passe saisis.</strong></p><pre id="r-557625" data-claire-element-id="557625"><code data-claire-semantic="html+php">&lt;!DOCTYPE html 
+     PUBLIC &quot;-//W3C//DTD XHTML 1.0 Transitional//EN&quot;
+     &quot;http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd&quot;&gt;
+&lt;html&gt;
+&lt;head&gt;
+&lt;title&gt;Authentification&lt;/title&gt;
+	&lt;?php
+	$login = mysql_real_escape_string($_POST['login']);
+	$mdp = mysql_real_escape_string($_POST['mdp']);
+	$requete = 'SELECT id_personne
+				FROM personnes
+				WHERE login = &quot;'.$login.'&quot;
+				AND mdp = &quot;'.$mdp.'&quot;;';
+	$resultat = mysql_query ( $requete );
+
+	$nb_ligne = mysql_num_rows($resultat);
+	if ($nb_ligne !== 1){
+		?&gt;
+&lt;/head&gt;
+&lt;body&gt;
+	&lt;p&gt;Vous n'avez pas été reconnu par le système.&lt;br /&gt;
+	Veuillez réessayer.&lt;br /&gt;
+	Si le problème persiste, veuillez contacter l'administrateur du site.&lt;/p&gt;
+	&lt;form method=&quot;post&quot; action=&quot;&quot;&gt;
+		&lt;input type=&quot;submit&quot; name=&quot;Retour&quot; value=&quot;Ré-essayer&quot; /&gt;
+	&lt;/form&gt;
+&lt;/body&gt;
+		&lt;?php
+	} else {
+		$ligne = mysql_fetch_assoc($resultat);
+		$_SESSION['user'] = $ligne['id_personne'];
+		echo '&lt;META http-equiv=&quot;Refresh&quot; content=&quot;0&quot;&gt; ';
+		echo '&lt;/head&gt;';
+	}
+	echo '&lt;/html&gt;';</code></pre><aside id="r-557627" data-claire-element-id="557627" data-claire-semantic="information"><p id="r-557626" data-claire-element-id="557626">Le mot de passe est stocké en clair dans la base de données. Il est possible de le crypter avec les algorithmes MD5 ou SHA-1 (recommandé). Cela demande une légère adaptation du code au niveau de la requête de recherche de la personne dans la base de données.</p></aside><h2 id="r-envoi-du-fichier-a-l-utilisateur" data-claire-element-id="557634">Envoi du fichier à l'utilisateur</h2><p id="r-557629" data-claire-element-id="557629">Dans cette partie, le point délicat est l'écriture de la requête déterminant si un utilisateur a le droit au fichier.<br/> Le fichier recherché est passé <em>via</em> le paramètre <strong>fichier</strong> transmis en <strong>GET</strong>. Ce paramètre contient l'identifiant du fichier.<br/> Commençons par décortiquer la requête.<br/> Dans ces requêtes, <strong>id_fichier </strong>sera remplacé par l'identifiant du fichier en base de données, et <strong>user </strong>par l'identifiant de l'utilisateur qui aura saisi son <em>login</em> et son mot de passe.</p><pre id="r-557630" data-claire-element-id="557630"><code data-claire-semantic="sql">-- Nous voulons le nom du fichier.
+SELECT DISTINCT (fichiers.nom)
+FROM fichiers ;
+-- Le DISTINCT permet de ne conserver qu'une ligne
+-- si l'on a plusieurs autorisations pour un même fichier.
+
+-- Ajoutons les conditions :
+WHERE id_fichier NOT IN (
+-- Fichiers interdits
+)
+AND (
+	id_fichier IN (
+-- Fichiers autorisés personnellement
+	)
+	OR  id_fichier IN (
+-- Fichiers autorisés via un groupe auquel l'utilisateur appartient.
+	)
+)
+-- Nous avons la structure de la requête.
+-- Pour avoir les identifiants des fichiers interdits, nous faisons la requête :
+	SELECT id_fichier_FK
+	FROM autorisation_personne
+	WHERE autorisation = &quot;non&quot;
+	AND id_fichier_FK = id_fichier
+	AND id_personne_FK = user
+	AND ( debut IS NULL OR debut &lt; now() )
+	AND ( fin IS NULL OR fin &gt; now() )
+-- On remarque au passage que si une date est NULL, cela veut dire :
+-- « depuis toujours » ou « pour toujours ».
+
+-- La requête pour avoir les fichiers autorisés personnellement est presque identique :
+	SELECT id_fichier_FK
+	FROM autorisation_personne
+	WHERE autorisation = &quot;oui&quot;
+	AND id_fichier_FK = id_fichier
+	AND id_personne_FK = user
+	AND ( debut IS NULL OR debut &lt; now() )
+	AND ( fin IS NULL OR fin &gt; now() )
+
+-- Enfin, pour les autorisations de groupe, nous allons utiliser
+-- les jointures sur plusieurs tables.
+	SELECT id_fichier_FK
+	FROM autorisation_groupes
+	LEFT JOIN fait_parti_de USING (id_groupe_FK)
+	WHERE id_fichier_FK = id_fichier
+	AND id_personne_FK = user
+	AND ( debut IS NULL OR debut &lt; now() )
+	AND ( fin IS NULL OR fin &gt; now() )
+
+-- La requête complète est donc : 
+SELECT DISTINCT (fichiers.nom)
+FROM fichiers
+WHERE id_fichier NOT IN (
+	SELECT id_fichier_FK
+	FROM autorisation_personne
+	WHERE autorisation = &quot;non&quot;
+	AND id_fichier_FK = id_fichier
+	AND id_personne_FK = user
+	AND ( debut IS NULL OR debut &lt; now() )
+	AND ( fin IS NULL OR fin &gt; now() )
+)
+AND (
+	id_fichier IN (
+		SELECT id_fichier_FK
+		FROM autorisation_personne
+		WHERE autorisation = &quot;oui&quot;
+		AND id_fichier_FK = $id_fichier
+		AND id_personne_FK = user
+		AND ( debut IS NULL OR debut &lt; now() )
+		AND ( fin IS NULL OR fin &gt; now() )
+	)
+	OR  id_fichier IN (
+		SELECT id_fichier_FK
+		FROM autorisation_groupes
+		LEFT JOIN fait_parti_de USING (id_groupe_FK)
+		WHERE id_fichier_FK = id_fichier
+		AND id_personne_FK = user
+		AND ( debut IS NULL OR debut &lt; now() )
+		AND ( fin IS NULL OR fin &gt; now() )
+	)
+)</code></pre><p id="r-557631" data-claire-element-id="557631">Et voici donc le code PHP où se trouve notre requête. Ce code s'insère dans le fichier <strong>index.php </strong>juste après le commentaire <strong>// Envoi du fichier demandé</strong>.</p><pre id="r-557632" data-claire-element-id="557632"><code data-claire-semantic="html+php">&lt;?php
+if ( (!isset ($_GET['fichier'])) || (empty($_GET['fichier']) ) ) {
+		exit ('paramètre manquant');
+	}
+	$id_fichier = intval($_GET['fichier']);
+		$requete = 'SELECT DISTINCT (fichiers.nom)
+				FROM fichiers
+				WHERE id_fichier NOT IN (
+					SELECT id_fichier_FK
+					FROM autorisation_personne
+					WHERE autorisation = &quot;non&quot;
+					AND id_fichier_FK = '.$id_fichier.'
+					AND id_personne_FK = '.$_SESSION['user'].'
+					AND ( debut IS NULL OR debut &lt; now() )
+					AND ( fin IS NULL OR fin &gt; now() )
+				)
+				AND (
+					id_fichier IN (
+						SELECT id_fichier_FK
+						FROM autorisation_personne
+						WHERE autorisation = &quot;oui&quot;
+						AND id_fichier_FK = '.$id_fichier.'
+						AND id_personne_FK = '.$_SESSION['user'].'
+						AND ( debut IS NULL OR debut &lt; now() )
+						AND ( fin IS NULL OR fin &gt; now() )
+					)
+					OR  id_fichier IN (
+						SELECT id_fichier_FK
+						FROM autorisation_groupes
+						LEFT JOIN fait_parti_de USING (id_groupe_FK)
+						WHERE id_fichier_FK = '.$id_fichier.'
+						AND id_personne_FK = '.$_SESSION['user'].'
+						AND ( debut IS NULL OR debut &lt; now() )
+						AND ( fin IS NULL OR fin &gt; now() )
+					)
+				)';
+	$resultat = mysql_query ( $requete );
+
+	$nb_ligne = mysql_num_rows($resultat);
+	if ($nb_ligne !== 1){
+		exit ('Vous n\'avez pas accès au fichier demandé');
+	}
+	$ligne = mysql_fetch_assoc($resultat);
+	$nom_fichier = $ligne['nom'];
+	envoi_fichier ($nom_fichier, true);
+?&gt;</code></pre><p id="r-557633" data-claire-element-id="557633">Vous venez de voir apparaître une fonction maison <strong>envoi_fichier</strong>. Cette fonction prend deux paramètres, le premier est le nom du fichier, le deuxième est un booléen qui indique si le fichier est envoyé avec une boîte de dialogue de téléchargement ou affiché à l'écran.</p><h2 id="r-les-fonctions-maison" data-claire-element-id="557669">Les fonctions maison</h2><p id="r-557635" data-claire-element-id="557635">Nous allons aussi développer quelques fonctions maison pour compléter les fonctions natives de PHP et permettre à notre script de fonctionner. Nous pouvons placer ces fonctions à la fin du fichier <strong>index.php</strong>.</p><h3 id="r-fonction-envoi-fichier" data-claire-element-id="557639">Fonction envoi_fichier</h3><p id="r-557636" data-claire-element-id="557636">Cette fonction envoie le fichier, passé en paramètre, à l'utilisateur.</p><pre id="r-557637" data-claire-element-id="557637"><code data-claire-semantic="html+php">&lt;?php
+function envoi_fichier ($nom_fichier, $download = FALSE){
+	// Chemin du document
+	$document = REPERTOIRE.'/'.$nom_fichier;
+
+	// Récupération du type mime
+	$mime = get_mime_type($document);
+
+	// Envoi de l'en-tête adapté au type mime.
+	header('Content-type: ' . $mime);
+
+	// Il sera proposé au téléchargement au lieu de s'afficher.
+	if ($download) {
+		header('Content-Disposition: attachment; filename=&quot;'.$nom_fichier.'&quot;');
+	}
+	// La source du fichier est lue et envoyée au navigateur.
+	readfile($document);
+}
+?&gt;</code></pre><p id="r-557638" data-claire-element-id="557638">Nous voyons ici l'utilisation d'une autre fonction maison. C'est la fonction <strong>get_mime_type</strong>.</p><h3 id="r-fonction-get-mime-type" data-claire-element-id="557668">Fonction get_mime_type</h3><p id="r-557640" data-claire-element-id="557640">Cette fonction permet de récupérer le type MIME d'un fichier dont le nom est passé en paramètre. Si le jeu de fonction <code data-claire-semantic="html+php">finfo </code> est installé (PHP &gt;= 5.3 ou PECL installé), on privilégie ces dernières qui sont les plus fiables. Sinon, on regarde si l'on a un fichier mime.ini dans le répertoire du script qui contient une table de conversion des types. C'est à l'utilisateur de s'assurer que tous les types utilisés sont présents au sein du fichier mime.ini. Si ce fichier n'est pas présent, la fonction « deprecated » (usage non recommandé, car d'autres fonctions plus récentes la remplacent) est potentiellement mal paramétrée (et non paramétrable), <strong>mime_content_type</strong> est utilisée.</p><pre id="r-557641" data-claire-element-id="557641"><code data-claire-semantic="html+php">&lt;?php
+function get_mime_type($fichier = ''){
+	if (empty ( $fichier)){
+		exit ('Paramètre invalide');
+	}
+	if( function_exists('finfo_open') ){
+		$finfo = finfo_open(FILEINFO_MIME_TYPE); // Retourne le type MIME à l'extension mimetype.
+		$retour = finfo_file($finfo, $fichier);
+		finfo_close($finfo);
+	} elseif(file_exists('mime.ini')){
+		$retour = typeMime($fichier);
+	} else {
+		$retour = mime_content_type ( $fichier );
+	}
+	return $retour;
+}
+?&gt;</code></pre><p id="r-557642" data-claire-element-id="557642">Nous utilisons ici la fonction <strong>typeMime</strong> dans le cas où nous utilisons le fichier <strong>mime.ini</strong>. Cette fonction est encore une fonction maison.</p><pre id="r-557643" data-claire-element-id="557643"><code data-claire-semantic="html+php">&lt;?php
+function typeMime($nomFichier)
+/* Fonction grandement inspirée de :
+ * http://www.asp-php.net/ressources/codes/PHP-Type+MIME+d%27un+fichier+a+partir+de+son+nom.aspx
+ * retourne le type MIME à partir de l'extension de fichier contenu dans $nomFichier
+ * Exemple : $nomFichier = &quot;fichier.pdf&quot; =&gt; type renvoyé : &quot;application/pdf&quot; */
+{
+	// On détecte d'abord le navigateur, ça nous servira plus tard.
+	if(preg_match(&quot;@Opera(/| )([0-9].[0-9]{1,2})@&quot;, $_SERVER['HTTP_USER_AGENT'], $resultats))
+	$navigateur=&quot;Opera&quot;;
+	elseif(preg_match(&quot;@MSIE ([0-9].[0-9]{1,2})@&quot;, $_SERVER['HTTP_USER_AGENT'], $resultats))
+	$navigateur=&quot;Internet Explorer&quot;;
+	else $navigateur=&quot;Mozilla&quot;;
+
+	// On récupère la liste des extensions de fichiers et leurs types MIME associés.
+	$mime=parse_ini_file(&quot;mime.ini&quot;);
+	$extension=substr($nomFichier, strrpos($nomFichier, &quot;.&quot;)+1);
+
+	/* On affecte le type MIME si l'on a trouvé l'extension, sinon le type par défaut (un flux d'octets).
+	 Attention : Internet Explorer et Opera ne supportent pas le type MIME standard. */
+	if(array_key_exists($extension, $mime)){
+		$type=$mime[$extension];
+	}
+	else{
+		$type=($navigateur!=&quot;Mozilla&quot;) ? 'application/octetstream' : 'application/octet-stream';
+	}
+
+	return $type;
+}
+?&gt;</code></pre><aside id="r-557654" data-claire-element-id="557654" data-claire-semantic="information"><p id="r-557644" data-claire-element-id="557644">Pour aller plus loin, il est possible de :</p><ul id="r-557653" data-claire-element-id="557653"><li id="r-557646" data-claire-element-id="557646"><p id="r-557645" data-claire-element-id="557645">rajouter un CSS, une mise en page des formulaires, et messages d'erreur ;</p></li><li id="r-557648" data-claire-element-id="557648"><p id="r-557647" data-claire-element-id="557647">utiliser de l'URL rewriting pour masquer le paramètre id_fichier ;</p></li><li id="r-557650" data-claire-element-id="557650"><p id="r-557649" data-claire-element-id="557649">appeler un fichier .gif dans l'URL avec la même technique, et ouvrir le fichier PHP avec le bon paramètre (transparence pour l'utilisateur) ;</p></li><li id="r-557652" data-claire-element-id="557652"><p id="r-557651" data-claire-element-id="557651">ajouter une interface PHP de gestion des droits.</p></li></ul></aside><aside id="r-557667" data-claire-element-id="557667" data-claire-semantic="warning"><p id="r-557655" data-claire-element-id="557655">Aucune sécurité n'est parfaite. Il faut toujours trouver un juste milieu entre les moyens que l'on met en place et la sécurité requise. Face au type de protection mise en place, les attaques les plus simples sont :</p><ul id="r-557666" data-claire-element-id="557666"><li id="r-557657" data-claire-element-id="557657"><p id="r-557656" data-claire-element-id="557656">vol d'identifiant via l'accès au mot de passe en clair sur un mail ou un fichier laissé à la portée d'une personne indélicate ;</p></li><li id="r-557659" data-claire-element-id="557659"><p id="r-557658" data-claire-element-id="557658">vol d'identifiant ou du fichier sur le client ou le serveur (avec un <em>keyloguer</em>, un troyen, une faille du système d'exploitation) ;</p></li><li id="r-557661" data-claire-element-id="557661"><p id="r-557660" data-claire-element-id="557660">la diffusion par un membre ayant accès à un document à d'autres personnes ne devant pas y avoir accès ;</p></li><li id="r-557663" data-claire-element-id="557663"><p id="r-557662" data-claire-element-id="557662">la diffusion d'un membre ayant accès à un document de ses identifiants ;</p></li><li id="r-557665" data-claire-element-id="557665"><p id="r-557664" data-claire-element-id="557664">un <em>sniffer</em> sur le réseau lors du téléchargement du fichier via un protocole non sécurisé (FTP, HTTP...).</p></li></ul></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/acces-securise-a-des-documents">Accès sécurisé à des documents</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/acces-securise-a-des-documents/l-architecture-du-site">
+L&#039;architecture du site
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/acces-securise-a-des-documents/le-dossier-documents">
+Le dossier documents
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/acces-securise-a-des-documents/la-base-de-donnees-11">
+La base de données
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/acces-securise-a-des-documents/le-code-php-3">
+Le code PHP
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/acces-securise-a-des-documents/la-base-de-donnees-11">
+<span class="arrow"></span>
+<span class="next">La base de données</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/acces-securise-a-des-documents.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 23:27:32 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/acces-securise-a-des-documents.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:07:53 GMT -->
+</html>

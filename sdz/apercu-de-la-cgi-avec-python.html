@@ -1,0 +1,674 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/apercu-de-la-cgi-avec-python.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 08:55:59 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/apercu-de-la-cgi-avec-python.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:35:41 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Aperçu de la CGI avec Python</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/apercu-de-la-cgi-avec-python.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Aperçu de la CGI avec Python</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#AperudelaCGIavecPython">Aperçu de la CGI avec Python</a><br/><a href="#Prparation">Préparation</a><br/><a href="#Lardactiondesscripts">La rédaction des scripts</a><br/><a href="#Miseenpratiqueuncompteurdevisites">Mise en pratique : un compteur de visites</a><br/><a href="#Traiterunformulaire">Traiter un formulaire</a><br/><a href="#Miseenpratiqueunlivred039or">Mise en pratique : un livre d&#039;or</a><br/><a href="#Affichersoncodesource">Afficher son code source</a><br/></div>
+<a name="AperudelaCGIavecPython"></a><h2>Aperçu de la CGI avec Python</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/preparation-12">
+<span class="next">Préparation</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-369567" data-claire-element-id="369567">Vous aimeriez rendre votre site interactif, par exemple pour mettre en place un compteur de visites, un formulaire de contact, un petit jeu...<br/> Pour ça, tout le monde utilise le PHP. Mais vous faites partie d'une élite éclairée et vous aimeriez le faire avec Python. C'est faisable !<br/> Voici un aperçu de la <a href="http://fr.wikipedia.org/wiki/Common_Gateway_Interface">CGI</a> avec ce langage.</p><p id="r-369568" data-claire-element-id="369568">Juste une chose avant de commencer, si vous n'avez pas d'hébergeur qui vous permette d'utiliser Python sur vos pages web, regardez donc <a href="http://wikipython.flibuste.net/moin.py/HebergeursWeb">cette liste</a>. Si vous hébergez votre site vous-même, alors sachez qu'il vous suffit d'installer Apache et Python.</p><aside id="r-369570" data-claire-element-id="369570" data-claire-semantic="warning"><p id="r-369569" data-claire-element-id="369569">Les exemples contenus dans ce cours fonctionnement avec la version 2 de Python. Si vous utilisez la version 3 ou supérieure, n'oubliez pas de remplacer les <code data-claire-semantic="python">print ...</code> par des <code data-claire-semantic="python">print(...)</code></p></aside>
+</div><a name="Prparation"></a><h2>Préparation</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/la-redaction-des-scripts">
+<span class="next">La rédaction des scripts</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-369571" data-claire-element-id="369571">Pour que vos scripts soient exploitables, il faut tout d'abord configurer Apache.<br/> Créons un fichier <em>.htaccess</em>, que vous placerez à la racine du site (en effet, ce fichier fonctionne récursivement : tous les répertoires situés dans le répertoire contenant votre <em>.htaccess</em> seront assujettis aux règles que vous définirez dans celui-ci). Le voici :</p><pre id="r-369572" data-claire-element-id="369572"><code data-claire-semantic="apache">AddHandler cgi-script .py
+Options +ExecCGI</code></pre><p id="r-369573" data-claire-element-id="369573">Ces deux lignes indiquent que les fichiers <em>.py</em> doivent être interprétés avant d'être envoyés au client. Le comportement par défaut serait d'envoyer le fichier comme s'il s'agissait d'un fichier texte ordinaire.<br/> Une bonne chose à faire est de configurer Apache pour considérer vos fichiers <em>index.py </em> comme les indexes de vos répertoires. Pour cela, vous pouvez ajouter la ligne suivante à votre <em>.htaccess</em> :</p><pre id="r-369574" data-claire-element-id="369574"><code data-claire-semantic="apache">DirectoryIndex index.py</code></pre><p id="r-369575" data-claire-element-id="369575">Néanmoins, il reste une chose <strong>très importante</strong> à faire : rendre votre script exécutable. Je dois reconnaître que je me suis souvent fait avoir par ce genre d'erreur. C'est assez pervers car vous ne savez pas pourquoi votre script échoue : vous vous retrouvez face à une erreur 500 fort peu explicite.<br/> Pour ce faire, sous UNIX, il faut utiliser la commande suivante :</p><pre id="r-369576" data-claire-element-id="369576"><code data-claire-semantic="bash">chmod +x fichier.py</code></pre><p id="r-369577" data-claire-element-id="369577">Vous <strong>devez</strong> le faire sur chacun de vos scripts.</p><p id="r-369578" data-claire-element-id="369578">Maintenant, nous allons voir comment rédiger nos fichiers Python.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python">Aperçu de la CGI avec Python</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/preparation-12">
+Préparation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/la-redaction-des-scripts">
+La rédaction des scripts
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/mise-en-pratique-un-compteur-de-visites">
+Mise en pratique : un compteur de visites
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/traiter-un-formulaire">
+Traiter un formulaire
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/mise-en-pratique-un-livre-d-or">
+Mise en pratique : un livre d&#039;or
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/afficher-son-code-source">
+Afficher son code source
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/la-redaction-des-scripts">
+<span class="next">La rédaction des scripts</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lardactiondesscripts"></a><h2>La rédaction des scripts</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/preparation-12">
+<span class="arrow"></span>
+<span class="next">Préparation</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/mise-en-pratique-un-compteur-de-visites">
+<span class="next">Mise en pratique : un compteur de visites</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-369580" data-claire-element-id="369580">Lorsque vous utilisez Python pour votre site web, vous générez du HTML.<br/> Il vous faut le préciser : vous pourriez très bien renvoyer une image, aussi faut-il informer le client de la nature du document renvoyé.<br/> Pour ce faire, il faut tout simplement utiliser print :</p><pre id="r-369581" data-claire-element-id="369581"><code data-claire-semantic="python">#!/usr/bin/python
+
+print 'Content-type: text/html'
+print 
+# Là commence votre code.</code></pre><p id="r-369582" data-claire-element-id="369582">La première ligne est importante : il s'agit du <a href="http://fr.wikipedia.org/wiki/Shebang">shebang</a>. Il indique quel interpréteur Python utiliser.<br/> La seconde (en réalité, la troisième car j'ai sauté une ligne) indique le type de document envoyé. <br/> La dernière écrit une ligne vide. En effet, le client et le serveur communiquent par le protocole HTTP. Ce dernier est composé d'un en-tête, dans lequel des informations comme le nom et la version du client, ceux du serveur, le poids du fichier, l'état de la requête (vous savez, 200 OK, 404 Not Found, 500 Internal Server Error...), etc., et du corps de la requête, qui contient, dans le cas d'une requête du serveur vers le client, le fichier envoyé. Ces deux blocs (en-tête et corps) sont séparés par une ligne vide. Pour plus d'informations, regardez donc l'<a href="http://fr.wikipedia.org/wiki/HTTP">article sur Wikipedia</a>.</p><p id="r-369583" data-claire-element-id="369583">Le type de fichier (que j'ai spécifié à la deuxième ligne avec <em>'Content-type: text/html'</em>), fait partie de l'en-tête de la requête. Or, la page que vous souhaitez envoyer se trouve dans le corps. C'est pourquoi vous devez les séparer à l'aide de cette ligne vide.</p><p id="r-369584" data-claire-element-id="369584">Votre script est maintenant prêt. Vous pouvez désormais écrire votre code HTML, toujours à l'aide de print :</p><pre id="r-369585" data-claire-element-id="369585"><code data-claire-semantic="python">#!/usr/bin/python
+
+print 'Content-type: text/html'
+print
+print '&lt;html&gt;&lt;head&gt;&lt;title&gt;...'</code></pre><p id="r-369586" data-claire-element-id="369586">Vous pouvez, plutôt que de vous esquinter à écrire ligne par ligne :</p><pre id="r-369587" data-claire-element-id="369587"><code data-claire-semantic="python">print '&lt;html&gt;'
+print '&lt;head&gt;'
+print '&lt;title&gt;Mon super site en Python qui powne tout XdXDxDXDXd&lt;/title&gt;'
+print '&lt;/head&gt;'
+print '&lt;body&gt;'
+# ... Je vous épargne la suite de cette horreur.</code></pre><p id="r-369588" data-claire-element-id="369588">Utiliser la syntaxe suivante, qui n'est pas toujours connue :</p><pre id="r-369589" data-claire-element-id="369589"><code data-claire-semantic="python">print '''
+&lt;html&gt;
+     &lt;head&gt;
+          &lt;title&gt;Mon super site en Python qui powne tout XdXDxDXDXd&lt;/title&gt;
+     &lt;/head&gt;
+     &lt;body&gt;
+          &lt;p&gt;Vous êtes jaloux, hein ?&lt;/p&gt;
+     &lt;/body&gt;
+&lt;/html&gt;
+'''</code></pre><p id="r-369590" data-claire-element-id="369590">Vous constatez qu'à l'intérieur des <em>'''</em>, vous pouvez utilisez l'indentation que vous voulez.<br/> Il est bien entendu important de rendre son site conforme aux normes de la W3C.</p><p id="r-369591" data-claire-element-id="369591">Si vous avez eu l'occasion de faire une erreur dans votre code, vous avez sûrement pu admirer une erreur 500. Et, vous l'avez remarqué, c'est très gênant pour le dépistage d'erreurs. Le module <em>cgitb</em> va pouvoir vous aider.<br/> Pour cela, il faut l'importer, puis l'activer :</p><pre id="r-369592" data-claire-element-id="369592"><code data-claire-semantic="python">import cgitb
+cgitb.enable()</code></pre><p id="r-369593" data-claire-element-id="369593">C'est fait ! Maintenant, les erreurs s'afficheront sur la page. Ces deux lignes vous seront certainement utiles !</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python">Aperçu de la CGI avec Python</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/preparation-12">
+Préparation
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/la-redaction-des-scripts">
+La rédaction des scripts
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/mise-en-pratique-un-compteur-de-visites">
+Mise en pratique : un compteur de visites
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/traiter-un-formulaire">
+Traiter un formulaire
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/mise-en-pratique-un-livre-d-or">
+Mise en pratique : un livre d&#039;or
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/afficher-son-code-source">
+Afficher son code source
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/preparation-12">
+<span class="arrow"></span>
+<span class="next">Préparation</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/mise-en-pratique-un-compteur-de-visites">
+<span class="next">Mise en pratique : un compteur de visites</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Miseenpratiqueuncompteurdevisites"></a><h2>Mise en pratique : un compteur de visites</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/la-redaction-des-scripts">
+<span class="arrow"></span>
+<span class="next">La rédaction des scripts</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/traiter-un-formulaire">
+<span class="next">Traiter un formulaire</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-369595" data-claire-element-id="369595">Maintenant que vous connaissez le strict <em>minimum</em>, pourquoi ne pas l'employer ? Nous allons réaliser un compteur de visites.<br/> Il serait judicieux de tenter de le faire seul. Néanmoins, je vous donne ma méthode.<br/> Tout d'abord, je tente d'ouvrir un fichier en mode lecture (<em>'r'</em> pour <em>read</em>). Je stocke son contenu dans la variable <em>nbr_visiteurs</em>, en le transformant en un nombre (car il s'agit pour l'instant d'une chaîne). Si cela ne marche pas (pour la bonne raison que mon fichier n'existe pas, ou que son contenu n'est pas un nombre), alors <em>nbr_visiteurs</em> = 0.<br/> Cela donne :</p><pre id="r-369596" data-claire-element-id="369596"><code data-claire-semantic="python">try: # Pour essayer le code qui suit. Si ledit code ne fonctionne pas, alors except: est appelé. Autrement, on continue.
+    fichier = open('compteur','r') # Lecture dans le fichier, appelé 'compteur'.
+    nbr_visiteurs = int(fichier.read()) # int() transforme son argument (à savoir, le contenu du fichier retourné par fichier.read()) en un nombre.
+except Exception:
+    nbr_visiteurs = 0 # Si le fichier est inexistant (= page jamais visitée) ou incorrect, on repart de 0.</code></pre><p id="r-369597" data-claire-element-id="369597">Maintenant, nous allons ouvrir le fichier avec l'option 'w' pour write. S'il existe, il sera supprimé et recréé vide. Sinon, il sera tout simplement créé. Dans les deux cas, nous n'aurons plus qu'à écrire dedans la valeur <code data-claire-semantic="python">nbr_visiteurs + 1</code> (car il faut compter le visiteur qui charge la page :-) ), en la transformant en une chaîne avec la fonction str().</p><pre id="r-369598" data-claire-element-id="369598"><code data-claire-semantic="python">fichier = open('compteur','w')
+fichier.write(str(nbr_visiteurs+1))</code></pre><p id="r-369599" data-claire-element-id="369599">Finalement, on indique au visiteur le nombre de visites :</p><pre id="r-369600" data-claire-element-id="369600"><code data-claire-semantic="python">print nbr_visiteurs+1,'visites \o/'</code></pre><p id="r-369601" data-claire-element-id="369601">Ce qui, avec le code minimal, donne :</p><pre id="r-369602" data-claire-element-id="369602"><code data-claire-semantic="python">#!/usr/bin/python
+
+print 'Content-type: text/html'
+print
+
+try:
+    fichier = open('compteur','r')
+    nbr_visiteurs = int(fichier.read())
+except Exception:
+    nbr_visiteurs = 0
+    fichier = open('compteur','w')
+fichier.write(str(nbr_visiteurs+1))
+print nbr_visiteurs+1,'visites \o/'</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python">Aperçu de la CGI avec Python</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/preparation-12">
+Préparation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/la-redaction-des-scripts">
+La rédaction des scripts
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/mise-en-pratique-un-compteur-de-visites">
+Mise en pratique : un compteur de visites
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/traiter-un-formulaire">
+Traiter un formulaire
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/mise-en-pratique-un-livre-d-or">
+Mise en pratique : un livre d&#039;or
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/afficher-son-code-source">
+Afficher son code source
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/la-redaction-des-scripts">
+<span class="arrow"></span>
+<span class="next">La rédaction des scripts</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/traiter-un-formulaire">
+<span class="next">Traiter un formulaire</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Traiterunformulaire"></a><h2>Traiter un formulaire</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/mise-en-pratique-un-compteur-de-visites">
+<span class="arrow"></span>
+<span class="next">Mise en pratique : un compteur de visites</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/mise-en-pratique-un-livre-d-or">
+<span class="next">Mise en pratique : un livre d&#039;or</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-369604" data-claire-element-id="369604">Un des points inévitables en CGI est le traitement de formulaires. En Python, c'est aussi faisable.</p><aside id="r-369606" data-claire-element-id="369606" data-claire-semantic="warning"><p id="r-369605" data-claire-element-id="369605">Nous travaillons maintenant avec des données envoyées par l'utilisateur. Nous allons notamment les afficher à l'écran. Or, si le visiteur décide de mettre du HTML dans les données qu'il envoie, cela peut présenter une faille.</p></aside><p id="r-369607" data-claire-element-id="369607">Prenons un cas concret. Si le visiteur entre le code suivant :</p><pre id="r-369608" data-claire-element-id="369608"><code data-claire-semantic="html">&lt;script type=&quot;text/javascript&quot;&gt;alert('OLOL CMT G T PWNED');&lt;/script&gt;</code></pre><p id="r-369609" data-claire-element-id="369609">Une alerte s'affichera sur l'écran du visiteur ! Et rien ne l'empêche de se faire passer pour vous « Votre session va expirer. Entrez votre mot de passe à nouveau. », de le récupérer puis de se le faire envoyer par mail, le tout en JavaScript !<br/> Pour pallier ce problème, nous allons utiliser une fonction fort pratique : <em>cgi.escape()</em>. C'est un peu l'équivalent de <em>htmlspecialchars()</em> en PHP : elle remplace les caractères <strong>&lt;</strong> et <strong>&gt;</strong> par <strong>&amp;amp;lt;</strong> et <strong>&amp;amp;gt;</strong>. De ce fait, le code JavaScript cité plus haut s'affichera tel quel, au lieu d'être exécuté. Notez que si vous utilisez une version de python supérieure à la 3.2 il vous faudra utiliser <em>html.escape()</em> à la place de <em>cgi.escape()</em>, car cette dernière est dépréciée. <br/> Aussi, <strong>prenez l'habitude de sécuriser toutes les données envoyées par le visiteur à l'aide de cette fonction</strong>.</p><p id="r-369610" data-claire-element-id="369610">Pour traiter un formulaire, nous devons tout d'abord importer le module CGI. Vous savez comment faire :</p><pre id="r-369611" data-claire-element-id="369611"><code data-claire-semantic="python">import cgi</code></pre><p id="r-369612" data-claire-element-id="369612">À partir de là, ça se corse. :-° On va créer une instance de la classe <em>cgi.FieldStorage()</em>, qui contiendra le formulaire envoyé. Puis, on pourra en extraire les informations avec <em>instance.getvalue('nom')</em>. Cela vous semble tordu ? En vérité, c'est très simple.</p><pre id="r-369613" data-claire-element-id="369613"><code data-claire-semantic="python">#!/usr/bin/python
+
+import cgi
+
+print 'Content-type: text/html'
+print
+formulaire = cgi.FieldStorage()
+if formulaire.getvalue('nom') == None:
+    print '''
+Veuillez remplir le formulaire : 
+&lt;form action=&quot;formulaire.py&quot; method=&quot;post&quot;&gt;
+&lt;input type=&quot;text&quot; name=&quot;nom&quot; /&gt;
+&lt;input type=&quot;submit&quot;&gt;&lt;/form&gt;
+    '''
+else:
+    print 'Ainsi, vous vous appelez',cgi.escape(formulaire.getvalue('nom')),' ?' # N'oubliez pas de sécuriser le code !</code></pre><p id="r-369614" data-claire-element-id="369614">Ce code, enregistré dans un fichier <em>formulaire.py</em> (autrement, il vous faudra le modifier, car le formulaire renvoie vers <em>formulaire.py</em>), créera une instance de <em>cgi.FieldStorage()</em> dans la variable formulaire.<br/> Si <em>formulaire.getvalue('nom') == None</em>, alors le champ <em>'nom'</em> était vide, voire non envoyé.<br/> On présente donc le formulaire au client. Autrement, on récupère la valeur du champ <em>'nom'</em> avec <em>formulaire.getvalue('nom')</em>, et on l'affiche tout en prenant soin de le sécuriser avec <em>cgi.escape()</em>.<br/> Si le champ s'était appelé <em>'prenom'</em>, vous comprenez bien que l'on aurait récupéré sa valeur avec <em>formulaire.getvalue('prenom')</em>.</p><p id="r-369615" data-claire-element-id="369615">Vous voulez une bonne nouvelle ? Pour un formulaire envoyé avec GET (c'est-à-dire que les valeurs des champs se retrouvent dans l'URL, dans le style <em>page.py?var=valeur&amp;amp;var2=valeur2</em>), c'est exactement pareil.<br/> Ainsi, le script suivant enregistré sous <em>essai.py</em> et appelé avec <em>essai.py?var=1&amp;amp;var2=2</em> affichera 'Var = 1 et Var2 = 2'.</p><pre id="r-369616" data-claire-element-id="369616"><code data-claire-semantic="python">#!/usr/bin/python
+
+import cgi
+
+print 'Content-type: text/html'
+print
+
+form = cgi.FieldStorage()
+print 'Var = ',cgi.escape(form.getvalue('var')),' et Var2 = ',cgi.escape(form.getvalue('var2'))</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python">Aperçu de la CGI avec Python</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/preparation-12">
+Préparation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/la-redaction-des-scripts">
+La rédaction des scripts
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/mise-en-pratique-un-compteur-de-visites">
+Mise en pratique : un compteur de visites
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/traiter-un-formulaire">
+Traiter un formulaire
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/mise-en-pratique-un-livre-d-or">
+Mise en pratique : un livre d&#039;or
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/afficher-son-code-source">
+Afficher son code source
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/mise-en-pratique-un-compteur-de-visites">
+<span class="arrow"></span>
+<span class="next">Mise en pratique : un compteur de visites</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/mise-en-pratique-un-livre-d-or">
+<span class="next">Mise en pratique : un livre d&#039;or</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Miseenpratiqueunlivred039or"></a><h2>Mise en pratique : un livre d&#039;or</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/traiter-un-formulaire">
+<span class="arrow"></span>
+<span class="next">Traiter un formulaire</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/afficher-son-code-source">
+<span class="next">Afficher son code source</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-369618" data-claire-element-id="369618">Le livre d'or est une des fonctionnalités que l'on se plaît à implémenter sur son site. Grâce aux formulaires et à la manipulation de fichiers, c'est tout à fait faisable en Python.<br/> Nous allons tout d'abord créer un formulaire tout simple, puis le traiter. Ensuite, nous verrons comment lire le fichier dans lequel seront enregistrés les messages.<br/> Le formulaire ressemblera à ça :</p><pre id="r-369619" data-claire-element-id="369619"><code data-claire-semantic="html">&lt;form action=&quot;enregistrement.py&quot; method=&quot;post&quot;&gt;
+  &lt;p&gt;Vous avez une remarque, un commentaire, un conseil ? Signez le livre d'or !&lt;/p&gt;
+  &lt;p&gt;
+    Pseudonyme : &lt;input type=&quot;text&quot; name=&quot;pseudo&quot; /&gt;&lt;br /&gt;
+    Site web : &lt;input type=&quot;text&quot; name=&quot;site&quot; /&gt;&lt;br /&gt;
+    Message :&lt;br /&gt;
+    &lt;textarea name=&quot;message&quot; cols=&quot;20&quot; rows=&quot;2&quot;&gt;&lt;/textarea&gt;&lt;br /&gt;
+    &lt;input type=&quot;submit&quot; /&gt;
+  &lt;/p&gt;
+&lt;/form&gt;</code></pre><p id="r-369620" data-claire-element-id="369620">À vous de le faire correspondre à vos besoins.<br/> Pour la gestion du formulaire :</p><pre id="r-369621" data-claire-element-id="369621"><code data-claire-semantic="python">#!/usr/bin/python
+
+import cgi
+
+print 'Content-type: text/html'
+print
+
+print '&lt;html&gt;&lt;head&gt;&lt;title&gt;Mon super site&lt;/title&gt;&lt;/head&gt;&lt;body&gt;'
+formulaire = cgi.FieldStorage()
+if formulaire.getvalue('message') != None:
+    print '&lt;p&gt;Merci d\'avoir particip&amp;amp;eacute; au livre d\'or. Vous pouvez le visiter &lt;a href=&quot;livreor.py&quot;&gt;ici&lt;/a&gt;.&lt;/p&gt;'
+    message = formulaire.getvalue('message')
+    site = formulaire.getvalue('site')
+    pseudo = formulaire.getvalue('pseudo')
+    try:
+        fichier = open('livreor','r')
+        livreor = fichier.read()
+    except IOError:
+        livreor = ''
+    message_poste = '&lt;message&gt;&lt;auteur&gt;'+cgi.escape(pseudo)+'&lt;/auteur&gt;&lt;site&gt;'+cgi.escape(site)+'&lt;/site&gt;&lt;contenu&gt;'+cgi.escape(message)+'&lt;/contenu&gt;&lt;/message&gt;\n'
+    fichier = open('livreor','w')
+    fichier.write(message_poste+livreor)
+else:
+    print '''Erreur : vous n'avez pas rempli le formulaire.'''
+print '&lt;/body&gt;&lt;/html&gt;'</code></pre><p id="r-369622" data-claire-element-id="369622">C'est tout simple :</p><ul id="r-369633" data-claire-element-id="369633"><li id="r-369624" data-claire-element-id="369624"><p id="r-369623" data-claire-element-id="369623">on charge le formulaire dans la variable <em>formulaire</em> avec <em>cgi.FieldStorage</em> ;</p></li><li id="r-369626" data-claire-element-id="369626"><p id="r-369625" data-claire-element-id="369625">on teste si le formulaire a été rempli, en vérifiant qu'un message est présent. Vous pouvez bien sûr vérifier si tous les champs sont remplis ;</p></li><li id="r-369628" data-claire-element-id="369628"><p id="r-369627" data-claire-element-id="369627">on charge les éléments du formulaire dans des variables ;</p></li><li id="r-369630" data-claire-element-id="369630"><p id="r-369629" data-claire-element-id="369629">on essaie de lire le contenu du fichier <em>livreor</em>. Si cela rate (avec une IOError), c'est que le fichier n'existe pas, auquel cas le contenu de <em>livreor</em> sera une chaîne vide ;</p></li><li id="r-369632" data-claire-element-id="369632"><p id="r-369631" data-claire-element-id="369631">on ouvre le fichier <em>livreor</em> en mode écriture. On écrit dedans le contenu du nouveau message.</p></li></ul><p id="r-369634" data-claire-element-id="369634">L'écriture est terminée. Chaque message est écrit dans le format :</p><pre id="r-369635" data-claire-element-id="369635"><code data-claire-semantic="xml">&lt;message&gt;&lt;auteur&gt;Auteur&lt;/auteur&gt;&lt;site&gt;Site&lt;/site&gt;&lt;contenu&gt;Contenu&lt;/contenu&gt;&lt;/message&gt;</code></pre><p id="r-369636" data-claire-element-id="369636">Nous n'avons plus qu'à le lire !</p><pre id="r-369637" data-claire-element-id="369637"><code data-claire-semantic="python">#!/usr/bin/python
+
+def trouver(chaine,chaine1,chaine2):
+    position_chaine1 = chaine.index(chaine1) + len(chaine1)
+    position_chaine2 = chaine.index(chaine2,position_chaine1)
+    return chaine[position_chaine1:position_chaine2]
+
+def isoler_message(chaine):
+    dico = {}
+    try:
+        message = trouver(chaine,'&lt;message&gt;','&lt;/message&gt;')
+        dico['auteur'] = trouver(message,'&lt;auteur&gt;','&lt;/auteur&gt;')
+        dico['site'] = trouver(message,'&lt;site&gt;','&lt;/site&gt;')
+        dico['contenu'] = trouver(message,'&lt;contenu&gt;','&lt;/contenu&gt;')
+        return dico
+    except Exception:
+        return 0
+
+def supprimer(chaine):
+    return chaine.replace('&lt;message&gt;'+trouver(chaine,'&lt;message&gt;','&lt;/message&gt;')+'&lt;/message&gt;','')
+
+print 'Content-type: text/html'
+print 
+print '''
+&lt;html&gt;
+&lt;head&gt;
+&lt;title&gt;Le livre d'or&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+'''
+try:
+    fichier = open('livreor','r')
+    contenu = fichier.read()
+    continuer = True
+    while continuer:
+        message = isoler_message(contenu)
+        if not message:
+            continuer = False
+        else:
+            print '&lt;p&gt;De : &lt;b&gt;&lt;a href=&quot;',message['site'],'&quot;&gt;',message['auteur'],'&lt;/a&gt;&lt;/b&gt;&lt;/p&gt;'
+            print '&lt;p&gt;',message['contenu'],'&lt;/p&gt;'
+        print '&lt;br /&gt;&lt;br /&gt;'
+        contenu = supprimer(contenu)
+except Exception:
+    print 'Il n\'y a aucun message dans le livre d\'or'
+print '&lt;/body&gt;&lt;/html&gt;'</code></pre><p id="r-369638" data-claire-element-id="369638">Ma première fonction, <em>trouver()</em>, retourne la première chaîne trouvée entre <em>chaine1</em> et <em>chaine2</em> dans <em>chaine</em>. Son fonctionnement est simple, lisez le code si vous souhaitez le comprendre.</p><p id="r-369639" data-claire-element-id="369639">La seconde, <em>isoler_message()</em>, utilise <em>trouver()</em> pour trouver le premier message (la première chaîne entre <em>&lt;message&gt;</em> et <em>&lt;/message&gt;</em>), puis extrait les différentes informations (l'auteur, le site et le contenu). Finalement, elle retourne le dictionnaire dans lequel elle a tout enregistré.</p><p id="r-369640" data-claire-element-id="369640">La troisième, <em>supprimer(chaine)</em>, supprime le premier message (le texte entre <em>&lt;message&gt;</em> et <em>&lt;/message&gt;</em>, ainsi que les deux balises), pour que la lecture puisse être recommencée sur le message suivant.</p><p id="r-369641" data-claire-element-id="369641">On commence par afficher le début du HTML de la page. Puis, on essaie de lire le fichier <em>livreor</em>, puis d'isoler le premier message, de l'afficher, et de le supprimer de la liste, avant de recommencer, jusqu'à ce qu'il n'y ait plus de messages.<br/> Si cela ne fonctionne pas, on affiche qu'il n'y a pas de message dans le livre d'or.<br/> C'est tout à fait rudimentaire. À vous d'ajouter ce que vous voulez : datez les messages, faites des pages lors de l'affichage...</p><p id="r-369642" data-claire-element-id="369642">Vous voyez que, en travaillant des fichiers et en traitant des formulaires, vous pouvez déjà aller loin. Légèrement modifié, ce livre d'or peut vous fournir un système de news.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python">Aperçu de la CGI avec Python</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/preparation-12">
+Préparation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/la-redaction-des-scripts">
+La rédaction des scripts
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/mise-en-pratique-un-compteur-de-visites">
+Mise en pratique : un compteur de visites
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/traiter-un-formulaire">
+Traiter un formulaire
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/mise-en-pratique-un-livre-d-or">
+Mise en pratique : un livre d&#039;or
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/afficher-son-code-source">
+Afficher son code source
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/traiter-un-formulaire">
+<span class="arrow"></span>
+<span class="next">Traiter un formulaire</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/afficher-son-code-source">
+<span class="next">Afficher son code source</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Affichersoncodesource"></a><h2>Afficher son code source</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/mise-en-pratique-un-livre-d-or">
+<span class="arrow"></span>
+<span class="next">Mise en pratique : un livre d&#039;or</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-369644" data-claire-element-id="369644">Une dernière astuce dont j'aimerais vous faire part est l'affichage de la source. En effet, il est agréable de pouvoir avoir le code d'un site web sous les yeux, pour pouvoir s'en inspirer, ou même donner des conseils au webmaster.</p><aside id="r-369646" data-claire-element-id="369646" data-claire-semantic="warning"><p id="r-369645" data-claire-element-id="369645">Ce genre de chose ne doit PAS être implémenté sur des pages sensibles comme l'administration, à moins que vous ne soyez absolument certain(e) de la sécurité de votre code.</p></aside><p id="r-369647" data-claire-element-id="369647">Pour afficher la source, le client n'aura qu'à entrer l'URL de la page ainsi :<br/><a href="http://site.web/index.py?source=1">http://site.web/index.py?source=1</a><br/> Il nous faudra donc utiliser <em>cgi.FieldStorage()</em>, et tester si <code data-claire-semantic="python">source=1</code>. Dans ce cas, on lit le fichier, et on l'affiche entre <em>&lt;pre&gt;</em> et <em>&lt;/pre&gt;</em>, pour que le code HTML et les sauts à la ligne apparaissent. Puis, on s'arrête là avec <em>sys.exit(0)</em>.<br/> Autrement, on envoie la page comme d'habitude.</p><p id="r-369648" data-claire-element-id="369648">Voici mon code :</p><pre id="r-369649" data-claire-element-id="369649"><code data-claire-semantic="python">#!/usr/bin/python
+
+import sys
+import cgi
+
+form = cgi.FieldStorage()
+if form.getvalue('source') == '1':
+    print &quot;&quot;&quot;Content-type: text/plain
+&quot;&quot;&quot;
+    print open('livreor.py').read()
+    sys.exit(0)
+
+
+print &quot;&quot;&quot;Content-type: text/html
+&quot;&quot;&quot;
+# Suite du code</code></pre><p id="r-369650" data-claire-element-id="369650">C'est enfantin mais pratique. ^^</p><p id="r-369651" data-claire-element-id="369651">Ce tutoriel n'est ici que pour solliciter votre enthousiasme. Pour pouvoir mettre en place un site web plus complexe, utilisant une base de données par exemple, vous devez vous tourner vers la documentation.<br/> J'espère vous avoir intéressés et donné des idées.<br/> Bonne continuation avec Python !<br/><em>Merci à delroth et plus généralement à tout #python pour l'aide qui m'a été apportée lors de la création de mon propre site, et sans qui ce tutoriel n'aurait pas vu le jour.</em></p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python">Aperçu de la CGI avec Python</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/preparation-12">
+Préparation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/la-redaction-des-scripts">
+La rédaction des scripts
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/mise-en-pratique-un-compteur-de-visites">
+Mise en pratique : un compteur de visites
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/traiter-un-formulaire">
+Traiter un formulaire
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/mise-en-pratique-un-livre-d-or">
+Mise en pratique : un livre d&#039;or
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/afficher-son-code-source">
+Afficher son code source
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/apercu-de-la-cgi-avec-python/mise-en-pratique-un-livre-d-or">
+<span class="arrow"></span>
+<span class="next">Mise en pratique : un livre d&#039;or</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/apercu-de-la-cgi-avec-python.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 08:55:59 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/apercu-de-la-cgi-avec-python.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:35:41 GMT -->
+</html>

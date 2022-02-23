@@ -1,0 +1,228 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/le-safe-mode-sous-php.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 19:54:44 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/le-safe-mode-sous-php.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 03:39:49 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Le Safe Mode sous PHP</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/le-safe-mode-sous-php.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Le Safe Mode sous PHP</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#LeSafeModesousPHP">Le Safe Mode sous PHP</a><br/><a href="#Qu039est-cequeleSafeMode">Qu&#039;est-ce que le Safe Mode ?</a><br/><a href="#LesconsquencesduSafeMode">Les conséquences du Safe Mode</a><br/><a href="#ContournonsleSafeMode">Contournons le Safe Mode</a><br/></div>
+<a name="LeSafeModesousPHP"></a><h2>Le Safe Mode sous PHP</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-safe-mode-sous-php/qu-est-ce-que-le-safe-mode">
+<span class="next">Qu&#039;est-ce que le Safe Mode ?</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-583268" data-claire-element-id="583268">Vous n'arrivez pas à uploader un fichier sur votre FTP <em>via</em> un script PHP ?<br/> Vous n'arrivez pas à supprimer un fichier de votre FTP <em>via</em> un autre script PHP ?<br/> En gros, vous n'arrivez pas à interagir avec des fichiers de votre FTP <em>via</em> PHP ?<br/> Pourtant vous êtes certain de votre script, vos chemins, des noms de fichiers, etc. ?</p><p id="r-583269" data-claire-element-id="583269">Le Safe Mode est activé sur votre serveur ! ^^ Et on va résoudre tous vos problèmes ! En avant ! :soleil:</p><aside id="r-583271" data-claire-element-id="583271" data-claire-semantic="warning"><p id="r-583270" data-claire-element-id="583270">Sachez cependant que le Safe Mode est obsolète depuis PHP 5.3 et sera supprimé dès PHP 6.0.<br/> Par conséquent, plus de souci à se faire à ce niveau-là si votre hébergeur utilise PHP 5.3 et +.<br/> L'activation du Safe Mode sur un serveur sous PHP v5.3 et + génère une erreur <code data-claire-semantic="html+php">E_DEPRECATED </code>.</p></aside>
+</div><a name="Qu039est-cequeleSafeMode"></a><h2>Qu&#039;est-ce que le Safe Mode ?</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-safe-mode-sous-php/les-consequences-du-safe-mode">
+<span class="next">Les conséquences du Safe Mode</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-583272" data-claire-element-id="583272">Je vais faire simple, je vais vous donner la définition selon <a href="http://php.net/manual/fr">la doc PHP</a> :</p><p id="r-583273" data-claire-element-id="583273"><cite>Citation : La doc PHP</cite></p><blockquote id="r-583275" data-claire-element-id="583275"><p id="r-583274" data-claire-element-id="583274">Le « Safe Mode » est le mode de sécurité de PHP : une solution au problème de partage de PHP sur un serveur. Ce système pêche au niveau de l'architecture car il n'est pas correct de tenter de résoudre ce problème au niveau de PHP, mais les solutions alternatives basées sur le serveur web et l'OS ne sont pas réalistes. De nombreux intervenants, notamment les fournisseurs d'hébergement, utilisent le « Safe Mode ».</p></blockquote><p id="r-583276" data-claire-element-id="583276">En d'autres termes (parce que la doc n'explique pas suffisamment), quand le <strong>Safe Mode</strong> est activé, le serveur vérifie que vous êtes bien le propriétaire du fichier/dossier avant d'interagir avec lui, que ce soit pour de la simple lecture ou de la manipulation.</p><div id="r-583278" data-claire-element-id="583278" data-claire-semantic="question"><p id="r-583277" data-claire-element-id="583277">Ok, mais si ce fichier est sur mon FTP, j'en suis donc le propriétaire, non ?</p></div><p id="r-583279" data-claire-element-id="583279">D'une certaine manière oui, mais d'une autre non. Donc oui le FTP vous appartient. Mais sur tout système UNIX qui se respecte, il y a des droits sur les fichiers. Chaque utilisateur appartient à un groupe. C'est le principe même du CHMOD si vous le saviez déjà.</p><p id="r-583280" data-claire-element-id="583280">Prenons en exemple un réseau UNIX sur lequel tous les professeurs et étudiants d'une université peuvent se connecter.<br/> Chaque personne aura son propre UID. Les professeurs appartiendront au groupe <em>professeurs</em>, tandis que les étudiants au groupe <em>étudiants</em>. Ces deux groupes ont d'ailleurs un GID également ! Par conséquent, deux professeurs ou deux étudiants auront le même GID mais pas le même UID.</p><p id="r-583281" data-claire-element-id="583281">Le Safe Mode fonctionne sur cette base, l'UID cherchant à modifier le fichier doit être égale à celui à qui appartient le fichier. En utilisant les chemins relatifs basiques, l'UID du fichier est celui de l'utilisateur <em>root</em>, mais votre UID à vous (celui du script PHP en vérité) n'est pas le même que celui de <em>root</em>, l'accès est donc refusé.</p><p id="r-583282" data-claire-element-id="583282">Et PHP, plutôt que de vous retourner une erreur claire et simple à comprendre du genre « <em>Vous n'avez pas les droits suffisants pour interagir avec ce fichier/dossier</em> », ne vous dit rien et vous laisse chercher pendant des plombes d'où provient l'erreur ! &gt;_</p><p id="r-583283" data-claire-element-id="583283">Et grâce à ce tutoriel, votre calvaire se termine enfin. :p Avant de voir comment résoudre ces problèmes de Safe Mode, nous allons voir les conséquences de son activation.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/le-safe-mode-sous-php">Le Safe Mode sous PHP</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/le-safe-mode-sous-php/qu-est-ce-que-le-safe-mode">
+Qu&#039;est-ce que le Safe Mode ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-safe-mode-sous-php/les-consequences-du-safe-mode">
+Les conséquences du Safe Mode
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-safe-mode-sous-php/contournons-le-safe-mode">
+Contournons le Safe Mode
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-safe-mode-sous-php/les-consequences-du-safe-mode">
+<span class="next">Les conséquences du Safe Mode</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="LesconsquencesduSafeMode"></a><h2>Les conséquences du Safe Mode</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-safe-mode-sous-php/qu-est-ce-que-le-safe-mode">
+<span class="arrow"></span>
+<span class="next">Qu&#039;est-ce que le Safe Mode ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-safe-mode-sous-php/contournons-le-safe-mode">
+<span class="next">Contournons le Safe Mode</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-583285" data-claire-element-id="583285">Il y a trois conséquences possibles :</p><ul id="r-583292" data-claire-element-id="583292"><li id="r-583287" data-claire-element-id="583287"><p id="r-583286" data-claire-element-id="583286">soit la fonction est désactivée purement et simplement OU n'a plus d'effet ;</p></li><li id="r-583289" data-claire-element-id="583289"><p id="r-583288" data-claire-element-id="583288">soit la fonction est limitée ;</p></li><li id="r-583291" data-claire-element-id="583291"><p id="r-583290" data-claire-element-id="583290">soit la fonction n'opère aucun changement.</p></li></ul><p id="r-583293" data-claire-element-id="583293">Comme la 3e conséquence ne nous intéresse pas ici, je ne vous donnerai que les deux premières.</p><h3 id="r-les-fonctions-purement-et-simplement-desactivees-ou-qui-n-ont-plus-d-effet" data-claire-element-id="583327">Les fonctions purement et simplement désactivées ou qui n'ont plus d'effet</h3><table id="r-583326" data-claire-element-id="583326"><thead id="r-583299" data-claire-element-id="583299"><tr id="r-583298" data-claire-element-id="583298"><th id="r-583295" data-claire-element-id="583295"><p id="r-583294" data-claire-element-id="583294">Fonction</p></th><th id="r-583297" data-claire-element-id="583297"><p id="r-583296" data-claire-element-id="583296">Conséquence</p></th></tr></thead><tbody id="r-583325" data-claire-element-id="583325"><tr id="r-583304" data-claire-element-id="583304"><td id="r-583301" data-claire-element-id="583301"><p id="r-583300" data-claire-element-id="583300">dl()</p></td><td id="r-583303" data-claire-element-id="583303"><p id="r-583302" data-claire-element-id="583302">Désactivée</p></td></tr><tr id="r-583309" data-claire-element-id="583309"><td id="r-583306" data-claire-element-id="583306"><p id="r-583305" data-claire-element-id="583305">shell_exec()</p></td><td id="r-583308" data-claire-element-id="583308"><p id="r-583307" data-claire-element-id="583307">Désactivée</p></td></tr><tr id="r-583314" data-claire-element-id="583314"><td id="r-583311" data-claire-element-id="583311"><p id="r-583310" data-claire-element-id="583310">set_time_limit()</p></td><td id="r-583313" data-claire-element-id="583313"><p id="r-583312" data-claire-element-id="583312">N'as plus d'effet</p></td></tr><tr id="r-583319" data-claire-element-id="583319"><td id="r-583316" data-claire-element-id="583316"><p id="r-583315" data-claire-element-id="583315">max_execution_time()</p></td><td id="r-583318" data-claire-element-id="583318"><p id="r-583317" data-claire-element-id="583317">N'as plus d'effet</p></td></tr><tr id="r-583324" data-claire-element-id="583324"><td id="r-583321" data-claire-element-id="583321"><p id="r-583320" data-claire-element-id="583320">opérateur guillemets obliques ( ` : touche 7 du clavier )</p></td><td id="r-583323" data-claire-element-id="583323"><p id="r-583322" data-claire-element-id="583322">Désactivé</p></td></tr></tbody></table><h3 id="r-les-fonctions-limitees" data-claire-element-id="583516">Les fonctions limitées</h3><table id="r-583515" data-claire-element-id="583515"><thead id="r-583333" data-claire-element-id="583333"><tr id="r-583332" data-claire-element-id="583332"><th id="r-583329" data-claire-element-id="583329"><p id="r-583328" data-claire-element-id="583328">Fonction</p></th><th id="r-583331" data-claire-element-id="583331"><p id="r-583330" data-claire-element-id="583330">Conséquence</p></th></tr></thead><tbody id="r-583514" data-claire-element-id="583514"><tr id="r-583338" data-claire-element-id="583338"><td id="r-583335" data-claire-element-id="583335"><p id="r-583334" data-claire-element-id="583334">dbmopen()</p></td><td id="r-583337" data-claire-element-id="583337"><p id="r-583336" data-claire-element-id="583336">UID du fichier doit être égale à UID du script</p></td></tr><tr id="r-583343" data-claire-element-id="583343"><td id="r-583340" data-claire-element-id="583340"><p id="r-583339" data-claire-element-id="583339">dbase_open()</p></td><td id="r-583342" data-claire-element-id="583342"><p id="r-583341" data-claire-element-id="583341">UID du fichier doit être égale à UID du script</p></td></tr><tr id="r-583348" data-claire-element-id="583348"><td id="r-583345" data-claire-element-id="583345"><p id="r-583344" data-claire-element-id="583344">filepro()</p></td><td id="r-583347" data-claire-element-id="583347"><p id="r-583346" data-claire-element-id="583346">UID du fichier doit être égale à UID du script</p></td></tr><tr id="r-583353" data-claire-element-id="583353"><td id="r-583350" data-claire-element-id="583350"><p id="r-583349" data-claire-element-id="583349">filepro_rowcount()</p></td><td id="r-583352" data-claire-element-id="583352"><p id="r-583351" data-claire-element-id="583351">UID du fichier doit être égale à UID du script</p></td></tr><tr id="r-583358" data-claire-element-id="583358"><td id="r-583355" data-claire-element-id="583355"><p id="r-583354" data-claire-element-id="583354">filepro_retrieve()</p></td><td id="r-583357" data-claire-element-id="583357"><p id="r-583356" data-claire-element-id="583356">UID du fichier doit être égale à UID du script</p></td></tr><tr id="r-583363" data-claire-element-id="583363"><td id="r-583360" data-claire-element-id="583360"><p id="r-583359" data-claire-element-id="583359">pg_lo_import()</p></td><td id="r-583362" data-claire-element-id="583362"><p id="r-583361" data-claire-element-id="583361">UID du fichier doit être égale à UID du script</p></td></tr><tr id="r-583368" data-claire-element-id="583368"><td id="r-583365" data-claire-element-id="583365"><p id="r-583364" data-claire-element-id="583364">posix_mkfifo()</p></td><td id="r-583367" data-claire-element-id="583367"><p id="r-583366" data-claire-element-id="583366">UID du fichier doit être égale à UID du script</p></td></tr><tr id="r-583373" data-claire-element-id="583373"><td id="r-583370" data-claire-element-id="583370"><p id="r-583369" data-claire-element-id="583369">putenv()</p></td><td id="r-583372" data-claire-element-id="583372"><p id="r-583371" data-claire-element-id="583371">UID du fichier doit être égale à UID du script</p></td></tr><tr id="r-583378" data-claire-element-id="583378"><td id="r-583375" data-claire-element-id="583375"><p id="r-583374" data-claire-element-id="583374">move_uploaded_file()</p></td><td id="r-583377" data-claire-element-id="583377"><p id="r-583376" data-claire-element-id="583376">UID du fichier doit être égale à UID du script</p></td></tr><tr id="r-583383" data-claire-element-id="583383"><td id="r-583380" data-claire-element-id="583380"><p id="r-583379" data-claire-element-id="583379">chdir()</p></td><td id="r-583382" data-claire-element-id="583382"><p id="r-583381" data-claire-element-id="583381">UID du fichier doit être égale à UID du script</p></td></tr><tr id="r-583388" data-claire-element-id="583388"><td id="r-583385" data-claire-element-id="583385"><p id="r-583384" data-claire-element-id="583384">exec()</p></td><td id="r-583387" data-claire-element-id="583387"><p id="r-583386" data-claire-element-id="583386">Ne peut exécuter que les programmes présents dans le safe_mode_exec_dir</p></td></tr><tr id="r-583393" data-claire-element-id="583393"><td id="r-583390" data-claire-element-id="583390"><p id="r-583389" data-claire-element-id="583389">system()</p></td><td id="r-583392" data-claire-element-id="583392"><p id="r-583391" data-claire-element-id="583391">Ne peut exécuter que les programmes présents dans le safe_mode_exec_dir</p></td></tr><tr id="r-583398" data-claire-element-id="583398"><td id="r-583395" data-claire-element-id="583395"><p id="r-583394" data-claire-element-id="583394">passthru()</p></td><td id="r-583397" data-claire-element-id="583397"><p id="r-583396" data-claire-element-id="583396">Ne peut exécuter que les programmes présents dans le safe_mode_exec_dir</p></td></tr><tr id="r-583403" data-claire-element-id="583403"><td id="r-583400" data-claire-element-id="583400"><p id="r-583399" data-claire-element-id="583399">popen()</p></td><td id="r-583402" data-claire-element-id="583402"><p id="r-583401" data-claire-element-id="583401">Ne peut exécuter que les programmes présents dans le safe_mode_exec_dir</p></td></tr><tr id="r-583408" data-claire-element-id="583408"><td id="r-583405" data-claire-element-id="583405"><p id="r-583404" data-claire-element-id="583404">fopen()</p></td><td id="r-583407" data-claire-element-id="583407"><p id="r-583406" data-claire-element-id="583406">UID du fichier doit être égale à UID du script</p></td></tr><tr id="r-583413" data-claire-element-id="583413"><td id="r-583410" data-claire-element-id="583410"><p id="r-583409" data-claire-element-id="583409">mkdir()</p></td><td id="r-583412" data-claire-element-id="583412"><p id="r-583411" data-claire-element-id="583411">UID du fichier doit être égale à UID du script</p></td></tr><tr id="r-583418" data-claire-element-id="583418"><td id="r-583415" data-claire-element-id="583415"><p id="r-583414" data-claire-element-id="583414">rmdir()</p></td><td id="r-583417" data-claire-element-id="583417"><p id="r-583416" data-claire-element-id="583416">UID du fichier doit être égale à UID du script</p></td></tr><tr id="r-583423" data-claire-element-id="583423"><td id="r-583420" data-claire-element-id="583420"><p id="r-583419" data-claire-element-id="583419">rename()</p></td><td id="r-583422" data-claire-element-id="583422"><p id="r-583421" data-claire-element-id="583421">UID du fichier doit être égale à UID du script</p></td></tr><tr id="r-583428" data-claire-element-id="583428"><td id="r-583425" data-claire-element-id="583425"><p id="r-583424" data-claire-element-id="583424">unlink()</p></td><td id="r-583427" data-claire-element-id="583427"><p id="r-583426" data-claire-element-id="583426">UID du fichier doit être égale à UID du script</p></td></tr><tr id="r-583433" data-claire-element-id="583433"><td id="r-583430" data-claire-element-id="583430"><p id="r-583429" data-claire-element-id="583429">copy()</p></td><td id="r-583432" data-claire-element-id="583432"><p id="r-583431" data-claire-element-id="583431">UID du fichier doit être égale à UID du script</p></td></tr><tr id="r-583438" data-claire-element-id="583438"><td id="r-583435" data-claire-element-id="583435"><p id="r-583434" data-claire-element-id="583434">chgrp()</p></td><td id="r-583437" data-claire-element-id="583437"><p id="r-583436" data-claire-element-id="583436">UID du fichier doit être égale à UID du script</p></td></tr><tr id="r-583443" data-claire-element-id="583443"><td id="r-583440" data-claire-element-id="583440"><p id="r-583439" data-claire-element-id="583439">chown()</p></td><td id="r-583442" data-claire-element-id="583442"><p id="r-583441" data-claire-element-id="583441">UID du fichier doit être égale à UID du script</p></td></tr><tr id="r-583448" data-claire-element-id="583448"><td id="r-583445" data-claire-element-id="583445"><p id="r-583444" data-claire-element-id="583444">chmod()</p></td><td id="r-583447" data-claire-element-id="583447"><p id="r-583446" data-claire-element-id="583446">UID du fichier doit être égale à UID du script</p></td></tr><tr id="r-583453" data-claire-element-id="583453"><td id="r-583450" data-claire-element-id="583450"><p id="r-583449" data-claire-element-id="583449">touch()</p></td><td id="r-583452" data-claire-element-id="583452"><p id="r-583451" data-claire-element-id="583451">UID du fichier doit être égale à UID du script</p></td></tr><tr id="r-583458" data-claire-element-id="583458"><td id="r-583455" data-claire-element-id="583455"><p id="r-583454" data-claire-element-id="583454">symlink()</p></td><td id="r-583457" data-claire-element-id="583457"><p id="r-583456" data-claire-element-id="583456">UID du fichier doit être égale à UID du script</p></td></tr><tr id="r-583463" data-claire-element-id="583463"><td id="r-583460" data-claire-element-id="583460"><p id="r-583459" data-claire-element-id="583459">link()</p></td><td id="r-583462" data-claire-element-id="583462"><p id="r-583461" data-claire-element-id="583461">UID du fichier doit être égale à UID du script</p></td></tr><tr id="r-583468" data-claire-element-id="583468"><td id="r-583465" data-claire-element-id="583465"><p id="r-583464" data-claire-element-id="583464">highlight_file()</p></td><td id="r-583467" data-claire-element-id="583467"><p id="r-583466" data-claire-element-id="583466">UID du fichier doit être égale à UID du script</p></td></tr><tr id="r-583473" data-claire-element-id="583473"><td id="r-583470" data-claire-element-id="583470"><p id="r-583469" data-claire-element-id="583469">show_source()</p></td><td id="r-583472" data-claire-element-id="583472"><p id="r-583471" data-claire-element-id="583471">UID du fichier doit être égale à UID du script</p></td></tr><tr id="r-583478" data-claire-element-id="583478"><td id="r-583475" data-claire-element-id="583475"><p id="r-583474" data-claire-element-id="583474">parse_ini_file()</p></td><td id="r-583477" data-claire-element-id="583477"><p id="r-583476" data-claire-element-id="583476">UID du fichier doit être égale à UID du script</p></td></tr><tr id="r-583483" data-claire-element-id="583483"><td id="r-583480" data-claire-element-id="583480"><p id="r-583479" data-claire-element-id="583479">apache_request_headers()</p></td><td id="r-583482" data-claire-element-id="583482"><p id="r-583481" data-claire-element-id="583481">Les en-têtes commençant par <em>authorization</em> (sensibles à la casse) ne seront pas retournés</p></td></tr><tr id="r-583488" data-claire-element-id="583488"><td id="r-583485" data-claire-element-id="583485"><p id="r-583484" data-claire-element-id="583484">link()</p></td><td id="r-583487" data-claire-element-id="583487"><p id="r-583486" data-claire-element-id="583486">UID du fichier doit être égale à UID du script</p></td></tr><tr id="r-583493" data-claire-element-id="583493"><td id="r-583490" data-claire-element-id="583490"><p id="r-583489" data-claire-element-id="583489">header()</p></td><td id="r-583492" data-claire-element-id="583492"><p id="r-583491" data-claire-element-id="583491">L'UID du script est ajouté à la partie <em>realm</em> de l'en-tête WWW-Authenticate</p></td></tr><tr id="r-583498" data-claire-element-id="583498"><td id="r-583495" data-claire-element-id="583495"><p id="r-583494" data-claire-element-id="583494">variables PHP_AUTH</p></td><td id="r-583497" data-claire-element-id="583497"><p id="r-583496" data-claire-element-id="583496">Indisponible dans la <em>superglobal</em> $_SERVER</p></td></tr><tr id="r-583503" data-claire-element-id="583503"><td id="r-583500" data-claire-element-id="583500"><p id="r-583499" data-claire-element-id="583499">mail()</p></td><td id="r-583502" data-claire-element-id="583502"><p id="r-583501" data-claire-element-id="583501">Le 5e paramètre est désactivé (drapeaux/paramètres optionnels)</p></td></tr><tr id="r-583508" data-claire-element-id="583508"><td id="r-583505" data-claire-element-id="583505"><p id="r-583504" data-claire-element-id="583504">session_start()</p></td><td id="r-583507" data-claire-element-id="583507"><p id="r-583506" data-claire-element-id="583506">Le propriétaire d'un script doit être le même que celui du répertoire session.save_path, si le répertoire par défaut session.save_handler est utilisé</p></td></tr><tr id="r-583513" data-claire-element-id="583513"><td id="r-583510" data-claire-element-id="583510"><p id="r-583509" data-claire-element-id="583509">Toutes les fonctions sur les flux et sur le système de fichiers</p></td><td id="r-583512" data-claire-element-id="583512"><p id="r-583511" data-claire-element-id="583511">UID du fichier doit être égale à UID du script</p></td></tr></tbody></table>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/le-safe-mode-sous-php">Le Safe Mode sous PHP</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-safe-mode-sous-php/qu-est-ce-que-le-safe-mode">
+Qu&#039;est-ce que le Safe Mode ?
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/le-safe-mode-sous-php/les-consequences-du-safe-mode">
+Les conséquences du Safe Mode
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-safe-mode-sous-php/contournons-le-safe-mode">
+Contournons le Safe Mode
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-safe-mode-sous-php/qu-est-ce-que-le-safe-mode">
+<span class="arrow"></span>
+<span class="next">Qu&#039;est-ce que le Safe Mode ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/le-safe-mode-sous-php/contournons-le-safe-mode">
+<span class="next">Contournons le Safe Mode</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="ContournonsleSafeMode"></a><h2>Contournons le Safe Mode</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-safe-mode-sous-php/les-consequences-du-safe-mode">
+<span class="arrow"></span>
+<span class="next">Les conséquences du Safe Mode</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-583518" data-claire-element-id="583518">Voilà, après du blabla intempestif, entrons dans le vif du sujet ! La résolution du problème !</p><h3 id="r-la-theorie-24" data-claire-element-id="583522">La théorie</h3><p id="r-583519" data-claire-element-id="583519">Pour résoudre le problème, c'est très simple. Il suffit de manipuler des fichiers dont le script est propriétaire ! L'UID du script doit correspondre à l'UID du fichier. Pour ce faire, il faut utiliser <strong>le chemin canonique absolu</strong> du fichier.</p><p id="r-583520" data-claire-element-id="583520">Quel nom barbare ! :ninja:</p><p id="r-583521" data-claire-element-id="583521">Autrement dit, il faut utiliser le <strong>VRAI</strong> chemin du fichier. Le chemin qui dit que le fichier, c'est le nôtre !</p><h3 id="r-la-pratique-14" data-claire-element-id="583526">La pratique</h3><p id="r-583523" data-claire-element-id="583523">Pour connaître le chemin canonique absolu d'un fichier, il suffit de placer ce fichier (que l'on appellera chemin.php) dans le dossier dans lequel on souhaite manipuler les fichiers. Il ne reste qu'à l'appeler dans son navigateur favori.</p><pre id="r-583524" data-claire-element-id="583524"><code data-claire-semantic="html+php">&lt;?php
+echo realpath('chemin.php');</code></pre><p id="r-583525" data-claire-element-id="583525">Ce code retournera quelquechose comme : /home/login/[...]/chemin.php où [...] peut valoir 1 ou plusieurs descentes de dossier. Le voilà, notre chemin canonique absolu : /home/login/[...]/ ; c'est avec lui que l'on devra toujours travailler pour manipuler des fichiers si le Safe Mode est actif.</p><h3 id="r-exemple-concret-un-script-d-upload-d-avatars" data-claire-element-id="583546">Exemple concret : un script d'upload d'avatars</h3><p id="r-583527" data-claire-element-id="583527">Sur mon FTP à la racine, je crée un dossier <code>images</code>, puis dans celui-ci un dossier <code>avatars</code>. J'ai donc une arborescence telle que celle-ci :</p><ul id="r-583536" data-claire-element-id="583536"><li id="r-583529" data-claire-element-id="583529"><p id="r-583528" data-claire-element-id="583528">racine</p></li><ul id="r-583535" data-claire-element-id="583535"><li id="r-583531" data-claire-element-id="583531"><p id="r-583530" data-claire-element-id="583530">images</p></li><ul id="r-583534" data-claire-element-id="583534"><li id="r-583533" data-claire-element-id="583533"><p id="r-583532" data-claire-element-id="583532">avatars</p></li></ul></ul></ul><p id="r-583537" data-claire-element-id="583537">Mon script d'upload d'avatars devra utiliser la fonction <code data-claire-semantic="html+php">move_uploaded_file() </code>, qui ressemblera à ceci :</p><p id="r-583538" data-claire-element-id="583538"><em>(J'ai volontairement réduit le code à sa plus simple utilisation, l'idée n'étant pas de vous apprendre à uploader des fichiers mais bien de contourner le Safe Mode).</em></p><pre id="r-583539" data-claire-element-id="583539"><code data-claire-semantic="html+php">&lt;?php
+$tmp_name = $_FILES['avatar']['tmp_name']; // Le fichier temporaire
+$nomFichier = basename($_FILES['avatar']['name']); // Le nom du fichier
+$chemin_canonique = '/home/Zazou/images/avatars/'; 
+// Mon FTP s'appelle Zazou qui correspond simplement à mon login de connexion à mon FTP
+// J'ai créé à la racine un dossier images, et dans celui-ci un dossier avatars (cf. arborescence)
+$destination = $chemin_canonique.$nomFichier; // On formate la destination
+move_uploaded_file($tmp_name,$destination); // On uploade</code></pre><aside id="r-583541" data-claire-element-id="583541" data-claire-semantic="warning"><p id="r-583540" data-claire-element-id="583540">Il ne faut pas oublier que le CHMOD du dossier <code>avatars</code> doit être à 777.</p></aside><p id="r-583542" data-claire-element-id="583542">Et voilà : le tour est joué ! Si toutes les conditions sont bien remplies, vous ne devriez plus avoir de problèmes.</p><p id="r-583543" data-claire-element-id="583543">Eh voilà, ce tutoriel est fini. :D J'espère qu'il vous aura aidé à résoudre tous vos soucis d'upload ou autres. Vous avez désormais toutes les cartes en main pour créer vos scripts d'upload ou pour utiliser toutes les fonctions qui sont limitées par le Safe Mode. Je ne veux donc plus entendre des « Bouhouhouh, ça marche pas ! J'vais me suicider :'( ». Je vous souhaite bonne chance, en espérant ne pas vous revoir sur les forums avec un problème lié au Safe Mode. :p</p><div id="r-583545" data-claire-element-id="583545"><p id="r-583544" data-claire-element-id="583544">Merci à Fihld et Barbatos pour la zCorrection :)</p></div>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/le-safe-mode-sous-php">Le Safe Mode sous PHP</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-safe-mode-sous-php/qu-est-ce-que-le-safe-mode">
+Qu&#039;est-ce que le Safe Mode ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/le-safe-mode-sous-php/les-consequences-du-safe-mode">
+Les conséquences du Safe Mode
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/le-safe-mode-sous-php/contournons-le-safe-mode">
+Contournons le Safe Mode
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/le-safe-mode-sous-php/les-consequences-du-safe-mode">
+<span class="arrow"></span>
+<span class="next">Les conséquences du Safe Mode</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/le-safe-mode-sous-php.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 19:54:44 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/le-safe-mode-sous-php.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 03:39:49 GMT -->
+</html>

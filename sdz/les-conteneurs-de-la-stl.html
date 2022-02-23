@@ -1,0 +1,980 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/les-conteneurs-de-la-stl.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 23:27:27 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/les-conteneurs-de-la-stl.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:07:51 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Les Conteneurs de la STL</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/les-conteneurs-de-la-stl.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Les Conteneurs de la STL</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#LesConteneursdelaSTL">Les Conteneurs de la STL</a><br/><a href="#Ladcouverteparl039exemple">La découverte par l&#039;exemple</a><br/><a href="#LetableauassociatifdelaSTLstdmap">Le tableau associatif de la STL : std::map</a><br/><a href="#UneclassebienpratiquepourmanipulerdeslmentscontenusdansunconteneurSTLlesitrateurs">Une classe bien pratique pour manipuler des éléments contenus dans un conteneur STL : les itérateurs</a><br/><a href="#Utilisationplustenduedesstdmap">Utilisation plus étendue des std::map</a><br/><a href="#Ilexisted039autresconteneursassociatifsdelaSTL">Il existe d&#039;autres conteneurs associatifs de la STL!</a><br/><a href="#LesautresconteneursdelaSTL">Les autres conteneurs de la STL</a><br/></div>
+<a name="LesConteneursdelaSTL"></a><h2>Les Conteneurs de la STL</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/la-decouverte-par-l-exemple">
+<span class="next">La découverte par l&#039;exemple</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-383514" data-claire-element-id="383514"><em>Il est nécessaire de connaître le contenu de la <a href="http://www.siteduzero.com/tutoriel-3-11406-apprenez-a-programmer-en-c.html">première partie et le début de la deuxième partie (notions de bases sur les classes) du cours de C++ de M@teo21/Nanoc</a>. Ce tutoriel étant un (gros) complément au chapitre sur les tableaux dynamiques : <code data-claire-semantic="cpp">std::vector</code>.</em></p><p id="r-383515" data-claire-element-id="383515">Salut les zéros ! :)</p><p id="r-383516" data-claire-element-id="383516">Vous avez découvert le conteneur <code data-claire-semantic="cpp">std::vector</code> sur le tutoriel de Nanoc et vous l'avez trouvé super pratique.<br/> Mais comme dit dans <a href="http://www.siteduzero.com/tutoriel-3-11405-ce-que-vous-pouvez-encore-apprendre.html#ss_part_2">le dernier chapitre du tutoriel C++ de M@teo21</a>, il existe plein d'autres classes que le <code data-claire-semantic="cpp">std::vector</code> pour créer des tableaux ! o_O <br/> Ces autres classes sont appellées &quot;conteneurs&quot; car elles ont toutes pour but de contenir des éléments. (Étonnant n'est-ce pas ?)</p><p id="r-383517" data-claire-element-id="383517">Comme indiqué sur <a href="http://cpp.developpez.com/faq/cpp/?page=STL#STL_choix_conteneur">ce schéma</a>, en fonction de l'utilisation à laquelle votre tableau est utilisé, il existera peut-être une classe qui sera plus optimisée pour cette utilisation, ou qui vous fournira des fonctions plus appropriées.<br/> C'est parti ! Laissez-moi vous présenter ces conteneurs ! :D</p>
+</div><a name="Ladcouverteparl039exemple"></a><h2>La découverte par l&#039;exemple</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/le-tableau-associatif-de-la-stl-std-map">
+<span class="next">Le tableau associatif de la STL : std::map</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-un-groupe-de-personnages" data-claire-element-id="383523">Un groupe de personnages</h2><p id="r-383518" data-claire-element-id="383518">Imaginez un jeu où l'utilisateur peut créer des personnages ayant chacun un nom.<br/> Comment coder cet exemple avec un tableau classique ou un <code data-claire-semantic="cpp">std::vector</code> ?<br/> Supposons que nous utilisons la même classe Personnage du tutoriel de Nanoc et M@teo21 (Moi je la trouve très sympatique cette classe :p ). Au stade où les personnages ont un nom et sont capables de se présenter.</p><pre id="r-383519" data-claire-element-id="383519"><code data-claire-semantic="cpp">class Personnage
+{
+    public:
+	Personnage(std::string nom);
+        void recevoirDegats(int degats);
+	void boirePotionDeVie(int pvAjoutes);
+        void coupDePoing(Personnage&amp; cible);
+
+        std::string getNom() const;
+        
+        void sePresenter() const;
+ 
+    protected:
+        int m_vie;
+        std::string m_nom;
+};
+void Personnage::sePresenter() const
+{
+    cout &lt;&lt; &quot;Bonjour, je m'appelle &quot; &lt;&lt; m_nom &lt;&lt; &quot;.&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;J'ai encore &quot; &lt;&lt; m_vie &lt;&lt; &quot; points de vie.&quot; &lt;&lt; endl;
+}</code></pre><p id="r-383520" data-claire-element-id="383520">L'utilisateur pourra créer des personnages par leur nom dans un <code data-claire-semantic="cpp">std::vector</code> :</p><pre id="r-383521" data-claire-element-id="383521"><code data-claire-semantic="cpp">int main(int argc, char ** argv)
+{
+	string nom;
+	vector&lt;Personnage&gt; groupe;
+	while(1)
+	{
+		cout &lt;&lt; endl &lt;&lt; &quot;Entrez le nom du Personnage que vous voulez creer&quot; &lt;&lt; endl;
+		cin &gt;&gt; nom;
+		groupe.push_back(nom);
+		cout &lt;&lt; &quot;Voici maintenant votre groupe de personnages : &quot; &lt;&lt; endl;
+		for(int i = 0;i&lt;groupe.size();i++)
+		{
+			cout &lt;&lt; &quot;&lt;Perso numero &quot; &lt;&lt; i &lt;&lt; &quot;&gt;&quot; &lt;&lt; endl;
+			groupe[i].sePresenter();
+		}
+	}
+	system(&quot;PAUSE&quot;);
+	return 0;
+}</code></pre><p id="r-383522" data-claire-element-id="383522">Il pourrait alors créer les personnages du nom qu'il veut, comme Bob, ou Michael_Jordan. :p</p><h2 id="r-appel-des-personnages" data-claire-element-id="383531">Appel des personnages</h2><p id="r-383524" data-claire-element-id="383524">Imaginons maintenant qu'après une longue série de combat, l'utilisateur veut savoir combien de vie il reste à Michael_Jordan.<br/> On peut créer une fonction affichant tous les personnages et il trouvera bien ce qu'il veut dedans. Mais évidemment ce n'est pas une bonne méthode si le groupe contient 500 personnages (j'envisage de grandes armées moi :p ).<br/> Comme chaque Personnage a un numéro dans le tableau (un indice), l'utilisateur pourrait <em>retenir</em> le numéro de Michael_Jordan et nous créerions une fonction du style :</p><pre id="r-383525" data-claire-element-id="383525"><code data-claire-semantic="cpp">void presentation(const vector&lt;Personnage&gt; &amp; groupe, int numeroDuPerso)
+{
+	groupe[numeroDuPerso].sePresenter();
+}</code></pre><p id="r-383526" data-claire-element-id="383526">Ayant retenu que Michael Jordan avait le numéro 23 dans le groupe, on écrirait dans le main <code data-claire-semantic="cpp">presentation(groupe,23);</code><br/> Mais évidemment l'utilisateur ne pourra pas se rappeler des indices de tous les Personnages... Il ne connaît juste que leur nom. Alors pourquoi ne pas surcharger la fonction <code data-claire-semantic="cpp">presentation</code> prenant comme paramètre un <code data-claire-semantic="cpp">std::string</code> ?</p><p id="r-383527" data-claire-element-id="383527">Le problème est là : à quel indice est placé Michael_Jordan ? Il faudra donc rechercher ce Personnage dans le groupe :</p><pre id="r-383528" data-claire-element-id="383528"><code data-claire-semantic="cpp">void presentation(const vector&lt;Personnage&gt; &amp; groupe, string nom)
+{
+	for(int i = 0;i &lt; groupe.size();i++)
+	{
+		if(groupe[i].getNom() == nom)
+		{
+			groupe[i].sePresenter();
+			break;
+		}
+	}
+	if(i == groupe.size())
+		cout &lt;&lt; &quot;Il n'existe pas de Personnage avec ce nom&quot; &lt;&lt; endl;
+}</code></pre><p id="r-383529" data-claire-element-id="383529">Cette technique fonctionne bien entendu mais si le tableau a 500 personnages... La performance ne sera pas géniale : une boucle de 500 itérations maximum pour juste trouver un Personnage, ce n'est pas utile. Pour info, la complexité de cet algorithme est en O(n).</p><p id="r-383530" data-claire-element-id="383530">Voilà un exemple où le <code data-claire-semantic="cpp">std::vector</code> n'est pas adapté à la situation :) , la STL fournit une classe de tableau associatif prévue pour des cas comme ça !<br/> Attention voici ... <code data-claire-semantic="cpp">std::map !</code></p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl">Les Conteneurs de la STL</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/la-decouverte-par-l-exemple">
+La découverte par l&#039;exemple
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/le-tableau-associatif-de-la-stl-std-map">
+Le tableau associatif de la STL : std::map
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/une-classe-bien-pratique-pour-manipuler-des-elements-contenus-dans-un-conteneur-stl-les-iterateurs">
+Une classe bien pratique pour manipuler des éléments contenus dans un conteneur STL : les itérateurs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/utilisation-plus-etendue-des-std-map">
+Utilisation plus étendue des std::map
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/il-existe-d-autres-conteneurs-associatifs-de-la-stl">
+Il existe d&#039;autres conteneurs associatifs de la STL!
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/les-autres-conteneurs-de-la-stl">
+Les autres conteneurs de la STL
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/le-tableau-associatif-de-la-stl-std-map">
+<span class="next">Le tableau associatif de la STL : std::map</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="LetableauassociatifdelaSTLstdmap"></a><h2>Le tableau associatif de la STL : std::map</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/la-decouverte-par-l-exemple">
+<span class="arrow"></span>
+<span class="next">La découverte par l&#039;exemple</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/une-classe-bien-pratique-pour-manipuler-des-elements-contenus-dans-un-conteneur-stl-les-iterateurs">
+<span class="next">Une classe bien pratique pour manipuler des éléments contenus dans un conteneur STL : les itérateurs</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-creer-un-std-map" data-claire-element-id="383589">Créer un std::map</h2><p id="r-383533" data-claire-element-id="383533">Nous allons créer un autre tableau qui permettra de savoir à quel indice a été placé quel nom. Imaginez cela comme un tableau classique où les indices sont remplacés par des <code data-claire-semantic="cpp">std::string</code> :</p><table id="r-383577" data-claire-element-id="383577"><thead id="r-383543" data-claire-element-id="383543"><tr id="r-383542" data-claire-element-id="383542"><th id="r-383537" data-claire-element-id="383537"><p id="r-383534" data-claire-element-id="383534"><strong>Clef</strong></p><div id="r-383536" data-claire-element-id="383536"><p id="r-383535" data-claire-element-id="383535">Clef</p></div></th><th id="r-383539" data-claire-element-id="383539"><p id="r-383538" data-claire-element-id="383538"><strong>\Rightarrow</strong></p></th><th id="r-383541" data-claire-element-id="383541"><p id="r-383540" data-claire-element-id="383540"><strong>Valeur associée</strong></p></th></tr></thead><tbody id="r-383576" data-claire-element-id="383576"><tr id="r-383551" data-claire-element-id="383551"><td id="r-383546" data-claire-element-id="383546"><div id="r-383545" data-claire-element-id="383545"><p id="r-383544" data-claire-element-id="383544">Bob</p></div></td><td id="r-383548" data-claire-element-id="383548"><p id="r-383547" data-claire-element-id="383547">\Rightarrow</p></td><td id="r-383550" data-claire-element-id="383550"><p id="r-383549" data-claire-element-id="383549">0</p></td></tr><tr id="r-383559" data-claire-element-id="383559"><td id="r-383554" data-claire-element-id="383554"><div id="r-383553" data-claire-element-id="383553"><p id="r-383552" data-claire-element-id="383552">Georges</p></div></td><td id="r-383556" data-claire-element-id="383556"><p id="r-383555" data-claire-element-id="383555">\Rightarrow</p></td><td id="r-383558" data-claire-element-id="383558"><p id="r-383557" data-claire-element-id="383557">1</p></td></tr><tr id="r-383567" data-claire-element-id="383567"><td id="r-383562" data-claire-element-id="383562"><div id="r-383561" data-claire-element-id="383561"><p id="r-383560" data-claire-element-id="383560">...</p></div></td><td id="r-383564" data-claire-element-id="383564"><p id="r-383563" data-claire-element-id="383563">\Rightarrow</p></td><td id="r-383566" data-claire-element-id="383566"><p id="r-383565" data-claire-element-id="383565">...</p></td></tr><tr id="r-383575" data-claire-element-id="383575"><td id="r-383570" data-claire-element-id="383570"><div id="r-383569" data-claire-element-id="383569"><p id="r-383568" data-claire-element-id="383568">Michael_Jordan</p></div></td><td id="r-383572" data-claire-element-id="383572"><p id="r-383571" data-claire-element-id="383571">\Rightarrow</p></td><td id="r-383574" data-claire-element-id="383574"><p id="r-383573" data-claire-element-id="383573">23</p></td></tr></tbody></table><p id="r-383578" data-claire-element-id="383578">Nous utiliserons alors ce tableau pour connaître l'indice auquel le personnage correspondant a été placé afin d'y accéder.<br/> Je vais tout de suite vous montrer comment utiliser <code data-claire-semantic="cpp">std::map</code>.<br/> Bien entendu il faudra inclure :</p><pre id="r-383579" data-claire-element-id="383579"><code data-claire-semantic="cpp">#include &lt;map&gt;</code></pre><p id="r-383580" data-claire-element-id="383580">La création du tableau se fera comme ceci : :)</p><pre id="r-383581" data-claire-element-id="383581"><code data-claire-semantic="cpp">map&lt;string, int&gt; indices;</code></pre><p id="r-383582" data-claire-element-id="383582">Observons les paramètres template de <code data-claire-semantic="cpp">std::map</code> :</p><ul id="r-383587" data-claire-element-id="383587"><li id="r-383584" data-claire-element-id="383584"><p id="r-383583" data-claire-element-id="383583">La première classe à indiquer est appelée la classe de <strong>clef</strong> (en anglais <strong>key value</strong>), c'est la classe qui est utilisée pour accéder aux éléments. Pour chaque clef correspondra <strong>une et une seule valeur associée</strong>.</p></li><li id="r-383586" data-claire-element-id="383586"><p id="r-383585" data-claire-element-id="383585">La deuxième classe sera la classe de <strong>valeur associée</strong> (en anglais <strong>mapped value</strong>, d'où le nom). C'est la classe des éléments contenus dans le tableau.</p></li></ul><p id="r-383588" data-claire-element-id="383588">En l'occurence ici nous utilisons une <code data-claire-semantic="cpp">std::string</code> pour obtenir un <code data-claire-semantic="cpp">int</code> qui est l'indice auquel le Personnage correspondant a été placé.</p><h2 id="r-ajout-et-acces-a-une-valeur-associee-d-une-std-map" data-claire-element-id="383612">Ajout et accès à une valeur associée d'une std::map</h2><p id="r-383590" data-claire-element-id="383590">L'avantage maintenant est que les éléments sont accessibles par leur nom. Ajouter un élément est très facile ! :p <br/> Voyez par vous-même.<br/> En dessous du <code data-claire-semantic="cpp">push_back</code> j'écrirai cette ligne pour pouvoir accéder à l'élément créé par son nom :</p><pre id="r-383591" data-claire-element-id="383591"><code data-claire-semantic="cpp">indices[nom] = groupe.size() - 1;</code></pre><p id="r-383592" data-claire-element-id="383592">(Après l'ajout, le Personnage a été placé à l'indice <code data-claire-semantic="cpp">size() - 1</code>)</p><aside id="r-383603" data-claire-element-id="383603" data-claire-semantic="information"><p id="r-383593" data-claire-element-id="383593">Moi, quand j'ai vu ça, j'ai trouvé ça très logique comme écriture</p><p id="r-383594" data-claire-element-id="383594"><cite>Citation : Moi</cite></p><blockquote id="r-383596" data-claire-element-id="383596"><p id="r-383595" data-claire-element-id="383595">La valeur associée à la clef &quot;nom&quot; du tableau &quot;indices&quot; est égale à &quot;groupe.size() -1&quot;</p></blockquote><p id="r-383597" data-claire-element-id="383597">ou encore :</p><p id="r-383598" data-claire-element-id="383598"><cite>Citation : Moi</cite></p><blockquote id="r-383600" data-claire-element-id="383600"><p id="r-383599" data-claire-element-id="383599">&quot;indices&quot; à &quot;nom&quot; = &quot;groupe.size() - 1&quot;</p></blockquote><p id="r-383601" data-claire-element-id="383601">Cela s'utilise comme un tableau en C !</p><pre id="r-383602" data-claire-element-id="383602"><code data-claire-semantic="cpp">double tab[5]; //Création d'un tableau C
+tab[3] = 25.1101992; //Ajout d'une valeur</code></pre></aside><p id="r-383604" data-claire-element-id="383604">Maintenant je peux utiliser ma <code data-claire-semantic="cpp">std::map</code> pour coder la surcharge de la fonction <code data-claire-semantic="cpp">presentation</code> que j'avais écrite :</p><pre id="r-383605" data-claire-element-id="383605"><code data-claire-semantic="cpp">void presentation(vector&lt;Personnage&gt; &amp; tab, map&lt;Personnage*&gt; &amp; indices, string nom)
+{
+	int indice = indices[nom];
+	tab[indice].sePresenter();
+}</code></pre><p id="r-383606" data-claire-element-id="383606">Simple n'est-ce pas ? :D <br/> L'avantage des conteneurs STL est qu'ils s'utilisent tous un peu de la même manière, on accède à un élément d'un <code data-claire-semantic="cpp">std::map</code> de la même manière qu'avec un <code data-claire-semantic="cpp">std::vector</code> : avec l'opérateur [].</p><p id="r-383607" data-claire-element-id="383607">Néanmoins, pour <code data-claire-semantic="cpp">std::map</code>, il existe une différence dans le comportement de cet opérateur, je vous en parlerai un peu plus tard après un exemple. ;)</p><aside id="r-383609" data-claire-element-id="383609" data-claire-semantic="information"><p id="r-383608" data-claire-element-id="383608">La complexité de l'opérateur [] est de O(log2 n), contrairement à notre recherche dans un vector qui était de O(n). <br/> Pour des grands tableaux le changement sera très efficace ! :D <br/> Cependant l'accès à une valeur dans un tableau par un indice est le plus rapide possible : O(1). Si vous voulez utiliser un accès rapide aux éléments, utilisez une table de hachage. Celles-ci ont une complexité de O(1) en moyenne, même si le pire des cas est en O(n). Pour plus d'infos : lisez <a href="http://fr.wikipedia.org/wiki/Table_de_hachage">cette page</a> sur wikipédia ou bien entendu les tutoriels de zéros traitant de ce sujet.</p></aside><p id="r-383610" data-claire-element-id="383610">Vous pourriez très bien créer une autre <code data-claire-semantic="cpp">std::map</code> qui permettra par exemple d'appeler un Personnage par son numéro de téléphone !</p><pre id="r-383611" data-claire-element-id="383611"><code data-claire-semantic="cpp">map&lt;int,int&gt; annuaire; // Le premier int étant le numéro, le deuxième étant l'indice
+annuaire[027336572] = 23; //Waw, le numéro de téléphone de Michael Jordan o_O en base 8 !</code></pre><h2 id="r-utiliser-une-std-map-en-tant-que-conteneur" data-claire-element-id="383648">Utiliser une std::map en tant que conteneur</h2><p id="r-383613" data-claire-element-id="383613"><code data-claire-semantic="cpp">std::map</code> est un conteneur me direz-vous, alors à quoi sert de garder encore un <code data-claire-semantic="cpp">std::vector</code> ?<br/> Bien entendu, vous ne pourrez plus accéder aux éléments par un indice car justement on ne sait pas à quel indice notre élément recherché a été placé.<br/> Alors, comment ferait-on ? :p</p><div id="r-383616" data-claire-element-id="383616" data-claire-semantic="question"><p id="r-383614" data-claire-element-id="383614">:euh: Been, comme ceci ? En ajoutant les éléments comme cela ?</p><pre id="r-383615" data-claire-element-id="383615"><code data-claire-semantic="cpp">std::map&lt;string, Personnage&gt; groupe;
+groupe[&quot;Jean-Claude&quot;] = Personnage(&quot;Jean-Claude&quot;);</code></pre></div><p id="r-383617" data-claire-element-id="383617">Bien vu mais il faut bien se mettre en tête que ce code fera ceci :</p><ol id="r-383631" data-claire-element-id="383631"><li id="r-383619" data-claire-element-id="383619"><p id="r-383618" data-claire-element-id="383618">Il créera un Personnage temporaire appelé Jean-Claude via le constructeur surchargé avec <code data-claire-semantic="cpp">std::string</code>.</p></li><li id="r-383626" data-claire-element-id="383626"><p id="r-383620" data-claire-element-id="383620">Il essaiera d'accéder à l'élément &quot;Jean-Claude&quot; du groupe via l'opérateur []. Deux cas se présentent alors :</p><ul id="r-383625" data-claire-element-id="383625"><li id="r-383622" data-claire-element-id="383622"><p id="r-383621" data-claire-element-id="383621">L'élément existe déjà, il renvoie une référence vers cet élément.</p></li><li id="r-383624" data-claire-element-id="383624"><p id="r-383623" data-claire-element-id="383623">L'élément n'existe pas, <strong>il en crée un en utilisant le constructeur par défaut</strong> et renvoie une référence vers cet élément.</p></li></ul></li><li id="r-383628" data-claire-element-id="383628"><p id="r-383627" data-claire-element-id="383627">L'opérateur = est appelé, les données du personnage temporaire Jean-Claude sont copiées dans celles du Personnage du tableau qui est l'élément qui a été renvoyé par l'opérateur [].</p></li><li id="r-383630" data-claire-element-id="383630"><p id="r-383629" data-claire-element-id="383629">Le personnage Jean-Claude temporaire sera détruit à la fin du bloc.</p></li></ol><p id="r-383632" data-claire-element-id="383632">Deux Personnages seront alors créés alors qu'un seul aurait suffit.<br/> (D'ailleurs si vous mettez quelques cout dans les constructeurs par défaut, de copie et avec paramètre(s) vous verrez qu'il crée beaucoup plus que deux Personnages...).<br/> Cependant vous pouvez utiliser cette méthode si créer beaucoup de Personnages ne vous dérange pas. ;)</p><aside id="r-383639" data-claire-element-id="383639" data-claire-semantic="information"><p id="r-383633" data-claire-element-id="383633">Je trouve que cette manière de faire pour ce code convient très bien à la phrase que j'avais dite plus haut :</p><p id="r-383634" data-claire-element-id="383634"><cite>Citation</cite></p><blockquote id="r-383636" data-claire-element-id="383636"><p id="r-383635" data-claire-element-id="383635">la valeur associée à la clef &quot;Jean-Claude&quot; du tableau &quot;groupe&quot; est égale à &quot;Personnage(&quot;Jean-Claude&quot;)&quot;</p></blockquote><p id="r-383637" data-claire-element-id="383637">Effet : peu importe s'il existait déjà une valeur associée pour cette clef, après cette instruction, la valeur associée sera &quot;<code data-claire-semantic="cpp">Personnage(&quot;Jean-Claude&quot;)</code>&quot;. A nouveau, comme un tableau en C :</p><pre id="r-383638" data-claire-element-id="383638"><code data-claire-semantic="cpp">double tab[5]; //Création d'un tableau C
+tab[3] = 25.1101992; //Ajout d'une valeur
+tab[3] = 24.1101996; //Modification de la valeur</code></pre></aside><aside id="r-383641" data-claire-element-id="383641" data-claire-semantic="warning"><p id="r-383640" data-claire-element-id="383640">Comme vous pouvez le voir, l'opérateur [] <strong>crée un objet</strong> avec le constructeur par défaut si aucune valeur n'est associée à la clef entrée, ainsi écrire <code data-claire-semantic="cpp">groupe[&quot;Jean-Claude&quot;];</code> suffit pour créer un élément.<br/> Contrairement à l'opérateur [] de <code data-claire-semantic="cpp">std::vector</code> qui lui vous aurait simplement fait bugger le programme pour cause d'accès à une case de mémoire non autorisée (essaiez de faire vect[5] avec un vecteur long de 3 si vous ne voyez pas ce que je veux dire :p ). Par contre la fonction membre <code data-claire-semantic="cpp">map::at</code> fonctionne exactement de la même manière qu'avec <code data-claire-semantic="cpp">std::vector</code>. ;)</p></aside><p id="r-383642" data-claire-element-id="383642">J'utiliserai alors un <code data-claire-semantic="cpp"><strong>std::map&lt;string, Personnage*&gt;</strong></code> afin de contenir mes éléments, que je créerai dynamiquement, un Personnage de créé avec <code data-claire-semantic="cpp">new</code> et ensuite je garde un pointeur de celui-ci dans le tableau :p (Un peu à la Java ^^).<br/> Voici alors comment j'ajouterai Bob à mon tableau de Personnage :</p><pre id="r-383643" data-claire-element-id="383643"><code data-claire-semantic="cpp">std::map&lt;string, Personnage*&gt; groupe;
+groupe[&quot;Bob&quot;] = new Personnage(&quot;Bob&quot;);</code></pre><p id="r-383644" data-claire-element-id="383644">Ma fonction <code data-claire-semantic="cpp">presentation</code> devient alors toute simple :</p><pre id="r-383645" data-claire-element-id="383645"><code data-claire-semantic="cpp">void presentation(map&lt;Personnage*&gt; &amp; groupe, string nom)
+{
+	groupe[nom]-&gt;sePresenter();
+}</code></pre><p id="r-383646" data-claire-element-id="383646">Mais maintenant, une question se pose très vite : comment faire pour accéder à tous les éléments du tableau ?<br/> Je ne connais pas les noms de tous les Personnages !</p><p id="r-383647" data-claire-element-id="383647">Vous pourriez déjà le faire : en créant un tableau <code data-claire-semantic="cpp">std::vector&lt;string&gt;</code> contenant tous les noms possibles de la <code data-claire-semantic="cpp">std::map</code>.<br/> Mais bien entendu, ce n'est pas la bonne manière de faire ! La STL a pensé à tout ! Comme d'habitude j'ai envie de dire. ^^</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl">Les Conteneurs de la STL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/la-decouverte-par-l-exemple">
+La découverte par l&#039;exemple
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/le-tableau-associatif-de-la-stl-std-map">
+Le tableau associatif de la STL : std::map
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/une-classe-bien-pratique-pour-manipuler-des-elements-contenus-dans-un-conteneur-stl-les-iterateurs">
+Une classe bien pratique pour manipuler des éléments contenus dans un conteneur STL : les itérateurs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/utilisation-plus-etendue-des-std-map">
+Utilisation plus étendue des std::map
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/il-existe-d-autres-conteneurs-associatifs-de-la-stl">
+Il existe d&#039;autres conteneurs associatifs de la STL!
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/les-autres-conteneurs-de-la-stl">
+Les autres conteneurs de la STL
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/la-decouverte-par-l-exemple">
+<span class="arrow"></span>
+<span class="next">La découverte par l&#039;exemple</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/une-classe-bien-pratique-pour-manipuler-des-elements-contenus-dans-un-conteneur-stl-les-iterateurs">
+<span class="next">Une classe bien pratique pour manipuler des éléments contenus dans un conteneur STL : les itérateurs</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="UneclassebienpratiquepourmanipulerdeslmentscontenusdansunconteneurSTLlesitrateurs"></a><h2>Une classe bien pratique pour manipuler des éléments contenus dans un conteneur STL : les itérateurs</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/le-tableau-associatif-de-la-stl-std-map">
+<span class="arrow"></span>
+<span class="next">Le tableau associatif de la STL : std::map</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/utilisation-plus-etendue-des-std-map">
+<span class="next">Utilisation plus étendue des std::map</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-383650" data-claire-element-id="383650">Voici la solution à notre problème ! :D</p><div id="r-383652" data-claire-element-id="383652" data-claire-semantic="question"><p id="r-383651" data-claire-element-id="383651">:euh: heuu, mais, c'est quoi un i-té-ra-teur ?</p></div><p id="r-383653" data-claire-element-id="383653">C'est une classe qui a été créée spécialement pour parcourir, pour itérer les éléments d'une séquence, en l'occurence ici la séquence est <code data-claire-semantic="cpp">std::map</code>. Ice_Keese en parle <a href="http://www.siteduzero.com/tutoriel-3-39045-foncteurs-et-iterateurs.html">dans son tutoriel</a>.<br/> Il vous dit qu'un itérateur est comme un pointeur vers l'élément de la séquence.<br/> Et avec un pointeur on peut manipuler les éléments ! :D <br/> Bon assez parlé de ses mérites, voici comment créer un itérateur de la STL :</p><pre id="r-383654" data-claire-element-id="383654"><code data-claire-semantic="cpp">map&lt;string, Personnage*&gt;::iterator it;</code></pre><p id="r-383655" data-claire-element-id="383655">Tous les conteneurs de la STL contiennent des fonctions renvoyant ou demandant un itérateur. Celles qui vont nous intéresser ici sont :</p><ul id="r-383660" data-claire-element-id="383660"><li id="r-383657" data-claire-element-id="383657"><p id="r-383656" data-claire-element-id="383656"><code>groupe.begin()</code> qui renvoie un itérateur vers le premier élément de la séquence</p></li><li id="r-383659" data-claire-element-id="383659"><p id="r-383658" data-claire-element-id="383658"><code>groupe.end()</code> qui renvoie un itérateur vers le dernier élément de la séquencel'élément SUIVANT le dernier élément de la séquence.</p></li></ul><p id="r-383661" data-claire-element-id="383661">La boucle permettant d'accéder à tous les éléments de notre <code data-claire-semantic="cpp">std::map</code> sera celle-ci :</p><pre id="r-383662" data-claire-element-id="383662"><code data-claire-semantic="cpp">for(it = groupe.begin() ; it != groupe.end() ; ++it)</code></pre><p id="r-383663" data-claire-element-id="383663">L'itérateur commencera donc à <code data-claire-semantic="cpp">begin()</code> et se terminera quand il sera arrivé à <code data-claire-semantic="cpp">end()</code>. C'est pourquoi <code data-claire-semantic="cpp">end()</code> renvoie un itérateur vers l'élément suivant au dernier élément de la séquence, pour arrêter la boucle quand il arrivera à cet itérateur. Si la boucle s'arrêtait au dernier élément, celui ne serait pas traité. :)</p><p id="r-383664" data-claire-element-id="383664">Remarquez que notre itérateur possède l'opérateur ++ surchargé, ce qui nous permet de facilement parcourir la séquence !</p><p id="r-383665" data-claire-element-id="383665">Bon maintenant qu'on sait parcourir la séquence, on aimerait bien savoir utiliser notre itérateur !</p><h2 id="r-utilisation-d-un-iterateur-de-std-map" data-claire-element-id="383680">Utilisation d'un itérateur de std::map</h2><p id="r-383666" data-claire-element-id="383666">Les itérateurs sont un peu comme des pointeurs vers les éléments de la séquence. Vous penseriez peut-être que les éléments de la séquence de <code data-claire-semantic="cpp">std::map&lt;string, Personnage*&gt;</code> sont des Personnages ? Et ben non ! Ce sont des <strong>paires</strong> &quot;nom - personnage&quot;, et cette paire est en fait un objet de la classe <code data-claire-semantic="cpp">std::pair&lt;string, Personnage*&gt;</code> !</p><p id="r-383667" data-claire-element-id="383667">Un objet de classe <code data-claire-semantic="cpp">std::pair</code> nous met à disposition deux variables pour accéder à ce qu'elle contient :</p><ul id="r-383672" data-claire-element-id="383672"><li id="r-383669" data-claire-element-id="383669"><p id="r-383668" data-claire-element-id="383668"><code data-claire-semantic="cpp">paire.first</code> qui ici contiendra la clef de notre élément, en l'occurence une <code data-claire-semantic="cpp">std::string</code>.</p></li><li id="r-383671" data-claire-element-id="383671"><p id="r-383670" data-claire-element-id="383670"><code data-claire-semantic="cpp">paire.second</code> qui ici contiendra la valeur associée à notre élement, en l'occurence un <code data-claire-semantic="cpp">Personnage*</code>.</p></li></ul><p id="r-383673" data-claire-element-id="383673">La boucle qui permettera la présentation générale des élements de notre <code data-claire-semantic="cpp">std::map groupe</code> se fera alors comme ceci :</p><pre id="r-383674" data-claire-element-id="383674"><code data-claire-semantic="cpp">for(it = groupe.begin();it != groupe.end(); ++it)
+{
+	cout &lt;&lt; &quot;clef &quot; &lt;&lt; it-&gt;first &lt;&lt; &quot; Présentation : &quot; &lt;&lt; endl;
+	it-&gt;second-&gt;sePresenter();
+}</code></pre><p id="r-383675" data-claire-element-id="383675">L'itérateur étant comme un pointeur sur une paire, on écrit <code data-claire-semantic="cpp">it-&gt;first</code> pour accéder à la clef,en l'occurence une <code data-claire-semantic="cpp">std::string</code>.<br/> De même, on écrit donc <code data-claire-semantic="cpp">it-&gt;second</code> pour accéder à la valeur associée. Cette valeur associée étant un pointeur vers Personnage on écrit<br/><code data-claire-semantic="cpp">it-&gt;second-&gt;sePresenter();</code> pour appeller sa fonction <code data-claire-semantic="cpp">sePresenter()</code>. :)</p><p id="r-383676" data-claire-element-id="383676">Je vous ai dit que tous les conteneurs de la STL avaient leur propre itérateur. <code data-claire-semantic="cpp">std::vector</code> en fait bien entendu partie. Ainsi vous pouvez parcourir tous les élements d'un <code data-claire-semantic="cpp">vector&lt;Personnage*&gt;</code> de cette façon :</p><pre id="r-383677" data-claire-element-id="383677"><code data-claire-semantic="cpp">vector&lt;Personnage*&gt; groupe;
+//Admettons qu'on le remplisse ici
+vector&lt;Personnage*&gt;::iterator it;
+for(it = groupe.begin() ; it != groupe.end() ; ++it)
+	(*it)-&gt;sePresenter();</code></pre><p id="r-383678" data-claire-element-id="383678">(les éléments d'un <code data-claire-semantic="cpp">vector&lt;Personnage*&gt;</code> sont des pointeurs sur <code data-claire-semantic="cpp">Personnage</code>, donc <code data-claire-semantic="cpp">it</code> se comporte comme un pointeur sur pointeur de Personnage, ce qui fait qu'on écrit <code data-claire-semantic="cpp">(*it)</code> pour accéder au pointeur et ainsi <code data-claire-semantic="cpp">(*it)-&gt;sePresenter();</code> pour appeler la fonction membre !)</p><p id="r-383679" data-claire-element-id="383679">Les itérateurs de la STL s'utilisent donc tous de la même façon peu importe le conteneur. :)</p><h2 id="r-quelques-utilisations-bien-pratiques-des-iterateurs" data-claire-element-id="383720">Quelques utilisations bien pratiques des itérateurs</h2><h3 id="r-map-find" data-claire-element-id="383686">map::find</h3><p id="r-383681" data-claire-element-id="383681">Voici son prototype pour notre classe :</p><pre id="r-383682" data-claire-element-id="383682"><code data-claire-semantic="cpp">map&lt;string, Personnage*&gt;::iterator find(const string &amp; clef);</code></pre><p id="r-383683" data-claire-element-id="383683">Cette fonction pourrait paraître inutile pour une <code data-claire-semantic="cpp">std::map</code> car pour trouver un élément dans une <code data-claire-semantic="cpp">std::map</code> il suffit d'utiliser l'opérateur [].<br/> Mais le problème est que celui-ci, comme je vous l'ai discrètement dit plus haut, <strong>crée un élément</strong> s'il n'existe pas de valeur associée à la clef demandée. Or souvent, on voudrait faire une autre action que de créer un nouvel élément si la clef utilisée n'existe pas encore.<br/> Et ben la fonction <code data-claire-semantic="cpp">map::find</code> renvoie l'itérateur <code data-claire-semantic="cpp">end()</code> dans ce cas (Qu'elle est gentille la fonction <code data-claire-semantic="cpp">map::find</code> ! :p ).</p><p id="r-383684" data-claire-element-id="383684">Ainsi on peut l'utiliser de cette manière :</p><pre id="r-383685" data-claire-element-id="383685"><code data-claire-semantic="cpp">it = groupe.find(nom);
+if(it != groupe.end())
+	it-&gt;second-&gt;sePresenter(); //Ou encore groupe[nom]-&gt;sePresenter();
+else
+	cout &lt;&lt; &quot;Il n'existe pas de Personnage avec ce nom&quot; &lt;&lt; endl;</code></pre><h3 id="r-map-insert" data-claire-element-id="383706">map::insert</h3><p id="r-383687" data-claire-element-id="383687">Cette fonction -comme c'est étonnant- permet d'insérer des éléments dans un conteneur STL.</p><p id="r-383688" data-claire-element-id="383688">Rappellez-vous que les <code data-claire-semantic="cpp">std::map</code> contiennent des <code data-claire-semantic="cpp">std::pair</code> !<br/> Il faudra alors insérer des paires dans le tableau.</p><aside id="r-383690" data-claire-element-id="383690" data-claire-semantic="information"><p id="r-383689" data-claire-element-id="383689">Vous pouvez créer une paire simplement avec son constructeur : <code data-claire-semantic="cpp">pair&lt;string, Personnage*&gt; laPaire(&quot;Bob&quot;, new Personnage(&quot;Bob&quot;))</code>, néanmoins il existe une fonction qui allège parfois la création d'une paire : <code data-claire-semantic="cpp">std::make_pair</code> qui renvoie une paire avec les deux éléments passés en argument. Voyez l'exemple.</p></aside><p id="r-383691" data-claire-element-id="383691">Voici comment on ferait :</p><pre id="r-383692" data-claire-element-id="383692"><code data-claire-semantic="cpp">map&lt;string, Personnage*&gt; groupe1;
+map&lt;string, Personnage*&gt; groupe2;
+
+pair&lt;string, Personnage*&gt; paireDeBob(&quot;Bob&quot;, new Personnage(&quot;Bob&quot;));
+groupe1.insert(paireDeBob);
+groupe2.insert(pair&lt;string, Personnage*&gt;(&quot;Alphonse&quot;, new Personnage(&quot;Alphonse&quot;)));
+groupe2.insert(make_pair(&quot;Zozor&quot;, new Personnage(&quot;Zozor&quot;))); //utilisation de make_pair</code></pre><p id="r-383693" data-claire-element-id="383693">Notre tableau est prêt à être utilisé. :)</p><aside id="r-383701" data-claire-element-id="383701" data-claire-semantic="information"><p id="r-383694" data-claire-element-id="383694">Cette surcharge de la fonction renvoie une<br/><code data-claire-semantic="cpp">std::pair&lt;map&lt;string, Personnage*&gt;::iterator, bool&gt;</code> où</p><ul id="r-383699" data-claire-element-id="383699"><li id="r-383696" data-claire-element-id="383696"><p id="r-383695" data-claire-element-id="383695"><code data-claire-semantic="cpp">paire.first</code> contient un itérateur vers l'élément ajouté ou l'élément déjà existant.</p></li><li id="r-383698" data-claire-element-id="383698"><p id="r-383697" data-claire-element-id="383697"><code data-claire-semantic="cpp">paire.second</code> est un booléen indiquant si l'élément a été ajouté (<code data-claire-semantic="cpp">true</code>) ou si il existait déjà une valeur associée à la clef demandée (<code data-claire-semantic="cpp">false</code>).</p></li></ul><p id="r-383700" data-claire-element-id="383700">Si <code data-claire-semantic="cpp">paire.second == false</code>, le tableau n'a pas été modifié étant donné que dans une <code data-claire-semantic="cpp">std::map</code><strong>chaque clef associe une et une seule valeur associée.</strong></p></aside><p id="r-383702" data-claire-element-id="383702">Une autre surcharge pratique de cette fonction est celle qui permet d'insérer des éléments d'une map vers une autre. Imaginons que le goupe2 rejoigne le groupe1 :</p><pre id="r-383703" data-claire-element-id="383703"><code data-claire-semantic="cpp">groupe1.insert(groupe2.begin(), groupe2.end()); //Insère à groupe1 les élément DE groupe2.begin() À groupe2.end() -non compris-</code></pre><aside id="r-383705" data-claire-element-id="383705" data-claire-semantic="information"><p id="r-383704" data-claire-element-id="383704">Remarquons qu'une copie de tous les éléments de groupe2 a été faite pour créer des nouveaux éléments identiques dans groupe1 via le constructeur de copie de éléments contenus, les conteneurs STL utilise d'ailleurs très souvent les constructeurs de copies lors des insertions, si ne voulez pas autant de copies ou si celles-ci posent un problème, utilisez l'allocation dynamique comme j'ai fait ici. Les copies seront seulement des copies de pointeurs qui ont une taille ridicule.</p></aside><h3 id="r-map-empty-map-size-map-clear-et-map-erase" data-claire-element-id="383713">map::empty, map::size, map::clear et map::erase</h3><p id="r-383707" data-claire-element-id="383707">Pas besoin de présenter les 3 premiers, vous les connaissez déjà via <a href="http://www.siteduzero.com/tutoriel-3-8937-les-tableaux-dynamiques.html">le tuto de Nanoc</a>. :p <br/> Je vous avais dit que beaucoup de fonctions sont communes à tous les conteneurs STL.</p><p id="r-383708" data-claire-element-id="383708">Quant à <code data-claire-semantic="cpp">map::erase</code>, il permet -on ne s'y attendait vraiment pas- de supprimer un(des) élément(s) d'une <code data-claire-semantic="cpp">std::map</code> avec ou sans itérateurs.<br/> (Pour <code data-claire-semantic="cpp">map::clear et map::erase</code>, n'oubliez pas quelques <code data-claire-semantic="cpp">delete</code> si les éléments de votre tableau ont été créés, comme moi, dynamiquement. Je ne l'écrirai pas ici car je considère que d'autres pointeurs pointent encore vers les Personnages que je supprime du tableau).</p><p id="r-383709" data-claire-element-id="383709">Un exemple ?</p><pre id="r-383710" data-claire-element-id="383710"><code data-claire-semantic="cpp">//Le groupe 2 avait rejoint le groupe 1.. ça veut dire qu'il n'y a plus personne dans le groupe 2
+groupe2.clear();
+
+groupe1.erase(groupe1.find(&quot;Bob&quot;)); // erase par itérateur
+cout &lt;&lt; groupe1.size() &lt;&lt; endl; // 2
+
+groupe1.erase(&quot;Alphonse&quot;); // erase par clef
+cout &lt;&lt; groupe1.size() &lt;&lt; endl; // 1
+
+groupe1.erase(groupe1.begin(), groupe1.end()); // erase DE nombres.begin() À nombres.end() -non compris-. Dans ce cas-ci, identique à clear()
+cout &lt;&lt; groupe1.empty() &lt;&lt; endl; // true</code></pre><p id="r-383711" data-claire-element-id="383711">La surcharge &quot;erase par clef&quot; renvoie le nombre d'éléments qui ont été supprimés.</p><p id="r-383712" data-claire-element-id="383712">Observez la méthode de &quot;plages d'éléments bornés par deux itérateurs&quot; dans la troisième surcharge. On efface les éléments DE <code data-claire-semantic="cpp">nombres.begin()</code> À <code data-claire-semantic="cpp">nombres.end()</code><strong>non compris</strong>. Heureusement que celui-ci n'est pas compris car on ne peut pas accéder à l'élément pointé par <code data-claire-semantic="cpp">nombres.end()</code>, par sa définition. Cette méthode est utilisée pour beaucoup de fonctions. On l'utilise même dans notre boucle de présentation générale ! &quot;Présenter tous les éléments DE begin() à end() -non compris-&quot;.</p><h3 id="r-map-swap" data-claire-element-id="383716">map::swap</h3><p id="r-383714" data-claire-element-id="383714">Cette fonction permet d'échanger <strong>le contenu de deux <code data-claire-semantic="cpp">std::map</code>.</strong></p><pre id="r-383715" data-claire-element-id="383715"><code data-claire-semantic="cpp">//Le groupe 1 devient le groupe 2 et inversément
+groupe1.swap(groupe2);</code></pre><h3 id="r-stl-algorithms" data-claire-element-id="383719">STL Algorithms</h3><p id="r-383717" data-claire-element-id="383717">STL Algorithms est un ensemble de fonctions de la bibliothèque standard très pratiques et très efficaces (comme on dit, tu ne battras jamais la STL).<br/> Pourquoi je vous en parle ici ? Car une grande partie de ces algorithmes utilisent des itérateurs ! :D Vous pouvez découvrir la liste de ces fonctions <a href="http://www.cplusplus.com/reference/algorithm/">ici</a>.</p><p id="r-383718" data-claire-element-id="383718">Maintenant, il faudrait que je vous parle d'un élément important sur les <code data-claire-semantic="cpp">std::map</code>. (Et vous apprendre de nouveaux concepts !)<br/> Laissez-moi vous montrez un exemple ! (Car c'est toujours plus sympa de se dire qu'on va apprendre quelque chose en sachant à quoi ça pourrait servir :p ).</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl">Les Conteneurs de la STL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/la-decouverte-par-l-exemple">
+La découverte par l&#039;exemple
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/le-tableau-associatif-de-la-stl-std-map">
+Le tableau associatif de la STL : std::map
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/une-classe-bien-pratique-pour-manipuler-des-elements-contenus-dans-un-conteneur-stl-les-iterateurs">
+Une classe bien pratique pour manipuler des éléments contenus dans un conteneur STL : les itérateurs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/utilisation-plus-etendue-des-std-map">
+Utilisation plus étendue des std::map
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/il-existe-d-autres-conteneurs-associatifs-de-la-stl">
+Il existe d&#039;autres conteneurs associatifs de la STL!
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/les-autres-conteneurs-de-la-stl">
+Les autres conteneurs de la STL
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/le-tableau-associatif-de-la-stl-std-map">
+<span class="arrow"></span>
+<span class="next">Le tableau associatif de la STL : std::map</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/utilisation-plus-etendue-des-std-map">
+<span class="next">Utilisation plus étendue des std::map</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Utilisationplustenduedesstdmap"></a><h2>Utilisation plus étendue des std::map</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/une-classe-bien-pratique-pour-manipuler-des-elements-contenus-dans-un-conteneur-stl-les-iterateurs">
+<span class="arrow"></span>
+<span class="next">Une classe bien pratique pour manipuler des éléments contenus dans un conteneur STL : les itérateurs</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/il-existe-d-autres-conteneurs-associatifs-de-la-stl">
+<span class="next">Il existe d&#039;autres conteneurs associatifs de la STL!</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-un-enorme-terrain-de-personnages" data-claire-element-id="383768">Un énorme terrain de Personnages...</h2><p id="r-383722" data-claire-element-id="383722">Imaginez que vous avez un énoooorme terrain à cases (genre 500 x 500 ou plus) Et vous avez une cinquantaine de Personnage placé sur ce terrain. Il peut arriver qu'une bombe tombe du ciel sur une case qui enlèvera de la vie à toutes les cases adjacentes à la case sur laquelle elle a été lancée. Comment coderiez vous un tel jeu ?</p><p id="r-383723" data-claire-element-id="383723">... Réflexion ...</p><ul id="r-383737" data-claire-element-id="383737"><li id="r-383725" data-claire-element-id="383725"><p id="r-383724" data-claire-element-id="383724">:euh: Je fais une grande matrice 500 x 500 de pointeurs vers Personnages (<code data-claire-semantic="cpp">Personnage* terrain[500][500] = {0};</code>), ceux-ci seront à NULL si personne n'est dessus ?</p></li><li id="r-383727" data-claire-element-id="383727"><p id="r-383726" data-claire-element-id="383726">Ceci utilisera bien entendu beaucoup trop de mémoire, de plus ce n'est pas très &quot;C++&quot; comme pensée.</p></li><li id="r-383729" data-claire-element-id="383729"><p id="r-383728" data-claire-element-id="383728">:euh: Une std::map ? Puisque c'est le nom de la partie... Une <code data-claire-semantic="cpp">std::map&lt;int,Personnage*&gt;</code> plus précisément, où le int est un nombre contenant le numéro de la case, de 1 à 250 000 ?</p></li><li id="r-383731" data-claire-element-id="383731"><p id="r-383730" data-claire-element-id="383730">Ceci est une bonne idée, mais il y a moyen de penser encore plus &quot;POO&quot; !</p></li><li id="r-383734" data-claire-element-id="383734"><p id="r-383732" data-claire-element-id="383732">Je sais ! On crée une classe <code data-claire-semantic="cpp">Coordonnees</code> qui sera utilisée comme ceci : :D</p><pre id="r-383733" data-claire-element-id="383733"><code data-claire-semantic="cpp">std::map&lt;Coordonnees, Personnage*&gt; terrain;</code></pre></li><li id="r-383736" data-claire-element-id="383736"><p id="r-383735" data-claire-element-id="383735">Voilà ce que je voulais entendre ! (Si vous y avez pensé tout de suite, je n'en serai que ravi ! :D ).</p></li></ul><p id="r-383738" data-claire-element-id="383738">Alors c'est parti on écrit vite fait une telle classe :</p><pre id="r-383739" data-claire-element-id="383739"><code data-claire-semantic="cpp">class Coordonnees
+{
+	protected :
+		int _x;
+		int _y;
+	public :
+		Coordonnees(int x = 0,int y = 0);
+		Coordonnees(const Coordonnees &amp;);
+		int getX() const;
+		int getY() const;
+		Coordonnees &amp; operator=(const Coordonnees &amp;);
+		Coordonnees operator+(const Coordonnees &amp;) const;
+};
+
+//Constructeurs
+Coordonnees::Coordonnees(int x,int y) : _x(x), _y(y)
+{}
+Coordonnees::Coordonnees(const Coordonnees &amp; autre) : _x(autre._x), _y(autre._y)
+{}
+
+//Accesseurs
+int Coordonnees::getX() const
+{
+	return _x;
+}
+int Coordonnees::getY() const
+{
+	return _y;
+}
+
+//Opérateurs
+Coordonnees &amp; Coordonnees::operator=(const Coordonnees &amp; autre)
+{
+	_x = autre._x;
+	_y = autre._y;
+	return *this;
+}
+Coordonnees Coordonnees::operator+(const Coordonnees &amp; autre) const
+{
+	return Coordonnees(_x + autre._x, _y + autre._y);
+}</code></pre><p id="r-383740" data-claire-element-id="383740">(Comme vous pouvez le voir j'aime commencer mes variables membres par un underscore pour les différencier des fonctions).</p><p id="r-383741" data-claire-element-id="383741">J'ai redéfini le constructeur de copie et l'<code data-claire-semantic="cpp">operator=</code> pour que vous voyez qu'il est important qu'une classe utilisée en clef dans une <code data-claire-semantic="cpp">std::map</code> aie ces fonctions car il les utilise !<br/> J'ai également créé un <code data-claire-semantic="cpp">operator+</code> qui permet d'additionner des Coordonnees car ceci sera bien pratique pour notre utilisation.</p><p id="r-383742" data-claire-element-id="383742">Alors on crée vite fait une <code data-claire-semantic="cpp">std::map</code> pour tester notre nouveau concept ! :)</p><pre id="r-383743" data-claire-element-id="383743"><code data-claire-semantic="cpp">int main()
+{
+	Coordonnees pos1(5,10);
+
+	map&lt;Coordonnees, Personnage*&gt; terrain;
+
+	terrain[pos1] = new Personnage(&quot;Bob&quot;,100); //Un gentil personnage à la case 5,10
+	terrain[Coordonnees(4,9)] = new Personnage(&quot;Megaz&quot;,25); //Un blessé à la case 4,9
+
+	lancerBombe(terrain, pos1); //On lance une bombe sur la case de Bob !
+
+	system(&quot;PAUSE&quot;);
+	return 0;
+}</code></pre><p id="r-383744" data-claire-element-id="383744">Sans oublier notre fonction lancerBombe ^^. Allons allons un peu d'exercice !</p><p id="r-383745" data-claire-element-id="383745"></p><div id="r-383747" data-claire-element-id="383747"><pre id="r-383746" data-claire-element-id="383746"><code data-claire-semantic="cpp">void lancerBombe(map&lt;Coordonnees, Personnage*&gt; &amp; terrain, const Coordonnees &amp; centre)
+{
+	//Baam les Personnages présents sur les cases adjacentes à centre se prennent 10 dégats ! Même en diagonale !
+	map&lt;Coordonnees, Personnage*&gt;::iterator it;
+	for(int Dx = -1;Dx &lt;= 1; Dx++)
+		for(int Dy = -1;Dy &lt;= 1;Dy++)
+		{
+			it = terrain.find(centre + Coordonnees(Dx,Dy));
+			if(it != terrain.end())
+				it-&gt;second-&gt;recevoirDegats(10);
+		}
+	
+}</code></pre></div><p id="r-383748" data-claire-element-id="383748">Et on teste vite fait notre code ! :p <br/> ...<br/> Pour avoir une beeelle insulte du compilateur... Voici mon insulte de Visual C++ 2010 :</p><pre id="r-383749" data-claire-element-id="383749"><code data-claire-semantic="console">error C2784: 'bool std::operator &lt;(const _Elem *,const std::basic_string&lt;_Elem,_Traits,_Alloc&gt; &amp;)' : impossible de déduire l'argument modèle pour 'const _Elem *' à partir de 'const Coordonnees'</code></pre><p id="r-383750" data-claire-element-id="383750">Car, scoop du jour, <strong>les éléments d'une std::map sont triés !</strong> Ils ne sont pas gardés par ordre d'insertion !<br/> Ainsi sans que vous le sachiez, notre vielle <code data-claire-semantic="cpp">std::map&lt;string, Personnage*&gt;</code> gardait ses éléments par ordre alphabétique de clef ! Ainsi <code data-claire-semantic="cpp">groupe.begin()</code> vous renvoyait toujours un itérateur vers la paire ayant le nom le plus au début de l'alphabet.<br/> Et quand nous faisions la boucle <code data-claire-semantic="cpp">for(it = groupe.begin();it != groupe.end();++it)</code>, les éléments étaient parcourus dans l'ordre alphabétique. :)</p><p id="r-383751" data-claire-element-id="383751">Comment l'ordinateur arrivait-il à trier les éléments ? Car il écrivait <code data-claire-semantic="cpp">nom1 &lt; nom2</code> afin de comparer les éléments entre eux. Et puisque <code data-claire-semantic="cpp">std::string</code> a un <code data-claire-semantic="cpp">operator&lt;</code> surchargé, celui-ci arrivait à trier le tableau.</p><p id="r-383752" data-claire-element-id="383752">Voilà ce qui nous manque à notre Classe Coordonnees ! :D</p><pre id="r-383753" data-claire-element-id="383753"><code data-claire-semantic="cpp">class Coordonnees
+{
+	protected :
+		int _x;
+		int _y;
+	public :
+		Coordonnees(int x = 0,int y = 0);
+		Coordonnees(const Coordonnees &amp;);
+	        int getX() const;
+		int getY() const;
+		Coordonnees &amp; operator=(const Coordonnees &amp;);
+		Coordonnees operator+(const Coordonnees &amp;);
+
+		bool operator&lt;(const Coordonnees &amp;) const;
+};
+bool Coordonnees::operator&lt;(const Coordonnees &amp; autre) const
+{
+	return (_x != autre._x) ? (_x &lt; autre._x) : (_y &lt; autre._y);
+}
+//Les autres définitions</code></pre><p id="r-383754" data-claire-element-id="383754">J'ai écrit un opérateur qui triera les éléments en regardant d'abord leur _x et ensuite leur _y.<br/> Quand l'ordinateur triera les éléments il placera <code data-claire-semantic="cpp">pos1</code> avant <code data-claire-semantic="cpp">pos2</code> si <code data-claire-semantic="cpp">pos1 &lt; pos2</code>.</p><aside id="r-383756" data-claire-element-id="383756" data-claire-semantic="information"><p id="r-383755" data-claire-element-id="383755">Veillez à avoir bien écrit les deux <code data-claire-semantic="cpp">const</code> dans la fonction de comparaison, en effet si vous les oubliez, le compilateur vous criera dessus... Il est très strict le compilateur...</p></aside><p id="r-383757" data-claire-element-id="383757">Bien sûr n'importe qu'elle fonction aurait été bien, cela dépend de l'utilisation que vous voulez en faire.</p><aside id="r-383764" data-claire-element-id="383764" data-claire-semantic="warning"><p id="r-383758" data-claire-element-id="383758">Il existe néanmoins une règle à appliquer ! Car <code data-claire-semantic="cpp">std::map</code> n'utilise pas l'<code data-claire-semantic="cpp">operator==</code> pour savoir si une clef correspond à une autre ! il se dit que<br/><code data-claire-semantic="cpp">!(a &lt; b) &amp;&amp; !(b &lt; a)</code><strong>!(a &lt; b) &amp;&amp; !(b &lt; a)\Rightarrow<code data-claire-semantic="cpp">a == b</code></strong><br/> (La flèche &quot;\Rightarrow&quot; signifie &quot;implique&quot;)</p><p id="r-383759" data-claire-element-id="383759">(Pour les littéraires : Si a n'est pas plus petit que b et que b n'est pas plus petit que a alors a est égal à b).</p><p id="r-383760" data-claire-element-id="383760">Autre définition (Pour les matheux littéraires :p ) : si vous voulez utiliser une certaine fonction <code data-claire-semantic="cpp">operator&lt;</code> pour votre tableau, cet <code data-claire-semantic="cpp">operator&lt;</code> doit être une <strong>relation irréflexive et transitive</strong>, c'est aussi ce qu'on appelle une <strong>relation d'ordre strict</strong>.<br/> Une relation irréflexive : <code data-claire-semantic="cpp">a &lt; a == false</code>. Pour tout a.<br/> Une relation transitive : <code data-claire-semantic="cpp">a &lt; b &amp;&amp; b &lt; c</code>\Rightarrow<code data-claire-semantic="cpp">a &lt; c</code>. Pour tout a, b, c.</p><p id="r-383761" data-claire-element-id="383761">Si vous utilisez une fonction <code data-claire-semantic="cpp">operator&lt;</code> qui renvoie par exemple toujours <code data-claire-semantic="cpp">true</code>, en plus de ne pas avoir un tableau trié, aucune clef ne correspondra pas à une clef, même la bonne ! En effet si on place un Personnage en <strong>(5,1)</strong> et qu'on recherche <strong>(5,1)</strong>, il vous renverra qu'il n'y a pas de Personnage en <strong>(5,1)</strong> car <strong>(5,1) &lt; (5,1)</strong> selon la fonction de comparaison !<br/> Une fonction renvoyant toujours <code data-claire-semantic="cpp">false</code> par exemple fera que toute clef sera égale à n'importe quelle clef, par exemple <strong>(5,1) et (6,2)</strong> : <strong>(5,2)</strong> n'est ni plus petit que <strong>(6,1)</strong> et <strong>(6,1)</strong> n'est pas plus petit que <strong>(5,1)</strong> =&gt; clef égales ! Ce qui fera un tableau associatif de un élément...</p><p id="r-383762" data-claire-element-id="383762">Si vous trouvez deux éléments différents qui satisfont la relation, c'est que votre fonction n'est pas appropriée.</p><p id="r-383763" data-claire-element-id="383763"><code data-claire-semantic="cpp">std::map</code> n'utilise évidemment pas deux fois l'<code data-claire-semantic="cpp">operator&lt;</code> mais cette règle est facile à utiliser pour vérifier si votre fonction de comparaison sera utilisable.</p></aside><p id="r-383765" data-claire-element-id="383765">Notre code marche enfin !<br/> Une petite boucle afin de présenter les Personnages, pour vérifier qu'ils ont effectivement perdu des points de vie :</p><pre id="r-383766" data-claire-element-id="383766"><code data-claire-semantic="console">Je m'appelle Megaz, et il me reste 15 points de vie
+Je m'appelle Bob, et il me reste 90 points de vie</code></pre><p id="r-383767" data-claire-element-id="383767">Vous pouvez maintenant utiliser <code data-claire-semantic="cpp">std::map</code> avec n'importe quelle classe en tant que clef (à <a href="http://www.siteduzero.com/tutoriel-3-8943-retour-sur-l-heritage.html#ss_part_3">sémantique de valeur</a> généralement :D ).</p><h2 id="r-un-troisieme-parametre-template-bien-cache" data-claire-element-id="383793">Un troisième paramètre template bien caché</h2><p id="r-383769" data-claire-element-id="383769">(Savoir écrire des template n'est pas nécessaire pour la compréhension de ce qui suit, ne fuyez pas devant ce nom s'il vous est inconnu !)<br/> Saviez-vous qu'il existe un troisième paramètre template à la classe <code data-claire-semantic="cpp">std::map</code> ?<br/> Il s'agit en fait de la <strong>classe de Comparaison</strong> utilisée pour trier les éléments. C'est une <strong>classe foncteur</strong> (voir <a href="http://www.siteduzero.com/tutoriel-3-39045-foncteurs-et-iterateurs.html">tutoriel de Ice_Keese</a> si vous avez des problèmes avec ce mot) : le compilateur en fait n'écrit pas <code data-claire-semantic="cpp">a &lt; b</code> pour savoir si a doit être placé avant b mais il écrit <code data-claire-semantic="cpp">compare(a,b)</code>. Où <code>compare</code> est un <strong>objet</strong> de la classe foncteur. Et un objet d'une classe foncteur est appellé un ... foncteur. On doit pouvoir écrire <code data-claire-semantic="cpp">compare(a,b)</code> avec le foncteur utilisé dans le paramètre.</p><p id="r-383770" data-claire-element-id="383770">Quelques exemples seront plus parlants. :p</p><p id="r-383771" data-claire-element-id="383771">La classe foncteur peut être une structure ou une classe ou encore un pointeur sur fonction (voir <a href="http://www.siteduzero.com/tutoriel-3-178617-les-pointeurs-sur-fonctions.html#ss_part_2">tutoriel de Nanoc</a> si ça vous intéresse, personnellement je trouve les classes plus faciles à utiliser).<br/> Si vous choisissez la classe (ou structure), la condition pour que celle-ci soit une classe foncteur est qu'elle ait son <code data-claire-semantic="cpp">operator()</code><strong>operator() surchargé</strong> :</p><pre id="r-383772" data-claire-element-id="383772"><code data-claire-semantic="cpp">struct Comparer1
+{
+	bool operator()(const Coordonnees &amp; a, const Coordonnees &amp; b) const
+	{
+		return a.getX() != b.getX() ? a.getX() &lt; b.getX() : a.getY() &lt; b.getY();
+	}
+};
+class Comparer2
+{
+	public :
+		bool operator()(const Coordonnees &amp; a, const Coordonnees &amp; b) const
+		{
+			return a.getY() != b.getY() ? a.getY() &lt; b.getY() : a.getX() &lt; b.getX();
+		}
+};
+bool fonctionComparaison(const Coordonnees &amp; a, const Coordonnees &amp; b)
+{
+	return a.getX() != a.getX() ? a.getX() &gt; b.getX() : a.getY() &gt; b.getY();
+}</code></pre><p id="r-383773" data-claire-element-id="383773">On créera les terrains de cette façon, en indiquant le troisième paramètre template.</p><pre id="r-383774" data-claire-element-id="383774"><code data-claire-semantic="cpp">//Utilisation d'une structure
+map&lt;Coordonnees, Personnage*, Comparer1&gt; terrain;
+//utilisation d'une classe
+map&lt;Coordonnees, Personnage*, Comparer2&gt; terrain2;
+//Utilisation d'un pointeur sur fonction
+bool(*pointeurSurFonction)(const Coordonnees &amp;, const Coordonnees &amp;) = fonctionComparaison;
+map&lt;Coordonnees, Personnage*, (bool)(*)(const Coordonnees &amp;, const Coordonnees &amp;)&gt; terrain3(pointeurSurFonction); //Le pointeur est indiqué en paramètre dans le constructeur.</code></pre><p id="r-383775" data-claire-element-id="383775">Les valeurs seront alors triées selon le foncteur utilisé. :)</p><h3 id="r-mecanique-interne" data-claire-element-id="383781">Mécanique interne</h3><p id="r-383776" data-claire-element-id="383776">En interne il fait ça :<br/><code data-claire-semantic="cpp">Comparer1</code> est la classe foncteur, on l'a indiqué dans les paramètres template.<br/><code data-claire-semantic="cpp">std::map</code> se demande si <code data-claire-semantic="cpp">obj1</code> est plus petit que <code data-claire-semantic="cpp">obj2</code>.<br/> Il crée alors un foncteur via la classe foncteur. Il le crée via le <strong>constructeur par défaut</strong>, c'est comme ça, c'est la classe qui a choisit ça (et c'est logique).</p><pre id="r-383777" data-claire-element-id="383777"><code data-claire-semantic="cpp">Comparer1 leFoncteurDeComparaison;</code></pre><p id="r-383778" data-claire-element-id="383778">Ensuite il veut comparer <code data-claire-semantic="cpp">obj1</code> et <code data-claire-semantic="cpp">obj2</code> par exemple. Pour ça il sait que le foncteur a l'<code data-claire-semantic="cpp">operator()</code> surchargé. Il fait donc comme ça :</p><pre id="r-383779" data-claire-element-id="383779"><code data-claire-semantic="cpp">bool plusPetit = leFoncteurDeComparaison(obj1, ob2);</code></pre><p id="r-383780" data-claire-element-id="383780">Un foncteur est donc bien un <strong>OBJET</strong> de la classe foncteur :)</p><h3 id="r-un-peu-de-clarification" data-claire-element-id="383788">Un peu de clarification</h3><p id="r-383782" data-claire-element-id="383782">D'ailleurs, les paramètres commencent à être longs, je vous conseille d'utiliser des <code data-claire-semantic="cpp">typedef</code> pour alléger l'écriture :</p><pre id="r-383783" data-claire-element-id="383783"><code data-claire-semantic="cpp">typedef map&lt;Coordonnees, Personnage*, Comparer1&gt; Terrain;
+typedef Terrain::iterator TerrainIt;
+typedef map&lt;Coordonnees, Personnage*, (bool)(*)(const Coordonnees &amp;, const Coordonnees &amp;)&gt; TerrainFct;
+typedef TerrainFct::iterator TerrainFctIt;</code></pre><aside id="r-383787" data-claire-element-id="383787" data-claire-semantic="information"><p id="r-383784" data-claire-element-id="383784">Par défaut, ce troisième paramètre template est égal à <code data-claire-semantic="cpp">std::less&lt;ClasseDeLaClef&gt;</code> qui est une classe foncteur dont l'<code data-claire-semantic="cpp">operator()</code> renvoie <code data-claire-semantic="cpp">true</code> si <code data-claire-semantic="cpp">a &lt; b</code>, c'est pour cela que nous avons dû définir une fonction <code data-claire-semantic="cpp">operator&lt;</code> pour notre classe de clef quand le 3ème paramètre template était laissé par défaut.</p><p id="r-383785" data-claire-element-id="383785">Vous pouvez trouver <a href="http://www.cplusplus.com/reference/std/functional/">ici</a> la liste des classes foncteurs de la bibliothèque standard.</p><p id="r-383786" data-claire-element-id="383786">Ainsi vous pouvez utiliser des classes foncteurs déjà prédéfinies comme <code data-claire-semantic="cpp">std::greater</code>, attention à la règle qu'il ne faut pas enfreindre citée plus haut ! <br/> Un paramètre <code data-claire-semantic="cpp">greater_equal</code> ne fournira pas une bonne <code data-claire-semantic="cpp">std::map</code> car <code data-claire-semantic="cpp">!(a &gt;= b) &amp;&amp; !(a &gt;= b)</code> n'implique pas que <code data-claire-semantic="cpp">a == b.</code></p></aside><h3 id="r-une-surcharge-de-constructeur" data-claire-element-id="383792">Une surcharge de constructeur</h3><p id="r-383789" data-claire-element-id="383789">Hum, la classe crée le foncteur via la classe des paramètres template. Et il le crée en utilsiant le constructeur par défaut, comme j'ai dit plus haut.<br/> Imaginons qu'on veuille qu'il utilise un autre foncteur que celui par défaut.<br/> Et bien, tous les conteneurs STL qui ont une classe foncteur en paramètre template ont un constructeur commun !<br/> Il prend un paramètre : le foncteur à utilisier.<br/> Exemple :</p><pre id="r-383790" data-claire-element-id="383790"><code data-claire-semantic="cpp">Comparer1 monPetitFoncteur;
+map&lt;Coordonnees, Personnage*&gt; terrain(monPetitFoncteur);</code></pre><p id="r-383791" data-claire-element-id="383791">C'est une autre manière d'indiquer le foncteur de comparaison à utiliser. :)</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl">Les Conteneurs de la STL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/la-decouverte-par-l-exemple">
+La découverte par l&#039;exemple
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/le-tableau-associatif-de-la-stl-std-map">
+Le tableau associatif de la STL : std::map
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/une-classe-bien-pratique-pour-manipuler-des-elements-contenus-dans-un-conteneur-stl-les-iterateurs">
+Une classe bien pratique pour manipuler des éléments contenus dans un conteneur STL : les itérateurs
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/utilisation-plus-etendue-des-std-map">
+Utilisation plus étendue des std::map
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/il-existe-d-autres-conteneurs-associatifs-de-la-stl">
+Il existe d&#039;autres conteneurs associatifs de la STL!
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/les-autres-conteneurs-de-la-stl">
+Les autres conteneurs de la STL
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/une-classe-bien-pratique-pour-manipuler-des-elements-contenus-dans-un-conteneur-stl-les-iterateurs">
+<span class="arrow"></span>
+<span class="next">Une classe bien pratique pour manipuler des éléments contenus dans un conteneur STL : les itérateurs</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/il-existe-d-autres-conteneurs-associatifs-de-la-stl">
+<span class="next">Il existe d&#039;autres conteneurs associatifs de la STL!</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Ilexisted039autresconteneursassociatifsdelaSTL"></a><h2>Il existe d&#039;autres conteneurs associatifs de la STL!</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/utilisation-plus-etendue-des-std-map">
+<span class="arrow"></span>
+<span class="next">Utilisation plus étendue des std::map</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/les-autres-conteneurs-de-la-stl">
+<span class="next">Les autres conteneurs de la STL</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-383795" data-claire-element-id="383795">Comme on vous l'avait déjà dit, il existe plus que deux conteneurs STL, notemment 3 autres conteneurs associatifs, maintenant que vous connaissez <code data-claire-semantic="cpp">std::map</code>, les apprendre se fera très vite ! :p</p><h2 id="r-associer-plusieurs-valeurs-associees-a-une-clef-d-un-tableau-associatif" data-claire-element-id="383816">Associer plusieurs valeurs associées à une clef d'un tableau associatif</h2><p id="r-383796" data-claire-element-id="383796">Imaginons le cas précédent, mais dans le cas où plusieurs personnages peuvent se trouver sur la même case. Vous pouvez créer une<br/><code data-claire-semantic="cpp">map&lt;Coordonnees, vector&lt;Personnage*&gt; &gt;</code> pour envisager ce cas, les éléments seront ajoutés via des <code data-claire-semantic="cpp">push_back</code> et enlevés avec une boucle traditionnelle en O(n), pour peu d'éléments, cela ne pose pas de problèmes.</p><p id="r-383797" data-claire-element-id="383797">Cependant il existe un conteneur STL fait pour ça : <code data-claire-semantic="cpp">std::multimap</code>.<br/> Cette classe s'utilise exactement de la même manière que <code data-claire-semantic="cpp">std::map</code> à quelques changements logiques dûs à sa définition :</p><ul id="r-383804" data-claire-element-id="383804"><li id="r-383799" data-claire-element-id="383799"><p id="r-383798" data-claire-element-id="383798"><code data-claire-semantic="cpp">multimap::insert</code> ne renverra pas une paire &quot;itérateur - booléen&quot; puisqu'un élément sera toujours inséré, cette fonction renverra juste un itérateur vers l'élément ajouté.</p></li><li id="r-383801" data-claire-element-id="383801"><p id="r-383800" data-claire-element-id="383800"><code data-claire-semantic="cpp">multimap::find</code> renverra un itérateur vers <em>un et un seul</em> des éléments trouvés à la clef voulue. Bien entendu <code data-claire-semantic="cpp">multimap::end</code> sera renvoyé si aucune valeur n'est associée à la clef demandée. Pour accéder à toutes les valeurs associées à une clef, voir la fonction <code data-claire-semantic="cpp">equal_range</code> juste en dessous. ;)</p></li><li id="r-383803" data-claire-element-id="383803"><p id="r-383802" data-claire-element-id="383802">Par conséquent, l'opérateur [] n'existe plus pour <code data-claire-semantic="cpp">std::multimap</code>, il faudra utiliser <code data-claire-semantic="cpp">find</code> et <code data-claire-semantic="cpp">insert</code> à la place pour bien indiquer ce qu'on veut faire.</p></li></ul><p id="r-383805" data-claire-element-id="383805">Et voici deux fonctions qui pourront vous être utile pour la manipulation d'une <code data-claire-semantic="cpp">std::multimap</code> :</p><h3 id="r-multimap-count" data-claire-element-id="383808">multimap::count</h3><p id="r-383806" data-claire-element-id="383806">Cette fonction renvoie le nombre de valeurs associées à une clef.<br/> Elle existait déjà avec <code data-claire-semantic="cpp">std::map</code> mais j'ai trouvé inutile d'en parler car la valeur renvoyée était soit 0 soit 1. Cependant cette valeur renvoyée peut être converti implicitement en booléen ce qui permet de facilement vérifier la présence d'une clef dans la (multi)map :</p><pre id="r-383807" data-claire-element-id="383807"><code data-claire-semantic="cpp">if(! groupe.count(&quot;Bob&quot;))
+	cout &lt;&lt; &quot;Il n'y a pas de Bob dans le groupe !&quot; &lt;&lt; endl;</code></pre><h3 id="r-multimap-equal-range" data-claire-element-id="383815">multimap::equal_range</h3><p id="r-383809" data-claire-element-id="383809">Voici son prototype :</p><pre id="r-383810" data-claire-element-id="383810"><code data-claire-semantic="cpp">pair&lt;itérateur, itérateur&gt; multimap::equal_range(Clef &amp;);</code></pre><p id="r-383811" data-claire-element-id="383811">Cette fonction renvoie une paire &quot;Itérateur de début - Itérateur de fin&quot; pour une certaine clef.<br/> Il suffira alors de parcourir les éléments depuis l'itérateur de début renvoyé jusqu'à celui -non compris- de fin. :) <br/> Par exemple, pour demander à tous les personnages sur la case (5,10) de se présentez gentillement à la console :</p><pre id="r-383812" data-claire-element-id="383812"><code data-claire-semantic="cpp">#include &lt;map&gt; //multimap est défini au même endroit que map
+
+typedef multimap&lt;Coordonnees, Personnage*&gt; MTerrain;
+typedef MTerrain::iterator MTerrainIt;
+typedef pair&lt;Coordonnees, Personnage*&gt; paireM;</code></pre><pre id="r-383813" data-claire-element-id="383813"><code data-claire-semantic="cpp">//Création de deux Coordonnees
+Coordonnees pos1(5,10);
+Coordonnees pos2(2,3);
+//Création du terrain
+MTerrain terrain;
+//Insertion de Personnages sur le terrain
+terrain.insert(paireM(pos1, new Personnage(&quot;Bob&quot;,100)));
+terrain.insert(paireM(pos1, new Personnage(&quot;Megaz&quot;,25)));
+terrain.insert(paireM(pos2, new Personnage(&quot;Alphonse&quot;,2)));
+//Recherches tous les Personnages en pos1
+pair&lt;MTerrainIt, MTerrainIt&gt; resultat = terrain.equal_range(pos1);
+//Affichage du résultat
+for(MTerrainIt it = resultat.first; it != resultat.second; ++it)
+	it-&gt;second-&gt;sePresenter();</code></pre><p id="r-383814" data-claire-element-id="383814">Dans le cas où aucun élément ne correspond à la clef, la fonction renvoie une paire d'itérateurs pointant vers le même élément. La boucle ne se fera pas car la condition de fin est tout de suite accomplie. :)</p><h2 id="r-quand-std-map-nous-donne-trop-d-informations" data-claire-element-id="383833">Quand std::map nous donne trop d'informations...</h2><p id="r-383817" data-claire-element-id="383817">Un jour je suis tombé sur ce cas : :p <br/> J'avais créé un conteneur contenant des Personnages alloués dynamiquement. Par exemple notre terrain de là tantôt.<br/> J'avais besoin de créer &quot;quelque chose&quot; qui permettait d'effectuer certaines actions sur une liste de Personnages, par exemple, tant que ces éléments sont dans la liste, leur donner 10pvs par tour. J'avais créé donc cette liste avec un <code data-claire-semantic="cpp">std::vector</code>, ne connaissant que cela au début :</p><pre id="r-383818" data-claire-element-id="383818"><code data-claire-semantic="cpp">vector&lt;Personnage*&gt; armee; //Conteneur des personnages (créés dynamiquement)
+vector&lt;Personnage*&gt; fontaineMagique; //Pointeurs indiquant quels Personnages obtiendront le bonus</code></pre><p id="r-383819" data-claire-element-id="383819">A chaque tour je parcourais la fontaine pour donner 10pvs à chacun de ses membres.</p><p id="r-383820" data-claire-element-id="383820">Maintenant que ceci était créé, j'aimerais bien ajouter des personnages à cette fontaine, et en enlever en sachant juste le personnage... Ajouter des éléments se ferait avec <code data-claire-semantic="cpp">push_back</code> (avec un test pour voir si le personnage n'est pas déjà dans la liste) et les enlever en faisant une boucle qui enlève l'élément s'il le trouve dans la fontaine.<br/> Une fois que j'ai connu les <code data-claire-semantic="cpp">std::map</code>, je les ai trouvées très utiles pour ce problème. :)</p><p id="r-383821" data-claire-element-id="383821">On ajoute des pointeurs avec <code data-claire-semantic="cpp">insert</code> pour que l'élément ne soit pas ajouté s'il est déjà dans la liste, et on supprime les éléments avec <code data-claire-semantic="cpp">erase</code>.<br/> Mais que mettre comme valeur de classe associée ? Un <code data-claire-semantic="cpp">bool</code> car il ne prend qu'un octet en mémoire ? On n'a pas besoin d'avoir de valeur associée : le simple fait d'être dans la fontaine permettait d'avoir le bonus de 10 pvs.</p><p id="r-383822" data-claire-element-id="383822">C'est alors que j'ai vu qu'il existait <code data-claire-semantic="cpp">std::set</code> qui est un conteneur STL où les éléments sont accédés par clef et où la valeur associée est... la clef !<br/> Ainsi voilà comment j'ai finalement fait : :)</p><pre id="r-383823" data-claire-element-id="383823"><code data-claire-semantic="cpp">#include &lt;set&gt;</code></pre><pre id="r-383824" data-claire-element-id="383824"><code data-claire-semantic="cpp">vector&lt;Personnage*&gt; armee;
+set&lt;Personnage*&gt; fontaineMagique; //Utilisation d'un std::set, plus approprié</code></pre><pre id="r-383825" data-claire-element-id="383825"><code data-claire-semantic="cpp">void ajouter(set&lt;Personnage*&gt; &amp; fontaine, Personnage* perso)
+{
+	fontaine.insert(perso);
+}
+void enlever(set&lt;Personnage*&gt; &amp; fontaine, Personnage* perso)
+{
+	fontaine.erase(perso);
+}</code></pre><p id="r-383826" data-claire-element-id="383826">La fonction à appeler à chaque tour serait celle-ci :</p><pre id="r-383827" data-claire-element-id="383827"><code data-claire-semantic="cpp">void donnerVie(set&lt;Personnage*&gt; &amp; fontaine)
+{
+	for(set&lt;Personnage*&gt;::iterator it = fontaine.begin(); it != fontaine.end; ++it)
+		(*it)-&gt;boirePotionDeVie(10);
+}</code></pre><p id="r-383828" data-claire-element-id="383828">(Rappellez-vous que l'itérateur &quot;it&quot; se comporte comme un pointeur sur un élément du conteneur qui ici est un pointeur sur personnage. On écrit donc <code data-claire-semantic="cpp">(*it)</code> pour accéder au pointeur et <code data-claire-semantic="cpp">(*it)-&gt;boirePotionDeVie(10);</code> pour appeler la fonction membre)</p><p id="r-383829" data-claire-element-id="383829">Il m'est déjà arrivé plein de fois où j'avais besoin de faire de telles actions. :D</p><aside id="r-383831" data-claire-element-id="383831" data-claire-semantic="information"><p id="r-383830" data-claire-element-id="383830">Tout comme <code data-claire-semantic="cpp">std::map</code>, <code data-claire-semantic="cpp">std::set</code> possède un paramètre template de Comparaison pour trier ses éléments qui est à <code data-claire-semantic="cpp">std::less</code> par défaut. Ici ce sera le deuxième paramètre template.</p></aside><p id="r-383832" data-claire-element-id="383832">Comme pour <code data-claire-semantic="cpp">std::multimap</code>, il existe une classe <code data-claire-semantic="cpp">std::multiset</code> qui fonctionne exactement de la même manière.<br/> Alors, ne vous avais-je pas dit que tous les conteneurs s'utilisaient à peu près de la même façon ? :)</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl">Les Conteneurs de la STL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/la-decouverte-par-l-exemple">
+La découverte par l&#039;exemple
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/le-tableau-associatif-de-la-stl-std-map">
+Le tableau associatif de la STL : std::map
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/une-classe-bien-pratique-pour-manipuler-des-elements-contenus-dans-un-conteneur-stl-les-iterateurs">
+Une classe bien pratique pour manipuler des éléments contenus dans un conteneur STL : les itérateurs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/utilisation-plus-etendue-des-std-map">
+Utilisation plus étendue des std::map
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/il-existe-d-autres-conteneurs-associatifs-de-la-stl">
+Il existe d&#039;autres conteneurs associatifs de la STL!
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/les-autres-conteneurs-de-la-stl">
+Les autres conteneurs de la STL
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/utilisation-plus-etendue-des-std-map">
+<span class="arrow"></span>
+<span class="next">Utilisation plus étendue des std::map</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/les-autres-conteneurs-de-la-stl">
+<span class="next">Les autres conteneurs de la STL</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="LesautresconteneursdelaSTL"></a><h2>Les autres conteneurs de la STL</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/il-existe-d-autres-conteneurs-associatifs-de-la-stl">
+<span class="arrow"></span>
+<span class="next">Il existe d&#039;autres conteneurs associatifs de la STL!</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-383835" data-claire-element-id="383835">Et si je vous disais que, maintenant que vous connaissez tout sur <code data-claire-semantic="cpp">std::map</code> et surtout sur les itérateurs des conteneurs STL, apprendre les autres ne sera qu'une formalité ? :p <br/> Les conteneurs STL sont séparés en trois parties :</p><ul id="r-383842" data-claire-element-id="383842"><li id="r-383837" data-claire-element-id="383837"><p id="r-383836" data-claire-element-id="383836">Les autres conteneurs <em>séquentiels</em> qui ont une interface similaire à <code data-claire-semantic="cpp">std::vector</code>, mais représentent néanmoins des concepts différents et ne sont pas prévus pour le même usage. Il s'agit de <code data-claire-semantic="cpp">std::deque</code> et <code data-claire-semantic="cpp">std::list</code>.</p></li><li id="r-383839" data-claire-element-id="383839"><p id="r-383838" data-claire-element-id="383838">Les <em>adaptateurs</em> de conteneurs réduisant les possibilités d'un <code data-claire-semantic="cpp">std::vector</code> à quelques fonctions, vous pourriez très bien faire ces classes vous même, héritant de <code data-claire-semantic="cpp">std::vector</code> par exemple.<br/> Il s'agit de <code data-claire-semantic="cpp">std::stack</code>, <code data-claire-semantic="cpp">std::queue</code> et <code data-claire-semantic="cpp">std::priority_queue</code>.</p></li><li id="r-383841" data-claire-element-id="383841"><p id="r-383840" data-claire-element-id="383840">Et bien entendu les conteneurs associatifs ! Vous les connaissez bien maintenant.</p></li></ul><aside id="r-383844" data-claire-element-id="383844" data-claire-semantic="information"><p id="r-383843" data-claire-element-id="383843">Sachez qu'il existe encore un conteneur associatif dont je ne parlerai pas : <code data-claire-semantic="cpp">std::bitset</code>, il permet de stocker des bits sur juste l'espace suffisant : 8 bits sur un octet.</p></aside><p id="r-383845" data-claire-element-id="383845">Et bien entendu, vous devrez inclure les headers pour chaque classe utilisée. ^^</p><pre id="r-383846" data-claire-element-id="383846"><code data-claire-semantic="cpp">#include &lt;stack&gt;
+#include &lt;deque&gt;
+#include &lt;queue&gt; // Qui contiendra aussi priority_queue :)
+//etc.</code></pre><h2 id="r-les-adaptateurs-de-conteneurs-de-la-stl" data-claire-element-id="383880">Les <em>adaptateurs</em> de conteneurs de la STL</h2><p id="r-383847" data-claire-element-id="383847">Ces classes sont faites pour n'être utilisées qu'avec quelques fonctions pour une utilisation bien précice :</p><h3 id="r-std-stack-ou-pile-pour-les-anglophobes-p" data-claire-element-id="383858">std::stack (ou <em>pile</em> pour les anglophobes :p )</h3><p id="r-383848" data-claire-element-id="383848">Cette classe est utilisée quand le tableau est réduit à une pile, par exemple une pile de feuilles (qui à la fin des examens s'est dispersée dans toute ta chambre :p ).<br/> Que peut-on faire avec une pile (à part la disperser...) ?</p><ul id="r-383855" data-claire-element-id="383855"><li id="r-383850" data-claire-element-id="383850"><p id="r-383849" data-claire-element-id="383849">Ajouter des éléments à son sommet. La fonction à utiliser pour cette action sera ... <code data-claire-semantic="cpp">stack::push</code>, elle se comporte exactement comme <code data-claire-semantic="cpp">push_back</code>...</p></li><li id="r-383852" data-claire-element-id="383852"><p id="r-383851" data-claire-element-id="383851">Accéder à son élément à son sommet. La fonction sera ... <code data-claire-semantic="cpp">stack::top</code>, elle se comporte comme <code data-claire-semantic="cpp">back</code> ou <code data-claire-semantic="cpp">front</code>. Mais ici on n'a pas l'embarras du choix car le seul élément auquel on peut accéder est l'élément au sommet (<em>at the top</em>).</p></li><li id="r-383854" data-claire-element-id="383854"><p id="r-383853" data-claire-element-id="383853">Supprimer l'élément au sommet, ce qui permettera d'accéder aux éléments en dessous. La fonction sera...<code data-claire-semantic="cpp">stack::pop</code>... Sans commentaires, cette fonction ne prend aucun paramètre et ne renvoie rien, elle ne fait juste qu'enlever l'élément <em>at the top</em>. Et si la pile est vide ben.. Elle reste vide...</p></li></ul><p id="r-383856" data-claire-element-id="383856">Cette classe a bien entendu les fonctions habituelles comme <code data-claire-semantic="cpp">size</code> ou <code data-claire-semantic="cpp">empty</code>.</p><p id="r-383857" data-claire-element-id="383857">Petite subtilité, cette classe a quand même un paramètre template caché !<br/> C'est la classe qui devra être utilisée pour contenir les éléments, un des trois conteneurs séquentiels. Par défaut, ce paramètre est <code data-claire-semantic="cpp">std::deque&lt;T&gt;</code> (où T est le type des éléments contenus).</p><h3 id="r-std-queue-prononcez-quiouu-ou-file-pour-les-francophones-n-aimant-pas-dire-je-fais-la-queue-p" data-claire-element-id="383863">std::queue (prononcez Quiouu) (ou <em>file</em> pour les francophones n'aimant pas dire &quot;Je fais la queue&quot; :p )</h3><p id="r-383859" data-claire-element-id="383859">Dans le même état d'esprit de simplification, voici la classe représentant une file : <code data-claire-semantic="cpp">std::queue</code>.<br/> C'est comme une pile sauf qu'on ajoute les éléments à la fin de la file histoire que le premier arrivé soit le premier servi !<br/> Ben oui, les éléments qui arrivent plus tard, ils n'ont qu'à faire la queue ! :p</p><p id="r-383860" data-claire-element-id="383860">Ainsi, la fonction <code data-claire-semantic="cpp">stack::top</code> est remplacée ici par <code data-claire-semantic="cpp">queue::front</code> (Premier élément de la file, celui-ci qui va être traité) et <code data-claire-semantic="cpp">queue::back</code> (Dernier élément de la file, il attendra son tour !). La fonction <code data-claire-semantic="cpp">queue::push</code> ajoute un élément à la fin de la file et <code data-claire-semantic="cpp">queue::pop</code> supprime le premier élément (après lui avoir donné son paquet de timbres bien entendu ! ).<br/> Vous pouvez aussi choisir le type de conteneur utilisé bien que le paramètre par défaut est le plus efficace.</p><aside id="r-383862" data-claire-element-id="383862" data-claire-semantic="information"><p id="r-383861" data-claire-element-id="383861">Si vous désirez un tutoriel beaucoup plus détaillé sur ces deux conteneurs ainsi que des exemples d'utilisation, regardez <a href="http://www.siteduzero.com/tutoriel-3-33398-les-piles-et-les-files-en-c.html">le tutoriel de Xavinou</a>.</p></aside><h3 id="r-std-priority-queue-prononcez-pwraiowrity-quiouu" data-claire-element-id="383879">std::priority_queue (prononcez <em>Pwraïowrity quiouu</em>)</h3><p id="r-383864" data-claire-element-id="383864">Cette classe est un peu plus développée que les deux autres que je viens de présenter platement décrire.<br/> Vous pouvez ajouter des éléments avec <code data-claire-semantic="cpp">priority_queue::push</code> mais celui-ci ne vas pas toujours se placer au début comme une pile ou à la fin comme une file mais <em>à sa place</em>, de telle sorte que les plus importants éléments soient au début de la liste. Ainsi cela vous permet de toujours traiter en premier l'élément avec la priorité la plus grande :D (avec <code data-claire-semantic="cpp">priority_queue::top</code>).</p><div id="r-383866" data-claire-element-id="383866" data-claire-semantic="question"><p id="r-383865" data-claire-element-id="383865">:euh: Mais, comment cette classe sait quel élément a <em>de l'importance</em> ?</p></div><p id="r-383867" data-claire-element-id="383867">Il utilise la même technique que <code data-claire-semantic="cpp">std::map</code> pour trier ses éléments.<br/> Alors, vous vous en souvenez ? Il utilise une classe foncteur de <em>Comparaison</em> qui permettra de savoir quel est l'élément le plus important entre deux. :) Cette classe foncteur était écrite dans le troisième paramètre template de <code data-claire-semantic="cpp">std::map</code>, et ben pour <code data-claire-semantic="cpp">priority_queue</code>, c'est aussi le 3ème paramètre template, le deuxième étant, rappelez vous, la classe utilisée pour contenir les éléments.</p><p id="r-383868" data-claire-element-id="383868">Je trouve que cette classe mérite un petit exemple, sous forme d'histoire (J'ai été inspiré là :p ).</p><pre id="r-383869" data-claire-element-id="383869"><code data-claire-semantic="cpp">struct PvMin
+{
+	bool operator()(const Personnage &amp; p1, const Personnage &amp; p2) const
+	{
+		return p1.vie() &gt; p2.vie();
+	}
+};
+#include &lt;queue&gt;
+int main()
+{
+	cout &lt;&lt; &quot;Il était une fois un petit village de Personnage (symbolisé ici par un vector étant une priority_queue)&quot; &lt;&lt; endl;
+	priority_queue&lt;Personnage, vector&lt;Personnage&gt;, PvMin&gt; village;</code></pre><p id="r-383870" data-claire-element-id="383870">Voilà comment utiliser le paramètre template. Vous voulez vraiment la suite du code ? Ma petite histoire o_O ?</p><p id="r-383871" data-claire-element-id="383871"></p><div id="r-383873" data-claire-element-id="383873"><pre id="r-383872" data-claire-element-id="383872"><code data-claire-semantic="cpp">cout &lt;&lt; &quot;Il contient un certain nombre d'habitants&quot; &lt;&lt; endl;
+	
+	village.push(Personnage(&quot;Bob&quot;)); //Bob, toujours en pleine santé
+	village.push(Personnage(&quot;Viellard du coin&quot;,10)); // Le viellard du coin
+	village.push(Personnage(&quot;Marie&quot;,75));
+	village.push(Personnage(&quot;Sophie&quot;,75));//Les deux jumelles, aussi en forme l'une que l'autre
+	village.push(Personnage(&quot;Gaston&quot;,60));//Le brave gars :)
+	village.push(Personnage(&quot;Alphonse&quot;,90));//Le sportif :)
+
+	cout &lt;&lt; &quot;Mais malheureusement les conditions de vie dans ce village sont dures : chaque jour le personnage avec le moins de santé s'exile tellement dures elles sont, observez par vous même :&quot; &lt;&lt; endl;
+	
+	int i = 1;
+	while(i&lt;=3)
+	{
+		cout &lt;&lt; &quot;---&quot; &lt;&lt; endl;
+		cout &lt;&lt; &quot;Jour &quot; &lt;&lt; i &lt;&lt; endl;
+		cout &lt;&lt; &quot;Aujourd'hui, on entend quelqu'un se présenter :&quot; &lt;&lt; endl;
+		
+		village.top().sePresenter();
+		
+		cout &lt;&lt; &quot;Il s'avère que cette personne a voulu quitter le village ...&quot; &lt;&lt; endl;
+		
+		village.pop();
+		
+		cout &lt;&lt; &quot;Il reste &quot; &lt;&lt; village.size() &lt;&lt; &quot; habitants&quot; &lt;&lt; endl;
+		
+		i++;
+	}
+	cout &lt;&lt; &quot;Un nouvel habitant arrive dans ce village : &quot; &lt;&lt; endl;
+	
+	Personnage nouveau(&quot;Alfred&quot;,80);
+	
+	cout &lt;&lt; &quot;Poli, il se présente : &quot; &lt;&lt; endl;
+	
+	nouveau.sePresenter();
+	
+	village.push(nouveau);
+
+	while(! village.empty())
+	{
+		cout &lt;&lt; &quot;---&quot; &lt;&lt; endl;
+		cout &lt;&lt; &quot;Jour &quot; &lt;&lt; i &lt;&lt; endl;
+		cout &lt;&lt; &quot;Aujourd'hui, on entend quelqu'un se présenter :&quot; &lt;&lt; endl;
+		
+		village.top().sePresenter();
+
+		cout &lt;&lt; &quot;Il s'avère que cette personne a voulu quitter le village ...&quot; &lt;&lt; endl;
+
+		village.pop();
+
+		cout &lt;&lt; &quot;Il reste &quot; &lt;&lt; village.size() &lt;&lt; &quot; habitants&quot; &lt;&lt; endl;
+
+		i++;
+	}
+	cout &lt;&lt; &quot;Le village est maintenant abandonné.. Il devient une ville fantôme..&quot; &lt;&lt; endl;
+	
+	return 0;
+}</code></pre></div><p id="r-383874" data-claire-element-id="383874">Exécutez ce code après avoir rajouté une fonction <code data-claire-semantic="cpp">int vie()</code> aux Personnages, la console vous racontera une petite histoire. :D</p><aside id="r-383878" data-claire-element-id="383878" data-claire-semantic="warning"><p id="r-383875" data-claire-element-id="383875">Le test de comparaison d'importance ne se fait que lors de <strong>l'ajout</strong> d'un élément dans la <code data-claire-semantic="cpp">priority_queue</code>. Si un élément dans la file acquiert plus (ou moins) d'importance, il ne sera plus à sa place et la file ne fera plus ce qu'elle devra ! Par exemple, dans l'algorithme de Dijkstra, un élément dans la liste ouverte peut voir son poids descendre et donc sa place devrait être changée dans la file. Si de tels cas apparaissent, il faut utiliser uen autre classe pour faire la file de priorité.<br/> Exemple de problème :</p><pre id="r-383876" data-claire-element-id="383876"><code data-claire-semantic="cpp">struct Comp
+{
+	bool operator()(int * un, int * deux)
+	{
+		cout &lt;&lt; &quot;Comparaison&quot; &lt;&lt; endl;
+		return *un &lt; *deux;
+	}
+};
+int main()
+{
+	int a(2), b(7);
+	priority_queue&lt;int*, vector&lt;int*&gt;, Comp&gt; f;
+
+	f.push(&amp;a);
+	cout &lt;&lt; *f.top() &lt;&lt; endl; //2 ... Normal
+	f.push(&amp;b);
+	cout &lt;&lt; *f.top() &lt;&lt; endl; //7 ... Normal car l'élément a une plus grande importance
+	b = 0;
+	cout &lt;&lt; *f.top() &lt;&lt; endl; //0 ... Pas normal, cela devrait être 2
+
+	return 0;
+}</code></pre><p id="r-383877" data-claire-element-id="383877">Cela devrait être l'adresse de a en premier dans la file. Mais quand on met la valeur de b à zéro, le conteneur ne se doute pas qu'une importance a changé dans ses éléments.<br/> Pour éviter ce problème, il faut se dire que quand on ajoute un élément, le conteneur fait une comparaison avec les éléments existants pour placer le nouvel arrivant à sa place. Et c'est le seul moment où il fait des comparaisons.<br/> Si on a besoin de faire changer les importances des éléments dans la file, il faut faire sa propre file de priorité (implémenté généralement sous forme de tas).</p></aside><h2 id="r-les-autres-conteneurs-sequentiels-de-la-stl" data-claire-element-id="383915">Les autres conteneurs <em>séquentiels</em> de la STL</h2><h3 id="r-std-deque-double-ended-queue-si-vous-voulez-tout-savoir" data-claire-element-id="383898">std::deque (Double Ended Queue si vous voulez tout savoir ...)</h3><p id="r-383881" data-claire-element-id="383881"><code data-claire-semantic="cpp">std::deque</code> est une classe qui s'utilise de la même façon que vector ! Les fonctions que vous connaissez pour vector pourront aussi être utilisées ici.<br/> Néanmoins <code data-claire-semantic="cpp">std::deque</code> possède deux différences :</p><ol id="r-383887" data-claire-element-id="383887"><li id="r-383883" data-claire-element-id="383883"><p id="r-383882" data-claire-element-id="383882">Un <code data-claire-semantic="cpp">std::vector</code> est optimisé pour que les nouveaux éléments soient ajoutés à la fin, c'est pourquoi il possède une fonction <code data-claire-semantic="cpp">push_back</code> et <code data-claire-semantic="cpp">pop_back</code>. <code data-claire-semantic="cpp">std::deque</code></p></li><p id="r-383884" data-claire-element-id="383884">est lui par contre optimisé pour que les nouveaux éléments soient ajoutés à la fin .. ou au début ! Il possède donc les fonctions <code data-claire-semantic="cpp">push_front</code> et <code data-claire-semantic="cpp">pop_front</code> en plus que <code data-claire-semantic="cpp">std::vector</code>.</p><li id="r-383886" data-claire-element-id="383886"><p id="r-383885" data-claire-element-id="383885">Les éléments de <code data-claire-semantic="cpp">std::vector</code> sont stockés comme pour un tableau en c, <strong>à des places continues de la mémoire</strong> alors qu'avec <code data-claire-semantic="cpp">std::deque</code>, pas nécessairement. Cela n'a pas d'importance tant qu'on ne doit pas faire de conversions du style <code data-claire-semantic="cpp">std::vector</code> =&gt; tableau C-like. ;)</p></li></ol><p id="r-383888" data-claire-element-id="383888">D'ailleurs, je vous informe que les itérateurs de <code data-claire-semantic="cpp">std::vector</code> et <code data-claire-semantic="cpp">std::deque</code> sont arithmétiques (<em>RandomAccess iterator</em>) !</p><div id="r-383890" data-claire-element-id="383890" data-claire-semantic="question"><p id="r-383889" data-claire-element-id="383889">Euh mais c'est quoi un itérateur arithmétique ?</p></div><p id="r-383891" data-claire-element-id="383891">Cela veut simplement dire que vous pouvez écrire ceci :</p><pre id="r-383892" data-claire-element-id="383892"><code data-claire-semantic="cpp">vector&lt;int&gt; v(10,2);
+vector&lt;int&gt;::iterator it = v.begin();
+it = it + 5;
+it -= 5;</code></pre><p id="r-383893" data-claire-element-id="383893">Utiliser des opérateurs arithmétiques pour se déplacer plus vite dans le tableau. :) <br/> Ceux des tableaux associatifs par exemple avaient les opérateurs !=, ==, ++ (etc.) surchargés. Ceux-ci en a plus, c'est tout. Si vous voulez savoir quels itérateurs possèdent quelles surcharges d'opérateur, jetez un coup d'oeil à <a href="http://cplusplus.com/reference/std/iterator/">cette page</a>. ;) Vous pouvez même voir que ces <em>RandomAccess iterator</em> ont par exemple les opérateurs &lt; et &gt; surchargés.<br/> Les itérateurs de <code data-claire-semantic="cpp">std::list</code> et des tableaux associatifs étaient appelés <em>Bidirectional iterator</em> car avec l'un de ces itérateurs on peut accéder à l'itérateur suivant et précédent uniquement (avec les opérateurs ++ et --).</p><aside id="r-383895" data-claire-element-id="383895" data-claire-semantic="information"><p id="r-383894" data-claire-element-id="383894">La fonction <code data-claire-semantic="cpp">std::advance(itérateur, nb)</code> peut-être utilisée pour avancer un itérateur de la valeur nb. Si l'itérateur est arithmétique, C++ utilisera l'opérateur += ou -= sinon il fera une boucle de ++ ou --.</p></aside><p id="r-383896" data-claire-element-id="383896">Bref, utilisez <code data-claire-semantic="cpp">std::deque</code> si vous avez besoin d'insérer des éléments autant au début qu'à la fin du tableau.</p><p id="r-383897" data-claire-element-id="383897">Et si vous avez besoin d'insérer des éléments au milieu ... Voici le dernier conteneur de la STL :</p><h3 id="r-std-list" data-claire-element-id="383904">std::list</h3><p id="r-383899" data-claire-element-id="383899">Un élément stocké dans une <code data-claire-semantic="cpp">std::list</code> prendra plus de place en mémoire qu'un <code data-claire-semantic="cpp">std::vector</code> mais vous fournira des performances bien meilleures si vous avez besoin d'effectuer beaucoup de déplacements à l'intérieur de la liste : élimination, déplacement de bloc d'une liste à l'autre ou dans la même, ajout d'éléments après un certain autre etc.</p><p id="r-383900" data-claire-element-id="383900">Les fonctions principales de <code data-claire-semantic="cpp">std::list</code> sont <code data-claire-semantic="cpp">list::insert</code> et <code data-claire-semantic="cpp">list::erase</code> que vous connaissez bien. :) <br/> Cependant <code data-claire-semantic="cpp">list::insert</code> ne s'utilise pas exactement de la même manière, voici ses prototypes :</p><pre id="r-383901" data-claire-element-id="383901"><code data-claire-semantic="cpp">itérateur insert(itérateur position, const Valeur &amp; x);
+void insert(itérateur position, size_t nombre, const Valeur &amp; x);
+void insert(itérateur position, itérateur debut, itérateur fin);</code></pre><p id="r-383902" data-claire-element-id="383902"><code data-claire-semantic="cpp">position</code> est un itérateur qui indique <strong>avant</strong> quel élément la valeur doit être insérée. :) <br/> Pour la deuxième surcharge, cela permet d'indiquer combien d'éléments identiques ajouter et pour la troisième cela permet d'ajouter les éléments avant <code data-claire-semantic="cpp">position</code> DE <code data-claire-semantic="cpp">debut</code> À <code data-claire-semantic="cpp">fin</code> -non compris-, de la même manière qu'on avait fait avec <code data-claire-semantic="cpp">std::map</code> :</p><pre id="r-383903" data-claire-element-id="383903"><code data-claire-semantic="cpp">//si groupe1 et groupe deux sont des std::map
+groupe1.insert(groupe2.begin(), groupe2.end()); //On ajoute le groupe 2 au groupe 1
+//si groupe1 et groupe2 sont des std::list
+groupe1.insert(groupe1.end(), groupe2.begin(), groupe2.end()); //On ajoute le groupe 2 à la fin du groupe 1</code></pre><h3 id="r-un-peu-de-genericite" data-claire-element-id="383914">Un peu de généricité</h3><p id="r-383905" data-claire-element-id="383905">Vous savez quoi ? <code data-claire-semantic="cpp">std::vector</code> (et <code data-claire-semantic="cpp">std::deque</code> bien sûr) possède <strong>exactement</strong> la même fonction ! Mais je vous rappelle que <code data-claire-semantic="cpp">std::vector</code> est optimisé pour des insertions à la fin seulement (et <code data-claire-semantic="cpp">std::deque</code> pour des insertions à la fin ou au début).<br/> Une utilisation pratique est la fusion de deux tableaux comme montré ci-dessus ou encore cette utilisation ci-dessous que je trouve très pratique : :p</p><pre id="r-383906" data-claire-element-id="383906"><code data-claire-semantic="cpp">int tabC[5] = {5, 2, -99, 12, 0xFF9900}; //Un tableau C-like initialisé avec une liste d'initialisation !
+vector&lt;int&gt; tab;
+tab.insert(tab.end(), tabC, tabC + 5); //Waw ! Le tableau C-like est considéré comme un itérateur ! On insère avant end() DE tabC à tabC + 5 -non compris- ! Que c'est pratique !</code></pre><p id="r-383907" data-claire-element-id="383907">Et encore pour avoir un code plus clair. Il existe un constructeur surchargé pour les itérateurs qui prend une paire d'itérateur pour savoir avec quoi le conteneur doit être rempli. Le code ci-dessus peut s'écrire en deux lignes :</p><pre id="r-383908" data-claire-element-id="383908"><code data-claire-semantic="cpp">int tabC[5] = {5, 2, -99, 12, 0xFF9900}; //Un tableau C-like initialisé avec une liste d'initialisation !
+vector&lt;int&gt; tab(tabC, tabC + 5); //Initialisé avec les itérateurs !</code></pre><p id="r-383909" data-claire-element-id="383909">Cette surcharge qui permet un raccourci de la fonction <code data-claire-semantic="cpp">insert</code> est présente dans <strong>tous les conteneurs</strong> :D (même les associatifs !)</p><div id="r-383911" data-claire-element-id="383911" data-claire-semantic="question"><p id="r-383910" data-claire-element-id="383910">Mais, si je voulais utiliser le constructeur qui prenait comme paramètre un foncteur ? Et aussi celui-là ?</p></div><p id="r-383912" data-claire-element-id="383912">Il existe encore un constructeur qui mixe les deux. D'abord les itérateurs, et puis les foncteurs (après tous, vous les avez appris dans cet ordre la non ?) :</p><pre id="r-383913" data-claire-element-id="383913"><code data-claire-semantic="cpp">map&lt;Coordonnees, Personnage*&gt; terrain(m1.begin(), m1.end(), monFoncteur);</code></pre><h2 id="r-quelques-fonctions-pratiques-que-propose-std-list" data-claire-element-id="383965">Quelques fonctions pratiques que propose std::list</h2><h3 id="r-list-assign-et-list-resize" data-claire-element-id="383918">list::assign et list::resize</h3><p id="r-383916" data-claire-element-id="383916">Ce sont <strong>exactement</strong> les mêmes fonctions que celles de <code data-claire-semantic="cpp">std::vector</code>. Sachez néanmoins que <code data-claire-semantic="cpp">assign</code> peut être utilisée avec des itérateurs (maintenant que vous les connaissez) :</p><pre id="r-383917" data-claire-element-id="383917"><code data-claire-semantic="cpp">list&lt;string&gt; maListe;
+list&lt;string&gt; maListe2;
+maListe.assign(5,&quot;Blaaaaaaaaa&quot;); //La première liste contient 5 Blaaaaaaaaa maintenant.
+maListe2.assign(maListe.begin(), maListe.end()); //Une copie de maListe</code></pre><h3 id="r-list-splice" data-claire-element-id="383921">list::splice</h3><p id="r-383919" data-claire-element-id="383919">Cette fonction est une manière plus rapide de déplacer-effacer des éléments à traver une même liste ou plusieurs. Vous pouvez l'utiliser de 3 manières différentes, voyez par vous-même (exemple platement pris de <a href="http://cplusplus.com/reference/stl/list/splice/">mon site de référence</a>) :</p><pre id="r-383920" data-claire-element-id="383920"><code data-claire-semantic="cpp">list&lt;int&gt; liste1;
+list&lt;int&gt; liste2;
+
+for(int i = 1;i&lt;5;i++)
+	liste1.push_back(i); //liste1 : 1,2,3,4
+for(int i = 20;i&lt;25;i++)
+	liste2.push_back(i); // liste2 : 20,21,22,23,24
+
+liste&lt;int&gt;::iterator it = liste1.begin(); //it pointe vers 1
+
+it++; //it pointe vers 2
+
+liste1.splice(it, liste2); // La liste 2 sera placée toute entière dans la liste1 juste avant l'élément pointé par it;
+//liste1 : 1,20,21,22,23,24,2,3,4
+//it pointe toujours vers 2
+
+cout &lt;&lt; liste2.empty(); // true, la liste a été été vidée
+
+liste2.splice(liste2.begin(), liste1, it);//Place avant liste2.begin() l'élément de liste1 pointé par it
+//liste1 : 1,20,21,22,23,24,3,4
+//liste2 : 2
+
+it = liste1.begin(); // it pointe vers 1
+advance(it,5); //it pointe sur 24
+
+liste1.splice(liste1.begin(), liste1, it, liste1.end()); //Prendre les éléments de liste1 DE it À liste1.end()-non compris- et les placer avant liste1.begin()
+//liste1 : 24,3,4,1,20,21,22,23
+
+it = liste1.begin();//Pointe 24
+advance(it,1);//pointe 3
+
+liste&lt;int&gt;::iterator it2 = it; // Pointe 3
+advance(it,3); //pointe 20 
+
+liste2.splice(liste2.end(), liste1, it, it2); //prendre les éléments de liste1 DE it À it2-non compris- et les placer avant liste2.end()
+//liste1 : 24,20,21,22,23
+//liste2 : 2,3,4,1</code></pre><h3 id="r-list-remove" data-claire-element-id="383923">list::remove</h3><p id="r-383922" data-claire-element-id="383922">Permet de supprimer tous les éléments d'une liste ayant une certaine valeur. Exemple : <code data-claire-semantic="cpp">liste.remove(5);</code> supprimera tous les éléments égaux à 5 dans la liste. Cette fonction utilise l'<code data-claire-semantic="cpp">operator==.</code></p><h3 id="r-list-remove-if" data-claire-element-id="383945">list::remove_if</h3><p id="r-383924" data-claire-element-id="383924">Permet de supprimer tous les éléments d'une liste satisfaisant une certaine condition. Le paramètre à indiquer est un <strong><em>prédicat</em></strong> prenant comme paramètre un élément de la liste. :)</p><aside id="r-383934" data-claire-element-id="383934" data-claire-semantic="information"><p id="r-383925" data-claire-element-id="383925">Un prédicat est simplement un foncteur qui renvoie un booléen ou quelque chose de convertible en un booléen.<br/> Si vous vous embrouillez avec les noms &quot;foncteurs&quot; et &quot;prédicats&quot;, voici un petit résumé :</p><ul id="r-383932" data-claire-element-id="383932"><li id="r-383927" data-claire-element-id="383927"><p id="r-383926" data-claire-element-id="383926">Un foncteur (appelons le &quot;f&quot;) est un objet avec lequel on peut écrire <code data-claire-semantic="cpp"><strong>f(quelqueChoseOuRienDuTout)</strong></code>. Par exemple f(5), f(a,b) ou encore f(). Les fonctions sont donc des foncteurs.</p></li><li id="r-383929" data-claire-element-id="383929"><p id="r-383928" data-claire-element-id="383928">Une classe ayant l'<code data-claire-semantic="cpp">operator()</code> surchargé créera des instances qui sont des foncteurs (par la définition d'un foncteur). Cette classe sera appelée &quot;classe foncteur&quot;.</p></li><li id="r-383931" data-claire-element-id="383931"><p id="r-383930" data-claire-element-id="383930">Un prédicat est un foncteur renvoyant un booléen ou quelque chose de transformable en booléen. On pourra alors qualifier de &quot;classe prédicat&quot; des classes créant des prédicats.</p></li></ul><p id="r-383933" data-claire-element-id="383933">Remarquez que parfois le mot &quot;foncteur&quot; est utilisé pour &quot;classe foncteur&quot; (mais dans ce cas on ne peut pas différencier la classe et les objets ...). Idem pour &quot;prédicat&quot;.</p></aside><p id="r-383935" data-claire-element-id="383935">Par exemple pour enlever tous les Personnages avec une vie de plus de 50 d'une liste de Personnage :</p><pre id="r-383936" data-claire-element-id="383936"><code data-claire-semantic="cpp">bool vie_plus_grande_que_50(const Personnage &amp; p)
+{
+	return p.vie() &gt; 50;
+}
+class Classe_vie_plus_grande_que_50
+{
+	public:
+		bool operator()(const Personnage &amp; p)
+		{
+			return p.vie() &gt; 50;
+		}
+};</code></pre><pre id="r-383937" data-claire-element-id="383937"><code data-claire-semantic="cpp">list&lt;Personnage&gt; liste;
+//Remplissage avec push_back, push_front, insert, assign etc.
+liste.remove_if(vie_plus_grande_que_50); //en utilisant une fonction comme prédicat :
+
+Classe_vie_plus_grand_que_50 leFoncteur; //On crée un foncteur, je dirais même un prédicat
+liste.remove_if(leFoncteur); //en utilisant un objet d'une classe comme prédicat, la fonction appellera son operator()</code></pre><aside id="r-383939" data-claire-element-id="383939" data-claire-semantic="information"><p id="r-383938" data-claire-element-id="383938">Vous voyez l'intérêt du foncteur, la fonction pourra écrire leFoncteur(a,b) pour savoir si les deux éléments son égaux, car, puisque c'est un foncteur, il a son <code data-claire-semantic="cpp">operator()</code> surchargé. :) <br/> Et vu que son <code data-claire-semantic="cpp">operator()</code> renvoie un booléen, on peut même le qualifier de prédicat ! :p</p></aside><p id="r-383940" data-claire-element-id="383940">L'utilisation de la classe permet beaucoup de choses ! Comme par exemple ceci :</p><pre id="r-383941" data-claire-element-id="383941"><code data-claire-semantic="cpp">class Classe_vie_plus_grande
+{
+	private :
+		int _val;
+	public:
+		Classe_vie_plus_grande(int val) : _val(val)
+		{}
+		bool operator()(const Personnage &amp; p)
+		{
+			return p.vie() &gt; _val;
+		}
+};</code></pre><pre id="r-383942" data-claire-element-id="383942"><code data-claire-semantic="cpp">Classe_vie_plus_grande monFoncteur(50);
+liste.remove_if(monFoncteur);</code></pre><p id="r-383943" data-claire-element-id="383943">Ou en une ligne :</p><pre id="r-383944" data-claire-element-id="383944"><code data-claire-semantic="cpp">liste.remove_if(Classe_vie_plus_grande(50));</code></pre><h3 id="r-list-unique" data-claire-element-id="383952">list::unique</h3><p id="r-383946" data-claire-element-id="383946">Permet de supprimer tous les doublons consécutifs d'une liste.<br/> C'est à dire qu'après avoir exécuté cette fonction, la liste ne contiendra plus deux éléments égaux l'un à côté de l'autre.</p><ul id="r-383951" data-claire-element-id="383951"><li id="r-383948" data-claire-element-id="383948"><p id="r-383947" data-claire-element-id="383947">Si vous n'indiquez aucun paramètre, l'<code data-claire-semantic="cpp">operator==</code> sera utilisé.</p></li><li id="r-383950" data-claire-element-id="383950"><p id="r-383949" data-claire-element-id="383949">Si vous voulez comparer des éléments selon un autre critère, mettez en paramètre un prédicat permettant de comparer les éléments. :)</p></li></ul><h3 id="r-list-reverse" data-claire-element-id="383954">list::reverse</h3><p id="r-383953" data-claire-element-id="383953">Cette fonction renverse l'ordre des éléments, les premiers seront les derniers et les derniers seront les premiers ! Si ça peut vous être utile un jour...</p><h3 id="r-list-sort" data-claire-element-id="383964">list::sort !</h3><p id="r-383955" data-claire-element-id="383955">Cette fonction trie les éléments d'un tableau !</p><ul id="r-383960" data-claire-element-id="383960"><li id="r-383957" data-claire-element-id="383957"><p id="r-383956" data-claire-element-id="383956">Soit elle ne prend aucun paramètre, l'<code data-claire-semantic="cpp">operator&lt;</code> est alors utilisé.</p></li><li id="r-383959" data-claire-element-id="383959"><p id="r-383958" data-claire-element-id="383958">Soit un paramètre Prédicat de Comparaison que vous connaissez bien (Ben oui, vous vous rappelez quand même de notre foncteur Comparaison non ? :euh: ).</p></li></ul><p id="r-383961" data-claire-element-id="383961">Un petit exemple même si vous avez déjà tout compris : :)</p><pre id="r-383962" data-claire-element-id="383962"><code data-claire-semantic="cpp">struct Tri_par_vie
+{
+	bool operator()(const Personnage &amp; p1, const Personnage &amp; p2)
+	{
+		return p1.vie() &lt; p2.vie();
+	}
+};</code></pre><pre id="r-383963" data-claire-element-id="383963"><code data-claire-semantic="cpp">liste.sort( Tri_par_vie() );//Les parenthèses permettent de créer un foncteur avec le constructeur par défaut</code></pre><h2 id="r-une-petite-astuce-de-types" data-claire-element-id="383987">Une petite astuce de types !</h2><p id="r-383966" data-claire-element-id="383966">Tous les conteneurs mettent à disposition le type des éléments qu'ils contiennent. Par exemple, un <code data-claire-semantic="cpp">vector&lt;int&gt;</code> contient des <code data-claire-semantic="cpp">int</code> et un <code data-claire-semantic="cpp">vecteur&lt;Personnage*&gt;</code> des <code data-claire-semantic="cpp">Personnage*</code><br/> Les conteneurs associatifs mettent également à disposition le type de la clef utilisé. Rappelez-vosu que les <code data-claire-semantic="cpp">std::map</code> contiennent des paires !<br/> Voici comment obtenir ces types : avec les mot-clefs <code data-claire-semantic="cpp">value_type</code> et <code data-claire-semantic="cpp">key_type</code>.</p><pre id="r-383967" data-claire-element-id="383967"><code data-claire-semantic="cpp">vector&lt;int&gt; v;
+vector&lt;int&gt;::value_type elemVec; //type int
+
+v.push_back(elemVec);
+
+
+map&lt;string, Personnage*&gt; m;
+map&lt;string, Personnage*&gt;::value_type elemMap; //type pair&lt;string, Personnage*&gt;
+map&lt;string, Personnage*&gt;::key_type nom = &quot;Bob&quot;; //type string
+
+elemMap.first = nom;
+elemMap.second = new Personnage;
+
+m.insert(elemMap);</code></pre><p id="r-383968" data-claire-element-id="383968">Ce code peut paraître un peu idiot, mais en modifiant comme ceci, ce serait déjà mieux !</p><pre id="r-383969" data-claire-element-id="383969"><code data-claire-semantic="cpp">typedef myVec vector&lt;int&gt;;
+typedef myMap map&lt;string, Personnage*&gt;;
+
+myVec v;
+myVec::value_type elemVec; //type int
+
+v.push_back(elemVec);
+
+
+myMap m;
+myMap::value_type elemMap; //type pair&lt;string, Personnage*&gt;
+mmyMap::key_type nom = &quot;Bob&quot;; //type string
+
+elemMap.first = nom;
+elemMap.second = new Personnage;
+
+m.insert(elemMap);</code></pre><p id="r-383970" data-claire-element-id="383970">Dans certains cas, il suffira juste de changer les <code data-claire-semantic="cpp">typedef</code>. :D</p><h3 id="r-utilisation-dans-une-classe-template" data-claire-element-id="383986">Utilisation dans une classe template</h3><p id="r-383971" data-claire-element-id="383971">Dans le cas d'une classe template, cela peut devenir nécessaire ! Imaginez une classe template qui manipule une <code data-claire-semantic="cpp">map</code> et un <code data-claire-semantic="cpp">vector</code>. Que choisirions nous comme paramètre template ?</p><pre id="r-383972" data-claire-element-id="383972"><code data-claire-semantic="cpp">MyMap m;
+MyVec v;
+Manipule&lt;???&gt; manip(m, v);</code></pre><p id="r-383973" data-claire-element-id="383973">Dans cet exemple, nous pourrions mettre <code data-claire-semantic="cpp">Manipule&lt;string, Personnage*, int&gt;</code> et donc dans la définition :</p><pre id="r-383974" data-claire-element-id="383974"><code data-claire-semantic="cpp">template &lt;typename Clef, typename ValeurM, typename ValeurV&gt;
+class Manipule
+{
+	Clef c; ValeurM m; ValeurV v;
+	Manipule( std::map&lt;Clef, ValeurM&gt;&amp;, std::vector&lt;ValeurV&gt; &gt;);
+}</code></pre><p id="r-383975" data-claire-element-id="383975">Mais ceci n'est pas toujours correct car par exemple std::map peut avoir un paramètre template en plus, celui de Comparaison. Donc il faudrait modifier les paramètres template et cela deviendrait bien compliqué. Ce qu'on aimerait c'est :</p><pre id="r-383976" data-claire-element-id="383976"><code data-claire-semantic="cpp">Manipule&lt;MyMap, MyVec&gt; m;</code></pre><p id="r-383977" data-claire-element-id="383977">Mais dans la classe template, on aimerait par exemple avoir la clef de la <code data-claire-semantic="cpp">map</code> ou le type des éléments du <code data-claire-semantic="cpp">vector</code>. Et donc c'est là qu'intervient l'astuce. :)</p><pre id="r-383978" data-claire-element-id="383978"><code data-claire-semantic="cpp">template &lt;typename LaMap, typename LeVec&gt;
+class Manipule
+{
+	typedef typename LaMap::key_type Clef;
+	typedef typename LaMap::value_type ValeurM;
+	typedef typename LeVec::value_type ValeurV;
+
+	Clef c; ValeurM m; ValeurV v;
+	Manipule( std::map&lt;Clef, ValeurM&gt;&amp;, std::vector&lt;ValeurV&gt; );
+}</code></pre><aside id="r-383980" data-claire-element-id="383980" data-claire-semantic="information"><p id="r-383979" data-claire-element-id="383979">Observez l'obligation d'utiliser le mot clef <code data-claire-semantic="cpp">typename</code> pour indiquer au compilateur que nous définissons un type ! En effet, LaMap::key_type par exemple pourrait être une variable de type <code data-claire-semantic="cpp">static</code> ou une fonction de la classe !</p></aside><p id="r-383981" data-claire-element-id="383981">Et dans notre classe, nous pourrions créer un itérateur par exemple ! :D <br/> Et les itérateurs pointent toujours vers... un élément contenu dans le conteneur ! Donc ... <code data-claire-semantic="cpp">value_type</code> !<br/> Exemple dans la classe <code data-claire-semantic="cpp">Manipule</code> :</p><pre id="r-383982" data-claire-element-id="383982"><code data-claire-semantic="cpp">typedef typename LaMap::iterator IteratorM;
+typedef typename LeVec::iterator IteratorV;
+	
+//On sait que les IteratorM pointeront vers ValeurM !</code></pre><p id="r-383983" data-claire-element-id="383983">Voilà je vous ai -j'espère- un peu éclairci sur les conteneurs de la STL (Surtout sur <code data-claire-semantic="cpp">std::map</code> me direz vous ! C'est normal, c'est celui que je préfère ^^ ), ainsi que sur les itérateurs, les foncteurs. :p <br/> J'espère que leurs utilisations rendront votre code plus clair et/ou plus efficace et que vous penserez à 2 fois avant d'utiliser un tableau c-like<code data-claire-semantic="cpp">std::vector</code>. :D <br/> Je rappelle également que <a href="http://cpp.developpez.com/faq/cpp/?page=STL#STL_choix_conteneur">ce schéma</a> est très utile pour savoir quel conteneur choisir. Maintenant que vous savez les utiliser. ;)</p><p id="r-383984" data-claire-element-id="383984">Si vous avez des exemples d'utilisations intéressantes, laissez un commentaire ! Si assez d'exemples sont donnés, je dédierai une nouvelle partie au tutoriel ! (Une partie &quot;Pratique&quot;).</p><p id="r-383985" data-claire-element-id="383985">Je tiens quand même à citer mes sources pour ce tutoriel (Et je vous invite à y jetez un coup d'oeil, bien que j'ai fait tout un tutoriel moi :p ) : <a href="http://www.cplusplus.com/reference/stl/">http://www.cplusplus.com/reference/stl/</a><br/> Remarquez que la page de garde vous montre un tableau qui vous indique quelles fonctions peuvent être utilisées avec quels conteneurs.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl">Les Conteneurs de la STL</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/la-decouverte-par-l-exemple">
+La découverte par l&#039;exemple
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/le-tableau-associatif-de-la-stl-std-map">
+Le tableau associatif de la STL : std::map
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/une-classe-bien-pratique-pour-manipuler-des-elements-contenus-dans-un-conteneur-stl-les-iterateurs">
+Une classe bien pratique pour manipuler des éléments contenus dans un conteneur STL : les itérateurs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/utilisation-plus-etendue-des-std-map">
+Utilisation plus étendue des std::map
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/il-existe-d-autres-conteneurs-associatifs-de-la-stl">
+Il existe d&#039;autres conteneurs associatifs de la STL!
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/les-autres-conteneurs-de-la-stl">
+Les autres conteneurs de la STL
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/les-conteneurs-de-la-stl/il-existe-d-autres-conteneurs-associatifs-de-la-stl">
+<span class="arrow"></span>
+<span class="next">Il existe d&#039;autres conteneurs associatifs de la STL!</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/les-conteneurs-de-la-stl.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 23:27:27 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/les-conteneurs-de-la-stl.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:07:51 GMT -->
+</html>

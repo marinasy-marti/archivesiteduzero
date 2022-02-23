@@ -1,0 +1,592 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/conteneurs-exotiques-boost.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 02:40:39 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/conteneurs-exotiques-boost.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:35:27 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Conteneurs exotiques Boost</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/conteneurs-exotiques-boost.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Conteneurs exotiques Boost</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#ConteneursexotiquesBoost">Conteneurs exotiques Boost</a><br/><a href="#DestuplesenC">Des tuples en C++</a><br/><a href="#Tamponcirculaire">Tampon circulaire</a><br/><a href="#Tableaurevisit">Tableau revisité</a><br/><a href="#Bimap">Bimap</a><br/><a href="#Tableaumultidimensionnel">Tableau multidimensionnel</a><br/><a href="#Conteneursintrusifs">Conteneurs intrusifs</a><br/></div>
+<a name="ConteneursexotiquesBoost"></a><h2>Conteneurs exotiques Boost</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/des-tuples-en-c">
+<span class="next">Des tuples en C++</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-573060" data-claire-element-id="573060">Boost fournit un grand nombre de conteneurs : nous en présenterons certains, plus ou moins inconnus, mais parfois fort utiles.</p>
+</div><a name="DestuplesenC"></a><h2>Des tuples en C++</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/tampon-circulaire">
+<span class="next">Tampon circulaire</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-573061" data-claire-element-id="573061">Le tuple est l'association de plusieurs éléments, structurellement semblable à un struct. On peut par exemple y stocker une relation élément/attribut (<code>{objet : &quot;Ballon&quot;, nombre: 4}</code>), une position (<code>{abscisse : 349, ordonne : 89, profondeur : 2}</code>) ...</p><p id="r-573062" data-claire-element-id="573062">Ainsi ils peuvent contenir plusieurs sorte de données, et cette association forme un type, là ou un tableau ne peut en contenir qu'un, et ne précise pas leur nombre. De plus, par rapport à une structure anonyme utilisé en plusieurs endroits, un tuple sera toujours compatible avec d'autres tuples de même caractéristique, puisqu'il s'agit d'un type unique.</p><h2 id="r-utiliser-les-tuples" data-claire-element-id="573084">Utiliser les tuples</h2><p id="r-573063" data-claire-element-id="573063">Vous n'avez pas besoin de librairie à lier, mais vous devez inclure les en-têtes suivants :</p><pre id="r-573064" data-claire-element-id="573064"><code data-claire-semantic="cpp">#include &lt;boost/tuple/tuple.hpp&gt; // Base
+#include &lt;boost/tuple/tuple_comparison.hpp&gt; // Opérateurs de comparaison
+#include &lt;boost/tuple/tuple_io.hpp&gt; // Tuples et IO</code></pre><p id="r-573065" data-claire-element-id="573065">Pour créer un tuple, vous devez spécifier les types de ses éléments, puis éventuellement les initialiser :</p><pre id="r-573066" data-claire-element-id="573066"><code data-claire-semantic="cpp">boost::tuple&lt;int, int, double&gt; monTuple(1,2,3.14);</code></pre><p id="r-573067" data-claire-element-id="573067">Cependant, cette notation est pénible en cela qu'elle oblige à écrire chaque type. Pour pallier ce problème, Boost met à notre disposition une fonction permettant de créer des tuples.</p><pre id="r-573068" data-claire-element-id="573068"><code data-claire-semantic="cpp">monTuple = make_tuple(1, 2, 3, 4);</code></pre><p id="r-573069" data-claire-element-id="573069">Si le tuple que vous essayez de créer doit contenir une référence, il faut le spécifier, autrement l'élément pointé sera copié : <code data-claire-semantic="cpp">ref() </code> pour forcer une référence, <code data-claire-semantic="cpp">cref() </code>pour forcer une référence constante.</p><aside id="r-573071" data-claire-element-id="573071" data-claire-semantic="information"><p id="r-573070" data-claire-element-id="573070">Si vous utilisez <code data-claire-semantic="cpp">ref() </code> , comme dans le 5éme exemple, sur une référence <code data-claire-semantic="cpp">consta</code>nte, l'attribut const ne sera pas perdu.</p></aside><pre id="r-573072" data-claire-element-id="573072"><code data-claire-semantic="cpp">MaClasse1 a; MaClasse2 b; const MaClasse1 ca = a;
+make_tuple(cref(a), b);      // Résultat : tuple&lt;const MaClasse1&amp;, MaClasse2&gt;
+make_tuple(ref(a), b);       // Résultat : tuple&lt;MaClasse1&amp;, MaClasse2&gt;
+make_tuple(ref(a), cref(b)); // Résultat : tuple&lt;MaClasse1&amp;, const MaClasse2&amp;&gt;
+make_tuple(cref(ca));        // Résultat : tuple&lt;const MaClasse1&amp;&gt;
+make_tuple(ref(ca));         // Résultat : tuple&lt;const MaClasse1&amp;&gt;</code></pre><p id="r-573073" data-claire-element-id="573073">Vous pouvez accéder au contenu du tuple de deux manières :</p><ul id="r-573078" data-claire-element-id="573078"><li id="r-573075" data-claire-element-id="573075"><p id="r-573074" data-claire-element-id="573074">Via la fonction <code data-claire-semantic="cpp">boost::get&lt;NumeroElement&gt;(tuple);</code></p></li><li id="r-573077" data-claire-element-id="573077"><p id="r-573076" data-claire-element-id="573076">Via la méthode <code data-claire-semantic="cpp">tuple.get&lt;NumeroElement&gt;();</code></p></li></ul><p id="r-573079" data-claire-element-id="573079">Ce qui donne par exemple :</p><pre id="r-573080" data-claire-element-id="573080"><code data-claire-semantic="cpp">tuple &lt;int, int&gt; t(1,2);
+get&lt;0&gt;(t) = 10; // t vaut 10|2
+std::cout &lt;&lt; t.get&lt;1&gt;(); // Le programme affiche 2</code></pre><p id="r-573081" data-claire-element-id="573081">Notez d'ailleurs que vous n'aurez pas de mauvaise surprise : les accès à des données inexistantes (par exemple, <code data-claire-semantic="cpp">t.get&lt;3&gt;() </code> pour un tuple à 2 valeurs) sont détectés à la compilation, grâce à l'utilisation de template.</p><aside id="r-573083" data-claire-element-id="573083" data-claire-semantic="information"><p id="r-573082" data-claire-element-id="573082">les indices commencent comme d'habitude à zéro et non pas à un</p></aside><h2 id="r-comparaisons-3" data-claire-element-id="573086">Comparaisons</h2><p id="r-573085" data-claire-element-id="573085">Les tuples ont des opérateurs de comparaison (<code data-claire-semantic="cpp">== </code>, <code data-claire-semantic="cpp">&gt; </code>,<code data-claire-semantic="cpp">&lt; </code>, ...) : le premier élément du tuple A sera comparé au premier élément du tuple B, le second au second, et ainsi de suite. Les tuples sont égaux si tous les éléments les constituants sont égaux un à un.</p><h2 id="r-flux" data-claire-element-id="573104">Flux</h2><p id="r-573087" data-claire-element-id="573087">Vous pouvez imprimer un tuple sous la forme (1 2 3 Orly) en utilisant l'opérateur &lt;&lt; :</p><pre id="r-573088" data-claire-element-id="573088"><code data-claire-semantic="cpp">tuple&lt;int,int,int,std::string&gt; t(1,2,3,std::string(&quot;Orly&quot;));
+std::cout &lt;&lt; t;</code></pre><p id="r-573089" data-claire-element-id="573089">Pour obtenir un tuple depuis l'entrée standard, faites de même :</p><pre id="r-573090" data-claire-element-id="573090"><code data-claire-semantic="cpp">cin &gt;&gt; a</code></pre><p id="r-573091" data-claire-element-id="573091">L'entrée devra être formatée comme la sortie (exemple : &quot;(1 2 3 Aaa)&quot;)</p><p id="r-573092" data-claire-element-id="573092">Si vous le souhaitez, vous pouvez changer les délimiteurs, tant pour la sortie que pour l'entrée :</p><ul id="r-573099" data-claire-element-id="573099"><li id="r-573094" data-claire-element-id="573094"><p id="r-573093" data-claire-element-id="573093"><strong>set_open(char)</strong> défini le caractère de début.</p></li><li id="r-573096" data-claire-element-id="573096"><p id="r-573095" data-claire-element-id="573095"><strong>set_close(char)</strong> défini le caractère de fin.</p></li><li id="r-573098" data-claire-element-id="573098"><p id="r-573097" data-claire-element-id="573097"><strong>set_delimiter(char)</strong> défini le délimiteur</p></li></ul><p id="r-573100" data-claire-element-id="573100">Le code suivant aura pour sortie <strong>[1,2,3,Aaa]</strong></p><pre id="r-573101" data-claire-element-id="573101"><code data-claire-semantic="cpp">std::cout &lt;&lt; tuples::set_open('[') &lt;&lt; tuples::set_close(']') &lt;&lt; tuples::set_delimiter(',') &lt;&lt; t;</code></pre><aside id="r-573103" data-claire-element-id="573103" data-claire-semantic="error"><p id="r-573102" data-claire-element-id="573102">Avec le compilateur MS Visual C++, il est possible que, malgré la conformance aux standards du code des tuples, les références ne puissent être utilisés dans les tuples (les fonctions <strong>ref()</strong> et <strong>cref()</strong> ne fonctionnant pas.)</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost">Conteneurs exotiques Boost</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/des-tuples-en-c">
+Des tuples en C++
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/tampon-circulaire">
+Tampon circulaire
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/tableau-revisite">
+Tableau revisité
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/bimap">
+Bimap
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/tableau-multidimensionnel">
+Tableau multidimensionnel
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/conteneurs-intrusifs">
+Conteneurs intrusifs
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/tampon-circulaire">
+<span class="next">Tampon circulaire</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Tamponcirculaire"></a><h2>Tampon circulaire</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/des-tuples-en-c">
+<span class="arrow"></span>
+<span class="next">Des tuples en C++</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/tableau-revisite">
+<span class="next">Tableau revisité</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-573106" data-claire-element-id="573106">Un tampon circulaire (&quot;Circular buffer&quot;, que j'abrègerais TC) est un conteneur générique, qui fonctionne de manière très similaire à un std::vector à ceci près qu'il possède une taille et que les éléments inscrits une fois que le TC est plein seront écrits par-dessus les premiers éléments.</p><figure id="r-573108" data-claire-element-id="573109"><img id="r-573107" data-claire-element-id="573107" src="medias/www.boost.org_doc_libs_1_43_0_libs_circular_buffer_doc_circular_buffer.png" alt="Image utilisateur"/></figure><p id="r-573110" data-claire-element-id="573110">Un seul include pour les TC :</p><pre id="r-573111" data-claire-element-id="573111"><code data-claire-semantic="cpp">#include &lt;boost/circular_buffer.hpp&gt;</code></pre><p id="r-573112" data-claire-element-id="573112">Le constructeur est tout ce qu'il y a de plus simple; par exemple, le code suivant créera un TC de 3 items contenant des <strong>int</strong> :</p><pre id="r-573113" data-claire-element-id="573113"><code data-claire-semantic="cpp">boost::circular_buffer&lt;int&gt; cb(3);</code></pre><p id="r-573114" data-claire-element-id="573114">On peut ensuite insérer, comme dans un vector, des éléments à la fin:</p><pre id="r-573115" data-claire-element-id="573115"><code data-claire-semantic="cpp">cb.push_back(1);
+cb.push_back(2);
+cb.push_back(3);</code></pre><p id="r-573116" data-claire-element-id="573116">L'état du TC est donc 1|2|3. Nous pouvons modifier les éléments qu'il contient comme un std::vector :</p><pre id="r-573117" data-claire-element-id="573117"><code data-claire-semantic="cpp">int a = cb[0];    // a vaut 1
+    a = cb.at(1); // a vaut 2
+cb[2] = 1;        // le TC est maintenant 1|2|1</code></pre><p id="r-573118" data-claire-element-id="573118">Si malgré que le TC soit plein, on continue d'appeler push_back :</p><pre id="r-573119" data-claire-element-id="573119"><code data-claire-semantic="cpp">// t est un TC défini comme ceci: 1|2|3|4|5|6. Il est rempli
+t.push_back(0); // t == 0|2|3|4|5|6
+t.push_back(9); // t == 0|9|3|4|5|6</code></pre><p id="r-573120" data-claire-element-id="573120">On peut enlever des items depuis le début et la fin du buffer (cf. le schéma précédent) :</p><pre id="r-573121" data-claire-element-id="573121"><code data-claire-semantic="cpp">// t est un TC défini comme ceci: 1|2|3|4|5|6. Il est rempli
+t.pop_back();  // t == 1|2|3|4|5**
+t.pop_front(); // t == **2|3|4|5**</code></pre><p id="r-573122" data-claire-element-id="573122">Quelques autres méthodes notables sont fournies :</p><pre id="r-573123" data-claire-element-id="573123"><code data-claire-semantic="cpp">bool    t.full();               // Plein ?
+bool    t.empty();              // Vide ?
+size_t  t.reserve();            // Nombre d'item non rempli ?
+size_t  t.capacity();           // Nombre d'item maximal ?
+void    t.set_capaxity(size_t); // Changement capacité</code></pre><p id="r-573124" data-claire-element-id="573124">Attention ! Les changements de capacité affectent grandement les performances lorsque le buffer s'étend. Quand il est réduit, les derniers éléments sont retirés.</p><p id="r-573125" data-claire-element-id="573125">Vous trouverez la totalité de la documentation <a href="http://www.boost.org/doc/libs/1_43_0/libs/circular_buffer/doc/circular_buffer.html">ici</a>.</p><p id="r-573126" data-claire-element-id="573126">Un TC peut par exemple être utilisé dans :</p><ul id="r-573133" data-claire-element-id="573133"><li id="r-573128" data-claire-element-id="573128"><p id="r-573127" data-claire-element-id="573127">Un système de cache avec <em>n</em> éléments maximum.</p></li><li id="r-573130" data-claire-element-id="573130"><p id="r-573129" data-claire-element-id="573129">Une queue qui retire automatiquement les éléments trop anciens.</p></li><li id="r-573132" data-claire-element-id="573132"><p id="r-573131" data-claire-element-id="573131">Un tampon avec frontière (<em>bounded buffer</em> en anglais) qui peut servir quand un thread produit des données, et qu'un autre les traitent. Voir <a href="http://www.boost.org/doc/libs/1_43_0/libs/circular_buffer/doc/circular_buffer.html#boundedbuffer">cette implémentation</a>.</p></li></ul><aside id="r-573135" data-claire-element-id="573135" data-claire-semantic="error"><p id="r-573134" data-claire-element-id="573134">N'utilisez jamais un TC pour des objets alloués dynamiquement : si le TC vient à devenir plein, les anciens éléments seront effacés, et vous ne pourrez plus les libérer. Cela conduira à des fuites de mémoire.</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost">Conteneurs exotiques Boost</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/des-tuples-en-c">
+Des tuples en C++
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/tampon-circulaire">
+Tampon circulaire
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/tableau-revisite">
+Tableau revisité
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/bimap">
+Bimap
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/tableau-multidimensionnel">
+Tableau multidimensionnel
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/conteneurs-intrusifs">
+Conteneurs intrusifs
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/des-tuples-en-c">
+<span class="arrow"></span>
+<span class="next">Des tuples en C++</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/tableau-revisite">
+<span class="next">Tableau revisité</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Tableaurevisit"></a><h2>Tableau revisité</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/tampon-circulaire">
+<span class="arrow"></span>
+<span class="next">Tampon circulaire</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/bimap">
+<span class="next">Bimap</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-573137" data-claire-element-id="573137">Les std::vector sont parfaits quand il s'agit de tableau <strong>dynamique</strong>. Mais ne sont d'aucune utilité dans le cas de tableau réellement statique (nombre de cases défini, et immuable). Cependant, ils fournissent un certain confort, comme les itérateurs, l'accès sécurisé via <code data-claire-semantic="cpp">at() </code> , la taille du tableau via <code data-claire-semantic="cpp">size() </code> ,... C'est-à-dire une interface dans le style de la librairie standard. C'est pour cette raison que l'équipe Boost a créé boost.array, des tableaux statiques dans une optique C++, avec les avantages précités.</p><p id="r-573138" data-claire-element-id="573138">Pour les utiliser, incluez l'header unique suivant :</p><pre id="r-573139" data-claire-element-id="573139"><code data-claire-semantic="cpp">#include &lt;boost/array.hpp&gt;</code></pre><p id="r-573140" data-claire-element-id="573140">Construisez un array avec :</p><pre id="r-573141" data-claire-element-id="573141"><code data-claire-semantic="cpp">boost::array&lt;int,4&gt; a;</code></pre><p id="r-573142" data-claire-element-id="573142">Ce code construit un array nommé <strong>a</strong>, contenant des <strong>int</strong>, de taille <strong>4</strong>.</p><p id="r-573143" data-claire-element-id="573143">L'accès au contenu de l'array se fait de 2 manières :</p><pre id="r-573144" data-claire-element-id="573144"><code data-claire-semantic="cpp">a[0] = 1;
+a.at(0);</code></pre><p id="r-573145" data-claire-element-id="573145">La deuxième méthode est considérée comme sûre car elle jette toujours une exception en cas d'accès hors de la plage de données, là où la première ne fait rien1</p><p id="r-573146" data-claire-element-id="573146">1</p><div id="r-573156" data-claire-element-id="573156"><p id="r-573147" data-claire-element-id="573147">En vérité, la première méthode est protégée par une assertion :</p><pre id="r-573148" data-claire-element-id="573148"><code data-claire-semantic="cpp">// operator[]
+        reference operator[](size_type i) 
+        { 
+            BOOST_ASSERT( i &lt; N &amp;&amp; &quot;out of range&quot; ); 
+            return elems[i];
+        }</code></pre><p id="r-573149" data-claire-element-id="573149">Cependant, cela pose deux problèmes :</p><ul id="r-573154" data-claire-element-id="573154"><li id="r-573151" data-claire-element-id="573151"><p id="r-573150" data-claire-element-id="573150">Une assertion ratée conduit à la fermeture brutale du programme par un appel à <code data-claire-semantic="c">abort()</code></p></li><li id="r-573153" data-claire-element-id="573153"><p id="r-573152" data-claire-element-id="573152">Dans le mode de compilation <strong>release</strong>, les assertions sont réduites à néant</p></li></ul><p id="r-573155" data-claire-element-id="573155">Un accès sécurisé par [x] est cependant possible car la classe fournit explicitement une méthode <code data-claire-semantic="cpp">size() </code>.</p></div><h3 id="r-details-1" data-claire-element-id="573162">Détails</h3><p id="r-573157" data-claire-element-id="573157">Vous pouvez initialiser un tableau ainsi :</p><pre id="r-573158" data-claire-element-id="573158"><code data-claire-semantic="cpp">boost::array&lt;int,4&gt; a = { 1, 2, 3, 4 };</code></pre><aside id="r-573161" data-claire-element-id="573161" data-claire-semantic="information"><p id="r-573159" data-claire-element-id="573159">Si votre compilateur ne respecte pas les standard, et que le code ci-dessus ne marche pas, utilisez celui-ci :</p><pre id="r-573160" data-claire-element-id="573160"><code data-claire-semantic="cpp">boost::array&lt;int,4&gt; a = { { 1, 2, 3, 4 } };</code></pre></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost">Conteneurs exotiques Boost</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/des-tuples-en-c">
+Des tuples en C++
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/tampon-circulaire">
+Tampon circulaire
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/tableau-revisite">
+Tableau revisité
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/bimap">
+Bimap
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/tableau-multidimensionnel">
+Tableau multidimensionnel
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/conteneurs-intrusifs">
+Conteneurs intrusifs
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/tampon-circulaire">
+<span class="arrow"></span>
+<span class="next">Tampon circulaire</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/bimap">
+<span class="next">Bimap</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Bimap"></a><h2>Bimap</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/tableau-revisite">
+<span class="arrow"></span>
+<span class="next">Tableau revisité</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/tableau-multidimensionnel">
+<span class="next">Tableau multidimensionnel</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-573164" data-claire-element-id="573164">Qu'est ce qu'une map (dans la STL, il s'agit de <code data-claire-semantic="cpp">std::map</code>) ? Il s'agit de l'association d'une valeur, unique, appelée clé, avec un contenu, qui lui ne l'est pas forcément :</p><p id="r-573165" data-claire-element-id="573165">Exemple de map :</p><pre id="r-573166" data-claire-element-id="573166"><code>&quot;Fraise&quot; ==&gt; &quot;Bon&quot;
+&quot;Epinard&quot; ==&gt; &quot;Mauvais&quot;
+&quot;Steak&quot; ==&gt; &quot;Bon si saignant&quot;</code></pre><p id="r-573167" data-claire-element-id="573167">ou encore</p><pre id="r-573168" data-claire-element-id="573168"><code>3.23 ==&gt; &quot;Bon&quot;
+2.432 ==&gt; &quot;Mauvais&quot;
+1.09 ==&gt; &quot;Bon si saignant&quot;</code></pre><p id="r-573169" data-claire-element-id="573169">Vous associez la valeur de gauche à la valeur de droite. Cela correspond au schéma suivant issue de la documentation Boost :</p><figure id="r-573171" data-claire-element-id="573172"><img id="r-573170" data-claire-element-id="573170" src="medias/www.boost.org_doc_libs_1_42_0_libs_bimap_doc_html_images_bimap_standard.mapping.framework.png" alt="Image utilisateur"/></figure><p id="r-573173" data-claire-element-id="573173">Une bimap fait la même chose, mais dans les deux sens : les deux coté sont des clés : cela signifie premièrement que l'on peut accéder aux données depuis la <strong>gauche</strong>, ou depuis la <strong>droite</strong>, et secondement, contrairement à une map, que les doublons sont prohibés, car conduiraient à une situation incohérente où une recherche renverrait 2 résultats.</p><h2 id="r-utilisation-83" data-claire-element-id="573202">Utilisation</h2><p id="r-573174" data-claire-element-id="573174">Incluez le header :</p><pre id="r-573175" data-claire-element-id="573175"><code data-claire-semantic="cpp">#include &lt;boost/bimap.hpp&gt;</code></pre><p id="r-573176" data-claire-element-id="573176">On définit ensuite un type pour notre map (ce n'est pas obligatoire, mais c'est plus lisible). Dans l'exemple suivant, la bimap aura une coté <strong>int</strong> et un coté <strong>string</strong> :</p><pre id="r-573177" data-claire-element-id="573177"><code data-claire-semantic="cpp">typedef boost::bimap&lt; int, std::string &gt; int_string;</code></pre><p id="r-573178" data-claire-element-id="573178">Nous créons ensuite un objet bimap:</p><pre id="r-573179" data-claire-element-id="573179"><code data-claire-semantic="cpp">int_string a;</code></pre><p id="r-573180" data-claire-element-id="573180">C'est vide. Il nous faut insérer des relations:</p><pre id="r-573181" data-claire-element-id="573181"><code data-claire-semantic="cpp">a.insert( int_string::value_type(1, &quot;un&quot; ) );
+a.insert( int_string::value_type(2, &quot;deux&quot; ) );
+a.insert( int_string::value_type(3, &quot;trois&quot; ) );</code></pre><p id="r-573182" data-claire-element-id="573182">Notre bimap est donc maintenant :</p><pre id="r-573183" data-claire-element-id="573183"><code>1 &lt;=&gt; &quot;un&quot;
+2 &lt;=&gt; &quot;deux&quot;
+3 &lt;=&gt; &quot;trois&quot;</code></pre><p id="r-573184" data-claire-element-id="573184">Nous pouvons par exemple afficher chaque relation à l'aide d'une boucle et des itérateurs fourni :</p><pre id="r-573185" data-claire-element-id="573185"><code data-claire-semantic="cpp">for( int_string::const_iterator iter = a.begin(), iend = a.end(); 
+    iter != iend; ++iter )
+{
+    std::cout &lt;&lt; iter-&gt;left &lt;&lt; &quot; &lt;--&gt; &quot; &lt;&lt; iter-&gt;right &lt;&lt; std::endl;
+}</code></pre><p id="r-573186" data-claire-element-id="573186">C'est ultra intuitif si l'on garde le schéma de nos relations en tête : <strong>left</strong> est la gauche de nos relation, <strong>right</strong> la droite !</p><p id="r-573187" data-claire-element-id="573187">La sortie de cette boucle sera:</p><pre id="r-573188" data-claire-element-id="573188"><code data-claire-semantic="console">1 &lt;--&gt; un
+2 &lt;--&gt; deux
+3 &lt;--&gt; trois</code></pre><p id="r-573189" data-claire-element-id="573189">On peut utiliser chaque coté (gauche/droit) comme une map indépendante; ici la gauche :</p><pre id="r-573190" data-claire-element-id="573190"><code data-claire-semantic="cpp">typedef int_string::left_map::const_iterator left_const_iterator; // pour la lisibilité
+
+for( left_const_iterator left_iter = a.left.begin(), iend = a.left.end();
+     left_iter != iend; ++left_iter )
+{
+    std::cout &lt;&lt; left_iter-&gt;first &lt;&lt; &quot; --&gt; &quot; &lt;&lt; left_iter-&gt;second &lt;&lt; std::endl;
+}</code></pre><p id="r-573191" data-claire-element-id="573191">La sortie attendue sera :</p><pre id="r-573192" data-claire-element-id="573192"><code data-claire-semantic="console">1 --&gt; un
+2 --&gt; deux
+3 --&gt; trois</code></pre><p id="r-573193" data-claire-element-id="573193">On peut accéder directement aux vue gauche et droite. Dans ce cas, nous avons affaire à 2 maps simples (une bimap étant la combinaison de ces deux maps) :</p><pre id="r-573194" data-claire-element-id="573194"><code data-claire-semantic="cpp">std::cout &lt;&lt; a.left(1); // affiche &quot;un&quot;
+std::cout &lt;&lt; a.right(&quot;un&quot;); // affiche 1
+a.left.erase(3); // efface 3&lt;=&gt;&quot;trois&quot;</code></pre><p id="r-573195" data-claire-element-id="573195">Pour résumer les différentes méthodes d'accès, voici un schéma issue de la documentation :</p><figure id="r-573197" data-claire-element-id="573198"><img id="r-573196" data-claire-element-id="573196" src="medias/www.boost.org_doc_libs_1_42_0_libs_bimap_doc_html_images_bimap_simple.bimap.png" alt="Image utilisateur"/></figure><p id="r-573199" data-claire-element-id="573199">On voit que l'accès du coté gauche donne une map inverse à celle correspondante à gauche.</p><aside id="r-573201" data-claire-element-id="573201" data-claire-semantic="information"><p id="r-573200" data-claire-element-id="573200">Le tutoriel long et officiel est <a href="http://www.boost.org/doc/libs/1_43_0/libs/bimap/doc/html/boost_bimap/the_tutorial.html">celui ci</a>. Il mène aussi à la documentation.</p></aside><h2 id="r-pour-aller-plus-loin-44" data-claire-element-id="573210">Pour aller plus loin...</h2><h3 id="r-stockage-sous-jacent" data-claire-element-id="573207">Stockage sous-jacent</h3><p id="r-573203" data-claire-element-id="573203">Une bimap est conçue de telle sorte qu'on peut choisir le mécanisme de stockage, que l'on ne &quot;voit&quot; pas.</p><p id="r-573204" data-claire-element-id="573204">Le code suivant définit un type de bimap <strong>int</strong>|<strong>string</strong> étant stocké par des vector.</p><pre id="r-573205" data-claire-element-id="573205"><code data-claire-semantic="cpp">typedef bimap&lt; vector_of&lt;int&gt;, vector_of&lt;std::string&gt; &gt; bm_type;</code></pre><p id="r-573206" data-claire-element-id="573206">Les différents choix sont listés <a href="http://www.boost.org/doc/libs/1_42_0/libs/bimap/doc/html/boost_bimap/the_tutorial/controlling_collection_types.html#boost_bimap.the_tutorial.controlling_collection_types.configuration_parameters">ici</a>, dans le tableau <strong>1.2</strong>. Chacun de ses modes est adapté à un type particulier d'opération : certains de ces containers sont ordonnés, d'autres utilisent un hash, ...</p><h3 id="r-changer-le-comportement-de-la-bimap" data-claire-element-id="573209">Changer le comportement de la bimap</h3><p id="r-573208" data-claire-element-id="573208">Si vous avez besoin malgré tout d'insérer des doublons dans vos bimaps, c'est possible : il suffit de remplacer une déclaration standard (<code data-claire-semantic="cpp">bimap&lt;int,std::string&gt; bm;</code>) avec le template <strong>multiset_of</strong> (<code data-claire-semantic="cpp">bimap&lt;int, multiset_of&lt;std::string&gt; &gt; bm;</code>)</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost">Conteneurs exotiques Boost</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/des-tuples-en-c">
+Des tuples en C++
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/tampon-circulaire">
+Tampon circulaire
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/tableau-revisite">
+Tableau revisité
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/bimap">
+Bimap
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/tableau-multidimensionnel">
+Tableau multidimensionnel
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/conteneurs-intrusifs">
+Conteneurs intrusifs
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/tableau-revisite">
+<span class="arrow"></span>
+<span class="next">Tableau revisité</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/tableau-multidimensionnel">
+<span class="next">Tableau multidimensionnel</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Tableaumultidimensionnel"></a><h2>Tableau multidimensionnel</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/bimap">
+<span class="arrow"></span>
+<span class="next">Bimap</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/conteneurs-intrusifs">
+<span class="next">Conteneurs intrusifs</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-573212" data-claire-element-id="573212">Il existe plusieurs manières plus ou moins naïves de créer un tableau multidimensionnel :</p><ul id="r-573219" data-claire-element-id="573219"><li id="r-573214" data-claire-element-id="573214"><p id="r-573213" data-claire-element-id="573213">Faire un tableau style C : <code data-claire-semantic="c">tableau[10][2][4];</code></p></li><li id="r-573216" data-claire-element-id="573216"><p id="r-573215" data-claire-element-id="573215">Faire un tableau à partir de <code data-claire-semantic="cpp">std::vector </code> imbriqué : <code data-claire-semantic="cpp">std::vector&lt; std::vector&lt;...&gt; &gt;</code></p></li><li id="r-573218" data-claire-element-id="573218"><p id="r-573217" data-claire-element-id="573217">Utiliser un algorithme maison (avec un tableau à une dimension et un peu de bricolage, on obtient relativement facilement ce qu'on veut)</p></li></ul><p id="r-573220" data-claire-element-id="573220">Les grands problèmes de ces méthodes sont la non-compatibilité avec la STL, des utilisations mémoires inappropriées (<code data-claire-semantic="cpp">std::vector </code> est optimisé, ce qui peut jouer de sales tours), des problèmes de lisibilité.</p><p id="r-573221" data-claire-element-id="573221">Boost apporte une solution : <strong>Boost.MultiArray</strong></p><h2 id="r-utilisation-de-multiarray" data-claire-element-id="573233">Utilisation de multiarray</h2><p id="r-573222" data-claire-element-id="573222">Voici l'include nécessaire :</p><pre id="r-573223" data-claire-element-id="573223"><code data-claire-semantic="cpp">#include &lt;boost/multi_array.hpp&gt;</code></pre><p id="r-573224" data-claire-element-id="573224">Nous allons ensuite établir un typedef, pour des raisons de lisibilité :</p><pre id="r-573225" data-claire-element-id="573225"><code data-claire-semantic="cpp">typedef boost::multi_array&lt;double, 3&gt; mon_array;</code></pre><p id="r-573226" data-claire-element-id="573226">Le type<strong> mon_array</strong> est un tableau de <strong>double</strong> à <strong>3</strong> dimensions.</p><p id="r-573227" data-claire-element-id="573227">Nous instancions ensuite ce type :</p><pre id="r-573228" data-claire-element-id="573228"><code data-claire-semantic="cpp">mon_array tableau(boost::extents[3][4][2]);</code></pre><pre id="r-573229" data-claire-element-id="573229"><code data-claire-semantic="cpp">boost::extents[3][4][2]</code></pre><p id="r-573230" data-claire-element-id="573230">est ce qui nous permet de déclarer la géométrie du tableau : il aura <strong>3</strong> cases dans sa première dimension,<strong> 4 </strong> cases dans sa seconde, et <strong>2</strong> cases dans se dernière.</p><p id="r-573231" data-claire-element-id="573231">On peut ensuite utiliser ce tableau multidimensionnel comme d'habitude :</p><pre id="r-573232" data-claire-element-id="573232"><code data-claire-semantic="cpp">tableau[1][2][4] = 0; // Remplir la case de coordonnée (1;2;3) avec 0
+
+/* Remplir le tableau de 3 */
+  for(int i = 0; i != 3; ++i) 
+    for(int j = 0; j != 4; ++j)
+      for(int k = 0; k != 2; ++k)
+        tableau[i][j][k] = 3;</code></pre><h2 id="r-changement-de-geometrie" data-claire-element-id="573237">Changement de géométrie</h2><p id="r-573234" data-claire-element-id="573234">Il est possible de changer la géométrie du tableau, avec la méthode <code data-claire-semantic="cpp">resize() </code> :</p><pre id="r-573235" data-claire-element-id="573235"><code data-claire-semantic="cpp">/* Rappel : tableau est de géométrie [3][4][2]*/
+ tableau.resize(boost::extents[2][2][2]);
+/* Sé géometrie est maintenant [2][2][2]*/</code></pre><p id="r-573236" data-claire-element-id="573236">La réduction d'un tableau rend certaines cases hors de portée.</p><h2 id="r-vue" data-claire-element-id="573252">Vue</h2><p id="r-573238" data-claire-element-id="573238">Il est possible de ne prendre en compte qu'une partie d'un tableau : il s'agit d'une vue. Elle est délimitée par un intervalle pour chaque dimension.</p><figure id="r-573240" data-claire-element-id="573241"><img id="r-573239" data-claire-element-id="573239" src="medias/uploads.siteduzero.com_files_246001_247000_246058.png" alt="Image utilisateur"/></figure><p id="r-573242" data-claire-element-id="573242">Dans ce schéma, la partie verte est une vue du tableau entier;</p><p id="r-573243" data-claire-element-id="573243">Cette vue est définie par les plages suivantes : X(1,2), Y(1,2).</p><p id="r-573244" data-claire-element-id="573244">Le code correspondant au grand tableau serait :</p><pre id="r-573245" data-claire-element-id="573245"><code data-claire-semantic="cpp">typedef boost::multi_array&lt;double, 2&gt; mon_array; // Tableau à 2 dimensions
+mon_array tableau(boost::extents[3][3]);</code></pre><p id="r-573246" data-claire-element-id="573246">Pour définir une vue :</p><pre id="r-573247" data-claire-element-id="573247"><code data-claire-semantic="cpp">typedef boost::multi_array_types::index_range range; // Par commodité
+
+array_type::array_view&lt;2&gt;::type maVue = tableau[ boost::indices[range(1,2)][range(1,2)] ];</code></pre><p id="r-573248" data-claire-element-id="573248">Notez que nous spécifions explicitement que le tableau et la vue utilisent 2 dimensions (array_view&lt;<strong>2</strong>&gt;). Les plages de données désirées sont ensuite passées via l'opérateur [].</p><p id="r-573249" data-claire-element-id="573249">L'accès à la vue se fait exactement de la même manière que pour un tableau. De plus, toute modification du tableau sera reportée sur la vue, et vice-versa.</p><aside id="r-573251" data-claire-element-id="573251" data-claire-semantic="information"><p id="r-573250" data-claire-element-id="573250"><a href="http://www.boost.org/doc/libs/1_43_0/libs/multi_array/doc/user.html#sec_concepts">La documentation complète de ces tableaux se trouve ici</a>.</p></aside><h2 id="r-usage-2" data-claire-element-id="573254">Usage</h2><p id="r-573253" data-claire-element-id="573253">Les tableaux multidimensionnels sont utiles, encore plus combinés à des vues : vous pouvez diviser un traitement entre plusieurs threads en leur affectant seulement une vue du tableau.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost">Conteneurs exotiques Boost</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/des-tuples-en-c">
+Des tuples en C++
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/tampon-circulaire">
+Tampon circulaire
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/tableau-revisite">
+Tableau revisité
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/bimap">
+Bimap
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/tableau-multidimensionnel">
+Tableau multidimensionnel
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/conteneurs-intrusifs">
+Conteneurs intrusifs
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/bimap">
+<span class="arrow"></span>
+<span class="next">Bimap</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/conteneurs-intrusifs">
+<span class="next">Conteneurs intrusifs</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Conteneursintrusifs"></a><h2>Conteneurs intrusifs</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/tableau-multidimensionnel">
+<span class="arrow"></span>
+<span class="next">Tableau multidimensionnel</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-573256" data-claire-element-id="573256">La plupart des conteneurs C++, notablement ceux de la STL, sont non intrusifs, en cela qu'ils stockent des copies des objets. En plus d'effectuer une copie, certaines métadonnée sont stocké (exemple : pointeur vers l'objet suivant et précédent dans le cas d'une liste) Cela ne nécessite pas de modifier les classes cibles.</p><p id="r-573257" data-claire-element-id="573257">Un conteneur intrusif nécessite une modification de la classe, en cela qu'il stocke les métadonnées directement dans celle-ci : cela signifie donc qu'ils n'ont pas besoin de faire des copies des objets. Ainsi, les conteneurs intrusifs sont plus performants (principalement, car ils effectuent moins d'allocations/désallocations de la mémoire).</p><p id="r-573258" data-claire-element-id="573258">Boost fournit de quoi faire des conteneurs intrusifs ayant une interface STL, avec des méthodes comme <code data-claire-semantic="cpp">push_back() </code>, <code data-claire-semantic="cpp">size() </code> ...</p><h2 id="r-mise-en-garde-5" data-claire-element-id="573262">Mise en garde</h2><p id="r-573259" data-claire-element-id="573259">Les conteneurs intrusifs, de par leur nature, peuvent poser des problèmes s’ils ne sont pas utilisés correctement. Notez par exemple qu'une modification de votre classe peut amener à des effets de bord indépendants de Boost ; il est plus dur d'utiliser des conteneurs intrusifs dans un environnement multithreadé : des modifications peuvent s'opérer en dehors du champ d'opération du conteneur, car l'objet n'est jamais copié. Les conteneurs intrusifs sont d'ailleurs difficilement copiables de par leur nature.</p><aside id="r-573261" data-claire-element-id="573261" data-claire-semantic="information"><p id="r-573260" data-claire-element-id="573260">Les différences entre un conteneur intrusif ou non sont décrites <a href="http://www.boost.org/doc/libs/1_43_0/doc/html/intrusive/intrusive_vs_nontrusive.html">ici</a> en détail.</p></aside><h2 id="r-utilisation-84" data-claire-element-id="573276">Utilisation</h2><p id="r-573263" data-claire-element-id="573263">Il faut d'abord inclure un entête correspondant au conteneur souhaité. Dans ce cas, la liste :</p><pre id="r-573264" data-claire-element-id="573264"><code data-claire-semantic="cpp">#include &lt;boost/intrusive/list.hpp&gt;</code></pre><p id="r-573265" data-claire-element-id="573265">Il faut ensuite modifier sa classe pour la faire hériter de list_base_hook</p><pre id="r-573266" data-claire-element-id="573266"><code data-claire-semantic="cpp">class MaClasse   :  public boost::intrusive::list_base_hook&lt;&gt;
+{
+ /* ... Contenu de la classe ...*/ 
+};</code></pre><aside id="r-573268" data-claire-element-id="573268" data-claire-semantic="information"><p id="r-573267" data-claire-element-id="573267">list_base_hook prend des arguments, c'est un template. Nous ne les verrons pas ici, mais ils sont détaillé dans <a href="http://www.boost.org/doc/libs/1_43_0/doc/html/intrusive/usage.html#intrusive.usage.usage_base_hook">la documentation</a>.</p></aside><p id="r-573269" data-claire-element-id="573269">La classe va hériter ,via notre <em>hook</em>, de propriété telle que les pointeurs <strong>next</strong> et <strong>previous</strong>, habituel dans les listes. Ainsi, l'intrusion ne nous est pas directement visible, mais elle est bien réelle.</p><p id="r-573270" data-claire-element-id="573270">Une fois ceci fait, nous pouvons déclarer notre liste intrusive :</p><pre id="r-573271" data-claire-element-id="573271"><code data-claire-semantic="cpp">typedef boost::intrusive::list&lt;MaClasse&gt; MaClasse_list;</code></pre><p id="r-573272" data-claire-element-id="573272">Elle n'est utilisable qu'avec MaClasse, comme spécifié dans le template.</p><p id="r-573273" data-claire-element-id="573273">On peut ensuite utiliser la liste comme un conteneur STL :</p><pre id="r-573274" data-claire-element-id="573274"><code data-claire-semantic="cpp">MaClasse objet;
+MaClasse_list liste;
+
+liste.push_back(objet);
+
+/* Les adresse affiché seront identique, car l'objet n'est pas copié !*/
+std::cout &lt;&lt; &amp;( liste.front() ) &lt;&lt; &quot; &quot; &lt;&lt; &amp;objet &lt;&lt; std::endl;</code></pre><p id="r-573275" data-claire-element-id="573275">Attention cependant lors de la manipulation d'un conteneur intrusif : si vous détruisez le conteneur, les ressources ne sont pas désallouées : vous vous exposez à des fuites considérables de mémoire. De même, ne désallouez pas manuellement un objet, car alors le conteneur contiendrait un pointeur invalide, et amènerait assez rapidement votre programme à crasher.</p><h2 id="r-autres-conteneurs-intrusif" data-claire-element-id="573305">Autres conteneurs intrusif</h2><p id="r-573277" data-claire-element-id="573277">Nous avons vu l'exemple de la liste. Pour utiliser les autres conteneurs, il suffit de changer l'héritage :</p><pre id="r-573278" data-claire-element-id="573278"><code data-claire-semantic="cpp">class MaClasse   :  public boost::intrusive::XXXXXXXX_base_hook&lt;&gt; // XXXXXX est le nom du conteneur souhaité
+{
+ /* ... Contenu de la classe ...*/ 
+};</code></pre><p id="r-573279" data-claire-element-id="573279">Et de changer le type généré :</p><pre id="r-573280" data-claire-element-id="573280"><code data-claire-semantic="cpp">typedef boost::intrusive::XXXX&lt;MaClasse&gt; MaClasse_list;</code></pre><p id="r-573281" data-claire-element-id="573281">Les types disponibles sont :</p><table id="r-573304" data-claire-element-id="573304"><thead id="r-573287" data-claire-element-id="573287"><tr id="r-573286" data-claire-element-id="573286"><th id="r-573283" data-claire-element-id="573283"><p id="r-573282" data-claire-element-id="573282">type</p></th><th id="r-573285" data-claire-element-id="573285"><p id="r-573284" data-claire-element-id="573284">description</p></th></tr></thead><tbody id="r-573303" data-claire-element-id="573303"><tr id="r-573292" data-claire-element-id="573292"><td id="r-573289" data-claire-element-id="573289"><p id="r-573288" data-claire-element-id="573288"><strong>slist</strong></p></td><td id="r-573291" data-claire-element-id="573291"><p id="r-573290" data-claire-element-id="573290">Liste avec un seul lien (usuellement, <strong>next</strong>). L'empreinte mémoire d'une telle liste est minimale, mais les complexités de parcours sont linéaires.</p></td></tr><tr id="r-573297" data-claire-element-id="573297"><td id="r-573294" data-claire-element-id="573294"><p id="r-573293" data-claire-element-id="573293"><strong>set</strong> , <strong>multiset</strong> , <strong>rbtree</strong></p></td><td id="r-573296" data-claire-element-id="573296"><p id="r-573295" data-claire-element-id="573295">Conteneurs associatifs (sur le modèle de <strong>std::set</strong>) basé sur les <a href="http://en.wikipedia.org/wiki/Red-black_tree">red-black tree</a>. Leurs complexités sont logarithmiques.</p></td></tr><tr id="r-573302" data-claire-element-id="573302"><td id="r-573299" data-claire-element-id="573299"><p id="r-573298" data-claire-element-id="573298"><strong>Autres types </strong><br/>avl_set,avl_multiset,avltree,<br/> splay_set,splay_multiset,splaytree,<br/> g_set,sg_multiset,sgtree</p></td><td id="r-573301" data-claire-element-id="573301"><p id="r-573300" data-claire-element-id="573300">Sensiblement la même chose que leurs confrères présentés précédemment, mais le mode de stockage / l'arbre utilisé diffère.</p></td></tr></tbody></table><h2 id="r-quand-utiliser-un-conteneur-intrusif-et-quand-ne-pas-l-utiliser" data-claire-element-id="573317">Quand utiliser un conteneur intrusif (et quand ne pas l'utiliser) ?</h2><p id="r-573306" data-claire-element-id="573306">Quand utiliser un conteneur intrusif (et quand ne pas l'utiliser) ?</p><p id="r-573307" data-claire-element-id="573307">Ce genre de conteneur est adapté aux situations suivantes, et devrait être évité dans les autres cas :</p><ul id="r-573314" data-claire-element-id="573314"><li id="r-573309" data-claire-element-id="573309"><p id="r-573308" data-claire-element-id="573308">Ressource mémoire limitée</p></li><li id="r-573311" data-claire-element-id="573311"><p id="r-573310" data-claire-element-id="573310">Besoin d'une protection contre les exceptions (garantie que rien ne sera jeté pendant l'utilisation de ce conteneur)</p></li><li id="r-573313" data-claire-element-id="573313"><p id="r-573312" data-claire-element-id="573312">Situation où la performance est capitale</p></li></ul><p id="r-573315" data-claire-element-id="573315">Dans les autres situations, il semble que les désavantages soient plus importants que les avantages.</p><p id="r-573316" data-claire-element-id="573316">En plus des conteneurs présentés ici, et des incontournables comme le <a href="http://www.boost.org/doc/libs/1_45_0/libs/ptr_container/doc/ptr_container.html">conteneur à pointeur</a> ou celui à <a href="http://www.boost.org/doc/libs/1_45_0/libs/graph/doc/table_of_contents.html">graphe</a>, on trouvera quelques autres perles directement dans <a href="http://www.boost.org/doc/libs/1_45_0/?view=category_Containers">la documentation de ceux-ci</a>.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost">Conteneurs exotiques Boost</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/des-tuples-en-c">
+Des tuples en C++
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/tampon-circulaire">
+Tampon circulaire
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/tableau-revisite">
+Tableau revisité
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/bimap">
+Bimap
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/tableau-multidimensionnel">
+Tableau multidimensionnel
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/conteneurs-intrusifs">
+Conteneurs intrusifs
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/conteneurs-exotiques-boost/tableau-multidimensionnel">
+<span class="arrow"></span>
+<span class="next">Tableau multidimensionnel</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/conteneurs-exotiques-boost.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 02:40:47 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/conteneurs-exotiques-boost.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:35:28 GMT -->
+</html>

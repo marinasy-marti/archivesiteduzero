@@ -1,0 +1,401 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/comprendre-et-utiliser-un-systeme-de-cache-php.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 05:39:16 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/comprendre-et-utiliser-un-systeme-de-cache-php.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:00:02 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Comprendre et utiliser un système de cache PHP</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/comprendre-et-utiliser-un-systeme-de-cache-php.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Comprendre et utiliser un système de cache PHP</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#ComprendreetutiliserunsystmedecachePHP">Comprendre et utiliser un système de cache PHP</a><br/><a href="#Utilitetorganisationd039unsystmedecache">Utilité et organisation d&#039;un système de cache</a><br/><a href="#Lathorielesfluxdesortie">La théorie : les flux de sortie</a><br/><a href="#Applicationunsystmedenews">Application : un système de news</a><br/><a href="#Problmesetamliorations">Problèmes et améliorations</a><br/></div>
+<a name="ComprendreetutiliserunsystmedecachePHP"></a><h2>Comprendre et utiliser un système de cache PHP</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/comprendre-et-utiliser-un-systeme-de-cache-php/utilite-et-organisation-d-un-systeme-de-cache">
+<span class="next">Utilité et organisation d&#039;un système de cache</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-333330" data-claire-element-id="333330">Lors du codage d'un site, on est toujours amené à se poser des questions sur les ressources consommées par ce dernier. En effet, les requêtes MySQL représentent une bonne part de l'utilisation du serveur : d'ailleurs, chez la majorité des hébergeurs, les bases de données se trouvent sur un serveur à part.</p><p id="r-333331" data-claire-element-id="333331">Si l'optimisation des requêtes est important, ainsi que leur nombre, il arrive un moment où l'on ne peut plus rien faire de ce côté sous peine d'enlever des fonctionnalités à son site.</p><p id="r-333332" data-claire-element-id="333332">Un système de cache permet de réduire le nombre de requêtes ainsi que le traitement qui en découle : il est possible d'organiser son code de telle façon que seules les requêtes indispensables soient effectuées, les autres l'ayant déjà été, et mises en cache précédemment.</p>
+</div><a name="Utilitetorganisationd039unsystmedecache"></a><h2>Utilité et organisation d&#039;un système de cache</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/comprendre-et-utiliser-un-systeme-de-cache-php/la-theorie-les-flux-de-sortie">
+<span class="next">La théorie : les flux de sortie</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-utilite-d-un-systeme-de-cache" data-claire-element-id="333338">Utilité d'un système de cache</h2><p id="r-333333" data-claire-element-id="333333">Je suis sûr que vous vous demandez si votre site a besoin d'un système de cache. Je ne peux pas vous donner la réponse mais vous aider à la trouver. Dans la majorité des cas, votre code PHP vous sort du code XHTML après de nombreux processus qui peuvent être longs à exécuter (requêtes, parsage, boucles, etc.).</p><p id="r-333334" data-claire-element-id="333334">Le principe d'un système de cache est de récupérer ce code XHTML et de le mettre de côté dans un fichier (en cache) pour que lors de la prochaine exécution de la page, on affiche directement le code XHTML sans refaire toutes les opérations PHP. Sur un petit site, le gain de temps et de ressources n'est pas très grand mais sur un site dont des pages sont vues des milliers (voire des millions) de fois par jour, ça représente au final une sacrée économie de ressources système.</p><h3 id="r-le-site-du-zero-grand-utilisateur-du-cache" data-claire-element-id="333337">Le Site du Zéro : grand utilisateur du cache</h3><p id="r-333335" data-claire-element-id="333335">Eh oui, un grand site comme celui sur lequel vous vous trouvez en ce moment utilise un système de cache afin de soulager les serveurs en diminuant le nombre de requêtes. De nombreuses choses sont mises en cache, comme par exemple le message aléatoire du Livre d'or dans le menu. Si vous rechargez votre page toutes les secondes, vous verrez qu'il ne change pas à chaque fois, c'est parce qu'il a été mis en cache : il ne change qu'au bout d'une minute, et pendant cette minute, tous les visiteurs verront le même message. Au final, cela ne permet d'économiser qu'une requête, mais avec une fréquence de 185 pages vues par minute, c'est déjà énorme au vu du nombre de pages générées chaque mois (185.60.24.30 = 7992000 requêtes économisées par mois :waw: ).</p><p id="r-333336" data-claire-element-id="333336">Dans le même style, le nombre de visiteurs est aussi mis en cache pendant 1 minute (encore de sacrées économies). Dans un autre domaine, plus personnel, le nombre de MP non lus est aussi mis en cache, ce qui permet au site de vous afficher le nombre de MP non lus sans faire une requête à chaque fois. Le cache n'est reconstruit que lorsqu'il y a un changement dans ce nombre.</p><h2 id="r-organisation-du-systeme" data-claire-element-id="333348">Organisation du système</h2><p id="r-333339" data-claire-element-id="333339">Maintenant que vous êtes convaincus qu'un système de cache peut être bénéfique pour votre site, vous vous demandez comment cela fonctionne. Comme je suis très gentil, je vais vous faire un beau dessin. :D</p><figure id="r-333341" data-claire-element-id="333342"><img id="r-333340" data-claire-element-id="333340" src="medias/uploads.siteduzero.com_files_93001_94000_93002.png" alt="Image utilisateur"/></figure><p id="r-333343" data-claire-element-id="333343">Maintenant que vous avez regardé mon beau dessin, je vais vous en expliquer le principe. Il faut tout d'abord voir si l'on a un fichier en cache pour la page correspondante : si ce n'est pas le cas, on crée ce fichier cache, puis on le lit dans la foulée.</p><p id="r-333344" data-claire-element-id="333344">Par contre, si on trouve un fichier cache, on vérifiera qu'il soit bien à jour (je vous montrerai comment faire ça dans la suite du tuto). S'il est à jour, on lit ce fichier ; si ce n'est pas le cas, on en crée un nouveau qui écrasera le précédent.</p><aside id="r-333346" data-claire-element-id="333346" data-claire-semantic="information"><p id="r-333345" data-claire-element-id="333345">L'absence d'un fichier cache ou le fait que celui-ci soit périmé conduit à la même chose : la reconstruction du cache. On peut donc vérifier ces deux informations en même temps.</p></aside><p id="r-333347" data-claire-element-id="333347">Vous l'avez compris : le cache PHP, c'est juste remplacer un système par une simple lecture de fichier, ce qui est infiniment plus rapide et plus économique. <br/> Et si maintenant on voyait comment ça marche en PHP (ce qui est un peu le but du tuto) ?</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-et-utiliser-un-systeme-de-cache-php">Comprendre et utiliser un système de cache PHP</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-et-utiliser-un-systeme-de-cache-php/utilite-et-organisation-d-un-systeme-de-cache">
+Utilité et organisation d&#039;un système de cache
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-et-utiliser-un-systeme-de-cache-php/la-theorie-les-flux-de-sortie">
+La théorie : les flux de sortie
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-et-utiliser-un-systeme-de-cache-php/application-un-systeme-de-news">
+Application : un système de news
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-et-utiliser-un-systeme-de-cache-php/problemes-et-ameliorations">
+Problèmes et améliorations
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/comprendre-et-utiliser-un-systeme-de-cache-php/la-theorie-les-flux-de-sortie">
+<span class="next">La théorie : les flux de sortie</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lathorielesfluxdesortie"></a><h2>La théorie : les flux de sortie</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/comprendre-et-utiliser-un-systeme-de-cache-php/utilite-et-organisation-d-un-systeme-de-cache">
+<span class="arrow"></span>
+<span class="next">Utilité et organisation d&#039;un système de cache</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/comprendre-et-utiliser-un-systeme-de-cache-php/application-un-systeme-de-news">
+<span class="next">Application : un système de news</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-333350" data-claire-element-id="333350">Lorsque vous demandez à un script PHP de s'exécuter, il vous renvoie 2 types d'informations :</p><ul id="r-333355" data-claire-element-id="333355"><li id="r-333352" data-claire-element-id="333352"><p id="r-333351" data-claire-element-id="333351">les informations invisibles par le visiteur : les en-têtes (avec header(), les cookies, les sessions, etc.)</p></li><li id="r-333354" data-claire-element-id="333354"><p id="r-333353" data-claire-element-id="333353">les informations visibles par le visiteur : le code XHTML (bref, votre page web).</p></li></ul><p id="r-333356" data-claire-element-id="333356">Et c'est sur ce fameux code XHTML, ou plutôt sur son affichage, que l'on va travailler.</p><h3 id="r-la-tamporisation-de-sortie" data-claire-element-id="333367">La tamporisation de sortie</h3><p id="r-333357" data-claire-element-id="333357">Il existe déjà <a href="tuto-3-16405-1-la-temporisation-de-sortie-en-php.html">un tuto sur ce sujet</a>, mais je vais vous montrer comment on peut s'en servir. Le code XHTML que le serveur retourne au client est créé grâce à la fonction echo, mais on peut faire en sorte d'empêcher les echo de nous retourner directement le code ; on va pour cela utiliser la fonction ob_start().</p><pre id="r-333358" data-claire-element-id="333358"><code data-claire-semantic="html+php">&lt;?php 
+echo'Une phrase de la mort qui tue';
+?&gt;</code></pre><pre id="r-333359" data-claire-element-id="333359"><code data-claire-semantic="html+php">&lt;?php
+ob_start(); // ouverture de la mise en tampon
+echo'Une phrase de la mort qui tue';
+ob_end_clean(); // fermeture de la tamporisation de sortie et effacement du tampon
+?&gt;</code></pre><aside id="r-333361" data-claire-element-id="333361" data-claire-semantic="warning"><p id="r-333360" data-claire-element-id="333360">Tout ce qui est ouvert doit être fermé, la fonction ob_start() permet d'ouvrir la tamporisation de sortie et stocke les informations dans le tampon. La fonction ob_end_clean(), elle, ferme cette tamporisation de sortie et vide le tampon.</p></aside><p id="r-333362" data-claire-element-id="333362">Si vous essayez ces deux codes, vous verrez que le premier vous génère bien du code XHTML, mais pour le second, vous vous retrouvez avec une page blanche. L'ob_start() a mis en tampon votre texte, on peut dire qu'il le garde sous le coude jusqu'à ce que vous lui demandiez de vous le ressortir. Ça tombe bien : je vais vous montrer comment faire.</p><pre id="r-333363" data-claire-element-id="333363"><code data-claire-semantic="html+php">&lt;?php
+ob_start();
+echo'Une phrase de la mort qui tue';
+ob_end_flush(); // affichage du tampon
+?&gt;</code></pre><p id="r-333364" data-claire-element-id="333364">Et là miracle :waw: , il vous affiche le texte. La fonction ob_end_flush() sert à afficher les données stockées dans le tampon et à éteindre la tamporisation de sortie (que l'on avait ouverte avec ob_start()) ; l'ennui, c'est que cette fonction détruit aussi le tampon, on ne pourra donc pas le récupérer par la suite.</p><div id="r-333366" data-claire-element-id="333366" data-claire-semantic="question"><p id="r-333365" data-claire-element-id="333365">C'est bien sympa ton truc, mais comment on s'en sert pour créer un cache ?</p></div><h3 id="r-la-recuperation-du-tampon" data-claire-element-id="333385">La récupération du tampon</h3><p id="r-333368" data-claire-element-id="333368">Tant que le tampon n'est pas détruit ou fermé, on peut le récupérer grâce à la fonction ob_get_contents().</p><pre id="r-333369" data-claire-element-id="333369"><code data-claire-semantic="html+php">&lt;?php
+ob_start(); // ouverture du tampon
+echo'Une phrase de la mort qui tue';
+$tampon = ob_get_contents(); // stockage du tampon dans une chaîne de caractères
+ob_end_clean(); // fermeture de la tamporisation de sortie et effacement du tampon
+echo $tampon ;
+?&gt;</code></pre><p id="r-333370" data-claire-element-id="333370">Cela vous affiche la même page que le code précédent à une différence près : le tampon est stocké dans une variable sous forme d'une chaîne de caractères ; de plus, le tampon n'est pas détruit.</p><div id="r-333372" data-claire-element-id="333372" data-claire-semantic="question"><p id="r-333371" data-claire-element-id="333371">Donc, si au lieu de faire un echo, on récupérait cette chaîne de caractères et on la stockait dans un fichier, on pourrait par la suite lire ce fichier ?</p></div><p id="r-333373" data-claire-element-id="333373">Je suis content de voir que vous avez compris :D ; effectivement, on peut écrire cette chaîne dans un fichier grâce à la fonction file_put_contents. Cette fonction a besoin de 2 arguments.</p><ul id="r-333378" data-claire-element-id="333378"><li id="r-333375" data-claire-element-id="333375"><p id="r-333374" data-claire-element-id="333374">Premier argument : le nom du fichier où l'on doit écrire les données (par exemple index.html).</p></li><li id="r-333377" data-claire-element-id="333377"><p id="r-333376" data-claire-element-id="333376">Deuxième argument : ce que l'on veut écrire dans le fichier ; ici, ce sera la variable $tampon qui contient notre chaîne de caractères.</p></li></ul><aside id="r-333380" data-claire-element-id="333380" data-claire-semantic="information"><p id="r-333379" data-claire-element-id="333379">La fonction file_put_contents ne marche qu'avec PHP5, il faut donc vous assurer que votre code PHP sera bien exécuté avec PHP5 ; pour cela, il faut ajouter à votre .htaccess la ligne suivante : <br/><strong>AddType x-mapp-php5 .php</strong><br/> cela obligera PHP à utiliser PHP5.</p></aside><pre id="r-333381" data-claire-element-id="333381"><code data-claire-semantic="html+php">&lt;?php
+ob_start();
+echo'Une phrase de la mort qui tue';
+$tampon = ob_get_contents();
+file_put_contents('cache/index.html', $tampon) ; //pour une meilleure organisation, on créera un répertoire cache pour y stocker les fichiers du cache
+ob_end_clean(); // toujours fermer et vider le tampon
+?&gt;</code></pre><p id="r-333382" data-claire-element-id="333382">Et donc maintenant, si on lit le fichier index.html, cela nous affichera notre texte ;) .</p><pre id="r-333383" data-claire-element-id="333383"><code data-claire-semantic="html+php">&lt;?php 
+readfile('cache/index.html');
+?&gt;</code></pre><p id="r-333384" data-claire-element-id="333384">Vous savez maintenant stocker dans un fichier du texte généré par un code PHP, c'est le principe même du cache PHP. On va maintenant voir comment s'en servir de manière pratique.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-et-utiliser-un-systeme-de-cache-php">Comprendre et utiliser un système de cache PHP</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-et-utiliser-un-systeme-de-cache-php/utilite-et-organisation-d-un-systeme-de-cache">
+Utilité et organisation d&#039;un système de cache
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-et-utiliser-un-systeme-de-cache-php/la-theorie-les-flux-de-sortie">
+La théorie : les flux de sortie
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-et-utiliser-un-systeme-de-cache-php/application-un-systeme-de-news">
+Application : un système de news
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-et-utiliser-un-systeme-de-cache-php/problemes-et-ameliorations">
+Problèmes et améliorations
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/comprendre-et-utiliser-un-systeme-de-cache-php/utilite-et-organisation-d-un-systeme-de-cache">
+<span class="arrow"></span>
+<span class="next">Utilité et organisation d&#039;un système de cache</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/comprendre-et-utiliser-un-systeme-de-cache-php/application-un-systeme-de-news">
+<span class="next">Application : un système de news</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Applicationunsystmedenews"></a><h2>Application : un système de news</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/comprendre-et-utiliser-un-systeme-de-cache-php/la-theorie-les-flux-de-sortie">
+<span class="arrow"></span>
+<span class="next">La théorie : les flux de sortie</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/comprendre-et-utiliser-un-systeme-de-cache-php/problemes-et-ameliorations">
+<span class="next">Problèmes et améliorations</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h3 id="r-on-joue-a-cache-cache" data-claire-element-id="333395">On joue à cache-cache ?</h3><p id="r-333387" data-claire-element-id="333387">Pour que tout le monde parte sur un pied d'égalité, voici un petit script de news imaginaire, mais vous pouvez dès à présent appliquer le système de cache à votre propre système.</p><pre id="r-333388" data-claire-element-id="333388"><code data-claire-semantic="html+php">&lt;?php
+$retour = mysql_query('SELECT id, titre, date, contenu FROM news ORDER BY id DESC LIMIT 0, 10') or die (mysql_error());
+ 
+while ($donnees = mysql_fetch_array($retour))
+{
+        echo'&lt;div class=&quot;news&quot;&gt;
+        &lt;h3&gt;'.$donnees['titre'].'&lt;/h3&gt;
+        le '.date('d/m/Y à H\hi', $donnees['date']).'&lt;br /&gt;';
+ 
+        echo zcode($donnees['contenu']).'&lt;/div&gt;';
+}
+?&gt;</code></pre><p id="r-333389" data-claire-element-id="333389">Vous voudriez une piqûre de rappel un rappel sur ce que vous avez à faire ? Eh bien vous devez d'abord déterminer si votre page est déjà en cache, ensuite vérifier si elle est à jour ; si l'une des deux conditions n'est pas bonne, vous devez générer le fichier cache puis le lire ; sinon, il suffit juste de lire le fichier cache.</p><p id="r-333390" data-claire-element-id="333390">Vous comprenez que lire un simple fichier texte est beaucoup plus rapide que passer par des requêtes, des boucles, du parsage de texte et j'en passe : c'est là qu'on fait des économies de temps et de ressources.</p><div id="r-333392" data-claire-element-id="333392" data-claire-semantic="question"><p id="r-333391" data-claire-element-id="333391">Et comment je fais pour savoir si mon fichier cache est à jour, est-ce qu'il existe une fonction qui pourrait me donner la date de sa dernière modification ?</p></div><p id="r-333393" data-claire-element-id="333393">Pour connaître la date de modification d'un fichier, il faut utiliser la fonction filemtime() ; elle prend comme argument le nom du fichier dont on veut la date de modification, elle nous renvoie une date sous la forme d'un TIMESTAMP.</p><p id="r-333394" data-claire-element-id="333394">Bon : si tout le monde est prêt, je lance le chrono et ramasse les copies dans 10 minutes :p .</p><h3 id="r-ramassage-des-copies" data-claire-element-id="333399">Ramassage des copies</h3><div id="r-333398" data-claire-element-id="333398"><div id="r-333397" data-claire-element-id="333397"><pre id="r-333396" data-claire-element-id="333396"><code data-claire-semantic="html+php">&lt;?php
+/*debut du cache*/
+$cache = 'cache/index.html';
+$expire = time() -3600 ; // valable une heure
+ 
+if(file_exists($cache) &amp;&amp; filemtime($cache) &gt; $expire)
+{
+        readfile($cache);
+}
+else
+{
+        ob_start(); // ouverture du tampon
+        
+        $retour = mysql_query('SELECT id, titre, date, contenu FROM news ORDER BY id DESC LIMIT 0, 10') or die (mysql_error());
+ 
+        while ($donnees = mysql_fetch_array($retour))
+        {
+                echo'&lt;div class=&quot;news&quot;&gt;
+                &lt;h3&gt;'.$donnees['titre'].'&lt;/h3&gt;
+                le '.date('d/m/Y à H\hi', $donnees['date']).'&lt;br /&gt;';
+ 
+                echo zcode($donnees['contenu']).'&lt;/div&gt;';
+        }
+        
+        $page = ob_get_contents(); // copie du contenu du tampon dans une chaîne
+        ob_end_clean(); // effacement du contenu du tampon et arrêt de son fonctionnement
+        
+        file_put_contents($cache, $page) ; // on écrit la chaîne précédemment récupérée ($page) dans un fichier ($cache) 
+        echo $page ; // on affiche notre page :D 
+}
+?&gt;</code></pre></div></div><h3 id="r-explications-22" data-claire-element-id="333410">Explications</h3><p id="r-333400" data-claire-element-id="333400">Je vois à vos mines sceptiques qu'il faut que je vous explique comment ce système marche.</p><pre id="r-333401" data-claire-element-id="333401"><code data-claire-semantic="html+php">&lt;?php
+/*debut du cache*/
+$cache = 'cache/index.html';
+$expire = time() -3600 ; // valable une heure
+ 
+if(file_exists($cache) &amp;&amp; filemtime($cache) &gt; $expire)
+{
+        readfile($cache);
+}
+else
+{
+    //script de la mise en cache
+}</code></pre><ul id="r-333408" data-claire-element-id="333408"><li id="r-333403" data-claire-element-id="333403"><p id="r-333402" data-claire-element-id="333402"><strong>Ligne 3 :</strong> je commence par donner un nom au fichier cache que je vais utiliser pendant tout le script afin de bien m'organiser.</p></li><li id="r-333405" data-claire-element-id="333405"><p id="r-333404" data-claire-element-id="333404"><strong>Ligne 4 :</strong> je détermine ensuite la durée de validité du cache (je prends 1 h, mais vous pouvez prendre 24h si vous en avez envie).</p></li><li id="r-333407" data-claire-element-id="333407"><p id="r-333406" data-claire-element-id="333406"><strong>Ligne 6 :</strong> je vérifie s'il y a déjà un fichier cache/index.html qui existe, et si celui-ci est bien à jour. La fonction filemtime() retourne la date de modification ou de création du fichier, on la compare à la date d'expiration pour voir si notre cache est périmé.</p></li></ul><p id="r-333409" data-claire-element-id="333409">Le reste, normalement vous devez le comprendre, c'est le script pour créer le fichier cache.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-et-utiliser-un-systeme-de-cache-php">Comprendre et utiliser un système de cache PHP</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-et-utiliser-un-systeme-de-cache-php/utilite-et-organisation-d-un-systeme-de-cache">
+Utilité et organisation d&#039;un système de cache
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-et-utiliser-un-systeme-de-cache-php/la-theorie-les-flux-de-sortie">
+La théorie : les flux de sortie
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-et-utiliser-un-systeme-de-cache-php/application-un-systeme-de-news">
+Application : un système de news
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-et-utiliser-un-systeme-de-cache-php/problemes-et-ameliorations">
+Problèmes et améliorations
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/comprendre-et-utiliser-un-systeme-de-cache-php/la-theorie-les-flux-de-sortie">
+<span class="arrow"></span>
+<span class="next">La théorie : les flux de sortie</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/comprendre-et-utiliser-un-systeme-de-cache-php/problemes-et-ameliorations">
+<span class="next">Problèmes et améliorations</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Problmesetamliorations"></a><h2>Problèmes et améliorations</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/comprendre-et-utiliser-un-systeme-de-cache-php/application-un-systeme-de-news">
+<span class="arrow"></span>
+<span class="next">Application : un système de news</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h3 id="r-un-cache-prenant-en-compte-la-pagination" data-claire-element-id="333414">Un cache prenant en compte la pagination</h3><p id="r-333412" data-claire-element-id="333412">Tout système peut être amélioré : par exemple pour celui-ci, vous pouvez lui ajouter un système de pagination, et chaque page de news sera mise en cache. Pour un système de ce genre, le cache est encore plus utile puisqu'il nous permet d'économiser, en plus de la requête pour récupérer les informations sur les news, la requête qui comptait le nombre total de news.</p><pre id="r-333413" data-claire-element-id="333413"><code data-claire-semantic="html+php">&lt;?php
+if(isset($_GET['page'])) $page = intval($_GET['page']);
+else $page = 1 ;
+ 
+/*debut du cache*/
+$cache = 'cache/index-'.$page.'.html'; // un fichier cache pour chaque page de news
+$expire = time() -3600 ; // valable une heure
+ 
+if(file_exists($cache) &amp;&amp; filemtime($cache) &gt; $expire)
+{
+        readfile($cache);
+}
+else
+{
+        //script de la mise en cache pour la page correspondante
+}</code></pre><h3 id="r-la-lecture-des-fichiers-mis-en-cache" data-claire-element-id="333423">La lecture des fichiers mis en cache</h3><p id="r-333415" data-claire-element-id="333415">Eh oui : vos fichiers peuvent être lus par tout le monde si la personne tape un lien pointant vers le fichier cache ; par exemple, <a href="http://www.latortuefacile.fr/cache/index1.html">http://www.latortuefacile.fr/cache/index1.html</a>, pour pouvez lire le fichier cache de ma première page de news sur mon site.</p><div id="r-333417" data-claire-element-id="333417" data-claire-semantic="question"><p id="r-333416" data-claire-element-id="333416">Et en quoi c'est dangereux ?</p></div><p id="r-333418" data-claire-element-id="333418">Justement, si je vous donne le lien, c'est que vous ne pouvez rien faire contre moi ; ce qui est dangereux, c'est de mettre en cache une page qui normalement n'est visible que par un nombre restreint de personnes.</p><p id="r-333419" data-claire-element-id="333419">Par exemple au début, je mettais en cache les messages dans mon Livre d'or ; or, si c'était moi qui reconstruisait le cache, le fichier cache était construit avec ce que je voyais (c'est-à-dire l'IP de celui qui a posté ainsi que les boutons Supprimer et Éditer) : il faut avouer que cela fait tache. Donc, lorsque vous voulez mettre un système de cache sur une page, faites attention à ne pas créer un système qui mettrait en cache des données sensibles.</p><p id="r-333420" data-claire-element-id="333420">Un système de cache, outre le fait de vous faire économiser des ressources, vous donne la possibilité de placer sur votre site un module que vous hésitiez à installer jusqu'à maintenant en raison des ressources qu'il consommait.</p><p id="r-333421" data-claire-element-id="333421">Pour ce qui est des économies de ressources, vous pouvez arriver à afficher des pages dynamiques sans requête (et afficher un 0 requête en bas de page, c'est la classe :soleil: ).</p><p id="r-333422" data-claire-element-id="333422">Je remercie karamilo de m'avoir fourni le code source du site des informations concernant l'utilisation du cache sur le Site du Zér0.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-et-utiliser-un-systeme-de-cache-php">Comprendre et utiliser un système de cache PHP</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-et-utiliser-un-systeme-de-cache-php/utilite-et-organisation-d-un-systeme-de-cache">
+Utilité et organisation d&#039;un système de cache
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-et-utiliser-un-systeme-de-cache-php/la-theorie-les-flux-de-sortie">
+La théorie : les flux de sortie
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-et-utiliser-un-systeme-de-cache-php/application-un-systeme-de-news">
+Application : un système de news
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/comprendre-et-utiliser-un-systeme-de-cache-php/problemes-et-ameliorations">
+Problèmes et améliorations
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/comprendre-et-utiliser-un-systeme-de-cache-php/application-un-systeme-de-news">
+<span class="arrow"></span>
+<span class="next">Application : un système de news</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/comprendre-et-utiliser-un-systeme-de-cache-php.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 05:39:17 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/comprendre-et-utiliser-un-systeme-de-cache-php.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:00:02 GMT -->
+</html>

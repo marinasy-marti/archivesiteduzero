@@ -1,0 +1,632 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/enregistrer-vos-options-avec-qsettings.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 06:36:32 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/enregistrer-vos-options-avec-qsettings.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:10:52 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Enregistrer vos options avec QSettings</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/enregistrer-vos-options-avec-qsettings.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Enregistrer vos options avec QSettings</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#EnregistrervosoptionsavecQSettings">Enregistrer vos options avec QSettings</a><br/><a href="#Commentamarche">Comment ça marche ?</a><br/><a href="#Crerunfichierd039options">Créer un fichier d&#039;options</a><br/><a href="#Ecriredesdonnes">Ecrire des données</a><br/><a href="#Liredesdonnes">Lire des données</a><br/><a href="#Annexes">Annexes</a><br/></div>
+<a name="EnregistrervosoptionsavecQSettings"></a><h2>Enregistrer vos options avec QSettings</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/comment-ca-marche-29">
+<span class="next">Comment ça marche ?</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<aside id="r-574934" data-claire-element-id="574934" data-claire-semantic="information"><p id="r-574933" data-claire-element-id="574933">Je vous conseille de lire la nouvelle sous-partie &quot;Annexes&quot; pour pouvoir mieux utiliser QSettings.</p></aside><p id="r-574935" data-claire-element-id="574935">Parfois, dans vos programmes Qt, vous avez peut-être déjà eu besoin de garder en mémoire certaines informations souvent liées à la configuration.</p><p id="r-574936" data-claire-element-id="574936">Par exemple :</p><ul id="r-574945" data-claire-element-id="574945"><li id="r-574938" data-claire-element-id="574938"><p id="r-574937" data-claire-element-id="574937">la taille et la position de la fenêtre ;</p></li><li id="r-574940" data-claire-element-id="574940"><p id="r-574939" data-claire-element-id="574939">les options du programme ;</p></li><li id="r-574942" data-claire-element-id="574942"><p id="r-574941" data-claire-element-id="574941">le thème ;</p></li><li id="r-574944" data-claire-element-id="574944"><p id="r-574943" data-claire-element-id="574943">etc.</p></li></ul><p id="r-574946" data-claire-element-id="574946">Évidemment, pour se &quot;souvenir&quot; de ces données au prochain lancement du programme, il faut les stocker définitivement sur le disque dur, sous forme de fichier. Qt propose pour ça la classe <strong>QFile</strong>.<br/> Problème : des options sont souvent des informations simples, qui se résument généralement par &quot;<em>cette donnée vaut cette valeur, cette option est activée, etc.</em>&quot;.<br/> Utiliser un fichier pour faire cela, c'est un peu exagéré.</p><p id="r-574947" data-claire-element-id="574947">Il y a une autre contrainte avec un fichier : comment différencier chaque option ?</p><div id="r-574949" data-claire-element-id="574949" data-claire-semantic="question"><p id="r-574948" data-claire-element-id="574948">Je sais, on fait une ligne par donnée, et hop c'est dans la poche ! :D</p></div><p id="r-574950" data-claire-element-id="574950">Non, car cette méthode ne serait pas très souple : en effet, il y aurait un ordre précis, ce serait dur à maintenir et à modifier.</p><p id="r-574951" data-claire-element-id="574951">La meilleure solution, c'est d'utiliser la classe <strong>QSettings</strong>, qui a été spécialement créée (que de &quot;e&quot; dans un même mot... :p ) pour enregistrer des options !</p><aside id="r-574954" data-claire-element-id="574954" data-claire-semantic="information"><p id="r-574952" data-claire-element-id="574952"><strong>Remarque :</strong> ici je vais prendre un exemple avec une fenêtre Qt, mais sachez que vous pourrez réutiliser cette classe dans vos programmes console ou autres.<br/> En effet, <strong>QSettings</strong> fait partie du module <strong>QtCore</strong> de Qt, qui est un ensemble de classes ne gérant que les opérations &quot;virtuelles&quot; (QString, QList et QFile en font partie) ; il n'y a donc pas besoin d'un GUI pour l'utiliser.</p><p id="r-574953" data-claire-element-id="574953">Qt possède plein d'autres modules (QtGui pour l'interface graphique, QtNetwork pour le réseau, QtOpenGL pour la 3D, etc.). La <a href="http://doc.trolltech.com/4.4/modules.html">liste de tous les modules Qt</a> est disponible sur la doc officielle.</p></aside>
+</div><a name="Commentamarche"></a><h2>Comment ça marche ?</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/creer-un-fichier-d-options">
+<span class="next">Créer un fichier d&#039;options</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-574955" data-claire-element-id="574955">Un peu de théorie est nécessaire pour commencer, sinon il va être impossible d'expliquer comment manipuler les données.</p><aside id="r-574957" data-claire-element-id="574957" data-claire-semantic="warning"><p id="r-574956" data-claire-element-id="574956"><strong>Attention :</strong> tout au long de cette partie, je vais parler généralement de &quot;fichier d'options&quot; pour désigner l'endroit où la classe QSettings enregistre les données. Mais elles ne sont pas forcément écrites dans un fichier ; vous allez d'ailleurs voir que si on ne le précise pas, le type de stockage peut beaucoup changer selon votre ordinateur.</p></aside><h2 id="r-la-structure-d-un-fichier-d-options" data-claire-element-id="574976">La structure d'un fichier d'options</h2><p id="r-574958" data-claire-element-id="574958">Quand on sauvegarde des options avec QSettings, on va en fait écrire une série de données qui vont chacune contenir une information (cette information doit pouvoir varier, sinon il n'y a pas d'intérêt de la garder en mémoire :lol: ).</p><p id="r-574959" data-claire-element-id="574959">Comme tout programmeur qui se respecte, vous allez devoir utiliser du vocabulaire précis :</p><ul id="r-574964" data-claire-element-id="574964"><li id="r-574961" data-claire-element-id="574961"><p id="r-574960" data-claire-element-id="574960">chaque donnée est appelée <strong>une clé</strong> : c'est le nom de l'information, qui permet de la différencier des autres ;</p></li><li id="r-574963" data-claire-element-id="574963"><p id="r-574962" data-claire-element-id="574962">l'information que porte chaque clé est <strong>la valeur</strong>.</p></li></ul><p id="r-574965" data-claire-element-id="574965">Un fichier d'options peut donc être représenté de cette façon :</p><figure id="r-574967" data-claire-element-id="574968"><img id="r-574966" data-claire-element-id="574966" src="medias/uploads.siteduzero.com_files_143001_144000_143591.png" alt="Image utilisateur"/></figure><p id="r-574969" data-claire-element-id="574969">Figurez-vous que, comme dans un OS, on peut également structurer les informations en les regroupant dans des dossiers : on parle alors de <strong>sous-clé</strong> ; c'est une clé un peu spéciale, elle n'a pas de valeur, elle contient juste d'autres clés, exactement comme un dossier contient des fichiers.</p><aside id="r-574971" data-claire-element-id="574971" data-claire-semantic="information"><p id="r-574970" data-claire-element-id="574970">Une sous-clé peut également contenir d'autres sous-clés, autant que l'on veut.</p></aside><p id="r-574972" data-claire-element-id="574972">Le même schéma que le précédent mais avec les sous-clés en plus :</p><figure id="r-574974" data-claire-element-id="574975"><img id="r-574973" data-claire-element-id="574973" src="medias/uploads.siteduzero.com_files_143001_144000_143593.png" alt="Image utilisateur"/></figure><h2 id="r-les-differentes-techniques-de-stockage" data-claire-element-id="575014">Les différentes techniques de stockage</h2><p id="r-574977" data-claire-element-id="574977">QSettings propose <a href="http://doc.trolltech.com/4.4/qsettings.html#Format-enum">3 formats</a> pour le fichier d'options.</p><ul id="r-574984" data-claire-element-id="574984"><li id="r-574979" data-claire-element-id="574979"><p id="r-574978" data-claire-element-id="574978"><strong>Le format natif</strong> : ce format n'en est pas vraiment un, du fait qu'il dépend de votre OS. C'est le plus simple à utiliser puisque QSettings va gérer la création du fichier. ;)</p></li><li id="r-574981" data-claire-element-id="574981"><p id="r-574980" data-claire-element-id="574980"><strong>Le format INI</strong> : le fichier a l'extension <strong>.ini</strong>, format de base des options de configuration.</p></li><li id="r-574983" data-claire-element-id="574983"><p id="r-574982" data-claire-element-id="574982"><strong>Un format invalide</strong> : ce dernier produit un format personnalisé, mais il est trop compliqué pour nous y intéresser dans ce tutoriel (il faut par exemple définir ses propres fonctions de lecture et écriture :-° ).</p></li></ul><h3 id="r-le-format-natif" data-claire-element-id="575009">Le format natif</h3><p id="r-574985" data-claire-element-id="574985">Les options vont être stockées vraiment différemment selon les OS. Voici un petit tableau représentatif :</p><table id="r-575008" data-claire-element-id="575008"><thead id="r-574991" data-claire-element-id="574991"><tr id="r-574990" data-claire-element-id="574990"><th id="r-574987" data-claire-element-id="574987"><p id="r-574986" data-claire-element-id="574986">OS</p></th><th id="r-574989" data-claire-element-id="574989"><p id="r-574988" data-claire-element-id="574988">Format</p></th></tr></thead><tbody id="r-575007" data-claire-element-id="575007"><tr id="r-574996" data-claire-element-id="574996"><td id="r-574993" data-claire-element-id="574993"><p id="r-574992" data-claire-element-id="574992">Unix</p></td><td id="r-574995" data-claire-element-id="574995"><p id="r-574994" data-claire-element-id="574994">Les options sont écrites dans un fichier texte, avec l'extension <strong>.conf</strong>.</p></td></tr><tr id="r-575001" data-claire-element-id="575001"><td id="r-574998" data-claire-element-id="574998"><p id="r-574997" data-claire-element-id="574997">Mac OS X</p></td><td id="r-575000" data-claire-element-id="575000"><p id="r-574999" data-claire-element-id="574999">Les options sont stockées dans le dossier des préférences système<br/> (d'après la doc : &quot;<em>the CFPreferences API</em>&quot;), dans des fichiers spéciaux <strong>.plist</strong>.</p></td></tr><tr id="r-575006" data-claire-element-id="575006"><td id="r-575003" data-claire-element-id="575003"><p id="r-575002" data-claire-element-id="575002">Windows</p></td><td id="r-575005" data-claire-element-id="575005"><p id="r-575004" data-claire-element-id="575004">Ici, pas de fichiers, on utilise directement le registre système<br/> (rassurez-vous, si vous utilisez bien QSettings, il n'y aucun risque de dommage ^^ ).</p></td></tr></tbody></table><h3 id="r-le-format-ini" data-claire-element-id="575013">Le format INI</h3><p id="r-575010" data-claire-element-id="575010">Comme je l'ai dit précédemment, ce format force la création d'un fichier <strong>.ini</strong>, quel que soit l'OS utilisé.</p><p id="r-575011" data-claire-element-id="575011">On peut alors définir un chemin différent du chemin par défaut (qui n'est pas très accessible :p ), et c'est plus facile pour une éventuelle maintenance.</p><p id="r-575012" data-claire-element-id="575012">Maintenant que tout est clair, nous allons pouvoir commencer les choses sérieusement ! :pirate:</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings">Enregistrer vos options avec QSettings</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/comment-ca-marche-29">
+Comment ça marche ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/creer-un-fichier-d-options">
+Créer un fichier d&#039;options
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/ecrire-des-donnees-1">
+Ecrire des données
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/lire-des-donnees-1">
+Lire des données
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/annexes-64">
+Annexes
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/creer-un-fichier-d-options">
+<span class="next">Créer un fichier d&#039;options</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Crerunfichierd039options"></a><h2>Créer un fichier d&#039;options</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/comment-ca-marche-29">
+<span class="arrow"></span>
+<span class="next">Comment ça marche ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/ecrire-des-donnees-1">
+<span class="next">Ecrire des données</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-575016" data-claire-element-id="575016">Avant de commencer, créez un nouveau projet.<br/> Comme on ne va pas créer de fenêtre (du moins pas dans cette partie), vous aurez seulement besoin du <strong>main.cpp</strong> :</p><pre id="r-575017" data-claire-element-id="575017"><code data-claire-semantic="cpp">#include &lt;QApplication&gt;
+#include &lt;QWidget&gt;
+
+int main(int argc, char* argv[])
+{
+    QApplication app(argc, argv);
+
+    QWidget widget;
+    widget.show();
+
+    return app.exec();
+}</code></pre><aside id="r-575019" data-claire-element-id="575019" data-claire-semantic="information"><p id="r-575018" data-claire-element-id="575018">Ce code ne fait absolument rien, si ce n'est afficher une fenêtre. :D</p></aside><p id="r-575020" data-claire-element-id="575020">Nous allons créer un nouveau fichier d'options en créant un nouvel objet QSettings.<br/> Voici le constructeur :</p><pre id="r-575021" data-claire-element-id="575021"><code data-claire-semantic="cpp">QSettings::QSettings ( const QString &amp;amp; organization, const QString &amp;amp; application = QString(), QObject * parent = 0 )</code></pre><p id="r-575022" data-claire-element-id="575022">Le dernier argument (l'objet parent) est un QObject (vous pouvez mettre n'importe quelle classe de Qt) qui se chargera de libérer votre objet de la mémoire en cas d'allocation dynamique. Vu que ce n'est pas le cas ici, nous allons seulement remplir les deux premiers : <strong>organization</strong> et <strong>application</strong>, qui sont le nom de votre équipe et le nom de votre programme.</p><div id="r-575024" data-claire-element-id="575024" data-claire-semantic="question"><p id="r-575023" data-claire-element-id="575023">Mais qu'est-ce qu'on en a à faire du nom de notre équipe et de notre programme ? o_O Ça n'aurait pas été mieux de dire le chemin ou le nom du fichier ?</p></div><p id="r-575025" data-claire-element-id="575025">La raison vient du fait que nous allons utiliser le format natif pour notre fichier d'options (rappelez-vous, celui qui dépend de votre OS). Vous ne pouviez pas le savoir, puisqu'on ne l'a pas précisé dans le constructeur, car c'est le format par défaut.<br/> Comme on utilise un chemin de stockage totalement différent selon les OS, l'emplacement du fichier ne peut être précisé. Le fichier sera créé dans le répertoire des configurations de votre OS.</p><p id="r-575026" data-claire-element-id="575026">Du coup, pour le différencier des autres, QSettings va le placer dans un sous-répertoire : un dossier portant le nom de votre programme, qui est lui-même contenu dans un dossier portant le nom de votre équipe.</p><p id="r-575027" data-claire-element-id="575027">C'est un peu compliqué, donc rien ne vaut un schéma pour expliquer :</p><figure id="r-575029" data-claire-element-id="575030"><img id="r-575028" data-claire-element-id="575028" src="medias/uploads.siteduzero.com_files_143001_144000_143596.png" alt="Image utilisateur"/></figure><h2 id="r-le-constructeur-18" data-claire-element-id="575086">Le constructeur</h2><p id="r-575031" data-claire-element-id="575031">Si tout est clair, nous allons tester le constructeur. Nous allons choisir &quot;sdz&quot; comme nom d'équipe et &quot;MonProgramme&quot; comme nom de programme. Reprenez le main et ajoutez-y ces lignes :</p><pre id="r-575032" data-claire-element-id="575032"><code data-claire-semantic="cpp">#include &lt;QApplication&gt;
+#include &lt;QWidget&gt;
+#include &lt;QSettings&gt;
+
+int main(int argc, char* argv[])
+{
+    QApplication app(argc, argv);
+
+    QWidget widget;
+    widget.show();
+
+    QSettings settings(&quot;sdz&quot;, &quot;MonProgramme&quot;);
+
+    return app.exec();
+}</code></pre><p id="r-575033" data-claire-element-id="575033">Compilez et lancez le programme : rien ne se passe (à part la fenêtre vide).<br/> En fait, le programme vient de créer votre fichier, sans que vous ne vous en rendiez compte. Suivez ce tableau pour le retrouver :</p><table id="r-575056" data-claire-element-id="575056"><thead id="r-575039" data-claire-element-id="575039"><tr id="r-575038" data-claire-element-id="575038"><th id="r-575035" data-claire-element-id="575035"><p id="r-575034" data-claire-element-id="575034">OS</p></th><th id="r-575037" data-claire-element-id="575037"><p id="r-575036" data-claire-element-id="575036">Emplacement</p></th></tr></thead><tbody id="r-575055" data-claire-element-id="575055"><tr id="r-575044" data-claire-element-id="575044"><td id="r-575041" data-claire-element-id="575041"><p id="r-575040" data-claire-element-id="575040">Unix</p></td><td id="r-575043" data-claire-element-id="575043"><p id="r-575042" data-claire-element-id="575042">$HOME/.config/sdz/MonProgramme.conf<br/> où $HOME est le répertoire de votre <em>home</em></p></td></tr><tr id="r-575049" data-claire-element-id="575049"><td id="r-575046" data-claire-element-id="575046"><p id="r-575045" data-claire-element-id="575045">Mac OS X</p></td><td id="r-575048" data-claire-element-id="575048"><p id="r-575047" data-claire-element-id="575047">$HOME/Library/Preferences/com.sdz.MonProgramme.plist<br/> où $HOME est le répertoire de votre <em>home</em></p></td></tr><tr id="r-575054" data-claire-element-id="575054"><td id="r-575051" data-claire-element-id="575051"><p id="r-575050" data-claire-element-id="575050">Windows</p></td><td id="r-575053" data-claire-element-id="575053"><p id="r-575052" data-claire-element-id="575052">HKEY_CURRENT_USER\Software\sdz\MonProgramme<br/> qui est un répertoire du registre système</p></td></tr></tbody></table><aside id="r-575058" data-claire-element-id="575058" data-claire-semantic="warning"><p id="r-575057" data-claire-element-id="575057">Peut-être que le fichier n'a pas été créé.<br/> En effet, sous Vista, il a été créé seulement après avoir écrit des données.<br/> Si c'est le cas sur les autres OS, <a href="http://www.siteduzero.com/mp-273-116778.html">prévenez-moi par MP</a>.</p></aside><h3 id="r-le-cas-de-windows" data-claire-element-id="575085">Le cas de Windows</h3><div id="r-575060" data-claire-element-id="575060" data-claire-semantic="question"><p id="r-575059" data-claire-element-id="575059">Euh, moi je suis sous Windows :euh: ... Et je n'ai pas tout compris à ton chemin bizarre et ton &quot;registre système&quot;...</p></div><p id="r-575061" data-claire-element-id="575061">Le registre système est en quelque sorte un <em>immense</em> fichier d'options qui contient absolument toute la configuration de votre ordinateur. Y sont stockés :</p><ul id="r-575070" data-claire-element-id="575070"><li id="r-575063" data-claire-element-id="575063"><p id="r-575062" data-claire-element-id="575062">les options des programmes ;</p></li><li id="r-575065" data-claire-element-id="575065"><p id="r-575064" data-claire-element-id="575064">les infos du panneau de configuration ;</p></li><li id="r-575067" data-claire-element-id="575067"><p id="r-575066" data-claire-element-id="575066">les différents périphériques installés ;</p></li><li id="r-575069" data-claire-element-id="575069"><p id="r-575068" data-claire-element-id="575068">mais aussi, comme son nom l'indique, des informations sur le système auxquelles il ne faut pas toucher si vous tenez à la santé de votre OS. :D</p></li></ul><p id="r-575071" data-claire-element-id="575071">Étant structuré comme nos fichiers d'options, il contient beaucoup de sous-clés, que l'on considère comme des répertoires. Le chemin si bizarre que je vous ai donné plus haut est donc la liste des sous-clés à suivre pour accéder à votre programme.</p><div id="r-575073" data-claire-element-id="575073" data-claire-semantic="question"><p id="r-575072" data-claire-element-id="575072">Oui mais comment j'y accède moi au registre ? L'explorateur ne trouve pas le dossier HKEY_CURRENT_USER ! :colere2:</p></div><p id="r-575074" data-claire-element-id="575074">Il va falloir utiliser un logiciel spécial intégré à Windows, qui s'appelle <strong>regedit</strong> (pour <em>REGistry EDITor</em>, l'éditeur du registre). Celui-ci affiche, sous forme d'arborescence, la liste de toutes les clés et sous-clés qui ont été inscrites dans le registre (celles des autres programmes mais aussi celles du système). Il permet même d'éditer manuellement les valeurs de ces clés, mais ne faites cela que si vous êtes absolument sûrs de ce que vous faites (vous pourriez perdre des données importantes ou même foutre en l'air votre système :waw: ).</p><p id="r-575075" data-claire-element-id="575075">Pour ouvrir ce logiciel (il est bien caché), faites &quot;Exécuter&quot; dans le menu Démarrer, et tapez &quot;regedit&quot;, sans les guillemets. Si vous avez un message de sécurité, acceptez-le. Voici comment se présente le programme sous Vista :</p><figure id="r-575077" data-claire-element-id="575078"><img id="r-575076" data-claire-element-id="575076" src="medias/uploads.siteduzero.com_files_140001_141000_140975.png" alt="Image utilisateur"/></figure><p id="r-575079" data-claire-element-id="575079">Déplacez-vous dans les sous-clés et allez jusqu'à l'emplacement de votre fichier d'options de vos sous-clés (c'est-à-dire HKEY_CURRENT_USER\Software\sdz\MonProgramme). Vous devriez voir ceci :</p><figure id="r-575081" data-claire-element-id="575082"><img id="r-575080" data-claire-element-id="575080" src="medias/uploads.siteduzero.com_files_140001_141000_140977.png" alt="Image utilisateur"/></figure><aside id="r-575084" data-claire-element-id="575084" data-claire-semantic="information"><p id="r-575083" data-claire-element-id="575083">Comme je l'ai dit plus haut dans la remarque &quot;Attention&quot;, il se peut que les sous-clés n'aient pas été créées, rassurez-vous, elles apparaîtront quand nous aurons écrit des clés.</p></aside><h2 id="r-conclusion-57" data-claire-element-id="575088">Conclusion</h2><p id="r-575087" data-claire-element-id="575087">Vous avez créé votre fichier, mais pour l'instant il ne sert à rien. Il serait peut-être temps d'apprendre à le remplir ! ;)</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings">Enregistrer vos options avec QSettings</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/comment-ca-marche-29">
+Comment ça marche ?
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/creer-un-fichier-d-options">
+Créer un fichier d&#039;options
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/ecrire-des-donnees-1">
+Ecrire des données
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/lire-des-donnees-1">
+Lire des données
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/annexes-64">
+Annexes
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/comment-ca-marche-29">
+<span class="arrow"></span>
+<span class="next">Comment ça marche ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/ecrire-des-donnees-1">
+<span class="next">Ecrire des données</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Ecriredesdonnes"></a><h2>Ecrire des données</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/creer-un-fichier-d-options">
+<span class="arrow"></span>
+<span class="next">Créer un fichier d&#039;options</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/lire-des-donnees-1">
+<span class="next">Lire des données</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-ecrire-des-cles" data-claire-element-id="575113">Ecrire des clés</h2><p id="r-575090" data-claire-element-id="575090">Voici la fonction de la classe QSettings qui permet d'écrire des clés :</p><pre id="r-575091" data-claire-element-id="575091"><code data-claire-semantic="cpp">void QSettings::setValue ( const QString &amp;amp; key, const QVariant &amp;amp; value )</code></pre><p id="r-575092" data-claire-element-id="575092">Cette méthode prend donc deux arguments : le nom de la clé et sa valeur.</p><div id="r-575094" data-claire-element-id="575094" data-claire-semantic="question"><p id="r-575093" data-claire-element-id="575093">Gné c'est quoi cet argument o_O <strong>QVariant</strong> value... Et si je veux mettre un <strong>int</strong> ?</p></div><p id="r-575095" data-claire-element-id="575095">En fait, QVariant est une classe Qt, qui permet de stocker n'importe quel type de variable ou d'objet. <a href="http://doc.trolltech.com/4.4/qvariant.html">En regardant la doc</a>, on se rend compte que cette classe peut représenter un grand nombre de classes Qt (<a href="http://doc.trolltech.com/4.4/qvariant.html#Type-enum">la liste complète...</a>).</p><p id="r-575096" data-claire-element-id="575096">L'intérêt de cette classe réside dans le fait que l'on peut créer des fonctions qui acceptent tous les types de Qt, comme c'est le cas dans la méthode <code>setValue</code> ; la fonction se charge alors de convertir la QVariant passée en argument dans le type originel.</p><p id="r-575097" data-claire-element-id="575097">De plus, comble du bonheur, vous n'êtes pas obligés de créer un objet QVariant pour utiliser <code>setValue</code> : indiquez seulement votre objet ou variable, Qt se charge de le transformer en QVariant. Plus simple tu meurs. :D</p><h3 id="r-je-teste-tu-testes-il-teste" data-claire-element-id="575112">Je teste, tu testes, il teste...</h3><p id="r-575098" data-claire-element-id="575098">Essayons cette fonction avec le fichier d'options que l'on a créé tout à l'heure. Ici, je vais appeler ma clé &quot;test&quot; et elle aura pour valeur &quot;true&quot; (un booléen) :</p><pre id="r-575099" data-claire-element-id="575099"><code data-claire-semantic="cpp">#include &lt;QApplication&gt;
+#include &lt;QWidget&gt;
+#include &lt;QSettings&gt;
+
+int main(int argc, char* argv[])
+{
+    QApplication app(argc, argv);
+
+    QWidget widget;
+    widget.show();
+
+    QSettings settings(&quot;sdz&quot;, &quot;MonProgramme&quot;);
+    settings.setValue(&quot;test&quot;, true);
+
+    return app.exec();
+}</code></pre><p id="r-575100" data-claire-element-id="575100">Compilez et exécutez le code (vous verrez toujours la fenêtre vide). Normalement, la clé a dû être écrite (ou alors votre ordi ne marche pas :p ). Voici ce que vous devriez avoir dans votre fichier d'options :</p><figure id="r-575102" data-claire-element-id="575103"><img id="r-575101" data-claire-element-id="575101" src="medias/uploads.siteduzero.com_files_141001_142000_141539.png" alt="Image utilisateur"/></figure><p id="r-575104" data-claire-element-id="575104">Et dans le <strong>regedit</strong> :</p><figure id="r-575106" data-claire-element-id="575107"><img id="r-575105" data-claire-element-id="575105" src="medias/uploads.siteduzero.com_files_141001_142000_141147.png" alt="Image utilisateur"/></figure><p id="r-575108" data-claire-element-id="575108"><em>Vous pouvez remarquer la clé appelée &quot;(par défaut)&quot; ;<br/> c'est une fonction spécifique à Windows, cette clé sert à attribuer une valeur à la sous-clé actuelle<br/> (si vous l'utilisez, votre programme ne sera pas portable !)</em></p><div id="r-575110" data-claire-element-id="575110" data-claire-semantic="question"><p id="r-575109" data-claire-element-id="575109">Y'a un truc qui m'asticote depuis tout à l'heure...<br/> Et si je veux enregistrer un objet qui n'est pas dans la liste de la QVariant ?</p></div><p id="r-575111" data-claire-element-id="575111">Heureusement, les développeurs ont tout prévu : quand le deuxième argument ne peut être stocké dans la QVariant, il est automatiquement converti pour qu'il puisse être stocké. Vous pouvez donc écrire n'importe quel objet, même d'une classe que vous avez créée ! :p</p><h2 id="r-ecrire-des-sous-cles" data-claire-element-id="575133">Ecrire des sous-clés</h2><p id="r-575114" data-claire-element-id="575114">Et voici la fonction qui permet d'écrire des sous-clés...</p><pre id="r-575115" data-claire-element-id="575115"><code data-claire-semantic="cpp">void QSettings::setValue ( const QString &amp;amp; key, const QVariant &amp;amp; value )</code></pre><div id="r-575117" data-claire-element-id="575117" data-claire-semantic="question"><p id="r-575116" data-claire-element-id="575116">Eh, mais c'est la même que pour les clés ! :waw:</p></div><p id="r-575118" data-claire-element-id="575118">Ben oui. Et c'est normal.<br/> En effet, on ne crée pas de sous-clés directement ; elles vont être ajoutées automatiquement en écrivant des clés stockées dans ces sous-clés.</p><p id="r-575119" data-claire-element-id="575119">Comment ? Cela va se passer dans le premier argument de la fonction. Je vous avais dit qu'il représentait le nom de la clé, eh bien... je vous ai menti. :honte: <br/> On indique en réalité <strong>le chemin de la clé</strong>. Oui oui, comme pour un fichier, avec les slashes ! Comme tout à l'heure nous n'avions pas besoin de structurer notre fichier avec des sous-clés, il était inutile d'en créer.</p><p id="r-575120" data-claire-element-id="575120">Mais toutes les explications au monde ne vaudront jamais un bon exemple. Ici, je vais créer une clé &quot;nom&quot; avec pour valeur &quot;granarc&quot; et une clé &quot;age&quot; avec pour valeur &quot;13&quot; (eh oui je suis jeune ^^ ) ; elles seront toutes les deux stockées dans la sous-clé &quot;Identite&quot;.</p><pre id="r-575121" data-claire-element-id="575121"><code data-claire-semantic="cpp">#include &lt;QApplication&gt;
+#include &lt;QWidget&gt;
+#include &lt;QSettings&gt;
+
+int main(int argc, char* argv[])
+{
+    QApplication app(argc, argv);
+
+    QWidget widget;
+    widget.show();
+
+    QSettings settings(&quot;sdz&quot;, &quot;MonProgramme&quot;);
+    settings.setValue(&quot;Identite/nom&quot;, &quot;granarc&quot;);
+    settings.setValue(&quot;Identite/age&quot;, 13);
+
+    return app.exec();
+}</code></pre><p id="r-575122" data-claire-element-id="575122">Et le résultat dans le fichier d'options :</p><figure id="r-575124" data-claire-element-id="575125"><img id="r-575123" data-claire-element-id="575123" src="medias/uploads.siteduzero.com_files_141001_142000_141540.png" alt="Image utilisateur"/></figure><p id="r-575126" data-claire-element-id="575126">Et dans le <strong>regedit</strong> :</p><figure id="r-575128" data-claire-element-id="575129"><img id="r-575127" data-claire-element-id="575127" src="medias/uploads.siteduzero.com_files_141001_142000_141541.png" alt="Image utilisateur"/></figure><p id="r-575130" data-claire-element-id="575130">On remarque que dans le fichier, la sous-clé est indiquée par son nom entre crochets <code>[]</code> (si c'est une sous-sous-clé elle sera indiquée par son chemin, par exemple <code>Famille/pere=Patrick</code> pour la clé &quot;Identite/Famille/pere&quot;), et dans le <strong>regedit</strong>, elle est indiquée par un nouveau dossier dans l'arborescence.</p><p id="r-575131" data-claire-element-id="575131"><strong>Exercice</strong> : écrivez le code qui produirait le fichier suivant :</p><pre id="r-575132" data-claire-element-id="575132"><code>vivant=true
+reel=true
+
+[Identite]
+nom=granarc
+age=13
+Famille/Freres/frere1=Remi
+Famille/Soeurs/soeur1=Pauline
+Famille/Soeurs/soeur2=Laura
+orphelin=false
+Famille/mere=Josiane
+Famille/pere=Patrick
+
+[Coordonnees]
+ville=Martigues
+Maison/rue=rue des Lilas
+Maison/numero=27
+codePostal=13500</code></pre><h2 id="r-complements-2" data-claire-element-id="575151">Compléments</h2><p id="r-575134" data-claire-element-id="575134">Voici encore trois choses qui pourraient vous être utiles.</p><h3 id="r-editer-une-cle" data-claire-element-id="575136">Éditer une clé</h3><p id="r-575135" data-claire-element-id="575135">Pour cela, c'est très simple, si vous utilisez <code>setValue</code> sur une clé déjà existante, la valeur de cette clé est remplacée par celle que vous demandez.</p><h3 id="r-supprimer-une-cle-1" data-claire-element-id="575140">Supprimer une clé</h3><p id="r-575137" data-claire-element-id="575137">Utilisez la fonction <code>remove</code> :</p><pre id="r-575138" data-claire-element-id="575138"><code data-claire-semantic="cpp">void QSettings::remove ( const QString &amp;amp; key )</code></pre><p id="r-575139" data-claire-element-id="575139">Vous n'avez qu'à indiquer le nom (ou le chemin) de la clé à supprimer.</p><h3 id="r-se-deplacer-dans-les-sous-cles" data-claire-element-id="575150">Se déplacer dans les sous-clés</h3><p id="r-575141" data-claire-element-id="575141">Si vous avez beaucoup de sous-clés, c'est un peu gavant de réécrire le chemin entier de chaque clé ; si vous avez fait l'exercice proposé au-dessus, vous avez dû le remarquer.<br/> Heureusement, il existe une fonction qui permet de se déplacer dans une sous-clé, qui dit au QSettings : &quot;<em>Attention, les clés qui vont être écrites maintenant se trouvent dans telle sous-clé</em>&quot;.</p><p id="r-575142" data-claire-element-id="575142">Il suffit pour cela d'utiliser la méthode <code>beginGroup</code> qui prend en seul paramètre le nom de la sous-clé dans laquelle aller. Vous pouvez utiliser maintenant <code>setValue</code> pour écrire vos données ; quand vous avez fini, appelez la méthode <code>endGroup</code> (ne prend aucun argument), cela vous fera revenir à la racine de votre fichier d'options.</p><p id="r-575143" data-claire-element-id="575143">Exemple:</p><pre id="r-575144" data-claire-element-id="575144"><code data-claire-semantic="cpp">#include &lt;QApplication&gt;
+#include &lt;QWidget&gt;
+#include &lt;QSettings&gt;
+
+int main(int argc, char* argv[])
+{
+    QApplication app(argc, argv);
+
+    QWidget widget;
+    widget.show();
+
+    QSettings settings(&quot;sdz&quot;, &quot;MonProgramme&quot;);
+    settings.beginGroup(&quot;Identite&quot;);
+    settings.setValue(&quot;nom&quot;, &quot;granarc&quot;);
+    settings.setValue(&quot;age&quot;, 13);
+    settings.endGroup();
+
+    return app.exec();
+}</code></pre><p id="r-575145" data-claire-element-id="575145">Ce code donnera la même chose que notre exemple précédent :</p><figure id="r-575147" data-claire-element-id="575148"><img id="r-575146" data-claire-element-id="575146" src="medias/uploads.siteduzero.com_files_141001_142000_141540.png" alt="Image utilisateur"/></figure><p id="r-575149" data-claire-element-id="575149">Vous avez désormais toutes les cartes en main pour garder en mémoire absolument toute la configuration de votre programme. Cependant, il vous manque une chose essentielle : savoir lire ces informations !</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings">Enregistrer vos options avec QSettings</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/comment-ca-marche-29">
+Comment ça marche ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/creer-un-fichier-d-options">
+Créer un fichier d&#039;options
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/ecrire-des-donnees-1">
+Ecrire des données
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/lire-des-donnees-1">
+Lire des données
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/annexes-64">
+Annexes
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/creer-un-fichier-d-options">
+<span class="arrow"></span>
+<span class="next">Créer un fichier d&#039;options</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/lire-des-donnees-1">
+<span class="next">Lire des données</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Liredesdonnes"></a><h2>Lire des données</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/ecrire-des-donnees-1">
+<span class="arrow"></span>
+<span class="next">Ecrire des données</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/annexes-64">
+<span class="next">Annexes</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-575153" data-claire-element-id="575153">Pour lire des clés, on utilise la méthode <code><a href="http://doc.trolltech.com/4.4/qsettings.html#value">value</a></code> :</p><pre id="r-575154" data-claire-element-id="575154"><code data-claire-semantic="cpp">QVariant QSettings::value ( const QString &amp;amp; key, const QVariant &amp;amp; defaultValue = QVariant() ) const</code></pre><p id="r-575155" data-claire-element-id="575155">Le premier argument est le nom de la clé à lire ; comme pour <code>setValue</code>, vous pouvez indiquer les sous-clés ou utiliser <code>beginGroup</code> et <code>endGroup</code>.<br/> Le second argument est la valeur par défaut que renverra la fonction si la clé n'est pas trouvée. Encore une fois, inutile de créer un objet QVariant, la fonction se charge de convertir automatiquement l'argument qu'on lui passe.</p><h3 id="r-utilisation-simple-2" data-claire-element-id="575168">Utilisation simple</h3><p id="r-575156" data-claire-element-id="575156">Il est temps de tester cette fonction. Reprenez l'exemple de tout à l'heure ; nous allons afficher dans un bouton la valeur de la clé &quot;nom&quot; contenue dans la sous-clé &quot;Identite&quot; :</p><pre id="r-575157" data-claire-element-id="575157"><code data-claire-semantic="cpp">#include &lt;QApplication&gt;
+#include &lt;QPushButton&gt;
+#include &lt;QSettings&gt;
+
+int main(int argc, char* argv[])
+{
+    QApplication app(argc, argv);
+
+    QPushButton bouton;
+    bouton.show();
+
+    QSettings settings(&quot;sdz&quot;, &quot;MonProgramme&quot;);
+    bouton.setText(settings.value(&quot;Identite/nom&quot;));
+
+    return app.exec();
+}</code></pre><p id="r-575158" data-claire-element-id="575158">Compilez et vous devriez obtenir... une belle erreur ! :D</p><p id="r-575159" data-claire-element-id="575159">Que nous dit le compilateur ?</p><pre id="r-575160" data-claire-element-id="575160"><code data-claire-semantic="console">main.cpp:13: error: no matching function for call to 'QPushButton::setText(QVariant)'</code></pre><p id="r-575161" data-claire-element-id="575161">Mais oui, c'est normal ! Regardez le prototype de <code>value</code> : la fonction renvoie une QVariant, car elle ne sait pas de quel type sont les données récupérées ; comme la méthode <code>setText</code> attend une QString, forcément, ça plante !</p><p id="r-575162" data-claire-element-id="575162">Il y a un moyen simple de contourner le problème : en regardant <a href="http://doc.trolltech.com/4.4/qvariant.html">la doc de QVariant</a>, on voit qu'il y a toute une série de fonctions commençant par &quot;to&quot;, qui reconvertissent la QVariant dans son type d'origine.<br/> Ici, nous voulons une QString, donc nous allons appliquer la méthode <code>toString</code> à la QVariant que l'on nous renvoie :</p><pre id="r-575163" data-claire-element-id="575163"><code data-claire-semantic="cpp">#include &lt;QApplication&gt;
+#include &lt;QPushButton&gt;
+#include &lt;QSettings&gt;
+
+int main(int argc, char* argv[])
+{
+    QApplication app(argc, argv);
+
+    QPushButton bouton;
+    bouton.show();
+
+    QSettings settings(&quot;sdz&quot;, &quot;MonProgramme&quot;);
+    bouton.setText(settings.value(&quot;Identite/nom&quot;).toString());
+
+    return app.exec();
+}</code></pre><p id="r-575164" data-claire-element-id="575164">Et voilà le travail :D :</p><figure id="r-575166" data-claire-element-id="575167"><img id="r-575165" data-claire-element-id="575165" src="medias/uploads.siteduzero.com_files_142001_143000_142033.png" alt="Image utilisateur"/></figure><h3 id="r-la-valeur-par-defaut" data-claire-element-id="575207">La valeur par défaut</h3><p id="r-575169" data-claire-element-id="575169">Souvenez-vous : il y avait un deuxième argument, celui de la valeur par défaut. Si la clé est introuvable (pas encore créée par exemple), la fonction va renvoyer une QVariant contenant cette valeur.</p><p id="r-575170" data-claire-element-id="575170">Essayez d'obtenir une clé inexistante (&quot;prenom&quot; par exemple) avec comme valeur par défaut &quot;jacques&quot; (ce n'est pas mon prénom si vous voulez savoir ^^ ) :</p><pre id="r-575171" data-claire-element-id="575171"><code data-claire-semantic="cpp">#include &lt;QApplication&gt;
+#include &lt;QPushButton&gt;
+#include &lt;QSettings&gt;
+
+int main(int argc, char* argv[])
+{
+    QApplication app(argc, argv);
+
+    QPushButton bouton;
+    bouton.show();
+
+    QSettings settings(&quot;sdz&quot;, &quot;MonProgramme&quot;);
+
+    // J'ai un peu réorganisé le code pour être plus clair
+    QString prenom = settings.value(&quot;Identite/prenom&quot;, &quot;jacques&quot;).toString();
+    bouton.setText(prenom);
+
+    return app.exec();
+}</code></pre><p id="r-575172" data-claire-element-id="575172">Et le résultat :</p><figure id="r-575174" data-claire-element-id="575175"><img id="r-575173" data-claire-element-id="575173" src="medias/uploads.siteduzero.com_files_142001_143000_142038.png" alt="Image utilisateur"/></figure><p id="r-575176" data-claire-element-id="575176">Remarquez que si, dans ce même code, vous ne précisez pas de valeur par défaut, la méthode renverra une QVariant vide.</p><div id="r-575178" data-claire-element-id="575178" data-claire-semantic="question"><p id="r-575177" data-claire-element-id="575177">J'ai une dernière petite question. Pour la méthode <code>setValue</code>, tu nous a dit que si on utilisait un objet qui n'était pas stockable dans une QVariant, la fonction s'occupait de le convertir. Mais là, vu que c'est nous qui devons faire la conversion, comment faisons-nous, hein ? Y'a pas de méthode <code>toColor</code> par exemple !</p></div><p id="r-575179" data-claire-element-id="575179">Dans ce cas, il suffit d'utiliser la fonction <code>value</code>de la QVariant. C'est une fonction utilisant les templates, vous aurez juste à indiquer entre chevrons <code>&lt;&gt;</code> le type de l'objet à renvoyer. Exemple en supposant que j'aie enregistré une clé &quot;couleur&quot; ayant pour valeur une QColor noire :</p><pre id="r-575180" data-claire-element-id="575180"><code data-claire-semantic="cpp">#include &lt;QApplication&gt;
+#include &lt;QPushButton&gt;
+#include &lt;QSettings&gt;
+
+int main(int argc, char* argv[])
+{
+    QApplication app(argc, argv);
+
+    QPushButton bouton;
+    bouton.show();
+
+    QSettings settings(&quot;sdz&quot;, &quot;MonProgramme&quot;);
+    QColor couleur = settings.value(&quot;couleur&quot;).value&lt;QColor&gt;();
+    bouton.setPalette(QPalette(couleur));
+
+    return app.exec();
+}</code></pre><p id="r-575181" data-claire-element-id="575181">Ce qui donne bien un bouton noir :</p><figure id="r-575183" data-claire-element-id="575184"><img id="r-575182" data-claire-element-id="575182" src="medias/uploads.siteduzero.com_files_142001_143000_142046.png" alt="Image utilisateur"/></figure><h2 id="r-d-autres-fonctions-de-lecture" data-claire-element-id="575206">D'autres fonctions de lecture</h2><p id="r-575185" data-claire-element-id="575185">Voici quelques autres fonctions qui pourraient vous servir un jour :</p><h3 id="r-allkeys" data-claire-element-id="575190">allKeys()</h3><p id="r-575186" data-claire-element-id="575186">Cette fonction renvoie une <a href="http://doc.trolltech.com/4.4/qstringlist.html">QStringList</a> de toutes les clés contenues dans la sous-clé actuelle ; celles qui sont contenues dans des sous-clés enfants sont sous la forme <em>sous-clé/clé</em>.<br/>Exemple :</p><pre id="r-575187" data-claire-element-id="575187"><code data-claire-semantic="cpp">settings.setValue(&quot;langage&quot;, &quot;C++&quot;);
+settings.setValue(&quot;librairie/nom&quot;, &quot;Qt&quot;);
+settings.setValue(&quot;librairie/version&quot;, 4);
+
+QStringList cles = settings.allKeys();</code></pre><p id="r-575188" data-claire-element-id="575188">Retour :</p><pre id="r-575189" data-claire-element-id="575189"><code>[&quot;langage&quot;, &quot;librarie/nom&quot;, &quot;librairie/version&quot;]</code></pre><h3 id="r-childkeys" data-claire-element-id="575195">childKeys()</h3><p id="r-575191" data-claire-element-id="575191">Cette fonction renvoie une QStringList de toutes les clés contenues cette fois <strong>directement</strong> dans la sous-clé actuelle.<br/>Exemple :</p><pre id="r-575192" data-claire-element-id="575192"><code data-claire-semantic="cpp">settings.setValue(&quot;langage&quot;, &quot;C++&quot;);
+settings.setValue(&quot;librairie/nom&quot;, &quot;Qt&quot;);
+settings.setValue(&quot;librairie/version&quot;, 4);
+
+QStringList cles = settings.childKeys();</code></pre><p id="r-575193" data-claire-element-id="575193">Retour :</p><pre id="r-575194" data-claire-element-id="575194"><code>[&quot;langage&quot;]</code></pre><h3 id="r-childgroups" data-claire-element-id="575200">childGroups()</h3><p id="r-575196" data-claire-element-id="575196">Cette fonction renvoie une QStringList de toutes les <strong>sous-clés</strong> contenues <strong>directement</strong> dans la sous-clé actuelle.<br/>Exemple :</p><pre id="r-575197" data-claire-element-id="575197"><code data-claire-semantic="cpp">settings.setValue(&quot;langage&quot;, &quot;C++&quot;);
+settings.setValue(&quot;librairie/nom&quot;, &quot;Qt&quot;);
+settings.setValue(&quot;librairie/version&quot;, 4);
+
+QStringList cles = settings.childGroups();</code></pre><p id="r-575198" data-claire-element-id="575198">Retour :</p><pre id="r-575199" data-claire-element-id="575199"><code>[&quot;librarie&quot;]</code></pre><h3 id="r-contains-qstring-key" data-claire-element-id="575205">contains(QString key)</h3><p id="r-575201" data-claire-element-id="575201">Cette fonction prend en argument le nom d'une clé et renvoie un booléen indiquant si la clé existe ou non.<br/>Exemple :</p><pre id="r-575202" data-claire-element-id="575202"><code data-claire-semantic="cpp">settings.setValue(&quot;langage&quot;, &quot;C++&quot;);
+settings.setValue(&quot;librairie/nom&quot;, &quot;Qt&quot;);
+settings.setValue(&quot;librairie/version&quot;, 4);
+
+bool existe = settings.contains(&quot;auteur&quot;);</code></pre><p id="r-575203" data-claire-element-id="575203">Retour :</p><pre id="r-575204" data-claire-element-id="575204"><code>false</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings">Enregistrer vos options avec QSettings</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/comment-ca-marche-29">
+Comment ça marche ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/creer-un-fichier-d-options">
+Créer un fichier d&#039;options
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/ecrire-des-donnees-1">
+Ecrire des données
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/lire-des-donnees-1">
+Lire des données
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/annexes-64">
+Annexes
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/ecrire-des-donnees-1">
+<span class="arrow"></span>
+<span class="next">Ecrire des données</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/annexes-64">
+<span class="next">Annexes</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Annexes"></a><h2>Annexes</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/lire-des-donnees-1">
+<span class="arrow"></span>
+<span class="next">Lire des données</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<aside id="r-575210" data-claire-element-id="575210" data-claire-semantic="information"><p id="r-575209" data-claire-element-id="575209">Cette partie est facultative, cependant je vous conseille de lire la sous-partie &quot;QSettings en pratique&quot; qui vous expliquera comment utiliser efficacement QSettings dans vos programmes.</p></aside><h2 id="r-creer-un-fichier-ini" data-claire-element-id="575227">Créer un fichier INI</h2><p id="r-575211" data-claire-element-id="575211">Pour l'instant, notre fichier d'options était sous le format natif, et donc son type et son emplacement changeaient radicalement selon les OS. Peut-être que, pour des raisons de goûts ou de besoins, vous préférerez qu'il soit <strong>forcément</strong> stocké sous forme de fichier INI. Le gros avantage c'est que vous pourrez alors spécifier votre propre emplacement pour le fichier.</p><p id="r-575212" data-claire-element-id="575212">Pour créer un fichier d'options en précisant le chemin du fichier et non le nom du programme et l'équipe, nous allons utiliser ce constructeur :</p><pre id="r-575213" data-claire-element-id="575213"><code data-claire-semantic="cpp">QSettings::QSettings ( const QString &amp;amp; fileName, Format format, QObject * parent = 0 )</code></pre><ul id="r-575220" data-claire-element-id="575220"><li id="r-575215" data-claire-element-id="575215"><p id="r-575214" data-claire-element-id="575214">L'argument <strong>filename</strong> est le nom du fichier (avec éventuellement son emplacement relatif ou absolu).</p></li><li id="r-575217" data-claire-element-id="575217"><p id="r-575216" data-claire-element-id="575216">L'argument <strong>format</strong> sert à indiquer le format du fichier d'options. Les valeurs possibles sont celles de l'énumération Format (expliqué au début du tuto).</p></li><li id="r-575219" data-claire-element-id="575219"><p id="r-575218" data-claire-element-id="575218">Le dernier argument (<strong>parent</strong>) sert à la même chose que dans notre ancien constructeur ; si vous ne vous en souvenez plus, retournez voir en dessous du constructeur de la partie &quot;Créer un fichier d'options&quot;. Retenez en tout cas qu'il n'est utile que si votre objet QSettings est créé avec <strong>new</strong> (ce n'est pas le cas ici ;) ).</p></li></ul><p id="r-575221" data-claire-element-id="575221">Et un exemple, un ! :D</p><pre id="r-575222" data-claire-element-id="575222"><code data-claire-semantic="cpp">QSettings settings(&quot;../mesoptions.ini&quot;, QSettings::IniFormat);
+/*...*/</code></pre><p id="r-575223" data-claire-element-id="575223">Après avoir lancé le programme, vous verrez apparaître un fichier &quot;mesoptions.ini&quot; dans le répertoire parent de votre exécutable.</p><div id="r-575225" data-claire-element-id="575225" data-claire-semantic="question"><p id="r-575224" data-claire-element-id="575224">Et pour la lecture / écriture ?</p></div><p id="r-575226" data-claire-element-id="575226">Eh bien figurez-vous que le constructeur est la seule chose qui change ! C'est ça la puissance de QSettings : les fonctions sont toujours les mêmes, elles s'adapteront juste au type de fichier.</p><h2 id="r-qsettings-en-pratique" data-claire-element-id="575277">QSettings en pratique</h2><p id="r-575228" data-claire-element-id="575228">Durant tout ce tutoriel, je vous ai parlé du fonctionnement des QSettings ; cette sous-partie traitera elle de l'utilisation concrète de QSettings dans un programme.</p><h3 id="r-l-ecriture-des-donnees" data-claire-element-id="575261">L'écriture des données</h3><p id="r-575229" data-claire-element-id="575229">En général, on sauvegarde la configuration du programme au moment où l'on quitte. Si vous avez un menu avec une action &quot;Quitter&quot;, c'est très simple : connectez le signal <strong>triggered()</strong> de cette action à un slot personnalisé <strong>quitter()</strong> par exemple, où vous écrirez les clés puis appellerez le slot <strong>quit()</strong> pour fermer le programme.</p><p id="r-575230" data-claire-element-id="575230">Le problème, c'est que l'utilisateur peut très bien quitter en cliquant sur la croix, et là, votre enregistrement tombe à l'eau.</p><div id="r-575232" data-claire-element-id="575232" data-claire-semantic="question"><p id="r-575231" data-claire-element-id="575231">Alors comment on fait pour détecter si l'utilisateur clique sur la croix ?</p></div><p id="r-575233" data-claire-element-id="575233">Vous le savez, Qt détecte les événements sous forme de signaux (connectés à des slots), mais peut également détecter des événements plus généraux comme l'appui d'une touche ou un mouvement de la souris. Pour réagir avec ces événements &quot;généraux&quot;, on n'utilise pas les signaux : Qt appelle à chaque événement une fonction qui est chargée de le traiter. Ces fonctions prennent en paramètre une des classes qui héritent de <a href="http://doc.trolltech.com/4.4/qevent.html">QEvent</a>, qui représentent chacune un événement bien spécifique. L'intérêt d'avoir une classe pour chaque événement, c'est qu'elles contiennent des informations propres à l'événement. Quelques exemples de ces fonctions :</p><ul id="r-575242" data-claire-element-id="575242"><li id="r-575235" data-claire-element-id="575235"><p id="r-575234" data-claire-element-id="575234"><code data-claire-semantic="cpp">keyPressEvent ( QKeyEvent * event)</code> : appelée quand on appuie sur une touche du clavier ;</p></li><li id="r-575237" data-claire-element-id="575237"><p id="r-575236" data-claire-element-id="575236"><code data-claire-semantic="cpp">mouseMoveEvent ( QMouseEvent * event)</code> : appelée quand on bouge la souris ;</p></li><li id="r-575239" data-claire-element-id="575239"><p id="r-575238" data-claire-element-id="575238"><code data-claire-semantic="cpp">resizeEvent ( QResizeEvent * event)</code> : appelée quand la fenêtre est redimensionnée ;</p></li><li id="r-575241" data-claire-element-id="575241"><p id="r-575240" data-claire-element-id="575240">etc.</p></li></ul><p id="r-575243" data-claire-element-id="575243">La fonction qui est appelée lors de la fermeture de la fenêtre est <code data-claire-semantic="cpp">closeEvent( QCloseEvent * event)</code>. Il suffit de modifier cette fonction pour pouvoir enregistrer nos options.</p><div id="r-575245" data-claire-element-id="575245" data-claire-semantic="question"><p id="r-575244" data-claire-element-id="575244">Comment ça &quot;modifier la fonction&quot; ? Ça veut dire que je dois modifier le code source ?! o_O</p></div><p id="r-575246" data-claire-element-id="575246">Non, heureusement, nous allons donc utiliser une technique spéciale du C++ : <strong>le masquage de méthodes</strong>. Derrière ce nom complexe se cache en fait quelque chose de très simple. Si jamais une classe hérite d'une autre et qu'elles ont toutes les deux une méthode en commun, c'est la méthode de <strong>la classe fille</strong> qui est utilisée. En gros, vous pouvez modifier les méthodes d'une classe mère en les &quot;recopiant&quot; : on parle de <strong>ré-implémentation</strong>.</p><aside id="r-575248" data-claire-element-id="575248" data-claire-semantic="information"><p id="r-575247" data-claire-element-id="575247">Plus d'infos sur le masquage dans <a href="http://www.siteduzero.com/tutoriel-3-8938-1-retour-sur-l-heritage.html#ss_part_2">le tutoriel de Nanoc.</a></p></aside><p id="r-575249" data-claire-element-id="575249">Donc, pour modifier la fonction <code data-claire-semantic="cpp">closeEvent</code> de la classe QWidget, nous devons :</p><ul id="r-575254" data-claire-element-id="575254"><li id="r-575251" data-claire-element-id="575251"><p id="r-575250" data-claire-element-id="575250"><strong>hériter de QWidget :</strong> bon, là, rien à faire, votre fenêtre hérite forcément de cette classe ; ;)</p></li><li id="r-575253" data-claire-element-id="575253"><p id="r-575252" data-claire-element-id="575252"><strong>réécrire la fonction <code data-claire-semantic="cpp">closeEvent</code> :</strong> c'est là que nous intervenons. :D</p></li></ul><p id="r-575255" data-claire-element-id="575255">Ajoutez donc une fonction <code data-claire-semantic="cpp">void closeEvent ( QCloseEvent * event )</code> à votre classe dans la portée <strong>protected</strong> :</p><pre id="r-575256" data-claire-element-id="575256"><code data-claire-semantic="cpp">#include &lt;QWidget&gt;
+
+class MaClasse : QWidget // Peut hériter de n'importe quelle classe fille de QWidget
+{
+    public:
+        MaClasse();
+        /* Vos méthodes */
+
+    private:
+        /* Vos attributs */
+
+    protected:
+        void closeEvent(QCloseEvent *event);
+};</code></pre><p id="r-575257" data-claire-element-id="575257">Il ne vous reste plus qu'à ré-implémenter cette fonction pour y sauvegarder les options :</p><pre id="r-575258" data-claire-element-id="575258"><code data-claire-semantic="cpp">/* ...Tout plein de code
+pour votre programme... */
+
+void MaClasse::closeEvent(QCloseEvent *event)
+{
+    QSettings settings(&quot;LoremIpsum Team&quot;, &quot;zSuperProgramme&quot;);
+    // Écrivez ce que vous avez à écrire
+    event-&gt;accept();
+}
+
+/* ...Encore du code
+qui ne regarde que vous... */</code></pre><aside id="r-575260" data-claire-element-id="575260" data-claire-semantic="warning"><p id="r-575259" data-claire-element-id="575259">Attention, n'oubliez pas la ligne <code data-claire-semantic="cpp">event-&gt;accept()</code>, sinon votre programme ne se fermera pas ! :p</p></aside><h3 id="r-la-lecture-2" data-claire-element-id="575276">La lecture</h3><p id="r-575262" data-claire-element-id="575262">Bien, vos options sont sauvegardées, il faut maintenant les lire. Bon, c'est d'un coup moins compliqué, il suffit juste de lire les clés au début du programme (dans le constructeur ^^ ) ; la lecture peut éventuellement être faite dans une fonction à part pour plus de clarté.</p><p id="r-575263" data-claire-element-id="575263">Cependant, un problème (qui n'en est pas vraiment un) se pose : comment accéder ensuite aux données à l'intérieur du programme ? Cela serait évidemment une très mauvaise idée de réouvrir le fichier et de récupérer les données à chaque fois que l'on en a besoin.</p><div id="r-575265" data-claire-element-id="575265" data-claire-semantic="question"><p id="r-575264" data-claire-element-id="575264">Je sais, on n'a qu'à stocker le fichier QSettings dans un attribut ! :D</p></div><p id="r-575266" data-claire-element-id="575266">C'est déjà mieux, mais on gaspillerait encore du temps à lire les données à chaque fois. Non, la meilleure solution, c'est de stocker une bonne fois pour toutes dans des attributs :) . Pour mieux structurer le code et éviter les confusions, on mettra un préfixe spécial à ces attributs, &quot;opt&quot; par exemple.</p><p id="r-575267" data-claire-element-id="575267">Un exemple de programme :</p><p id="r-575268" data-claire-element-id="575268"><cite>Citation</cite></p><blockquote id="r-575271" data-claire-element-id="575271"><pre id="r-575269" data-claire-element-id="575269"><code data-claire-semantic="cpp">#include &lt;QPushButton&gt;
+
+class Fenetre : QPushButton
+{
+    public:
+        Fenetre();
+        void chargerOptions();
+
+    private:
+        int opt_largeur;
+        int opt_hauteur;
+        QColor opt_couleur;
+};</code></pre><pre id="r-575270" data-claire-element-id="575270"><code data-claire-semantic="cpp">#include &quot;Fenetre.h&quot;
+
+Fenetre::Fenetre() : QPushButton()
+{
+    chargerOptions();
+    resize(opt_largeur, opt_hauteur);
+    setPalette(QPalette(couleur));
+}
+
+void Fenetre::chargerOptions()
+{
+    QSettings settings(&quot;sdz&quot;, &quot;programme&quot;);
+
+    opt_largeur = settings.value(&quot;largeur&quot;, 300).toInt();
+    opt_hauteur = settings.value(&quot;hauteur&quot;, 250).toInt();
+    opt_couleur = settings.value(&quot;couleur&quot;, QColor(Qt::white)).value&lt;QColor&gt;();
+}</code></pre></blockquote><p id="r-575272" data-claire-element-id="575272">Et voilà, c'est fini pour les annexes ! :)</p><p id="r-575273" data-claire-element-id="575273">Avouez que maintenant, il vous est beaucoup plus facile de sauvegarder les options de votre programme, et encore plus facile de les lire.</p><p id="r-575274" data-claire-element-id="575274">J'espère que ce tuto vous aura servi. Si vous avez une remarque ou un problème, vous pouvez <a href="http://www.siteduzero.com/mp-273-116778.html">m'envoyer un MP</a>, et n'hésitez pas à laisser un commentaire. ;)</p><p id="r-575275" data-claire-element-id="575275"><em>Enjoy programming !</em></p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings">Enregistrer vos options avec QSettings</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/comment-ca-marche-29">
+Comment ça marche ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/creer-un-fichier-d-options">
+Créer un fichier d&#039;options
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/ecrire-des-donnees-1">
+Ecrire des données
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/lire-des-donnees-1">
+Lire des données
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/annexes-64">
+Annexes
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/enregistrer-vos-options-avec-qsettings/lire-des-donnees-1">
+<span class="arrow"></span>
+<span class="next">Lire des données</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/enregistrer-vos-options-avec-qsettings.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 06:36:44 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/enregistrer-vos-options-avec-qsettings.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:10:54 GMT -->
+</html>

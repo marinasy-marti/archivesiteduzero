@@ -1,0 +1,816 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/domxml-flux-rss-de-news.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 20:06:07 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/domxml-flux-rss-de-news.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 03:47:18 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : [DOMXML] Flux RSS de news</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/domxml-flux-rss-de-news.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : [DOMXML] Flux RSS de news</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#DOMXMLFluxRSSdenews">[DOMXML] Flux RSS de news</a><br/><a href="#Quelquesnotionsutiles">Quelques notions utiles</a><br/><a href="#StructuredudocumentXML">Structure du document XML</a><br/><a href="#Rcuprerlesnews">Récupérer les news</a><br/><a href="#CrerlefichierXML">Créer le fichier XML</a><br/><a href="#Faciliterl039utilisation">Faciliter l&#039;utilisation</a><br/><a href="#PassagePHP5">Passage à PHP5</a><br/></div>
+<a name="DOMXMLFluxRSSdenews"></a><h2>[DOMXML] Flux RSS de news</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/quelques-notions-utiles">
+<span class="next">Quelques notions utiles</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-525821" data-claire-element-id="525821">Bonjour, bonjour ! :)</p><p id="r-525822" data-claire-element-id="525822">Vous voulez créer votre propre flux RSS de news pour votre site ?<br/> Vous voulez utiliser une librairie (lib) XML pour avoir un code plus joli, plus propre, mais vous ne trouvez aucun tutoriel à ce sujet sur Google ?</p><p id="r-525823" data-claire-element-id="525823">J'ai celui qu'il vous faut. ^^</p>
+</div><a name="Quelquesnotionsutiles"></a><h2>Quelques notions utiles</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/structure-du-document-xml">
+<span class="next">Structure du document XML</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-525824" data-claire-element-id="525824">Pour commencer, nous allons aborder les bases qui me semblent nécessaires pour comprendre la suite du tuto, et surtout examiner le fonctionnement de la lib XML.<br/> Elle n'est vraiment pas difficile à comprendre (c'est bien pour cela que je l'utilise :-° ), mais sans quelques mots de vocabulaire, vous aurez du mal à voir de quoi je parle.</p><p id="r-525825" data-claire-element-id="525825">Prenons par exemple un fichier XML « au hasard » (bon, pas vraiment au hasard : il nous servira encore par la suite).</p><pre id="r-525826" data-claire-element-id="525826"><code data-claire-semantic="xml">&lt;?xml version=&quot;1.0&quot; encoding=&quot;ISO-8859-15&quot; ?&gt;
+&lt;rss version=&quot;2.0&quot;&gt;
+        &lt;channel&gt;
+                &lt;description&gt;Une description&lt;/description&gt;
+                &lt;link&gt;Un lien&lt;/link&gt;
+                &lt;title&gt;Oh, un titre ! :D&lt;/title&gt;
+        &lt;/channel&gt;
+&lt;/rss&gt;</code></pre><p id="r-525827" data-claire-element-id="525827">&lt;channel&gt; est ce que l'on appelle une balise. Comme vous le savez, les balises vont par « paires », c'est-à-dire qu'il y a une balise ouvrante et une balise fermante.<br/> Dans cet exemple avec &lt;channel&gt;, la balise ouvrante est &lt;channel&gt; et la balise fermante &lt;/channel&gt;.<br/> Il y a aussi les balises autofermantes comme &lt;img /&gt;, mais elles ne nous intéressent pas dans cet article.<br/> Une balise peut en outre prendre un (ou plusieurs) arguments ; par exemple, version est un argument de la balise &lt;rss&gt; qui a pour valeur 2.0.</p><p id="r-525828" data-claire-element-id="525828">Si vous voulez en savoir plus au sujet du XML, <a href="http://www.siteduzero.com/tuto-3-2882-1-le-point-sur-xml.html">voici un excellent article écrit par un Zéro</a>.</p><p id="r-525829" data-claire-element-id="525829">Quelques mots concernant la lib que nous utiliserons pour <em>parser</em> le fichier XML afin de créer notre flux RSS : il s'agira de DomXML pour PHP4.<br/> Pour la documentation officielle, c'est <a href="http://php.benscom.com/manual/fr/ref.domxml.php">par ici</a>. Avec cette documentation et un peu de logique, vous pouvez faire énormément de choses. ;)</p><p id="r-525830" data-claire-element-id="525830">À présent, parlons un peu vocabulaire : voici quelques informations qui vous aideront à comprendre le nom des fonctions de DomXML. ^^ <br/> Dans notre fichier XML, la balise &lt;channel&gt; est aussi appelée « node » (« nœud », en français). Elle fait partie d'un <em>node root</em> (nœud parent), ici &lt;rss&gt;. On dit aussi que &lt;channel&gt; est une balise fille ou un fils <em>(child)</em> de &lt;rss&gt;.<br/> Si vous avez bien compris cela, vous avez sans doute déduit que les balises &lt;description&gt;, &lt;link&gt; et &lt;title&gt; sont des enfants de &lt;channel&gt;.</p><p id="r-525831" data-claire-element-id="525831">En résumé, on a :</p><ul id="r-525836" data-claire-element-id="525836"><li id="r-525833" data-claire-element-id="525833"><p id="r-525832" data-claire-element-id="525832"><strong>&lt;channel&gt;</strong>, appelée « node » dans la lib XML. C'est le node root de &lt;description&gt; ;</p></li><li id="r-525835" data-claire-element-id="525835"><p id="r-525834" data-claire-element-id="525834"><strong>&lt;description&gt;</strong>, appelée « child » dans la lib XML.</p></li></ul><aside id="r-525838" data-claire-element-id="525838" data-claire-semantic="warning"><p id="r-525837" data-claire-element-id="525837">La balise &lt;channel&gt; est elle-même un child de &lt;rss&gt;. Et ceci est récursivement valable pour toutes les balises. ;)</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news">[DOMXML] Flux RSS de news</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/quelques-notions-utiles">
+Quelques notions utiles
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/structure-du-document-xml">
+Structure du document XML
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/recuperer-les-news">
+Récupérer les news
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/creer-le-fichier-xml">
+Créer le fichier XML
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/faciliter-l-utilisation">
+Faciliter l&#039;utilisation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/passage-a-php5">
+Passage à PHP5
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/structure-du-document-xml">
+<span class="next">Structure du document XML</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="StructuredudocumentXML"></a><h2>Structure du document XML</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/quelques-notions-utiles">
+<span class="arrow"></span>
+<span class="next">Quelques notions utiles</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/recuperer-les-news">
+<span class="next">Récupérer les news</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-525840" data-claire-element-id="525840">Après avoir vu un peu de vocabulaire utile à la compréhension du tutoriel, nous allons nous intéresser à la structure que devra respecter le fichier XML pour être lisible par un lecteur de flux RSS. Prenons pour exemple le Site du Zéro. :-°</p><p id="r-525841" data-claire-element-id="525841">Voici la structure du début du fichier.</p><pre id="r-525842" data-claire-element-id="525842"><code data-claire-semantic="xml">&lt;?xml version=&quot;1.0&quot; encoding=&quot;ISO-8859-15&quot; ?&gt;
+&lt;rss version=&quot;2.0&quot;&gt;
+        &lt;channel&gt;
+                &lt;description&gt;Description du site&lt;/description&gt;
+                &lt;link&gt;Lien vers le site&lt;/link&gt;
+                &lt;title&gt;Titre du site&lt;/title&gt;
+        &lt;/channel&gt;
+&lt;/rss&gt;</code></pre><p id="r-525843" data-claire-element-id="525843">C'est la base d'un fichier XML pouvant être lu par un lecteur de flux RSS. Bien sûr, vous pouvez ajouter des éléments.</p><p id="r-525844" data-claire-element-id="525844">À présent, étudions la structure d'un élément (dans notre cas, une news) qui est à mettre entre les balises &lt;channel&gt;&lt;/channel&gt; du fichier XML vu précédemment. ;)</p><pre id="r-525845" data-claire-element-id="525845"><code data-claire-semantic="xml">&lt;item&gt;
+        &lt;title&gt;Titre de la news&lt;/title&gt;
+        &lt;link&gt;Lien vers la news en entier&lt;/link&gt;
+        &lt;description&gt;Description de la news, le mieux étant de mettre le contenu de la news&lt;/description&gt;
+        &lt;comments&gt;Un lien vers des commentaires de news&lt;/comments&gt;
+        &lt;author&gt;Auteur de la news&lt;/author&gt;
+        &lt;pubDate&gt;Date de publication de la news&lt;/pubDate&gt;
+        &lt;guid&gt;Texte qui identifie de manière unique la news, le mieux étant de mettre le titre de la news&lt;/guid&gt;
+        &lt;source&gt;Source dont est tirée la news&lt;/source&gt;
+&lt;/item&gt;</code></pre><p id="r-525846" data-claire-element-id="525846">Quelques explications s’imposent. Le nœud item va correspondre à <strong>une</strong> news dans la liste des news du fichier XML, c'est-à-dire qu'une fois votre fichier XML construit, vous aurez sans doute quelque chose ressemblant à ceci :</p><pre id="r-525847" data-claire-element-id="525847"><code data-claire-semantic="xml">&lt;item&gt;
+&lt;!-- Titre, lien, etc. de la première news --&gt;
+&lt;/item&gt;
+&lt;item&gt;
+&lt;!-- Titre, lien, etc. de la deuxième news --&gt;
+&lt;/item&gt;
+&lt;item&gt;
+&lt;!-- etc. --&gt;
+&lt;/item&gt;</code></pre><p id="r-525848" data-claire-element-id="525848">Voilà, cette structure vous permettra d'obtenir un flux RSS assez complet ; bien sûr, vous pouvez ajouter encore plus de choses. ;)</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news">[DOMXML] Flux RSS de news</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/quelques-notions-utiles">
+Quelques notions utiles
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/structure-du-document-xml">
+Structure du document XML
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/recuperer-les-news">
+Récupérer les news
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/creer-le-fichier-xml">
+Créer le fichier XML
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/faciliter-l-utilisation">
+Faciliter l&#039;utilisation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/passage-a-php5">
+Passage à PHP5
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/quelques-notions-utiles">
+<span class="arrow"></span>
+<span class="next">Quelques notions utiles</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/recuperer-les-news">
+<span class="next">Récupérer les news</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Rcuprerlesnews"></a><h2>Récupérer les news</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/structure-du-document-xml">
+<span class="arrow"></span>
+<span class="next">Structure du document XML</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/creer-le-fichier-xml">
+<span class="next">Créer le fichier XML</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-525850" data-claire-element-id="525850">Une fois que l'on connaît la manière dont doit être construit le document XML, il est temps de savoir comment récupérer le contenu qu'il faut y insérer. :D</p><p id="r-525851" data-claire-element-id="525851">Tout d'abord, jetons un œil à la structure de la table news servant de modèle pour ce tuto.</p><pre id="r-525852" data-claire-element-id="525852"><code data-claire-semantic="sql">CREATE TABLE `news` (
+  `nws_id` smallint(3) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `nws_pseudo` varchar(255) NOT NULL DEFAULT '0',
+  `nws_titre` varchar(255) NOT NULL DEFAULT '',
+  `nws_contenu` text NOT NULL,
+  `nws_date` int(10) NOT NULL DEFAULT '0',
+  PRIMARY KEY `id` (`nws_id`),
+) TYPE=InnoDB COMMENT='Contient les news' AUTO_INCREMENT=59 ;</code></pre><p id="r-525853" data-claire-element-id="525853">Cette table n'a rien d'exceptionnel ; si vous ne la comprenez pas, c’est que vous n'avez pas suivi les cours de M@teo correctement. :-°</p><p id="r-525854" data-claire-element-id="525854">Intéressons-nous à la requête destinée à sélectionner les différents éléments.</p><pre id="r-525855" data-claire-element-id="525855"><code data-claire-semantic="sql">SELECT nws_id, nws_pseudo, nws_titre, nws_contenu, nws_date FROM news ORDER BY nws_date DESC LIMIT 10 OFFSET 0</code></pre><p id="r-525856" data-claire-element-id="525856">Maintenant, il ne nous reste plus qu'à envoyer la requête au serveur MySQL.</p><pre id="r-525857" data-claire-element-id="525857"><code data-claire-semantic="html+php">&lt;?php
+mysql_connect(&quot;localhost&quot;, &quot;root&quot;, &quot;mdp&quot;);
+mysql_select_db(&quot;nom_bdd&quot;);
+ 
+$nws = mysql_query(&quot;SELECT nws_id, nws_pseudo, nws_titre, nws_contenu, nws_date FROM news WHERE ORDER BY nws_date DESC LIMIT 0 OFFSET 10&quot;);
+?&gt;</code></pre><p id="r-525858" data-claire-element-id="525858">Ici, on sélectionne les dix dernières news. Libre à vous de modifier cette valeur.<br/> Et voilà. Ces quelques lignes de code ne devraient pas vous surprendre si vous avez lu le tuto depuis le début. :)</p><p id="r-525859" data-claire-element-id="525859">Il ne vous reste plus qu'à vous souvenir que $nws contient la liste des news que vous voulez mettre dans votre flux RSS.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news">[DOMXML] Flux RSS de news</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/quelques-notions-utiles">
+Quelques notions utiles
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/structure-du-document-xml">
+Structure du document XML
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/recuperer-les-news">
+Récupérer les news
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/creer-le-fichier-xml">
+Créer le fichier XML
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/faciliter-l-utilisation">
+Faciliter l&#039;utilisation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/passage-a-php5">
+Passage à PHP5
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/structure-du-document-xml">
+<span class="arrow"></span>
+<span class="next">Structure du document XML</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/creer-le-fichier-xml">
+<span class="next">Créer le fichier XML</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="CrerlefichierXML"></a><h2>Créer le fichier XML</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/recuperer-les-news">
+<span class="arrow"></span>
+<span class="next">Récupérer les news</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/faciliter-l-utilisation">
+<span class="next">Faciliter l&#039;utilisation</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-525861" data-claire-element-id="525861">Nous sommes presque arrivés au bout de nos peines. Plus que quelques minutes d'attention et vous aurez enfin votre flux RSS. ^^</p><p id="r-525862" data-claire-element-id="525862">Voici la ligne de code permettant d'initialiser le fichier XML :</p><pre id="r-525863" data-claire-element-id="525863"><code data-claire-semantic="html+php">&lt;?php
+$xml_file = domxml_new_doc(&quot;1.0&quot;);
+?&gt;</code></pre><p id="r-525864" data-claire-element-id="525864">Cette ligne crée simplement un fichier XML temporaire en mémoire dans lequel on indique la version XML utilisée (ici : version 1.0).</p><p id="r-525865" data-claire-element-id="525865">À présent, voyons comment créer le nœud maître rss puis un nœud fils channel.</p><pre id="r-525866" data-claire-element-id="525866"><code data-claire-semantic="html+php">&lt;?php
+function &amp;init_news_rss(&amp;$xml_file)
+{
+        $root = $xml_file-&gt;create_element(&quot;rss&quot;); // création de l'élément
+        $root-&gt;set_attribute(&quot;version&quot;, &quot;2.0&quot;); // on lui ajoute un attribut
+        $root = $xml_file-&gt;append_child($root); // on l'insère dans le nœud parent (ici root, qui est &quot;rss&quot;)
+        
+        $channel = $xml_file-&gt;create_element(&quot;channel&quot;);
+        $channel = $root-&gt;append_child($channel);
+                
+        $desc = $xml_file-&gt;create_element(&quot;description&quot;);
+        $desc = $channel-&gt;append_child($desc);
+        $text_desc = $xml_file-&gt;create_text_node(&quot;Partage de connaissances en tous genres&quot;); // on insère du texte entre les balises &lt;description&gt;&lt;/description&gt;
+        $text_desc = $desc-&gt;append_child($text_desc);
+        
+        $link = $xml_file-&gt;create_element(&quot;link&quot;);
+        $link = $channel-&gt;append_child($link);
+        $text_link = $xml_file-&gt;create_text_node(&quot;http://www.bougiemind.info&quot;);
+        $text_link = $link-&gt;append_child($text_link);
+        
+        $title = $xml_file-&gt;create_element(&quot;title&quot;);
+        $title = $channel-&gt;append_child($title);
+        $text_title = $xml_file-&gt;create_text_node(&quot;Bougie'S mind&quot;);
+        $text_title = $title-&gt;append_child($text_title);
+        
+        return $channel;
+}
+?&gt;</code></pre><p id="r-525867" data-claire-element-id="525867">Cette fonction retourne une référence : ainsi n'obtient-on pas une simple copie de l'élément, mais bien l'élément lui-même. ;)</p><p id="r-525868" data-claire-element-id="525868">À présent, vous avez un fichier XML (toujours en mémoire) qui devrait ressembler à ceci :</p><pre id="r-525869" data-claire-element-id="525869"><code data-claire-semantic="xml">&lt;?xml version=&quot;1.0&quot; encoding=&quot;ISO-8859-15&quot; ?&gt;
+&lt;rss version=&quot;2.0&quot;&gt;
+        &lt;channel&gt;
+                &lt;description&gt;Partage de connaissances en tous genres&lt;/description&gt;
+                &lt;link&gt;http://www.bougiemind.info&lt;/link&gt;
+                &lt;title&gt;Bougie'S mind&lt;/title&gt;
+        &lt;/channel&gt;
+&lt;/rss&gt;</code></pre><p id="r-525870" data-claire-element-id="525870">Maintenant, nous allons passer à la partie la plus difficile à comprendre (je vous rassure, elle est quand même tout à fait abordable) : la création des <em>items</em> (chaque item correspond à une news différente).<br/> La fonction prend comme arguments :</p><ul id="r-525885" data-claire-element-id="525885"><li id="r-525872" data-claire-element-id="525872"><p id="r-525871" data-claire-element-id="525871"><strong>$parent</strong>, contient le fichier XML temporaire ;</p></li><li id="r-525874" data-claire-element-id="525874"><p id="r-525873" data-claire-element-id="525873"><strong>$root</strong>, nœud parent, ici channel ;</p></li><li id="r-525876" data-claire-element-id="525876"><p id="r-525875" data-claire-element-id="525875"><strong>$id</strong>, ID de la news ;</p></li><li id="r-525878" data-claire-element-id="525878"><p id="r-525877" data-claire-element-id="525877"><strong>$pseudo</strong>, auteur de la news ;</p></li><li id="r-525880" data-claire-element-id="525880"><p id="r-525879" data-claire-element-id="525879"><strong>$titre</strong>, titre de la news ;</p></li><li id="r-525882" data-claire-element-id="525882"><p id="r-525881" data-claire-element-id="525881"><strong>$contenu</strong>, contenu de la news ;</p></li><li id="r-525884" data-claire-element-id="525884"><p id="r-525883" data-claire-element-id="525883"><strong>$date</strong>, date de création de la news.</p></li></ul><pre id="r-525886" data-claire-element-id="525886"><code data-claire-semantic="html+php">&lt;?php
+function add_news_node(&amp;$parent, $root, $id, $pseudo, $titre, $contenu, $date)
+{
+        $item = $parent-&gt;create_element(&quot;item&quot;);
+        $item = $root-&gt;append_child($item);
+        
+        $title = $parent-&gt;create_element(&quot;title&quot;);
+        $title = $item-&gt;append_child($title);
+        $text_title = $parent-&gt;create_text_node($titre);
+        $text_title = $title-&gt;append_child($text_title);
+        
+        $link = $parent-&gt;create_element(&quot;link&quot;);
+        $link = $item-&gt;append_child($link);
+        $text_link = $parent-&gt;create_text_node(&quot;http://www.bougiemind.info/rss_news&quot;.$id.&quot;.html&quot;);
+        $text_link = $link-&gt;append_child($text_link);
+        
+        $desc = $parent-&gt;create_element(&quot;description&quot;);
+        $desc = $item-&gt;append_child($desc);
+        $text_desc = $parent-&gt;create_text_node($contenu);
+        $text_desc = $desc-&gt;append_child($text_desc);
+        
+        $com = $parent-&gt;create_element(&quot;comments&quot;);
+        $com = $item-&gt;append_child($com);
+        $text_com = $parent-&gt;create_text_node(&quot;http://www.bougiemind.info/news-11-&quot;.$id.&quot;.html&quot;);
+        $text_com = $com-&gt;append_child($text_com);
+        
+        $author = $parent-&gt;create_element(&quot;author&quot;);
+        $author = $item-&gt;append_child($author);
+        $text_author = $parent-&gt;create_text_node($pseudo);
+        $text_author = $author-&gt;append_child($text_author);
+        
+        $pubdate = $parent-&gt;create_element(&quot;pubDate&quot;);
+        $pubdate = $item-&gt;append_child($pubdate);
+        $text_date = $parent-&gt;create_text_node($date);
+        $text_date = $pubdate-&gt;append_child($text_date);
+        
+        $guid = $parent-&gt;create_element(&quot;guid&quot;);
+        $guid = $item-&gt;append_child($guid);
+        $text_guid = $parent-&gt;create_text_node(&quot;http://www.bougiemind.info/rss_news&quot;.$id.&quot;.html&quot;);
+        $text_guid = $guid-&gt;append_child($text_guid);
+        
+        $src = $parent-&gt;create_element(&quot;source&quot;);
+        $src = $item-&gt;append_child($src);
+        $text_src = $parent-&gt;create_text_node(&quot;http://www.bougiemind.info&quot;);
+        $text_src = $src-&gt;append_child($text_src);
+}
+?&gt;</code></pre><p id="r-525887" data-claire-element-id="525887">Normalement, aucune de ces fonctions ne vous est inconnue : elles ont été décrites plus haut. ;)</p><p id="r-525888" data-claire-element-id="525888">Voici à quoi ressemble le bout de fichier XML que vous venez de créer.</p><aside id="r-525890" data-claire-element-id="525890" data-claire-semantic="warning"><p id="r-525889" data-claire-element-id="525889">J'ai utilisé une news au hasard. ;)</p></aside><pre id="r-525891" data-claire-element-id="525891"><code data-claire-semantic="xml">&lt;item&gt;
+    &lt;title&gt;Flux RSS des news en place&lt;/title&gt;
+    &lt;link&gt;http://www.bougiemind.info/rss_news56.html&lt;/link&gt;
+    &lt;description&gt;Voilà, le flux RSS des news est en place !&lt;/description&gt;
+    &lt;comments&gt;http://www.bougiemind.info/news-11-56.html&lt;/comments&gt;
+    &lt;author&gt;Bougie&lt;/author&gt;
+    &lt;pubDate&gt;24/04/2006 12:42&lt;/pubDate&gt;
+    &lt;guid&gt;http://www.bougiemind.info/rss_news56.html&lt;/guid&gt;
+    &lt;source&gt;http://www.bougiemind.info&lt;/source&gt;
+&lt;/item&gt;</code></pre><aside id="r-525893" data-claire-element-id="525893" data-claire-semantic="warning"><p id="r-525892" data-claire-element-id="525892">Souvenez-vous que le nœud item est un fils de channel, donc que les item se trouvent entre les balises &lt;channel&gt;&lt;/channel&gt;.</p></aside><p id="r-525894" data-claire-element-id="525894">Il ne nous reste plus qu'à élaborer une boucle sur la fonction add_news_node afin de créer un élément item à chaque fois qu'il y a une news. Je vous laisse réfléchir. ;)</p><p id="r-525895" data-claire-element-id="525895">…</p><p id="r-525896" data-claire-element-id="525896">Vous avez réfléchi ? Bon, je ne vous fais pas patienter plus longtemps. ^^</p><pre id="r-525897" data-claire-element-id="525897"><code data-claire-semantic="html+php">&lt;?php
+while($news = mysql_fetch_assoc($nws))
+        {
+                add_news_node($xml_file, $channel, $news[&quot;nws_id&quot;], $news[&quot;nws_pseudo&quot;], $news[&quot;nws_titre&quot;], $news[&quot;nws_contenu&quot;], date(&quot;d/m/Y H:i&quot;, $news[&quot;nws_date&quot;]));
+        }
+?&gt;</code></pre><p id="r-525898" data-claire-element-id="525898">Le paramètre de la fonction add_news_node ($channel) est l'objet retourné par la fonction init_news_rss.</p><p id="r-525899" data-claire-element-id="525899">À présent, il ne reste plus qu'à enregistrer le fichier XML sur le disque dur. ^^</p><pre id="r-525900" data-claire-element-id="525900"><code data-claire-semantic="html+php">&lt;?php
+$xml_file-&gt;dump_file(&quot;news_FR_flux.xml&quot;);
+?&gt;</code></pre><p id="r-525901" data-claire-element-id="525901">Vous devriez désormais avoir un flux RSS fonctionnel.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news">[DOMXML] Flux RSS de news</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/quelques-notions-utiles">
+Quelques notions utiles
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/structure-du-document-xml">
+Structure du document XML
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/recuperer-les-news">
+Récupérer les news
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/creer-le-fichier-xml">
+Créer le fichier XML
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/faciliter-l-utilisation">
+Faciliter l&#039;utilisation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/passage-a-php5">
+Passage à PHP5
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/recuperer-les-news">
+<span class="arrow"></span>
+<span class="next">Récupérer les news</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/faciliter-l-utilisation">
+<span class="next">Faciliter l&#039;utilisation</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Faciliterl039utilisation"></a><h2>Faciliter l&#039;utilisation</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/creer-le-fichier-xml">
+<span class="arrow"></span>
+<span class="next">Créer le fichier XML</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/passage-a-php5">
+<span class="next">Passage à PHP5</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-525903" data-claire-element-id="525903">Maintenant que l'on a vu comment faire un flux RSS, on va essayer de mettre un peu d'ordre dans ce code qui, pour le moment, est assez brouillon : on va tout regrouper dans un fichier flux_rss.php.</p><p id="r-525904" data-claire-element-id="525904">Nous allons également créer une fonction qui s'occupera de mettre à jour le flux RSS :</p><pre id="r-525905" data-claire-element-id="525905"><code data-claire-semantic="html+php">&lt;?php
+function rebuild_rss()
+{
+        // on se connecte à la BDD
+        mysql_connect(&quot;localhost&quot;, &quot;root&quot;, &quot;mdp&quot;);
+        mysql_select_db(&quot;votre_table&quot;);
+ 
+        // on récupère les news
+        $nws = mysql_query(&quot;SELECT nws_id, nws_pseudo, nws_titre, nws_contenu, nws_date FROM news WHERE ORDER BY nws_date DESC LIMIT 0 OFFSET 10&quot;);
+ 
+        // on crée le fichier XML
+        $xml_file = domxml_new_doc(&quot;1.0&quot;);
+ 
+        // on ajoute chaque news au fichier RSS
+        while($news = mysql_fetch_assoc($nws))
+        {
+                add_news_node($xml_file, $channel, $news[&quot;nws_id&quot;], $news[&quot;nws_pseudo&quot;], $news[&quot;nws_titre&quot;], $news[&quot;nws_contenu&quot;], date(&quot;d/m/Y H:i&quot;, $news[&quot;nws_date&quot;]));
+        }
+        
+        // on écrit le fichier
+        $xml_file-&gt;dump_file(&quot;news_FR_flux.xml&quot;);
+}
+?&gt;</code></pre><p id="r-525906" data-claire-element-id="525906">Vous avez maintenant une fonction qui reconstruira votre flux RSS à chaque fois que vous l'appellerez. ;)</p><p id="r-525907" data-claire-element-id="525907">Si on récapitule, vous devriez avoir un fichier flux_rss.php comme celui-ci :</p><pre id="r-525908" data-claire-element-id="525908"><code data-claire-semantic="html+php">&lt;?php
+function &amp;init_news_rss(&amp;$xml_file)
+{
+        $root = $xml_file-&gt;create_element(&quot;rss&quot;); // création de l'élément
+        $root-&gt;set_attribute(&quot;version&quot;, &quot;2.0&quot;); // on lui ajoute un attribut
+        $root = $xml_file-&gt;append_child($root); // on l'insère dans le nœud parent (ici root qui est &quot;rss&quot;)
+       
+        $channel = $xml_file-&gt;create_element(&quot;channel&quot;);
+        $channel = $root-&gt;append_child($channel);
+               
+        $desc = $xml_file-&gt;create_element(&quot;description&quot;);
+        $desc = $channel-&gt;append_child($desc);
+        $text_desc = $xml_file-&gt;create_text_node(&quot;Partage de connaissances en tous genres&quot;); // on insère du texte entre les balises &lt;description&gt;&lt;/description&gt;
+        $text_desc = $desc-&gt;append_child($text_desc);
+       
+        $link = $xml_file-&gt;create_element(&quot;link&quot;);
+        $link = $channel-&gt;append_child($link);
+        $text_link = $xml_file-&gt;create_text_node(&quot;http://www.bougiemind.info&quot;);
+        $text_link = $link-&gt;append_child($text_link);
+       
+        $title = $xml_file-&gt;create_element(&quot;title&quot;);
+        $title = $channel-&gt;append_child($title);
+        $text_title = $xml_file-&gt;create_text_node(&quot;Bougie'S mind&quot;);
+        $text_title = $title-&gt;append_child($text_title);
+       
+        return $channel;
+}
+ 
+function add_news_node(&amp;$parent, $root, $id, $pseudo, $titre, $contenu, $date)
+{
+        $item = $parent-&gt;create_element(&quot;item&quot;);
+        $item = $root-&gt;append_child($item);
+       
+        $title = $parent-&gt;create_element(&quot;title&quot;);
+        $title = $item-&gt;append_child($title);
+        $text_title = $parent-&gt;create_text_node($titre);
+        $text_title = $title-&gt;append_child($text_title);
+       
+        $link = $parent-&gt;create_element(&quot;link&quot;);
+        $link = $item-&gt;append_child($link);
+        $text_link = $parent-&gt;create_text_node(&quot;http://www.bougiemind.info/rss_news&quot;.$id.&quot;.html&quot;);
+        $text_link = $link-&gt;append_child($text_link);
+       
+        $desc = $parent-&gt;create_element(&quot;description&quot;);
+        $desc = $item-&gt;append_child($desc);
+        $text_desc = $parent-&gt;create_text_node($contenu);
+        $text_desc = $desc-&gt;append_child($text_desc);
+       
+        $com = $parent-&gt;create_element(&quot;comments&quot;);
+        $com = $item-&gt;append_child($com);
+        $text_com = $parent-&gt;create_text_node(&quot;http://www.bougiemind.info/news-11-&quot;.$id.&quot;.html&quot;);
+        $text_com = $com-&gt;append_child($text_com);
+       
+        $author = $parent-&gt;create_element(&quot;author&quot;);
+        $author = $item-&gt;append_child($author);
+        $text_author = $parent-&gt;create_text_node($pseudo);
+        $text_author = $author-&gt;append_child($text_author);
+       
+        $pubdate = $parent-&gt;create_element(&quot;pubDate&quot;);
+        $pubdate = $item-&gt;append_child($pubdate);
+        $text_date = $parent-&gt;create_text_node($date);
+        $text_date = $pubdate-&gt;append_child($text_date);
+       
+        $guid = $parent-&gt;create_element(&quot;guid&quot;);
+        $guid = $item-&gt;append_child($guid);
+        $text_guid = $parent-&gt;create_text_node(&quot;http://www.bougiemind.info/rss_news&quot;.$id.&quot;.html&quot;);
+        $text_guid = $guid-&gt;append_child($text_guid);
+       
+        $src = $parent-&gt;create_element(&quot;source&quot;);
+        $src = $item-&gt;append_child($src);
+        $text_src = $parent-&gt;create_text_node(&quot;http://www.bougiemind.info&quot;);
+        $text_src = $src-&gt;append_child($text_src);
+}
+ 
+function rebuild_rss()
+{
+        // on se connecte à la BDD
+        mysql_connect(&quot;localhost&quot;, &quot;root&quot;, &quot;mdp&quot;);
+        mysql_select_db(&quot;votre_table&quot;);
+ 
+        // on récupère les news
+        $nws = mysql_query(&quot;SELECT nws_id, nws_pseudo, nws_titre, nws_contenu, nws_date FROM news WHERE ORDER BY nws_date DESC LIMIT 0 OFFSET 10&quot;);
+ 
+        // on crée le fichier XML
+        $xml_file = domxml_new_doc(&quot;1.0&quot;);
+ 
+        // on initialise le fichier XML pour le flux RSS
+        $channel = init_news_rss($xml_file);
+ 
+        // on ajoute chaque news au fichier RSS
+        while($news = mysql_fetch_assoc($nws))
+        {
+                add_news_node($xml_file, $channel, $news[&quot;nws_id&quot;], $news[&quot;nws_pseudo&quot;], $news[&quot;nws_titre&quot;], $news[&quot;nws_contenu&quot;], date(&quot;d/m/Y H:i&quot;, $news[&quot;nws_date&quot;]));
+        }
+       
+        // on écrit le fichier
+        $xml_file-&gt;dump_file(&quot;news_FR_flux.xml&quot;);
+}
+?&gt;</code></pre><p id="r-525909" data-claire-element-id="525909">Et voilà le travail ! Il vous suffit à présent d'ajouter deux lignes de code pour que votre flux RSS soit reconstruit :</p><pre id="r-525910" data-claire-element-id="525910"><code data-claire-semantic="html+php">&lt;?php
+require('flux_rss.php');
+rebuild_rss();
+?&gt;</code></pre><p id="r-525911" data-claire-element-id="525911">Il ne vous reste plus qu'à indiquer au navigateur que votre site possède un flux RSS, et pour cela une simple ligne en XHTML suffit.</p><pre id="r-525912" data-claire-element-id="525912"><code data-claire-semantic="html">&lt;link rel=&quot;alternate&quot; type=&quot;application/rss+xml&quot; title=&quot;{Titre du flux RSS}&quot; href=&quot;{Lien vers le flux RSS}&quot; /&gt;</code></pre><p id="r-525913" data-claire-element-id="525913">{Titre du flux RSS} et {Lien vers le flux RSS} sont bien sûr à remplacer par ce que vous voulez. :)</p><aside id="r-525915" data-claire-element-id="525915" data-claire-semantic="information"><p id="r-525914" data-claire-element-id="525914">Ce lien vers le fichier du flux RSS est à placer entre les balises &lt;head&gt;&lt;head&gt; de votre fichier XHTML. ;)</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news">[DOMXML] Flux RSS de news</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/quelques-notions-utiles">
+Quelques notions utiles
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/structure-du-document-xml">
+Structure du document XML
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/recuperer-les-news">
+Récupérer les news
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/creer-le-fichier-xml">
+Créer le fichier XML
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/faciliter-l-utilisation">
+Faciliter l&#039;utilisation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/passage-a-php5">
+Passage à PHP5
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/creer-le-fichier-xml">
+<span class="arrow"></span>
+<span class="next">Créer le fichier XML</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/passage-a-php5">
+<span class="next">Passage à PHP5</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="PassagePHP5"></a><h2>Passage à PHP5</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/faciliter-l-utilisation">
+<span class="arrow"></span>
+<span class="next">Faciliter l&#039;utilisation</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-525917" data-claire-element-id="525917">Pour ceux qui souhaitent utiliser mon code avec PHP5, il y a quelques trucs à changer (c'est principalement le nom des méthodes qui change).</p><p id="r-525918" data-claire-element-id="525918">Le nom de la lib XML n'est plus DOMXML mais simplement DOM.<br/><a href="http://fr.php.net/manual/fr/ref.dom.php">Un lien vers la documentation</a>.</p><p id="r-525919" data-claire-element-id="525919">Je ne vais pas recopier le code modifié car il est, à peu de choses près, identique (et puis c’est assez répétitif ;) ).</p><ul id="r-525928" data-claire-element-id="525928"><li id="r-525921" data-claire-element-id="525921"><p id="r-525920" data-claire-element-id="525920">La fonction create_element est à remplacer par createElement.</p></li><li id="r-525923" data-claire-element-id="525923"><p id="r-525922" data-claire-element-id="525922">La fonction set_attribute est à remplacer par setAttribute.</p></li><li id="r-525925" data-claire-element-id="525925"><p id="r-525924" data-claire-element-id="525924">La fonction append_child est à remplacer par appendChild.</p></li><li id="r-525927" data-claire-element-id="525927"><p id="r-525926" data-claire-element-id="525926">La fonction create_text_node est à remplacer par createTextNode.</p></li></ul><p id="r-525929" data-claire-element-id="525929">Ce qui nous donnerait (par exemple) pour la fonction &amp;init_news_rss(&amp;$xml_file) :</p><pre id="r-525930" data-claire-element-id="525930"><code data-claire-semantic="html+php">&lt;?php
+function &amp;init_news_rss(&amp;$xml_file)
+{
+        $root = $xml_file-&gt;createElement(&quot;rss&quot;); // création de l'élément
+        $root-&gt;setAttribute(&quot;version&quot;, &quot;2.0&quot;); // on lui ajoute un attribut
+        $root = $xml_file-&gt;appendChild($root); // on l'insère dans le nœud parent (ici root qui est &quot;rss&quot;)
+       
+        $channel = $xml_file-&gt;createElement(&quot;channel&quot;);
+        $channel = $root-&gt;appendChild($channel);
+               
+        $desc = $xml_file-&gt;createElement(&quot;description&quot;);
+        $desc = $channel-&gt;appendChild($desc);
+        $text_desc = $xml_file-&gt;createTextNode(&quot;Partage de connaissances en tous genres&quot;); // on insère du texte entre les balises &lt;description&gt;&lt;/description&gt;
+        $text_desc = $desc-&gt;appendChild($text_desc);
+       
+        $link = $xml_file-&gt;createElement(&quot;link&quot;);
+        $link = $channel-&gt;appendChild($link);
+        $text_link = $xml_file-&gt;createTextNode(&quot;http://www.bougiemind.info&quot;);
+        $text_link = $link-&gt;appendChild($text_link);
+       
+        $title = $xml_file-&gt;createElement(&quot;title&quot;);
+        $title = $channel-&gt;appendChild($title);
+        $text_title = $xml_file-&gt;createTextNode(&quot;Bougie'S mind&quot;);
+        $text_title = $title-&gt;appendChild($text_title);
+       
+        return $channel;
+}
+?&gt;</code></pre><p id="r-525931" data-claire-element-id="525931">À vous ensuite de modifier les autres fonctions ! Je vous fais confiance. ;)</p><p id="r-525932" data-claire-element-id="525932">Les dernières modifications doivent se faire au niveau de la création du fichier XML et de sa sauvegarde.</p><p id="r-525933" data-claire-element-id="525933">Dans notre code PHP4, on avait :</p><pre id="r-525934" data-claire-element-id="525934"><code data-claire-semantic="html+php">&lt;?php
+$xml_file = domxml_new_doc(&quot;1.0&quot;);
+?&gt;</code></pre><p id="r-525935" data-claire-element-id="525935">En PHP5, il faut faire comme cela :</p><pre id="r-525936" data-claire-element-id="525936"><code data-claire-semantic="html+php">&lt;?php
+$xml_file = new DOMDocument(&quot;1.0&quot;);
+?&gt;</code></pre><p id="r-525937" data-claire-element-id="525937">Et pour sauvegarder le fichier XML…<br/> En PHP4 :</p><pre id="r-525938" data-claire-element-id="525938"><code data-claire-semantic="html+php">&lt;?php
+$xml_file-&gt;dump_file(&quot;news_FR_flux.xml&quot;);
+?&gt;</code></pre><p id="r-525939" data-claire-element-id="525939">En PHP5 :</p><pre id="r-525940" data-claire-element-id="525940"><code data-claire-semantic="html+php">&lt;?php
+$xml_file-&gt;save(&quot;news_FR_flux.xml&quot;);
+?&gt;</code></pre><p id="r-525941" data-claire-element-id="525941">Vous avez désormais un code qui fonctionnera sur un serveur avec PHP5 !<br/> Et n'oubliez pas : tout ce que je vous ai dit ici, je l'ai trouvé dans la documentation. ;)</p><p id="r-525942" data-claire-element-id="525942">Vous devriez maintenant être capables de coder votre propre flux RSS des news de votre site en vous servant d'une lib XML.<br/> Merci de m'avoir lu, et à bientôt pour de nouvelles aventures. :-°</p><p id="r-525943" data-claire-element-id="525943">P.-S. — À ceux qui souhaitent finaliser le tuto en ajoutant ce qui a été dit dans les commentaires, envoyez-moi un MP. ;)</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news">[DOMXML] Flux RSS de news</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/quelques-notions-utiles">
+Quelques notions utiles
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/structure-du-document-xml">
+Structure du document XML
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/recuperer-les-news">
+Récupérer les news
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/creer-le-fichier-xml">
+Créer le fichier XML
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/faciliter-l-utilisation">
+Faciliter l&#039;utilisation
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/passage-a-php5">
+Passage à PHP5
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/domxml-flux-rss-de-news/faciliter-l-utilisation">
+<span class="arrow"></span>
+<span class="next">Faciliter l&#039;utilisation</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/domxml-flux-rss-de-news.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 20:06:07 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/domxml-flux-rss-de-news.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 03:47:19 GMT -->
+</html>

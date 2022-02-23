@@ -1,0 +1,702 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/lecture-et-ecriture-de-fichiers-en-mode-binaire.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 07:01:52 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/lecture-et-ecriture-de-fichiers-en-mode-binaire.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:16:26 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Lecture et écriture de fichiers en mode binaire</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Lecture et écriture de fichiers en mode binaire</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Lectureetcrituredefichiersenmodebinaire">Lecture et écriture de fichiers en mode binaire</a><br/><a href="#Lemodeformatetnonformat">Le mode formaté et non formaté</a><br/><a href="#Avantagesdefwriteparrapportfprintf">Avantages de fwrite par rapport à fprintf</a><br/><a href="#Utilisationdefwrite">Utilisation de fwrite</a><br/><a href="#Lescasdanslesquelsfwriteestdconseille">Les cas dans lesquels fwrite est déconseillée</a><br/><a href="#Lectureparfread">Lecture par fread</a><br/><a href="#Exemplesd039application">Exemples d&#039;application</a><br/><a href="#Portabilit">Portabilité</a><br/></div>
+<a name="Lectureetcrituredefichiersenmodebinaire"></a><h2>Lecture et écriture de fichiers en mode binaire</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/le-mode-formate-et-non-formate">
+<span class="next">Le mode formaté et non formaté</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-450745" data-claire-element-id="450745">Comme ce que vous avez pu voir dans le cours de M@teo21 sur <a href="http://www.siteduzero.com/tutoriel-3-14052-lire-et-ecrire-dans-des-fichiers.html">l'écriture et la lecture d'un fichier</a>, si ce n'est pas encore fait, alors je vous le conseille vivement avant de continuer à lire ce présent tutoriel :) , on peut écrire et lire dans un fichier au format texte (ASCII). Ici je vais vous parler d'une autre méthode de lecture et écriture non formatée qu'on appelle <em><strong>écriture binaire</strong></em>.</p><p id="r-450746" data-claire-element-id="450746">En vous souhaitant bonne lecture.</p>
+</div><a name="Lemodeformatetnonformat"></a><h2>Le mode formaté et non formaté</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/avantages-de-fwrite-par-rapport-a-fprintf">
+<span class="next">Avantages de fwrite par rapport à fprintf</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-printf-et-le-mode-formate" data-claire-element-id="450752">printf () et le mode formaté</h2><p id="r-450747" data-claire-element-id="450747">Je vais parler un peu de printf :) , et oui ça vous rappelle quelque chose (enfin je l'espère :p ).</p><p id="r-450748" data-claire-element-id="450748">Cette merveilleuse fonction qui se tape un grand travail afin de nous afficher les choses qu'on lui donne au format qu'on désire, et ceci en mode dit &quot;formaté&quot;, c'est-à-dire, que la donnée que nous lui avons passée sera écrite d'une façon personnalisée et au format ASCII.</p><pre id="r-450749" data-claire-element-id="450749"><code data-claire-semantic="c">int var = 15;
+printf(&quot;la valeur de var est %d&quot;,var);</code></pre><p id="r-450750" data-claire-element-id="450750">Ainsi, la valeur de la <code data-claire-semantic="c">vari</code>able var , sera inscrite en caractères ASCII ('1' et '5') sur l'écran.</p><pre id="r-450751" data-claire-element-id="450751"><code data-claire-semantic="console">la valeur de var est 15</code></pre><h2 id="r-la-difference-entre-fwrite-et-printf" data-claire-element-id="450788">La différence entre fwrite et printf</h2><p id="r-450753" data-claire-element-id="450753">Maintenant que nous savons un peu ce qu'est l'écriture en mode formaté, voyons ce que c'est qu'un mode dit &quot;non formaté&quot;. En l'occurrence le mode d'écriture de fwrite.</p><p id="r-450754" data-claire-element-id="450754">Vous avez dû lire dans le cours de M@teo21 que quand on déclare une variable, cela alloue une place dans la mémoire pour contenir ce qu'on va stocker dans cette variable.</p><p id="r-450755" data-claire-element-id="450755">Je m'explique :)</p><p id="r-450756" data-claire-element-id="450756">Si je continue sur l'exemple d'avant, une déclaration comme ceci :</p><pre id="r-450757" data-claire-element-id="450757"><code data-claire-semantic="c">int var;</code></pre><p id="r-450758" data-claire-element-id="450758">Va allouer un espace qu'on nommera 'var', ainsi si on lui affecte une valeur, cette valeur sera inscrite dans cet espace mémoire, qui, dans le cas d'un int, est généralement sur 4 octets (32 bits).</p><p id="r-450759" data-claire-element-id="450759">La notions de bits est importante ici :) .</p><p id="r-450760" data-claire-element-id="450760">Ainsi le résultat d'une affectation comme ceci :</p><pre id="r-450761" data-claire-element-id="450761"><code data-claire-semantic="c">int var = 15;</code></pre><p id="r-450762" data-claire-element-id="450762">Donnerait en mémoire :</p><table id="r-450773" data-claire-element-id="450773"><tbody id="r-450772" data-claire-element-id="450772"><tr id="r-450771" data-claire-element-id="450771"><td id="r-450764" data-claire-element-id="450764"><p id="r-450763" data-claire-element-id="450763">00000000</p></td><td id="r-450766" data-claire-element-id="450766"><p id="r-450765" data-claire-element-id="450765">00000000</p></td><td id="r-450768" data-claire-element-id="450768"><p id="r-450767" data-claire-element-id="450767">00000000</p></td><td id="r-450770" data-claire-element-id="450770"><p id="r-450769" data-claire-element-id="450769">00001111</p></td></tr></tbody></table><p id="r-450774" data-claire-element-id="450774">Qui est la représentation binaire du nombre 15 sur 32 bits. J'ouvre une parenthèse pour vous informer que l'ordre de ces 4 octets peut différer d'une machine à l'autre selon le codage utilisé (<a href="http://fr.wikipedia.org/wiki/Endianness">Endianess</a>). Je vais donc vous demander de supposer qu'on est sur une machine utilisant ce codage :) (ce sera transparent pour la suite, du temps qu'on ne change pas de machine).</p><div id="r-450776" data-claire-element-id="450776" data-claire-semantic="question"><p id="r-450775" data-claire-element-id="450775">C'est quoi le rapport avec fwrite ?</p></div><p id="r-450777" data-claire-element-id="450777">fwrite est une fonction qui se fiche de la valeur enregistrée dans notre variable var, contrairement à printf qui pour afficher '1' et '5' a dû évaluer cette valeur binaire en décimale.<br/> La variable 'var' pour la fonction fwrite sera ni plus ni moins qu'une suite d'octets en mémoire, une utilisation de cette dernière va inscrire dans un fichier les octets représentant notre variable en mémoire.</p><p id="r-450778" data-claire-element-id="450778">Si je continue sur l'exemple, la fonction fwrite inscrira ceci dans le fichier :</p><table id="r-450786" data-claire-element-id="450786"><tbody id="r-450785" data-claire-element-id="450785"><tr id="r-450781" data-claire-element-id="450781"><td id="r-450780" data-claire-element-id="450780"><p id="r-450779" data-claire-element-id="450779">octet1 - octet2 - octet3 - octet4</p></td></tr><tr id="r-450784" data-claire-element-id="450784"><td id="r-450783" data-claire-element-id="450783"><p id="r-450782" data-claire-element-id="450782">00000000 00000000 00000000 00001111</p></td></tr></tbody></table><p id="r-450787" data-claire-element-id="450787">Qui représente notre espace mémoire 'var' contenant la valeur 15.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire">Lecture et écriture de fichiers en mode binaire</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/le-mode-formate-et-non-formate">
+Le mode formaté et non formaté
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/avantages-de-fwrite-par-rapport-a-fprintf">
+Avantages de fwrite par rapport à fprintf
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/utilisation-de-fwrite">
+Utilisation de fwrite
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/les-cas-dans-lesquels-fwrite-est-deconseillee">
+Les cas dans lesquels fwrite est déconseillée
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/lecture-par-fread">
+Lecture par fread
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/exemples-d-application">
+Exemples d&#039;application
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/portabilite-1">
+Portabilité
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/avantages-de-fwrite-par-rapport-a-fprintf">
+<span class="next">Avantages de fwrite par rapport à fprintf</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Avantagesdefwriteparrapportfprintf"></a><h2>Avantages de fwrite par rapport à fprintf</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/le-mode-formate-et-non-formate">
+<span class="arrow"></span>
+<span class="next">Le mode formaté et non formaté</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/utilisation-de-fwrite">
+<span class="next">Utilisation de fwrite</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-450790" data-claire-element-id="450790">L'avantage que fwrite peut avoir par rapport à fprintf, est la simplicité de l'écriture et encore plus, de la lecture :) . Pour mettre ceci en évidence je vais prendre l'exemple d'une structure.</p><p id="r-450791" data-claire-element-id="450791">Si j'ai la structure suivante :</p><pre id="r-450792" data-claire-element-id="450792"><code data-claire-semantic="c">typedef struct {
+
+     int age;
+     char nom[30];
+     char prenom[30];
+     char adresse[60];
+     int nombreFreres;
+
+}SPersonne ;
+
+SPersonne personne;  //Je déclare une variable de type SPersonne</code></pre><p id="r-450793" data-claire-element-id="450793">Et que je souhaite sauvegarder les données relatives à une personne que j'ai créée. Avec fprintf, je vais être obligé d'écrire champ par champ :-° alors que avec fwrite une seule ligne suffirait pour sauvegarder une personne, et pour la charger aussi :) . Je vous laisse en juger vous même :</p><p id="r-450794" data-claire-element-id="450794">Avec fprintf :</p><pre id="r-450795" data-claire-element-id="450795"><code data-claire-semantic="c">fprintf( fichier , &quot;%d\n&quot; , personne.age);
+fprintf( fichier , &quot;%s\n&quot; , personne.nom);
+fprintf( fichier , &quot;%s\n&quot; , personne.prenom);
+fprintf( fichier , &quot;%s\n&quot; , personne.adresse);
+fprintf( fichier , &quot;%d\n&quot; , personne.nombreFreres);</code></pre><p id="r-450796" data-claire-element-id="450796">Avec fwrite :</p><pre id="r-450797" data-claire-element-id="450797"><code data-claire-semantic="c">fwrite( &amp;personne , sizeof(personne) , 1 , fichier);</code></pre><p id="r-450798" data-claire-element-id="450798">Nous verrons tous ça plus en détail plus loin :) .</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire">Lecture et écriture de fichiers en mode binaire</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/le-mode-formate-et-non-formate">
+Le mode formaté et non formaté
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/avantages-de-fwrite-par-rapport-a-fprintf">
+Avantages de fwrite par rapport à fprintf
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/utilisation-de-fwrite">
+Utilisation de fwrite
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/les-cas-dans-lesquels-fwrite-est-deconseillee">
+Les cas dans lesquels fwrite est déconseillée
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/lecture-par-fread">
+Lecture par fread
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/exemples-d-application">
+Exemples d&#039;application
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/portabilite-1">
+Portabilité
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/le-mode-formate-et-non-formate">
+<span class="arrow"></span>
+<span class="next">Le mode formaté et non formaté</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/utilisation-de-fwrite">
+<span class="next">Utilisation de fwrite</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Utilisationdefwrite"></a><h2>Utilisation de fwrite</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/avantages-de-fwrite-par-rapport-a-fprintf">
+<span class="arrow"></span>
+<span class="next">Avantages de fwrite par rapport à fprintf</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/les-cas-dans-lesquels-fwrite-est-deconseillee">
+<span class="next">Les cas dans lesquels fwrite est déconseillée</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<div id="r-450801" data-claire-element-id="450801" data-claire-semantic="question"><p id="r-450800" data-claire-element-id="450800">Comment s'utilise fwrite ?</p></div><p id="r-450802" data-claire-element-id="450802">Je rappelle que le prototype de cette fonction est :</p><pre id="r-450803" data-claire-element-id="450803"><code data-claire-semantic="c">size_t fwrite (const void *ptr, size_t size, size_t nmemb, FILE *stream);</code></pre><ul id="r-450814" data-claire-element-id="450814"><li id="r-450805" data-claire-element-id="450805"><p id="r-450804" data-claire-element-id="450804"><strong><em>ptr</em></strong> pointeur sur le premier octet de la liste d'objets à inscrire.</p></li><li id="r-450807" data-claire-element-id="450807"><p id="r-450806" data-claire-element-id="450806"><strong><em>size</em></strong> L'espace mémoire pris par un membre de la liste d'objets à inscrire.</p></li><li id="r-450809" data-claire-element-id="450809"><p id="r-450808" data-claire-element-id="450808"><strong><em>nmemb</em></strong> Le nombre de membres ayant la taille <em>size</em> dans la liste d'objets à inscrire.</p></li><li id="r-450811" data-claire-element-id="450811"><p id="r-450810" data-claire-element-id="450810"><strong><em>stream</em></strong> Pointeur sur le flux (pointeur sur FILE dans notre cas).</p></li><li id="r-450813" data-claire-element-id="450813"><p id="r-450812" data-claire-element-id="450812"><strong>Valeur retournée</strong> La fonction fwrite retourne le nombre d'éléments qu'elle a réussi à inscrire correctement dans le flux pointé par <em>stream</em>.</p></li></ul><h2 id="r-ecriture-d-une-variable-dans-un-fichier" data-claire-element-id="450831">Ecriture d'une variable dans un fichier</h2><p id="r-450815" data-claire-element-id="450815">Admettons que je veuille sauvegarder ma variable 'var' dans mon fichier, j'utiliserai donc fwrite ainsi :</p><pre id="r-450816" data-claire-element-id="450816"><code data-claire-semantic="c">int var = 15;
+
+fwrite( &amp;var , sizeof(int) , 1 , fichier);</code></pre><div id="r-450818" data-claire-element-id="450818" data-claire-semantic="question"><p id="r-450817" data-claire-element-id="450817">D'où vient le 'fichier' :euh: ?</p></div><p id="r-450819" data-claire-element-id="450819">Et bah le 'fichier' c'est le fichier dans lequel je souhaite sauvegarder ma variable, que je dois avoir ouverte préalablement à l'aide de fopen comme ceci :</p><pre id="r-450820" data-claire-element-id="450820"><code data-claire-semantic="c">FILE * fichier;
+
+fichier = fopen(&quot;monfichier.bin&quot; , &quot;wb&quot;);</code></pre><p id="r-450821" data-claire-element-id="450821">Il faut noter les choses suivantes avec la légende &quot;très important&quot; :) :</p><ul id="r-450828" data-claire-element-id="450828"><li id="r-450823" data-claire-element-id="450823"><p id="r-450822" data-claire-element-id="450822">L'extension du fichier n'a pas d'importance, mais ici j'ai choisi le .bin, pour éviter le .txt. Car, contrairement au mode formaté qu'on a vu précédemment, un fichier écrit en mode binaire <strong>ne doit pas</strong> être ouvert ou édité avec un éditeur de texte classique (Bloc-notes par exemple), mais par un éditeur de fichiers binaires.<br/> De toute façon, le contenu de notre fichier ne sera pas exploitable généralement :p</p></li><li id="r-450825" data-claire-element-id="450825"><p id="r-450824" data-claire-element-id="450824"><code data-claire-semantic="c">&quot;wb&quot; </code> : le 'b' ici indique à fopen qu'on souhaite ouvrir le fichier en mode binaire (donc non formaté), ce même 'b' peut être combiné avec tous les autres modes de la fonction fopen (a,r,w,...).<br/> Dans le cas de r+,a+ ou w+, le 'b' doit être entre la lettre et le signe '+' comme ceci : &quot;rb+&quot;.</p></li><li id="r-450827" data-claire-element-id="450827"><p id="r-450826" data-claire-element-id="450826">Et le plus important, <strong>toujours</strong> tester le retour de fopen &gt;_</p></li></ul><p id="r-450829" data-claire-element-id="450829">Maintenant que nous savons ouvrir un fichier en mode binaire, analysons la ligne : <code data-claire-semantic="c">fwrite( &amp;var , sizeof(int) , 1 , fichier);</code></p><p id="r-450830" data-claire-element-id="450830">1- J'appelle ma fonction fwrite.<br/> 2- Je lui donne un pointeur sur l'espace mémoire que je cherche à sauvegarder.<br/> 3- Je lui dis que cet espace fait (<code data-claire-semantic="c">sizeof(int) </code>) 4 octets dans notre cas.<br/> 4- Je lui dis qu'il n'y a qu'un seul élément.<br/> 5- Et je lui dis que c'est dans 'fichier' que je voudrais sauvegarder tout ça :) .</p><h2 id="r-ecriture-d-un-tableau-alloue-statiquement-dans-un-fichier" data-claire-element-id="450851">Ecriture d'un tableau alloué statiquement dans un fichier</h2><p id="r-450832" data-claire-element-id="450832">Si j'ai maintenant un tableau de int comme ceci :</p><pre id="r-450833" data-claire-element-id="450833"><code data-claire-semantic="c">int tab[10];</code></pre><p id="r-450834" data-claire-element-id="450834">Et que je veuille le sauvegarder dans un fichier alors c'est simple :) , il suffit de faire ceci :</p><pre id="r-450835" data-claire-element-id="450835"><code data-claire-semantic="c">fwrite( tab , sizeof(int) , 10 , fichier);</code></pre><p id="r-450836" data-claire-element-id="450836">Et oui pas besoin de faire une boucle pour inscrire mon tableau case par case ;) .<br/> Car on a demandé à la fonction fwrite d'inscrire l'espace mémoire pointé par 'tab', et dont la portée est 10 x 4 octets. Ce qui correspond aux 10 éléments de mon tableau.</p><p id="r-450837" data-claire-element-id="450837">Je vais vous conseiller une autre façon de le faire, que si vous décidez de changer la taille ou le type de votre tableau, cela ne vous obligera pas à changer l'appel à la fonction fwrite. L'écriture est la suivante :</p><pre id="r-450838" data-claire-element-id="450838"><code data-claire-semantic="c">fwrite( tab , sizeof(tab[0]) , sizeof(tab)/sizeof(tab[0]) , fichier);</code></pre><ul id="r-450843" data-claire-element-id="450843"><li id="r-450840" data-claire-element-id="450840"><p id="r-450839" data-claire-element-id="450839"><code data-claire-semantic="c">sizeof (tab[0]) </code> nous indiquera la taille de chaque élément de notre tableau (4 octets).</p></li><li id="r-450842" data-claire-element-id="450842"><p id="r-450841" data-claire-element-id="450841"><code data-claire-semantic="c">sizeof (tab) </code> nous indiquera la taille totale allouée à notre tableau (40 octets), que si on divise par la taille de chaque élément, ceci nous donne le nombre d'éléments que contient notre tableau (10 éléments).</p></li></ul><p id="r-450844" data-claire-element-id="450844">Ceci indépendamment du type de notre tableau et de sa taille :)</p><aside id="r-450846" data-claire-element-id="450846" data-claire-semantic="information"><p id="r-450845" data-claire-element-id="450845">Cette méthode est valable aussi pour des tableaux à plusieurs dimensions et dont la déclaration est faite statiquement (et non par allocation dynamique)</p></aside><p id="r-450847" data-claire-element-id="450847">Ainsi une utilisation comme ceci est correcte :</p><pre id="r-450848" data-claire-element-id="450848"><code data-claire-semantic="c">int tab[10][10];
+
+fwrite( tab , sizeof(tab) , 1 , fichier);</code></pre><aside id="r-450850" data-claire-element-id="450850" data-claire-semantic="warning"><p id="r-450849" data-claire-element-id="450849">Ce cas est seulement pour une déclaration dite &quot;statique&quot; de notre tableau, <strong>pour un cas d'allocation dynamique, ceci n'est plus valable.</strong></p></aside><h2 id="r-ecriture-d-un-tableau-alloue-dynamiquement-dans-un-fichier" data-claire-element-id="450860">Ecriture d'un tableau alloué dynamiquement dans un fichier</h2><p id="r-450852" data-claire-element-id="450852">Si je dispose d'un tableau que j'ai alloué dynamiquement par malloc comme ceci :</p><pre id="r-450853" data-claire-element-id="450853"><code data-claire-semantic="c">int * ptab;
+
+ptab = malloc(10 * sizeof(int));
+//Ne pas oublier de tester le retour de malloc !</code></pre><p id="r-450854" data-claire-element-id="450854">la sauvegarde dans notre fichier s'effectuera de la même façon qu'un tableau statique :</p><pre id="r-450855" data-claire-element-id="450855"><code data-claire-semantic="c">fwrite( ptab , sizeof(int) , 10 , fichier);</code></pre><p id="r-450856" data-claire-element-id="450856">Ou indépendemment du type ainsi :</p><pre id="r-450857" data-claire-element-id="450857"><code data-claire-semantic="c">fwrite( ptab , sizeof (* ptab) , 10 , fichier);</code></pre><aside id="r-450859" data-claire-element-id="450859" data-claire-semantic="warning"><p id="r-450858" data-claire-element-id="450858">Ceci n'est pas vrai dans le cas de tableaux à plusieurs dimensions (alloués dynamiquement), il faudrait écrire chaque dimensions comme présenté ci-dessus.</p></aside><h2 id="r-ecriture-d-un-pointeur-dans-un-fichier" data-claire-element-id="450869">Ecriture d'un pointeur dans un fichier</h2><p id="r-450861" data-claire-element-id="450861">Ce cas est très identique à celui d'un tableau alloué dynamiquement.</p><p id="r-450862" data-claire-element-id="450862">Si on a un pointeur 'ptr' ayant une taille allouée de 'size' octets, alors fwrite s'utilise ainsi :</p><pre id="r-450863" data-claire-element-id="450863"><code data-claire-semantic="c">fwrite ( ptr , size , 1 , fichier);</code></pre><p id="r-450864" data-claire-element-id="450864">ainsi, tout le bloc mémoire alloué pour notre pointeur sera considéré comme un seul élément uni (d'où le 1 au 3ième argument).</p><p id="r-450865" data-claire-element-id="450865">On peu également considérer que la mémoire comporte 'size' éléments de taille 1 octet, auquel cas l'utilisation de fwrite devient :</p><pre id="r-450866" data-claire-element-id="450866"><code data-claire-semantic="c">fwrite ( ptr , 1 , size , fichier);</code></pre><aside id="r-450868" data-claire-element-id="450868" data-claire-semantic="warning"><p id="r-450867" data-claire-element-id="450867">Il s'agit de deux notions différentes, et qui aboutiront à deux façons parfois différentes de construire notre fichier.<br/> Alors dans la lecture avec fread, on fera attention à respecter ce détail.</p></aside><h2 id="r-ecriture-d-une-structure-dans-un-fichier" data-claire-element-id="450918">Ecriture d'une structure dans un fichier</h2><p id="r-450870" data-claire-element-id="450870">L'écriture d'une structure est très similaire aux cas présentés ci-dessus, car pour fwrite, encore une fois, la structure ne sera qu'une suite d'octets. Cependant, il y a quelques petites notions à comprendre :) . D'ailleurs c'est pourquoi je fais ce tutoriel.</p><p id="r-450871" data-claire-element-id="450871">Si nous avons une structure comme ceci :</p><pre id="r-450872" data-claire-element-id="450872"><code data-claire-semantic="c">typedef struct {
+    int age;
+    char nom[30];
+    char prenom[30];
+}Personne;</code></pre><p id="r-450873" data-claire-element-id="450873">Alors il n'y aucun problème à l'utilisation de l'opérateur <code data-claire-semantic="c">sizeof </code> pour savoir la taille de notre structure.</p><pre id="r-450874" data-claire-element-id="450874"><code data-claire-semantic="c">Personne personne1 = {15,{&quot;NOM&quot;},{&quot;Prenom&quot;}};
+
+fwrite( &amp;personne1 , sizeof(personne1) , 1 , fichier );</code></pre><p id="r-450875" data-claire-element-id="450875">Maintenant si on a une structure comme ceci :</p><pre id="r-450876" data-claire-element-id="450876"><code data-claire-semantic="c">typedef struct {
+    int age;
+    char * nom;
+    char * prenom;
+}Personne;
+
+Personne personne1 = {15,&quot;TOTO&quot;,&quot;TATA&quot;};</code></pre><p id="r-450877" data-claire-element-id="450877">Alors si on essaie de récupérer la taille de cette dernière par un sizeof, ceci nous donnera la taille de age + la taille de 'nom' + la taille de 'prenom'.</p><div id="r-450879" data-claire-element-id="450879" data-claire-semantic="question"><p id="r-450878" data-claire-element-id="450878">Où est le problème ?</p></div><p id="r-450880" data-claire-element-id="450880">Le problème est que 'nom' et 'prenom' sont deux variables de type pointeur. Et leurs tailles sont les tailles d'un pointeur (généralement 4 octets) et non celles des chaines de caractères sur lesquelles ils pointent.</p><p id="r-450881" data-claire-element-id="450881">ainsi le résultat de <code data-claire-semantic="c">sizeof(prsonne1) </code> donnerait 12 octets (4 + 4 + 4) quelque soient les chaines sur lesquelles ils pointent.</p><aside id="r-450883" data-claire-element-id="450883" data-claire-semantic="error"><p id="r-450882" data-claire-element-id="450882"><code data-claire-semantic="c">fwrite( &amp;personne1 , sizeof(personne1) , 1 , fichier );</code></p></aside><p id="r-450884" data-claire-element-id="450884">Si on essaie malgré cela, d'utiliser fwrite comme indiqué ci-dessus, cela va sauvegarder les adresses des chaines pointées par 'nom' et 'prenom'. Qui seront, après la fermeture du programme, non signifiantes. Et leur utilisation aboutirait à un SEGFAULT ou ACCESS VIOLATION à coup sûr (sauf cas de chance :-° ).</p><div id="r-450886" data-claire-element-id="450886" data-claire-semantic="question"><p id="r-450885" data-claire-element-id="450885">Comment faire alors dans de tels cas :( ?</p></div><p id="r-450887" data-claire-element-id="450887">2 solutions sont possibles :</p><p id="r-450888" data-claire-element-id="450888"><em>Solution 1 :</em></p><p id="r-450889" data-claire-element-id="450889">Inscrire séparément l'age, le nom et le prénom. Dans ce cas je vous conseille vivement d'utiliser fprintf comme vous l'avez appris :)</p><p id="r-450890" data-claire-element-id="450890"><em>Solution 2 :</em></p><p id="r-450891" data-claire-element-id="450891">Procéder à une sérialisation de nos données (age, nom et prénom).</p><div id="r-450893" data-claire-element-id="450893" data-claire-semantic="question"><p id="r-450892" data-claire-element-id="450892">C'est quoi une sérialisations ?</p></div><p id="r-450894" data-claire-element-id="450894">Une sérialisation de données est un terme informatique qui consiste à mettre toutes nos données en série (les unes à la suite des autres) dans un seul buffer pour être envoyées par réseau ou être inscrites dans un flux. Ceci peut être vu comme une concaténation :) .</p><p id="r-450895" data-claire-element-id="450895">Donc une sérialisation de notre structure donnerait :</p><table id="r-450911" data-claire-element-id="450911"><tbody id="r-450910" data-claire-element-id="450910"><tr id="r-450902" data-claire-element-id="450902"><td id="r-450897" data-claire-element-id="450897"><p id="r-450896" data-claire-element-id="450896">4 octets</p></td><td id="r-450899" data-claire-element-id="450899"><p id="r-450898" data-claire-element-id="450898">5 octets</p></td><td id="r-450901" data-claire-element-id="450901"><p id="r-450900" data-claire-element-id="450900">5 octets</p></td></tr><tr id="r-450909" data-claire-element-id="450909"><td id="r-450904" data-claire-element-id="450904"><p id="r-450903" data-claire-element-id="450903"><code data-claire-semantic="c">15</code></p></td><td id="r-450906" data-claire-element-id="450906"><p id="r-450905" data-claire-element-id="450905"><code data-claire-semantic="c">&quot;TOTO\0&quot;</code></p></td><td id="r-450908" data-claire-element-id="450908"><p id="r-450907" data-claire-element-id="450907"><code data-claire-semantic="c">&quot;TATA\0&quot;</code></p></td></tr></tbody></table><p id="r-450912" data-claire-element-id="450912">Ce buffer sera donc à enregistrer dans le fichier par fwrite.</p><p id="r-450913" data-claire-element-id="450913">Je ne rentre pas dans les détails car ceci impliquerait l'écriture d'un tutoriel. Si vous êtes intéressés, vous pouvez faire des recherches sur les techniques de sérialisation de données :) .</p><p id="r-450914" data-claire-element-id="450914">En conclusion :</p><p id="r-450915" data-claire-element-id="450915">L'enregistrement en mode binaire, n'est pas adéquat avec de telles déclarations. Pour y parvenir il faut, quand vous en avez la possibilité, déclarer statiquement les champs d'une structure pour pouvoir la sauvegarder en mode binaire (avec fwrite) sans problèmes et sans manœuvres particulières (sérialisation ou autres).</p><p id="r-450916" data-claire-element-id="450916">Mon but n'étant pas de vous inciter à déclarer toujours statiquement vos données (tableaux en particulier), car très souvent on déclare plus qu'on en a besoin. Ce qui n'est pas très optimisé.</p><p id="r-450917" data-claire-element-id="450917">Donc à vous de trouver le compromis idéal pour votre application, entre la simplicité de sauvegarde, et l'optimisation de mémoire.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire">Lecture et écriture de fichiers en mode binaire</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/le-mode-formate-et-non-formate">
+Le mode formaté et non formaté
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/avantages-de-fwrite-par-rapport-a-fprintf">
+Avantages de fwrite par rapport à fprintf
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/utilisation-de-fwrite">
+Utilisation de fwrite
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/les-cas-dans-lesquels-fwrite-est-deconseillee">
+Les cas dans lesquels fwrite est déconseillée
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/lecture-par-fread">
+Lecture par fread
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/exemples-d-application">
+Exemples d&#039;application
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/portabilite-1">
+Portabilité
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/avantages-de-fwrite-par-rapport-a-fprintf">
+<span class="arrow"></span>
+<span class="next">Avantages de fwrite par rapport à fprintf</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/les-cas-dans-lesquels-fwrite-est-deconseillee">
+<span class="next">Les cas dans lesquels fwrite est déconseillée</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lescasdanslesquelsfwriteestdconseille"></a><h2>Les cas dans lesquels fwrite est déconseillée</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/utilisation-de-fwrite">
+<span class="arrow"></span>
+<span class="next">Utilisation de fwrite</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/lecture-par-fread">
+<span class="next">Lecture par fread</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-450920" data-claire-element-id="450920">Dans l'un des cas suivants, il est déconseillé d'utiliser fwrite (pour un débutant bien évidemment :-° ) :</p><ul id="r-450923" data-claire-element-id="450923"><li id="r-450922" data-claire-element-id="450922"><p id="r-450921" data-claire-element-id="450921">Celui présenté juste au dessus. A savoir une structure comportant un ou plusieurs pointeurs dans ses champs :</p></li></ul><pre id="r-450924" data-claire-element-id="450924"><code data-claire-semantic="c">typedef struct {
+    int age;
+    char * nom;
+    char * prenom;
+}Personne;</code></pre><ul id="r-450927" data-claire-element-id="450927"><li id="r-450926" data-claire-element-id="450926"><p id="r-450925" data-claire-element-id="450925">Si l'on souhaite éditer nos données avec un éditeur de texte du genre bloc-notes par exemple, car ce ne sera pas possible pour un fichier créé en mode binaire. Il faudra donc utiliser un éditeur de fichiers binaires.</p></li></ul><ul id="r-450930" data-claire-element-id="450930"><li id="r-450929" data-claire-element-id="450929"><p id="r-450928" data-claire-element-id="450928">Si à la déclaration de vos structures et vos variables, vous n'avez pas prévu une manoeuvre de sauvegarde dans un fichier en mode binaire, alors je vous déconseille de vouloir le faire à tout prix, car généralement cela implique un bricolage (des sérialisations, des changements de types...) bref beaucoup de bidouilles qui rendent votre code incompréhensible, et pas facil à déboguer :) .</p></li></ul>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire">Lecture et écriture de fichiers en mode binaire</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/le-mode-formate-et-non-formate">
+Le mode formaté et non formaté
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/avantages-de-fwrite-par-rapport-a-fprintf">
+Avantages de fwrite par rapport à fprintf
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/utilisation-de-fwrite">
+Utilisation de fwrite
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/les-cas-dans-lesquels-fwrite-est-deconseillee">
+Les cas dans lesquels fwrite est déconseillée
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/lecture-par-fread">
+Lecture par fread
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/exemples-d-application">
+Exemples d&#039;application
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/portabilite-1">
+Portabilité
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/utilisation-de-fwrite">
+<span class="arrow"></span>
+<span class="next">Utilisation de fwrite</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/lecture-par-fread">
+<span class="next">Lecture par fread</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lectureparfread"></a><h2>Lecture par fread</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/les-cas-dans-lesquels-fwrite-est-deconseillee">
+<span class="arrow"></span>
+<span class="next">Les cas dans lesquels fwrite est déconseillée</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/exemples-d-application">
+<span class="next">Exemples d&#039;application</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-450932" data-claire-element-id="450932">Il est important de noter que la lecture par fread doit correspondre parfaitement à la manière dont on a écrit avec fwrite. Et que pour pouvoir lire un fichier créé sur une autre machine, il faut que ces deux machines aient utilisé le même encodage notamment l'<a href="http://fr.wikipedia.org/wiki/Endianness">Endianess</a> (little, big, bi ou middle).</p><p id="r-450933" data-claire-element-id="450933"><strong>Par conséquent, fread ne pourra pas être utilisée si le fichier à été créé avec les fonctions fputs, fprintf ou les autres fonctions écrivant en mode formaté.<br/> Ou si le fichier est édité (rempli) avec un éditeur de texte classique (type bloc-notes), sauf éditeurs binaires, auquel cas il faut maîtriser ce que l'on écrit.</strong></p><aside id="r-450935" data-claire-element-id="450935" data-claire-semantic="warning"><p id="r-450934" data-claire-element-id="450934">Par conséquent, fread ne pourra pas être utilisée si le fichier à été créé avec les fonctions fputs, fprintf ou les autres fonctions écrivant en mode formaté.<br/> Ou si le fichier est édité (rempli) avec un éditeur de texte classique (type bloc-notes), sauf éditeurs binaires, auquel cas il faut maîtriser ce que l'on écrit.</p></aside><p id="r-450936" data-claire-element-id="450936">L'utilisation de fread est aussi simple que fwrite, et s'utilise de la même manière, je rappelle le prototype de la fonction fread :</p><pre id="r-450937" data-claire-element-id="450937"><code data-claire-semantic="c">size_t fread (const void *ptr, size_t size, size_t nmemb, FILE *stream);</code></pre><ul id="r-450948" data-claire-element-id="450948"><li id="r-450939" data-claire-element-id="450939"><p id="r-450938" data-claire-element-id="450938"><strong><em>ptr</em></strong> pointeur sur le premier octet de la liste d'objets à charger.</p></li><li id="r-450941" data-claire-element-id="450941"><p id="r-450940" data-claire-element-id="450940"><strong><em>size</em></strong> L'espace mémoire pris par un membre de la liste d'objets à charger.</p></li><li id="r-450943" data-claire-element-id="450943"><p id="r-450942" data-claire-element-id="450942"><em><strong>nmemb</strong></em> Le nombre de membres ayant la taille <em>size</em> dans la liste d'objets à charger.</p></li><li id="r-450945" data-claire-element-id="450945"><p id="r-450944" data-claire-element-id="450944"><strong><em>stream</em></strong> Pointeur sur le flux (pointeur sur FILE dans notre cas).</p></li><li id="r-450947" data-claire-element-id="450947"><p id="r-450946" data-claire-element-id="450946"><strong>Valeur retournée</strong> La fonction fread retourne le nombre d'éléments qu'elle a réussis à lire correctement dans le flux pointé par <em>stream</em>. Il faut noter aussi que la fonction fread traite la fin du fichier comme une erreur de lecture.</p></li></ul><p id="r-450949" data-claire-element-id="450949">L'utilisation étant similaire à fwrite ainsi que les conditions d'utilisation présentées ci-dessus, alors je ne tarderai pas dans les explications :) :</p><h2 id="r-pour-une-variable" data-claire-element-id="450952">Pour une variable</h2><p id="r-450950" data-claire-element-id="450950">Si l'on a une variable 'var' qu'on a sauvegardée par fwrite dans le fichier 'fichier' alors on peut la charger ainsi :</p><pre id="r-450951" data-claire-element-id="450951"><code data-claire-semantic="c">int var;
+
+fread( &amp;var , sizeof(var) , 1 , fichier );</code></pre><h2 id="r-pour-un-tableau-statiquement-alloue" data-claire-element-id="450964">Pour un tableau statiquement alloué</h2><p id="r-450953" data-claire-element-id="450953">L'utilisation est identique à celle décrite pour fwrite :) , et est valable pour des tableaux multidimensionnels statiquement alloués.</p><pre id="r-450954" data-claire-element-id="450954"><code data-claire-semantic="c">int tab[10];
+
+fread( tab , sizeof(tab) , 1 , fichier );</code></pre><p id="r-450955" data-claire-element-id="450955">Si on a sauvegardé avec <code data-claire-semantic="c">fwrite( tab , sizeof(tab) , 1 , fichier );</code></p><p id="r-450956" data-claire-element-id="450956">Et</p><pre id="r-450957" data-claire-element-id="450957"><code data-claire-semantic="c">fread( tab , sizeof(tab[0]) , sizeof(tab)/sizeof(tab[0]) , fichier );</code></pre><p id="r-450958" data-claire-element-id="450958">Si on a sauvegardé avec <code data-claire-semantic="c">fwrite( tab , sizeof(tab[0]) , sizeof(tab)/sizeof(tab[0]) , fichier );</code></p><aside id="r-450960" data-claire-element-id="450960" data-claire-semantic="warning"><p id="r-450959" data-claire-element-id="450959">La différence entre ces deux notions se situe dans la disposition différente des éléments dans le fichier, selon si on a utilisé une méthode ou une autre.<br/> Donc il faut respecter la méthode avec laquelle on a effectué l'écriture. Et ne pas mélanger les deux.</p></aside><p id="r-450961" data-claire-element-id="450961">Et pour un tableau à deux dimensions :</p><pre id="r-450962" data-claire-element-id="450962"><code data-claire-semantic="c">int tab[10][10];
+
+fread( tab , sizeof(tab) , 1 , fichier );</code></pre><p id="r-450963" data-claire-element-id="450963">pratique n'est-ce pas :) ?</p><h2 id="r-pour-un-pointeur" data-claire-element-id="450967">Pour un pointeur</h2><p id="r-450965" data-claire-element-id="450965">La condition à utiliser fread est <strong>qu'on ait alloué préalablement de l'espace</strong> pour notre pointeur.</p><pre id="r-450966" data-claire-element-id="450966"><code data-claire-semantic="c">ptr = malloc(sizeof * ptr);
+//Ne pas oublier de tester le retour de malloc :) 
+
+fread( ptr , sizeof * ptr , 1 , fichier );</code></pre><h2 id="r-pour-un-tableau-a-une-dimension-alloue-dynamiquement" data-claire-element-id="450972">Pour un tableau à une dimension, alloué dynamiquement</h2><p id="r-450968" data-claire-element-id="450968">C'est le même cas qu'un pointeur. A savoir <strong>qu'il faut allouer au préalable assez d'espace pour lire les éléments du fichier.</strong></p><pre id="r-450969" data-claire-element-id="450969"><code data-claire-semantic="c">int * ptableau;
+ptableau = malloc(nombreElements * sizeof *ptableau);
+//Ne pas oublier de tester le retour de malloc
+
+fread( ptableau , sizeof * ptableau , nombreElements , fichier );</code></pre><aside id="r-450971" data-claire-element-id="450971" data-claire-semantic="warning"><p id="r-450970" data-claire-element-id="450970">Pour le cas d'un tableau à plusieurs dimensions il faut procéder par boucle en lisant dimension par dimension pour arriver au cas décrit ci-dessus!</p></aside><h2 id="r-pour-une-structure" data-claire-element-id="450979">Pour une structure</h2><p id="r-450973" data-claire-element-id="450973">Identiquement à fwrite si l'on a une structure déclarée ainsi :</p><pre id="r-450974" data-claire-element-id="450974"><code data-claire-semantic="c">typedef struct {
+    int age;
+    char nom[30];
+    char prenom[30];
+}Personne;
+
+Personne personne1;</code></pre><p id="r-450975" data-claire-element-id="450975">Alors la lecture s'effectue comme ceci :</p><pre id="r-450976" data-claire-element-id="450976"><code data-claire-semantic="c">fread( &amp;personne1 , sizeof(personne1) , 1 , fichier );</code></pre><aside id="r-450978" data-claire-element-id="450978" data-claire-semantic="warning"><p id="r-450977" data-claire-element-id="450977">Dans le cas d'une écriture après une sérialisation, il faut récupérer les données dans un buffer et procéder par utilisation de memcpy à une &quot;désérialisation&quot;.<br/> Je n'explique pas plus car ceci n'est pas le sujet :) .</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire">Lecture et écriture de fichiers en mode binaire</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/le-mode-formate-et-non-formate">
+Le mode formaté et non formaté
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/avantages-de-fwrite-par-rapport-a-fprintf">
+Avantages de fwrite par rapport à fprintf
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/utilisation-de-fwrite">
+Utilisation de fwrite
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/les-cas-dans-lesquels-fwrite-est-deconseillee">
+Les cas dans lesquels fwrite est déconseillée
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/lecture-par-fread">
+Lecture par fread
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/exemples-d-application">
+Exemples d&#039;application
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/portabilite-1">
+Portabilité
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/les-cas-dans-lesquels-fwrite-est-deconseillee">
+<span class="arrow"></span>
+<span class="next">Les cas dans lesquels fwrite est déconseillée</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/exemples-d-application">
+<span class="next">Exemples d&#039;application</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Exemplesd039application"></a><h2>Exemples d&#039;application</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/lecture-par-fread">
+<span class="arrow"></span>
+<span class="next">Lecture par fread</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/portabilite-1">
+<span class="next">Portabilité</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-450981" data-claire-element-id="450981">En exemple d'application on pourrait citer la sauvegarde des données d'un joueur, il est donc conseillé de prévoir ceci en déclarant la structure contenant les informations à sauvegarder :) .</p><pre id="r-450982" data-claire-element-id="450982"><code data-claire-semantic="c">typedef struct {
+     char nom[30];
+     int niveau;
+     int force;
+     int vies;
+     Map dernierePartie;
+     //......
+}Joueur;</code></pre><p id="r-450983" data-claire-element-id="450983">Et veiller à, quand vous en avez la possibilité, déclarer statiquement les champs de cette structure. Ainsi la sauvegarde et le chargement ne vous couteront qu'une ligne de code chacune :) . Même pour le cas de plusieurs joueurs.<br/> Ceci représente l'inconvénient majeur, car très souvent, on ne sait pas à priori, qu'elle taille on doit avoir pour stocker une donnée. Dans ce cas l'allocation dynamique s'impose.</p><p id="r-450984" data-claire-element-id="450984">Un deuxième exemple est la configuration d'une application que vous avez développée.<br/> Des données telles que, des chemins d'accès, temps, date....</p><p id="r-450985" data-claire-element-id="450985">Ou faire une base de donnée sans avoir à aller lire ligne par ligne et identifier des séparateurs que vous aurez mis entre deux données etc...<br/> Imaginons que j'aie un tableau contenant mes données :</p><pre id="r-450986" data-claire-element-id="450986"><code data-claire-semantic="c">Data donnees[50];</code></pre><p id="r-450987" data-claire-element-id="450987">Au lieu d'aller traiter chaque champ de chaque donnée, j'aurais préféré un seul coup de fwrite pour tout sauvegarder et un coup de fread pour tout charger :D .</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire">Lecture et écriture de fichiers en mode binaire</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/le-mode-formate-et-non-formate">
+Le mode formaté et non formaté
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/avantages-de-fwrite-par-rapport-a-fprintf">
+Avantages de fwrite par rapport à fprintf
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/utilisation-de-fwrite">
+Utilisation de fwrite
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/les-cas-dans-lesquels-fwrite-est-deconseillee">
+Les cas dans lesquels fwrite est déconseillée
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/lecture-par-fread">
+Lecture par fread
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/exemples-d-application">
+Exemples d&#039;application
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/portabilite-1">
+Portabilité
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/lecture-par-fread">
+<span class="arrow"></span>
+<span class="next">Lecture par fread</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/portabilite-1">
+<span class="next">Portabilité</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Portabilit"></a><h2>Portabilité</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/exemples-d-application">
+<span class="arrow"></span>
+<span class="next">Exemples d&#039;application</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-450989" data-claire-element-id="450989">Cette partie du tutoriel n'est pas là pour vous donner des solutions portables, mais uniquement pour vous sensibiliser aux différents problèmes de portabilité que vous pouvez rencontrer.</p><p id="r-450990" data-claire-element-id="450990">Voici les problèmes auxquels vous serez <strong>peut être</strong> confrontés si vous désirez lire un fichier binaire créé sur <strong>une autre machine</strong>.</p><ul id="r-451003" data-claire-element-id="451003"><li id="r-450992" data-claire-element-id="450992"><p id="r-450991" data-claire-element-id="450991">Le premier étant la taille des types. Les 4 octets de notre <code data-claire-semantic="c">int </code> (présenté en haut) peuvent varier d'une implémentation à une autre. Donc pensez à utiliser les types standards pour un int (uint_8, uint_16, uint_32, uint_64...). Pour les autres types vous pouvez consulter la description de la norme.</p></li><li id="r-450994" data-claire-element-id="450994"><p id="r-450993" data-claire-element-id="450993">Le type de codage utilisé, l'&quot;endianess&quot;, qui définit une disposition différente des octets formant un objet en mémoire, et de leurs poids significatifs.</p></li><li id="r-450996" data-claire-element-id="450996"><p id="r-450995" data-claire-element-id="450995">Dans le cas d'une structure, la disposition des champs en mémoire peut varier d'une machine à l'autre. Notamment dans le cas d'un int qui nécessite une taille multiple de 2 ou de 4, l'implémentation peut donc faire appel à des bit dits de &quot;bourrage&quot;, pour des raisons de performance (notamment la manipulation de données en mémoire par le CPU).</p></li><li id="r-450998" data-claire-element-id="450998"><p id="r-450997" data-claire-element-id="450997">En ce qui concerne l'aspect contigüe des champs formant la structure, certains disent que cette mémoire n'est pas garantie d'être contigüe (que les champs de la structure ne sont pas disposés les uns à la suite des autres en mémoire). La norme dit :</p></li><p id="r-450999" data-claire-element-id="450999"><cite>Citation : 6.2.5 Types</cite></p><blockquote id="r-451001" data-claire-element-id="451001"><p id="r-451000" data-claire-element-id="451000">A structure type describes a sequentially allocated nonempty set of member objects<br/> (and, in certain circumstances, an incomplete array), each of which has an optionally specified name and possibly distinct type.</p></blockquote><p id="r-451002" data-claire-element-id="451002">&quot;Un type structure décrit une séquence non vide allouée...&quot;Donc ceci est en quelque sorte vrai, car la norme ne dit pas explicitement que la mémoire sera contigüe (comme ce qu'elle fait avec les tableaux). Mais elle utilise le mot séquence qui réfère à une suite de données (les unes à la suite des autres) mais sous-entend la possibilité de trouver des bits de bourrage (ce qu'on appelle &quot;<em>padding</em>&quot;) entre deux données successives. Ceci étant pour des raisons d'optimisation (de performance CPU), car ceci lui permet de gérer plus facilement des données selon si elles sont disposées d'une façon ou d'une autre.</p></ul><p id="r-451004" data-claire-element-id="451004">Je vous rappelle que cette partie ne doit être prise en compte que dans le cas de changement de machine entre l'écriture d'un fichier binaire et sa lecture (ou la compilation sur deux implémentations différentes). Donc si vous travaillez sur une seule machine, tous ces problèmes ne se poseront pas. Et c'est ce qu'on appelle <strong>la non-portabilité</strong> :) .</p><p id="r-451005" data-claire-element-id="451005">La portabilité des fichiers binaires est un domaine très vaste, j'ai donc expliqué ici très brièvement une partie des problèmes que l'on peut rencontrer :) . Si vous êtes intéressés je vous invite à faire plus de recherches en vous aidant du draft de la norme ISO/IEC 9899 (la version 1124 étant la plus récente facilement trouvable sur le net).</p><p id="r-451006" data-claire-element-id="451006">Vous savez à présent quels sont les avantages et inconvénients d'une manipulation binaire de fichiers. Donc faites-en bon usage :) .</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire">Lecture et écriture de fichiers en mode binaire</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/le-mode-formate-et-non-formate">
+Le mode formaté et non formaté
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/avantages-de-fwrite-par-rapport-a-fprintf">
+Avantages de fwrite par rapport à fprintf
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/utilisation-de-fwrite">
+Utilisation de fwrite
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/les-cas-dans-lesquels-fwrite-est-deconseillee">
+Les cas dans lesquels fwrite est déconseillée
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/lecture-par-fread">
+Lecture par fread
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/exemples-d-application">
+Exemples d&#039;application
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/portabilite-1">
+Portabilité
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/lecture-et-ecriture-de-fichiers-en-mode-binaire/exemples-d-application">
+<span class="arrow"></span>
+<span class="next">Exemples d&#039;application</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/lecture-et-ecriture-de-fichiers-en-mode-binaire.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 07:01:52 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/lecture-et-ecriture-de-fichiers-en-mode-binaire.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:16:26 GMT -->
+</html>

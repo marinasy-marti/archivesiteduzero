@@ -1,0 +1,776 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/manipulez-les-paquets-reseau-avec-scapy.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 09:00:17 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/manipulez-les-paquets-reseau-avec-scapy.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:36:30 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Manipulez les paquets réseau avec Scapy</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Manipulez les paquets réseau avec Scapy</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#ManipulezlespaquetsrseauavecScapy">Manipulez les paquets réseau avec Scapy</a><br/><a href="#Installationetutilisation">Installation et utilisation</a><br/><a href="#Manipulationdepaquets">Manipulation de paquets</a><br/><a href="#Leslistesdepaquets">Les listes de paquets</a><br/><a href="#Lafonctionsniff">La fonction sniff()</a><br/><a href="#Importetexportdesrsultats">Import et export des résultats</a><br/></div>
+<a name="ManipulezlespaquetsrseauavecScapy"></a><h2>Manipulez les paquets réseau avec Scapy</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/installation-et-utilisation-1">
+<span class="next">Installation et utilisation</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-551595" data-claire-element-id="551595">Scapy est un module pour Python permettant de forger, envoyer, réceptionner et manipuler des paquets réseau.<br/> Si le réseau vous intéresse et que vous aimeriez mieux comprendre le fonctionnement des outils traditionnels (wireshark, dig, ping, traceroute, nmap...), alors ce tutoriel est fait pour vous ! :) <br/> La compréhension de ce tutoriel nécessite quelques prérequis :</p><ul id="r-551600" data-claire-element-id="551600"><li id="r-551597" data-claire-element-id="551597"><p id="r-551596" data-claire-element-id="551596">Des connaissances en Python (grosso modo les parties 1 et 2 du <a href="http://www.siteduzero.com/tutoriel-3-223267-apprendre-python.html">tutoriel officiel</a>)</p></li><li id="r-551599" data-claire-element-id="551599"><p id="r-551598" data-claire-element-id="551598">Des connaissances de base en réseau (je vous conseille la lecture du <a href="http://www.siteduzero.com/tutoriel-3-346829-comprendre-les-reseaux-tcp-ip-et-ie-fonctionnement-d-internet.html">tutoriel</a> de elalitte)</p></li></ul><p id="r-551601" data-claire-element-id="551601">A l'issue de ce tutoriel, vous devriez être en mesure de programmer par vous même des utilitaires simples, et surtout de <strong>comprendre</strong> leur fonctionnement.</p><p id="r-551602" data-claire-element-id="551602">Allez, à l'assaut ! :pirate:</p>
+</div><a name="Installationetutilisation"></a><h2>Installation et utilisation</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/manipulation-de-paquets">
+<span class="next">Manipulation de paquets</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-551603" data-claire-element-id="551603">Profitant de la portabilité du langage Python, Scapy est multi-plateforme. Cela dit, je ne détaillerai ici son installation et son utilisation que sous Linux, ne possédant que cet OS lors de l'écriture de ce tutoriel. La procédure d'installation est décrite <a href="http://www.secdev.org/projects/scapy/doc/installation.html#mac-os-x">ici</a> pour Mac OS X et <a href="http://www.secdev.org/projects/scapy/doc/installation.html#windows">ici</a> pour Windows. Par facilité, vous pouvez également préférer installer GNU/Linux en <a href="http://www.siteduzero.com/tutoriel-3-36484-virtualisez-un-systeme-d-exploitation-avec-virtualbox.html">machine virtuelle</a>.</p><h2 id="r-installation-89" data-claire-element-id="551615">Installation</h2><h3 id="r-depuis-les-depots-de-votre-distribution" data-claire-element-id="551608">Depuis les dépôts de votre distribution</h3><p id="r-551604" data-claire-element-id="551604">Pour les pressés, l'installation minimale se fait avec la commande suivante :</p><pre id="r-551605" data-claire-element-id="551605"><code data-claire-semantic="console">$ sudo apt-get install python-scapy</code></pre><p id="r-551606" data-claire-element-id="551606">Scapy ne fonctionne qu'avec la branche 2.x de Python (&gt;= 2.5), la dernière version de cette branche étant Python 2.7. De plus, vous pouvez étendre les possibilités de Scapy (rapports pdf, traceroute 3D...) grâce à d'autres paquets.<br/> Pour une distribution à base de Debian, l'installation complète se fait donc par cette ligne de commande :</p><pre id="r-551607" data-claire-element-id="551607"><code data-claire-semantic="console">$ sudo apt-get install python2.7 tcpdump graphviz imagemagick python-gnuplot python-crypto python-pyx nmap python-scapy</code></pre><h3 id="r-depuis-mercurial" data-claire-element-id="551614">Depuis Mercurial</h3><p id="r-551609" data-claire-element-id="551609">Si vous souhaitez disposer de la toute dernière version de Scapy, vous pouvez l'installer depuis les sources en les récupérant depuis le dépôt mercurial.<br/> Si ce n'est pas déjà fait, installez mercurial :</p><pre id="r-551610" data-claire-element-id="551610"><code data-claire-semantic="console">$ sudo apt-get install mercurial</code></pre><p id="r-551611" data-claire-element-id="551611">Récupérez les sources et installez Scapy :</p><pre id="r-551612" data-claire-element-id="551612"><code data-claire-semantic="console">$ hg clone http://hg.secdev.org/scapy
+$ cd scapy
+$ sudo python setup.py install</code></pre><p id="r-551613" data-claire-element-id="551613">Scapy est maintenant installé, c'est bien beau, mais passons à son utilisation. :)</p><h2 id="r-utilisation-79" data-claire-element-id="551627">Utilisation</h2><h3 id="r-depuis-l-interpreteur" data-claire-element-id="551622">Depuis l'interpréteur</h3><p id="r-551616" data-claire-element-id="551616">Rien de plus simple, lancez la commande suivante :</p><pre id="r-551617" data-claire-element-id="551617"><code data-claire-semantic="console">$ sudo scapy</code></pre><aside id="r-551619" data-claire-element-id="551619" data-claire-semantic="information"><p id="r-551618" data-claire-element-id="551618">Scapy manipule des paquets réseaux, ce qui nécessite d'être en root pour une majorité de tâches</p></aside><p id="r-551620" data-claire-element-id="551620">Si tout se passe bien, vous vous retrouvez devant l'interpréteur python :</p><pre id="r-551621" data-claire-element-id="551621"><code data-claire-semantic="console">WARNING: No route found for IPv6 destination :: (no default route?)
+Welcome to Scapy (2.1.0)
+&gt;&gt;&gt;</code></pre><h3 id="r-dans-un-script-python-py" data-claire-element-id="551626">Dans un script Python (.py)</h3><p id="r-551623" data-claire-element-id="551623">Pour disposer des fonctionnalités de Scapy dans vos programmes Python, ajoutez simplement cette ligne à vos fichiers :</p><pre id="r-551624" data-claire-element-id="551624"><code data-claire-semantic="python">from scapy.all import *</code></pre><p id="r-551625" data-claire-element-id="551625">Nous voilà maintenant prêts à utiliser Scapy ! :magicien:</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy">Manipulez les paquets réseau avec Scapy</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/installation-et-utilisation-1">
+Installation et utilisation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/manipulation-de-paquets">
+Manipulation de paquets
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/les-listes-de-paquets">
+Les listes de paquets
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/la-fonction-sniff">
+La fonction sniff()
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/import-et-export-des-resultats">
+Import et export des résultats
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/manipulation-de-paquets">
+<span class="next">Manipulation de paquets</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Manipulationdepaquets"></a><h2>Manipulation de paquets</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/installation-et-utilisation-1">
+<span class="arrow"></span>
+<span class="next">Installation et utilisation</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/les-listes-de-paquets">
+<span class="next">Les listes de paquets</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-forgeons" data-claire-element-id="551673">Forgeons !</h2><figure id="r-551630" data-claire-element-id="551631"><img id="r-551629" data-claire-element-id="551629" src="medias/uploads.siteduzero.com_files_343001_344000_343908.png" alt="forgeron"/></figure><div id="r-551633" data-claire-element-id="551633" data-claire-semantic="question"><p id="r-551632" data-claire-element-id="551632">Euh, quel rapport entre la métallurgie et les paquets ? o_O</p></div><p id="r-551634" data-claire-element-id="551634">Aucun. ^^ <br/><em>Forger un paquet</em> désigne le fait de le construire en mettant les &quot;mains dans le cambouis&quot;.<br/> Je m'explique. D'ordinaire, quand vous utilisez un logiciel orienté réseau tel qu'un navigateur web, un logiciel de messagerie, etc, celui-ci échange des paquets. Par exemple, votre navigateur, quand vous vous rendez sur <a href="http://www.siteduzero.com/">http://www.siteduzero.com</a>, échange des paquets avec le serveur web du Site du Zéro. Pour simplifier cet échange, on peut dire que votre navigateur envoie un paquet &quot;envoie moi cette page web s'il te plaît&quot;, et que le serveur du Site du Zéro lui renvoie le paquet &quot;tiens, la voici : &lt;html&gt;Coucou&lt;/html&gt;&quot; (ne m'en veuillez pas pour cet exemple :D ).<br/> Si vous décidez de programmer un tel logiciel, en pratique, vous n'aurez pas à vous soucier du détail de cette conversation par paquets. Par exemple, en C++, à l'aide de la bibliothèque Qt, afficher une page web se fait ainsi :</p><pre id="r-551635" data-claire-element-id="551635"><code data-claire-semantic="cpp">QWebView *pageWeb = new QWebView;
+pageWeb-&gt;load(QUrl(&quot;http://www.siteduzero.com/&quot;));</code></pre><p id="r-551636" data-claire-element-id="551636">Comme vous le voyez, aucune connaissance en réseau n'est nécessaire pour réaliser une telle chose, car on n'a pas réellement mis les mains dans le cambouis.<br/> Or, nous, ce qui nous intéresse, avec Scapy, c'est de comprendre le détail de ces mystérieuses conversations...</p><h3 id="r-creation-d-une-trame-ethernet" data-claire-element-id="551663">Création d'une trame Éthernet</h3><aside id="r-551638" data-claire-element-id="551638" data-claire-semantic="information"><p id="r-551637" data-claire-element-id="551637">Les mots &quot;trame&quot;, &quot;paquet&quot;, mais aussi &quot;datagramme&quot;, &quot;segment&quot;, ont des sens bien précis, mais par abus de langage j'utiliserai surtout le mot &quot;paquet&quot; pour désigner les informations échangées sur le réseau.</p></aside><p id="r-551639" data-claire-element-id="551639">L'échange de paquets avec un serveur web est loin d'être simple, elle fait intervenir le protocole HTTP, le handshake TCP, l'entête IP, bref, nous allons rester plus basique.<br/> Commençons donc par créer et afficher une trame Éthernet dans l'interpréteur Scapy :</p><pre id="r-551640" data-claire-element-id="551640"><code data-claire-semantic="python">&gt;&gt;&gt; ma_trame = Ether()
+&gt;&gt;&gt; ma_trame.show()
+###[ Ethernet ]###
+WARNING: Mac address to reach destination not found. Using broadcast.
+  dst= ff:ff:ff:ff:ff:ff
+  src= 00:00:00:00:00:00
+  type= 0x0
+&gt;&gt;&gt;</code></pre><p id="r-551641" data-claire-element-id="551641">Comme on le voit, la création d'une trame éthernet se fait en instanciant la classe Ether(). Bien qu'on ne lui ai fournit aucun paramètre, on constate a l'appel de la méthode show() que les attributs <code data-claire-semantic="python">dst</code>, <code data-claire-semantic="python">src</code> et <code data-claire-semantic="python">type</code> ont des valeurs par défaut.</p><div id="r-551643" data-claire-element-id="551643" data-claire-semantic="question"><p id="r-551642" data-claire-element-id="551642">Que représentent ces différents attributs ? :euh:</p></div><p id="r-551644" data-claire-element-id="551644">Pour ceux qui ne connaitraient pas le protocole éthernet, voici la structure qu'une trame éthernet doit présenter :</p><figure id="r-551646" data-claire-element-id="551647"><img id="r-551645" data-claire-element-id="551645" src="medias/uploads.siteduzero.com_files_343001_344000_343920.png" alt="structure trame éthernet"/></figure><p id="r-551648" data-claire-element-id="551648">Nous venons de créer une trame éthernet &quot;pure&quot;, c'est à dire qu'on a rien dans data. Le CRC permet le contrôle d'intégrité de notre trame : si on le modifiait, notre trame deviendrait invalide et inutile. Il ne nous reste donc que 3 champs modifiables :</p><ul id="r-551655" data-claire-element-id="551655"><li id="r-551650" data-claire-element-id="551650"><p id="r-551649" data-claire-element-id="551649"><code data-claire-semantic="python">dst</code> : représente l'adresse mac du destinataire</p></li><li id="r-551652" data-claire-element-id="551652"><p id="r-551651" data-claire-element-id="551651"><code data-claire-semantic="python">src</code> : représente l'adresse mac de l'émetteur</p></li><li id="r-551654" data-claire-element-id="551654"><p id="r-551653" data-claire-element-id="551653"><code data-claire-semantic="python">type</code> : représente le type de protocole (dépend du contenu de la partie &quot;data&quot; pour l'instant vide)</p></li></ul><p id="r-551656" data-claire-element-id="551656">Pour les modifier, c'est très simple :</p><pre id="r-551657" data-claire-element-id="551657"><code data-claire-semantic="python">&gt;&gt;&gt; ma_trame.dst = '00:19:4b:10:38:79'
+&gt;&gt;&gt; ma_trame.show()
+###[ Ethernet ]###
+  dst= 00:19:4b:10:38:79
+  src= 00:00:00:00:00:00
+  type= 0x0
+&gt;&gt;&gt;</code></pre><p id="r-551658" data-claire-element-id="551658">On aurait pu préciser l'adresse mac du destinataire lors de la création de la trame :</p><pre id="r-551659" data-claire-element-id="551659"><code data-claire-semantic="python">&gt;&gt;&gt; ma_trame = Ether(dst='00:19:4b:10:38:79')</code></pre><p id="r-551660" data-claire-element-id="551660">Les attributs <code data-claire-semantic="python">dst</code>, <code data-claire-semantic="python">src</code> et <code data-claire-semantic="python">type</code> sont modifiables à votre guise. Cela veut donc dire que vous pouvez facilement envoyer des trames en faisant croire que l'émetteur est quelqu'un d'autre ! :ninja:</p><div id="r-551662" data-claire-element-id="551662" data-claire-semantic="question"><p id="r-551661" data-claire-element-id="551661">Les envoyer ? Non, je ne sais pas faire ... :'(</p></div><h3 id="r-envoi-de-la-trame" data-claire-element-id="551672">Envoi de la trame</h3><p id="r-551664" data-claire-element-id="551664">Pour envoyer une <strong>trame Éthernet</strong>, il existe la fonction <strong>sendp</strong>() :</p><pre id="r-551665" data-claire-element-id="551665"><code data-claire-semantic="python">&gt;&gt;&gt; sendp(ma_trame)
+.
+Sent 1 packets.
+&gt;&gt;&gt;</code></pre><aside id="r-551667" data-claire-element-id="551667" data-claire-semantic="information"><p id="r-551666" data-claire-element-id="551666">Dans le jargon Scapy, un point &quot;.&quot; représente un envoi.</p></aside><p id="r-551668" data-claire-element-id="551668">Voilà, mon paquet a bien été envoyé à la machine dont j'avais précisé l'adresse mac.</p><div id="r-551670" data-claire-element-id="551670" data-claire-semantic="question"><p id="r-551669" data-claire-element-id="551669">Génial ! .. C'est tout ? :-°</p></div><p id="r-551671" data-claire-element-id="551671">Je vous vois bien déçu. :p Ce que nous venons de faire ne présentait guère d'intérêt, je vous l'accorde. En effet, une trame Éthernet pure ne sert pratiquement à rien ; pour pouvoir faire quelque chose d'intéressant, il faudrait donc mettre quelque chose dans le &quot;data&quot; vu plus haut...<br/> Nous allons donc faire de l'<strong>encapsulation</strong>.</p><h2 id="r-encapsulons" data-claire-element-id="551716">Encapsulons !</h2><p id="r-551674" data-claire-element-id="551674"><cite>Citation : Wikipédia</cite></p><blockquote id="r-551676" data-claire-element-id="551676"><p id="r-551675" data-claire-element-id="551675">L'encapsulation, en informatique et spécifiquement pour les réseaux informatiques, est un procédé consistant à inclure les données d'un protocole dans un autre protocole.</p></blockquote><h3 id="r-encapsuler-les-protocoles-l-exemple-du-ping" data-claire-element-id="551685">Encapsuler les protocoles : l'exemple du ping</h3><p id="r-551677" data-claire-element-id="551677">La commande ping permet de savoir si un hôte, désigné par son adresse IP, existe. En version cambouis, la commande ping consiste à envoyer un paquet ICMP &quot;echo-request&quot; à l'hôte et à dire si un paquet ICMP &quot;echo-reply&quot; a été renvoyé.<br/> Forgeons donc un paquet ICMP echo-request !</p><pre id="r-551678" data-claire-element-id="551678"><code data-claire-semantic="python">&gt;&gt;&gt; mon_ping = ICMP()
+&gt;&gt;&gt; mon_ping.show()
+###[ ICMP ]###
+  type= echo-request
+  code= 0
+  chksum= None
+  id= 0x0
+  seq= 0x0
+&gt;&gt;&gt;</code></pre><p id="r-551679" data-claire-element-id="551679">On voit que par défaut, l'instanciation de la classe ICMP() met le type du ping à echo-request. On pourrait tout à fait le modifier, tout comme les autres champs. Pour savoir ce qu'ils représentent, je vous renvoie à <a href="http://fr.wikipedia.org/wiki/ICMP%23Format_d.27un_paquet_ICMP">l'article ICMP sur Wikipédia</a>. Dans cet article, on peut notamment lire quelque chose d'intéressant : <em>un paquet ICMP est encapsulé dans un datagramme IP</em>. En effet, c'est dans le datagramme IP qu'on va pouvoir renseigner l'adresse IP du destinataire. :magicien:</p><p id="r-551680" data-claire-element-id="551680">L'encapsulation entre protocoles, dans Scapy, est réalisée par l'opérateur / (slash). Rien à voir avec une division, donc ;) .</p><pre id="r-551681" data-claire-element-id="551681"><code data-claire-semantic="python">&gt;&gt;&gt; mon_ping = Ether() / IP(dst='192.168.1.1') / ICMP()
+&gt;&gt;&gt; mon_ping.show()
+###[ Ethernet ]###
+  dst= 00:19:4b:10:38:79
+  src= 00:26:5e:17:00:6e
+  type= 0x800
+###[ IP ]###
+     version= 4
+     ihl= None
+     tos= 0x0
+     len= None
+     id= 1
+     flags= 
+     frag= 0
+     ttl= 64
+     proto= icmp
+     chksum= None
+     src= 192.168.1.14
+     dst= 192.168.1.1
+     \options\
+###[ ICMP ]###
+        type= echo-request
+        code= 0
+        chksum= None
+        id= 0x0
+        seq= 0x0
+&gt;&gt;&gt;</code></pre><aside id="r-551683" data-claire-element-id="551683" data-claire-semantic="information"><p id="r-551682" data-claire-element-id="551682">On constate que, en précisant simplement l'adresse IP du destinataire, Scapy a compris tout seul qu'il devait modifier les attributs <code data-claire-semantic="python">dst</code>, <code data-claire-semantic="python">src</code> et <code data-claire-semantic="python">type</code> de Ether() ainsi que l'adresse IP de l'émetteur (<code data-claire-semantic="python">src</code> dans IP()) ! C'est très pratique, mais évidemment nous aurions pu forcer Scapy à mettre les valeurs que l'on voulait.</p></aside><p id="r-551684" data-claire-element-id="551684">Voyons maintenant si 192.168.1.1 (ma Livebox) va répondre à cela par un paquet ICMP echo-reply.</p><h3 id="r-envoi-du-paquet" data-claire-element-id="551715">Envoi du paquet</h3><p id="r-551686" data-claire-element-id="551686">L'envoi s'effectue comme auparavant :</p><pre id="r-551687" data-claire-element-id="551687"><code data-claire-semantic="python">&gt;&gt;&gt; sendp(mon_ping)
+.
+Sent 1 packets.
+&gt;&gt;&gt;</code></pre><div id="r-551689" data-claire-element-id="551689" data-claire-semantic="question"><p id="r-551688" data-claire-element-id="551688">Hé, on a toujours rien ! Tu nous aurais menti ? :colere:</p></div><p id="r-551690" data-claire-element-id="551690">Oui et non !<br/> Oui, car la fonction <code data-claire-semantic="python">sendp()</code> ne fait qu'envoyer, c'est vrai. Pour envoyer et recevoir, il faut utiliser les fonctions <code data-claire-semantic="python">srp()</code> et <code data-claire-semantic="python">srp1()</code>.<br/> Non, car dans le cas d'une trame Éthernet pure, srp() et srp1() n'auraient de toute façon rien reçu !<br/><code data-claire-semantic="python">srp()</code> renvoie deux objets : le premier contient les paquets émis et leurs réponses associées, l'autre contient les paquets sans réponse.</p><pre id="r-551691" data-claire-element-id="551691"><code data-claire-semantic="python">&gt;&gt;&gt; rep,non_rep = srp(mon_ping)
+Begin emission:
+Finished to send 1 packets.
+*
+Received 1 packets, got 1 answers, remaining 0 packets
+&gt;&gt;&gt; rep
+&lt;Results: TCP:0 UDP:0 ICMP:1 Other:0&gt;
+&gt;&gt;&gt; non_rep
+&lt;Unanswered: TCP:0 UDP:0 ICMP:0 Other:0&gt;
+&gt;&gt;&gt;</code></pre><aside id="r-551693" data-claire-element-id="551693" data-claire-semantic="information"><p id="r-551692" data-claire-element-id="551692">Dans le jargon scapy, une étoile représente une réponse.</p></aside><p id="r-551694" data-claire-element-id="551694">On voit qu'on a eu une réponse, zéro échecs, et que notre réponse est un paquet ICMP ! Examinons-le :</p><pre id="r-551695" data-claire-element-id="551695"><code data-claire-semantic="python">&gt;&gt;&gt; rep.show()
+0000 Ether / IP / ICMP 192.168.1.14 &gt; 192.168.1.1 echo-request 0 ==&gt; Ether / IP / ICMP 192.168.1.1 &gt; 192.168.1.14 echo-reply 0
+&gt;&gt;&gt;</code></pre><p id="r-551696" data-claire-element-id="551696">Bingo, on a bien reçu un ICMP echo-reply ! :) <br/> rep contient en réalité une liste de couples de paquets. En l'occurence, la liste ne contient qu'un seul couple de paquets, qu'on peut afficher ainsi comme on afficherai n'importe quel élément d'une liste en Python :</p><pre id="r-551697" data-claire-element-id="551697"><code data-claire-semantic="python">&gt;&gt;&gt; rep[0]
+(&lt;Ether  type=0x800 |&lt;IP  frag=0 proto=icmp dst=192.168.1.1 |&lt;ICMP  |&gt;&gt;&gt;, &lt;Ether  dst=00:26:5e:17:00:6e src=00:19:4b:10:38:79 type=0x800 |&lt;IP  version=4L ihl=5L tos=0x0 len=28 id=58681 flags= frag=0L ttl=64 proto=icmp chksum=0x1248 src=192.168.1.1 dst=192.168.1.14 options=[] |&lt;ICMP  type=echo-reply code=0 chksum=0xffff id=0x0 seq=0x0 |&gt;&gt;&gt;)
+&gt;&gt;&gt;</code></pre><p id="r-551698" data-claire-element-id="551698">Le résultat est un couple (tuple à deux valeurs). Pour afficher le paquet émis (notre ICMP echo-request), on fera donc <code data-claire-semantic="python">rep[0][0].show()</code>, et pour le paquet reçu en réponse, <code data-claire-semantic="python">rep[0][1].show()</code> :</p><p id="r-551699" data-claire-element-id="551699"></p><div id="r-551701" data-claire-element-id="551701"><pre id="r-551700" data-claire-element-id="551700"><code data-claire-semantic="python">&gt;&gt;&gt; rep[0][0].show()
+###[ Ethernet ]###
+  dst= 00:19:4b:10:38:79
+  src= 00:26:5e:17:00:6e
+  type= 0x800
+###[ IP ]###
+     version= 4
+     ihl= None
+     tos= 0x0
+     len= None
+     id= 1
+     flags= 
+     frag= 0
+     ttl= 64
+     proto= icmp
+     chksum= None
+     src= 192.168.1.14
+     dst= 192.168.1.1
+     \options\
+###[ ICMP ]###
+        type= echo-request
+        code= 0
+        chksum= None
+        id= 0x0
+        seq= 0x0
+&gt;&gt;&gt; rep[0][1].show()
+###[ Ethernet ]###
+  dst= 00:26:5e:17:00:6e
+  src= 00:19:4b:10:38:79
+  type= 0x800
+###[ IP ]###
+     version= 4L
+     ihl= 5L
+     tos= 0x0
+     len= 28
+     id= 58681
+     flags= 
+     frag= 0L
+     ttl= 64
+     proto= icmp
+     chksum= 0x1248
+     src= 192.168.1.1
+     dst= 192.168.1.14
+     \options\
+###[ ICMP ]###
+        type= echo-reply
+        code= 0
+        chksum= 0xffff
+        id= 0x0
+        seq= 0x0
+&gt;&gt;&gt;</code></pre></div><p id="r-551702" data-claire-element-id="551702">Pour simplifier tout cela, on peut préférer ici la fonction <code data-claire-semantic="python">srp1()</code>. Cette fonction renvoie renvoie un seul objet : <strong>la première réponse</strong>.</p><pre id="r-551703" data-claire-element-id="551703"><code data-claire-semantic="python">&gt;&gt;&gt; rep = srp1(mon_ping)
+Begin emission:
+Finished to send 1 packets.
+*
+Received 1 packets, got 1 answers, remaining 0 packets
+&gt;&gt;&gt; rep.show()
+###[ Ethernet ]###
+  dst= 00:26:5e:17:00:6e
+  src= 00:19:4b:10:38:79
+  type= 0x800
+###[ IP ]###
+     version= 4L
+     ihl= 5L
+     tos= 0x0
+     len= 28
+     id= 3386
+     flags= 
+     frag= 0L
+     ttl= 64
+     proto= icmp
+     chksum= 0xea47
+     src= 192.168.1.1
+     dst= 192.168.1.14
+     \options\
+###[ ICMP ]###
+        type= echo-reply
+        code= 0
+        chksum= 0xffff
+        id= 0x0
+        seq= 0x0
+&gt;&gt;&gt;</code></pre><p id="r-551704" data-claire-element-id="551704">Enfin, souvent également, on ne s'intéressera pas à la partie Éthernet qui est de toute façon très bien remplie de façon automatique par Scapy. Il existe donc des fonctions <code data-claire-semantic="python">send()</code>, <code data-claire-semantic="python">sr()</code> et <code data-claire-semantic="python">sr1()</code> équivalentes à <code data-claire-semantic="python">sendp()</code>, <code data-claire-semantic="python">srp()</code> et <code data-claire-semantic="python">srp1()</code> mis à part le fait qu'elles se chargent toutes seules d'ajouter l'en-tête Éthernet.<br/> Un exemple :</p><pre id="r-551705" data-claire-element-id="551705"><code data-claire-semantic="python">&gt;&gt;&gt; rep = sr1(IP(dst='192.168.1.1') / ICMP())
+Begin emission:
+Finished to send 1 packets.
+*
+Received 1 packets, got 1 answers, remaining 0 packets
+&gt;&gt;&gt; rep.show()
+###[ IP ]###
+  version= 4L
+  ihl= 5L
+  tos= 0x0
+  len= 28
+  id= 3389
+  flags= 
+  frag= 0L
+  ttl= 64
+  proto= icmp
+  chksum= 0xea44
+  src= 192.168.1.1
+  dst= 192.168.1.14
+  \options\
+###[ ICMP ]###
+     type= echo-reply
+     code= 0
+     chksum= 0xffff
+     id= 0x0
+     seq= 0x0
+&gt;&gt;&gt;</code></pre><aside id="r-551707" data-claire-element-id="551707" data-claire-semantic="warning"><p id="r-551706" data-claire-element-id="551706">Quand on procède ainsi, on voit que même dans la réponse, l'en-tête Éthernet n'apparaît plus.</p></aside><p id="r-551708" data-claire-element-id="551708">Essayons la même chose sur un hôte non existant :</p><pre id="r-551709" data-claire-element-id="551709"><code data-claire-semantic="python">&gt;&gt;&gt; rep = sr1(IP(dst='192.168.1.2') / ICMP())
+Begin emission:
+.WARNING: Mac address to reach destination not found. Using broadcast.
+Finished to send 1 packets.
+.....................^C
+Received 22 packets, got 0 answers, remaining 1 packets
+&gt;&gt;&gt;</code></pre><p id="r-551710" data-claire-element-id="551710">J'ai arrêté manuellement (Ctrl-C) l'envoi au bout de 30 secondes. A l'issue de ce temps, la variable rep est vide : rien n'a été renvoyé, comme le laissait deviner le &quot;got 0 answers&quot;.<br/> On peut rajouter une limite de temps (en secondes) à <code data-claire-semantic="python">sr1()</code> pour ne pas rester bloqué, grâce au paramètre timeout.</p><pre id="r-551711" data-claire-element-id="551711"><code data-claire-semantic="python">&gt;&gt;&gt; rep = sr1(IP(dst='192.168.1.2') / ICMP(), timeout=0.5)
+Begin emission:
+WARNING: Mac address to reach destination not found. Using broadcast.
+Finished to send 1 packets.
+
+Received 0 packets, got 0 answers, remaining 1 packets
+&gt;&gt;&gt;</code></pre><p id="r-551712" data-claire-element-id="551712">Pour voir les autres paramètres que peut prendre <code data-claire-semantic="python">sr1()</code>, faites <code data-claire-semantic="python">help(sr1)</code> :)</p><aside id="r-551714" data-claire-element-id="551714" data-claire-semantic="information"><p id="r-551713" data-claire-element-id="551713">Je vous encourage à faire de même pour <code data-claire-semantic="python">sr()</code> et <code data-claire-semantic="python">send()</code></p></aside><h2 id="r-exercice-scan-d-une-plage-d-adresse" data-claire-element-id="551723">Exercice : scan d'une plage d'adresse</h2><p id="r-551717" data-claire-element-id="551717">A la lumière des explications ci-dessus et avec quelques connaissances en Python, vous devriez maintenant être capable de coder un programme qui effectue un ping sur toute une plage d'adresses.<br/> Indice : pour désigner une plage d'adresse, vous pouvez simplement mettre '192.168.1.1-15' dans l'attribut <code data-claire-semantic="python">dst</code> de IP. :magicien:</p><p id="r-551718" data-claire-element-id="551718"></p><div id="r-551722" data-claire-element-id="551722"><pre id="r-551719" data-claire-element-id="551719"><code data-claire-semantic="python">#! /usr/bin/python
+from scapy.all import *
+
+rang = '192.168.1.1-15'
+rep,non_rep = sr( IP(dst=rang) / ICMP() , timeout=0.5 )
+for elem in rep : # elem représente un couple (paquet émis, paquet reçu)
+	if elem[1].type == 0 : # 0 &lt;=&gt; echo-reply
+		print elem[1].src + ' a renvoye un echo-reply '</code></pre><p id="r-551720" data-claire-element-id="551720">Pour savoir que le champ type d'ICMP valait 0 dans le cas de l'echo-reply, vous pouviez vous renseigner sur la page Wikipédia vue plus tôt, ou faire <strong>ls(mon_ping)</strong> avec mon_ping de type echo-reply.<br/><strong>ls(un_paquet)</strong> affiche en effet les attributs du paquet de manière numérique, et affiche également leur nom, leur type et leur valeur par défaut (entre parenthèses) :</p><pre id="r-551721" data-claire-element-id="551721"><code data-claire-semantic="python">&gt;&gt;&gt; ls(IP(dst='192.168.1.1') / ICMP(type='echo-reply'))
+version    : BitField             = 4               (4)
+ihl        : BitField             = None            (None)
+tos        : XByteField           = 0               (0)
+len        : ShortField           = None            (None)
+id         : ShortField           = 1               (1)
+flags      : FlagsField           = 0               (0)
+frag       : BitField             = 0               (0)
+ttl        : ByteField            = 64              (64)
+proto      : ByteEnumField        = 1               (0)
+chksum     : XShortField          = None            (None)
+src        : Emph                 = '192.168.1.14'  (None)
+dst        : Emph                 = '192.168.1.1'   ('127.0.0.1')
+options    : PacketListField      = []              ([])
+--
+type       : ByteEnumField        = 0               (8)
+code       : MultiEnumField       = 0               (0)
+chksum     : XShortField          = None            (None)
+id         : ConditionalField     = 0               (0)
+seq        : ConditionalField     = 0               (0)
+ts_ori     : ConditionalField     = 62019678        (62019678)
+ts_rx      : ConditionalField     = 62019678        (62019678)
+ts_tx      : ConditionalField     = 62019678        (62019678)
+gw         : ConditionalField     = '0.0.0.0'       ('0.0.0.0')
+ptr        : ConditionalField     = 0               (0)
+reserved   : ConditionalField     = 0               (0)
+addr_mask  : ConditionalField     = '0.0.0.0'       ('0.0.0.0')
+unused     : ConditionalField     = 0               (0)
+&gt;&gt;&gt;</code></pre></div>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy">Manipulez les paquets réseau avec Scapy</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/installation-et-utilisation-1">
+Installation et utilisation
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/manipulation-de-paquets">
+Manipulation de paquets
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/les-listes-de-paquets">
+Les listes de paquets
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/la-fonction-sniff">
+La fonction sniff()
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/import-et-export-des-resultats">
+Import et export des résultats
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/installation-et-utilisation-1">
+<span class="arrow"></span>
+<span class="next">Installation et utilisation</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/les-listes-de-paquets">
+<span class="next">Les listes de paquets</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Leslistesdepaquets"></a><h2>Les listes de paquets</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/manipulation-de-paquets">
+<span class="arrow"></span>
+<span class="next">Manipulation de paquets</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/la-fonction-sniff">
+<span class="next">La fonction sniff()</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-551725" data-claire-element-id="551725">Scapy permet, pour chaque attribut d'un paquet, de préciser une liste au lieu d'une valeur simple. On l'a vu juste avant, dans le cas de l'adresse IP du destinataire, mais cela est valable pour tous les attributs ! :o</p><h2 id="r-liste-simple" data-claire-element-id="551739">Liste simple</h2><p id="r-551726" data-claire-element-id="551726">Prenons un cas concret : nous voulons savoir si un serveur web est accessible en http et en https. Nous pourrions tenter un scan des ports correspondant par défaut : 80 et 443. Plutôt que d'envoyer/recevoir deux fois en changeant simplement le port, nous allons utiliser une liste simple sur le port de destination en mettant :</p><pre id="r-551727" data-claire-element-id="551727"><code data-claire-semantic="python">dport=[80,443]</code></pre><aside id="r-551729" data-claire-element-id="551729" data-claire-semantic="information"><p id="r-551728" data-claire-element-id="551728">Je vais utiliser ici un scan SYN : pour ceux qui ne connaitraient pas, le principe est simple : j'envoie un paquet TCP sur le port désiré de la cible avec le flag SYN. Si son port accepte les connexions, il me renverra un paquet TCP avec les flags SYN et ACK.</p></aside><pre id="r-551730" data-claire-element-id="551730"><code data-claire-semantic="python">&gt;&gt;&gt; ls(TCP)
+sport      : ShortEnumField       = (20)
+dport      : ShortEnumField       = (80)
+seq        : IntField             = (0)
+ack        : IntField             = (0)
+dataofs    : BitField             = (None)
+reserved   : BitField             = (0)
+flags      : FlagsField           = (2)
+window     : ShortField           = (8192)
+chksum     : XShortField          = (None)
+urgptr     : ShortField           = (0)
+options    : TCPOptionsField      = ({})
+&gt;&gt;&gt; mon_paquet = IP(dst='192.168.1.10') / TCP(sport=12345, dport=[80,443], flags='S')
+&gt;&gt;&gt; rep,non_rep = sr(mon_paquet)
+Begin emission:
+Finished to send 2 packets.
+**
+Received 2 packets, got 2 answers, remaining 0 packets
+&gt;&gt;&gt; rep.show()
+0000 IP / TCP 192.168.1.14:12345 &gt; 192.168.1.10:www S ==&gt; IP / TCP 192.168.1.10:www &gt; 192.168.1.14:12345 SA / Padding
+0001 IP / TCP 192.168.1.14:12345 &gt; 192.168.1.10:https S ==&gt; IP / TCP 192.168.1.10:https &gt; 192.168.1.14:12345 RA / Padding
+&gt;&gt;&gt;</code></pre><p id="r-551731" data-claire-element-id="551731">Lors de la création de mon_paquet, je précise le port source, le port de destination et je positionne le flag SYN. J'envoie ce paquet (qui en réalité représente deux paquets), comme d'habitude, avec <code data-claire-semantic="python">sr()</code>.<br/> Le résultat est composé des deux couples paquet émis / paquet reçu.</p><ul id="r-551736" data-claire-element-id="551736"><li id="r-551733" data-claire-element-id="551733"><p id="r-551732" data-claire-element-id="551732">Le premier paquet reçu correspond à celui envoyé sur le port 80. Les flags positionnés sont bien SYN et ACK (SA) : le port est ouvert.</p></li><li id="r-551735" data-claire-element-id="551735"><p id="r-551734" data-claire-element-id="551734">Le second paquet reçu correspond à celui envoyé sur le port 443. Les flags ne sont pas SYN et ACK mais RESET et ACK : le port est fermé.</p></li></ul><aside id="r-551738" data-claire-element-id="551738" data-claire-semantic="information"><p id="r-551737" data-claire-element-id="551737">Les réponses des hôtes aux paquets TCP peuvent parfois différer très légèrement en fonction du système d'exploitation. Par exemple, dans ce cas ci, je reçois des paquets avec bourrage (padding), tandis qu'en envoyant les même paquets sur ma Livebox, il n'y en a pas. Ces différences de comportement peuvent être très pratique pour savoir à quel système d'exploitation on a à faire : on parle alors d'OS fingerprinting.</p></aside><h2 id="r-rang-1" data-claire-element-id="551751">Rang</h2><p id="r-551740" data-claire-element-id="551740">Et si à la place de <code data-claire-semantic="python">dport=[80,443]</code>, j'avais écrit <code data-claire-semantic="python">dport=(80,443)</code> ? (des parenthèses au lieu des crochets)<br/> Eh bien il n'y aurait pas eu 2 paquets d'envoyés, mais 364 : un pour chaque port de 80 à 443.</p><pre id="r-551741" data-claire-element-id="551741"><code data-claire-semantic="python">&gt;&gt;&gt; mon_paquet = IP(dst='192.168.1.10') / TCP(sport=12345, dport=(80,443), flags='S')
+&gt;&gt;&gt; rep,non_rep = sr(mon_paquet)
+Begin emission:
+.***************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************Finished to send 364 packets.
+*
+Received 365 packets, got 364 answers, remaining 0 packets
+&gt;&gt;&gt;</code></pre><p id="r-551742" data-claire-element-id="551742">Et si on désire afficher ceux ouverts :</p><pre id="r-551743" data-claire-element-id="551743"><code data-claire-semantic="python">&gt;&gt;&gt; for emis,recu in rep :
+...     if recu[1].flags==18 : # 18 &lt;=&gt; SYN+ACK
+...         print 'port ouvert : ', recu[1].sport
+... 
+port ouvert :  80
+port ouvert :  111
+&gt;&gt;&gt;</code></pre><h3 id="r-exercice-programmer-un-traceroute" data-claire-element-id="551750">Exercice : programmer un traceroute</h3><p id="r-551744" data-claire-element-id="551744">La commande traceroute permet de savoir par où passent vos paquets avant d'atteindre leur destination. Pour cela, on se sert de l'attribut <code data-claire-semantic="python">ttl</code> (time to live) de l'en-tête IP. Cet attribut diminue de 1 à chaque routeur traversé, et lorsqu'il atteint 0, il &quot;meurt&quot; et nous revient. On peut alors exploiter l'attribut <code data-claire-semantic="python">src</code> de son en-tête IP pour connaître l'adresse IP du routeur où il est &quot;mort&quot;.<br/> Pour connaître tous les routeurs traversés, il suffit donc de mettre, dans l'attribut <code data-claire-semantic="python">ttl</code>, un rang.</p><p id="r-551745" data-claire-element-id="551745">Si vous ne comprenez pas tout, un bout de code vaut mieux qu'un grand discours :</p><p id="r-551746" data-claire-element-id="551746"></p><div id="r-551748" data-claire-element-id="551748"><pre id="r-551747" data-claire-element-id="551747"><code data-claire-semantic="python">&gt;&gt;&gt; rep,non_rep=sr( IP(dst='209.85.143.100', ttl=(1,25)) / TCP(), timeout=1 )
+Begin emission:
+********Finished to send 25 packets.
+***..
+Received 13 packets, got 11 answers, remaining 14 packets
+&gt;&gt;&gt; for emis,recu in rep:
+...     print emis.ttl, recu.src
+... 
+1 192.168.1.1
+2 90.45.115.1
+3 10.125.164.10
+4 193.253.93.105
+5 81.253.130.14
+6 193.252.100.42
+7 193.251.254.18
+8 72.14.232.211
+9 209.85.251.190
+10 209.85.253.125
+11 209.85.143.100
+&gt;&gt;&gt;</code></pre></div><p id="r-551749" data-claire-element-id="551749"><strong>Précisions</strong> : L'adresse IP de destination, '209.85.143.100', est celle d'un des nombreux datacenter de Google. J'encapsule dans mon paquet IP du TCP mais je pourrais y mettre de l'ICMP, de l'UDP, ou même rien, mais les firewall des routeurs sur le chemin risqueraient de ne pas laisser passer certains protocoles.<br/> Je fais varier le <code data-claire-semantic="python">ttl</code> de 1 à 25, mais on voit qu'en pratique le datacenter est atteint au bout de 11 sauts seulement.<br/> Au passage, on peut voir que mes paquets traversent ma Livebox (routeur n°1) et différents routeurs d'Orange et de Google.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy">Manipulez les paquets réseau avec Scapy</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/installation-et-utilisation-1">
+Installation et utilisation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/manipulation-de-paquets">
+Manipulation de paquets
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/les-listes-de-paquets">
+Les listes de paquets
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/la-fonction-sniff">
+La fonction sniff()
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/import-et-export-des-resultats">
+Import et export des résultats
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/manipulation-de-paquets">
+<span class="arrow"></span>
+<span class="next">Manipulation de paquets</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/la-fonction-sniff">
+<span class="next">La fonction sniff()</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lafonctionsniff"></a><h2>La fonction sniff()</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/les-listes-de-paquets">
+<span class="arrow"></span>
+<span class="next">Les listes de paquets</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/import-et-export-des-resultats">
+<span class="next">Import et export des résultats</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-551753" data-claire-element-id="551753">Nous savons maintenant envoyer et recevoir des paquets, mais pour progresser dans notre compréhension des outils réseau, il nous faudrait lire et décortiquer leurs échanges de paquets. Par exemple : comment procède réellement la commande ping ? Comment procède nmap pour scanner un port ? Comment procède firefox pour récupérer <a href="http://www.siteduzero.com/index.html">http://www.siteduzero.com/index.html</a> ? :euh:</p><p id="r-551754" data-claire-element-id="551754">C'est là qu'intervient la fonction <code data-claire-semantic="python">sniff()</code> de Scapy.</p><h2 id="r-presentation-138" data-claire-element-id="551774">Présentation</h2><p id="r-551755" data-claire-element-id="551755">Voilà une simplification de la signature de cette fonction :</p><pre id="r-551756" data-claire-element-id="551756"><code data-claire-semantic="python">sniff(filter=&quot;&quot;, count=0, prn=None, lfilter=None, timeout=None, iface=All)</code></pre><p id="r-551757" data-claire-element-id="551757">Elle renvoie une liste de paquets (en comparaison, sr() renvoie deux listes de paquets).<br/> Ses paramètres sont :</p><ul id="r-551770" data-claire-element-id="551770"><li id="r-551759" data-claire-element-id="551759"><p id="r-551758" data-claire-element-id="551758"><strong>count</strong> : nombre de paquets à capturer. 0 : pas de limite.</p></li><li id="r-551761" data-claire-element-id="551761"><p id="r-551760" data-claire-element-id="551760"><strong>timeout</strong> : stoppe le sniff après un temps donné.</p></li><li id="r-551763" data-claire-element-id="551763"><p id="r-551762" data-claire-element-id="551762"><strong>iface</strong> : désigne l'interface sur laquelle sniffer. La liste de vos interfaces est donnée par la commande ifconfig.</p></li><li id="r-551765" data-claire-element-id="551765"><p id="r-551764" data-claire-element-id="551764"><strong>filter</strong> : filtre les paquets à garder d'après une chaîne de caractère. <br/> Exemple : <code data-claire-semantic="python">filter=&quot;port 80&quot;</code> filtre les paquets ayant un lien avec le port 80.</p></li><li id="r-551767" data-claire-element-id="551767"><p id="r-551766" data-claire-element-id="551766"><strong>lfilter</strong> : même chose, mais utilise une fonction plutôt qu'une chaîne. <br/> Exemple : <code data-claire-semantic="python">lfilter=lambda x: x[1].src=='192.168.1.14'</code> filtre les paquets émis par 192.168.1.14.</p></li><li id="r-551769" data-claire-element-id="551769"><p id="r-551768" data-claire-element-id="551768"><strong>prn</strong> :fonction à appliquer à chaque paquet. Si la fonction retourne quelque chose, cela s'affiche. <br/> Exemple : <code data-claire-semantic="python">prn = lambda x: x.show()</code> va afficher le détail de chaque paquet.</p></li></ul><aside id="r-551772" data-claire-element-id="551772" data-claire-semantic="information"><p id="r-551771" data-claire-element-id="551771">filter utilise un filtre <a href="http://fr.wikipedia.org/wiki/BSD_Packet_Filter">BPF</a>. Le filtre &quot;(port 80 or port 443) and dst host 192.168.1.14&quot; va sélectionner les paquets envoyés (dst) à moi-même (host 192.168.1.14) et qui ont un rapport avec les ports http ou https (port 80 or port 443).</p></aside><p id="r-551773" data-claire-element-id="551773">Maintenant que les présentations sont faites, passons à l'étape suivante : explorons le réseau ! :pirate:</p><h2 id="r-utilisation-80" data-claire-element-id="551815">Utilisation</h2><h3 id="r-que-fait-ping" data-claire-element-id="551786">Que fait ping ?</h3><p id="r-551775" data-claire-element-id="551775">Je lance mon sniff en filtrant sur la cible du ping, 192.168.1.10 :</p><pre id="r-551776" data-claire-element-id="551776"><code data-claire-semantic="python">&gt;&gt;&gt; rep = sniff(filter=&quot;host 192.168.1.10&quot;)</code></pre><p id="r-551777" data-claire-element-id="551777">J'exécute mon ping :</p><pre id="r-551778" data-claire-element-id="551778"><code data-claire-semantic="console">$ ping 192.168.1.10 -c 1</code></pre><p id="r-551779" data-claire-element-id="551779">Je vais voir les paquets sniffés :</p><pre id="r-551780" data-claire-element-id="551780"><code data-claire-semantic="python">&gt;&gt;&gt; rep.show()
+0000 Ether / IP / ICMP 192.168.1.14 &gt; 192.168.1.10 echo-request 0 / Raw
+0001 Ether / IP / ICMP 192.168.1.10 &gt; 192.168.1.14 echo-reply 0 / Raw
+&gt;&gt;&gt;</code></pre><p id="r-551781" data-claire-element-id="551781">C'est à peu près ce que nous avions tout à l'heure ! :) <br/> À part le RAW... Que contient-il ?</p><aside id="r-551783" data-claire-element-id="551783" data-claire-semantic="information"><p id="r-551782" data-claire-element-id="551782">RAW désigne le payload, les données encapsulées dans les multiples en-têtes de notre paquet. Lorsque l'on télécharge un gros fichier, par exemple, celui ci est découpés en petits paquets, et pour le reconstituer à la fin, on doit réassembler tous les RAW.</p></aside><pre id="r-551784" data-claire-element-id="551784"><code data-claire-semantic="python">&gt;&gt;&gt; rep[0].show()
+###[ Ethernet ]###
+   ....
+   blabla
+   ....
+###[ Raw ]###
+           load= 'B\xdd\xa5N\x14\xf7\x02\x00\x08\t\n\x0b\x0c\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f !&quot;#$%&amp;\'()*+,-./01234567'
+&gt;&gt;&gt;</code></pre><p id="r-551785" data-claire-element-id="551785">o_O . Visiblement, rien de très pertinent ! ^^ Plus sérieusement, cette suite étrange de caractère peut permettre au destinataire de savoir qu'il a été la cible d'un ping effectué par la commande ping de Linux.</p><h3 id="r-que-fait-nmap" data-claire-element-id="551792">Que fait nmap ?</h3><p id="r-551787" data-claire-element-id="551787">Tentons un scan SYN du port 80 de 192.168.1.10 avec nmap :</p><pre id="r-551788" data-claire-element-id="551788"><code data-claire-semantic="console">$ sudo nmap -sS -p 80 192.168.1.10</code></pre><p id="r-551789" data-claire-element-id="551789">Les paquets sniffés sont alors :</p><pre id="r-551790" data-claire-element-id="551790"><code data-claire-semantic="python">&gt;&gt;&gt; rep.show()
+0000 Ether / ARP who has 192.168.1.10 says 192.168.1.14
+0001 Ether / ARP is at 00:16:17:e3:ed:88 says 192.168.1.10 / Padding
+0002 Ether / IP / TCP 192.168.1.14:50662 &gt; 192.168.1.10:www S
+0003 Ether / IP / TCP 192.168.1.10:www &gt; 192.168.1.14:50662 SA / Padding
+0004 Ether / IP / TCP 192.168.1.14:50662 &gt; 192.168.1.10:www R
+&gt;&gt;&gt;</code></pre><p id="r-551791" data-claire-element-id="551791">Pour rappel, dans notre version du scan SYN, nous n'avions que les paquets avec les flags S et SA d'échangés. Mais en réalité, des paquets ARP étaient également échangés : ceux cis servent à déterminer l'adresse mac de la cible. Eh oui, on s'économise depuis longtemps l'encapsulation dans Ether(), mais Scapy le fait pour nous, et il a besoin de certaines informations. ^^ <br/> Quand au paquet RESET (R), nous ne nous en rendions pas compte, mais il était également envoyé ! :o <br/> En effet, le noyau Linux voyait arriver un paquet SYN + ACK sans deviner que Scapy l'avait demandé. Le noyau envoyait donc un paquet RESET pour fermer cette connection qu'il pensait inexistante. On peut empêcher cet envoi de RESET par la commande <code data-claire-semantic="console">$ sudo iptables -A OUTPUT -p tcp --tcp-flags RST RST -j DROP</code>.<br/> Finalement donc, nmap a fait comme nous !</p><h3 id="r-que-fait-firefox" data-claire-element-id="551814">Que fait firefox ?</h3><p id="r-551793" data-claire-element-id="551793">Je charge la page <a href="http://lalitte.com/anciensite/double.html">http://lalitte.com/anciensite/double.html</a> dans firefox.</p><pre id="r-551794" data-claire-element-id="551794"><code data-claire-semantic="python">&gt;&gt;&gt; r = sniff(filter=&quot;host 192.168.1.14&quot;)
+^C&gt;&gt;&gt; r
+&lt;Sniffed: TCP:28 UDP:4 ICMP:0 Other:2&gt;
+&gt;&gt;&gt; r.show()
+0000 Ether / IP / UDP / DNS Qry &quot;lalitte.com.&quot; 
+0001 Ether / IP / UDP / DNS Ans &quot;88.191.135.63&quot; 
+0002 Ether / IP / TCP 192.168.1.14:48095 &gt; 88.191.135.63:www S
+0003 Ether / IP / TCP 88.191.135.63:www &gt; 192.168.1.14:48095 SA
+0004 Ether / IP / TCP 192.168.1.14:48095 &gt; 88.191.135.63:www A
+0005 Ether / IP / TCP 192.168.1.14:48095 &gt; 88.191.135.63:www PA / Raw
+0006 Ether / IP / TCP 88.191.135.63:www &gt; 192.168.1.14:48095 A
+0007 Ether / IP / TCP 88.191.135.63:www &gt; 192.168.1.14:48095 A / Raw
+0008 Ether / IP / TCP 192.168.1.14:48095 &gt; 88.191.135.63:www A
+0009 Ether / IP / TCP 88.191.135.63:www &gt; 192.168.1.14:48095 A / Raw
+0010 Ether / IP / TCP 192.168.1.14:48095 &gt; 88.191.135.63:www A
+0011 Ether / IP / TCP 88.191.135.63:www &gt; 192.168.1.14:48095 A / Raw
+0012 Ether / IP / TCP 192.168.1.14:48095 &gt; 88.191.135.63:www A
+0013 Ether / IP / TCP 88.191.135.63:www &gt; 192.168.1.14:48095 A / Raw
+0014 Ether / IP / TCP 192.168.1.14:48095 &gt; 88.191.135.63:www A
+0015 Ether / IP / TCP 88.191.135.63:www &gt; 192.168.1.14:48095 A / Raw
+0016 Ether / IP / TCP 192.168.1.14:48095 &gt; 88.191.135.63:www A
+0017 Ether / IP / TCP 88.191.135.63:www &gt; 192.168.1.14:48095 PA / Raw
+0018 Ether / IP / TCP 192.168.1.14:48095 &gt; 88.191.135.63:www A
+0019 Ether / IP / UDP / DNS Qry &quot;www.free-easy-counters.com.&quot; 
+0020 Ether / IP / UDP / DNS Ans &quot;free-easy-counters.com.&quot; 
+0021 Ether / IP / TCP 192.168.1.14:46605 &gt; 65.181.158.186:www S
+0022 Ether / IP / TCP 192.168.1.14:46606 &gt; 65.181.158.186:www S
+0023 Ether / IP / TCP 65.181.158.186:www &gt; 192.168.1.14:46606 SA
+0024 Ether / IP / TCP 192.168.1.14:46606 &gt; 65.181.158.186:www A
+0025 Ether / IP / TCP 192.168.1.14:46606 &gt; 65.181.158.186:www PA / Raw
+0026 Ether / IP / TCP 65.181.158.186:www &gt; 192.168.1.14:46605 SA
+0027 Ether / IP / TCP 192.168.1.14:46605 &gt; 65.181.158.186:www A
+0028 Ether / IP / TCP 65.181.158.186:www &gt; 192.168.1.14:46606 A
+0029 Ether / IP / TCP 65.181.158.186:www &gt; 192.168.1.14:46606 PA / Raw
+0030 Ether / IP / TCP 192.168.1.14:46606 &gt; 65.181.158.186:www A
+0031 Ether / IP / TCP 65.181.158.186:www &gt; 192.168.1.14:46605 A
+&gt;&gt;&gt;</code></pre><p id="r-551795" data-claire-element-id="551795">Outch ! o_O Décortiquons tout cela au calme :</p><ul id="r-551806" data-claire-element-id="551806"><li id="r-551797" data-claire-element-id="551797"><p id="r-551796" data-claire-element-id="551796">Les paquets 0 et 1 sont deux paquets DNS : l'émis et le reçu. Il permettent à firefox de connaître l'adresse IP de lalitte.com</p></li><li id="r-551799" data-claire-element-id="551799"><p id="r-551798" data-claire-element-id="551798">Les paquets 2,3 et 4 représentent le handshake TCP qui se fait entre firefox et le serveur web de lalitte.com. A l'issue de ce handshake, si tout s'est bien passé (ce qui se voit grâce aux flags S / SA / A), le dialogue peut réellement commencer.</p></li><li id="r-551803" data-claire-element-id="551803"><p id="r-551800" data-claire-element-id="551800">Le paquet 5 est la requête HTTP émise par firefox. La preuve :</p><div id="r-551802" data-claire-element-id="551802"><pre id="r-551801" data-claire-element-id="551801"><code data-claire-semantic="python">&gt;&gt;&gt; r[5].show()
+###[ Ethernet ]###
+  dst= 00:19:4b:10:38:79
+  src= 00:26:5e:17:00:6e
+  type= 0x800
+###[ IP ]###
+     version= 4L
+     ihl= 5L
+     tos= 0x0
+     len= 458
+     id= 46027
+     flags= DF
+     frag= 0L
+     ttl= 64
+     proto= tcp
+     chksum= 0xe3ad
+     src= 192.168.1.14
+     dst= 88.191.135.63
+     \options\
+###[ TCP ]###
+        sport= 36578
+        dport= www
+        seq= 1719662898
+        ack= 4036772261L
+        dataofs= 8L
+        reserved= 0L
+        flags= PA
+        window= 229
+        chksum= 0xb742
+        urgptr= 0
+        options= [('NOP', None), ('NOP', None), ('Timestamp', (10767110, 506925378))]
+###[ Raw ]###
+           load= 'GET /anciensite/double.html HTTP/1.1\r\nHost: lalitte.com\r\nUser-Agent: Mozilla/5.0 (X11; Linux i686; rv:7.0.1) Gecko/20100101 Firefox/7.0.1\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\nAccept-Language: fr-fr,en-us;q=0.7,en;q=0.3\r\nAccept-Encoding: gzip, deflate\r\nAccept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.7\r\nConnection: keep-alive\r\nPragma: no-cache\r\nCache-Control: no-cache\r\n\r\n'
+&gt;&gt;&gt;</code></pre></div></li><li id="r-551805" data-claire-element-id="551805"><p id="r-551804" data-claire-element-id="551804">Les paquets 7 à 18 représentent la réception de la page web par paquets. firefox envoie un accusé de réception (ACK) pour chaque paquet de donnée reçu.</p></li></ul><div id="r-551808" data-claire-element-id="551808" data-claire-semantic="question"><p id="r-551807" data-claire-element-id="551807">Et les paquets 19 à 31, ils sont là pour quoi ?</p></div><p id="r-551809" data-claire-element-id="551809">Je vous laisse trouver. :p <br/> Réponse :</p><div id="r-551811" data-claire-element-id="551811"><p id="r-551810" data-claire-element-id="551810">firefox recommence toute la manip' précédente avec le site www.free-easy-counters.com, qui est un compteur de visiteurs pour sites web. En effet, la page que j'ai chargée contient un compteur de visite :)</p></div><aside id="r-551813" data-claire-element-id="551813" data-claire-semantic="warning"><p id="r-551812" data-claire-element-id="551812">Je n'ai fait que survoler les résultats de ce sniff ! À vous d'approfondir et de comprendre comment forger vos propres requêtes DNS, ou comment les attributs ack et seq des en-têtes IP évoluent au fil des paquets quand ceux-cis sont fragmentés, par exemple... ;)</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy">Manipulez les paquets réseau avec Scapy</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/installation-et-utilisation-1">
+Installation et utilisation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/manipulation-de-paquets">
+Manipulation de paquets
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/les-listes-de-paquets">
+Les listes de paquets
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/la-fonction-sniff">
+La fonction sniff()
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/import-et-export-des-resultats">
+Import et export des résultats
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/les-listes-de-paquets">
+<span class="arrow"></span>
+<span class="next">Les listes de paquets</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/import-et-export-des-resultats">
+<span class="next">Import et export des résultats</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Importetexportdesrsultats"></a><h2>Import et export des résultats</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/la-fonction-sniff">
+<span class="arrow"></span>
+<span class="next">La fonction sniff()</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-dans-des-fichiers-pcap" data-claire-element-id="551824">Dans des fichiers .pcap</h2><p id="r-551817" data-claire-element-id="551817">Le plus simple pour sauvegarder et charger des paquets est de passer par des fichiers .pcap. Ces fichiers peuvent également être lus ou écrits par d'autres programmes (tcpdump, wireshark, etc.).</p><h3 id="r-sauvegarder-2" data-claire-element-id="551820">Sauvegarder</h3><p id="r-551818" data-claire-element-id="551818">Pour sauvegarder p (qui peut être un unique paquet tout comme une liste de paquets) dans le fichier p.pcap, il faut utiliser la fonction <code data-claire-semantic="python">wrpcap()</code> (<strong>wr</strong>ite <strong>pcap</strong>) :</p><pre id="r-551819" data-claire-element-id="551819"><code data-claire-semantic="python">&gt;&gt;&gt; wrpcap('p.pcap', p)</code></pre><h3 id="r-charger" data-claire-element-id="551823">Charger</h3><p id="r-551821" data-claire-element-id="551821">Inversement, ici, il faut utiliser la fonction <code data-claire-semantic="python">rdpcap()</code> (<strong>r</strong>ea<strong>d</strong><strong>pcap</strong>) :</p><pre id="r-551822" data-claire-element-id="551822"><code data-claire-semantic="python">&gt;&gt;&gt; p = rdpcap('p.pcap')</code></pre><h2 id="r-hexdump-et-pdfdump" data-claire-element-id="551842">hexdump et pdfdump</h2><p id="r-551825" data-claire-element-id="551825">p est le paquet suivant :</p><pre id="r-551826" data-claire-element-id="551826"><code data-claire-semantic="python">&gt;&gt;&gt; p
+&lt;Ether  dst=00:19:4b:10:38:79 src=00:26:5e:17:00:6e type=0x800 |&lt;IP  version=4L ihl=5L tos=0x0 len=64 id=37095 flags=DF frag=0L ttl=64 proto=udp chksum=0x2666 src=192.168.1.14 dst=192.168.1.1 options=[] |&lt;UDP  sport=38897 dport=domain len=44 chksum=0x65a |&lt;DNS  id=28184 qr=0L opcode=QUERY aa=0L tc=0L rd=1L ra=0L z=0L rcode=ok qdcount=1 ancount=0 nscount=0 arcount=0 qd=&lt;DNSQR  qname='www.siteduzero.com.' qtype=A qclass=IN |&gt; an=None ns=None ar=None |&gt;&gt;&gt;&gt;</code></pre><aside id="r-551828" data-claire-element-id="551828" data-claire-semantic="information"><p id="r-551827" data-claire-element-id="551827">Vous aurez peut être reconnu une requête DNS demandant l'adresse IP du Site du Zéro. :)</p></aside><h3 id="r-hexdump" data-claire-element-id="551832">hexdump</h3><p id="r-551829" data-claire-element-id="551829">La fonction <code data-claire-semantic="python">hexdump()</code> donne une représentation hexadécimale du paquet (ainsi qu'une représentation ASCII) et s'utilise ainsi :</p><pre id="r-551830" data-claire-element-id="551830"><code data-claire-semantic="python">&gt;&gt;&gt; hexdump(p)
+0000   00 19 4B 10 38 79 00 26  5E 17 00 6E 08 00 45 00   ..K.8y.&amp;^..n..E.
+0010   00 40 90 E7 40 00 40 11  26 66 C0 A8 01 0E C0 A8   .@..@.@.&amp;f......
+0020   01 01 97 F1 00 35 00 2C  06 5A 6E 18 01 00 00 01   .....5.,.Zn.....
+0030   00 00 00 00 00 00 03 77  77 77 0A 73 69 74 65 64   .......www.sited
+0040   75 7A 65 72 6F 03 63 6F  6D 00 00 01 00 01         uzero.com.....
+&gt;&gt;&gt;</code></pre><p id="r-551831" data-claire-element-id="551831">Nous voyons là à quoi ressemble concrètement un paquet réseau, aux yeux de l'ordinateur ! :waw:</p><h3 id="r-pdfdump" data-claire-element-id="551841">pdfdump</h3><p id="r-551833" data-claire-element-id="551833">Encore plus fort, il est possible d'avoir à la fois la représentation aux yeux de l'ordinateur et aux yeux d'uun humain dans un même fichier .pdf ! Pour cela, il vous faudra le paquet python-pyx installé.</p><pre id="r-551834" data-claire-element-id="551834"><code data-claire-semantic="python">&gt;&gt;&gt; p.pdfdump('p.pdf')</code></pre><p id="r-551835" data-claire-element-id="551835">Voici le résultat :</p><figure id="r-551837" data-claire-element-id="551838"><img id="r-551836" data-claire-element-id="551836" src="medias/uploads.siteduzero.com_files_344001_345000_344021.png" alt="pdfdump du paquet p"/></figure><p id="r-551839" data-claire-element-id="551839">Comme vous le voyez, les paquets un peu longs et un peu trop embriqués à son goût sont simplifiés, et toute l'information n'est pas affichée. :( Cela dit, c'est déjà assez brouillon comme cela ! ^^</p><p id="r-551840" data-claire-element-id="551840">Ce tutoriel s'achève, et j'espère qu'il aura attisé votre curiosité et vous aura permis de comprendre les mécanismes qui se cachent derrière les outils réseaux traditionnels :) <br/> Vous pouvez évidemment approfondir vos connaissances grâce à la <a href="http://www.secdev.org/projects/scapy/doc/">documentation officielle</a> (en anglais), ou par la découverte d'autres protocoles (je vous laisse découvrir tous les <a href="http://www.networksorcery.com/enp/topic/ipsuite.htm">protocoles</a> que gère scapy : tapez la commande <code data-claire-semantic="bash">ls()</code> dans l'interpréteur ;) )</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy">Manipulez les paquets réseau avec Scapy</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/installation-et-utilisation-1">
+Installation et utilisation
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/manipulation-de-paquets">
+Manipulation de paquets
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/les-listes-de-paquets">
+Les listes de paquets
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/la-fonction-sniff">
+La fonction sniff()
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/import-et-export-des-resultats">
+Import et export des résultats
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/manipulez-les-paquets-reseau-avec-scapy/la-fonction-sniff">
+<span class="arrow"></span>
+<span class="next">La fonction sniff()</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/manipulez-les-paquets-reseau-avec-scapy.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 09:00:24 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/manipulez-les-paquets-reseau-avec-scapy.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:36:31 GMT -->
+</html>

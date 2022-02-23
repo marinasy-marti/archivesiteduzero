@@ -1,0 +1,590 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/installer-sa-base-de-donnees-via-un-formulaire.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 07:13:08 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/installer-sa-base-de-donnees-via-un-formulaire.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:18:00 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Installer sa base de données via un formulaire</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/installer-sa-base-de-donnees-via-un-formulaire.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Installer sa base de données via un formulaire</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Installersabasededonnesviaunformulaire">Installer sa base de données via un formulaire</a><br/><a href="#Lefichierderequtes">Le fichier de requêtes</a><br/><a href="#Notreformulaire">Notre formulaire</a><br/><a href="#Letraitement">Le traitement</a><br/><a href="#Testerlaconnexion">Tester la connexion</a><br/></div>
+<a name="Installersabasededonnesviaunformulaire"></a><h2>Installer sa base de données via un formulaire</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/installer-sa-base-de-donnees-via-un-formulaire/le-fichier-de-requetes">
+<span class="next">Le fichier de requêtes</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-565188" data-claire-element-id="565188">Bonjour à tous.</p><p id="r-565189" data-claire-element-id="565189">Je vais dans ce tutoriel vous apprendre comment installer sa base de données <a href="http://fr.wikipedia.org/wiki/mysql">MySQL</a>, sans forcément passer par <a href="http://fr.wikipedia.org/wiki/phpmyadmin">PhpMyAdmin</a>, à l'image des <a href="http://fr.wikipedia.org/wiki/Content_management_system">CMS</a>.</p><p id="r-565190" data-claire-element-id="565190">Avant d'aller plus loin, je vais partir du principe que vous avez lu et compris le <a href="http://www.siteduzero.com/tutoriel-3-14668-un-site-dynamique-avec-php.html">tutoriel de M@teo21</a> au moins jusqu'à la <strong>PARTIE 3</strong>.</p><p id="r-565191" data-claire-element-id="565191">Organisation du script :</p><p id="r-565192" data-claire-element-id="565192"><strong>install/</strong> :<br/> - base.sql : requêtes SQL ;<br/> - index.php : formulaire pour établir la connexion avec la base de données (pas de PHP) ;<br/> - traitement.php : la partie la plus grosse la plus intéressante du tutoriel, nous établirons la connexion avec la base de données, créerons un fichier de configuration et exécuterons le fichier contenant les requêtes à envoyer au serveur ;<br/> - test.php : ce fichier nous permettra d'établir en une seule ligne la connexion avec la base de données et par un petit code, de récupérer les informations de la table &quot;tuto&quot;.</p><p id="r-565193" data-claire-element-id="565193"><strong>sql/</strong> :<br/> - <em>ici sera placé notre fichier de configuration (config.php) pour pouvoir se connecter à la base de données grâce à ce seul fichier qui devra être inclus à chaque fois qu'il sera nécessaire.</em></p><aside id="r-565195" data-claire-element-id="565195" data-claire-semantic="information"><p id="r-565194" data-claire-element-id="565194">Je sais que cela vous démange, mais ne créez pas tout de suite le fichier de configuration (seulement le répertoire <strong>sql/</strong>). Du moins, ce n'est pas nécessaire.<br/> Le terrain est désormais préparé, nous pouvons attaquer !</p></aside><aside id="r-565197" data-claire-element-id="565197" data-claire-semantic="warning"><p id="r-565196" data-claire-element-id="565196">Pour que le script fonctionne, vous devez préalablement créer votre base dans PhpMyAdmin. Pour le tutoriel, créez simplement une base nommée &quot;test&quot;.<br/> Notre fichier base.sql contiendra seulement des requêtes de création de tables et d'insertion de données.</p></aside>
+</div><a name="Lefichierderequtes"></a><h2>Le fichier de requêtes</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/installer-sa-base-de-donnees-via-un-formulaire/notre-formulaire">
+<span class="next">Notre formulaire</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-565198" data-claire-element-id="565198">Un exemple rien que pour le tutoriel, vous êtes censés comprendre ces lignes :-° :</p><pre id="r-565199" data-claire-element-id="565199"><code data-claire-semantic="sql">-- 
+-- Structure de la table `tuto`
+-- 
+
+CREATE TABLE IF NOT EXISTS `tuto` (
+  `id` tinyint(4) NOT NULL auto_increment,
+  `nom` varchar(255) NOT NULL default '',
+  PRIMARY KEY  (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=2 ;
+
+-- 
+-- Contenu de la table `tuto`
+-- 
+
+INSERT INTO `tuto` VALUES (1, 'Je suis un Zéro !');</code></pre><aside id="r-565201" data-claire-element-id="565201" data-claire-semantic="information"><p id="r-565200" data-claire-element-id="565200">Pour obtenir ce joli code, j'ai créé ma table directement dans PhpMyAdmin et j'ai ensuite inséré des données. Finalement j'ai utilisé l'onglet &quot;<strong>Exporter</strong>&quot;.</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/installer-sa-base-de-donnees-via-un-formulaire">Installer sa base de données via un formulaire</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/installer-sa-base-de-donnees-via-un-formulaire/le-fichier-de-requetes">
+Le fichier de requêtes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/installer-sa-base-de-donnees-via-un-formulaire/notre-formulaire">
+Notre formulaire
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/installer-sa-base-de-donnees-via-un-formulaire/le-traitement-1">
+Le traitement
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/installer-sa-base-de-donnees-via-un-formulaire/tester-la-connexion">
+Tester la connexion
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/installer-sa-base-de-donnees-via-un-formulaire/notre-formulaire">
+<span class="next">Notre formulaire</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Notreformulaire"></a><h2>Notre formulaire</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/installer-sa-base-de-donnees-via-un-formulaire/le-fichier-de-requetes">
+<span class="arrow"></span>
+<span class="next">Le fichier de requêtes</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/installer-sa-base-de-donnees-via-un-formulaire/le-traitement-1">
+<span class="next">Le traitement</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-565203" data-claire-element-id="565203">Maintenant que nous avons notre fichier base.sql, nous pouvons réaliser notre simplissime formulaire. Voici pour l'occasion une page xHTML :</p><pre id="r-565204" data-claire-element-id="565204"><code data-claire-semantic="html">&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD XHTML 1.0 Transitional//EN&quot; &quot;http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd&quot;&gt;
+&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot;&gt;
+&lt;head&gt;
+&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=iso-8859-1&quot; /&gt;
+&lt;title&gt;Installation automatisée : 1ère étape&lt;/title&gt;
+&lt;style type=&quot;text/css&quot;&gt;
+body {
+font-family:Tahoma, Arial, Serif; /* polices du texte */
+font-size:14px; /* taille du texte */
+}
+h1 {
+font-size:1.4em; /* taille du titre */
+}
+label
+{
+font-size:1.2em; /* taille du texte pour les &quot;label&quot; */
+display:block; /* on affiche les &quot;label&quot; en tant que block et non pas inline */ 
+width:150px; /* on leur met une taille pour aligner nos zones de texte */
+float:left; /* flottant à gauche */
+}
+&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+
+&lt;h1&gt;Informations sur la base de données MySQL :&lt;/h1&gt;
+&lt;p&gt;
+&lt;form action=&quot;traitement.php&quot; method=&quot;post&quot;&gt;
+&lt;p&gt;
+&lt;input type=&quot;hidden&quot; name=&quot;etape&quot; value=&quot;1&quot; /&gt;
+
+&lt;label for=&quot;hote&quot;&gt;Hôte :&lt;/label&gt;
+&lt;input type=&quot;text&quot; name=&quot;hote&quot; maxlength=&quot;40&quot; /&gt;&lt;br /&gt;
+
+&lt;label for=&quot;login&quot;&gt;Utilisateur :&lt;/label&gt;
+&lt;input type=&quot;text&quot; name=&quot;login&quot; maxlength=&quot;40&quot; /&gt;&lt;br /&gt;
+
+&lt;label for=&quot;mdp&quot;&gt;Mot de passe :&lt;/label&gt;
+&lt;input type=&quot;password&quot; name=&quot;mdp&quot; maxlength=&quot;40&quot; /&gt;&lt;br /&gt;
+
+&lt;label for=&quot;base&quot;&gt;Nom de la base :&lt;/label&gt;
+&lt;input type=&quot;text&quot; name=&quot;base&quot; maxlength=&quot;40&quot; /&gt;&lt;br /&gt;&lt;br /&gt;
+
+&lt;label for=&quot;submit&quot;&gt;&amp;nbsp;&lt;/label&gt;
+&lt;input type=&quot;submit&quot; name=&quot;submit&quot; value=&quot;Envoyer&quot; /&gt;
+&lt;/p&gt;
+&lt;/form&gt;
+&lt;/p&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;</code></pre><p id="r-565205" data-claire-element-id="565205">Ce qu'il vous faudra remplir (pour du local) :</p><ul id="r-565214" data-claire-element-id="565214"><li id="r-565207" data-claire-element-id="565207"><p id="r-565206" data-claire-element-id="565206">Hôte : <strong>localhost</strong> ;</p></li><li id="r-565209" data-claire-element-id="565209"><p id="r-565208" data-claire-element-id="565208">Utilisateur : <strong>root</strong> ;</p></li><li id="r-565211" data-claire-element-id="565211"><p id="r-565210" data-claire-element-id="565210">Mot de passe : le <strong>mot de passe</strong> pour l'utilisateur root ;</p></li><li id="r-565213" data-claire-element-id="565213"><p id="r-565212" data-claire-element-id="565212">Nom de la base : <strong>test</strong> (pour le tutoriel).</p></li></ul><aside id="r-565216" data-claire-element-id="565216" data-claire-semantic="information"><p id="r-565215" data-claire-element-id="565215">Ici, il faut retenir que nous avons un champ caché nommé &quot;<strong>etape</strong>&quot; pour qu'ensuite, nous puissions vérifier que la page de traitement a bien été appelée depuis celle-ci.<br/> J'en ai également profité pour mettre un peu de CSS dans l'en-tête comme vous avez pu le remarquer.</p></aside>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/installer-sa-base-de-donnees-via-un-formulaire">Installer sa base de données via un formulaire</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/installer-sa-base-de-donnees-via-un-formulaire/le-fichier-de-requetes">
+Le fichier de requêtes
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/installer-sa-base-de-donnees-via-un-formulaire/notre-formulaire">
+Notre formulaire
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/installer-sa-base-de-donnees-via-un-formulaire/le-traitement-1">
+Le traitement
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/installer-sa-base-de-donnees-via-un-formulaire/tester-la-connexion">
+Tester la connexion
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/installer-sa-base-de-donnees-via-un-formulaire/le-fichier-de-requetes">
+<span class="arrow"></span>
+<span class="next">Le fichier de requêtes</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/installer-sa-base-de-donnees-via-un-formulaire/le-traitement-1">
+<span class="next">Le traitement</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Letraitement"></a><h2>Le traitement</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/installer-sa-base-de-donnees-via-un-formulaire/notre-formulaire">
+<span class="arrow"></span>
+<span class="next">Notre formulaire</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/installer-sa-base-de-donnees-via-un-formulaire/tester-la-connexion">
+<span class="next">Tester la connexion</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-565218" data-claire-element-id="565218">À présent, nous pouvons embrayer sur la phase finale, c'est-à-dire le traitement des informations envoyées par le formulaire.</p><p id="r-565219" data-claire-element-id="565219">Je vous présente le début de notre page traitement.php :</p><pre id="r-565220" data-claire-element-id="565220"><code data-claire-semantic="html">&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD XHTML 1.0 Transitional//EN&quot; &quot;http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd&quot;&gt;
+&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot;&gt;
+&lt;head&gt;
+&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=iso-8859-1&quot; /&gt;
+&lt;title&gt;Installation automatisée : 2nde étape&lt;/title&gt;
+&lt;style type=&quot;text/css&quot;&gt;
+body {
+font-family:Tahoma, Arial, Serif;
+font-size:14px;
+}
+.note {
+font-size:1.1em;
+font-style:italic;
+}
+.ok {
+color:green;
+font-weight:bold;
+}
+.echec {
+color:red;
+font-weight:bold;
+}
+&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;p&gt;</code></pre><p id="r-565221" data-claire-element-id="565221">Vous constatez que j'ai encore mis un peu de CSS : il nous servira plus tard afin de mettre en valeur certaines choses.<br/> Venons-en à notre cher PHP, vous êtes là pour ça, non ? Ça tombe bien, j'en ai à vous faire croquer ! :-°</p><pre id="r-565222" data-claire-element-id="565222"><code data-claire-semantic="html+php">&lt;?php
+if(isset($_POST['etape']) AND $_POST['etape'] == 1) { // si nous venons du formulaire alors
+
+// on crée des constantes dont on se servira plus tard
+define('RETOUR', '&lt;br /&gt;&lt;br /&gt;&lt;input type=&quot;button&quot; value=&quot;Retour&quot; onclick=&quot;history.back()&quot;&gt;');
+define('OK', '&lt;span class=&quot;ok&quot;&gt;OK&lt;/span&gt;&lt;br /&gt;');
+define('ECHEC', '&lt;span class=&quot;echec&quot;&gt;ECHEC&lt;/span&gt;');
+?&gt;</code></pre><p id="r-565223" data-claire-element-id="565223">Comme promis, nous vérifions ici si la superglobale <code data-claire-semantic="html+php">$_POST['etape'] </code> existe et si elle vaut <strong>1</strong>.<br/> Nous en profitons pour créer des constantes qui auront leur utilité par la suite.<br/> Comme tout est bon, il ne reste plus qu'à coder le reste dans ce <code data-claire-semantic="html+php">if </code>. :)</p><p id="r-565224" data-claire-element-id="565224">D'ailleurs, nous allons commencer à utiliser les fonctions qui aident à la manipulation de fichiers.</p><h2 id="r-fichier-de-configuration" data-claire-element-id="565247">Fichier de configuration</h2><pre id="r-565225" data-claire-element-id="565225"><code data-claire-semantic="html+php">&lt;?php
+
+$fichier = '../sql/config.php';
+if(file_exists($fichier) AND filesize($fichier ) &gt; 0) { // si le fichier existe et qu'il n'est pas vide alors
+exit('Fichier de configuration déjà existant. Installation interrompue.'. RETOUR);
+}	
+?&gt;</code></pre><p id="r-565226" data-claire-element-id="565226">Nous créons une variable <code data-claire-semantic="html+php">$fichier </code> qui contient le <strong>chemin relatif</strong> du fichier à créer. Si vous ne vous souvenez plus du concept de chemin relatif et absolu, je vous invite à aller (re)lire <a href="http://www.siteduzero.com/tutoriel-3-13502-creer-des-liens.html#ss_part_1">ceci</a>.<br/> Dans ce fragment de code, nous testons l'existence du fichier grâce à la fonction <a href="http://fr.php.net/manual/fr/function.file-exists.php">file_exists()</a> qui prend donc en argument le chemin du fichier. De plus, s'il existe, nous souhaitons savoir s'il est vide ou non ; autrement dit, si sa taille est supérieure ou non à 0 octet. Une fonction bien pratique nommée <a href="http://fr.php.net/manual/fr/function.filesize.php">filesize()</a> nous permet donc de faire cela.</p><p id="r-565227" data-claire-element-id="565227">Si notre condition est remplie, à savoir : si le fichier <strong>sql/</strong>config.php existe et qu'il n'est pas vide, alors on s'arrête là en utilisant la fonction <a href="http://fr.php.net/manual/fr/function.exit.php">exit()</a> qui prend en paramètre une chaîne de caractères ou un entier (voir la documentation car il y a des exceptions liées aux versions de PHP).</p><div id="r-565229" data-claire-element-id="565229" data-claire-semantic="question"><p id="r-565228" data-claire-element-id="565228">Pourquoi on s'arrête ?</p></div><p id="r-565230" data-claire-element-id="565230">Si cette condition est remplie, c'est que le script a déjà été exécuté, et donc, pour des raisons de sécurité, nous ne changeons pas les valeurs de connexion à la base sans avoir préalablement supprimé le fichier de configuration.</p><pre id="r-565231" data-claire-element-id="565231"><code data-claire-semantic="html+php">&lt;?php
+// on crée nos variables, et au passage on retire les éventuels espaces	
+$hote = trim($_POST['hote']);
+$login = trim($_POST['login']);
+$mdp = trim($_POST['mdp']);
+$base = trim($_POST['base']);
+?&gt;</code></pre><p id="r-565232" data-claire-element-id="565232">Ici, nous traitons nos superglobales <code data-claire-semantic="html+php">$_POST['...'] </code> en leur passant la fonction <a href="http://fr.php.net/manual/fr/function.trim.php">trim()</a> qui prend en paramètre la chaîne de caractères : elle sert à retirer les espaces insérés (accidentellement ? :p ) en début et en fin de chaine.</p><aside id="r-565234" data-claire-element-id="565234" data-claire-semantic="warning"><p id="r-565233" data-claire-element-id="565233">Nous ne sécurisons pas les données envoyées car ce n'est pas l'objectif : il n'y a en plus aucun intérêt à y saisir n'importe quoi, puisque le but est d'installer ses tables et d'assurer une connectivité avec sa base ; et lorsque cela est fait, vous pouvez supprimer les fichiers d'installation.</p></aside><pre id="r-565235" data-claire-element-id="565235"><code data-claire-semantic="html+php">&lt;?php
+// on vérifie la connectivité avec le serveur avant d'aller plus loin
+if(!mysql_connect($hote, $login, $mdp)) {
+exit('Mauvais paramètres de connexion.'. RETOUR);
+}
+
+// on vérifie la connectivité avec la base avant d'aller plus loin	
+if(!mysql_select_db($base)) {
+exit('Mauvais nom de base.'. RETOUR);
+}	
+?&gt;</code></pre><p id="r-565236" data-claire-element-id="565236">Pas grand-chose à expliquer ici, les commentaires sont clairs. Peut-être que le <code data-claire-semantic="html+php">! </code> peut gêner certain(e)s. Succinctement, le point d'exclamation devant une fonction ou une variable vérifie &quot;le contraire&quot; de la fonction. Dans notre exemple : <a href="http://fr.php.net/manual/fr/function.mysql-connect.php">mysql_connect()</a> sert à se connecter au serveur ; en y plaçant le <code data-claire-semantic="html+php">! </code> devant, cela se transforme en &quot;si on <strong>ne</strong> peut <strong>pas</strong> se connecter au serveur...&quot;.<br/> Le <code data-claire-semantic="html+php">RETOUR </code> est une des constantes définies au début du fichier.</p><pre id="r-565237" data-claire-element-id="565237"><code data-claire-semantic="html+php">&lt;?php
+// le texte que l'on va mettre dans le config.php
+$texte = '&lt;?php
+$hote   = &quot;'. $hote .'&quot;;
+$login  = &quot;'. $login .'&quot;;
+$mdp    = &quot;'. $mdp .'&quot;;
+$base   = &quot;'. $base .'&quot;;
+
+mysql_connect($hote,$login,$mdp);
+mysql_select_db($base);
+?&gt;';
+?&gt;</code></pre><p id="r-565238" data-claire-element-id="565238">Nous compliquons la chose, nous créons une variable <code data-claire-semantic="html+php">$texte </code> dans laquelle nous y écrivons le code PHP à insérer dans notre fichier config.php.<br/> En fait, comme vous pouvez le remarquer ici, nous écrivons du PHP <strong>dans</strong> du PHP. Regardez bien le code <strong>après</strong> les apostrophes <code data-claire-semantic="html+php">' </code>, le code n'est pas &quot;pris en compte&quot; ni exécuté. Il nous suffit alors de concaténer nos variables fraîchement attribuées. Pour ceux qui ont oublié un trou de mémoire, vous êtes vivement invités à consulter la partie du tuto de M@teo21 concernant la <a href="http://www.siteduzero.com/tutoriel-3-14531-faire-joujou-avec-des-variables.html#ss_part_1">concaténation</a>.</p><pre id="r-565239" data-claire-element-id="565239"><code data-claire-semantic="html+php">&lt;?php
+// on vérifie s'il est possible d'ouvrir le fichier
+if(!$ouvrir = fopen($fichier, 'w')) {
+exit('Impossible d\'ouvrir le fichier : &lt;strong&gt;'. $fichier .'&lt;/strong&gt;.'. RETOUR);
+}
+
+// s'il est possible d'écrire dans le fichier alors on ne se gêne pas
+if(fwrite($ouvrir, $texte) == FALSE) {
+exit('Impossible d\'écrire dans le fichier : &lt;strong&gt;'. $fichier .'&lt;/strong&gt;.'. RETOUR);
+}
+
+// tout s'est bien passé
+echo 'Fichier de configuration : '. OK;
+fclose($ouvrir); // on ferme le fichier
+?&gt;</code></pre><p id="r-565240" data-claire-element-id="565240">La fonction <a href="http://fr.php.net/manual/fr/function.fopen.php">fopen()</a> (pour <code data-claire-semantic="html+php">file open </code>) nous permet d'ouvrir un fichier, elle prend en paramètre le chemin du fichier (ou une URL) ainsi que le mode d'ouverture ; ici, nous avons seulement besoin d'ouvrir notre fichier config.php en écriture, soit le mode <code data-claire-semantic="html+php">w </code> (pour <code data-claire-semantic="html+php">write </code>). Extrait de la documentation officielle pour le mode <code data-claire-semantic="html+php">w </code> :</p><p id="r-565241" data-claire-element-id="565241"><cite>Citation</cite></p><blockquote id="r-565243" data-claire-element-id="565243"><p id="r-565242" data-claire-element-id="565242">Ouvre en écriture seule ; place le pointeur de fichier au début du fichier et réduit la taille du fichier à 0. Si le fichier n'existe pas, on tente de le créer.</p></blockquote><p id="r-565244" data-claire-element-id="565244">Notre pointeur de fichier (le pointeur est en quelque sorte votre focus de souris positionné au début) est créé et placé au début grâce à <a href="http://fr.php.net/manual/fr/function.fopen.php">fopen()</a>, nous pouvons donc user de la fonction <a href="http://fr.php.net/manual/fr/function.fwrite.php">fwrite()</a> qui prend en paramètres le pointeur et la chaîne de caractères à écrire dans le fichier concerné.</p><p id="r-565245" data-claire-element-id="565245">Notre fichier a été correctement écrit, nous pouvons le fermer à l'aide de la fonction <a href="http://fr.php.net/manual/fr/function.fclose.php">fclose()</a> qui prend en paramètre le pointeur.</p><p id="r-565246" data-claire-element-id="565246">Nous en avons terminé avec le fichier de configuration. :o</p><h2 id="r-fichier-de-requetes" data-claire-element-id="565253">Fichier de requêtes</h2><p id="r-565248" data-claire-element-id="565248">Il ne nous reste plus qu'à exécuter nos requêtes SQL sur notre base.</p><pre id="r-565249" data-claire-element-id="565249"><code data-claire-semantic="html+php">&lt;?php
+$requetes = ''; // on crée une variable vide car on va s'en servir après
+ 
+$sql = file('./base.sql'); // on charge le fichier SQL qui contient des requêtes
+foreach($sql as $lecture) { // on le lit
+	if(substr(trim($lecture), 0, 2) != '--') { // suppression des commentaires et des espaces
+	$requetes .= $lecture; // nous avons nos requêtes dans la variable
+	}
+}
+?&gt;</code></pre><p id="r-565250" data-claire-element-id="565250">Une autre manière de gérer les fichiers en PHP. Nous pouvons utiliser la fonction <a href="http://fr.php.net/manual/fr/function.file.php">file()</a> qui elle, nous renvoie le résultat dans un tableau, contrairement à <a href="http://fr.php.net/manual/fr/function.fopen.php">fopen()</a> qui renvoie dans une chaîne de caractères.<br/> Nous utilisons un <a href="http://fr.php.net/manual/fr/function.foreach.php">foreach()</a> pour lire notre fichier. Ensuite nous retirons les éventuels commentaires inclus dans notre fichier car ils sont inutiles pour son exécution. Vous connaissez <a href="http://fr.php.net/manual/fr/function.trim.php">trim()</a>, mais peut-être pas encore <a href="http://fr.php.net/manual/fr/function.substr.php">substr()</a> qui renvoie une partie voulue d'une chaîne de caractères en fonction des paramètres que vous lui passez, la position de début ou de fin ainsi que la taille souhaitée (voir la documentation).<br/> Nous concaténons ensuite la variable <code data-claire-semantic="html+php">$requetes </code> avec <code data-claire-semantic="html+php">$lecture </code>.</p><pre id="r-565251" data-claire-element-id="565251"><code data-claire-semantic="html+php">&lt;?php
+$reqs = split(';', $requetes); // on sépare les requêtes
+foreach($reqs as $req){	// et on les exécute
+	if(!mysql_query($req) AND trim($req) != '') { // si la requête fonctionne bien et qu'elle n'est pas vide
+		exit('ERREUR : '. $req); // message d'erreur
+	}
+}
+echo 'Installation : '. OK;	
+echo '&lt;br /&gt;&lt;span class=&quot;note&quot;&gt;Note : si le site est en ligne, veuillez supprimer le répertoire &lt;strong&gt;/install&lt;/strong&gt; du ftp.&lt;/span&gt;';
+
+} // si on passe sur ce fichier sans être passé par la première étape alors on redirige
+else
+exit('Vous devez d\'abord être passé par &lt;a href=&quot;./index.php&quot;&gt;le formulaire&lt;/a&gt;.');	
+?&gt;
+&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre><p id="r-565252" data-claire-element-id="565252">Enfin, la fonction <a href="http://fr.php.net/manual/fr/function.split.php">split()</a> nous permet de couper une chaîne en tableau. Nous traiterons alors nos requêtes une par une.<br/> Encore un petit <a href="http://fr.php.net/manual/fr/function.foreach.php">foreach()</a> pour la route qui passe en revue notre tableau.<br/> Ensuite, nous vérifions si nos requêtes peuvent être exécutées et si elles sont &quot;différentes de vide&quot; (dans le cas où nous aurions un fichier base.sql vide).<br/> Tout est bon, message de confirmation.<br/> Sinon, (rappelez-vous) on ne vient pas du formulaire (la première condition du fichier n'est pas remplie), alors on retourne un message d'erreur.<br/> On peut terminer notre page xHTML, le travail est terminé.</p><h2 id="r-code-final-2" data-claire-element-id="565255">Code final</h2><pre id="r-565254" data-claire-element-id="565254"><code data-claire-semantic="html+php">&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD XHTML 1.0 Transitional//EN&quot; &quot;http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd&quot;&gt;
+&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot;&gt;
+&lt;head&gt;
+&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=iso-8859-1&quot; /&gt;
+&lt;title&gt;Installation automatisée : 2nde étape&lt;/title&gt;
+&lt;style type=&quot;text/css&quot;&gt;
+body {
+font-family:Tahoma, Arial, Serif;
+font-size:14px;
+}
+.note {
+font-size:1.1em;
+font-style:italic;
+}
+.ok {
+color:green;
+font-weight:bold;
+}
+.echec {
+color:red;
+font-weight:bold;
+}
+&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;p&gt;
+&lt;?php
+if(isset($_POST['etape']) AND $_POST['etape'] == 1) { // si nous venons du formulaire alors
+
+// on crée des constantes dont on se servira plus tard
+define('RETOUR', '&lt;br /&gt;&lt;br /&gt;&lt;input type=&quot;button&quot; value=&quot;Retour&quot; onclick=&quot;history.back()&quot;&gt;');
+define('OK', '&lt;span class=&quot;ok&quot;&gt;OK&lt;/span&gt;&lt;br /&gt;');
+define('ECHEC', '&lt;span class=&quot;echec&quot;&gt;ECHEC&lt;/span&gt;');
+
+$fichier = '../sql/config.php';
+if(file_exists($fichier) AND filesize($fichier ) &gt; 0) { // si le fichier existe et qu'il n'est pas vide alors
+exit('Fichier de configuration déjà existant. Installation interrompue.'. RETOUR);
+}	
+
+// on crée nos variables, et au passage on retire les éventuels espaces	
+$hote = trim($_POST['hote']);
+$login = trim($_POST['login']);
+$mdp = trim($_POST['mdp']);
+$base = trim($_POST['base']);
+
+// on vérifie la connectivité avec le serveur avant d'aller plus loin
+if(!mysql_connect($hote, $login, $mdp)) {
+exit('Mauvais paramètres de connexion.'. RETOUR);
+}
+
+// on vérifie la connectivité avec la base avant d'aller plus loin	
+if(!mysql_select_db($base)) {
+exit('Mauvais nom de base.'. RETOUR);
+}	
+
+// le texte que l'on va mettre dans le config.php
+$texte = '&lt;?php
+$hote   = &quot;'. $hote .'&quot;;
+$login  = &quot;'. $login .'&quot;;
+$mdp    = &quot;'. $mdp .'&quot;;
+$base   = &quot;'. $base .'&quot;;
+
+mysql_connect($hote,$login,$mdp);
+mysql_select_db($base);
+?&gt;';
+
+// on vérifie s'il est possible d'ouvrir le fichier
+if(!$ouvrir = fopen($fichier, 'w')) {
+exit('Impossible d\'ouvrir le fichier : &lt;strong&gt;'. $fichier .'&lt;/strong&gt;.'. RETOUR);
+}
+
+// s'il est possible d'écrire dans le fichier alors on ne se gêne pas
+if(fwrite($ouvrir, $texte) == FALSE) {
+exit('Impossible d\'écrire dans le fichier : &lt;strong&gt;'. $fichier .'&lt;/strong&gt;.'. RETOUR);
+}
+
+// tout s'est bien passé
+echo 'Fichier de configuration : '. OK;
+fclose($ouvrir); // on ferme le fichier
+	
+
+$requetes = ''; // on crée une variable vide car on va s'en servir après
+ 
+$sql = file('./base.sql'); // on charge le fichier SQL qui contient des requêtes
+foreach($sql as $lecture) { // on le lit
+	if(substr(trim($lecture), 0, 2) != '--') { // suppression des commentaires et des espaces
+	$requetes .= $lecture; // nous avons nos requêtes dans la variable
+	}
+}
+ 
+$reqs = split(';', $requetes); // on sépare les requêtes
+foreach($reqs as $req){	// et on les exécute
+	if(!mysql_query($req) AND trim($req) != '') { // si la requête fonctionne bien et qu'elle n'est pas vide
+		exit('ERREUR : '. $req); // message d'erreur
+	}
+}
+echo 'Installation : '. OK;	
+echo '&lt;br /&gt;&lt;span class=&quot;note&quot;&gt;Note : si le site est en ligne, veuillez supprimer le répertoire &lt;strong&gt;/install&lt;/strong&gt; du ftp.&lt;/span&gt;';
+
+} // si on passe sur ce fichier sans être passé par la première étape alors on redirige
+else
+exit('Vous devez d\'abord être passé par &lt;a href=&quot;./index.php&quot;&gt;le formulaire&lt;/a&gt;.');	
+?&gt;
+&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/installer-sa-base-de-donnees-via-un-formulaire">Installer sa base de données via un formulaire</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/installer-sa-base-de-donnees-via-un-formulaire/le-fichier-de-requetes">
+Le fichier de requêtes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/installer-sa-base-de-donnees-via-un-formulaire/notre-formulaire">
+Notre formulaire
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/installer-sa-base-de-donnees-via-un-formulaire/le-traitement-1">
+Le traitement
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/installer-sa-base-de-donnees-via-un-formulaire/tester-la-connexion">
+Tester la connexion
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/installer-sa-base-de-donnees-via-un-formulaire/notre-formulaire">
+<span class="arrow"></span>
+<span class="next">Notre formulaire</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/installer-sa-base-de-donnees-via-un-formulaire/tester-la-connexion">
+<span class="next">Tester la connexion</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Testerlaconnexion"></a><h2>Tester la connexion</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/installer-sa-base-de-donnees-via-un-formulaire/le-traitement-1">
+<span class="arrow"></span>
+<span class="next">Le traitement</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-565257" data-claire-element-id="565257">Allez, testons notre connexion à la base, ressortons ce qu'il y a dedans (oui, oui, j'ai enregistré des choses ! :p ) :</p><pre id="r-565258" data-claire-element-id="565258"><code data-claire-semantic="html+php">&lt;?php
+include('../sql/config.php'); // connexion à la base de données
+
+$requete = &quot;SELECT * FROM tuto&quot;; // création de la requête
+$resultat = mysql_query($requete) or die(mysql_error('ERREUR SQL '. $requete)); // exécution de la requête
+while($donnees = mysql_fetch_array($resultat)) { // boucle et tableau pour récupérer les données
+echo 'id = '. $donnees['id'] .'&lt;br /&gt;';
+echo 'nom = '. $donnees['nom'] .'&lt;br /&gt;';
+}
+?&gt;</code></pre><p id="r-565259" data-claire-element-id="565259">Vous devriez obtenir ceci :</p><div id="r-565261" data-claire-element-id="565262"><img id="r-565262" data-claire-element-id="565261" src="medias/uploads.siteduzero.com_files_145001_146000_145812.jpg" alt="Image utilisateur"/><img id="r-565260" data-claire-element-id="565260" src="medias/uploads.siteduzero.com_files_145001_146000_145812.jpg" alt="Image utilisateur"/></div><h3 id="r-des-idees-d-ameliorations-1" data-claire-element-id="565274">Des idées d'améliorations</h3><ul id="r-565271" data-claire-element-id="565271"><li id="r-565264" data-claire-element-id="565264"><p id="r-565263" data-claire-element-id="565263">Forcément, on ne passe pas à côté de l'amélioration &quot;design&quot;, je n'ai pas fait le strict minimum, mais quelque chose de présentable.</p></li><li id="r-565266" data-claire-element-id="565266"><p id="r-565265" data-claire-element-id="565265">Peut-être ne pas vérifier l'existence du fichier de configuration et simplement l'écraser s'il existe déjà, mais côté sécurité, je suis assez réticent.</p></li><li id="r-565268" data-claire-element-id="565268"><p id="r-565267" data-claire-element-id="565267">Créer sa base grâce à un <code data-claire-semantic="sql">CREATE DATABASE </code> dans le fichier base.sql et ainsi retirer le champ <code data-claire-semantic="html">base </code> du formulaire, mais aussi faire les modifications nécessaires dans traitement.php.</p></li><li id="r-565270" data-claire-element-id="565270"><p id="r-565269" data-claire-element-id="565269">Je n'ai pas d'autres idées, mais je suis sûr que vous en avez, vous. ;)</p></li></ul><p id="r-565272" data-claire-element-id="565272">Le tutoriel est maintenant terminé, j'espère que vous avez appris au moins quelque chose, comme manier (un peu) les fichiers avec PHP par exemple... :euh:</p><p id="r-565273" data-claire-element-id="565273">Je vous remercie de votre lecture, et bonne journée. :)</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/installer-sa-base-de-donnees-via-un-formulaire">Installer sa base de données via un formulaire</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/installer-sa-base-de-donnees-via-un-formulaire/le-fichier-de-requetes">
+Le fichier de requêtes
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/installer-sa-base-de-donnees-via-un-formulaire/notre-formulaire">
+Notre formulaire
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/installer-sa-base-de-donnees-via-un-formulaire/le-traitement-1">
+Le traitement
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/installer-sa-base-de-donnees-via-un-formulaire/tester-la-connexion">
+Tester la connexion
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/installer-sa-base-de-donnees-via-un-formulaire/le-traitement-1">
+<span class="arrow"></span>
+<span class="next">Le traitement</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/installer-sa-base-de-donnees-via-un-formulaire.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 07:13:08 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/installer-sa-base-de-donnees-via-un-formulaire.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:18:00 GMT -->
+</html>

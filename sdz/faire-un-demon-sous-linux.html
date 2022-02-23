@@ -1,0 +1,707 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/faire-un-demon-sous-linux.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 02:33:21 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/faire-un-demon-sous-linux.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:34:46 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Faire un Demon sous Linux</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/faire-un-demon-sous-linux.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Faire un Demon sous Linux</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#FaireunDemonsousLinux">Faire un Demon sous Linux</a><br/><a href="#PourquoiraliserundemonQuelssontlespr-requis">Pourquoi réaliser un demon ? Quels sont les pré-requis ?</a><br/><a href="#Autravail">Au travail</a><br/><a href="#Update-rc.d">Update-rc.d</a><br/><a href="#Indexationetautres">Indexation et autres</a><br/><a href="#Quelquesoptions">Quelques options</a><br/><a href="#Jeveuxsupprimermondemon">Je veux supprimer mon demon</a><br/><a href="#Sousd039autresdistributions">Sous d&#039;autres distributions</a><br/></div>
+<a name="FaireunDemonsousLinux"></a><h2>Faire un Demon sous Linux</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/pourquoi-realiser-un-demon-quels-sont-les-pre-requis">
+<span class="next">Pourquoi réaliser un demon ? Quels sont les pré-requis ?</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-341629" data-claire-element-id="341629">Bonjour à tous et à toutes, chers linuxiens.<br/> Vous est-il déjà arrivé de vouloir automatiser toutes vos tâches ? J'entends par là qu'au démarrage même de la machine, vous verriez tous vos scripts se lancer, automatiquement, sans avoir à lancer la session et se connecter en root pour enfin exécuter son script… ça ne vous tenterait pas ?<br/> Eh bien c'est possible grâce aux <strong><em>demons</em></strong> (appelés « services » sous Windows).</p><p id="r-341630" data-claire-element-id="341630"><cite>Citation : Wikipédia</cite></p><blockquote id="r-341632" data-claire-element-id="341632"><p id="r-341631" data-claire-element-id="341631">[Un demon] désigne un type de programme informatique, un processus qui s'exécute en arrière-plan plutôt que sous le contrôle direct d'un utilisateur.</p></blockquote><aside id="r-341634" data-claire-element-id="341634" data-claire-semantic="information"><p id="r-341633" data-claire-element-id="341633">Demon signifie : Disk and Execution MONitor (on peut utiliser aussi l'écriture Daemon pour Disk And Execution MONitor).</p></aside><p id="r-341635" data-claire-element-id="341635">Il est nécessaire d'avoir lu le <a href="http://www.siteduzero.com/tutoriel-3-12827-reprenez-le-controle-avec-linux.html">tutoriel sur Linux</a> de M@teo21.</p>
+</div><a name="PourquoiraliserundemonQuelssontlespr-requis"></a><h2>Pourquoi réaliser un demon ? Quels sont les pré-requis ?</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/au-travail-1">
+<span class="next">Au travail</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h3 id="r-pourquoi-faire-un-demon" data-claire-element-id="341640">Pourquoi faire un demon ?</h3><p id="r-341636" data-claire-element-id="341636">Évidemment, on pourrait se demander pourquoi faire un demon.<br/> Imaginez simplement que vous avez un tout petit serveur pour votre famille, pour vos amis, ou même un serveur de communication vocale. Ce serveur tourne sous Linux et à chaque fois que vous démarrez le serveur, il faut entrer login, mot de passe, puis lancer le terminal, s'identifier en tant que root et — enfin — lancer le script de démarrage.<br/> Eh bien le demon permet de lancer un script avec toutes les autorisations nécessaires, avant d'ouvrir sa session.</p><div id="r-341638" data-claire-element-id="341638" data-claire-semantic="question"><p id="r-341637" data-claire-element-id="341637">Donc, j'aurai juste à démarrer l'ordinateur, et mon serveur se lancera tout seul ?</p></div><p id="r-341639" data-claire-element-id="341639">Oui. :lol:</p><h3 id="r-quels-sont-les-pre-requis" data-claire-element-id="341652">Quels sont les pré-requis ?</h3><p id="r-341641" data-claire-element-id="341641">Tout d'abord, il faut le script d'exécution. C'est un programme qui se charge de démarrer le serveur. Exemple :</p><pre id="r-341642" data-claire-element-id="341642"><code data-claire-semantic="bash">#!/bin/bash
+/etc/init.d/apache start</code></pre><aside id="r-341644" data-claire-element-id="341644" data-claire-semantic="information"><p id="r-341643" data-claire-element-id="341643">Attention, le <code data-claire-semantic="console">/etc/init.d/apache start</code> est à titre informatif, apache s'enregistre à l'installation dans le init.d !</p></aside><p id="r-341645" data-claire-element-id="341645">Il faut ensuite l'accès au compte root.</p><p id="r-341646" data-claire-element-id="341646">Et enfin, il faut deux-trois connaissances.<br/> La plupart des serveurs demandent des accès au compte root, et le plus souvent vous n'avez pas besoin d'être derrière tout le temps ; vous le démarrez et le réduisez en tâche de fond.</p><p id="r-341647" data-claire-element-id="341647">Dans ce tutoriel, on abordera le dossier init.d qui contient tous les scripts demons.</p><p id="r-341648" data-claire-element-id="341648">On parlera aussi d'une variable $PATH. C'est une liste de répertoires qui permettent à l'utilisateur de faire directement des commandes sans se déplacer dans le dossier de l'exécutable. <br/> Exemple :</p><pre id="r-341649" data-claire-element-id="341649"><code data-claire-semantic="console">man</code></pre><p id="r-341650" data-claire-element-id="341650">Cette commande appelle en fait /usr/bin/man. Et c'est grâce aux variables d'environnement ($PATH) que vous pouvez utiliser <em>man</em> au lieu de /usr/bin/man : elle contient en fait une liste de dossiers (dont /usr/bin/).</p><p id="r-341651" data-claire-element-id="341651">Voilà, vous avez normalement les connaissances nécessaires pour créer un joli demon. :)</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux">Faire un Demon sous Linux</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/pourquoi-realiser-un-demon-quels-sont-les-pre-requis">
+Pourquoi réaliser un demon ? Quels sont les pré-requis ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/au-travail-1">
+Au travail
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/update-rc-d">
+Update-rc.d
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/indexation-et-autres">
+Indexation et autres
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/quelques-options-2">
+Quelques options
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/je-veux-supprimer-mon-demon">
+Je veux supprimer mon demon
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/sous-d-autres-distributions">
+Sous d&#039;autres distributions
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/au-travail-1">
+<span class="next">Au travail</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Autravail"></a><h2>Au travail</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/pourquoi-realiser-un-demon-quels-sont-les-pre-requis">
+<span class="arrow"></span>
+<span class="next">Pourquoi réaliser un demon ? Quels sont les pré-requis ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/update-rc-d">
+<span class="next">Update-rc.d</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-341654" data-claire-element-id="341654">Pour réaliser un demon, tout se passe dans ces dossiers : /etc/init.d/ et /usr/bin/</p><p id="r-341655" data-claire-element-id="341655">Créez un tout petit programme en shell qui lance votre serveur, si ce n'est pas déjà fait. Sous certains programmes (TeamSpeak), un programme dit startscript est déjà présent.</p><p id="r-341656" data-claire-element-id="341656">Lancez un terminal.<br/> Entrez-y la commande pour avoir accès aux droits root :</p><pre id="r-341657" data-claire-element-id="341657"><code data-claire-semantic="console">sudo -s</code></pre><p id="r-341658" data-claire-element-id="341658">Entrez votre mot de passe (le mot de passe root).</p><aside id="r-341660" data-claire-element-id="341660" data-claire-semantic="information"><p id="r-341659" data-claire-element-id="341659">Pour ce tutoriel, nous prendrons un exemple de serveur avec « launcher » (en shell, pas besoin d'extensions, bien que cela ne change rien :) ).</p></aside><p id="r-341661" data-claire-element-id="341661">Localisez votre script de démarrage et copiez-le dans /usr/bin :</p><pre id="r-341662" data-claire-element-id="341662"><code data-claire-semantic="console">cp /dir1/dir2/launcher /usr/bin/launcher</code></pre><p id="r-341663" data-claire-element-id="341663">Ceci est valable pour tout type de fichiers (Python, shell, etc.).</p><p id="r-341664" data-claire-element-id="341664">La suite est un petit peu plus complexe : il faut créer un programme de lancement automatique situé dans /etc/init.d/</p><aside id="r-341666" data-claire-element-id="341666" data-claire-semantic="warning"><p id="r-341665" data-claire-element-id="341665">Mais je ne sais pas faire ça, moi !</p></aside><p id="r-341667" data-claire-element-id="341667">C'est là que Linux est bien gentil, il nous fournit un squelette, un cadre : skeleton.<br/> Donc copiez le skeleton dans votre script avec :</p><pre id="r-341668" data-claire-element-id="341668"><code data-claire-semantic="console">cp /etc/init.d/skeleton /etc/init.d/launcher</code></pre><p id="r-341669" data-claire-element-id="341669">Puis on édite ce startscript :</p><pre id="r-341670" data-claire-element-id="341670"><code data-claire-semantic="console">gedit /etc/init.d/launcher</code></pre><p id="r-341671" data-claire-element-id="341671">Ou sous KDE :</p><pre id="r-341672" data-claire-element-id="341672"><code data-claire-semantic="console">kate /etc/init.d/launcher</code></pre><p id="r-341673" data-claire-element-id="341673">Là, plein de choses s'affichent, mais seulement quelques-unes sont importantes :</p><pre id="r-341674" data-claire-element-id="341674"><code>PATH=/usr/sbin:/usr/bin:/sbin:/bin
+DESC=&quot;Description du service&quot;
+NAME=nomdudemon
+DAEMON=/usr/bin/$NAME
+DAEMON_ARGS=&quot;--options args&quot;
+PIDFILE=/var/run/$NAME.pid
+SCRIPTNAME=/etc/init.d/$NAME</code></pre><ul id="r-341689" data-claire-element-id="341689"><li id="r-341676" data-claire-element-id="341676"><p id="r-341675" data-claire-element-id="341675">PATH : il ne faut pas toucher à cette ligne, c'est la liste des PATH</p></li><li id="r-341678" data-claire-element-id="341678"><p id="r-341677" data-claire-element-id="341677">DESC : mettez une courte description de votre launcher.</p></li><li id="r-341680" data-claire-element-id="341680"><p id="r-341679" data-claire-element-id="341679">NAME : mettez le nom de votre exécutable (ici, launcher).</p></li><li id="r-341682" data-claire-element-id="341682"><p id="r-341681" data-claire-element-id="341681">DAEMON : on n'y touche pas (c'est là que se situe votre script).</p></li><li id="r-341684" data-claire-element-id="341684"><p id="r-341683" data-claire-element-id="341683">DAEMON_ARGS : les options de lancement (quand vous lancez la commande, il est possible que vous ayez à mettre des paramètres).</p></li><li id="r-341686" data-claire-element-id="341686"><p id="r-341685" data-claire-element-id="341685">PIDFILE : on laisse.</p></li><li id="r-341688" data-claire-element-id="341688"><p id="r-341687" data-claire-element-id="341687">SCRIPTNAME : on laisse.</p></li></ul><aside id="r-341695" data-claire-element-id="341695" data-claire-semantic="information"><p id="r-341690" data-claire-element-id="341690">La variable PATH est :</p><p id="r-341691" data-claire-element-id="341691"><cite>Citation : CCM</cite></p><blockquote id="r-341693" data-claire-element-id="341693"><p id="r-341692" data-claire-element-id="341692">Ce sont les répertoires dans lesquels le shell cherche la commande qu'on écrit au clavier.</p></blockquote><p id="r-341694" data-claire-element-id="341694">Elle permet de faire la commande <code data-claire-semantic="console">ifconfig</code> et non <code data-claire-semantic="console">/sbin/ifconfig</code></p></aside><p id="r-341696" data-claire-element-id="341696">Vous remplissez avec vos paramètres comme ci-dessus.<br/> Un exemple avec un script « launcher » dans /usr/bin :</p><pre id="r-341697" data-claire-element-id="341697"><code>PATH=/usr/sbin:/usr/bin:/sbin:/bin
+DESC=&quot;Un launcher de mon serveur&quot;
+NAME=launcher
+DAEMON=/usr/bin/$NAME
+DAEMON_ARGS=&quot;-option valeur&quot;
+PIDFILE=/var/run/$NAME.pid
+SCRIPTNAME=/etc/init.d/$NAME</code></pre><p id="r-341698" data-claire-element-id="341698">Nous allons maintenant passer à « l'enregistrement » de votre demon.</p><div id="r-341700" data-claire-element-id="341700" data-claire-semantic="question"><p id="r-341699" data-claire-element-id="341699">Hé, mais tu oublies de rendre le script exécutable ! Ce n'est qu'un fichier texte pour le moment !</p></div><p id="r-341701" data-claire-element-id="341701">Oooups ! :p</p><pre id="r-341702" data-claire-element-id="341702"><code data-claire-semantic="console">chmod +x /etc/init.d/launcher</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux">Faire un Demon sous Linux</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/pourquoi-realiser-un-demon-quels-sont-les-pre-requis">
+Pourquoi réaliser un demon ? Quels sont les pré-requis ?
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/au-travail-1">
+Au travail
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/update-rc-d">
+Update-rc.d
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/indexation-et-autres">
+Indexation et autres
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/quelques-options-2">
+Quelques options
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/je-veux-supprimer-mon-demon">
+Je veux supprimer mon demon
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/sous-d-autres-distributions">
+Sous d&#039;autres distributions
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/pourquoi-realiser-un-demon-quels-sont-les-pre-requis">
+<span class="arrow"></span>
+<span class="next">Pourquoi réaliser un demon ? Quels sont les pré-requis ?</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/update-rc-d">
+<span class="next">Update-rc.d</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Update-rc.d"></a><h2>Update-rc.d</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/au-travail-1">
+<span class="arrow"></span>
+<span class="next">Au travail</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/indexation-et-autres">
+<span class="next">Indexation et autres</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-341704" data-claire-element-id="341704">Le programme qui va gérer tous les demons (et bien plus) est « update-rc.d ».</p><h3 id="r-mais-que-fait-il-exactement" data-claire-element-id="341711">Mais que fait-il exactement ?</h3><p id="r-341705" data-claire-element-id="341705">Il crée plusieurs liens depuis /etc/rc0.d/launcher vers /etc/init.d/launcher.</p><p id="r-341706" data-claire-element-id="341706"><cite>Citation : Man update-rc.d traduit</cite></p><blockquote id="r-341708" data-claire-element-id="341708"><p id="r-341707" data-claire-element-id="341707">update-rc.d met à jour automatiquement les liens vers les scripts d'initialisation de type System-V dont le nom est /etc/rc<strong><em>runlevel</em></strong>.d/<em><strong>NN</strong></em>nom vers les scripts /etc/<em>init</em>.d/name. Ils sont lancés par init quand on change de niveau de fonctionnement et sont généralement utilisés pour démarrer ou arrêter des services tels que les demons. « <em><strong>runlevel</strong></em> » est l'un des niveaux de fonctionnement autorisés par <em>init</em>, 0123456789S, et « <em><strong>NN</strong></em> » est le code à deux chiffres utilisé par <em>init</em> pour décider de l'ordre d'exécution des scripts.</p></blockquote><p id="r-341709" data-claire-element-id="341709">Je juge cette citation plutôt claire, et ne pouvant faire mieux, je vous la laisse.</p><p id="r-341710" data-claire-element-id="341710">Si vous êtes à la recherche d'une documentation complète (hé, on est sur un site pour Zéros, quand même), je vous redirige sur la documentation officielle, dont j'ai tiré la citation ci-dessus : <a href="http://manpages.ubuntu.com/manpages/gutsy/fr/man8/update-rc.d.8.html">Update-rc.d sur manpage.ubuntu.com</a>.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux">Faire un Demon sous Linux</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/pourquoi-realiser-un-demon-quels-sont-les-pre-requis">
+Pourquoi réaliser un demon ? Quels sont les pré-requis ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/au-travail-1">
+Au travail
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/update-rc-d">
+Update-rc.d
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/indexation-et-autres">
+Indexation et autres
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/quelques-options-2">
+Quelques options
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/je-veux-supprimer-mon-demon">
+Je veux supprimer mon demon
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/sous-d-autres-distributions">
+Sous d&#039;autres distributions
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/au-travail-1">
+<span class="arrow"></span>
+<span class="next">Au travail</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/indexation-et-autres">
+<span class="next">Indexation et autres</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Indexationetautres"></a><h2>Indexation et autres</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/update-rc-d">
+<span class="arrow"></span>
+<span class="next">Update-rc.d</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/quelques-options-2">
+<span class="next">Quelques options</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-341713" data-claire-element-id="341713">Vous êtes presque arrivés à la fin. Maintenant, il faut « enregistrer » votre script pour qu'il soit pris en compte.<br/> Tapez</p><pre id="r-341714" data-claire-element-id="341714"><code data-claire-semantic="console">update-rc.d launcher defaults</code></pre><p id="r-341715" data-claire-element-id="341715"><em>update-rc.d</em> pour mettre à jour,<br/><em>launcher</em> pour le nom de votre script,<br/><em>defaults</em> options par défaut : placement en bout de file d'attente, pour éviter les conflits</p><p id="r-341716" data-claire-element-id="341716">Normalement update-rc.d vous répond (il se peut que le message diffère) :</p><pre id="r-341717" data-claire-element-id="341717"><code data-claire-semantic="console">Adding system startup for /etc/init.d/launcher ...
+   /etc/rc0.d/K20launcher -&gt; ../init.d/launcher
+   /etc/rc1.d/K20launcher -&gt; ../init.d/launcher
+   /etc/rc6.d/K20launcher -&gt; ../init.d/launcher
+   /etc/rc2.d/S20launcher -&gt; ../init.d/launcher
+   /etc/rc3.d/S20launcher -&gt; ../init.d/launcher
+   /etc/rc4.d/S20launcher -&gt; ../init.d/launcher
+   /etc/rc5.d/S20launcher -&gt; ../init.d/launcher</code></pre><p id="r-341718" data-claire-element-id="341718">Vous pouvez maintenant exécuter votre script avec /etc/init.d/launcher start ou /etc/init.d/launcher stop.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux">Faire un Demon sous Linux</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/pourquoi-realiser-un-demon-quels-sont-les-pre-requis">
+Pourquoi réaliser un demon ? Quels sont les pré-requis ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/au-travail-1">
+Au travail
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/update-rc-d">
+Update-rc.d
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/indexation-et-autres">
+Indexation et autres
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/quelques-options-2">
+Quelques options
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/je-veux-supprimer-mon-demon">
+Je veux supprimer mon demon
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/sous-d-autres-distributions">
+Sous d&#039;autres distributions
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/update-rc-d">
+<span class="arrow"></span>
+<span class="next">Update-rc.d</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/quelques-options-2">
+<span class="next">Quelques options</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Quelquesoptions"></a><h2>Quelques options</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/indexation-et-autres">
+<span class="arrow"></span>
+<span class="next">Indexation et autres</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/je-veux-supprimer-mon-demon">
+<span class="next">Je veux supprimer mon demon</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-341720" data-claire-element-id="341720">Vous pouvez faire en sorte que votre programme soit en tâche de fond. Pour cela, dans votre /etc/init.d/launcher, regardez au niveau de la fonction do_start() :</p><pre id="r-341721" data-claire-element-id="341721"><code data-claire-semantic="bash">do_start()
+{
+        # Return
+        #   0 if daemon has been started
+        #   1 if daemon was already running
+        #   2 if daemon could not be started
+        start-stop-daemon --start --quiet --background --make-pidfile --pidfile $PIDFILE --exec $DAEMON --test &gt; /dev/null \
+                || return 1
+        start-stop-daemon --start --quiet --background --make-pidfile --pidfile $PIDFILE --exec $DAEMON -- \
+                $DAEMON_ARGS \
+                || return 2
+        # Add code here, if necessary, that waits for the process to be ready
+        # to handle requests from services started subsequently which depend
+        # on this one.  As a last resort, sleep for some time.
+}</code></pre><p id="r-341722" data-claire-element-id="341722">start-stop-daemon est la commande principale. Analysons ses options :</p><ul id="r-341737" data-claire-element-id="341737"><li id="r-341724" data-claire-element-id="341724"><p id="r-341723" data-claire-element-id="341723">--start pour démarrer le script ;</p></li><li id="r-341726" data-claire-element-id="341726"><p id="r-341725" data-claire-element-id="341725">--quiet pour rendre le script silencieux (CQFD) ;</p></li><li id="r-341728" data-claire-element-id="341728"><p id="r-341727" data-claire-element-id="341727">--background pour mettre le script en arrière-plan (CQFD) ;</p></li><li id="r-341730" data-claire-element-id="341730"><p id="r-341729" data-claire-element-id="341729">--make-pidfile pour faire un fichier de processus (pour pouvoir forcer l'arrêt plus tard) ;</p></li><li id="r-341732" data-claire-element-id="341732"><p id="r-341731" data-claire-element-id="341731">--pidfile $PIDFILE pour localiser le pidfile créé ci-dessus ;</p></li><li id="r-341734" data-claire-element-id="341734"><p id="r-341733" data-claire-element-id="341733">--exec $DAEMON pour lancer le programme ;</p></li><li id="r-341736" data-claire-element-id="341736"><p id="r-341735" data-claire-element-id="341735">--test.</p></li></ul><p id="r-341738" data-claire-element-id="341738">Le reste, ce n'est pas la peine d'expliquer.<br/> Vous pouvez donc modifier ce code à votre guise pour faire votre demon.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux">Faire un Demon sous Linux</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/pourquoi-realiser-un-demon-quels-sont-les-pre-requis">
+Pourquoi réaliser un demon ? Quels sont les pré-requis ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/au-travail-1">
+Au travail
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/update-rc-d">
+Update-rc.d
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/indexation-et-autres">
+Indexation et autres
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/quelques-options-2">
+Quelques options
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/je-veux-supprimer-mon-demon">
+Je veux supprimer mon demon
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/sous-d-autres-distributions">
+Sous d&#039;autres distributions
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/indexation-et-autres">
+<span class="arrow"></span>
+<span class="next">Indexation et autres</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/je-veux-supprimer-mon-demon">
+<span class="next">Je veux supprimer mon demon</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Jeveuxsupprimermondemon"></a><h2>Je veux supprimer mon demon</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/quelques-options-2">
+<span class="arrow"></span>
+<span class="next">Quelques options</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/sous-d-autres-distributions">
+<span class="next">Sous d&#039;autres distributions</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-341740" data-claire-element-id="341740">Si jamais votre script ne fonctionne pas, ou que vous voulez tout simplement enlever votre serveur, il faut exécuter une suite de commandes :</p><pre id="r-341741" data-claire-element-id="341741"><code data-claire-semantic="console">/etc/init.d/launcher stop
+update-rc.d -f launcher remove
+rm /etc/init.d/launcher
+rm /usr/bin/launcher</code></pre><ul id="r-341750" data-claire-element-id="341750"><li id="r-341743" data-claire-element-id="341743"><p id="r-341742" data-claire-element-id="341742">/etc/init.d/launcher stop → Termine le programme.</p></li><li id="r-341745" data-claire-element-id="341745"><p id="r-341744" data-claire-element-id="341744">update-rc.d -f launcher remove → Supprime l'enregistrement du script.</p></li><li id="r-341747" data-claire-element-id="341747"><p id="r-341746" data-claire-element-id="341746">rm /etc/init.d/launcher pour supprimer le skeleton modifié.</p></li><li id="r-341749" data-claire-element-id="341749"><p id="r-341748" data-claire-element-id="341748">rm /usr/bin/launcher pour supprimer la copie de votre script.</p></li></ul><p id="r-341751" data-claire-element-id="341751">Votre init.d est maintenant nettoyé. :)</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux">Faire un Demon sous Linux</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/pourquoi-realiser-un-demon-quels-sont-les-pre-requis">
+Pourquoi réaliser un demon ? Quels sont les pré-requis ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/au-travail-1">
+Au travail
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/update-rc-d">
+Update-rc.d
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/indexation-et-autres">
+Indexation et autres
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/quelques-options-2">
+Quelques options
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/je-veux-supprimer-mon-demon">
+Je veux supprimer mon demon
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/sous-d-autres-distributions">
+Sous d&#039;autres distributions
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/quelques-options-2">
+<span class="arrow"></span>
+<span class="next">Quelques options</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/sous-d-autres-distributions">
+<span class="next">Sous d&#039;autres distributions</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Sousd039autresdistributions"></a><h2>Sous d&#039;autres distributions</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/je-veux-supprimer-mon-demon">
+<span class="arrow"></span>
+<span class="next">Je veux supprimer mon demon</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<div id="r-341754" data-claire-element-id="341754" data-claire-semantic="question"><p id="r-341753" data-claire-element-id="341753">Mais je fais quoi si je suis sous Kubuntu, sous Debian, … ?</p></div><p id="r-341755" data-claire-element-id="341755">Je vais vous aider pour quelques autres OS bien connus.<br/> J'ai testé sous toutes les versions ci-dessous.</p><aside id="r-341757" data-claire-element-id="341757" data-claire-semantic="information"><p id="r-341756" data-claire-element-id="341756">Je vous parle d'éditeurs de texte, mais le meilleur reste votre préféré, il n'y a pas besoin d'autre chose que la lecture / écriture de texte, même si la coloration rend plus simple la tâche, etc.</p></aside><h3 id="r-sous-kubuntu" data-claire-element-id="341759">Sous Kubuntu</h3><p id="r-341758" data-claire-element-id="341758">La technique est la même : on copie notre exécutable sur /usr/bin/ puis on copie skeleton, on le modifie pour qu'il lance notre programme, et on fait un update-rc.d.<br/> La seule chose qui change est l'éditeur de texte : utilisez <em><strong>Kate</strong></em> (ou nano, ou Vim, etc.).</p><h3 id="r-sous-debian" data-claire-element-id="341761">Sous Debian</h3><p id="r-341760" data-claire-element-id="341760">De la même façon que sous Ubuntu ou Kubuntu, Debian possède un skeleton, un dossier init.d/ un update-rc.d, etc.<br/> Comme sous Ubuntu et Kubuntu, vous pouvez utiliser <strong>nano</strong>, <strong>Vim</strong>, etc.</p><h3 id="r-sous-mandriva" data-claire-element-id="341763">Sous Mandriva</h3><p id="r-341762" data-claire-element-id="341762">Là ça se complique : le skeleton est un peu différent, il y a des chmods pour les priorités d'exécution, etc.<br/> Je vous redirige donc sur la documentation officielle : <a href="http://wiki.mandriva.com/fr/Service">Wiki de Mandriva</a>.</p><h3 id="r-sous-fedora" data-claire-element-id="341765">Sous Fedora</h3><p id="r-341764" data-claire-element-id="341764">Fedora gère ses demons de la même manière que Debian, donc pas de problèmes</p><h3 id="r-sous-archlinux" data-claire-element-id="341772">Sous ArchLinux</h3><p id="r-341766" data-claire-element-id="341766">Ici, autre fonctionnement, il n'y a pas de /etc/init.d. :lol: Il faut en fait ajouter son script au /etc/rc.d/ en respectant le skeleton suivant (attention à bien remplacer tous les noms de programmes, et autres chaines contenant &quot;skeleton&quot; :</p><div id="r-341768" data-claire-element-id="341768"><pre id="r-341767" data-claire-element-id="341767"><code data-claire-semantic="bash">#!/bin/bash
+
+. /etc/rc.conf
+. /etc/rc.d/functions
+
+PID=$(pidof -o %PPID -x /usr/sbin/skeleton)
+case &quot;$1&quot; in
+  start)
+    stat_busy &quot;Starting skeleton&quot;
+    [ -z &quot;$PID&quot; ] &amp;&amp; /usr/sbin/skeleton &gt; /dev/null 2 &gt; &amp;1 &amp;
+    if [ $? -gt 0 ]; then
+      stat_fail
+    else
+      add_daemon skeleton
+      stat_done
+    fi
+    ;;
+  stop)
+    stat_busy &quot;Stopping skeleton&quot;
+    [ ! -z &quot;$PID&quot; ]  &amp;&amp; kill $PID &amp;&gt; /dev/null
+    if [ $? -gt 0 ]; then
+      stat_fail
+    else
+      rm_daemon skeleton
+      stat_done
+    fi
+    ;;
+  restart)
+    $0 stop
+    $0 start
+    ;;
+  *)
+    echo &quot;usage: $0 {start|stop|restart}&quot;  
+esac
+exit 0</code></pre></div><p id="r-341769" data-claire-element-id="341769">Puis il faut modifier le fichier /etc/rc.conf en ajoutant à la liste des demons (bas du fichier) « @skeleton » (ou skeleton = nom du script, et @ pour mettre le script en tâche d'arrière-plan).</p><p id="r-341770" data-claire-element-id="341770">Et voilà, vous savez faire des demons. :) J'espère que ce tutoriel vous a plu ! ^^</p><p id="r-341771" data-claire-element-id="341771">Je tiens à remercier Norrin pour ses <a href="http://www.siteduzero.com/tutoriel-50-234522-p1-faire-un-demon-sous-linux.html">commentaires,</a> nim65s qui m'a aidé pour ArchLinux, et enfin merci aux commentaires qui m'ont aidé.<br/> Je remercie aussi Poulpette et ptipilou pour leur correction plus qu'utile.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux">Faire un Demon sous Linux</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/pourquoi-realiser-un-demon-quels-sont-les-pre-requis">
+Pourquoi réaliser un demon ? Quels sont les pré-requis ?
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/au-travail-1">
+Au travail
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/update-rc-d">
+Update-rc.d
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/indexation-et-autres">
+Indexation et autres
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/quelques-options-2">
+Quelques options
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/je-veux-supprimer-mon-demon">
+Je veux supprimer mon demon
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/sous-d-autres-distributions">
+Sous d&#039;autres distributions
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/faire-un-demon-sous-linux/je-veux-supprimer-mon-demon">
+<span class="arrow"></span>
+<span class="next">Je veux supprimer mon demon</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/faire-un-demon-sous-linux.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 02:33:21 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/faire-un-demon-sous-linux.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:34:47 GMT -->
+</html>
