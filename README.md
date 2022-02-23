@@ -1,6 +1,6 @@
 # archivesiteduzero
 
-C'est un archive de vieux cours du siteduzero. Cela fait un bail mais comme on dit "old is gold".
+C'est un archive des vieux cours du siteduzero. Cela fait un bail mais comme on dit ... "old is gold".
 
 Pour obtenir le contenu:
 
