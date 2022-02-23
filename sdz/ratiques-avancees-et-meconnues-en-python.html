@@ -1,0 +1,840 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/ratiques-avancees-et-meconnues-en-python.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 23:41:39 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/ratiques-avancees-et-meconnues-en-python.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:10:48 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Pratiques avancées et méconnues en Python</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Pratiques avancées et méconnues en Python</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#PratiquesavancesetmconnuesenPython">Pratiques avancées et méconnues en Python</a><br/><a href="#Lafonctionenumerate">La fonction enumerate</a><br/><a href="#Lesgnrateurs">Les générateurs</a><br/><a href="#Lescoroutines">Les coroutines</a><br/><a href="#Leslistcomprehensionsetgeneratorexpressions">Les list comprehensions et generator expressions</a><br/><a href="#Lafonctionzip">La fonction zip</a><br/><a href="#Lemoduleitertools">Le module itertools</a><br/><a href="#Lemotclwith">Le mot clé with</a><br/></div>
+<a name="PratiquesavancesetmconnuesenPython"></a><h2>Pratiques avancées et méconnues en Python</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/la-fonction-enumerate-1">
+<span class="next">La fonction enumerate</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-447969" data-claire-element-id="447969">Beaucoup de gens pensent maîtriser correctement le langage Python après quelques cours lus, et quelques exercices réalisés.<br/> Cette sensation vient de la simplicité apparente de Python pour un débutant. Pourtant, malgré ce que l'on pense, un code Python est relativement souvent améliorable sur de nombreux points, et c'est sur ces points que l'on distingue un codeur expérimenté d'un codeur débutant. :)</p><p id="r-447970" data-claire-element-id="447970">Ce tutoriel recense la plupart de ces points permettant de rendre son code plus lisible et plus <em>pythonnique</em> en utilisant des fonctionnalités méconnues du langage et en l'exploitant à 100 %.</p><p id="r-447971" data-claire-element-id="447971">De par sa nature, ce tutoriel ne vise clairement pas un public débutant en Python, mais plutôt un public ayant un peu d'expérience en Python et prêt à se documenter pour en savoir plus sur ce qui y est dit, car rien n'est aussi bien documenté que la documentation elle-même. :)</p><p id="r-447972" data-claire-element-id="447972">Bonne lecture à vous.</p>
+</div><a name="Lafonctionenumerate"></a><h2>La fonction enumerate</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/les-generateurs-2">
+<span class="next">Les générateurs</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-447973" data-claire-element-id="447973">Un besoin assez courant quand on manipule une liste ou tout autre objet itérable est de récupérer en même temps l'élément et son indice à chaque itération. Pour cela, la méthode habituellement utilisée est simple : au lieu d'itérer sur notre liste, on va itérer sur une liste d'entiers partant de 0 et allant de 1 en 1 jusqu'au dernier indice valide de la liste, obtenue via la fonction <code>xrange</code>. Cette méthode n'est pas du tout efficace : en effet, manipuler ainsi l'indice est totalement contre-intuitif et va à l'encontre du principe des itérateurs en Python.</p><p id="r-447974" data-claire-element-id="447974">Un exemple de code utilisant cette mauvaise méthode :</p><pre id="r-447975" data-claire-element-id="447975"><code data-claire-semantic="python">for indice in xrange(0, len(liste)):
+    print &quot;liste[%d] = %r&quot; % (indice, liste[indice])</code></pre><p id="r-447976" data-claire-element-id="447976">Pour réaliser ce genre d'itérations, on va utiliser la fonction <code>enumerate</code> : elle permet en effet de récupérer une liste de tuples <code>(indice, valeur)</code> en fonction du contenu de la liste, et d'une manière très pratique. On l'utilise comme ceci :</p><pre id="r-447977" data-claire-element-id="447977"><code data-claire-semantic="python">for indice, valeur in enumerate(liste):
+    print &quot;liste[%d] = %r&quot; % (indice, valeur)
+# ou sinon, comme enumerate renvoie une liste de tuples :
+for indval in enumerate(liste):
+    print &quot;liste[%d] = %r&quot; % indval</code></pre><p id="r-447978" data-claire-element-id="447978">Cette manière de faire se rapproche beaucoup plus de ce qui doit être fait en Python si l'on veut utiliser correctement le langage : on itère directement sur les valeurs à la sortie d'un générateur, au lieu d'utiliser un indice (manière plus courante dans les langages comme le C n'ayant pas d'itérateurs comme ceux de Python).</p><p id="r-447979" data-claire-element-id="447979">Avec <code>enumerate</code>, on peut par exemple écrire très facilement un code numérotant les lignes d'un texte :</p><pre id="r-447980" data-claire-element-id="447980"><code data-claire-semantic="python">texte = file('nom-de-fichier').read()
+for numberedline in enumerate(texte.split('\n')):
+    print &quot;%d\t%s&quot; % numberedline</code></pre><p id="r-447981" data-claire-element-id="447981">Au niveau des performances, l'utilisation de <code>enumerate</code> par rapport à des indices ne change strictement rien, avec une différence de temps d'exécution d'un centième de seconde sur un million d'itérations. Aucun argument n'est donc bon pour continuer à utiliser les indices dans ce genre de cas. :)</p><p id="r-447982" data-claire-element-id="447982">Pour plus d'informations : <a href="http://www.python.org/dev/peps/pep-0279/">PEP 279</a>.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python">Pratiques avancées et méconnues en Python</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/la-fonction-enumerate-1">
+La fonction enumerate
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/les-generateurs-2">
+Les générateurs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/les-coroutines">
+Les coroutines
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/les-list-comprehensions-et-generator-expressions">
+Les list comprehensions et generator expressions
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/la-fonction-zip">
+La fonction zip
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/le-module-itertools">
+Le module itertools
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/le-mot-cle-with-2">
+Le mot clé with
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/les-generateurs-2">
+<span class="next">Les générateurs</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lesgnrateurs"></a><h2>Les générateurs</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/la-fonction-enumerate-1">
+<span class="arrow"></span>
+<span class="next">La fonction enumerate</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/les-coroutines">
+<span class="next">Les coroutines</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-447984" data-claire-element-id="447984">Ce qu'on appelle en Python &quot;<em>générateurs</em>&quot; sont des objets que l'on crée d'une manière plutôt originale, en appelant une fonction que l'on crée soi-même et qui possède dans son code l'instruction <code>yield</code>. Cette fonction ne doit retourner aucune valeur.</p><p id="r-447985" data-claire-element-id="447985">Un exemple de code créant un générateur est le suivant :</p><pre id="r-447986" data-claire-element-id="447986"><code data-claire-semantic="pycon">&gt;&gt;&gt; def generateur():
+...     while True: yield 1
+...
+&gt;&gt;&gt; generateur
+&lt;function generateur at 0x7f1c0bbe0aa0&gt;
+&gt;&gt;&gt; type(generateur)
+&lt;type 'function'&gt;
+&gt;&gt;&gt; generateur()
+&lt;generator object at 0x7f1c0bbf8710&gt;
+&gt;&gt;&gt; type(generateur())
+&lt;type 'generator'&gt;</code></pre><p id="r-447987" data-claire-element-id="447987">Nous avons donc créé un <em>générateur</em>.<br/> C'est beau, mais vous vous demandez sûrement à quoi ces générateurs servent. <br/> Eh bien ce sont des objets <strong>itérables</strong>, c'est-à-dire qu'ils vont successivement renvoyer différentes valeurs. <br/> Pour récupérer ces différentes valeurs, il y a plusieurs solutions :</p><ul id="r-447992" data-claire-element-id="447992"><li id="r-447989" data-claire-element-id="447989"><p id="r-447988" data-claire-element-id="447988">soit utiliser une boucle classique <code>for ... in ...:</code> ;</p></li><li id="r-447991" data-claire-element-id="447991"><p id="r-447990" data-claire-element-id="447990">soit utiliser la méthode <code>next</code> du générateur.</p></li></ul><p id="r-447993" data-claire-element-id="447993">Pour bien comprendre, prenons l'exemple d'une fonction nous permettant, à l'instar de la fonction <code>xrange</code>, de nous donner une liste de nombres de 0 à y.</p><pre id="r-447994" data-claire-element-id="447994"><code data-claire-semantic="python">def range_perso(x, y=0):
+    if y &lt; x:     # Si y est inférieur à x on inverse ces deux valeurs
+        x, y  = y, x
+
+    yield x       # On renvoie la première valeur de X
+    while x &lt; y:
+        x += 1
+        yield x   # On retourne x</code></pre><p id="r-447995" data-claire-element-id="447995">On peut par exemple choisir d'utiliser notre nouvelle fonction / <code>generateur</code><code>range_perso(x,y)</code> dans une boucle <code>for</code> :</p><pre id="r-447996" data-claire-element-id="447996"><code data-claire-semantic="python">for n in range_perso(10):
+    print n</code></pre><p id="r-447997" data-claire-element-id="447997">Le principe de fonctionnement d'un générateur est simple.</p><p id="r-447998" data-claire-element-id="447998">Quand on veut récupérer une valeur, il va commencer à exécuter le code de la fonction, jusqu'au moment où l'exécution rencontrera une instruction <code>yield</code>. <br/> À ce moment-là, le code s'arrête, et on ressort de la fonction en ayant comme valeur la valeur donnée à l'instruction <code>yield</code> rencontrée. <br/> Lorsque l'exécution atteint la fin de la fonction, le générateur envoie une exception de type <code>StopIteration</code>. <br/> Cette exception est :</p><ul id="r-448003" data-claire-element-id="448003"><li id="r-448000" data-claire-element-id="448000"><p id="r-447999" data-claire-element-id="447999">soit à rattraper manuellement en cas d'utilisation de la méthode <code>next</code> du générateur ;</p></li><li id="r-448002" data-claire-element-id="448002"><p id="r-448001" data-claire-element-id="448001">soit signifie la fin de la boucle <code>for</code> dans le cas d'une itération par boucle <code>for ... in ...:</code>.</p></li></ul><p id="r-448004" data-claire-element-id="448004">On peut ainsi coder des tonnes de fonctions très pratiques qui renverraient normalement par exemple des listes, en leur faisant renvoyer les valeurs une par une. Par exemple, ce générateur implémente la suite de Syracuse :</p><pre id="r-448005" data-claire-element-id="448005"><code data-claire-semantic="python">def syracuse(n):
+    yield n
+    while n != 1:
+        if n % 2 == 0:
+            n = n / 2
+        else:
+            n = 3 * n + 1
+        yield n
+
+for n in syracuse(3):
+    print n</code></pre><p id="r-448006" data-claire-element-id="448006">Un générateur ne doit pas forcément s'arrêter.<br/> Par exemple, ce générateur part d'un nombre x, et donne toutes les valeurs en partant de <code>x</code> : <code>x + 1</code>, <code>x + 2</code>, <code>x + 3</code>, etc.</p><pre id="r-448007" data-claire-element-id="448007"><code data-claire-semantic="python">def countfrom(x):
+    while True:
+        yield x
+        x += 1
+
+for n in countfrom(10):
+    print n
+    if n &gt; 20: break # Si on ne break pas, on est en boucle infinie
+                     # car le générateur ne s'arrête pas.</code></pre><p id="r-448008" data-claire-element-id="448008">Avec les générateurs, on peut aussi recoder la fonction <code>enumerate</code> vue précédemment (qui est en réalité un générateur codé en C et intégré à la bibliothèque standard Python).</p><pre id="r-448009" data-claire-element-id="448009"><code data-claire-semantic="python">def enumerate(li):
+    for i in xrange(0, len(li)):
+        yield i, li[i]</code></pre><p id="r-448010" data-claire-element-id="448010">La fonction <code>xrange</code> est, elle aussi, un générateur codé en C, mais que l'on peut très facilement programmer en Python :</p><pre id="r-448011" data-claire-element-id="448011"><code data-claire-semantic="python">def xrange(start, stop=None, step=1):
+    if stop is None:
+        start, stop = 0, start
+    while step &gt; 0 and start &lt; stop or step &lt; 0 and start &gt; stop:
+        yield start
+        start += step</code></pre><p id="r-448012" data-claire-element-id="448012">Pour plus d'informations : <a href="http://www.python.org/dev/peps/pep-0255/">PEP 255</a></p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python">Pratiques avancées et méconnues en Python</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/la-fonction-enumerate-1">
+La fonction enumerate
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/les-generateurs-2">
+Les générateurs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/les-coroutines">
+Les coroutines
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/les-list-comprehensions-et-generator-expressions">
+Les list comprehensions et generator expressions
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/la-fonction-zip">
+La fonction zip
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/le-module-itertools">
+Le module itertools
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/le-mot-cle-with-2">
+Le mot clé with
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/la-fonction-enumerate-1">
+<span class="arrow"></span>
+<span class="next">La fonction enumerate</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/les-coroutines">
+<span class="next">Les coroutines</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lescoroutines"></a><h2>Les coroutines</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/les-generateurs-2">
+<span class="arrow"></span>
+<span class="next">Les générateurs</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/les-list-comprehensions-et-generator-expressions">
+<span class="next">Les list comprehensions et generator expressions</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-448014" data-claire-element-id="448014">Les coroutines sont des fonctions utilisant les générateurs de Python, et permettant de réaliser des choses impossibles autrement.<br/> Leur première implémentation en Python a été réalisée par le projet Stackless Python, puis la PEP 342 a intégré tout ce qui est nécessaire à la création de coroutines à CPython, l'interpréteur Python que vous connaissez. :)</p><p id="r-448015" data-claire-element-id="448015">Leur principale particularité est de pouvoir mettre en pause leur exécution en renvoyant une valeur (donc, comme un générateur). Pendant cette pause, elles peuvent également recevoir une valeur leur indiquant comment continuer leur exécution. Pour stopper l'exécution de notre coroutine, on va utiliser l'instruction <code>yield</code> vue précédemment pour les générateurs. La différence est que l'on pourra faire des choses comme ceci :</p><pre id="r-448016" data-claire-element-id="448016"><code data-claire-semantic="python">var = yield 42</code></pre><p id="r-448017" data-claire-element-id="448017">Notre instruction <code>yield</code><em>renvoie</em> donc une valeur qui lui est donnée pendant sa pause, et qui est par défaut <code>None</code>. Pour assigner une valeur au résultat de <code>yield</code>, on va utiliser la méthode <code>send</code> de notre générateur. On peut ainsi faire interagir notre générateur et le reste de notre programme très facilement, sans utiliser de variables globales.</p><p id="r-448018" data-claire-element-id="448018">Un exemple d'utilisation de la méthode <code>send</code> est celui d'un générateur qui compte de 0 à x, auquel on va pouvoir faire modifier la valeur actuelle du compteur, comme ceci :</p><pre id="r-448019" data-claire-element-id="448019"><code data-claire-semantic="python">def compteur(x):
+    n = 0
+    while n &lt;= x:
+        v = (yield n)  # Prenez l'habitude de mettre des parenthèses
+                       # autour d'une instruction yield ;)
+        if v is not None:
+            n = v
+        else:
+            n += 1
+
+gen = compteur(25)
+for i in gen:
+    print i
+    # Si on en est à 15, on veut passer directement à 18
+    if i == 15:
+        gen.send(18)</code></pre><p id="r-448020" data-claire-element-id="448020">Maintenant, voyons plus précisément les coroutines en elles-mêmes : ce sont deux fonctions qui vont interagir entre elles avec ce système de <code>yield</code> et <code>send</code>, et ainsi se communiquer des valeurs tout en gardant un contexte évoluant au fur et à mesure. On peut reprendre l'exemple de la PEP 342 en le simplifiant : un script écrivant les lignes d'un texte une par une dans des fichiers différents :</p><pre id="r-448021" data-claire-element-id="448021"><code data-claire-semantic="python">def ecrire_lignes_vers(combien, destination):
+    &quot;&quot;&quot;
+    Écrit `combien` lignes vers `destination`.
+    &quot;&quot;&quot;
+    while True:
+        lignes = [ ]
+        plein = False
+        commence = False
+        try:
+            for i in xrange(combien):
+                commence = True
+                lignes.append((yield))
+            plein = True
+        except GeneratorExit:
+            # On a appelé la méthode close() de notre générateur qui
+            # le fait normalement s'arrêter ici. Si notre liste de
+            # lignes n'est pas pleine, on force son écriture.
+            if not plein and commence:
+                destination.send(lignes)
+            destination.close()
+            return
+        else:
+            # Pas d'exceptions, ça roule, on envoie vers la
+            # destination
+            destination.send(lignes)
+
+def ecrire_vers_fichiers():
+    &quot;&quot;&quot;
+    Écrit les lignes vers des fichiers numérotés.
+    &quot;&quot;&quot;
+    i = 0
+    while True:
+        file('decoupe%04d.txt' % i, 'w').write('\n'.join((yield)))
+        i += 1
+
+def decouper_fichier_par(fichier, combien):
+    destination = ecrire_vers_fichiers()
+    ecrivain_lignes = ecrire_lignes_vers(combien, destination)
+
+    # On initialise les générateurs pour éviter une exception
+    destination.next()
+    ecrivain_lignes.next()
+
+    for ligne in file(fichier).read().split('\n'):
+        ecrivain_lignes.send(ligne)
+    ecrivain_lignes.close()</code></pre><p id="r-448022" data-claire-element-id="448022">Cet exemple montre une jolie utilisation des coroutines pour couper un fichier en fichiers de n lignes numérotées dans l'ordre. Elles permettent également bien d'autres choses, qui sont mieux expliquées sur la <a href="http://en.wikipedia.org/wiki/Coroutine">page wikipédia anglaise des coroutines</a>.</p><p id="r-448023" data-claire-element-id="448023">Pour plus d'informations : <a href="http://www.python.org/dev/peps/pep-0342/">PEP 342</a>.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python">Pratiques avancées et méconnues en Python</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/la-fonction-enumerate-1">
+La fonction enumerate
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/les-generateurs-2">
+Les générateurs
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/les-coroutines">
+Les coroutines
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/les-list-comprehensions-et-generator-expressions">
+Les list comprehensions et generator expressions
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/la-fonction-zip">
+La fonction zip
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/le-module-itertools">
+Le module itertools
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/le-mot-cle-with-2">
+Le mot clé with
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/les-generateurs-2">
+<span class="arrow"></span>
+<span class="next">Les générateurs</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/les-list-comprehensions-et-generator-expressions">
+<span class="next">Les list comprehensions et generator expressions</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Leslistcomprehensionsetgeneratorexpressions"></a><h2>Les list comprehensions et generator expressions</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/les-coroutines">
+<span class="arrow"></span>
+<span class="next">Les coroutines</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/la-fonction-zip">
+<span class="next">La fonction zip</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-448025" data-claire-element-id="448025">Les <em>list comprehensions</em> et <em>generator expressions</em> sont deux concepts très proches facilitant énormément la manipulation de listes et la création de générateurs simples.<br/> Voyons tout d'abord les <em>list comprehensions</em>, plus faciles à aborder que les <em>generator expressions</em> que nous verrons ensuite.</p><p id="r-448026" data-claire-element-id="448026">Il arrive parfois que l'on doive faire le même traitement sur tous les éléments d'une liste, ou qu'on veuille éliminer tous les éléments d'une liste ne satisfaisant pas un prédicat. Pour cela, plusieurs solutions sont possibles :</p><ul id="r-448033" data-claire-element-id="448033"><li id="r-448028" data-claire-element-id="448028"><p id="r-448027" data-claire-element-id="448027">la boucle <code>for</code> : c'est une solution plutôt mauvaise car elle nécessite (si on veut faire quelque chose de correct) une copie de la liste ; elle ne permet pas de travailler directement sur nos éléments ;</p></li><li id="r-448030" data-claire-element-id="448030"><p id="r-448029" data-claire-element-id="448029">les méthodes <code>map/filter</code> et les itérateurs <code>imap/ifilter</code> : cette solution est clairement meilleure, du moins en termes de performances ; ces fonctions sont codées en C et travaillent directement sur les éléments de notre liste. Cependant, lorsque le traitement à réaliser n'est pas faisable par une fonction déjà créée, on doit créer cette fonction ou utiliser une fonction <em>lambda</em>, ralentissant ainsi l'exécution et réduisant la lisibilité ;</p></li><li id="r-448032" data-claire-element-id="448032"><p id="r-448031" data-claire-element-id="448031">les <em>list comprehensions</em> : elles permettent de récupérer une nouvelle liste avec tous les éléments de l'ancienne liste filtrés et sur lesquels on a effectué (ou non) un traitement. C'est à cette méthode, comme vous l'avez sûrement compris, que l'on va s'intéresser. :)</p></li></ul><p id="r-448034" data-claire-element-id="448034">Une <em>list comprehension</em> a la syntaxe suivante :</p><pre id="r-448035" data-claire-element-id="448035"><code data-claire-semantic="python">[expression for element in liste if predicat]</code></pre><p id="r-448036" data-claire-element-id="448036">Le prédicat étant optionnel, la syntaxe peut donc se réduire à ceci :</p><pre id="r-448037" data-claire-element-id="448037"><code data-claire-semantic="python">[expression for element in liste]</code></pre><p id="r-448038" data-claire-element-id="448038"><code>expression</code> est une expression Python (donc par exemple un tuple, une liste, une fonction, un type, une <em>list comprehension</em>, ou même plus simplement une somme ou un produit ;) ), qui peut utiliser notre variable <code>element</code>. Cette <em>list comprehension</em> va créer une nouvelle liste avec, à la place de <code>element</code>, la valeur de <code>expression</code> qui peut, bien entendu, dépendre de <code>element</code> comme vous l'aurez sûrement compris. ;)</p><p id="r-448039" data-claire-element-id="448039">Voyons maintenant quelques choses réalisables facilement avec les <em>list comprehensions</em> :</p><pre id="r-448040" data-claire-element-id="448040"><code data-claire-semantic="pycon">&gt;&gt;&gt; liste = range(10) # On prend une liste contenant les 10 premiers entiers naturels
+&gt;&gt;&gt; liste
+[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+&gt;&gt;&gt; [element + 1 for element in liste] # La même liste en ajoutant 1 à chaque élément
+[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+&gt;&gt;&gt; [element ** 2 for element in liste] # On élève les éléments au carré
+[0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
+&gt;&gt;&gt; liste, liste == range(10) # La liste n'est pas modifiée ;)
+([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], True)
+&gt;&gt;&gt; liste = [element for element in liste if element % 2 == 0] # On prend tous les éléments pairs de notre liste
+&gt;&gt;&gt; liste
+[0, 2, 4, 6, 8]
+&gt;&gt;&gt; [element ** 4 for element in liste if element &lt; 7] # On met à la puissance 4 les éléments inférieurs à 7
+[0, 16, 256, 1296]</code></pre><p id="r-448041" data-claire-element-id="448041">Maintenant que les <em>list comprehensions</em> n'ont plus de secrets pour vous, voyons leur petite soeur : les <em>generator expressions</em>.<br/> Ces expressions sont très proches des <em>list comprehensions</em> ; la seule différence est que, contrairement aux <em>list comprehensions</em> qui renvoient une liste, la <em>generator expression</em> renvoie un générateur sur lequel on peut itérer pour récupérer les éléments calculés. Cela permet de réaliser la transformation de nos éléments à la volée quand on itére sur notre générateur. ;)</p><p id="r-448042" data-claire-element-id="448042">Leur syntaxe est, elle aussi, simplissime :</p><pre id="r-448043" data-claire-element-id="448043"><code data-claire-semantic="python">(expression for element in liste)</code></pre><p id="r-448044" data-claire-element-id="448044">On peut également, comme pour les <em>list comprehensions</em>, rajouter une condition avec <code>if predicat</code> au bout.<br/> La seule vraie différence est l'utilisation de parenthèses à la place des crochets. Cela permet d'ailleurs de l'utiliser avec une légère variante syntaxique lors de l'appel d'une fonction :</p><pre id="r-448045" data-claire-element-id="448045"><code data-claire-semantic="python">fonction(expression for element in liste)</code></pre><p id="r-448046" data-claire-element-id="448046">Un petit exemple de leur utilisation est le suivant :</p><pre id="r-448047" data-claire-element-id="448047"><code data-claire-semantic="pycon">&gt;&gt;&gt; liste = range(10)
+&gt;&gt;&gt; (elem - 5 for elem in liste)
+&lt;generator object at 0x7f004ec20878&gt;
+&gt;&gt;&gt; gen = (elem - 5 for elem in liste)
+&gt;&gt;&gt; for elem in gen: print elem
+...
+-5
+-4
+-3
+-2
+-1
+0
+1
+2
+3
+4
+&gt;&gt;&gt; list(elem - 5 for elem in liste) # Une autre façon d'écrire une list comprehension ;)
+[-5, -4, -3, -2, -1, 0, 1, 2, 3, 4]</code></pre><p id="r-448048" data-claire-element-id="448048">Utilisez les <em>list comprehensions</em> et les <em>generator expressions</em> le plus souvent possible quand vous réalisez des traitements simples sur les éléments d'une liste : cela simplifie énormément la lecture de votre code par rapport à une boucle. ;)</p><p id="r-448049" data-claire-element-id="448049">Pour plus d'informations, <a href="http://www.python.org/dev/peps/pep-0202/">PEP 202</a> et <a href="http://www.python.org/dev/peps/pep-0289/">PEP 289</a>.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python">Pratiques avancées et méconnues en Python</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/la-fonction-enumerate-1">
+La fonction enumerate
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/les-generateurs-2">
+Les générateurs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/les-coroutines">
+Les coroutines
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/les-list-comprehensions-et-generator-expressions">
+Les list comprehensions et generator expressions
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/la-fonction-zip">
+La fonction zip
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/le-module-itertools">
+Le module itertools
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/le-mot-cle-with-2">
+Le mot clé with
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/les-coroutines">
+<span class="arrow"></span>
+<span class="next">Les coroutines</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/la-fonction-zip">
+<span class="next">La fonction zip</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lafonctionzip"></a><h2>La fonction zip</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/les-list-comprehensions-et-generator-expressions">
+<span class="arrow"></span>
+<span class="next">Les list comprehensions et generator expressions</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/le-module-itertools">
+<span class="next">Le module itertools</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-448051" data-claire-element-id="448051">La fonction <code>zip</code> est une fonction très simple nous venant des langages fonctionnels tels que Objective Caml ou Haskell, et permettant de combiner plusieurs listes en une seule, de manière à rendre les itérations plus efficaces.</p><p id="r-448052" data-claire-element-id="448052">En effet, imaginons que nous voulions itérer sur deux listes. La solution naïve venant à l'esprit est la suivante :</p><pre id="r-448053" data-claire-element-id="448053"><code data-claire-semantic="python">for i in xrange(min(len(liste1), len(liste2))):
+    e1, e2 = liste1[i], liste2[i]
+    # Actions en utilisant e1 et e2</code></pre><p id="r-448054" data-claire-element-id="448054">Cependant, comme il a été dit dans la partie sur <code>enumerate</code>, les indices sont à éviter le plus possible dans ce genre de contexte. Pour réaliser cela, on a donc recours à la fameuse fonction <code>zip</code> qui nous permet de faire cette itération sur deux listes facilement :</p><pre id="r-448055" data-claire-element-id="448055"><code data-claire-semantic="python">for e1, e2 in zip(liste1, liste2):
+    # Actions en utilisant e1 et e2</code></pre><p id="r-448056" data-claire-element-id="448056">Ceci s'explique par la définition de <code>zip</code> que l'on peut trouver dans la documentation de Python.</p><pre id="r-448057" data-claire-element-id="448057"><code>zip(...)
+    zip(seq1 [, seq2 [...]]) -&gt; [(seq1[0], seq2[0] ...), (...)]
+
+    Return a list of tuples, where each tuple contains the i-th element
+    from each of the argument sequences. The returned list is truncated
+    in length to the length of the shortest argument sequence.</code></pre><p id="r-448058" data-claire-element-id="448058"><code>zip</code> réalise donc la fonction suivante : pour une liste <code>[a, b, c]</code> et une autre liste <code>[d, e, f]</code>, <code>zip</code> nous donnera une liste <code>[(a, d), (b, e), (c, f)]</code>. En effet :</p><pre id="r-448059" data-claire-element-id="448059"><code data-claire-semantic="pycon">&gt;&gt;&gt; zip(['a', 'b', 'c'], ['d', 'e', 'f'])
+[('a', 'd'), ('b', 'e'), ('c', 'f')]</code></pre><p id="r-448060" data-claire-element-id="448060">Pensez donc à <code>zip</code> quand vous itérerez sur plusieurs listes. ;)</p><p id="r-448061" data-claire-element-id="448061">En revanche et contrairement à d'autres langages, Python ne fournit pas de fonction <code>unzip</code> réalisant le rôle inverse de <code>zip</code>. Cependant, on peut très facilement exprimer la fonction <code>unzip</code> en fonction de <code>zip</code> :</p><pre id="r-448062" data-claire-element-id="448062"><code data-claire-semantic="pycon">&gt;&gt;&gt; unzip = lambda liste: [list(li) for li in zip(*liste)]
+&gt;&gt;&gt; unzip([(1, 2), (3, 4), (5, 6)])
+[[1, 3, 5], [2, 4, 6]]</code></pre><p id="r-448063" data-claire-element-id="448063">Voilà qui conclut cette partie sur <code>zip</code>, une fonction très simple d'utilisation mais très pratique. :)</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python">Pratiques avancées et méconnues en Python</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/la-fonction-enumerate-1">
+La fonction enumerate
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/les-generateurs-2">
+Les générateurs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/les-coroutines">
+Les coroutines
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/les-list-comprehensions-et-generator-expressions">
+Les list comprehensions et generator expressions
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/la-fonction-zip">
+La fonction zip
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/le-module-itertools">
+Le module itertools
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/le-mot-cle-with-2">
+Le mot clé with
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/les-list-comprehensions-et-generator-expressions">
+<span class="arrow"></span>
+<span class="next">Les list comprehensions et generator expressions</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/le-module-itertools">
+<span class="next">Le module itertools</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lemoduleitertools"></a><h2>Le module itertools</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/la-fonction-zip">
+<span class="arrow"></span>
+<span class="next">La fonction zip</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/le-mot-cle-with-2">
+<span class="next">Le mot clé with</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-448065" data-claire-element-id="448065">Le module <code>itertools</code> est un module standard Python proposant nombre de générateurs prêts à l'emploi dans votre code, vous permettant ainsi de réaliser des choses compliquées très facilement. Par exemple, des fonctions comme <code>map</code> ou <code>filter</code> renvoient des listes, alors que l'évaluation complète n'est pas forcément nécessaire. <code>itertools</code> pallie ce problème en fournissant des générateurs se comportant de la même manière. :)</p><h2 id="r-imap-ifilter-ifilterfalse" data-claire-element-id="448068">imap, ifilter, ifilterfalse</h2><p id="r-448066" data-claire-element-id="448066">Ces trois fonctions, relativement proches les unes des autres, permettent de reproduire le fonctionnement des fonctions standard <code>map</code> et <code>filter</code> tout en utilisant des générateurs. On trouve également <code>ifilterfalse</code> qui a le comportement inverse de <code>ifilter</code> et prend donc uniquement les éléments ne satisfaisant pas au prédicat.</p><pre id="r-448067" data-claire-element-id="448067"><code data-claire-semantic="pycon">&gt;&gt;&gt; from itertools import imap, ifilter, ifilterfalse
+&gt;&gt;&gt; pair = lambda n: n % 2 == 0
+&gt;&gt;&gt; carre = lambda n: n ** 2
+&gt;&gt;&gt; imap(carre, xrange(10)) # Renvoie un générateur
+&lt;itertools.imap object at 0x7f4ab174fc10&gt;
+&gt;&gt;&gt; for elem in imap(carre, xrange(10)): print elem
+...
+0
+1
+4
+9
+16
+25
+36
+49
+64
+81
+&gt;&gt;&gt; list(ifilter(pair, xrange(10)))
+[0, 2, 4, 6, 8]
+&gt;&gt;&gt; list(ifilterfalse(pair, xrange(10)))
+[1, 3, 5, 7, 9]</code></pre><h2 id="r-chain" data-claire-element-id="448071">chain</h2><p id="r-448069" data-claire-element-id="448069"><code>chain</code> est un générateur lui aussi très simple. Il prend en paramètre une liste d'objets itérables (comme des listes, par exemple), et itère sur chacun d'eux, dans l'ordre. :) <br/> Par exemple, pour itérer sur les nombres de 0 à 10, puis 15 à 20, et enfin 30 à 45 :</p><pre id="r-448070" data-claire-element-id="448070"><code data-claire-semantic="pycon">&gt;&gt;&gt; from itertools import chain
+&gt;&gt;&gt; list(chain(xrange(11), xrange(15, 21), xrange(30, 46)))
+[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 16, 17, 18, 19, 20, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45]</code></pre><h2 id="r-takewhile-et-dropwhile" data-claire-element-id="448074">takewhile et dropwhile</h2><p id="r-448072" data-claire-element-id="448072">Ces deux fonctions complémentaires permettent de prendre ou de rejeter des éléments tant qu'ils satisfont un prédicat. Une fois qu'un élément satisfait ce prédicat, selon la fonction, on jette tous les éléments ou on les prend tous. Si vous êtes un minimum capables de comprendre l'anglais, vous comprendrez très facilement l'exemple suivant :</p><pre id="r-448073" data-claire-element-id="448073"><code data-claire-semantic="pycon">&gt;&gt;&gt; from itertools import takewhile, dropwhile
+&gt;&gt;&gt; list(takewhile(lambda i: i &lt; 10, xrange(20))) # On prend tant que i &lt; 10
+[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+&gt;&gt;&gt; list(dropwhile(lambda i: i &lt; 10, xrange(20))) # On jette tant que i &lt; 10
+[10, 11, 12, 13, 14, 15, 16, 17, 18, 19]</code></pre><h2 id="r-groupby" data-claire-element-id="448079">groupby</h2><p id="r-448075" data-claire-element-id="448075">Ce générateur magique permet de regrouper les valeurs consécutives sortant d'un générateur en un tuple <code>(valeur, itérateur sur ces valeurs)</code>.<br/> Un exemple de son utilisation est le suivant :</p><pre id="r-448076" data-claire-element-id="448076"><code data-claire-semantic="pycon">&gt;&gt;&gt; from itertools import groupby
+&gt;&gt;&gt; liste = list('aaaaabbbcddddee')
+&gt;&gt;&gt; for element, iterateur in groupby(liste):
+...     # element est l'élément répété une ou plusieurs fois
+...     # iterateur est un itérateur sur la répétition de cet élément ; on l'utilise particulièrement pour savoir combien de fois il est répété
+...     print &quot;%s est répété %d fois&quot; % (element, len(list(iterateur)))
+...
+a est répété 5 fois
+b est répété 3 fois
+c est répété 1 fois
+d est répété 4 fois
+e est répété 2 fois</code></pre><p id="r-448077" data-claire-element-id="448077">On peut donc réaliser des choses plutôt marrantes avec cette fonction, comme par exemple implémenter très facilement l'algorithme de compression RLE :</p><pre id="r-448078" data-claire-element-id="448078"><code data-claire-semantic="python">from itertools import groupby
+def rle(data):
+    for value, it in groupby(data):
+        numb = len(list(it))
+        while numb &gt; 255:
+            yield &quot;%s%s&quot; % (chr(255), value)
+            numb -= 255
+        if numb != 0:
+            yield &quot;%s%s&quot; % (chr(numb), value)</code></pre>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python">Pratiques avancées et méconnues en Python</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/la-fonction-enumerate-1">
+La fonction enumerate
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/les-generateurs-2">
+Les générateurs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/les-coroutines">
+Les coroutines
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/les-list-comprehensions-et-generator-expressions">
+Les list comprehensions et generator expressions
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/la-fonction-zip">
+La fonction zip
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/le-module-itertools">
+Le module itertools
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/le-mot-cle-with-2">
+Le mot clé with
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/la-fonction-zip">
+<span class="arrow"></span>
+<span class="next">La fonction zip</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/le-mot-cle-with-2">
+<span class="next">Le mot clé with</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lemotclwith"></a><h2>Le mot clé with</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/le-module-itertools">
+<span class="arrow"></span>
+<span class="next">Le module itertools</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-448081" data-claire-element-id="448081">Peut-être avez-vous déjà travaillé sur des fichiers en Python, ou sur d'autres ressources nécessitant d'être fermées après utilisation.<br/> Dans des cas critiques, si cette fermeture n'a pas lieu (à cause d'une erreur, par exemple), cela peut provoquer de gros problèmes dans le système. Pour se protéger contre ça, la solution utilisée la plupart du temps est la suivante :</p><pre id="r-448082" data-claire-element-id="448082"><code data-claire-semantic="python">f = open('fichier', 'w')
+try:
+    # Opérations sur f
+except Exception:
+    # Une erreur a eu lieu, on la gère (ou non)
+finally:
+    # On referme notre fichier
+    f.close()</code></pre><p id="r-448083" data-claire-element-id="448083">L'instruction <code>with</code> permet de beaucoup simplifier ce genre de codes en les transformant en ceci (qui réalise strictement la même chose) :</p><pre id="r-448084" data-claire-element-id="448084"><code data-claire-semantic="python">with open('fichier', 'w') as f:
+    # Opérations sur f</code></pre><p id="r-448085" data-claire-element-id="448085">Ce code réalise <strong>vraiment</strong> la même chose que les blocs <code>try</code> au-dessus, exceptée la possibilité de gérer nous-mêmes les erreurs. Cela passe par l'utilisation des <em>contexts managers</em>, des objets possédant deux méthodes magiques : <code>__enter__</code> et <code>__exit__</code> appelées à l'entrée ou à la sortie d'un bloc <code>with</code>.</p><p id="r-448086" data-claire-element-id="448086">Cette méthode n'est cependant disponible qu'avec des versions de Python récentes (au moins Python 2.6 ou au moins Python 3.0).</p><p id="r-448087" data-claire-element-id="448087">Pour plus d'informations : <a href="http://www.python.org/dev/peps/pep-0343/">PEP 343</a></p><p id="r-448088" data-claire-element-id="448088">Ce tutoriel est terminé.<br/> Nous espérons vous y avoir appris pas mal de choses nouvelles sur le langage Python. Ces notions sont inconnues des débutants Python mais devraient être utilisées par des codeurs expérimentés.</p><p id="r-448089" data-claire-element-id="448089">Tutoriel propulsé par <strong>mdown</strong> et <strong>tutosuite</strong>, merci aux auteurs de ces deux outils.<br/> Merci à <strong>Tarek Ziadé</strong> pour son <em>lightning talk</em> aux PyCon 2008 m'ayant inspiré ce tutoriel. :)</p><p id="r-448090" data-claire-element-id="448090">Merci à toutes les personnes qui ont bien voulu relire et corriger ce tutoriel.</p><p id="r-448091" data-claire-element-id="448092">Ce tutoriel est issu d'une réflexion ayant eu lieu sur :<a href="http://www.siteduzero.com/equipes-781-22-python.html"><img id="r-448092" data-claire-element-id="448091" src="medias/img373.imageshack.us_img373_8651_pythonircio1.png" alt="Image utilisateur"/></a></p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python">Pratiques avancées et méconnues en Python</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/la-fonction-enumerate-1">
+La fonction enumerate
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/les-generateurs-2">
+Les générateurs
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/les-coroutines">
+Les coroutines
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/les-list-comprehensions-et-generator-expressions">
+Les list comprehensions et generator expressions
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/la-fonction-zip">
+La fonction zip
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/le-module-itertools">
+Le module itertools
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/le-mot-cle-with-2">
+Le mot clé with
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/pratiques-avancees-et-meconnues-en-python/le-module-itertools">
+<span class="arrow"></span>
+<span class="next">Le module itertools</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/ratiques-avancees-et-meconnues-en-python.html by HTTrack Website Copier/3.x [XR&CO'2013], Sat, 26 Oct 2013 23:41:39 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/ratiques-avancees-et-meconnues-en-python.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 04:10:49 GMT -->
+</html>
