@@ -1,0 +1,461 @@
+<html>
+
+<!-- Mirrored from 62.4.17.167/sdz/sdz/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 06:50:51 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:14:38 GMT -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Tutoriel : Mettez des accents dans vos programmes avec le type wchar_t</title>
+<link href="medias/sdz_main.css" type="text/css" rel="stylesheet" media="all"/>
+</head>
+        <body>
+<a href="../www.siteduzero.com/informatique/tutoriels/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t.html" class="version_en_ligne">Version en ligne</a>
+<h1>Tutoriel : Mettez des accents dans vos programmes avec le type wchar_t</h1>
+<h2>Table des matières</h2><div class="table_des_matieres"><a href="#Mettezdesaccentsdansvosprogrammesavecletypewchar_t">Mettez des accents dans vos programmes avec le type wchar_t</a><br/><a href="#CaractresspciauxetlangageCunpeud039histoire">Caractères spéciaux et langage C : un peu d&#039;histoire</a><br/><a href="#l039assautdeltwchar.hgt">À l&#039;assaut de &lt;wchar.h&gt;</a><br/><a href="#Lemondemerveilleuxdesaccents">Le monde merveilleux des accents</a><br/><a href="#Quelquesexemplesetexercices">Quelques exemples et exercices</a><br/></div>
+<a name="Mettezdesaccentsdansvosprogrammesavecletypewchar_t"></a><h2>Mettez des accents dans vos programmes avec le type wchar_t</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t/caracteres-speciaux-et-langage-c-un-peu-d-histoire">
+<span class="next">Caractères spéciaux et langage C : un peu d&#039;histoire</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div class="content">
+<p id="r-566188" data-claire-element-id="566188">Bonjour à tous !<br/>Aujourd'hui, nous allons voir comment utiliser les caractères spéciaux en langage C.<br/> Vous êtes fatigués de ne pas pouvoir utiliser de textes contenant <strong>de beaux accents</strong> dans vos programmes en C ? Cette injure à la langue française vous révolte :-° ? Ce tuto va vous permettre de rendre vos programmes bien plus fonctionnels et agréables à utiliser ! <br/> Nous allons apprendre à utiliser une nouveauté du C99 vous permettant de <strong>gérer nativement, sans bibliothèque tierce, les caractères spéciaux </strong>dans toutes vos chaînes de textes.</p><p id="r-566189" data-claire-element-id="566189">Bonne lecture !</p>
+</div><a name="CaractresspciauxetlangageCunpeud039histoire"></a><h2>Caractères spéciaux et langage C : un peu d&#039;histoire</h2><div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t/a-l-assaut-de-wchar-h">
+<span class="next">À l&#039;assaut de &lt;wchar.h&gt;</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-566190" data-claire-element-id="566190">Tout d'abord, pour mieux comprendre ce que l'on va faire par la suite, je vous invite à une petite rétrospective sur le langage C.</p><div id="r-566193" data-claire-element-id="566193" data-claire-semantic="question"><p id="r-566191" data-claire-element-id="566191">Pourquoi les caractères spéciaux en C c'est si compliqué ? Pourquoi je ne peux écrire tout simplement ça ?</p><pre id="r-566192" data-claire-element-id="566192"><code data-claire-semantic="c">char texte[4] = {'ζ', 'é', 'Щ', '\0'}</code></pre></div><p id="r-566194" data-claire-element-id="566194">Bizarrement, la réponse à cette question est à la fois simple et compliquée. Simple, parce que le langage C a été inventé par des américains <strong>qui, comme vous devez le savoir, n'utilisent pas d'accents ou de lettres bizarroïdes.</strong> À une époque où les ordinateurs étaient encore volumineux et disposaient de très peu de mémoire, le type <em>char</em> conçu pour stocker des caractères devait <strong>prendre le moins de place possible en mémoire</strong>. Il ne peut donc stocker que des entiers de -128 à 127.</p><p id="r-566195" data-claire-element-id="566195">Compliquée, parce que 256 nombres ce n'est pas du tout suffisant pour stocker tous les caractères de toutes les langues ! Pensez aux cédilles françaises, aux accents espagnols, aux Umlauts des allemands ou, pire, aux lettres des grecs et des russes ! Et je ne parle même pas des chinois avec leurs milliers d'idéogrammes :waw: ...<br/> Le type char ne peut en fait stocker que quelques types de caractères, selon la très ancienne norme ASCII, que vous pouvez consulter <a href="http://asciitable.com/">sur ce site</a>.</p><p id="r-566196" data-claire-element-id="566196">Mais alors, que faire ? Finalement, pour remédier à cette situation intolérable, de nouvelles normes de transformation des lettres en chiffres (on parle d'encodage) ont été successivement instaurées : <strong>d'abord l'ASCII étendu,</strong> qui a l'avantage de gérer un plus grand nombre de caractères, y compris nos fameux accents (elle couvre presque toutes les langues européennes). Les chinois, arabes et japonais ont dû quant à eux attendre l'arrivée de <strong>l'Unicode</strong>, qui gère la totalité des caractères présents sur terre, pour pouvoir utiliser les ordinateurs dans leurs langues.<br/> Et aujourd'hui encore, cette affaire d'encodage est loin d'être réglée et de nombreux problèmes de comptabilité subsistent... On est donc bel et bien en terrain hostile.</p><aside id="r-566198" data-claire-element-id="566198" data-claire-semantic="information"><p id="r-566197" data-claire-element-id="566197">Windows possède depuis toujours un léger retard sur la gestion des caractères spéciaux. Sur les OS dits de &quot;type UNIX&quot;, comme Linux, Mac OS, etc., la gestion de l'Unicode est intégrée au système à la base, et est donc bien plus transparente. Par exemple, sous Linux, vous pouvez sans problème inclure des accents dans votre code-source, car Linux enregistre les fichiers en UTF-8, l'une des variantes de l'Unicode. Sous Windows, c'est impensable. À ce sujet, Windows 7 suscitait beaucoup d'espoir, mais il n'est en fait toujours pas passé à l'Unicode.</p></aside><p id="r-566199" data-claire-element-id="566199">Pour utiliser en C ces nouveaux outils, il nous faut un type de caractères plus grand que <em>char</em>, qui a une &quot;taille&quot; de 1 octet et ne peut donc stocker que 2^8 soit 256 caractères différents. En multipliant le nombre d'octets par 2 voire 4, on augmente significativement le nombre de caractères gérés : une variable qui occupe 2 octets peut stocker 2^{16}, soit 65 536 caractères différents !</p><p id="r-566200" data-claire-element-id="566200">Ce type existe, il s'appelle <em>wchar_t</em>, mais il n'a été introduit en C que tardivement. C'est pourquoi pour l'utiliser correctement il nous faudra <strong>passer notre compilateur en mode C99</strong> (nous verrons comment on fait). Nous allons aussi utiliser de nouvelles fonctions spécifiques aux caractères spéciaux, mais rassurez-vous dans l'ensemble, <strong>tout restera très similaire aux chaînes de caractères &quot;classiques&quot;.</strong></p><p id="r-566201" data-claire-element-id="566201">Vous l'aurez compris : nous allons tout simplement mettre le type char à la poubelle ! Faites lui vos adieux, il n'est plus adapté à notre époque... De nos jours la mémoire ce n'est plus ce qui manque, et se limiter à quelques lettres est bien trop restrictif. Le nouveau type que nous allons utiliser, le type prend plus de place en mémoire, mais se fera un plaisir de stocker tous les caractères que vous voulez, en ASCII étendu voire en Unicode.</p><figure id="r-566203" data-claire-element-id="566204"><img id="r-566202" data-claire-element-id="566202" src="medias/uploads.siteduzero.com_files_244001_245000_244003.png" alt="Image utilisateur"/></figure>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t">Mettez des accents dans vos programmes avec le type wchar_t</a>
+</li>
+<ul class="subchapter-parts">
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t/caracteres-speciaux-et-langage-c-un-peu-d-histoire">
+Caractères spéciaux et langage C : un peu d&#039;histoire
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t/a-l-assaut-de-wchar-h">
+À l&#039;assaut de &lt;wchar.h&gt;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t/le-monde-merveilleux-des-accents">
+Le monde merveilleux des accents
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t/quelques-exemples-et-exercices">
+Quelques exemples et exercices
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t/a-l-assaut-de-wchar-h">
+<span class="next">À l&#039;assaut de &lt;wchar.h&gt;</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="l039assautdeltwchar.hgt"></a><h2>À l&#039;assaut de &lt;wchar.h&gt;</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t/caracteres-speciaux-et-langage-c-un-peu-d-histoire">
+<span class="arrow"></span>
+<span class="next">Caractères spéciaux et langage C : un peu d&#039;histoire</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t/le-monde-merveilleux-des-accents">
+<span class="next">Le monde merveilleux des accents</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-le-type-wchar-t-quelques-infos-theoriques" data-claire-element-id="566217">Le type wchar_t : quelques infos théoriques</h2><div id="r-566207" data-claire-element-id="566207" data-claire-semantic="question"><p id="r-566206" data-claire-element-id="566206">Tiens, que signifie <em>wchar_t</em> ?</p></div><p id="r-566208" data-claire-element-id="566208">Cette question m'a été posée dans les commentaires : <em>wchar_t</em> signifie <strong>Wide Character Type</strong>. &quot;Wide Character&quot; signifie littéralement &quot;Caractère Étendu&quot;, ce que l'on peut interpréter par &quot;Caractère Spécial&quot; (codé sur plus d'un octet) ; en français on pourrait donc traduire l'expression par <em>Type caractère spécial</em>.</p><div id="r-566210" data-claire-element-id="566210" data-claire-semantic="question"><p id="r-566209" data-claire-element-id="566209">Quelle place prend le type <em>wchar_t</em> en mémoire ?</p></div><p id="r-566211" data-claire-element-id="566211">Cette question est inévitable, et pourtant soyez sûrs que je la redoutais. En deux mots : ça dépend. Selon de nombreux paramètres, en particulier votre compilateur, le type <em>wchar_t</em> peut prendre 2 octets (2 x 8 bits), ou 4, ou plus... Si cela vous intéresse, cette petite ligne de code vous renseignera :</p><pre id="r-566212" data-claire-element-id="566212"><code data-claire-semantic="c">printf(&quot;%d&quot;, sizeof(wchar_t));</code></pre><p id="r-566213" data-claire-element-id="566213">La plupart du temps, sauf compilateur ou système bizarroïde, vous pouvez vous attendre à ce que <em>wchar_t</em> prenne 2 octets.</p><div id="r-566215" data-claire-element-id="566215" data-claire-semantic="question"><p id="r-566214" data-claire-element-id="566214">Mais en fait, selon quelle norme est stockée une lettre dans un wchar_t ?</p></div><p id="r-566216" data-claire-element-id="566216">Là encore, la réponse est à la fois simple et cauchemardesque : ce n'est pas spécifié. Le type <em>wchar_t</em> vous laisse simplement stocker des nombres bien supérieurs à 127, en vue d'utiliser des caractères spéciaux, mais il ne fixe aucun encodage particulier. Là encore, tout dépend de votre compilateur et de votre OS, voire des bibliothèques que vous utilisez.<br/> Dans le souci de préserver le côté théorique, simple et multiplateforme de ce tuto, je n'envisage pas de vous faire un cours magistral sur la gestion de l'Unicode. Nous allons d'abord faire nos tests avec l'ASCII étendu, une simple extension de l'ASCII qui permet de gérer nos chers accents et fonctionne aujourd'hui de la même façon sur quasiment toutes les plateformes. Mais soyez prévenus : vos valeurs peuvent être différentes des miennes...<br/> Pour utiliser l'Unicode, il faudrait utiliser une bibliothèque tierce, ou les outils spécifiques livrés avec les OS. Et la console Windows est si limitée sur ce point qu'il ne faudrait pas espérer faire des programmes en russe... Certaines bibliothèques proposent même leurs propres types pour gérer l'Unicode, on n'est donc pas sortis de l'auberge si on commence à s'aventurer dans cette voie.<br/><strong>Vous l'aurez compris, pour vous apprendre à utiliser le type <em>wchar_t</em>, nous ne ferons que de simples essais en ASCII étendu ayant pour but d'afficher des accents. Cela vous permettra à la fois d'acquérir les bases de la gestion des chaînes de caractères spéciaux et d'accentuer les caractères de vos programmes en console.</strong></p><h2 id="r-configurer-le-compilateur" data-claire-element-id="566233">Configurer le compilateur</h2><p id="r-566218" data-claire-element-id="566218">Comme je l'ai dit, avant de pratiquer nous devons faire une petite manipulation pour passer notre compilateur en mode C99.</p><aside id="r-566220" data-claire-element-id="566220" data-claire-semantic="information"><p id="r-566219" data-claire-element-id="566219">Le C99 est une amélioration récente du langage C, qui apporte quelques nouveautés intéressantes. Si vous ne faites pas cette manipulation, il est très probable que la compilation plante dans la suite du tutoriel : ne négligez pas cette partie !</p></aside><p id="r-566221" data-claire-element-id="566221">Je vais vous expiquer pas à pas comment faire sous Code::Blocks 10.05, puisque cet IDE est libre et multi-plateformes, mais la procédure est similaire sur les autres IDE.<br/> Cette procédure est spécifique au <em>GNU GCC Compiler</em>, un compilateur libre très utilisé. Les compilateurs propriétaires, comme celui de Microsoft, aurons d'ailleurs de fortes chances d'être déjà en C99.</p><ul id="r-566232" data-claire-element-id="566232"><li id="r-566223" data-claire-element-id="566223"><p id="r-566222" data-claire-element-id="566222">Dans le menu de Code::Blocks, allez dans &quot;Settings&quot; puis &quot;Compiler and Debugger..&quot;</p></li><li id="r-566225" data-claire-element-id="566225"><p id="r-566224" data-claire-element-id="566224">Vérifiez que dans la partie &quot;Selected Compiler&quot;, l'option <em>GNU GCC Compiler</em> est bien séléctionnée.</p></li><li id="r-566227" data-claire-element-id="566227"><p id="r-566226" data-claire-element-id="566226">Ensuite, cliquez sur l'onglet &quot;Compiler Settings&quot; puis allez dans le sous-onglet &quot;Other options&quot;.</p></li><li id="r-566229" data-claire-element-id="566229"><p id="r-566228" data-claire-element-id="566228">Dans le champ de texte qui se présente à vos yeux, tapez EXACTEMENT cette chaîne de texte : <strong>-std=c99</strong></p></li><li id="r-566231" data-claire-element-id="566231"><p id="r-566230" data-claire-element-id="566230">Cliquez sur &quot;OK&quot; puis, seulement maintenant, créez un nouveau projet. On y est arrivé :-° !</p></li></ul><h2 id="r-modifier-les-directives-de-preprocesseur-du-projet" data-claire-element-id="566237">Modifier les directives de préprocesseur du projet</h2><p id="r-566234" data-claire-element-id="566234">En plus des fichiers de la bibliothèque standard que vous intégrez habituellement à vos projets, vous allez ajouter cette ligne à vos directives de préprocesseur :</p><pre id="r-566235" data-claire-element-id="566235"><code data-claire-semantic="c">#include &lt;wchar.h&gt;</code></pre><p id="r-566236" data-claire-element-id="566236">C'est en effet dans cette partie de la bibliothèque standard du C99 que se trouvent les fonctions de manipulation des caractères spéciaux qui nous intéressent.</p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t">Mettez des accents dans vos programmes avec le type wchar_t</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t/caracteres-speciaux-et-langage-c-un-peu-d-histoire">
+Caractères spéciaux et langage C : un peu d&#039;histoire
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t/a-l-assaut-de-wchar-h">
+À l&#039;assaut de &lt;wchar.h&gt;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t/le-monde-merveilleux-des-accents">
+Le monde merveilleux des accents
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t/quelques-exemples-et-exercices">
+Quelques exemples et exercices
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t/caracteres-speciaux-et-langage-c-un-peu-d-histoire">
+<span class="arrow"></span>
+<span class="next">Caractères spéciaux et langage C : un peu d&#039;histoire</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t/le-monde-merveilleux-des-accents">
+<span class="next">Le monde merveilleux des accents</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Lemondemerveilleuxdesaccents"></a><h2>Le monde merveilleux des accents</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t/a-l-assaut-de-wchar-h">
+<span class="arrow"></span>
+<span class="next">À l&#039;assaut de &lt;wchar.h&gt;</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t/quelques-exemples-et-exercices">
+<span class="next">Quelques exemples et exercices</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<h2 id="r-notre-premiere-chaine-de-wchar-t" data-claire-element-id="566269">Notre première chaîne de <em>wchar_t</em></h2><p id="r-566239" data-claire-element-id="566239">Nous y sommes ! Voyons maintenant comment créer puis afficher une chaîne de caractères accentués. Nous allons nous exercer sur des caractères simples, les caractères ASCII étendu, qui incluent les è, î, à, etc. En effet, le type <em>wchar_t</em> permet de stocker bien d'autres caractères mais compilateur et consoles pourraient se montrer capricieux, comme je l'ai déjà expliqué.</p><aside id="r-566241" data-claire-element-id="566241" data-claire-semantic="warning"><p id="r-566240" data-claire-element-id="566240">Comme je vous l'ai dit, il faut d'abord utiliser un nouveau type de caractère. Fini le type <em>char</em>, dorénavant nous utiliserons le type <em>wchar_t</em>.</p></aside><p id="r-566242" data-claire-element-id="566242">Si les chaînes standard sont des tableaux de char, les chaînes ASCII étendu sont <strong>des tableaux de <em>wchar_t</em></strong>. Rien ne change à ce niveau-là !<br/> Ce code créé un tableau de 50 <em>wchar_t</em>, donc 49 caractères.</p><pre id="r-566243" data-claire-element-id="566243"><code data-claire-semantic="c">#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;wchar.h&gt;
+
+int main()
+{
+
+wchar_t texte[50];
+return 0;
+
+}</code></pre><aside id="r-566245" data-claire-element-id="566245" data-claire-semantic="warning"><p id="r-566244" data-claire-element-id="566244">Même avec le type <em>wchar_t</em> il ne faut pas oublier le fameux '\0', caractère qui termine toute chaîne de texte ! Attention aux pièges...</p></aside><p id="r-566246" data-claire-element-id="566246">Voyons maintenant comment initialiser cette chaîne avec le texte &quot;Salut !&quot;<br/> Essayons ce code :</p><pre id="r-566247" data-claire-element-id="566247"><code data-claire-semantic="c">#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;wchar.h&gt;
+
+int main()
+{
+
+wchar_t texte[50] = &quot;Salut !&quot;;
+return 0;
+
+}</code></pre><p id="r-566248" data-claire-element-id="566248">Aïe, ça ne fonctionne pas :colere: ...<br/> C'est tout à fait normal, vu que ce code tente de remplir une chaîne <em>wchar_t</em> avec une chaîne classique ! Les deux types sont différents, et donc ça coince à la compilation...<br/> Pour spécifier au compilateur qu'il s'agit d'une chaîne <em>wchar_t</em> étendu, vous <strong>DEVEZ</strong> ajouter un L avant les guillemets. Ainsi, ce code est parfaitement correct.</p><pre id="r-566249" data-claire-element-id="566249"><code data-claire-semantic="c">wchar_t texte[50] = L&quot;Salut !&quot;;</code></pre><p id="r-566250" data-claire-element-id="566250">Attention : ce n'est pas à ce stade que vous pouvez ajouter des accents. En effet, ce code a de gros risques de planter à la compilation !</p><pre id="r-566251" data-claire-element-id="566251"><code data-claire-semantic="c">wchar_t texte[50] = L&quot;Salut Gérard !&quot;;</code></pre><aside id="r-566253" data-claire-element-id="566253" data-claire-semantic="error"><p id="r-566252" data-claire-element-id="566252">Notez que si le type <em>wchar_t</em> vous autorise à gérer les caractères accentués, il ne vous autorise pas à en insérer dans votre code ! Par exemple, n'appelez jamais une variable &quot;chaîne&quot;, ou &quot;élément&quot;, vous risquez de gros plantages !</p></aside><p id="r-566254" data-claire-element-id="566254">Mais alors, comment initialiser cette chaîne si elle contient un <strong>é</strong> ? Nous allons dans un premier temps faire comme au bon vieux temps, caractère par caractère. Ainsi, ce code est parfaitement correct. Notez qu'il faut ajouter le L avant la valeur de chaque lettre. Ce n'est pas indispensable, mais bien plus propre !</p><pre id="r-566255" data-claire-element-id="566255"><code data-claire-semantic="c">wchar_t texte[50] = {L'S', L'a', L'l', L'u', L't', L' ', L'G', 130, L'r', L'a', L'r', L'd', L' ', L'!', L'\0'};</code></pre><div id="r-566257" data-claire-element-id="566257" data-claire-semantic="question"><p id="r-566256" data-claire-element-id="566256">C'est quoi ce 130 qui traîne ?</p></div><p id="r-566258" data-claire-element-id="566258">Bonne question ! C'est en fait le <strong>é</strong> de ce pauvre Gérard. Tous les compilateurs n'acceptent pas la notation <strong>L'é'</strong>, pourtant plus pratique. Il faut donc remplacer la lettre <strong>é</strong> par sa valeur en ASCII étendu, et cette valeur, c'est 130.<br/> Vous trouverez les valeurs ASCII étendu correspondant à chaque caractère <a href="http://www.asciitable.com/">sur ce site</a>.</p><aside id="r-566260" data-claire-element-id="566260" data-claire-semantic="error"><p id="r-566259" data-claire-element-id="566259">Selon le compilateur que vous utilisez, certaines valeurs peuvent être complètement différentes des miennes ! Cela ne doit pas trop vous perturber, demandez de l'aide sur les forums pour connaître l'encodage de votre compilateur ou utilisez, comme moi, Code::Blocks avec le <strong>GNU GCC Compiler</strong>^^ .</p></aside><p id="r-566261" data-claire-element-id="566261">Cette méthode d'initialisation n'est extrêmement pas pratique, c'est pourquoi il existe une petite astuce pour s'en passer : les échappements. Les échappements sont tout simplement des raccourcis pour faire figurer des caractères spéciaux dans l'initialisation d'un chaîne. Un échappement se présente sous la forme :<br/>\xNN<br/> NN est tout simplement la valeur ASCII du caractère à afficher. Elle doit être exprimée dans le système hexadécimal. Pour convertir un nombre standard en valeur hexadécimale, vous pouvez utiliser la calculatrice Windows ou un outil sur internet, en <a href="http://yves.mary.online.fr/hansi/html/902.htm">voici un</a>.</p><p id="r-566262" data-claire-element-id="566262">Revenons à notre code source de tout à l'heure. Je vous le remémore.</p><pre id="r-566263" data-claire-element-id="566263"><code data-claire-semantic="c">wchar_t texte[50] = {L'S', L'a', L'l', L'u', L't', L' ', L'G', 130, L'r', L'a', L'r', L'd', L' ', L'!', L'\0'};</code></pre><p id="r-566264" data-claire-element-id="566264">Plutôt terrible, n'est-ce pas ? Sachant que la valeur de &quot;é&quot; en ASCII est 130, et que cette valeur vaut 82 en hexadécimal, on va pouvoir utiliser pour &quot;é&quot; l'échappement <strong>\x82</strong> ! Voici le code en question.</p><pre id="r-566265" data-claire-element-id="566265"><code data-claire-semantic="c">wchar_t texte[50] = L&quot;Salut G\x82rard !&quot;;</code></pre><p id="r-566266" data-claire-element-id="566266">Un peu plus commode, hein ?</p><aside id="r-566268" data-claire-element-id="566268" data-claire-semantic="information"><p id="r-566267" data-claire-element-id="566267">Normalement, vous connaissiez déjà des échappements dits &quot;spéciaux&quot; : par exemple, <strong></strong> pour le saut de ligne.</p></aside><h2 id="r-afficher-et-recuperer-une-chaine-de-wchar-t" data-claire-element-id="566287">Afficher et récupérer une chaîne de <em>wchar_t</em></h2><p id="r-566270" data-claire-element-id="566270">Nous allons maintenant tester un bout de code qui devrait vous sembler intuitif, mais qui est vraiment archi-faux :p !</p><pre id="r-566271" data-claire-element-id="566271"><code data-claire-semantic="c">wchar_t texte[50] = {0};
+fgets(texte, 50, stdin);
+printf(&quot;%s&quot;, texte);</code></pre><p id="r-566272" data-claire-element-id="566272">Il fallait s'en douter, ça ne marche pas. Ce serait trop beau !<br/> Il manque en effet trois choses à ce code pour le rendre fonctionnel. Vous devez connaître la première.</p><ul id="r-566279" data-claire-element-id="566279"><li id="r-566274" data-claire-element-id="566274"><p id="r-566273" data-claire-element-id="566273"><strong>Il faut ajouter un L avant chaque guillemet représentant une chaîne.</strong> C'est primordial pour indiquer qu'il s'agit d'une chaîne de texte <em>wchar_t</em> !</p></li><li id="r-566276" data-claire-element-id="566276"><p id="r-566275" data-claire-element-id="566275">Les codes %c et %s, indiquant où insérer un caractère et une chaîne de caractères, ne fonctionnent plus ! <strong>Il faut les remplacer par leur équivalent, c'est-à-dire %lc et %ls !</strong></p></li><li id="r-566278" data-claire-element-id="566278"><p id="r-566277" data-claire-element-id="566277"><strong>Enfin, TOUTES les fonctions de manipulation du texte doivent être remplacées par leurs équivalents dans la bibliothèque wchar.h. </strong>Ne faites pas ces têtes-là, ces fonctions sont heureusement similaires aux fonctions que vous connaissez, leur prototype sont quasiment les mêmes. Les <em>char</em> sont tout simplement remplacés par des <em>wchar_t</em>, et le nom de la fonction change légèrement. L'équivalent de printf est ainsi <strong>wprintf</strong>, et de fgets est... <strong>fgetws</strong>.</p></li></ul><div id="r-566281" data-claire-element-id="566281" data-claire-semantic="question"><p id="r-566280" data-claire-element-id="566280">On doit réapprendre le nom des fonctions ?</p></div><p id="r-566282" data-claire-element-id="566282">Idéalement oui, mais vous trouverez un tableau de conversion préparé par mes soins à la fin du tuto. Et si vous utilisez les caractères spéciaux régulièrement, vous maîtriserez vite ces petits changements !</p><p id="r-566283" data-claire-element-id="566283">Code FAUX</p><pre id="r-566284" data-claire-element-id="566284"><code data-claire-semantic="c">wchar_t texte[50] = {0};
+fgets(texte, 50, stdin);
+printf(&quot;%s&quot;, texte);</code></pre><p id="r-566285" data-claire-element-id="566285">Code CORRECT</p><pre id="r-566286" data-claire-element-id="566286"><code data-claire-semantic="c">wchar_t texte[50] = {0};
+fgetws(texte, 50, stdin);
+wprintf(L&quot;%ls&quot;, texte);</code></pre><h2 id="r-resumons-la-situation" data-claire-element-id="566300">Résumons la situation</h2><p id="r-566288" data-claire-element-id="566288">Vous y êtes ? Ce n'est pas si compliqué que ça ! En résumé, pour passer aux caractères spéciaux, il faut simplement...</p><ul id="r-566299" data-claire-element-id="566299"><li id="r-566290" data-claire-element-id="566290"><p id="r-566289" data-claire-element-id="566289">Remplacer le type char par le type wchar_t</p></li><li id="r-566292" data-claire-element-id="566292"><p id="r-566291" data-claire-element-id="566291">Remplacer les fonctions de gestion du texte par leurs équivalents</p></li><li id="r-566294" data-claire-element-id="566294"><p id="r-566293" data-claire-element-id="566293">Remplacer les marqueurs %c et %s (caractères et chaînes) par leurs équivalents %lc et %ls</p></li><li id="r-566296" data-claire-element-id="566296"><p id="r-566295" data-claire-element-id="566295">Ne pas oublier de caractériser un caractère ou une chaîne de <em>wchar_t</em> par la lettre L, comme dans <em>L'A'</em> ou <em>L&quot;Mon texte !&quot;</em></p></li><li id="r-566298" data-claire-element-id="566298"><p id="r-566297" data-claire-element-id="566297">Penser aux échappements pour limiter les maux de tête :p !</p></li></ul>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t">Mettez des accents dans vos programmes avec le type wchar_t</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t/caracteres-speciaux-et-langage-c-un-peu-d-histoire">
+Caractères spéciaux et langage C : un peu d&#039;histoire
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t/a-l-assaut-de-wchar-h">
+À l&#039;assaut de &lt;wchar.h&gt;
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t/le-monde-merveilleux-des-accents">
+Le monde merveilleux des accents
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t/quelques-exemples-et-exercices">
+Quelques exemples et exercices
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t/a-l-assaut-de-wchar-h">
+<span class="arrow"></span>
+<span class="next">À l&#039;assaut de &lt;wchar.h&gt;</span>
+</a>
+<a class="after" href="http://62.4.17.167/informatique/tutoriels/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t/quelques-exemples-et-exercices">
+<span class="next">Quelques exemples et exercices</span>
+<span class="arrow"></span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div><a name="Quelquesexemplesetexercices"></a><h2>Quelques exemples et exercices</h2><div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t/le-monde-merveilleux-des-accents">
+<span class="arrow"></span>
+<span class="next">Le monde merveilleux des accents</span>
+</a>
+</div>
+<hr class="top"/>
+<div class="clear"></div> <div id="content" role="article">
+<p id="r-566302" data-claire-element-id="566302">Pour faire une petite synthèse, je vais vous montrer deux codes complets. Les deux sont corrects, mais l'un permet de gérer les accents, l'autre non.<br/> Ce code vous dit bonjour, récupère votre prénom, et vous souhaite une bonne journée. Il écrit ensuite votre nom dans le fichier &quot;nom.txt&quot;. Je sais, c'est un peu plat mais c'est un très très bon moyen de se familiariser avec la bibliothèque wchar.h ;) .</p><pre id="r-566303" data-claire-element-id="566303"><code data-claire-semantic="c">#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;wchar.h&gt;
+
+int main()
+{
+wchar_t nom[100] = {0}; // On initialise une chaîne de texte ASCII étendu.
+wprintf(L&quot;Bonjour !\nQuel est votre nom ?\n&quot;); // On demande à l'utilisateur son nom.
+fgetws(nom, 100, stdin); // On récupère ce nom grâce à la fonction fgetws, équivalent de la fonction fgets.
+    
+FILE* fichier = NULL;
+fichier = fopen(&quot;nom.txt&quot;, &quot;a&quot;); // On ouvre le fichier nom.txt en mode écriture.
+
+wprintf(L&quot;Bonne journ%lce, %ls\n&quot;, 130, nom); // On utilise wprintf, l'équivalent de printf en ASCII étendu, pour afficher le nom de l'utilisateur.
+    
+fwprintf(fichier, L&quot;%ls&quot;, nom); // On écrit ce nom dans le fichier grâce à l'équivalent de fprintf.
+fclose(fichier); // On ferme le fichier.
+return 0;
+}</code></pre><pre id="r-566304" data-claire-element-id="566304"><code data-claire-semantic="console">Bonjour !
+Quel est votre nom ?
+Gérard
+Bonne journée, Gérard !</code></pre><p id="r-566305" data-claire-element-id="566305">Et voici le même code, ne gérant pas les accents.</p><pre id="r-566306" data-claire-element-id="566306"><code data-claire-semantic="c">#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+
+int main()
+{
+    char nom[100] = {0};
+    printf(&quot;Bonjour !\nQuel est votre nom ?\n&quot;);
+    fgets(nom, 100, stdin);
+    printf(&quot;Bonne journee, %s !\n&quot;, nom);
+    FILE* fichier = NULL;
+    fichier = fopen(&quot;nom.txt&quot;, &quot;a&quot;);
+    fprintf(fichier, &quot;%s&quot;, nom); 
+    fclose(fichier);
+    return 0;
+}</code></pre><div id="r-566308" data-claire-element-id="566308" data-claire-semantic="question"><p id="r-566307" data-claire-element-id="566307">Je l'ai testé, et même si je mets des accents ça marche !</p></div><p id="r-566309" data-claire-element-id="566309">Selon votre OS, c'est tout à fait possible, mais attention aux bugs dans la suite du programme... Sans parler des caractères codés par un entier supérieur à 127, qui ne seront pas gérés et pourront faire tout planter.</p><h2 id="r-exercons-nous" data-claire-element-id="566332">Exerçons-nous !</h2><p id="r-566310" data-claire-element-id="566310">Allez, deux-trois petites idées un peu plus simples pour se familiariser avec la manipulation des caractères spéciaux.</p><ul id="r-566317" data-claire-element-id="566317"><li id="r-566312" data-claire-element-id="566312"><p id="r-566311" data-claire-element-id="566311">Créez un programme qui détecte la langue de l'utilisateur ! Ce n'est pas si compliqué que ça en a l'air. Je peux par exemple vous indiquer que....<br/> -les caractères ç et ê sont spécifiques au français.<br/> -le caractère ñ est spécifique à l'espagnol.<br/> -le caractère ß est spécifique à l'allemand.<br/> -le caractère å est spécifique au suédois :euh: .<br/> Utilisez la fonction <strong>wcschr</strong> (équivalente à <strong>strchr</strong>).</p></li><li id="r-566314" data-claire-element-id="566314"><p id="r-566313" data-claire-element-id="566313">Créez un programme qui indique la valeur d'un caractère spécial wchar_t (selon l'encodage votre compilateur). Il vous sera utile par la suite !</p></li><li id="r-566316" data-claire-element-id="566316"><p id="r-566315" data-claire-element-id="566315">Adaptez le jeu de pendu du tutoriel de M@teo21 sur le C pour qu'il gère les accents ! Il faudra bien sûr une fonction qui les supprime, car choisir la lettre E doit être équivalent à choisir les caractères È, É, Ê, Ë, E, tous à la fois...</p></li></ul><p id="r-566318" data-claire-element-id="566318">Les corrigés des deux premiers exercices sont disponibles ci-dessous. Quant au dernier exercice, je vous laisse trouver...</p><p id="r-566319" data-claire-element-id="566319"><strong>Correction du premier exercice</strong></p><div id="r-566323" data-claire-element-id="566323"><pre id="r-566320" data-claire-element-id="566320"><code data-claire-semantic="c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;wchar.h&gt;
+
+enum {ESPAGNOL, SUEDOIS, ALLEMAND, FRANCAIS, ERREUR};
+
+int detectionlangue(wchar_t texteaverifier[]);
+
+int main()
+{
+    wchar_t texte[200]; // On initialise une chaîne de 200 wchar_t.
+    wprintf(L&quot;Bonjour cher Z%lcro !\nQuelle langue parles-tu ?\nDis-moi une phrase !\n&quot;, 130);
+    fgetws(texte, 200, stdin); // On demande et récupère le nom de l'utilisateur.
+    switch (detectionlangue(texte))
+    /* On demande à la fonction detectionlangue
+    quelle langue parle l'utilisateur. */
+    {
+    case ESPAGNOL:
+        wprintf(L&quot;%lc Hablas espa%lcol !\n&quot;, 173, 164);
+        break;
+    case SUEDOIS:
+        wprintf(L&quot;Euuuh... vous parlez su%lcdois...\n&quot;, 130);
+        break;
+    case ALLEMAND:
+        wprintf(L&quot;Du sprichst Deutsch !\n&quot;);
+        break;
+    case FRANCAIS:
+        wprintf(L&quot;Tu parles fran%lcais ! Tu es un vrai Z%lcro !\n&quot;, 135, 130);
+        break;
+    case ERREUR:
+        wprintf(L&quot;Je ne peux pas d%lctecter ta langue petit Z%lcro !\n&quot;, 130, 130);
+        break;
+    default:
+        wprintf(L&quot;Je ne peux pas d%lctecter ta langue petit Z%lcro !&quot;, 130, 130);
+        break;
+    } // En fonction de la langue de l'utilisateur, on renvoie un message différent.
+    return 0;
+}
+
+int detectionlangue(wchar_t texteaverifier[])
+{
+    /* On teste la présence dans &quot;texte&quot; de caractères spéciaux
+    propres à certaines langues, et on en déduit la langue de
+    l'utilisateur. */
+    if (wcschr(texteaverifier, 164) != NULL)
+    {
+        return ESPAGNOL;
+    }
+    else if (wcschr(texteaverifier, 165) != NULL)
+    {
+        return ESPAGNOL;
+    }
+    else if (wcschr(texteaverifier, 134) != NULL)
+    {
+        return SUEDOIS;
+    }
+    else if (wcschr(texteaverifier, 143) != NULL)
+    {
+        return SUEDOIS;
+    }
+    else if (wcschr(texteaverifier, 225) != NULL)
+    {
+        return ALLEMAND;
+    }
+    else if (wcschr(texteaverifier, 128) != NULL)
+    {
+        return FRANCAIS;
+    }
+    else if (wcschr(texteaverifier, 135) != NULL)
+    {
+        return FRANCAIS;
+    }
+    else
+    {
+        return ERREUR;
+    }
+}</code></pre><p id="r-566321" data-claire-element-id="566321">Et voilà...</p><pre id="r-566322" data-claire-element-id="566322"><code data-claire-semantic="console">Bonjour cher Zéro !
+Quelle langue parles-tu ?
+Dis moi une phrase !
+Das weiß ich nicht !
+Du sprichst Deutsch !</code></pre></div><p id="r-566324" data-claire-element-id="566324"><strong>Correction du deuxième exercice</strong></p><div id="r-566326" data-claire-element-id="566326"><pre id="r-566325" data-claire-element-id="566325"><code data-claire-semantic="c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;wchar.h&gt;
+
+int main()
+{
+    wchar_t caractereatester;
+    wprintf(L&quot;Tapez un caract%lcre !&quot;, 138);
+    fgets(&amp;caractereatester, 2, stdin); // On récupère la saisie dans caractereatester.
+    wprintf(L&quot;Le caract%lcre %lc a pour valeur %d !&quot;, 138, caractereatester, caractereatester); // On affiche la valeur du caractère comme un int.
+    return 0;
+}</code></pre></div><p id="r-566327" data-claire-element-id="566327">Bon travail ! Et comme promis, voici le tableau récapitulatif...</p><figure id="r-566329" data-claire-element-id="566330"><img id="r-566328" data-claire-element-id="566328" src="medias/uploads.siteduzero.com_files_243001_244000_243794.png" alt="Image utilisateur"/></figure><p id="r-566331" data-claire-element-id="566331">Voilà, c'est fait. Ce n'était pas si compliqué, mais cela demande quelques petites adaptations au quotidien. Essayer <em>wchar_t</em>, c'est l'adopter. Il vous permet en effet d'encoder vos caractères sur 2 ou 4 octets au lieu d'un et permet ainsi, selon votre OS ou la bibliothèque que vous utilisez, d'utiliser bien plus de lettres que celles que la très réduite table ASCII vous propose.<br/><strong>Bonne continuation !</strong></p>
+<aside class="aside-menu">
+<ul class="content-menu subchapter" role="navigation">
+<li class="tuto">
+<a href="http://62.4.17.167/informatique/tutoriels/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t">Mettez des accents dans vos programmes avec le type wchar_t</a>
+</li>
+<ul class="subchapter-parts">
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t/caracteres-speciaux-et-langage-c-un-peu-d-histoire">
+Caractères spéciaux et langage C : un peu d&#039;histoire
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t/a-l-assaut-de-wchar-h">
+À l&#039;assaut de &lt;wchar.h&gt;
+</a>
+</li>
+<li>
+<a href="http://62.4.17.167/informatique/tutoriels/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t/le-monde-merveilleux-des-accents">
+Le monde merveilleux des accents
+</a>
+</li>
+<li class="active">
+<a href="http://62.4.17.167/informatique/tutoriels/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t/quelques-exemples-et-exercices">
+Quelques exemples et exercices
+</a>
+</li>
+</ul>
+</ul>
+</aside>
+</div>
+<div id="content-bottom-menu"></div>
+<hr/>
+<div class="paginate-tuto">
+<a class="before" href="http://62.4.17.167/informatique/tutoriels/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t/le-monde-merveilleux-des-accents">
+<span class="arrow"></span>
+<span class="next">Le monde merveilleux des accents</span>
+</a>
+</div>
+<hr class="bottom"/>
+<div class="clear"></div> <div class="adBan">
+<script type='text/javascript'>
+    if (window.innerWidth >= 728)
+    {
+        document.write('<div id="div-gpt-ad-1350977194635-8" class="megaban"></div>');
+        googletag.cmd.push(function() {
+            googletag.display('div-gpt-ad-1350977194635-8');
+        });
+    }
+            else
+        {
+            document.write('<div id="div-gpt-ad-1350977284180-8" class="miniban"></div>');
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1350977284180-8');
+            });
+        }
+    </script>
+</div>
+<div class="clear"></div>
+</body>
+<!-- Mirrored from 62.4.17.167/sdz/sdz/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t.html by HTTrack Website Copier/3.x [XR&CO'2013], Sun, 27 Oct 2013 06:50:53 GMT -->
+
+<!-- Mirrored from sdz.tdct.org/sdz/mettez-des-accents-dans-vos-programmes-avec-le-type-wchar-t.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 30 Nov 2015 05:14:38 GMT -->
+</html>
